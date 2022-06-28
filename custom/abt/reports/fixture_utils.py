@@ -1,11 +1,8 @@
 from collections import defaultdict, namedtuple
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types,
-    get_fixture_items_for_data_type,
-)
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
+from corehq.apps.fixtures.models import FixtureDataItem, LookupTable
 
 REQUIRED_FIXTURE_DATA_TYPES = (
     'level_1_eco',
@@ -76,10 +73,10 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
     """
     l3s_by_l2 = {}
     l4s_by_l3 = {}
-    data_types_by_tag = get_data_types_by_tag(domain)
+    data_types_by_tag = get_data_type_ids_by_tag(domain)
     level_1s = get_fixture_dicts(
         domain,
-        data_types_by_tag["level_1_eco"]._id,
+        data_types_by_tag["level_1_eco"],
         filter_in={
             'id': [filters['level_1']] if filters['level_1'] else None
         },
@@ -87,22 +84,22 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
     )
     l2s_by_l1 = get_fixture_dicts_by_key(
         domain,
-        data_type_id=data_types_by_tag["level_2_eco"]._id,
+        data_type_id=data_types_by_tag["level_2_eco"],
         key='level_1_eco',
         filter_in={
-            'level_1_eco': [l['id'] for l in level_1s],
+            'level_1_eco': [x['id'] for x in level_1s],
             'id': [filters['level_2']] if filters['level_2'] else None
         },
         filter_out={'other': '1'},
     )
     l3_data_items = get_fixture_items_for_data_type(
-        domain, data_type_id=data_types_by_tag["level_3_eco"]._id,
+        domain, data_type_id=data_types_by_tag["level_3_eco"],
     )
     country_has_level_3 = len(l3_data_items) > 1
     if country_has_level_3:
         l3s_by_l2 = get_fixture_dicts_by_key(
             domain,
-            data_type_id=data_types_by_tag["level_3_eco"]._id,
+            data_type_id=data_types_by_tag["level_3_eco"],
             key='level_2_eco',
             filter_in={
                 'level_2_eco': [l2['id'] for l2s in l2s_by_l1.values() for l2 in l2s],
@@ -111,13 +108,13 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
             filter_out={'other': '1'},
         )
         l4_data_items = get_fixture_items_for_data_type(
-            domain, data_type_id=data_types_by_tag["level_4_eco"]._id,
+            domain, data_type_id=data_types_by_tag["level_4_eco"],
         )
         country_has_level_4 = len(l4_data_items) > 1
         if country_has_level_4:
             l4s_by_l3 = get_fixture_dicts_by_key(
                 domain,
-                data_type_id=data_types_by_tag["level_4_eco"]._id,
+                data_type_id=data_types_by_tag["level_4_eco"],
                 key='level_3_eco',
                 filter_in={
                     'level_3_eco': [l3['id'] for l3s in l3s_by_l2.values() for l3 in l3s],
@@ -128,16 +125,15 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
     return level_1s, l2s_by_l1, l3s_by_l2, l4s_by_l3
 
 
-def get_data_types_by_tag(domain):
-    # Not cached, because get_fixture_data_types() is already cached
-    data_types_by_tag = {
-        dt.tag: dt
-        for dt in get_fixture_data_types(domain)
+def get_data_type_ids_by_tag(domain):
+    ids_by_tag = {
+        table.tag: table._migration_couch_id
+        for table in LookupTable.objects.by_domain(domain)
     }
     for data_type in REQUIRED_FIXTURE_DATA_TYPES:
-        assert data_type in data_types_by_tag, \
+        assert data_type in ids_by_tag, \
             f'Domain {domain!r} is missing required lookup table {data_type!r}'
-    return data_types_by_tag
+    return ids_by_tag
 
 
 def get_fixture_dicts(

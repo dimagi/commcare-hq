@@ -4,10 +4,8 @@ from django.utils.functional import cached_property
 
 from attr import attrib, attrs, fields_dict
 
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types,
-    iter_fixture_items_for_data_type,
-)
+from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
+from corehq.apps.fixtures.models import LookupTable
 
 
 class InddexFixtureError(Exception):
@@ -88,11 +86,14 @@ class FixtureAccessor:
         self.domain = domain
 
     @cached_property
-    def _data_types(self):
-        return {dt.tag: dt for dt in get_fixture_data_types(self.domain)}
+    def _data_types_ids(self):
+        return {
+            table.tag: table._migration_couch_id
+            for table in LookupTable.objects.by_domain(self.domain)
+        }
 
     def _get_fixture_dicts(self, data_type_tag):
-        data_type_id = self._data_types[data_type_tag].get_id
+        data_type_id = self._data_types_ids[data_type_tag]
         for item in iter_fixture_items_for_data_type(self.domain, data_type_id):
             yield {field_name: field_list.field_list[0].field_value
                    for field_name, field_list in item.fields.items()}
