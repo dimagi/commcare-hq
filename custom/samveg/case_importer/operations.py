@@ -9,12 +9,13 @@ class BaseRowOperation(object):
     """
 
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
         """
         :param row_num: 1-based row number. Headers are in row zero.
         :param raw_row: Row dict.
         :param fields_to_update: Current set of fields to update
         :param import_context: import context available during import for extensions
+        :param domain_name: name of the domain for which upload operation is done
 
         :return: fields to update, list of errors
         """
