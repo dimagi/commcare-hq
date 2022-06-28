@@ -68,7 +68,6 @@ branches:
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
     #- ad/tableau-request-client-IP # Addison June 14
-    - rc/case-id-download-from-mult-domains # Robert June 15
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth+cs/SC-1945-ability-to-add-filter-to-rules # Jenny June 21
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
@@ -76,9 +75,6 @@ branches:
     - es/mobile-auth+sk/rename-permission-classes
     - es/mobile-auth  # Simon Nov 23
     # - ml/all-in-one-offboarding  # Minha April 13
-    - sk/rename-permission-classes
-    - cs/fix-case-owner-location-parent # Charl Jun 20
-    - dm/lookup-table-uploader # Daniel Jun 20
 #    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
 #    - ad/multi-select-auto-launch # Addison/Jenny June 22
@@ -86,4 +82,5 @@ branches:
     - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
+    - rc/hidden-question-geocoder-values # Robert June 27
 submodules: { }

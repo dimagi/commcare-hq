@@ -23871,10 +23871,6 @@ msgid "Could not find app"
 msgstr ""
 
 #: corehq/apps/linked_domain/tasks.py
-msgid "Updated app but did not build or release: "
-msgstr ""
-
-#: corehq/apps/linked_domain/tasks.py
 msgid "Feature flag for {} is not enabled"
 msgstr ""
 
