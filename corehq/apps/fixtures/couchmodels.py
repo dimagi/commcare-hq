@@ -20,7 +20,6 @@ from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types,
     get_fixture_items_for_data_type,
     get_owner_ids_by_type,
 )
@@ -156,10 +155,6 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
         # NOTE cache must be invalidated after transaction commit
-
-    def clear_caches(self):
-        super(FixtureDataType, self).clear_caches()
-        get_fixture_data_types.clear(self.domain)
 
 
 class FixtureItemField(DocumentSchema):

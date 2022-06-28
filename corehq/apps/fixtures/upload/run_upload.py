@@ -300,12 +300,8 @@ def clear_fixture_quickcache(domain, data_types):
         :domain: The domain that has been updated
         :data_types: List of LookupTable or FixtureDataType objects with stale cache
     """
-    from corehq.apps.fixtures.dbaccessors import (
-        get_fixture_data_types,
-        get_fixture_items_for_data_type
-    )
+    from ..dbaccessors import get_fixture_items_for_data_type
     if not data_types:
-        get_fixture_data_types.clear(domain)
         return
 
     type_ids = set()

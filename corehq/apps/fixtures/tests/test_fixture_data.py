@@ -7,10 +7,7 @@ from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw
 
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.dbaccessors import (
-    delete_all_fixture_data,
-    get_fixture_data_types,
-)
+from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
@@ -117,9 +114,6 @@ class FixtureDataTest(TestCase):
         )
         ownership.save()
         self.addCleanup(delete_ownership)
-
-        get_fixture_data_types.clear(self.domain)
-        self.addCleanup(get_fixture_data_types.clear, self.domain)
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
@@ -243,7 +237,6 @@ class FixtureDataTest(TestCase):
         )
         empty_data_type.save()
         self.addCleanup(empty_data_type.delete)
-        get_fixture_data_types.clear(self.domain)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
