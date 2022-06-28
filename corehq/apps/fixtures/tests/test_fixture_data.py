@@ -8,7 +8,7 @@ from casexml.apps.phone.tests.utils import \
 
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import (
-    delete_all_fixture_data_types,
+    delete_all_fixture_data,
     get_fixture_data_types,
 )
 from corehq.apps.fixtures.exceptions import FixtureVersionError
@@ -21,7 +21,6 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureTypeField,
 )
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 
@@ -37,8 +36,7 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).setUp()
         self.domain = 'qwerty'
         self.tag = "district"
-        delete_all_users()
-        delete_all_fixture_data_types()
+        delete_all_fixture_data()
 
         self.data_type = FixtureDataType(
             domain=self.domain,
@@ -61,6 +59,7 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         self.data_type.save()
+        self.addCleanup(self.data_type.delete)
 
         self.data_item = FixtureDataItem(
             domain=self.domain,
@@ -98,28 +97,30 @@ class FixtureDataTest(TestCase):
             item_attributes={},
         )
         self.data_item.save()
+        self.addCleanup(self.data_item.delete)
 
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-        self.fixture_ownership = FixtureOwnership(
+        def delete_ownership():
+            from couchdbkit import ResourceNotFound
+            try:
+                ownership.delete()
+            except ResourceNotFound:
+                pass  # ignore if already deleted
+
+        ownership = FixtureOwnership(
             domain=self.domain,
             owner_id=self.user.get_id,
             owner_type='user',
             data_item_id=self.data_item.get_id
         )
-        self.fixture_ownership.save()
-        get_fixture_data_types.clear(self.domain)
+        ownership.save()
+        self.addCleanup(delete_ownership)
 
-    def tearDown(self):
-        self.data_type.delete()
-        self.data_item.delete()
-        self.user.delete(self.domain, deleted_by=None)
-        self.fixture_ownership.delete()
-        delete_all_users()
-        delete_all_fixture_data_types()
         get_fixture_data_types.clear(self.domain)
-        get_blob_db().delete(key=FIXTURE_BUCKET + '/' + self.domain)
-        super(FixtureDataTest, self).tearDown()
+        self.addCleanup(get_fixture_data_types.clear, self.domain)
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
         item_dict = self.data_item.to_json()
@@ -155,7 +156,8 @@ class FixtureDataTest(TestCase):
         self.data_item.remove_user(self.user)
         self.assertItemsEqual([], self.data_item.get_all_users())
 
-        self.fixture_ownership = self.data_item.add_user(self.user)
+        fixture_ownership = self.data_item.add_user(self.user)
+        self.addCleanup(fixture_ownership.delete)
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
     def test_fixture_removal(self):
@@ -177,8 +179,6 @@ class FixtureDataTest(TestCase):
             """.format(self.user.user_id),
             ElementTree.tostring(fixtures[0], encoding='utf-8')
         )
-
-        self.fixture_ownership = self.data_item.add_user(self.user)
 
     def test_get_indexed_items(self):
         with self.assertRaises(FixtureVersionError):
@@ -266,7 +266,10 @@ class FixtureDataTest(TestCase):
             </fixture>
             </f>
             """.format(self.user.user_id),
-            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8') for fixture in fixtures])
+            '<f>{}\n{}\n</f>'.format(*[
+                ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8')
+                for fixture in fixtures
+            ])
         )
 
     def test_user_data_type_with_item(self):
@@ -303,7 +306,9 @@ class FixtureDataTest(TestCase):
         sandwich = self.make_data_type("sandwich", is_global=True)
         self.make_data_item(sandwich, "7.39")
         frank = self.user.to_ota_restore_user(self.domain)
-        sammy = CommCareUser.create(self.domain, 'sammy', '***', None, None).to_ota_restore_user(self.domain)
+        sammy_ = CommCareUser.create(self.domain, 'sammy', '***', None, None)
+        self.addCleanup(sammy_.delete, self.domain, deleted_by=None)
+        sammy = sammy_.to_ota_restore_user(self.domain)
 
         fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
@@ -352,6 +357,7 @@ class TestFixtureOrdering(TestCase):
         super(TestFixtureOrdering, cls).setUpClass()
         cls.domain = "TestFixtureOrdering"
         cls.user = CommCareUser.create(cls.domain, 'george', '***', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
         cls.data_type = FixtureDataType(
             domain=cls.domain,
@@ -366,6 +372,7 @@ class TestFixtureOrdering(TestCase):
             item_attributes=[],
         )
         cls.data_type.save()
+        cls.addClassCleanup(cls.data_type.delete)
 
         cls.data_items = [
             cls._make_data_item(4, "Tyrell", "Highgarden", "Rose"),
@@ -376,6 +383,7 @@ class TestFixtureOrdering(TestCase):
             cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
             cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
         ]
+        cls.addClassCleanup(FixtureDataItem.delete_docs, cls.data_items)
 
     @classmethod
     def _make_data_item(cls, sort_key, name, seat, sigil):
@@ -395,14 +403,6 @@ class TestFixtureOrdering(TestCase):
         )
         data_item.save()
         return data_item
-
-    @classmethod
-    def tearDownClass(cls):
-        for data_item in cls.data_items:
-            data_item.delete()
-        cls.data_type.delete()
-        cls.user.delete(cls.domain, deleted_by=None)
-        super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):
         (fixture,) = call_fixture_generator(self.user.to_ota_restore_user(self.domain))

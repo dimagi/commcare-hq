@@ -39,10 +39,8 @@ class OtaFixtureTest(TestCase):
             SA_PROVINCES: make_item_lists(SA_PROVINCES, 'western cape'),
             FR_PROVINCES: make_item_lists(FR_PROVINCES, 'burgundy'),
         }
-        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-        for ftype, fitem in cls.item_lists.values():
-            cls.addClassCleanup(FixtureDataType.get_db().delete_doc, ftype._migration_couch_id)
-            cls.addClassCleanup(FixtureDataItem.get_db().delete_doc, fitem._migration_couch_id)
+        from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
+        cls.addClassCleanup(delete_all_fixture_data, DOMAIN)
         cls.addClassCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + "/" + DOMAIN)
 
         cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)

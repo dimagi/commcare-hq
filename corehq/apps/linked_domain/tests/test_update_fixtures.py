@@ -36,6 +36,7 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             ],
         )
         cls.table.save()
+        cls.addClassCleanup(delete_all_fixture_data)
 
     def setUp(self):
         # Reset table content for each test
@@ -75,11 +76,6 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
         FixtureDataType.bulk_delete(linked_types)
         clear_fixture_quickcache(self.domain, [self.table])
         clear_fixture_quickcache(self.linked_domain, linked_types)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_fixture_data()
-        super().tearDownClass()
 
     def test_update_fixture(self):
         self.assertEqual([], get_fixture_data_types(self.linked_domain))

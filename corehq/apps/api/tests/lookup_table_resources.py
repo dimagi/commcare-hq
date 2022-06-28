@@ -1,10 +1,10 @@
 import json
 
 from corehq.apps.api.tests.utils import APIResourceTest
+from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     LookupTable,
     TypeField,
 )
@@ -21,15 +21,6 @@ class TestLookupTableResource(APIResourceTest):
 
     def setUp(self):
         super(TestLookupTableResource, self).setUp()
-
-        def ensure_no_unexpected_fixture_types():
-            fixture_data_types = FixtureDataType.by_domain(self.domain.name)
-            if fixture_data_types:
-                FixtureDataType.delete_docs(fixture_data_types)
-                self.fail(f"Unexpected in Couch: {fixture_data_types}")
-        # add cleanup to be done after all other cleanups
-        self.addCleanup(ensure_no_unexpected_fixture_types)
-
         self.data_type = LookupTable(
             domain=self.domain.name,
             tag="lookup_table",
@@ -37,16 +28,7 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         self.data_type.save()
-        self.addCleanup(self.ensure_couch_fixture_is_deleted, self.data_type, False)
-
-    def ensure_couch_fixture_is_deleted(self, data_type, fail_if_found=True):
-        from couchdbkit.exceptions import ResourceNotFound
-        try:
-            FixtureDataType.get(data_type._migration_couch_id).delete()
-            if fail_if_found:
-                self.fail("Expected Couch fixture type to be deleted")
-        except ResourceNotFound:
-            pass
+        self.addCleanup(delete_all_fixture_data, self.domain.name)
 
     def _data_type_json(self):
         return {
@@ -86,7 +68,6 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(self.ensure_couch_fixture_is_deleted, data_type)
         TestLookupTableItemResource._create_data_item(self, cleanup=False, data_type=data_type)
         assert FixtureDataItem.by_data_type(self.domain.name, data_type)  # populate cache
 
@@ -110,7 +91,6 @@ class TestLookupTableResource(APIResourceTest):
             self.list_endpoint, json.dumps(lookup_table), content_type='application/json')
         self.assertEqual(response.status_code, 201)
         data_type = LookupTable.objects.by_domain_tag(self.domain.name, "table_name")
-        self.addCleanup(self.ensure_couch_fixture_is_deleted, data_type, False)
 
         self.assertEqual(data_type.tag, "table_name")
         self.assertEqual(len(data_type.fields), 1)
@@ -148,7 +128,7 @@ class TestLookupTableItemResource(APIResourceTest):
             item_attributes=[]
         )
         cls.data_type.save()
-        cls.addClassCleanup(lambda: FixtureDataType.get(cls.data_type._migration_couch_id).delete())
+        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
 
     def tearDown(self):
         clear_fixture_quickcache(self.domain.name, [self.data_type._migration_get_couch_object()])
