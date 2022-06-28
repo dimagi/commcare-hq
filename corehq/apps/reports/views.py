@@ -127,7 +127,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
-    Permissions,
+    HqPermissions,
     WebUser,
 )
 from corehq.apps.users.permissions import (
@@ -183,24 +183,24 @@ datespan_default = datespan_in_request(
 )
 
 require_form_export_permission = require_permission(
-    Permissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
+    HqPermissions.view_report, FORM_EXPORT_PERMISSION, login_decorator=None)
 require_form_deid_export_permission = require_permission(
-    Permissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
+    HqPermissions.view_report, DEID_EXPORT_PERMISSION, login_decorator=None)
 require_case_export_permission = require_permission(
-    Permissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
+    HqPermissions.view_report, CASE_EXPORT_PERMISSION, login_decorator=None)
 
 require_form_view_permission = require_permission(
-    Permissions.view_report,
+    HqPermissions.view_report,
     'corehq.apps.reports.standard.inspect.SubmitHistory',
     login_decorator=None,
 )
 require_case_view_permission = require_permission(
-    Permissions.view_report,
+    HqPermissions.view_report,
     'corehq.apps.reports.standard.cases.basic.CaseListReport',
     login_decorator=None,
 )
 
-require_can_view_all_reports = require_permission(Permissions.view_reports)
+require_can_view_all_reports = require_permission(HqPermissions.view_reports)
 
 
 def can_view_attachments(request):
@@ -672,7 +672,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     page_title = _("Scheduled Report")
     template_name = 'reports/edit_scheduled_report.html'
 
-    @method_decorator(require_permission(Permissions.download_reports))
+    @method_decorator(require_permission(HqPermissions.download_reports))
     @use_multiselect
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
@@ -1441,7 +1441,7 @@ def case_xml(request, domain, case_id):
 
 @location_safe
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_GET
 def case_property_names(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
@@ -1466,7 +1466,7 @@ def case_property_names(request, domain, case_id):
 
 @location_safe
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 def edit_case_view(request, domain, case_id):
     if not (has_privilege(request, privileges.DATA_CLEANUP)):
@@ -1501,7 +1501,7 @@ def edit_case_view(request, domain, case_id):
 
 
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 def rebuild_case_view(request, domain, case_id):
     case = get_case_or_404(domain, case_id)
@@ -1511,7 +1511,7 @@ def rebuild_case_view(request, domain, case_id):
 
 
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 def resave_case_view(request, domain, case_id):
     """Re-save the case to have it re-processed by pillows
@@ -1527,7 +1527,7 @@ def resave_case_view(request, domain, case_id):
 
 @location_safe
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 def close_case_view(request, domain, case_id):
     case = safely_get_case(request, domain, case_id)
@@ -1550,7 +1550,7 @@ def close_case_view(request, domain, case_id):
 
 @location_safe
 @require_case_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 def undo_close_case_view(request, domain, case_id, xform_id):
     case = safely_get_case(request, domain, case_id)
@@ -1973,7 +1973,7 @@ def download_form(request, domain, instance_id):
 class EditFormInstance(View):
 
     @method_decorator(require_form_view_permission)
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(require_permission(HqPermissions.edit_data))
     def dispatch(self, request, *args, **kwargs):
         return super(EditFormInstance, self).dispatch(request, args, kwargs)
 
@@ -2102,7 +2102,7 @@ class EditFormInstance(View):
 
 
 @require_form_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
 def restore_edit(request, domain, instance_id):
@@ -2120,7 +2120,7 @@ def restore_edit(request, domain, instance_id):
 
 
 @require_form_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
 def archive_form(request, domain, instance_id):
@@ -2215,7 +2215,7 @@ def _get_case_id_and_redirect_url(domain, request):
 
 
 @require_form_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @location_safe
 def unarchive_form(request, domain, instance_id):
     instance = safely_get_form(request, domain, instance_id)
@@ -2249,7 +2249,7 @@ def _get_data_cleaning_updates(request, old_properties):
 
 
 @require_form_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
 def edit_form(request, domain, instance_id):
@@ -2273,7 +2273,7 @@ def edit_form(request, domain, instance_id):
 
 
 @require_form_view_permission
-@require_permission(Permissions.edit_data)
+@require_permission(HqPermissions.edit_data)
 @require_POST
 @location_safe
 def resave_form_view(request, domain, instance_id):
@@ -2339,7 +2339,7 @@ def export_report(request, domain, export_hash, format):
             return HttpResponseNotFound(_("We don't support this format"))
 
 
-@require_permission(Permissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
+@require_permission(HqPermissions.view_report, 'corehq.apps.reports.standard.project_health.ProjectHealthDashboard')
 def project_health_user_details(request, domain, user_id):
     # todo: move to project_health.py? goes with project health dashboard.
     user = get_document_or_404(CommCareUser, domain, user_id)
@@ -2417,6 +2417,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     @property
     def column_names(self):
         return [
+            _("Title"),
             _("Server"),
             _("View URL"),
         ]
@@ -2437,6 +2438,7 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
     def _get_item_data(self, tableau_visualization):
         data = {
             'id': tableau_visualization.id,
+            'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
         }

@@ -3,8 +3,9 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/base_ace',  // ace editor for UCR filter
     'hqwebapp/js/components.ko',    // select toggle widget
-], function ($, _, ko, initialPageData) {
+], function ($, _, ko, initialPageData, baseAce) {
 
     var caseRuleCriteria = function (initial, constants) {
         'use strict';
@@ -41,6 +42,18 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 if (value.koTemplateId === 'custom-filter') {
                     result.push({
                         name: value.name() || '',
+                    });
+                }
+            });
+            return JSON.stringify(result);
+        });
+
+        self.ucrFilterDefinitions = ko.computed(function () {
+            var result = [];
+            $.each(self.criteria(), function (index, value) {
+                if (value.koTemplateId === 'ucr-filter') {
+                    result.push({
+                        configured_filter: value.configured_filter() || {},
                     });
                 }
             });
@@ -106,6 +119,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return false;
         };
 
+        self.enableAce = function (element) {
+            baseAce.initObservableJsonWidget($(element).siblings()[0]);
+        };
+
         self.disableCriteriaField = function () {
             if (initialPageData.get('read_only_mode')) {
                 $('.main-form :input').prop('disabled', true);
@@ -133,6 +150,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 }
             } else if (caseFilterId === 'custom-filter') {
                 self.criteria.push(customMatchDefinition(caseFilterId));
+            } else if (caseFilterId === 'ucr-filter') {
+                self.criteria.push(ucrFilterDefinition(caseFilterId));
             }
         };
 
@@ -183,6 +202,12 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             $.each(initial.custom_match_definitions, function (index, value) {
                 obj = customMatchDefinition('custom-filter');
                 obj.name(value.name);
+                self.criteria.push(obj);
+            });
+
+            $.each(initial.ucr_filter_definitions, function (index, value) {
+                obj = ucrFilterDefinition('ucr-filter');
+                obj.configured_filter(value.configured_filter);
                 self.criteria.push(obj);
             });
 
@@ -254,6 +279,16 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         var self = {};
         self.koTemplateId = koTemplateId;
 
+        // This model matches the Django model with the same name
+        return self;
+    };
+
+    var ucrFilterDefinition = function (koTemplateId) {
+        'use strict';
+        var self = {};
+        self.koTemplateId = koTemplateId;
+
+        self.configured_filter = ko.observable();
         // This model matches the Django model with the same name
         return self;
     };

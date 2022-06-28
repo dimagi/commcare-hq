@@ -94,7 +94,7 @@ hqDefine("users/js/mobile_workers",[
 
         // used by two-stage sms provisioning
         self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
-        
+
         self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
@@ -373,7 +373,7 @@ hqDefine("users/js/mobile_workers",[
 
             if (self.requiredPhoneMissing()) {
                 return gettext('Phone number is required when users confirm their own accounts by sms.');
-            } 
+            }
 
             if (self.phoneIsInvalid()) {
                 return gettext('Phone number should contain only digits 0-9.');

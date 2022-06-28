@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.core import mail
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import UserRole, Permissions, WebUser, CouchUser
+from corehq.apps.users.models import UserRole, HqPermissions, WebUser, CouchUser
 from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -28,7 +28,7 @@ class TestScheduledReports(TestCase):
 
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
-        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=HqPermissions(
             view_reports=True
         ))
         cls.user = cls.create_fresh_user(

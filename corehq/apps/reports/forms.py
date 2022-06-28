@@ -356,6 +356,7 @@ class TableauVisualizationForm(forms.ModelForm):
     class Meta:
         model = TableauVisualization
         fields = [
+            'title',
             'server',
             'view_url',
         ]
@@ -370,6 +371,7 @@ class TableauVisualizationForm(forms.ModelForm):
         helper = HQFormHelper()
         from corehq.apps.reports.views import TableauVisualizationListView
         helper.layout = crispy.Layout(
+            crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
 

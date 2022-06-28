@@ -1,9 +1,9 @@
-from corehq.apps.app_manager.models import Application
-from corehq.apps.userreports.specs import TypeProperty
-from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.util.quickcache import quickcache
 from dimagi.ext.jsonobject import JsonObject, StringProperty
 
+from corehq.apps.app_manager.models import Application
+from corehq.apps.userreports.decorators import ucr_context_cache
+from corehq.apps.userreports.specs import TypeProperty
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 STATUSES = {
     (1, 0): "Improved",
@@ -37,10 +37,10 @@ def get_yes_no(val):
         return 'N/A'
 
 
-@quickcache(['item', 'xmlns'])
-def get_two_last_forms(item, xmlns):
-    xforms_ids = CommCareCase.objects.get_case_xform_ids(item['_id'])
-    forms = XFormInstance.objects.get_forms(xforms_ids, item['domain'])
+@ucr_context_cache(vary_on=('domain', 'case_id', 'xmlns',))
+def get_two_last_forms(domain, case_id, xmlns, evaluation_context):
+    xforms_ids = CommCareCase.objects.get_case_xform_ids(case_id)
+    forms = XFormInstance.objects.get_forms(xforms_ids, domain)
     f_forms = [f for f in forms if f.xmlns == xmlns]
     s_forms = sorted(f_forms, key=lambda x: x.received_on)
 
@@ -64,7 +64,7 @@ class EQAExpressionSpec(JsonObject):
     xmlns = StringProperty()
 
     def __call__(self, item, evaluation_context=None):
-        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
+        curr_form, prev_form = get_two_last_forms(item['domain'], item['_id'], self.xmlns, evaluation_context)
 
         path_question = 'form/%s' % self.question_id
 
@@ -144,7 +144,7 @@ class EQAPercentExpression(JsonObject):
     xmlns = StringProperty()
 
     def __call__(self, item, evaluation_context=None):
-        curr_form, prev_form = get_two_last_forms(item, self.xmlns)
+        curr_form, prev_form = get_two_last_forms(item['domain'], item['_id'], self.xmlns, evaluation_context)
 
         path_question = 'form/%s' % self.question_id
 
