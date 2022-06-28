@@ -796,3 +796,23 @@ def get_case_sharing_groups_for_locations(locations, for_user_id=None):
             location_type__shares_cases=True, is_archived=False)
     for loc in descendants:
         yield loc.case_sharing_group_object(for_user_id)
+
+
+def get_domain_locations(domain):
+    return SQLLocation.active_objects.filter(domain=domain)
+
+
+def get_accessible_locations(domain, couch_user):
+    if couch_user is None:
+        return SQLLocation.objects.none()
+
+    if couch_user.is_domain_admin(domain):
+        return get_domain_locations(domain)
+
+    domain_membership = next((
+        dm for dm in couch_user.domain_memberships
+        if dm.domain == domain
+    ))
+    return SQLLocation.objects.get_locations_and_children(
+        domain_membership.assigned_location_ids
+    )
