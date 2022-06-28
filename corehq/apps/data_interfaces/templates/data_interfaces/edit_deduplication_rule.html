@@ -1,6 +1,7 @@
 {% extends 'hqwebapp/base_section.html' %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load crispy_forms_tags %}
 
 {% requirejs_main 'data_interfaces/js/case_dedupe_main' %}
 
@@ -79,6 +80,12 @@
           <input type="checkbox" data-bind="checked: includeClosed" name="include_closed" />
         </div>
       </fieldset>
+      <div id="caseFilters" {% if readonly %} disabled="disabled" {% endif %}>
+        <div id="caseFiltersForm">
+          {% include "data_interfaces/partials/case_rule_criteria.html" with form=criteria_form %}
+          {% crispy criteria_form %}
+        </div>
+      </div>
       <fieldset {% if readonly %} disabled="disabled" {% endif %}>
         <legend>{% trans "Actions" %}</legend>
         <div data-bind="template: {name: 'update-case-property-action', foreach: propertiesToUpdate, as: 'propertyToUpdate'} "></div>
@@ -144,6 +151,5 @@
       </div>
     </div>
   </script>
-
 
 {% endblock %}
