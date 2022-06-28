@@ -2229,6 +2229,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/forms/reports.py
@@ -11894,8 +11895,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
+#, fuzzy
+#| msgid "Form does not validate"
 msgid "{} is not a valid date"
-msgstr ""
+msgstr "Le formulaire ne valide pas"
 
 #: corehq/apps/case_search/xpath_functions/value_functions.py
 msgid ""
@@ -13622,6 +13625,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/views/incremental.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
@@ -20527,13 +20531,39 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr "Le classeur ne contient aucune feuille intitulée types"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid "type {lookup_table_name} is not defined as global"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
+"succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown group: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Groupe inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 "Emplacement inconnu: %(name)s. Toutefois, la rangéé a été ajoutée avec succès"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/workbook.py
+#, fuzzy, python-format
+#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
+"succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid ""
 "Multiple locations found with the name: '%(name)s'.  Try using site code. "
@@ -20541,60 +20571,6 @@ msgid ""
 msgstr ""
 "Multiples emplacements trouvés pour le nom:  '%(name)s'. Essayez d'utiliser "
 "le code site. Mais la rangée a été ajoutée avec succès."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
-msgstr ""
-"'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le nouveau "
-"type a été créé."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-"'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le nouvel "
-"élément a été créé."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown group: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Groupe inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec succès"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
-msgstr ""
-"Nom d'utilisateur non valide : '%(name)s'. La ligne n'a pas été ajoutée"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
-"succès"
 
 #: corehq/apps/fixtures/views.py
 #, python-format
@@ -21100,6 +21076,18 @@ msgstr ""
 "numéros de téléphone du dossier seront synchronisés."
 
 #: corehq/apps/hqadmin/forms.py
+#, fuzzy
+#| msgid "Please enter a valid email address."
+msgid "Email address '{}' is not a dimagi email address"
+msgstr "Veuillez entrer une adresse mail valide."
+
+#: corehq/apps/hqadmin/forms.py
+msgid ""
+"User with email address '{}' does not exist on this site, please have the "
+"user registered first"
+msgstr ""
+
+#: corehq/apps/hqadmin/forms.py
 msgid "Confirm the username"
 msgstr ""
 
@@ -21304,11 +21292,41 @@ msgstr "Démarrer"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid ""
-"\n"
-"          Please type comma-separated email addresses of users to grant/"
-"revoke superuser privileges.\n"
-"        "
+"Please type comma or new-line separated email addresses of users you want to "
+"offboard."
 msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"Please type comma or new-line separated email addresses of users to grant/"
+"revoke superuser privileges."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/apps/hqadmin/views/users.py
+msgid "All superusers and staff users"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Developer"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#, fuzzy
+#| msgid "SuperUser?"
+msgid "Superuser"
+msgstr "SuperUser ?"
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/reports.py
+msgid "Accounting Admin"
+msgstr "Administrateur de Compte"
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#, fuzzy
+#| msgid "Two Factor Authentication"
+msgid "Two Factor Enabled"
+msgstr "Authentification à deux facteurs "
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -21423,6 +21441,10 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Two-Factor Auth successfully disabled."
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "Get users to offboard"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
@@ -24063,8 +24085,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/linked_domain/ucr.py
+#, fuzzy
+#| msgid "This is not a valid sub-area for the area %s"
 msgid "{} is not a valid data source type!"
-msgstr ""
+msgstr "Cette sous-zone n'est pas valide pour la zone %s"
 
 #: corehq/apps/linked_domain/ucr.py corehq/apps/userreports/models.py
 msgid "The data source referenced by this report could not be found."
@@ -37525,12 +37549,16 @@ msgid "Copy and paste admin emails"
 msgstr "Copier et coller des messages électroniques d'admin"
 
 #: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username contains invalid characters."
 msgid "Username '{}' may not contain special characters."
-msgstr ""
+msgstr "Le nom d'utilisateur comporte des caractères no valides."
 
 #: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
 msgid "Username is required."
-msgstr ""
+msgstr "Le nom d'utilisateur {} est réservé."
 
 #: corehq/apps/users/util.py
 msgid "Username '{}' may not contain consecutive '.' (period)."
@@ -37545,12 +37573,16 @@ msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
 msgstr ""
 
 #: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is already taken"
 msgid "Username '{}' is already taken."
-msgstr ""
+msgstr "Le nom d'utilisateur {} existe déjà"
 
 #: corehq/apps/users/util.py
+#, fuzzy
+#| msgid "Username {} is reserved."
 msgid "Username '{}' is reserved."
-msgstr ""
+msgstr "Le nom d'utilisateur {} est réservé."
 
 #: corehq/apps/users/views/__init__.py
 #, python-format
@@ -41510,10 +41542,6 @@ msgid "Edit Data"
 msgstr "Modifier des données"
 
 #: corehq/reports.py
-msgid "Accounting Admin"
-msgstr "Administrateur de Compte"
-
-#: corehq/reports.py
 msgid "SMS Billing Administration"
 msgstr "Administration de la facturation des SMS"
 
@@ -41727,6 +41755,10 @@ msgstr ""
 #: corehq/tabs/tabclasses.py
 msgid "Grant superuser privileges"
 msgstr "Accorder des privilèges de super-utilisateur"
+
+#: corehq/tabs/tabclasses.py
+msgid "Get users for offboarding"
+msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Manage deleted domains"
@@ -42702,6 +42734,23 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#, python-format
+#~ msgid "'%(UID)s' is not a valid UID. But the new type is created."
+#~ msgstr ""
+#~ "'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le "
+#~ "nouveau type a été créé."
+
+#, python-format
+#~ msgid "'%(UID)s' is not a valid UID. But the new item is created."
+#~ msgstr ""
+#~ "'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le "
+#~ "nouvel élément a été créé."
+
+#, python-format
+#~ msgid "Invalid username: '%(name)s'. Row is not added"
+#~ msgstr ""
+#~ "Nom d'utilisateur non valide : '%(name)s'. La ligne n'a pas été ajoutée"
 
 #, fuzzy
 #~| msgid "Specify Workers at this Location"
