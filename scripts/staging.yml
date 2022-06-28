@@ -76,8 +76,6 @@ branches:
     - es/mobile-auth+sk/rename-permission-classes
     - es/mobile-auth  # Simon Nov 23
     # - ml/all-in-one-offboarding  # Minha April 13
-    - sk/rename-permission-classes
-    - cs/fix-case-owner-location-parent # Charl Jun 20
     - dm/lookup-table-uploader # Daniel Jun 20
 #    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
