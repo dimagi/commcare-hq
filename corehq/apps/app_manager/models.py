@@ -2152,6 +2152,11 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
+class CaseSearchValidationCondition(DocumentSchema):
+    xpath = StringProperty()
+    message = StringProperty(exclude_if_none=True)
+
+
 class Itemset(DocumentSchema):
     instance_id = StringProperty(exclude_if_none=True)
     instance_uri = StringProperty(exclude_if_none=True)
@@ -2177,6 +2182,7 @@ class CaseSearchProperty(DocumentSchema):
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
     required = StringProperty(exclude_if_none=True)
+    validation = SchemaListProperty(CaseSearchValidationCondition)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
