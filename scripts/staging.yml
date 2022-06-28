@@ -68,7 +68,6 @@ branches:
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
     #- ad/tableau-request-client-IP # Addison June 14
-    - rc/case-id-download-from-mult-domains # Robert June 15
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth+cs/SC-1945-ability-to-add-filter-to-rules # Jenny June 21
     - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
