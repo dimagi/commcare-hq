@@ -167,6 +167,7 @@ def _terminate_subscriptions(domain_name):
 def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
+    case_ids += CommCareCase.objects.get_deleted_case_ids_in_domain(domain_name)
     for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
         CommCareCase.objects.hard_delete_cases(domain_name, list(case_id_chunk))
     logger.info('Deleting cases complete.')
@@ -178,6 +179,7 @@ def delete_all_forms(domain_name):
         XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
         for doc_type in doc_type_to_state
     ]))
+    form_ids += XFormInstance.objects.get_deleted_form_ids_in_domain(domain_name)
     for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
         XFormInstance.objects.hard_delete_forms(domain_name, list(form_id_chunk))
     logger.info('Deleting forms complete.')
