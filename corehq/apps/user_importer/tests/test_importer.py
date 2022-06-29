@@ -1489,7 +1489,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+        self.assertEqual(rows[0]['flag'], 'Password should have at least 8 characters.')
 
 
 class TestUserUploadRecord(TestCase):
