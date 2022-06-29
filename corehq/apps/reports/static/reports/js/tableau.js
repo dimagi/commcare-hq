@@ -31,7 +31,7 @@ hqDefine("reports/js/tableau", function () {
                     "the server configuration is correct and try again.");
                 errorMessage.style.display = "block";
                 errorMessage.innerHTML = requestErrorMessage;
-            }
+            },
         });
     };
 
