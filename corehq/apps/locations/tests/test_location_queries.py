@@ -1,9 +1,14 @@
 import pickle
+from contextlib import contextmanager
 
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 
-from ..models import SQLLocation
+from ..models import (
+    SQLLocation,
+    get_accessible_locations,
+    get_domain_locations,
+)
 from .util import LocationHierarchyTestCase
 
 
@@ -72,6 +77,19 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
 
         california = SQLLocation.objects.get(name="California")
         self.assertFalse(california.descendants_include_location(boston.location_id))
+
+    def test_get_domain_locations(self):
+        locations = get_domain_locations(self.domain)
+        names = {loc.name for loc in locations}
+        self.assertIn('Massachusetts', names)
+        self.assertIn('California', names)
+
+    def test_get_domain_locations_archived(self):
+        with california_secedes():
+            locations = get_domain_locations(self.domain)
+            names = {loc.name for loc in locations}
+            self.assertIn('Massachusetts', names)
+            self.assertNotIn('California', names)
 
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
@@ -152,6 +170,19 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         )
         self.assertItemsEqual([], no_locs)
 
+    def test_get_accessible_locations(self):
+        locations = get_accessible_locations(self.domain, self.web_user)
+        names = [loc.name for loc in locations]
+        self.assertIn('Middlesex', names)
+        self.assertNotIn('California', names)
+
+    def test_get_accessible_locations_admin(self):
+        with as_superuser(self.web_user):
+            locations = get_accessible_locations(self.domain, self.web_user)
+            names = [loc.name for loc in locations]
+            self.assertIn('Middlesex', names)
+            self.assertIn('California', names)
+
 
 class TestFilterByUserInput(LocationHierarchyTestCase):
     location_type_names = ['state', 'county', 'city']
@@ -199,3 +230,22 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
                           .values_list('name', flat=True))
             error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
             self.assertItemsEqual(actual, expected, error_msg)
+
+
+@contextmanager
+def california_secedes():
+    california = SQLLocation.objects.get(name="California")
+    california.archive()
+    try:
+        yield
+    finally:
+        california.unarchive()
+
+
+@contextmanager
+def as_superuser(user):
+    user.is_superuser = True
+    try:
+        yield
+    finally:
+        user.is_superuser = False
