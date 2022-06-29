@@ -260,10 +260,14 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
+            var broadcastObj = Utils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
+            question.answer(JSON.stringify(broadcastObj));
+            if (!question.answer()) {
+                question.answer("");
+            }
             // The default full address returned to the search bar
             return item.place_name;
         };
