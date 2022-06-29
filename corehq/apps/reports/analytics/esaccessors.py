@@ -320,7 +320,6 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
         FormES()
         .domain(domain)
         .filter(date_filter_fn(gte=startdate, lte=enddate))
-        .app(app_ids)
         .xmlns(xmlnss)
         .size(5000)
     )
@@ -329,6 +328,9 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
         query = (query
             .user_ids_handle_unknown(user_ids)
             .remove_default_filter('has_user'))
+
+    if app_ids:
+        query = query.app(app_ids)
 
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
