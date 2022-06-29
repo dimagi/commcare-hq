@@ -15185,10 +15185,8 @@ msgid "Add case type"
 msgstr "Agregar tipo de caso"
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
-#, fuzzy
-#| msgid "Web Apps Permissions"
 msgid "Synchronous Web Apps Submissions"
-msgstr "Permisos de Aplicaciones Web"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid ""
@@ -26220,10 +26218,9 @@ msgid "Reset Password on CommCare HQ"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, fuzzy, python-format
-#| msgid "Hello,"
+#, python-format
 msgid "Hello %(name)s,"
-msgstr "Hola,"
+msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
