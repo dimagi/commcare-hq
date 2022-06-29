@@ -20658,13 +20658,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr "El cuaderno de trabajo no contiene una hoja llamada tipos"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid "type {lookup_table_name} is not defined as global"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown group: '%(name)s'. But the row is successfully added"
+msgstr "Grupo desconocido: '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 "Ubicación desconocida: '%(name)s'. Pero la fila fue agregada exitosamente"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/workbook.py
+#, fuzzy, python-format
+#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid ""
 "Multiple locations found with the name: '%(name)s'.  Try using site code. "
@@ -20672,53 +20695,6 @@ msgid ""
 msgstr ""
 "Se encontraron múltiples ubicaciones con el nombre '%(name)s'. Intente "
 "utilizar el código del sitio. Pero la fila fue agregada exitosamente."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
-msgstr "'%(UID)s' no es un UID válido. Pero el nuevo tipo está creado."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr "'%(UID)s' no es un UID válido. Pero el nuevo elemento está creado."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown group: '%(name)s'. But the row is successfully added"
-msgstr "Grupo desconocido: '%(name)s'. Pero la fila fue agregada exitosamente"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
-msgstr "Nombre de usuario inválido:  '%(name)s'. La fila no esta agregada"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
 
 #: corehq/apps/fixtures/views.py
 #, python-format
@@ -42830,6 +42806,18 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#, python-format
+#~ msgid "'%(UID)s' is not a valid UID. But the new type is created."
+#~ msgstr "'%(UID)s' no es un UID válido. Pero el nuevo tipo está creado."
+
+#, python-format
+#~ msgid "'%(UID)s' is not a valid UID. But the new item is created."
+#~ msgstr "'%(UID)s' no es un UID válido. Pero el nuevo elemento está creado."
+
+#, python-format
+#~ msgid "Invalid username: '%(name)s'. Row is not added"
+#~ msgstr "Nombre de usuario inválido:  '%(name)s'. La fila no esta agregada"
 
 #, fuzzy
 #~| msgid "Specify Workers at this Location"
