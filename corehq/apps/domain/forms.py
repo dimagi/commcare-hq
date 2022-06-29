@@ -102,6 +102,7 @@ from corehq.apps.domain.models import (
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     Domain,
+    OperatorCallLimitSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
     AllowedUCRExpressionSettings
@@ -117,7 +118,6 @@ from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
     SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-from custom.samveg.const import SAMVEG_DOMAINS
 
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
@@ -401,8 +401,6 @@ class DomainGlobalSettingsForm(forms.Form):
     operator_call_limit = IntegerField(
         label=gettext_lazy("Call limit"),
         required=True,
-        min_value=1,
-        max_value=1000,
         help_text=gettext_lazy(
             """
             Limit on number of calls allowed to an operator for each call type.
@@ -457,12 +455,16 @@ class DomainGlobalSettingsForm(forms.Form):
                 self.domain
             ).confirmation_link_expiry_time
 
-        if self.domain not in SAMVEG_DOMAINS:
+        self._handle_call_limit_visibility()
+
+    def _handle_call_limit_visibility(self):
+        if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
             del self.fields['operator_call_limit']
-        else:
-            self.fields['operator_call_limit'].initial = Domain.get_by_name(
-                self.domain
-            ).operator_call_limit
+            return
+        existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
+        self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
+        self.fields['operator_call_limit'].min_value = OperatorCallLimitSettings.CALL_LIMIT_MINIMUM
+        self.fields['operator_call_limit'].max_value = OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
@@ -563,7 +565,10 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
         domain.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
-        domain.operator_call_limit = self.cleaned_data.get("operator_call_limit")
+        if self.cleaned_data.get("operator_call_limit"):
+            setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
+            setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")
+            setting_obj.save()
         try:
             self._save_logo_configuration(domain)
         except IOError as err:

@@ -5,7 +5,7 @@ from collections import Counter, defaultdict
 from django.utils.translation import gettext as _
 
 from corehq.apps.case_importer.util import EXTERNAL_ID
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import OperatorCallLimitSettings
 from corehq.util.dates import get_previous_month_date_range, iso_string_to_date
 from custom.samveg.case_importer.exceptions import (
     CallNotInLastMonthError,
@@ -186,8 +186,8 @@ class UploadLimitValidator(BaseRowOperation):
         return fields_to_update, error_messages
 
     @classmethod
-    def _upload_limit_reached(cls, import_context, owner_name, call_number, domain_name):
-        row_limit = Domain.get_by_name(domain_name).operator_call_limit
+    def _upload_limit_reached(cls, import_context, owner_name, call_number, domain):
+        row_limit = OperatorCallLimitSettings.objects.get_or_create(domain=domain).call_limit
         return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= row_limit
 
     @classmethod

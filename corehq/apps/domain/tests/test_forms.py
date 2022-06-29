@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
 
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
@@ -108,7 +108,7 @@ class TestDomainGlobalSettingsForm(TestCase):
             form.full_clean()
             form.save(Mock(), domain)
             self.assertTrue('operator_call_limit' in form.fields)
-            self.assertEqual(120, domain.operator_call_limit)
+            self.assertEqual(120, OperatorCallLimitSettings.get(domain="test-samveg-quick").operator_call_limit)
         finally:
             domain.delete()
 
@@ -130,6 +130,8 @@ class TestDomainGlobalSettingsForm(TestCase):
         try:
             form = self.create_form(domain=domain, operator_call_limit="12a")
             form.full_clean()
+            form.save(Mock(), domain)
+            self.assertTrue('operator_call_limit' in form.fields)
             self.assertIsNotNone(form.errors)
             self.assertEqual(1, len(form.errors))
             self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
