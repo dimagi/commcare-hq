@@ -504,7 +504,7 @@ class Assertion(XmlObject):
 class Validation(XmlObject):
     ROOT_NAME = 'validation'
     xpath = XPathField('@xpath')
-    message = StringField('@message', required=False)
+    text = NodeField('text', Text)
 
 
 class QueryPrompt(DisplayNode):

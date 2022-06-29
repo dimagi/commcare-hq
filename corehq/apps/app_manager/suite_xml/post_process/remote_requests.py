@@ -279,7 +279,7 @@ class RemoteRequestFactory(object):
                 kwargs['validation'] = [
                     Validation(
                         xpath=condition.xpath,
-                        message=condition.message,
+                        text=Text(locale_id=id_strings.search_property_validation_msg(self.module, prop.name)),
                     )
                     for condition in prop.validation
                 ]

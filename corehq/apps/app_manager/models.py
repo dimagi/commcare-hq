@@ -2154,7 +2154,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 class CaseSearchValidationCondition(DocumentSchema):
     xpath = StringProperty()
-    message = StringProperty(exclude_if_none=True)
+    message = DictProperty()  # eg: {'en': 'bad format'})
 
 
 class Itemset(DocumentSchema):

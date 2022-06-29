@@ -866,7 +866,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             CaseSearchProperty(name='email', label={'en': 'Email'}, validation=[
                 CaseSearchValidationCondition(
                     xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')",
-                    message="Please enter a valid email address",
+                    message={"en": "Please enter a valid email address",
+                             "it": "Si prega di inserire un indirizzo email valido"},
                 )
             ]),
         ]
@@ -879,7 +880,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <validation xpath="2 + 2 = 5"/>
+            <validation xpath="2 + 2 = 5">
+              <text>
+                <locale id="search_property.m0.name.validation_msg"/>
+              </text>
+            </validation>
           </prompt>
           <prompt key="email">
             <display>
@@ -887,10 +892,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.email"/>
               </text>
             </display>
-            <validation
-                xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')"
-                message="Please enter a valid email address"
-            />
+            <validation xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')">
+              <text>
+                <locale id="search_property.m0.email.validation_msg"/>
+              </text>
+            </validation>
           </prompt>
         </partial>
         """

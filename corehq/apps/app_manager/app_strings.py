@@ -185,6 +185,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
                 yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
+                yield id_strings.search_property_validation_msg(module, prop.name), trans(prop.hint)
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
