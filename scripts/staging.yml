@@ -78,6 +78,5 @@ branches:
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - rc/hidden-question-geocoder-values # Robert June 27
-    - dm/lookup-table-uploader # Daniel June 29
     - jc/minimum-pwd-length # Jing June 29
 submodules: { }
