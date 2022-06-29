@@ -44,7 +44,10 @@ from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain,
 )
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import (
+    SQLLocation,
+    get_accessible_locations,
+)
 
 
 def true_or_false(value):
@@ -464,20 +467,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
     def user_locations(self):
-        if self.couch_user is None:
-            return []
-
-        if self.couch_user.is_domain_admin(self.domain):
-            user_locations = SQLLocation.active_objects.filter(domain=self.domain)
-        else:
-            domain_membership = next(
-                (membership
-                 for membership in self.couch_user.domain_memberships
-                 if membership.domain == self.domain)
-            )
-            user_locations = (SQLLocation.objects.
-                get_locations_and_children(domain_membership.assigned_location_ids))
-
+        user_locations = get_accessible_locations(self.domain, self.couch_user)
         return [
             {'location_id': location.location_id, 'name': location.name}
             for location in user_locations
