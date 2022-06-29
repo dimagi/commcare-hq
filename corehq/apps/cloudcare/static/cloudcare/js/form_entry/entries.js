@@ -42,6 +42,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // Checkbox questions in a Question List Group.
     Entry.prototype.getColStyle = function (numChoices) {
         var colWidth = parseInt(12 / (numChoices + 1)) || 1;
+        colWidth = colWidth >= 3 ? colWidth : 3;
         return 'col-xs-' + colWidth;
     };
 
