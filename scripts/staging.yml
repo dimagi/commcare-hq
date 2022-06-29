@@ -69,7 +69,6 @@ branches:
     - ml/dhis2-better-errors # Minha June 9
     #- ad/tableau-request-client-IP # Addison June 14
     - bmb/sso/api/test-001  # Biyeun June 15
-    - es/mobile-auth  # Simon Nov 23
     # - ml/all-in-one-offboarding  # Minha April 13
 #    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
