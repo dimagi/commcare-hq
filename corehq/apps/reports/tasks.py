@@ -303,7 +303,6 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                 form = form_info['form']
                 for attachment in form_info['attachments']:
                     if attachment['id'] in unique_attachment_ids:
-                        DownloadBase.set_progress(build_form_multimedia_zip, form_number, num_forms)
                         continue
                     else:
                         unique_attachment_ids.append(attachment['id'])

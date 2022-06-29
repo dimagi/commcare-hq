@@ -587,8 +587,8 @@ def media_export_is_too_big(es_query):
     unique_attachments = []
     for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
-            attachment_id = attachment.get('id', 0)
-            if attachment_id not in unique_attachments:
+            attachment_id = attachment.get('id', None)
+            if attachment_id is not None and attachment_id not in unique_attachments:
                 size += attachment.get('content_length', 0)
                 unique_attachments.append(attachment_id)
             if size > MAX_MULTIMEDIA_EXPORT_SIZE:
