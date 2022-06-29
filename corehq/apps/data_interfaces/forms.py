@@ -8,21 +8,12 @@ from django.db import transaction
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
-from corehq.apps.hqwebapp.widgets import SelectToggle
 
 from couchdbkit import ResourceNotFound
-from crispy_forms.bootstrap import (
-    FieldWithButtons,
-    InlineField,
-    StrictButton,
-)
+from crispy_forms.bootstrap import FieldWithButtons, InlineField, StrictButton
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
-from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.specs import FactoryContext
-from corehq.toggles import CASE_UPDATES_UCR_FILTERS
 
 from dimagi.utils.django.fields import TrimmedCharField
 
@@ -34,20 +25,19 @@ from corehq.apps.data_interfaces.models import (
     ClosedParentDefinition,
     CustomActionDefinition,
     CustomMatchDefinition,
+    LocationFilterDefinition,
     MatchPropertyDefinition,
     UCRFilterDefinition,
     UpdateCaseDefinition,
-    LocationFilterDefinition,
 )
-from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
-from corehq.apps.reports.analytics.esaccessors import (
-    get_case_types_for_domain,
-)
-from corehq.apps.locations.models import (
-    SQLLocation,
-    get_accessible_locations,
-)
+from corehq.apps.hqwebapp.widgets import SelectToggle
+from corehq.apps.locations.models import SQLLocation, get_accessible_locations
+from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.specs import FactoryContext
+from corehq.toggles import CASE_UPDATES_UCR_FILTERS
 
 
 def true_or_false(value):
