@@ -6,7 +6,7 @@ hqDefine("reports/js/tableau", function () {
     self.requestViz = function () {
         $.ajax({
             method: 'post',
-            url: initialPageData.reverse('tableau_visualisation_ajax'),
+            url: initialPageData.reverse('tableau_visualization_ajax'),
             data: {
                 validate_hostname: initialPageData.get("validate_hostname"),
                 server_name: initialPageData.get("server_address"),
@@ -23,14 +23,15 @@ hqDefine("reports/js/tableau", function () {
                     document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
                 }
             },
-        }).fail(function () {
-            var loadingDiv = document.getElementById("loadingDiv");
-            loadingDiv.style.display = "none";
-            var errorMessage = document.getElementById("errorMessage");
-            var requestErrorMessage = gettext("An error occured with the tableau server request, please ensure " +
-                "the server configuration is correct and try again.");
-            errorMessage.style.display = "block";
-            errorMessage.innerHTML = requestErrorMessage;
+            error: function () {
+                var loadingDiv = document.getElementById("loadingDiv");
+                loadingDiv.style.display = "none";
+                var errorMessage = document.getElementById("errorMessage");
+                var requestErrorMessage = gettext("An error occured with the tableau server request, please ensure " +
+                    "the server configuration is correct and try again.");
+                errorMessage.style.display = "block";
+                errorMessage.innerHTML = requestErrorMessage;
+            }
         });
     };
 
