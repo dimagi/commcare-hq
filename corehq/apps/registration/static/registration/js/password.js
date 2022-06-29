@@ -46,7 +46,7 @@ hqDefine('registration/js/password', [
             self.isSuggestedPassword(false);
         });
         self.color = ko.computed(function () {
-            if (self.length() < self.minimumPasswordLength || self.strength()<self.minimumZxcvbnScore - 1) {
+            if (self.length() < self.minimumPasswordLength || self.strength() < self.minimumZxcvbnScore - 1) {
                 return "text-error text-danger";
             } else if (self.strength() < self.minimumZxcvbnScore || self.isSuggestedPassword()) {
                 return "text-warning";
