@@ -105,7 +105,7 @@ class DownloadBase(object):
         headers and causes the download to fail.
         """
         if isinstance(content_disposition, str):
-            return re.compile('[\r\n]').sub('', content_disposition)
+            return re.sub(r'[\t\n\v\f\r]', '', content_disposition)
 
         return content_disposition
 

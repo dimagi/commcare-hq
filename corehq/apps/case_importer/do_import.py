@@ -150,8 +150,8 @@ class _Importer(object):
             else:
                 caseblock = row.get_update_caseblock()
                 self.results.add_updated(row_num)
-        except CaseBlockError:
-            raise exceptions.CaseGeneration()
+        except CaseBlockError as e:
+            raise exceptions.CaseGeneration(message=str(e))
 
         self.add_caseblock(RowAndCase(row_num, caseblock))
 

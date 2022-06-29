@@ -58,13 +58,13 @@ class TestDataSourceExpressions(SimpleTestCase):
         if column['type'] == 'boolean':
             return FilterFactory.from_spec(
                 column['filter'],
-                context=FactoryContext(self.named_expressions, {})
+                FactoryContext(self.named_expressions, {})
             )
         else:
             self.assertEqual(column['datatype'], column_type)
             return ExpressionFactory.from_spec(
                 column['expression'],
-                context=FactoryContext(self.named_expressions, {})
+                FactoryContext(self.named_expressions, {})
             )
 
     @classmethod

@@ -3255,6 +3255,12 @@ msgstr "Ingrese Pago"
 msgid "Submit Invoice Request"
 msgstr "Ingrese Solicitud de Factura"
 
+#: corehq/apps/domain/static/domain/js/case_search.js
+#, fuzzy
+#| msgid "You have unchanged case settings"
+msgid "You have unchanged settings"
+msgstr "Tiene configuraciones de caso sin cambio"
+
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr "Comprar Créditos"
@@ -3975,10 +3981,8 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
-#, fuzzy
-#| msgid "Time"
 msgid "From Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
@@ -4330,6 +4334,10 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+msgid "Expression saved"
+msgstr ""
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4391,6 +4399,14 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."

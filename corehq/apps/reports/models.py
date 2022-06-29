@@ -225,6 +225,7 @@ class TableauServer(models.Model):
 
 
 class TableauVisualization(models.Model):
+    title = models.CharField(max_length=32, null=True)
     domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
