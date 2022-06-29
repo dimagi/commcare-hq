@@ -944,18 +944,11 @@ def get_form_datums(request, domain, app_id):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
-    datums = []
-    root_module = form.get_module().root_module
-    if root_module:
-        datums.extend([
-            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
-            if datum.requires_selection
-        ])
-    datums.extend([
+    datums = [
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
-    ])
-    return json_response(datums)
+    ]
+    return JsonResponse(datums)
 
 
 @require_GET

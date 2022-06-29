@@ -639,7 +639,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "type": "identity",
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -655,7 +655,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "three"
                 }
             },
-            context=FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
+            FactoryContext({'three': ExpressionFactory.from_spec(3)}, {})
         )
         self.assertEqual(3, expression({}))
 
@@ -685,7 +685,7 @@ class NestedExpressionTest(SimpleTestCase):
         evaluation_context = EvaluationContext(doc)
         factory_context = FactoryContext({
             'test_named_expression': ExpressionFactory.from_spec(named_expression)
-        }, evaluation_context)
+        }, {})
 
         expression1 = ExpressionFactory.from_spec(
             {
@@ -706,7 +706,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         expression2 = ExpressionFactory.from_spec(
             {
@@ -727,7 +727,7 @@ class NestedExpressionTest(SimpleTestCase):
                     "name": "test_named_expression"
                 }
             },
-            context=factory_context
+            factory_context
         )
         self.assertEqual(expression1(doc, evaluation_context), 'my_parent_id')
         self.assertEqual(expression2(doc, evaluation_context), 'my_parent_id2')
@@ -830,7 +830,7 @@ class RootDocExpressionTest(SimpleTestCase):
             None,
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({}, 0)
+                EvaluationContext({}, 0)
             )
         )
 
@@ -839,7 +839,7 @@ class RootDocExpressionTest(SimpleTestCase):
             "base_value",
             self.expression(
                 {"base_property": "item_value"},
-                context=EvaluationContext({"base_property": "base_value"}, 0)
+                EvaluationContext({"base_property": "base_value"}, 0)
             )
         )
 
@@ -1457,7 +1457,7 @@ class TestEvaluationContext(SimpleTestCase):
         counter = MagicMock()
 
         @ucr_context_cache(vary_on=('arg1', 'arg2',))
-        def fn_that_should_be_cached(arg1, arg2, context):
+        def fn_that_should_be_cached(arg1, arg2, evaluation_context):
             counter()
 
         context = EvaluationContext({})
@@ -1473,7 +1473,7 @@ class TestEvaluationContext(SimpleTestCase):
 
         class MyObject(object):
             @ucr_context_cache(vary_on=('arg1', 'arg2',))
-            def method_that_should_be_cached(self, arg1, arg2, context):
+            def method_that_should_be_cached(self, arg1, arg2, evaluation_context):
                 counter()
 
         context = EvaluationContext({})
@@ -1489,11 +1489,11 @@ class TestEvaluationContext(SimpleTestCase):
         counter = MagicMock()
 
         @ucr_context_cache(vary_on=('arg1',))
-        def fn_that_should_be_cached(arg1, context):
+        def fn_that_should_be_cached(arg1, evaluation_context):
             counter()
 
         @ucr_context_cache(vary_on=('arg1',))
-        def another_fn_that_should_be_cached(arg1, context):
+        def another_fn_that_should_be_cached(arg1, evaluation_context):
             counter()
 
         context = EvaluationContext({})

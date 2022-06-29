@@ -1209,8 +1209,8 @@ class FormBase(DocumentSchema):
     def timing_context(self):
         return self.get_app().timing_context
 
-    def validate_for_build(self, validate_module=True):
-        return self.validator.validate_for_build(validate_module)
+    def validate_for_build(self):
+        return self.validator.validate_for_build()
 
     def get_unique_id(self):
         """

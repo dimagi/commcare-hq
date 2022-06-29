@@ -3111,6 +3111,10 @@ msgstr ""
 msgid "Submit Invoice Request"
 msgstr ""
 
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr ""
+
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr ""
@@ -4132,6 +4136,10 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+msgid "Expression saved"
+msgstr ""
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4190,6 +4198,14 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js

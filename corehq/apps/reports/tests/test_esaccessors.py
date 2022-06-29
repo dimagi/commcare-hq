@@ -166,6 +166,33 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
         self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
 
+    def test_get_forms_with_empty_appid(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = 'randmoappid'
+        user_id = 'abcd'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[],
+            xmlnss=xmlns,
+        )
+        self.assertEqual(paged_result.total, 1)
+        self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
+        self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
     def test_get_form_ids_having_multimedia(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)

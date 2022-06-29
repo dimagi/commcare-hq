@@ -9,7 +9,6 @@ from django.core.exceptions import ValidationError
 from django.utils import html
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -21,11 +20,6 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.users.exceptions import (
-    InvalidUsernameException,
-    UsernameAlreadyExists,
-    ReservedUsernameException,
-)
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -55,33 +49,28 @@ def generate_mobile_username(username, domain):
     Returns the email formatted mobile username if successfully generated
     Handles exceptions raised by .validation.validate_mobile_username with user facing messages
     Any additional validation should live in .validation.validate_mobile_username
-    :param username: required str, expecting the first part of a mobile username
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: required str, domain name
     :return: str, email formatted mobile username
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """
     from .validation import validate_mobile_username
-    error = None
-    try:
-        return validate_mobile_username(username, domain)
-    except InvalidUsernameException:
-        error = _("Username '{}' may not contain special characters.").format(username)
-        if not username:
-            error = _("Username is required.")
-        elif '..' in username:
-            error = _("Username '{}' may not contain consecutive '.' (period).").format(username)
-        elif username.endswith('.'):
-            error = _("Username '{}' may not end with a '.' (period).").format(username)
-    except UsernameAlreadyExists as e:
-        if e.is_deleted:
-            error = _("Username '{}' belonged to a user that was deleted and cannot be reused.").format(username)
-        else:
-            error = _("Username '{}' is already taken.").format(username)
-    except ReservedUsernameException:
-        error = _("Username '{}' is reserved.").format(username)
-    finally:
-        if error:
-            raise ValidationError(error)
+    username = get_complete_mobile_username(username, domain)
+    validate_mobile_username(username, domain)
+    return username
+
+
+def get_complete_mobile_username(username, domain):
+    """
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: domain associated with the mobile user
+    :return: the complete username ('example-user@domain.commcarehq.org')
+    """
+    # this method is not responsible for validation, and therefore does the most basic email format check
+    if '@' not in username:
+        username = format_username(username, domain)
+
+    return username
 
 
 def cc_user_domain(domain):
@@ -496,3 +485,23 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
 
 def is_dimagi_email(email):
     return email.endswith('@dimagi.com')
+
+
+def is_username_available(username):
+    """
+    Checks if the username is available to use
+    :param username: expects complete/email formatted username (e.g., user@example.commcarehq.org)
+    :return: boolean
+    """
+    from corehq.apps.users.dbaccessors import user_exists
+
+    local_username = username
+    if '@' in local_username:
+        # assume email format since '@' is an invalid character for usernames
+        local_username = username.split('@')[0]
+    reserved_usernames = ['admin', 'demo_user']
+    if local_username in reserved_usernames:
+        return False
+
+    exists = user_exists(username)
+    return not exists.exists
