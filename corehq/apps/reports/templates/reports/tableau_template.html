@@ -13,7 +13,7 @@
 {% initial_page_data "target_site" target_site %}
 {% initial_page_data "domain_username" domain_username %}
 {% initial_page_data "view_url" view_url %}
-{% registerurl 'tableau_visualisation_ajax' request.domain %}
+{% registerurl 'tableau_visualization_ajax' request.domain %}
 
 <script src="https://{{ validate_hostname }}/javascripts/api/tableau-2.5.0.min.js"></script>
 <script src="{% static 'reports/js/tableau.js' %}"></script>
