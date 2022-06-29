@@ -11,9 +11,8 @@
  *  When creating a new user, validation for their password depends on a few settings.
  *  - By default, passwords are not validated.
  *  - If the project requires strong mobile passwords (Project Settings > Privacy and Security), the
- *    password has to meet a minimum strength requirement, based on the zxcvbn strength algorithm.
- *  - If strong mobile passwords are on AND the server setting ENABLE_DRACONIAN_SECURITY_FEATURES is on, the
- *    password instead has to meet a specific set of requirements (8+ chars, at least one special character, etc.).
+ *    password has to meet a minimum strength requirement, based on the zxcvbn strength algorithm,
+ *    as well as a minimum length requirment (8+ chars).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  *  - Independently of password validation, if the server setting OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE is on,
  *    passwords are encrypted before the new user is sent to the server for creation.
