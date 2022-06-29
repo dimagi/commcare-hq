@@ -10,6 +10,7 @@ import requests
 
 from corehq import toggles
 from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
 
 
@@ -68,8 +69,9 @@ class TableauView(BaseDomainView):
         return super().get(request, *args, **kwargs)
 
 
+@login_required
 @require_POST
-def tableau_visualisation_ajax(request, domain):
+def tableau_visualization_ajax(request, domain):
     from requests_toolbelt.adapters import host_header_ssl
     visualiation_data = {data: value[0] for data, value in dict(request.POST).items()}
     server_name = visualiation_data.pop('server_name')
