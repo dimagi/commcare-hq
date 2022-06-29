@@ -1,4 +1,3 @@
-import itertools
 import logging
 from datetime import date
 
@@ -10,7 +9,6 @@ from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
-from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -20,10 +18,8 @@ from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-from corehq.util.log import with_progress_bar
+from corehq.sql_db.util import get_db_aliases_for_partitioned_query, paginate_query_across_partitioned_databases
 from dimagi.utils.chunked import chunked
 from settings import HQ_ACCOUNT_ROOT
 
@@ -166,23 +162,31 @@ def _terminate_subscriptions(domain_name):
 
 def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
-    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
-    case_ids += CommCareCase.objects.get_deleted_case_ids_in_domain(domain_name)
-    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
-        CommCareCase.objects.hard_delete_cases(domain_name, list(case_id_chunk))
+    case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
+    for chunk in chunked(case_ids, 1000, list):
+        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
     logger.info('Deleting cases complete.')
 
 
 def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
-    form_ids = list(itertools.chain(*[
-        XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
-        for doc_type in doc_type_to_state
-    ]))
-    form_ids += XFormInstance.objects.get_deleted_form_ids_in_domain(domain_name)
-    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        XFormInstance.objects.hard_delete_forms(domain_name, list(form_id_chunk))
+    form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
+    for chunk in chunked(form_ids, 1000, list):
+        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
     logger.info('Deleting forms complete.')
+
+
+def iter_ids(model_class, field, domain, chunk_size=1000):
+    where = Q(domain=domain)
+    rows = paginate_query_across_partitioned_databases(
+        model_class,
+        where,
+        values=[field],
+        load_source='delete_domain',
+        query_size=chunk_size,
+    )
+    for r in rows:
+        yield r[0]
 
 
 def _delete_data_files(domain_name):
