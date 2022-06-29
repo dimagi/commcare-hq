@@ -20552,13 +20552,39 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr "Le classeur ne contient aucune feuille intitulée types"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid "type {lookup_table_name} is not defined as global"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
+"succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown group: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Groupe inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 "Emplacement inconnu: %(name)s. Toutefois, la rangéé a été ajoutée avec succès"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/workbook.py
+#, fuzzy, python-format
+#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
+"succès"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid ""
 "Multiple locations found with the name: '%(name)s'.  Try using site code. "
@@ -20566,60 +20592,6 @@ msgid ""
 msgstr ""
 "Multiples emplacements trouvés pour le nom:  '%(name)s'. Essayez d'utiliser "
 "le code site. Mais la rangée a été ajoutée avec succès."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
-msgstr ""
-"'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le nouveau "
-"type a été créé."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-"'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le nouvel "
-"élément a été créé."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown group: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Groupe inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec succès"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
-msgstr ""
-"Nom d'utilisateur non valide : '%(name)s'. La ligne n'a pas été ajoutée"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
-"succès"
 
 #: corehq/apps/fixtures/views.py
 #, python-format
