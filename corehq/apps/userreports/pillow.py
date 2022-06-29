@@ -277,9 +277,10 @@ class ConfigurableReportTableManager(UcrTableManager):
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
         filtered_data_sources = self.get_filtered_configs(new_data_sources)
+        invalid_data_sources = (ds._id for ds in new_data_sources) - (ds._id for ds in filtered_data_sources)
         self._add_data_sources_to_table_adapters(filtered_data_sources)
 
-    def _add_data_sources_to_table_adapters(self, new_data_sources):
+    def _add_data_sources_to_table_adapters(self, new_data_sources, invalid_data_sources):
         for new_data_source in new_data_sources:
             pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
             domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
@@ -291,6 +292,12 @@ class ConfigurableReportTableManager(UcrTableManager):
             domain_adapters.append(_get_indicator_adapter_for_pillow(new_data_source))
             # update dictionary
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
+        for data_source in invalid_data_sources:
+            new_adapters = [
+                adapter for adapter in self.table_adapters_by_domain[data_source.domain]
+                if adapter._id != data_source._id
+            ]
+            self.table_adapters_by_domain[data_source.domain] = new_adapters
 
 
 class RegistryDataSourceTableManager(UcrTableManager):
