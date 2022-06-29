@@ -13321,6 +13321,23 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr "Por favor especifique por lo menos una acción."
 
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid ""
+#| "The Actions will be performed for all open cases that match all filter "
+#| "criteria below."
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+"Las Acciones se realizarán para todos los casos abiertos que coinciden con "
+"todos los criterios de filtros que se especifican abajo."
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "Case Filters"
+msgid "Cases Filter"
+msgstr "Filtros de Caso"
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr "Reasignar Casos"
@@ -13939,6 +13956,21 @@ msgid "Date case property (advanced)"
 msgstr "Fecha propiedad de caso (avanzado)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Ubicación"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr "Caso padre ha sido cerrado"
 
@@ -14013,6 +14045,18 @@ msgstr "El caso padre ha sido cerrado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "ID filtro Personalizada"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "Case Self-Registration"
+msgid "Case belongs to location"
+msgstr "Autorregistro del Caso"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "(including child locations)"
+msgid "Include cases from child locations"
+msgstr "(incluyendo ubicaciones hijo)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14294,8 +14338,10 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
-msgstr ""
+#, fuzzy, python-format
+#| msgid "Couldn't send to the following number(s): "
+msgid "Deduplication rule not saved due to the following issues: %s"
+msgstr "No se pudo enviar a los siguientes número(s):"
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Successfully created deduplication rule: {}"
@@ -15025,20 +15071,6 @@ msgstr "Seleccione un tipo de suscripción..."
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr "Tipo de Suscripción"
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Ubicación"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -37617,7 +37649,6 @@ msgstr "¿Está seguro que desea eliminar esta invitación?"
 msgid "Copy and paste admin emails"
 msgstr "Copiar y pegar correos electrónicos administrativos"
 
-<<<<<<< HEAD
 #: corehq/apps/users/util.py
 #, fuzzy
 #| msgid "Username contains invalid characters."
@@ -37627,15 +37658,8 @@ msgstr "El nombre de usuario contiene caracteres inválidos."
 #: corehq/apps/users/util.py
 #, fuzzy
 #| msgid "Username {} is reserved."
-||||||| merged common ancestors
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not contain special characters."
-msgstr ""
 
-#: corehq/apps/users/util.py
-=======
 #: corehq/apps/users/validation.py
->>>>>>> master
 msgid "Username is required."
 msgstr "Nombre de usuario {} está reservado. "
 
