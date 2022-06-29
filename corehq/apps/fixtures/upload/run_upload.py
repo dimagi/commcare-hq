@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 from itertools import chain
 from operator import attrgetter
 
@@ -10,6 +11,7 @@ from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
 from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.couch.database import retry_on_couch_error as retry
 from soil import DownloadBase
 
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType, FixtureOwnership
@@ -45,22 +47,21 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             update_progress(table)
             if skip_orm:
                 return  # fast upload does not do ownership
-            mutation = get_mutation(
+            owners.process(
                 workbook,
                 old_owners.get(row._id, []),
                 workbook.iter_ownerships(new_row, row._id, owner_ids, result.errors),
                 owner_key,
             )
-            owners.update(mutation)
 
-        old_rows = FixtureDataItem.get_item_list(domain, table.tag)
+        old_rows = retry(FixtureDataItem.get_item_list)(domain, table.tag)
         sort_keys = {r._id: r.sort_key for r in old_rows}
         if not skip_orm:
             old_owners = defaultdict(list)
-            for owner in FixtureOwnership.for_all_item_ids(list(sort_keys), domain):
+            for owner in retry(FixtureOwnership.for_all_item_ids)(list(sort_keys), domain):
                 old_owners[owner.data_item_id].append(owner)
 
-        mutation = get_mutation(
+        rows.process(
             workbook,
             old_rows,
             workbook.iter_rows(table, sort_keys),
@@ -68,7 +69,8 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             process_row,
             delete_missing=replace,
         )
-        rows.update(mutation)
+        if len(rows.to_create) > 1000 or len(rows.to_delete) > 1000:
+            flush(tables, rows, owners)
 
     result = FixtureUploadResult()
     if skip_orm:
@@ -81,9 +83,10 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
     old_tables = FixtureDataType.by_domain(domain)
+    tables = Mutation()
     rows = Mutation()
     owners = Mutation()
-    tables = get_mutation(
+    tables.process(
         workbook,
         old_tables,
         workbook.iter_tables(domain),
@@ -93,6 +96,56 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         deleted_key=attrgetter("tag"),
     )
 
+    update_progress(None)
+    flush(tables, rows, owners)
+    clear_fixture_quickcache(domain, old_tables)
+    clear_fixture_cache(domain)
+    return result
+
+
+@define
+class Mutation:
+    to_delete = field(factory=list)
+    to_create = field(factory=list)
+
+    def process(
+        self,
+        workbook,
+        old_items,
+        new_items,
+        key,
+        process_item=lambda item, new_item: None,
+        delete_missing=True,
+        deleted_key=attrgetter("_id"),
+    ):
+        old_map = {key(old): old for old in old_items}
+        get_deleted_item = {deleted_key(x): x for x in old_items}.get
+        assert get_deleted_item(None) is None, get_deleted_item(None)
+        for new in new_items:
+            if isinstance(new, Deleted):
+                old = get_deleted_item(new.key)
+                if old is not None:
+                    self.to_delete.append(old)
+                continue
+            old = old_map.pop(key(new), None)
+            if old is None:
+                old = get_deleted_item(workbook.get_key(new))
+                if old is not None:
+                    self.to_delete.append(old)
+                self.to_create.append(new)
+                item = new
+            else:
+                item = old
+            process_item(item, new)
+        if delete_missing:
+            self.to_delete.extend(old_map.values())
+
+    def clear(self):
+        self.to_delete = []
+        self.to_create = []
+
+
+def flush(tables, rows, owners):
     with CouchTransaction() as couch:
         for table in tables.to_delete:
             table.recursive_delete(couch)
@@ -101,9 +154,9 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         couch.delete_all(d for d in to_delete if d._id not in deleted_ids)
         for doc in chain(tables.to_create, rows.to_create, owners.to_create):
             couch.save(doc)
-    clear_fixture_quickcache(domain, old_tables)
-    clear_fixture_cache(domain)
-    return result
+    tables.clear()
+    rows.clear()
+    owners.clear()
 
 
 def setup_progress(task, workbook):
@@ -112,18 +165,23 @@ def setup_progress(task, workbook):
         return total_tables, lambda table: None
 
     def update_progress(table):
-        if table.tag not in progress.tables:
-            progress.tables.add(table.tag)
-            progress.total_rows = workbook.count_rows(table) or 1
-            progress.row = 0
-        else:
-            progress.row += 1
+        if table is not None:
+            if table.tag not in progress.tables:
+                progress.tables.add(table.tag)
+                progress.total_rows = workbook.count_rows(table) or 1
+                progress.row = 0
+            else:
+                progress.row += 1
+            if datetime.now() < progress.next_update:
+                return
+        progress.next_update = datetime.now() + timedelta(seconds=2)
         table_count = len(progress.tables) - 1
         processed = table_count * 10 + (10 * progress.row / progress.total_rows)
         DownloadBase.set_progress(task, processed, 10 * total_tables)
 
     class progress:
         tables = set()
+        next_update = datetime.now()
 
     return total_tables, update_progress
 
@@ -154,50 +212,6 @@ def row_key(row):
 
 def owner_key(owner):
     return (owner.owner_id, owner.owner_type)
-
-
-def get_mutation(
-    workbook,
-    old_items,
-    new_items,
-    key,
-    process_item=lambda item, new_item: None,
-    delete_missing=True,
-    deleted_key=attrgetter("_id"),
-):
-    mutation = Mutation()
-    old_map = {key(old): old for old in old_items}
-    get_deleted_item = {deleted_key(x): x for x in old_items}.get
-    assert get_deleted_item(None) is None, get_deleted_item(None)
-    for new in new_items:
-        if isinstance(new, Deleted):
-            old = get_deleted_item(new.key)
-            if old is not None:
-                mutation.to_delete.append(old)
-            continue
-        old = old_map.pop(key(new), None)
-        if old is None:
-            old = get_deleted_item(workbook.get_key(new))
-            if old is not None:
-                mutation.to_delete.append(old)
-            mutation.to_create.append(new)
-            item = new
-        else:
-            item = old
-        process_item(item, new)
-    if delete_missing:
-        mutation.to_delete.extend(old_map.values())
-    return mutation
-
-
-@define
-class Mutation:
-    to_delete = field(factory=list)
-    to_create = field(factory=list)
-
-    def update(self, mutation):
-        self.to_delete.extend(mutation.to_delete)
-        self.to_create.extend(mutation.to_create)
 
 
 def load_owner_ids(owners, domain_name):
