@@ -20,7 +20,7 @@ hqDefine('hqwebapp/js/password_validators.ko', [
 
     ko.validation.rules['minimumPasswordLength'] = {
         validator: function (val, minLength) {
-            if (val === undefined || val.length === 0) return true;  // do separate validation for required
+            if (val === undefined || val.length === 0) {return true;}  // do separate validation for required
             return val.length >= minLength;
         },
     };

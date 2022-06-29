@@ -165,8 +165,8 @@ hqDefine('registration/js/new_user.ko', [
         self.passwordDelayed = ko.pureComputed(self.password)
             .extend(_rateLimit)
             .extend({
-                minimumPasswordLength: {params:initialPageData.get('minimumPasswordLength'),
-                                        message: gettext(`Your password must be at least ${initialPageData.get('minimumPasswordLength')} characters.`)},
+                minimumPasswordLength: {params: initialPageData.get('minimumPasswordLength'),
+                    message: gettext(`Your password must be at least ${initialPageData.get('minimumPasswordLength')} characters.`)},
                 zxcvbnPassword: initialPageData.get('minimumZxcvbnScore'),
             });
 

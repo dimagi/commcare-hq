@@ -320,7 +320,7 @@ hqDefine("users/js/mobile_workers",[
             return self.STATUS.SUCCESS;
         });
 
-        self.passwordSatisfyLength = ko.computed(function(){
+        self.passwordSatisfyLength = ko.computed(function () {
             if (!self.stagedUser()) {
                 return true;
             }
@@ -338,7 +338,7 @@ hqDefine("users/js/mobile_workers",[
                 return true;
             }
 
-            if(!self.skipStandardValidations()){
+            if (!self.skipStandardValidations()) {
                 var minimumPasswordLength = initialPageData.get('minimumPasswordLength');
                 var password = self.stagedUser().password();
                 if (!password) {
@@ -347,12 +347,12 @@ hqDefine("users/js/mobile_workers",[
                 if (self.isSuggestedPassword()) {
                     return true;
                 }
-                if(password.length < minimumPasswordLength) {
+                if (password.length < minimumPasswordLength) {
                     return false;
                 }
             }
             return true;
-        })
+        });
 
         self.requiredEmailMissing = ko.computed(function () {
             return self.stagedUser() && self.stagedUser().emailRequired() && !self.stagedUser().email();
