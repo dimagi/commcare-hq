@@ -8917,6 +8917,18 @@ msgid "Label for Searching Again"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Search Properties"
+msgid "Search Screen Title"
+msgstr "Buscar Propiedades"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "User Interface Translations"
+msgid "Search Screen Title Translation"
+msgstr "Traducciones de Interfaz del Usuario"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search Filter"
 msgstr ""
 
