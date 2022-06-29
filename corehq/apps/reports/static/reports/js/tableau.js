@@ -26,9 +26,11 @@ hqDefine("reports/js/tableau", function () {
         }).fail(function () {
             var loadingDiv = document.getElementById("loadingDiv");
             loadingDiv.style.display = "none";
+            var errorMessage = document.getElementById("errorMessage");
             var requestErrorMessage = gettext("An error occured with the tableau server request, please ensure " +
                 "the server configuration is correct and try again.");
-            document.getElementById('errorMessage').innerHTML = '<b>' + requestErrorMessage + '</b>';
+            errorMessage.style.display = "block";
+            errorMessage.innerHTML = requestErrorMessage;
         });
     };
 

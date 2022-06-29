@@ -19,12 +19,11 @@
 <script src="{% static 'reports/js/tableau.js' %}"></script>
 
 <body>
-    <div id="loadingDiv">
-        <i class='fa fa-spin fa-spinner' style="font-size: 70px; margin: 50px"></i>
-        {# <img src="{% static "reports/loader.gif" %}" #}
+    <div id="loadingDiv" class="fa-5x">
+        <i class="fa fa-spin fa-spinner"></i>
     </div>
     <div id="vizContainer"></div>
-    <div id="errorMessage"><p>{{ failure_message }}</p></div>
+    <div id="errorMessage" class="alert alert-danger" style="display:none">{{ failure_message }}</div>
 </body>
 
 {% endblock %}
