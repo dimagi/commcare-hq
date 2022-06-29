@@ -13708,6 +13708,12 @@ msgid "maximum password attempts exceeded"
 msgstr ""
 
 #: corehq/apps/domain/extension_points.py
+#, python-brace-format
+msgid ""
+"Password should have at least {settings.MINIMUM_PASSWORD_LENGTH} characters."
+msgstr ""
+
+#: corehq/apps/domain/extension_points.py
 msgid "Password is not strong enough. Try making your password more complex."
 msgstr ""
 
@@ -34513,6 +34519,13 @@ msgstr ""
 msgid ""
 "Setting a password is disabled. The user will set their own password on "
 "confirming their account phone number."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+#, python-brace-format
+msgid ""
+"Your password should have at least {settings."
+"MINIMUM_PASSWORD_LENGTH}                             characters."
 msgstr ""
 
 #: corehq/apps/users/forms.py
