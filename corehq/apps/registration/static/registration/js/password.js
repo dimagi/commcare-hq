@@ -15,7 +15,7 @@ hqDefine('registration/js/password', [
     var passwordModel = function () {
         var self = {};
         self.minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
-        self.minimumPwdLength = initialPageData.get('minimumPwdLength');
+        self.minimumPasswordLength = initialPageData.get('minimumPasswordLength');
         self.penalizedWords = ['dimagi', 'commcare', 'hq', 'commcarehq'];
         self.password = ko.observable();
         self.strength = ko.computed(function () {
@@ -46,7 +46,7 @@ hqDefine('registration/js/password', [
             self.isSuggestedPassword(false);
         });
         self.color = ko.computed(function () {
-            if (self.length() < self.minimumPwdLength || self.strength() < self.minimumZxcvbnScore - 1 ) {
+            if (self.length() < self.minimumPasswordLength || self.strength() < self.minimumZxcvbnScore - 1 ) {
                 return "text-error text-danger";
             } else if (self.strength() < self.minimumZxcvbnScore || self.isSuggestedPassword()) {
                 return "text-warning";
@@ -57,8 +57,8 @@ hqDefine('registration/js/password', [
         self.passwordHelp = ko.computed(function () {
             if (!self.password()) {
                 return '';
-            } else if (self.length()<self.minimumPwdLength) {
-                return gettext("Your password must be at least 8 characters long.")
+            } else if (self.length()<self.minimumPasswordLength) {
+                return gettext(`Your password must be at least ${self.minimumPasswordLength} characters long.`)
             } else if (self.strength() >= self.minimumZxcvbnScore && self.isSuggestedPassword()) {
                 return gettext("<i class='fa fa-warning'></i>" +
                     "This password is automatically generated. " +
@@ -72,7 +72,7 @@ hqDefine('registration/js/password', [
             }
         });
         self.passwordSufficient = ko.computed(function () {
-            return self.strength() >= self.minimumZxcvbnScore;
+            return self.strength() >= self.minimumZxcvbnScore && self.length() >= self.minimumPasswordLength;
         });
         self.submitCheck = function (formElement) {
             if (self.passwordSufficient()) {

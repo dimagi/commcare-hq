@@ -27,8 +27,8 @@ def validate_password_rules(password) -> Optional[str]:
     Returns:
         An error message to show
     """
-    if len(password) < settings.MINIMUM_PWD_LENGTH:
-        return _('Password should have at least 8 characters.')
+    if len(password) < settings.MINIMUM_PASSWORD_LENGTH:
+        return _(f"Password should have at least {settings.MINIMUM_PASSWORD_LENGTH} characters.")
     strength = zxcvbn(password, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
     if strength['score'] < settings.MINIMUM_ZXCVBN_SCORE:
         return _('Password is not strong enough. Try making your password more complex.')

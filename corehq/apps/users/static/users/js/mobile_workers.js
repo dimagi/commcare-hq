@@ -340,7 +340,7 @@ hqDefine("users/js/mobile_workers",[
             }
 
             if(!self.skipStandardValidations()){
-                var minimumPwdLength = initialPageData.get('minimumPwdLength');
+                var minimumPasswordLength = initialPageData.get('minimumPasswordLength');
                 var password = self.stagedUser().password();
                 if (!password) {
                     return true;
@@ -348,7 +348,7 @@ hqDefine("users/js/mobile_workers",[
                 if (self.isSuggestedPassword()) {
                     return true;
                 }
-                if(password.length < minimumPwdLength) {
+                if(password.length < minimumPasswordLength) {
                     return false;
                 }
             }

@@ -23,7 +23,6 @@ hqDefine('hqwebapp/js/password_validators.ko', [
             if (val === undefined || val.length === 0) return true;  // do separate validation for required
             return val.length >= minLength;
         },
-        message: gettext("Your password must be at least 8 characters."),
     };
 
     ko.validation.registerExtenders();
