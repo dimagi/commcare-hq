@@ -970,7 +970,7 @@ class DedupeCaseFilterForm(CaseRuleCriteriaForm):
         return False
 
     def __init__(self, domain, *args, **kwargs):
-        couch_user = kwargs.get('couch_user', {})
+        couch_user = kwargs.get('couch_user', None)
         kwargs['is_system_admin'] = couch_user.is_superuser if couch_user else False
         super(DedupeCaseFilterForm, self).__init__(domain, *args, **kwargs)
 
