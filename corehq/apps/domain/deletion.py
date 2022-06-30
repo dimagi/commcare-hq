@@ -24,7 +24,7 @@ from corehq.elastic import ESError
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
-    paginate_query_across_partitioned_databases,
+    paginate_query_across_partitioned_databases, estimate_partitioned_row_count,
 )
 from corehq.util.log import with_progress_bar
 from settings import HQ_ACCOUNT_ROOT
@@ -169,16 +169,16 @@ def _terminate_subscriptions(domain_name):
 def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
-    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
-        CommCareCase.objects.hard_delete_cases(domain_name, case_id_chunk)
+    for chunk in chunked(case_ids, 1000, list):
+        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
     logger.info('Deleting cases complete.')
 
 
 def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
-    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        XFormInstance.objects.hard_delete_forms(domain_name, form_id_chunk)
+    for chunk in chunked(form_ids, 1000, list):
+        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
     logger.info('Deleting forms complete.')
 
 
@@ -191,8 +191,13 @@ def iter_ids(model_class, field, domain, chunk_size=1000):
         load_source='delete_domain',
         query_size=chunk_size,
     )
-    for r in rows:
-        yield r[0]
+    yield from with_progress_bar(
+        (r[0] for r in rows),
+        estimate_partitioned_row_count(model_class, where),
+        prefix="",
+        oneline="concise",
+        stream=silence_during_tests(),
+    )
 
 
 def _delete_data_files(domain_name):
