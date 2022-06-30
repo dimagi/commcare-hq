@@ -58,8 +58,15 @@ class NodeType(Enum):
 class Edge:
     tail = attr.ib()
     head = attr.ib()
+    type = attr.ib(default=None)
     label = attr.ib(default=None)
-    attrs = attr.ib(default={}, cmp=False)
+
+
+class EdgeType(Enum):
+    SEARCH = "search"
+    EOF_NAV = "eof_nav"
+    FORM_LINK = "form_link"
+    CASE_LIST_FORM = "case_list_form"
 
 
 @attr.s
@@ -98,9 +105,11 @@ class AppWorkflowVisualizer:
             NodeType.FORM_ENTRY: {"shape": self.styles.form_entry_shape},
             NodeType.CASE_LIST: {"shape": self.styles.case_list_shape},
         }
-        self.eof_attrs = {"color": self.styles.eof_color, "constraint": "false"}
-        self.form_link_attrs = {"color": self.styles.eof_color}
-        self.case_list_form_link_attrs = {"color": self.styles.case_list_form_color, "constraint": "false"}
+        self.edge_attrs = {
+            EdgeType.EOF_NAV: {"color": self.styles.eof_color, "constraint": "false"},
+            EdgeType.FORM_LINK: {"color": self.styles.eof_color},
+            EdgeType.CASE_LIST_FORM: {"color": self.styles.case_list_form_color, "constraint": "false"},
+        }
 
     def stack_append(self, node, is_global=False):
         """Append node to the current stack frame"""
@@ -151,7 +160,7 @@ class AppWorkflowVisualizer:
             node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, parent
         ), is_global=True)
         if has_search:
-            self.add_edge(Edge(node_id, node_id, "Search"))
+            self.add_edge(Edge(node_id, node_id, EdgeType.SEARCH, "Search"))
         return node_id
 
     def add_eof_workflow(self, form_id, target_node, label=None):
@@ -164,16 +173,16 @@ class AppWorkflowVisualizer:
             elif target.type == NodeType.CASE_LIST and target_child.type == NodeType.FORM_MENU:
                 # advance to form entry if case has been created
                 target_node = target_child.children[0].id
-        self.add_edge(Edge(f"{form_id}_form_entry", target_node, label, attrs=self.eof_attrs))
+        self.add_edge(Edge(f"{form_id}_form_entry", target_node, EdgeType.EOF_NAV, label))
 
     def add_eof_form_link(self, tail_form_id, head_form_id, label=None):
         self.add_edge(Edge(
-            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", label, attrs=self.form_link_attrs
+            f"{tail_form_id}_form_entry", f"{head_form_id}_form_entry", EdgeType.FORM_LINK, label
         ))
 
     def add_case_list_form_link(self, tail_id, form_id, label):
         self.add_edge(Edge(
-            tail_id, f"{form_id}_form_entry", label, attrs=self.case_list_form_link_attrs
+            tail_id, f"{form_id}_form_entry", EdgeType.CASE_LIST_FORM, label
         ))
 
     def add_edge(self, edge):
@@ -207,7 +216,8 @@ class AppWorkflowVisualizer:
 
         root_graph.edge("root", "start")
         for edge in self.edges:
-            root_graph.edge(edge.tail, edge.head, label=edge.label or None, **edge.attrs)
+            attrs = self.edge_attrs.get(edge.type, {})
+            root_graph.edge(edge.tail, edge.head, label=edge.label or None, **attrs)
         return root_graph.source
 
 
