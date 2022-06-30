@@ -807,7 +807,7 @@ def _normalize(source):
 
 
 def _check_output(actual, expected):
-    check_output(_normalize(actual), inspect.cleandoc(expected), OutputChecker(), "dot")
+    check_output(_normalize(actual.strip()), inspect.cleandoc(expected.strip()), OutputChecker(), "dot")
 
 
 class TestStyle:
