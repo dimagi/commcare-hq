@@ -32,7 +32,7 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.widgets import SelectToggle
-from corehq.apps.locations.models import SQLLocation, get_accessible_locations
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.filters.factory import FilterFactory
@@ -457,7 +457,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
     def user_locations(self):
-        user_locations = get_accessible_locations(self.domain, self.couch_user)
+        user_locations = SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
         return [
             {'location_id': location.location_id, 'name': location.name}
             for location in user_locations

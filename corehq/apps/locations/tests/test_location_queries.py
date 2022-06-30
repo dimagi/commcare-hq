@@ -6,7 +6,6 @@ from corehq.apps.users.models import WebUser
 
 from ..models import (
     SQLLocation,
-    get_accessible_locations,
     get_domain_locations,
 )
 from .util import LocationHierarchyTestCase
@@ -170,19 +169,6 @@ class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
         )
         self.assertItemsEqual([], no_locs)
 
-    def test_get_accessible_locations(self):
-        locations = get_accessible_locations(self.domain, self.web_user)
-        names = [loc.name for loc in locations]
-        self.assertIn('Middlesex', names)
-        self.assertNotIn('California', names)
-
-    def test_get_accessible_locations_admin(self):
-        with as_superuser(self.web_user):
-            locations = get_accessible_locations(self.domain, self.web_user)
-            names = [loc.name for loc in locations]
-            self.assertIn('Middlesex', names)
-            self.assertIn('California', names)
-
 
 class TestFilterByUserInput(LocationHierarchyTestCase):
     location_type_names = ['state', 'county', 'city']
@@ -240,12 +226,3 @@ def california_secedes():
         yield
     finally:
         california.unarchive()
-
-
-@contextmanager
-def as_superuser(user):
-    user.is_superuser = True
-    try:
-        yield
-    finally:
-        user.is_superuser = False
