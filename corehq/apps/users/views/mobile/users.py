@@ -5,6 +5,7 @@ import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -61,7 +62,9 @@ from corehq.apps.locations.permissions import (
     user_can_access_location_id,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
-from corehq.apps.registration.forms import MobileWorkerAccountConfirmationBySMSForm
+from corehq.apps.registration.forms import (
+    MobileWorkerAccountConfirmationBySMSForm, MobileWorkerAccountConfirmationForm
+)
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
@@ -1505,14 +1508,18 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         if self.request.method == 'POST':
             return MobileWorkerAccountConfirmationBySMSForm(self.request.POST)
         else:
-            if not self.is_invite_valid():
-                raise ValidationError("Invite has expired.")
-            messages.success(self.request, f"{self.user.raw_username}@{self.domain}.commcarehq.org")
             return MobileWorkerAccountConfirmationBySMSForm(initial={
                 'username': self.user.raw_username,
                 'full_name': self.user.full_name,
-                'email': f"{self.user.raw_username}@{self.domain}.commcarehq.org"
+                'email': f"{self.user.raw_username}@{self.domain}.{settings.HQ_ACCOUNT_ROOT}",
             })
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountBySMSView, self).get_context_data(**kwargs)
+        context.update({
+            'invite_expired': self.is_invite_valid() is False,
+        })
+        return context
 
     def send_success_sms(self):
         template_params = {
