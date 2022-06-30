@@ -28,12 +28,21 @@ WORKFLOW_DIAGRAM_NAME = "workflow_diagram.png"
 
 
 def generate_app_workflow_diagram(app):
-    source = generate_app_workflow_diagram_source(app)
+    model = generate_app_workflow_diagram_model(app)
+    source = GraphvisRenderer().render(model)
     path = graphviz.Source(source).render(filename=f"{app.get_id}_workflow", format="png")
     with open(path, 'rb') as f:
         content = f.read()
         app.put_attachment(content, name=WORKFLOW_DIAGRAM_NAME, content_type="image/png")
         return BytesIO(content)
+
+
+@attr.s
+class AppModel:
+    name = attr.ib()
+    global_nodes = attr.ib()
+    node_stack = attr.ib()
+    edges = attr.ib()
 
 
 @attr.s
@@ -83,7 +92,7 @@ class AppWorkflowVisualizer:
     ROOT = "root"
     START = "start"
 
-    def __init__(self, styles=None):
+    def __init__(self):
         self.global_nodes = []
 
         start = Node(self.START, "Start", NodeType.START, parent=self.ROOT)
@@ -97,19 +106,6 @@ class AppWorkflowVisualizer:
 
         self.pos = 1
         self.fill_stack()
-        self.styles = styles or DefaultStyle
-
-        self.node_attrs = {
-            NodeType.MODULE: {"shape": self.styles.module_shape},
-            NodeType.FORM_MENU: {"shape": self.styles.form_menu_shape},
-            NodeType.FORM_ENTRY: {"shape": self.styles.form_entry_shape},
-            NodeType.CASE_LIST: {"shape": self.styles.case_list_shape},
-        }
-        self.edge_attrs = {
-            EdgeType.EOF_NAV: {"color": self.styles.eof_color, "constraint": "false"},
-            EdgeType.FORM_LINK: {"color": self.styles.eof_color},
-            EdgeType.CASE_LIST_FORM: {"color": self.styles.case_list_form_color, "constraint": "false"},
-        }
 
     def stack_append(self, node, is_global=False):
         """Append node to the current stack frame"""
@@ -189,45 +185,94 @@ class AppWorkflowVisualizer:
         if edge not in self.edges:
             self.edges.append(edge)
 
-    def render(self, name):
-        root_graph = graphviz.Digraph(
-            name,
-            graph_attr={"rankdir": "LR"},
-        )
+    def get_model(self, name):
+        return AppModel(name, self.global_nodes, self.node_stack, self.edges)
 
-        def _add_node(graph, node):
-            attrs = self.node_attrs.get(node.type, {})
-            graph.node(node.id, node.label, **attrs)
 
-        for pos, nodes in enumerate(self.node_stack):
+class Renderer:
+    def render_node(self, node):
+        raise NotImplementedError
+
+    def render_edge(self, edge):
+        raise NotImplementedError
+
+    def subgraph_context(self):
+        raise NotImplementedError
+
+    def get_output(self):
+        raise NotImplementedError
+
+    def render(self, model):
+        for pos, nodes in enumerate(model.node_stack):
             if not nodes:
                 continue
 
             if pos == 0:
                 for node in nodes:
-                    _add_node(root_graph, node)
+                    self.render_node(node)
                 continue
 
-            with root_graph.subgraph() as sub:
-                sub.attr(rank="same")
+            with self.subgraph_context():
                 for node in nodes:
-                    _add_node(sub, node)
+                    self.render_node(node)
 
-        for node in self.global_nodes:
-            _add_node(root_graph, node)
+        for node in model.global_nodes:
+            self.render_node(node)
 
-        for edge in self.edges:
-            attrs = self.edge_attrs.get(edge.type, {})
-            root_graph.edge(edge.tail, edge.head, label=edge.label or None, **attrs)
-        return root_graph.source
+        for edge in model.edges:
+            self.render_edge(edge)
+        return self.get_output()
 
 
-def generate_app_workflow_diagram_source(app, style=None):
+class GraphvisRenderer(Renderer):
+    def __init__(self, style=None):
+        style = style or DefaultStyle
+        self.node_attrs = {
+            NodeType.MODULE: {"shape": style.module_shape},
+            NodeType.FORM_MENU: {"shape": style.form_menu_shape},
+            NodeType.FORM_ENTRY: {"shape": style.form_entry_shape},
+            NodeType.CASE_LIST: {"shape": style.case_list_shape},
+        }
+        self.edge_attrs = {
+            EdgeType.EOF_NAV: {"color": style.eof_color, "constraint": "false"},
+            EdgeType.FORM_LINK: {"color": style.eof_color},
+            EdgeType.CASE_LIST_FORM: {"color": style.case_list_form_color, "constraint": "false"},
+        }
+
+    def render_node(self, node):
+        attrs = self.node_attrs.get(node.type, {})
+        self.current_graph.node(node.id, node.label, **attrs)
+
+    def render_edge(self, edge):
+        attrs = self.edge_attrs.get(edge.type, {})
+        self.current_graph.edge(edge.tail, edge.head, label=edge.label or None, **attrs)
+
+    @contextmanager
+    def subgraph_context(self):
+        with self.root_graph.subgraph() as sub:
+            sub.attr(rank="same")
+            self.current_graph = sub
+            yield
+        self.current_graph = self.root_graph
+
+    def get_output(self):
+        return self.root_graph.source
+
+    def render(self, model):
+        self.root_graph = graphviz.Digraph(
+            model.name,
+            graph_attr={"rankdir": "LR"},
+        )
+        self.current_graph = self.root_graph
+        return super().render(model)
+
+
+def generate_app_workflow_diagram_model(app):
     generator = SuiteGenerator(app)
     generator.generate_suite()
     suite = generator.suite
 
-    workflow = AppWorkflowVisualizer(style)
+    workflow = AppWorkflowVisualizer()
     helper = WorkflowHelper(suite, app, list(app.get_modules()))
     added = []
     stacks_by_form = {}
@@ -284,7 +329,7 @@ def generate_app_workflow_diagram_source(app, style=None):
             if not form_has_eof:
                 add_case_list_form_eof_edges(module, form, helper, workflow)
 
-    return workflow.render(app.name)
+    return workflow.get_model(app.name)
 
 
 def _get_case_list_id(stack):

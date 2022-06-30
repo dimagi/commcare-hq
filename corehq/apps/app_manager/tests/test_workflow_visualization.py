@@ -5,8 +5,8 @@ from unittest import skip
 from testil import eq
 
 from corehq.apps.app_manager.app_schemas.workflow_visualization import (
-    generate_app_workflow_diagram_source,
-    _substitute_hashtags,
+    generate_app_workflow_diagram_model,
+    _substitute_hashtags, GraphvisRenderer,
 )
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
@@ -29,7 +29,7 @@ def test_workflow_diagram_not_all_forms_require_case():
     for i in range(2):
         form = factory.new_form(m0)
         factory.form_requires_case(form)
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -79,7 +79,7 @@ def test_workflow_diagram_not_all_forms_require_case_child_module():
         factory.form_requires_case(form, 'child')
         factory.form_requires_case(form, 'visit', parent_case_type='child')
 
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -135,7 +135,7 @@ def test_workflow_diagram_modules():
     """This test reveals"""
     app = _build_test_app()
 
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -190,7 +190,7 @@ def test_workflow_diagram_modules_put_in_root():
     m0, m0f0 = factory.new_basic_module('enroll child', 'child')
     factory.form_opens_case(m0f0)
     m0.put_in_root = True
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -218,7 +218,7 @@ def test_workflow_diagram_modules_child_module_put_in_root():
     # child module in root
     app.get_module(2).put_in_root = True
 
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -277,7 +277,7 @@ def test_workflow_diagram_child_module_form_links():
     ]
     m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
 
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -331,7 +331,7 @@ def test_workflow_diagram_child_module_form_links():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_root():
     app = _build_workflow_app(WORKFLOW_ROOT)
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -374,7 +374,7 @@ def test_workflow_diagram_post_form_workflow_root():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_module():
     app = _build_workflow_app(WORKFLOW_MODULE)
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -417,7 +417,7 @@ def test_workflow_diagram_post_form_workflow_module():
 @patch_get_xform_resource_overrides()
 def test_workflow_diagram_post_form_workflow_previous():
     app = _build_workflow_app(WORKFLOW_PREVIOUS)
-    source = generate_app_workflow_diagram_source(app, TestStyle)
+    source = generate_app_workflow_diagram_source(app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -468,7 +468,7 @@ def test_workflow_diagram_post_form_workflow_parent():
     factory.form_requires_case(m2f0, 'visit', parent_case_type='child')
 
     m2f0.post_form_workflow = WORKFLOW_PARENT_MODULE
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -518,7 +518,7 @@ def test_workflow_diagram_module_case_list():
     factory.form_opens_case(m0f0)
     m0.case_list.show = True
     m0.case_list.label = {"en": "Al People"}
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -556,7 +556,7 @@ def test_workflow_diagram_case_list_form():
 
     m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
     factory.form_requires_case(m1f0)
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -601,7 +601,7 @@ def test_workflow_diagram_case_list_form_return_to_case_list():
     m1, m1f0 = factory.new_basic_module("followup", "case", case_list_form=m0f0)
     m1.case_list_form.post_form_workflow = WORKFLOW_CASE_LIST
     factory.form_requires_case(m1f0)
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -649,7 +649,7 @@ def test_workflow_diagram_case_list_form_child_case_parent_selection():
     m2, m2f0 = factory.new_basic_module("update child", "child", case_list_form=m1f0)
     factory.form_requires_case(m2f0, "child", parent_case_type="parent")
 
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -707,7 +707,7 @@ def test_workflow_diagram_shadow_module():
 
     factory.new_shadow_module("shadow parent", m0, with_form=False)
 
-    source = generate_app_workflow_diagram_source(factory.app, TestStyle)
+    source = generate_app_workflow_diagram_source(factory.app)
     _check_output(source, """
     digraph "Untitled Application" {
         graph [rankdir=LR]
@@ -818,3 +818,8 @@ class TestStyle:
     case_list_shape = "folder"
     eof_color = "red"
     case_list_form_color = "blue"
+
+
+def generate_app_workflow_diagram_source(app):
+    model = generate_app_workflow_diagram_model(app)
+    return GraphvisRenderer(TestStyle).render(model)
