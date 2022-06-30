@@ -162,7 +162,8 @@ class SubmissionPost(object):
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
-        from corehq.apps.reports.views import CaseDataView, FormDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
+        from corehq.apps.reports.views import FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
         if has_permission_to_view_report(user, instance.domain, form_view):

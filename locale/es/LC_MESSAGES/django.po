@@ -28044,6 +28044,118 @@ msgstr "Fecha Creada"
 msgid "Modified Date"
 msgstr "Fecha Modificada"
 
+#: corehq/apps/reports/standard/cases/case_data.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Case Data"
+msgstr "Datos de Caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"Sorry, we couldn't find that case. If you think this is a mistake please "
+"report an issue."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"The case creation form could not be found. Usually this happens if the form "
+"that created the case is archived but there are other forms that updated the "
+"case. To fix this you can archive the other forms listed here."
+msgstr ""
+"El formulario de creación del caso no pudo ser encontrado. Usualmente esto "
+"ocurre si el formulario que creó el caso está archivado pero hay otros "
+"formularios que actualizaron el caso. Para arreglar esto, usted puede "
+"archivar los otros formularios listados aquí."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Unknown Product (\"{}\")"
+msgstr "Producto Desconocido (\"{}\")"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Case Attachments"
+msgstr "Archivos adjuntos del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "You don't have permission to access this page."
+msgstr "Usted no tiene permiso para acceder a esta página."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Attachments for case"
+msgstr "Archivos adjuntos para el caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case properties saved for %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "No changes made to %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case %s was rebuilt from its forms."
+msgstr "El caso %s fue desarrollado nuevamente desde sus formularios."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid ""
+"Case %s was successfully saved. Hopefully it will show up in all reports "
+"momentarily."
+msgstr ""
+"El caso %s fue guardado exitosamente. Esperamos que aparezca en todos los "
+"reportes en un momento. "
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-brace-format
+msgid ""
+"Case {name} has been closed.\n"
+"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
+"            You can also reopen the case in the future by archiving the last "
+"form in the case history.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case id"
+msgstr "id del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case name"
+msgstr "nombre del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "section"
+msgstr "sección"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "date"
+msgstr "fecha"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_id"
+msgstr "id_del producto"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_name"
+msgstr "nombre_del producto"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "transaction amount"
+msgstr "monto de la transacción"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "type"
+msgstr "tipo"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "ending balance"
+msgstr "balance final"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "unknown product"
+msgstr "producto desconocido"
+
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 msgid "Case List Explorer"
 msgstr ""
@@ -28626,10 +28738,6 @@ msgid "Proportion of users in group who submitted forms in date range."
 msgstr ""
 "Proporción de usuarios en grupo quienes ingresaron formularios en el rango "
 "de fecha."
-
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
-msgid "Case Data"
-msgstr "Datos de Caso"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "# Cases Created"
@@ -30232,113 +30340,6 @@ msgstr "Reporte apagado una vez"
 #: corehq/apps/reports/views.py
 msgid "scheduled report"
 msgstr "reporte agendado"
-
-#: corehq/apps/reports/views.py
-msgid ""
-"Sorry, we couldn't find that case. If you think this is a mistake please "
-"report an issue."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid ""
-"The case creation form could not be found. Usually this happens if the form "
-"that created the case is archived but there are other forms that updated the "
-"case. To fix this you can archive the other forms listed here."
-msgstr ""
-"El formulario de creación del caso no pudo ser encontrado. Usualmente esto "
-"ocurre si el formulario que creó el caso está archivado pero hay otros "
-"formularios que actualizaron el caso. Para arreglar esto, usted puede "
-"archivar los otros formularios listados aquí."
-
-#: corehq/apps/reports/views.py
-msgid "Unknown Product (\"{}\")"
-msgstr "Producto Desconocido (\"{}\")"
-
-#: corehq/apps/reports/views.py
-msgid "Case Attachments"
-msgstr "Archivos adjuntos del caso"
-
-#: corehq/apps/reports/views.py
-msgid "You don't have permission to access this page."
-msgstr "Usted no tiene permiso para acceder a esta página."
-
-#: corehq/apps/reports/views.py
-msgid "Attachments for case"
-msgstr "Archivos adjuntos para el caso"
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case properties saved for %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "No changes made to %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case %s was rebuilt from its forms."
-msgstr "El caso %s fue desarrollado nuevamente desde sus formularios."
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid ""
-"Case %s was successfully saved. Hopefully it will show up in all reports "
-"momentarily."
-msgstr ""
-"El caso %s fue guardado exitosamente. Esperamos que aparezca en todos los "
-"reportes en un momento. "
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case {name} has been closed.\n"
-"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
-"            You can also reopen the case in the future by archiving the last "
-"form in the case history.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "case id"
-msgstr "id del caso"
-
-#: corehq/apps/reports/views.py
-msgid "case name"
-msgstr "nombre del caso"
-
-#: corehq/apps/reports/views.py
-msgid "section"
-msgstr "sección"
-
-#: corehq/apps/reports/views.py
-msgid "date"
-msgstr "fecha"
-
-#: corehq/apps/reports/views.py
-msgid "product_id"
-msgstr "id_del producto"
-
-#: corehq/apps/reports/views.py
-msgid "product_name"
-msgstr "nombre_del producto"
-
-#: corehq/apps/reports/views.py
-msgid "transaction amount"
-msgstr "monto de la transacción"
-
-#: corehq/apps/reports/views.py
-msgid "type"
-msgstr "tipo"
-
-#: corehq/apps/reports/views.py
-msgid "ending balance"
-msgstr "balance final"
-
-#: corehq/apps/reports/views.py
-msgid "unknown product"
-msgstr "producto desconocido"
 
 #: corehq/apps/reports/views.py
 msgid "Duplicate ID fix"

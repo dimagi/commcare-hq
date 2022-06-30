@@ -157,7 +157,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             else:
                 return _('View Case')
 
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
         return [
             {
                 'title': _get_case_name,
