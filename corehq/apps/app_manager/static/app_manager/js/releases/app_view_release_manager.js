@@ -1,7 +1,7 @@
 hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
 
-    hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Releases"));
+    hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Releases"));
 
     // Main releases content
     var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;

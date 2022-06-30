@@ -12,6 +12,7 @@ hqDefine('users/js/edit_commcare_user', [
     'hqwebapp/js/widgets',
     'registration/js/password',
     'select2/dist/js/select2.full.min',
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -41,13 +42,16 @@ hqDefine('users/js/edit_commcare_user', [
             type: 'POST',
             dataType: 'json',
             success: function (response, status, xhr, form) {
-                $('#reset-password-form-container').html(response.formHTML);
                 if (response.status === "OK") {
-                    alertUser.alert_user(gettext("Password changed successfully"), 'success');
+                    alertUser.alert_user(gettext("Password changed successfully."), 'success');
                     googleAnalytics.track.event("Edit Mobile Worker", "Reset password", couchUserId);
+                } else if (response.status === "weak") {
+                    alertUser.alert_user(gettext("Password is not strong enough. " +
+                                                 "Try making your password more complex."), 'danger');
+                } else if (response.status === "different") {
+                    alertUser.alert_user(gettext("The two password fields didn't match."), 'danger');
                 } else {
-                    var message = gettext('Password was not changed ');
-                    alertUser.alert_user(message, 'danger');
+                    alertUser.alert_user(gettext("Password was not changed. "), 'danger');
                 }
             },
         });
@@ -86,12 +90,11 @@ hqDefine('users/js/edit_commcare_user', [
     }
 
     // Groups form
-    multiselectUtils.createFullMultiselectWidget(
-        'id_selected_ids',
-        gettext("Available Groups"),
-        gettext("Groups with this User"),
-        gettext("Search Group...")
-    );
+    multiselectUtils.createFullMultiselectWidget('id_selected_ids', {
+        selectableHeaderTitle: gettext("Available Groups"),
+        selectedHeaderTitle: gettext("Groups with this User"),
+        searchItemTitle: gettext("Search Group..."),
+    });
 
     // "are you sure?" stuff
     var unsavedChanges = false;
@@ -128,6 +131,16 @@ hqDefine('users/js/edit_commcare_user', [
     }).on("input", null, null, function () {
         $userInformationForm.find(":submit").prop("disabled", false);
     });
+
+    // Enable deactivate after calendar widget
+    let showDeactivateAfterDate = initialPageData.get('show_deactivate_after_date');
+    if (showDeactivateAfterDate) {
+        $('#id_deactivate_after_date').datetimepicker({
+            format: 'MM-y',
+        }).on('dp.change', function () {
+            $userInformationForm.trigger('change');
+        });
+    }
 
     /* Additional Information / custom user data */
     var $customDataFieldsForm = $(".custom-data-fieldset");

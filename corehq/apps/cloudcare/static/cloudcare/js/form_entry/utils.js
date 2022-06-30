@@ -96,17 +96,22 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     /**
-     * Composes a boardcast object from mapbox result to be used by receivers
+     * Composes a broadcast object from mapbox result to be used by receivers
      * @param {Object} mapboxResult - Mapbox query result object
      */
     module.getBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
+            geopoint: mapboxResult.geometry.coordinates[1] + ' ' + mapboxResult.geometry.coordinates[0],
         };
         mapboxResult.context.forEach(function (contextValue) {
             try {
-                if (contextValue.id.startsWith('postcode')) {
+                if (contextValue.id.startsWith('district')) {
+                    broadcastObj.county = contextValue.text;
+                    broadcastObj.district = contextValue.text;
+                } else if (contextValue.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextValue.text;
+                    broadcastObj.postcode = contextValue.text;
                 } else if (contextValue.id.startsWith('place')) {
                     broadcastObj.city = contextValue.text;
                 } else if (contextValue.id.startsWith('country')) {

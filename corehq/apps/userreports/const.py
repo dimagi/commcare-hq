@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.change_feed import topics
 
@@ -30,9 +30,7 @@ UCR_CELERY_QUEUE = 'ucr_queue'
 UCR_INDICATOR_CELERY_QUEUE = 'ucr_indicator_queue'
 
 KAFKA_TOPICS = (
-    topics.CASE,
     topics.CASE_SQL,
-    topics.FORM,
     topics.FORM_SQL,
     topics.LOCATION,
     topics.COMMCARE_USER,
@@ -75,3 +73,11 @@ AGGGREGATION_TYPE_SIMPLE = 'simple'
 AGGGREGATION_TYPE_YEAR = 'year'
 AGGGREGATION_TYPE_NONZERO_SUM = 'nonzero_sum'
 AGGGREGATION_TYPE_ARRAY_AGG_LAST_VALUE = 'array_agg_last_value'
+
+UCR_NAMED_EXPRESSION = "named_expression"
+UCR_NAMED_FILTER = "named_filter"
+
+ALL_EXPRESSION_TYPES = (
+    (UCR_NAMED_EXPRESSION, UCR_NAMED_EXPRESSION),
+    (UCR_NAMED_FILTER, UCR_NAMED_FILTER),
+)

@@ -2,7 +2,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.messaging.templating import MessagingTemplateRenderer, CaseMessagingTemplateParam
 from corehq.util.test_utils import create_test_case, set_parent_case
 from django.test import TestCase
@@ -122,7 +122,7 @@ class TemplatingTestCase(TestCase):
     def test_parent_case_template_params(self):
         with self.create_child_case() as child_case, self.create_parent_case() as parent_case:
             set_parent_case(self.domain, child_case, parent_case)
-            child_case = CaseAccessors(self.domain).get_case(child_case.case_id)
+            child_case = CommCareCase.objects.get_case(child_case.case_id, self.domain)
 
             r = MessagingTemplateRenderer()
             r.set_context_param('case', CaseMessagingTemplateParam(child_case))
@@ -151,7 +151,7 @@ class TemplatingTestCase(TestCase):
     def test_host_case_template_params(self):
         with self.create_child_case() as extension_case, self.create_parent_case() as host_case:
             set_parent_case(self.domain, extension_case, host_case, relationship='extension')
-            extension_case = CaseAccessors(self.domain).get_case(extension_case.case_id)
+            extension_case = CommCareCase.objects.get_case(extension_case.case_id, self.domain)
 
             r = MessagingTemplateRenderer()
             r.set_context_param('case', CaseMessagingTemplateParam(extension_case))

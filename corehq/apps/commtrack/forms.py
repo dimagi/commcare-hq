@@ -1,7 +1,7 @@
 from django import forms
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.utils.html import format_html
 
 from crispy_forms.bootstrap import PrependedText
@@ -18,30 +18,30 @@ from corehq.apps.products.models import SQLProduct
 
 class CommTrackSettingsForm(forms.Form):
     use_auto_emergency_levels = forms.BooleanField(
-        label=ugettext_noop("Use default emergency levels"), required=False)
+        label=gettext_noop("Use default emergency levels"), required=False)
 
     stock_emergency_level = forms.DecimalField(
-        label=ugettext_lazy("Emergency Level (months)"), required=False)
+        label=gettext_lazy("Emergency Level (months)"), required=False)
     stock_understock_threshold = forms.DecimalField(
-        label=ugettext_lazy("Low Stock Level (months)"), required=False)
+        label=gettext_lazy("Low Stock Level (months)"), required=False)
     stock_overstock_threshold = forms.DecimalField(
-        label=ugettext_lazy("Overstock Level (months)"), required=False)
+        label=gettext_lazy("Overstock Level (months)"), required=False)
 
     use_auto_consumption = forms.BooleanField(
-        label=ugettext_lazy("Use automatic consumption calculation"), required=False)
+        label=gettext_lazy("Use automatic consumption calculation"), required=False)
     consumption_min_transactions = forms.IntegerField(
-        label=ugettext_lazy("Minimum Transactions (Count)"), required=False)
+        label=gettext_lazy("Minimum Transactions (Count)"), required=False)
     consumption_min_window = forms.IntegerField(
-        label=ugettext_lazy("Minimum Window for Calculation (Days)"), required=False)
+        label=gettext_lazy("Minimum Window for Calculation (Days)"), required=False)
     consumption_optimal_window = forms.IntegerField(
-        label=ugettext_lazy("Optimal Window for Calculation (Days)"), required=False)
+        label=gettext_lazy("Optimal Window for Calculation (Days)"), required=False)
     individual_consumption_defaults = forms.BooleanField(
-        label=ugettext_lazy("Configure consumption defaults individually by supply point"),
+        label=gettext_lazy("Configure consumption defaults individually by supply point"),
         required=False
     )
 
     sync_consumption_fixtures = forms.BooleanField(
-        label=ugettext_lazy("Sync consumption fixtures"), required=False)
+        label=gettext_lazy("Sync consumption fixtures"), required=False)
 
     def clean(self):
         cleaned_data = super(CommTrackSettingsForm, self).clean()
@@ -90,7 +90,7 @@ class CommTrackSettingsForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 ButtonHolder(
-                    Submit('submit', ugettext_lazy('Submit'))
+                    Submit('submit', gettext_lazy('Submit'))
                 )
             )
         )
@@ -136,7 +136,7 @@ class ConsumptionForm(forms.Form):
 
         layout.append(hqcrispy.FormActions(
             ButtonHolder(
-                Submit('submit', ugettext_lazy('Update Default Consumption Info'))
+                Submit('submit', gettext_lazy('Update Default Consumption Info'))
             )
         ))
         self.helper.layout = Layout(*layout)

@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.test import TestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from pillow_retry.models import PillowError
 from pillowtop import get_all_pillow_configs

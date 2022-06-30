@@ -9,9 +9,7 @@ from pillowtop import get_pillow_by_name, get_all_pillow_configs
 
 
 TOPIC_TO_PILLOW_NAME_MAP = {
-    topics.CASE: 'case-pillow',
     topics.CASE_SQL: 'case-pillow',
-    topics.FORM: 'xform-pillow',
     topics.FORM_SQL: 'xform-pillow',
 }
 

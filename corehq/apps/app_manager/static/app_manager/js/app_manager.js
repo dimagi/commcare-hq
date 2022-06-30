@@ -1,4 +1,3 @@
-/* globals hqDefine django hqImport */
 hqDefine('app_manager/js/app_manager', function () {
     'use strict';
     var initialPageData = hqImport("hqwebapp/js/initial_page_data");
@@ -141,7 +140,7 @@ hqDefine('app_manager/js/app_manager', function () {
      */
     var _initAddItemPopovers = function () {
         $('.js-add-new-item').popover({
-            title: django.gettext("Add"),
+            title: gettext("Add"),
             container: 'body',
             sanitize: false,
             content: function () {

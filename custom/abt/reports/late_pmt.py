@@ -1,6 +1,6 @@
 from django.db.models.aggregates import Count
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
 from sqlagg.columns import SimpleColumn

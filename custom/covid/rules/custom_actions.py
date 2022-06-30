@@ -4,12 +4,41 @@ COVID: Available Actions
 
 The following actions can be used in messaging in projects using the ``covid`` custom module.
 """
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
-from casexml.apps.case.models import CommCareCase
+from datetime import datetime
+
+from corehq.apps.domain.models import Domain
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
 from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.es import filters
+
+
+def set_all_activity_complete_date_to_today(case, rule):
+    """
+    For any case matching the criteria, set the all_activity_complete_date property
+    to today's date, in YYYY-MM-DD format, based on the domain's default time zone.
+    """
+    if case.get_case_property("all_activity_complete_date"):
+        return CaseRuleActionResult()
+
+    from dimagi.utils.parsing import ISO_DATE_FORMAT
+    domain_obj = Domain.get_by_name(case.domain)
+    today = datetime.now(domain_obj.get_default_timezone()).strftime(ISO_DATE_FORMAT)
+    (submission, cases) = update_case(
+        case.domain,
+        case.case_id,
+        case_properties={
+            "all_activity_complete_date": today,
+        },
+        xmlns=AUTO_UPDATE_XMLNS,
+        device_id=__name__ + ".set_all_activity_complete_date_to_today",
+    )
+    rule.log_submission(submission.form_id)
+
+    return CaseRuleActionResult(
+        num_related_updates=1,
+    )
 
 
 def close_cases_assigned_to_checkin(checkin_case, rule):
@@ -41,11 +70,11 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
         "assigned_to_primary_username": "",
     }
     num_related_updates = 0
-    for assigned_case in _get_assigned_cases(checkin_case):
+    for assigned_case_domain, assigned_case_id in _get_assigned_cases(checkin_case):
         num_related_updates += 1
         (submission, cases) = update_case(
-            assigned_case.domain,
-            assigned_case.case_id,
+            assigned_case_domain,
+            assigned_case_id,
             case_properties=blank_properties,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
@@ -68,11 +97,10 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
 
 
 def _get_assigned_cases(checkin_case):
-    query = (
+    return (
         CaseSearchES()
         .domain(checkin_case.domain)
         .filter(filters.OR(case_type("patient"), case_type("contact")))
         .case_property_query("assigned_to_primary_checkin_case_id", checkin_case.case_id)
+        .values_list('domain', '_id')
     )
-
-    return [CommCareCase.wrap(flatten_result(hit)) for hit in query.run().hits]

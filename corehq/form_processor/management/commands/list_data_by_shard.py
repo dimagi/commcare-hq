@@ -1,7 +1,7 @@
 from collections import Counter
 from django.core.management.base import BaseCommand
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
 class Command(BaseCommand):
@@ -17,14 +17,14 @@ class Command(BaseCommand):
         cases_by_db = Counter()
         print('======================== forms ========================')
         print('id\t\t\t\t\tshard\tdatabase')
-        for form_id in sorted(FormAccessors(domain=domain).get_all_form_ids_in_domain()):
+        for form_id in sorted(XFormInstance.objects.get_form_ids_in_domain(domain=domain)):
             shard_id, dbname = ShardAccessor.get_shard_id_and_database_for_doc(form_id)
             forms_by_shard[shard_id] += 1
             forms_by_db[dbname] += 1
             print('{}\t{}\t{}'.format(form_id, shard_id, dbname))
         print('\n======================== cases ========================')
         print('id\t\t\t\t\tshard\tdatabase')
-        for case_id in sorted(CaseAccessors(domain=domain).get_case_ids_in_domain()):
+        for case_id in sorted(CommCareCase.objects.get_case_ids_in_domain(domain)):
             shard_id, dbname = ShardAccessor.get_shard_id_and_database_for_doc(case_id)
             cases_by_shard[shard_id] += 1
             cases_by_db[dbname] += 1

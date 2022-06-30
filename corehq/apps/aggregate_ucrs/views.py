@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq import toggles
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -19,7 +19,7 @@ from corehq.apps.userreports.views import (
     swallow_programming_errors,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 @method_decorator(toggles.AGGREGATE_UCRS.required_decorator(), name='dispatch')
@@ -49,13 +49,13 @@ class BaseAggregateUCRView(BaseUserConfigReportsView):
 class AggregateUCRView(BaseAggregateUCRView):
     template_name = 'aggregate_ucrs/view_aggregate_ucr.html'
     urlname = 'aggregate_ucr'
-    page_title = ugettext_lazy("View Aggregate UCR")
+    page_title = gettext_lazy("View Aggregate UCR")
 
 
 class PreviewAggregateUCRView(BaseAggregateUCRView):
     urlname = 'preview_aggregate_ucr'
     template_name = 'aggregate_ucrs/preview_aggregate_ucr.html'
-    page_title = ugettext_lazy("Preview Aggregate UCR")
+    page_title = gettext_lazy("Preview Aggregate UCR")
 
     @method_decorator(swallow_programming_errors)
     def dispatch(self, request, *args, **kwargs):
@@ -75,7 +75,7 @@ class PreviewAggregateUCRView(BaseAggregateUCRView):
 
 
 @login_or_basic
-@require_permission(Permissions.view_reports)
+@require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
 def export_aggregate_ucr(request, domain, table_id):
     table_definition = get_object_or_404(

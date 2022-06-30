@@ -21,13 +21,14 @@ def get_casedb_schema(form):
     if form.requires_case() and not form.get_module().search_config.data_registry:
         subsets.extend(_get_case_schema_subsets(app, form.get_module().case_type))
 
-    parent_select = form.get_module().parent_select
-    if parent_select.active and parent_select.relationship is None:
+    parent_select = getattr(form.get_module(), 'parent_select', None)
+    if parent_select and parent_select.active and parent_select.relationship is None:
         # for child modules that use parent select where the parent is not a 'related' case
         # See toggles.NON_PARENT_MENU_SELECTION
         parent_module = app.get_module_by_unique_id(parent_select.module_id)
         source = clean_trans(parent_module.name, app.langs)
         subsets.extend(_get_case_schema_subsets(app, parent_module.case_type, source=source))
+
 
     if is_usercase_in_use(app.domain):
         subsets.append({

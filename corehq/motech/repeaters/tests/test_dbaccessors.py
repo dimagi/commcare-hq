@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
     RECORD_PENDING_STATE,
 )
 from corehq.motech.repeaters.dbaccessors import (
+    get_all_repeater_docs,
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
     get_overdue_repeat_record_count,
@@ -15,10 +16,11 @@ from corehq.motech.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
+    get_repeater_count_for_domains,
     get_repeaters_by_domain,
     get_success_repeat_record_count,
     iter_repeat_records_by_domain,
-    iterate_repeat_records,
+    iterate_repeat_record_ids,
 )
 from corehq.motech.repeaters.models import CaseRepeater, RepeatRecord
 
@@ -141,7 +143,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), len(self.records))  # get all the records that were created
 
     def test_iterate_repeat_records(self):
-        records = list(iterate_repeat_records(datetime.utcnow(), chunk_size=2))
+        records = list(iterate_repeat_record_ids(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
 
     def test_get_overdue_repeat_record_count(self):
@@ -171,16 +173,28 @@ class TestRepeatRecordDBAccessors(TestCase):
 
 
 class TestRepeatersDBAccessors(TestCase):
-    domain = 'test-domain-3'
+
+    domain_1 = 'test-domain-3'
+    domain_2 = 'domain-test-3'
 
     @classmethod
     def setUpClass(cls):
         super(TestRepeatersDBAccessors, cls).setUpClass()
-        repeater = CaseRepeater(
-            domain=cls.domain,
+        cls.conn = ConnectionSettings(domain=cls.domain_1, url='http://url.com')
+        cls.conn.save()
+        repeater_1 = CaseRepeater(
+            domain=cls.domain_1,
+            format='case_json',
+            connection_settings_id=cls.conn.id,
+        )
+        repeater_2 = CaseRepeater(
+            domain=cls.domain_2,
+            connection_settings_id=cls.conn.id,
+            format='case_json',
         )
         cls.repeaters = [
-            repeater
+            repeater_1,
+            repeater_2
         ]
 
         for repeater in cls.repeaters:
@@ -193,9 +207,23 @@ class TestRepeatersDBAccessors(TestCase):
         super(TestRepeatersDBAccessors, cls).tearDownClass()
 
     def test_get_repeaters_by_domain(self):
-        repeaters = get_repeaters_by_domain(self.domain)
+        repeaters = get_repeaters_by_domain(self.domain_1)
         self.assertEqual(len(repeaters), 1)
         self.assertEqual(repeaters[0].__class__, CaseRepeater)
+
+    def test_get_all_repeater_docs(self):
+        repeaters = get_all_repeater_docs()
+        self.assertEqual(len(repeaters), 2)
+
+    def test_get_repeater_count_for_domains(self):
+        self.assertEqual(
+            get_repeater_count_for_domains([self.domain_1]),
+            1
+        )
+        self.assertEqual(
+            get_repeater_count_for_domains([self.domain_1, self.domain_2]),
+            2
+        )
 
 
 class TestOtherDBAccessors(TestCase):

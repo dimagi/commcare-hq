@@ -1,13 +1,13 @@
 from django.db import migrations
 
-from corehq.form_processor.models import XFormInstanceSQL, XFormOperationSQL, CaseTransaction
+from corehq.form_processor.models import XFormInstance, XFormOperation, CaseTransaction
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {
-    'FORM_STATE_ARCHIVED': XFormInstanceSQL.ARCHIVED,
-    'FORM_STATE_NORMAL': XFormInstanceSQL.NORMAL,
-    'FORM_OPERATION_ARCHIVE': XFormOperationSQL.ARCHIVE,
-    'FORM_OPERATION_UNARCHIVE': XFormOperationSQL.UNARCHIVE,
+    'FORM_STATE_ARCHIVED': XFormInstance.ARCHIVED,
+    'FORM_STATE_NORMAL': XFormInstance.NORMAL,
+    'FORM_OPERATION_ARCHIVE': XFormOperation.ARCHIVE,
+    'FORM_OPERATION_UNARCHIVE': XFormOperation.UNARCHIVE,
     'TRANSACTION_TYPE_LEDGER': CaseTransaction.TYPE_LEDGER,
     'TRANSACTION_TYPE_FORM': CaseTransaction.TYPE_FORM,
 })

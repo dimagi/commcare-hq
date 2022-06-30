@@ -1,6 +1,7 @@
 import csv
 import itertools
 import os
+import urllib.parse
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
@@ -23,8 +24,8 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.generic import FormView, TemplateView, View
 
 from couchdbkit.exceptions import ResourceNotFound
@@ -34,6 +35,7 @@ from two_factor.utils import default_device
 
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
+from corehq.apps.hqadmin.utils import unset_password
 from couchexport.models import Format
 from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.django.email import send_HTML_email
@@ -63,7 +65,7 @@ from corehq.util.timer import TimingContext
 
 
 class UserAdministration(BaseAdminSectionView):
-    section_name = ugettext_lazy("User Administration")
+    section_name = gettext_lazy("User Administration")
 
 
 class SuperuserManagement(UserAdministration):
@@ -213,14 +215,14 @@ class AdminRestoreView(TemplateView):
         cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
         num_cases = len(cases)
 
-        create_case_type = filter(None, [case.find(
+        create_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}create/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
-        update_case_type = filter(None, [case.find(
+        ) for case in cases if len(case) and hasattr(case, "type")]
+        update_case_type = [case.find(
             '{http://commcarehq.org/case/transaction/v2}update/'
             '{http://commcarehq.org/case/transaction/v2}case_type'
-        ) for case in cases])
+        ) for case in cases if len(case) and hasattr(case, "type")]
         case_type_counts = dict(Counter([
             case.type for case in itertools.chain(create_case_type, update_case_type)
         ]))
@@ -365,7 +367,12 @@ class DisableUserView(FormView):
 
     @property
     def redirect_url(self):
-        return '{}?q={}'.format(reverse('web_user_lookup'), self.username)
+        base_url = reverse('web_user_lookup')
+        if self.username:
+            encoded_username = urllib.parse.quote(self.username) if self.username else None
+            return '{}?q={}'.format(base_url, encoded_username)
+
+        return base_url
 
     def get(self, request, *args, **kwargs):
         if not self.user:
@@ -392,7 +399,7 @@ class DisableUserView(FormView):
 
         reset_password = form.cleaned_data['reset_password']
         if reset_password:
-            self.user.set_password(uuid.uuid4().hex)
+            unset_password(self.user)
             change_messages.update(UserChangeMessage.password_reset())
 
         # toggle active state
@@ -425,7 +432,7 @@ class DisableUserView(FormView):
         )
         send_HTML_email(
             "%sYour account has been %s" % (settings.EMAIL_SUBJECT_PREFIX, verb),
-            self.username,
+            self.user.get_email() if self.user else self.username,
             render_to_string('hqadmin/email/account_disabled_email.html', context={
                 'support_email': settings.SUPPORT_EMAIL,
                 'password_reset': reset_password,
@@ -436,7 +443,7 @@ class DisableUserView(FormView):
         )
 
         messages.success(self.request, _('Account successfully %(verb)s.' % {'verb': verb}))
-        return redirect('{}?q={}'.format(reverse('web_user_lookup'), self.username))
+        return redirect(self.redirect_url)
 
 
 @method_decorator(require_superuser, name='dispatch')
@@ -512,7 +519,7 @@ class DisableTwoFactorView(FormView):
             "Two-Factor auth was reset. Details: \n"
             "    Account reset: {username}\n"
             "    Reset by: {reset_by}\n"
-            "    Request Verificatoin Mode: {verification}\n"
+            "    Request Verification Mode: {verification}\n"
             "    Verified by: {verified_by}\n"
             "    Two-Factor disabled for {days} days.".format(
                 username=username,
@@ -524,7 +531,7 @@ class DisableTwoFactorView(FormView):
         )
         send_HTML_email(
             "%sTwo-Factor authentication reset" % settings.EMAIL_SUBJECT_PREFIX,
-            username,
+            couch_user.get_email(),
             render_to_string('hqadmin/email/two_factor_reset_email.html', context={
                 'until': disable_until.strftime('%Y-%m-%d %H:%M:%S UTC') if disable_for_days else None,
                 'support_email': settings.SUPPORT_EMAIL,

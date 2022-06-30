@@ -478,8 +478,16 @@
                             {
                                 "case_name": "/data/babies/whats_the_babys_name",
                                 "case_properties": {
-                                    "eye_color": "/data/babies/eye_color",
-                                    "facility_name": "/data/facility_name"
+                                  "eye_color": {
+                                    "doc_type": "ConditionalCaseUpdate",
+                                    "question_path": "/data/babies/eye_color",
+                                    "update_mode": "always"
+                                  },
+                                  "facility_name": {
+                                    "doc_type": "ConditionalCaseUpdate",
+                                    "question_path": "/data/facility_name",
+                                    "update_mode": "always"
+                                  }
                                 },
                                 "case_type": "baby",
                                 "close_condition": {
@@ -512,7 +520,10 @@
                             },
                             "doc_type": "UpdateCaseAction",
                             "update": {
-                                "last_status": "/data/how_are_you_today"
+                                "last_status": {
+                                  "question_path": "/data/how_are_you_today",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {

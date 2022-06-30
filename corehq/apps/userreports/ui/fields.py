@@ -1,12 +1,12 @@
 import json
 
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
-    StaticDataSourceConfiguration,
+    StaticDataSourceConfiguration, RegistryDataSourceConfiguration,
 )
 from corehq.apps.userreports.ui.widgets import JsonWidget
 
@@ -16,8 +16,9 @@ class ReportDataSourceField(forms.ChoiceField):
     def __init__(self, domain, *args, **kwargs):
         self.domain = domain
         standard_sources = DataSourceConfiguration.by_domain(self.domain)
+        registry_sources = RegistryDataSourceConfiguration.by_domain(self.domain)
         custom_sources = list(StaticDataSourceConfiguration.by_domain(domain))
-        available_data_sources = standard_sources + custom_sources
+        available_data_sources = standard_sources + registry_sources + custom_sources
         if toggles.AGGREGATE_UCRS.enabled(domain):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
             available_data_sources += AggregateTableDefinition.objects.filter(domain=self.domain)
@@ -47,6 +48,9 @@ class JsonField(forms.CharField):
             return value
 
     def to_python(self, value):
+        if value and isinstance(value, dict):
+            return value
+
         val = super(JsonField, self).to_python(value)
         try:
             return json.loads(val)
@@ -57,4 +61,5 @@ class JsonField(forms.CharField):
         if value in self.null_values and self.required:
             raise forms.ValidationError(self.error_messages['required'])
         if self.expected_type and not isinstance(value, self.expected_type):
-            raise forms.ValidationError(_('Expected {} but was {}'.format(self.expected_type, type(value))))
+            raise forms.ValidationError(
+                _('Expected {} but was {}').format(self.expected_type.__name__, type(value).__name__))

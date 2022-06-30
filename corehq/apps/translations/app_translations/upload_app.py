@@ -2,7 +2,7 @@ import io
 
 from django.contrib import messages
 from django.template.defaultfilters import linebreaksbr
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import ghdiff
 from CommcareTranslationChecker import validate_workbook

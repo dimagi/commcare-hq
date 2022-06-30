@@ -34,29 +34,6 @@ def convert_property_dict(sub_dict, mapping, override_root_keys=None):
     return sub_dict
 
 
-def restore_property_dict(report_dict_item):
-    """
-    Revert a converted/retrieved document from Report<index> and deconvert all its properties
-    back from {#value: <val>} to just <val>
-    """
-    restored = {}
-    if not isinstance(report_dict_item, dict):
-        return report_dict_item
-
-    for k, v in report_dict_item.items():
-        if isinstance(v, list):
-            restored[k] = [restore_property_dict(x) for x in v]
-        elif isinstance(v, dict):
-            if VALUE_TAG in v:
-                restored[k] = v[VALUE_TAG]
-            else:
-                restored[k] = restore_property_dict(v)
-        else:
-            restored[k] = v
-
-    return restored
-
-
 def is_couch_change_for_sql_domain(change):
     if not change.metadata or not change.metadata.domain:
         return False

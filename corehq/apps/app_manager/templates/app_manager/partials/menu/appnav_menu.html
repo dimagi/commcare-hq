@@ -15,8 +15,7 @@
         {% include 'app_manager/partials/menu/module_link.html' %}
 
         <ul class="appnav-menu appnav-menu-nested see sortable sortable-forms
-                   {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %}
-                   {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}">
+                   {% if module.unique_id == selected_module.unique_id %}selected{% endif %}">
           {% with nav_form as selected_form %}
             {% for form in module.get_forms %}
               <li class="edit-form-li js-sorted-li"

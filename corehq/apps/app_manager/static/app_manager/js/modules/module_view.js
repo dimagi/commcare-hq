@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
-        $('.multiselect-caselist').select2();
+        $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
         });
@@ -9,7 +9,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             moduleType = moduleBrief.module_type,
             options = initial_page_data('js_options') || {};
 
-        hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Menu Settings"));
+        hqImport('app_manager/js/app_manager').setAppendedPageTitle(gettext("Menu Settings"));
         // Set up details
         if (moduleBrief.case_type) {
             var details = initial_page_data('details');
@@ -37,7 +37,6 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     fixtureSelect: detail.fixture_select,
                     multimedia: initial_page_data('multimedia_object_map'),
                     searchProperties: options.search_properties || [],
-                    searchDefaultRelevant: options.search_default_relevant,
                     searchAdditionalRelevant: options.search_additional_relevant,
                     autoLaunch: options.auto_launch,
                     defaultSearch: options.default_search,
@@ -48,7 +47,10 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
                     dataRegistry: options.data_registry,
-                    additionalRegistryQueries: options.additional_registry_queries,
+                    dataRegistryWorkflow: options.data_registry_workflow,
+                    additionalRegistryCases: options.additional_registry_cases,
+                    customRelatedCaseProperty: options.custom_related_case_property,
+                    inlineSearch: options.inline_search,
                 });
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

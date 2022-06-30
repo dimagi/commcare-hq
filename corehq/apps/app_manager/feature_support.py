@@ -156,6 +156,13 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.38')
 
     @property
+    def enable_case_search_title_translation(self):
+        """
+        Ability to configure case search title through translation attribute, only supported > 2.53
+        """
+        return self._require_minimum_version('2.53')
+
+    @property
     def enable_training_modules(self):
         return self._require_minimum_version('2.43')
 
@@ -186,4 +193,25 @@ class CommCareFeatureSupportMixin(object):
         return (
             toggles.SESSION_ENDPOINTS.enabled(self.domain)
             and self._require_minimum_version('2.51')
+        )
+
+    @property
+    def supports_data_registry(self):
+        return (
+            toggles.DATA_REGISTRY.enabled(self.domain)
+            and self._require_minimum_version('2.53')
+        )
+
+    @property
+    def enable_exclude_from_search(self):
+        return (
+            toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
+            and self._require_minimum_version('2.53')
+        )
+
+    @property
+    def enable_required_search_fields(self):
+        return (
+            toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
+            and self._require_minimum_version('2.53')
         )

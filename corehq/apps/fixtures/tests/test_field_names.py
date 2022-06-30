@@ -152,7 +152,7 @@ class FieldNameValidationTest(SimpleTestCase):
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_combo(self):
-        bad_name = "<space>\<dadgg sd"
+        bad_name = "<space>\\<dadgg sd"
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_starts_with_number(self):
@@ -160,7 +160,7 @@ class FieldNameValidationTest(SimpleTestCase):
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_punctuation(self):
-        bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \_(ツ)_/¯"
+        bad_name = "ﾉｲ丂 ﾑ ｲ尺ﾑｱ! \\_(ツ)_/¯"
         self.assertTrue(is_identifier_invalid(bad_name))
 
     def test_alphanumeric_nonascii(self):

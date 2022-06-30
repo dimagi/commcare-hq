@@ -7,7 +7,7 @@ def get_resource_versions(path=None):
     resource_versions = {}
 
     if not path:
-        path = os.path.join(settings.FILEPATH, 'resource_versions.yaml')
+        path = os.path.join(settings.FILEPATH, 'resource_versions.yml')
     if not os.path.exists(path):
         return resource_versions
 

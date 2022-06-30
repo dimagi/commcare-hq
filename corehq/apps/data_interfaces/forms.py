@@ -6,8 +6,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
+from corehq.apps.hqwebapp.widgets import SelectToggle
 
 from couchdbkit import ResourceNotFound
 from crispy_forms.bootstrap import (
@@ -18,17 +19,23 @@ from crispy_forms.bootstrap import (
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import HTML, Div, Field, Fieldset, Layout
 from memoized import memoized
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.specs import FactoryContext
+from corehq.toggles import CASE_UPDATES_UCR_FILTERS
 
 from dimagi.utils.django.fields import TrimmedCharField
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
     CaseRuleAction,
     CaseRuleCriteria,
     ClosedParentDefinition,
     CustomActionDefinition,
     CustomMatchDefinition,
     MatchPropertyDefinition,
+    UCRFilterDefinition,
     UpdateCaseDefinition,
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -136,7 +143,7 @@ def validate_non_negative_days(value):
 
 
 class AddCaseGroupForm(forms.Form):
-    name = forms.CharField(required=True, label=ugettext_noop("Group Name"))
+    name = forms.CharField(required=True, label=gettext_noop("Group Name"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseGroupForm, self).__init__(*args, **kwargs)
@@ -203,7 +210,7 @@ class UpdateCaseGroupForm(AddCaseGroupForm):
 
 
 class AddCaseToGroupForm(forms.Form):
-    case_identifier = forms.CharField(label=ugettext_noop("Case ID, External ID, or Phone Number"))
+    case_identifier = forms.CharField(label=gettext_noop("Case ID, External ID, or Phone Number"))
 
     def __init__(self, *args, **kwargs):
         super(AddCaseToGroupForm, self).__init__(*args, **kwargs)
@@ -228,7 +235,7 @@ class CaseUpdateRuleForm(forms.Form):
     prefix = "rule"
 
     name = TrimmedCharField(
-        label=ugettext_lazy("Name"),
+        label=gettext_lazy("Name"),
         required=True,
     )
 
@@ -267,8 +274,18 @@ class CaseRuleCriteriaForm(forms.Form):
     prefix = "criteria"
 
     case_type = forms.ChoiceField(
-        label=ugettext_lazy("Case Type"),
+        label=gettext_lazy("Case Type"),
         required=True,
+    )
+    criteria_operator = forms.ChoiceField(
+        label=gettext_lazy("Run when"),
+        required=False,
+        initial='ALL',
+        choices=AutomaticUpdateRule.CriteriaOperator.choices,
+        widget=SelectToggle(
+            choices=AutomaticUpdateRule.CriteriaOperator.choices,
+            attrs={"ko_value": "criteriaOperator"}
+        ),
     )
 
     filter_on_server_modified = forms.CharField(required=False, initial='false')
@@ -276,6 +293,7 @@ class CaseRuleCriteriaForm(forms.Form):
     custom_match_definitions = forms.CharField(required=False, initial='[]')
     property_match_definitions = forms.CharField(required=False, initial='[]')
     filter_on_closed_parent = forms.CharField(required=False, initial='false')
+    ucr_filter_definitions = forms.JSONField(required=False, initial=list)
 
     @property
     def current_values(self):
@@ -286,6 +304,8 @@ class CaseRuleCriteriaForm(forms.Form):
             'property_match_definitions': json.loads(self['property_match_definitions'].value()),
             'filter_on_closed_parent': self['filter_on_closed_parent'].value(),
             'case_type': self['case_type'].value(),
+            'criteria_operator': self['criteria_operator'].value(),
+            'ucr_filter_definitions': json.loads(self['ucr_filter_definitions'].value()),
         }
 
     @property
@@ -303,12 +323,14 @@ class CaseRuleCriteriaForm(forms.Form):
     def compute_initial(self, domain, rule):
         initial = {
             'case_type': rule.case_type,
+            'criteria_operator': rule.criteria_operator,
             'filter_on_server_modified': 'true' if rule.filter_on_server_modified else 'false',
             'server_modified_boundary': rule.server_modified_boundary,
         }
 
         custom_match_definitions = []
         property_match_definitions = []
+        ucr_filter_definitions = []
 
         for criteria in rule.memoized_criteria:
             definition = criteria.definition
@@ -324,9 +346,15 @@ class CaseRuleCriteriaForm(forms.Form):
                 })
             elif isinstance(definition, ClosedParentDefinition):
                 initial['filter_on_closed_parent'] = 'true'
+            elif isinstance(definition, UCRFilterDefinition):
+                ucr_filter_definitions.append({
+                    'configured_filter': definition.configured_filter,
+                })
 
         initial['custom_match_definitions'] = json.dumps(custom_match_definitions)
         initial['property_match_definitions'] = json.dumps(property_match_definitions)
+        initial['ucr_filter_definitions'] = ucr_filter_definitions
+
         return initial
 
     @property
@@ -354,6 +382,10 @@ class CaseRuleCriteriaForm(forms.Form):
         return True
 
     @property
+    def allow_ucr_filter(self):
+        return CASE_UPDATES_UCR_FILTERS.enabled(self.domain)
+
+    @property
     def allow_regex_case_property_match(self):
         # The framework allows for this, it's just historically only
         # been an option for messaging conditonal alert rules and not
@@ -375,6 +407,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
         self.domain = domain
         self.set_case_type_choices(self.initial.get('case_type'))
+        self.fields['criteria_operator'].choices = AutomaticUpdateRule.CriteriaOperator.choices
 
         self.helper = HQFormHelper()
         self.helper.form_tag = False
@@ -389,19 +422,22 @@ class CaseRuleCriteriaForm(forms.Form):
                 hidden_bound_field('custom_match_definitions', 'customMatchDefinitions'),
                 hidden_bound_field('property_match_definitions', 'propertyMatchDefinitions'),
                 hidden_bound_field('filter_on_closed_parent', 'filterOnClosedParent'),
+                hidden_bound_field('ucr_filter_definitions', 'ucrFilterDefinitions'),
                 Div(data_bind="template: {name: 'case-filters'}"),
                 css_id="rule-criteria-panel",
             ),
         )
 
-        self.case_type_helper = HQFormHelper()
-        self.case_type_helper.form_tag = False
-        self.case_type_helper.layout = Layout(
+        self.form_beginning_helper = HQFormHelper()
+        self.form_beginning_helper.form_tag = False
+        self.form_beginning_helper.layout = Layout(
             Fieldset(
                 _("Rule Criteria"),
-                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2")
+                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2"),
+                Field('criteria_operator'),
             )
         )
+
 
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
@@ -556,9 +592,36 @@ class CaseRuleCriteriaForm(forms.Form):
     def clean_filter_on_closed_parent(self):
         return true_or_false(self.cleaned_data.get('filter_on_closed_parent'))
 
+    def clean_ucr_filter_definitions(self):
+        value = self.cleaned_data.get('ucr_filter_definitions')
+
+        if not isinstance(value, list):
+            self._json_fail_hard()
+
+        result = []
+
+        for obj in value:
+            if not isinstance(obj, dict):
+                self._json_fail_hard()
+            try:
+                spec = json.loads(obj['configured_filter'])
+            except (TypeError, ValueError):
+                self._json_fail_hard()
+
+            try:
+                FilterFactory.from_spec(spec, FactoryContext.empty(domain=self.domain))
+            except BadSpecError as error:
+                message = _("There was a problem with a UCR Filter Definition: ")
+                raise ValidationError(message + str(error))
+
+            result.append(obj)
+
+        return result
+
     def save_criteria(self, rule):
         with transaction.atomic():
             rule.case_type = self.cleaned_data['case_type']
+            rule.criteria_operator = self.cleaned_data['criteria_operator']
             rule.filter_on_server_modified = self.cleaned_data['filter_on_server_modified']
             rule.server_modified_boundary = self.cleaned_data['server_modified_boundary']
             rule.save()
@@ -581,6 +644,14 @@ class CaseRuleCriteriaForm(forms.Form):
                     name=item['name'],
                 )
 
+                criteria = CaseRuleCriteria(rule=rule)
+                criteria.definition = definition
+                criteria.save()
+
+            for item in self.cleaned_data['ucr_filter_definitions']:
+                definition = UCRFilterDefinition.objects.create(
+                    configured_filter=item['configured_filter']
+                )
                 criteria = CaseRuleCriteria(rule=rule)
                 criteria.definition = definition
                 criteria.save()

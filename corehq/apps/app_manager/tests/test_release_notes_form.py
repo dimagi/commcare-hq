@@ -3,7 +3,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 
 from couchdbkit import ResourceNotFound
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.models import Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory

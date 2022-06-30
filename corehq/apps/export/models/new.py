@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models import Sum
 from django.http import Http404
 from django.utils.datastructures import OrderedSet
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import (
     BooleanProperty,
@@ -89,6 +89,11 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
 )
+from corehq.apps.export.esaccessors import (
+    get_case_export_base_query,
+    get_form_export_base_query,
+    get_sms_export_base_query
+)
 from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import SQLProduct
@@ -108,6 +113,8 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.html_utils import strip_tags
+
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
 
@@ -225,7 +232,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     def create_from_question(cls, question, app_id, app_version, repeats):
         return cls(
             path=_question_path_to_path_nodes(question['value'], repeats),
-            label=question['label'],
+            label=strip_tags(question['label']),
             last_occurrences={app_id: app_version},
             datatype=get_form_indicator_data_type(question['type'])
         )
@@ -1173,6 +1180,20 @@ class CaseExportInstance(ExportInstance):
             for column in table.columns
         )
 
+    def get_query(self, include_filters=True):
+        query = get_case_export_base_query(self.domain, self.case_type)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
+
 
 class FormExportInstance(ExportInstance):
     xmlns = StringProperty()
@@ -1242,6 +1263,20 @@ class FormExportInstance(ExportInstance):
             )
         return []
 
+    def get_query(self, include_filters=True):
+        query = get_form_export_base_query(self.domain, self.app_id, self.xmlns, self.include_errors)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
+
+    def get_rows(self):
+        return self.get_query().values()
+
+    def get_count(self):
+        return self.get_query().count()
+
 
 class SMSExportInstance(ExportInstance):
     type = SMS_EXPORT
@@ -1268,6 +1303,14 @@ class SMSExportInstance(ExportInstance):
         instance = cls(domain=schema.domain, tables=[main_table])
         instance._insert_system_properties(instance.domain, schema.type, instance.tables[0])
         return instance
+
+    def get_query(self, include_filters=True):
+        query = get_sms_export_base_query(self.domain)
+        if include_filters:
+            for filter in self.get_filters():
+                query = query.filter(filter.to_es_filter())
+
+        return query
 
 
 class ExportInstanceDefaults(object):
@@ -1371,7 +1414,9 @@ class LabelItem(ExportItem):
 
 class CaseIndexItem(ExportItem):
     """
-    An item that refers to a case index
+    An item that refers to a case index.
+
+    See CaseIndexExportColumn
     """
 
     @property
@@ -1381,19 +1426,25 @@ class CaseIndexItem(ExportItem):
 
 class GeopointItem(ExportItem):
     """
-    A GPS coordinate question
+    A GPS coordinate question.
+
+    See SplitGPSExportColumn
     """
 
 
 class MultiMediaItem(ExportItem):
     """
-    An item that references multimedia
+    An item that references multimedia.
+
+    See MultiMediaExportColumn
     """
 
 
 class StockItem(ExportItem):
     """
     An item that references a stock question (balance, transfer, dispense, receive)
+
+    See StockFormExportColumn
     """
 
     @classmethod
@@ -1424,6 +1475,8 @@ class MultipleChoiceItem(ExportItem):
     A multiple choice question or case property
     Choices is the union of choices for the question in each of the builds with
     this question.
+
+    See SplitExportColumn
     """
     options = SchemaListProperty(Option)
 
@@ -2189,7 +2242,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
         """
         Generates the schema for the main Case tab on the export page
-        Includes system export properties for the case.
+        Includes system export properties for the case as well as properties for exporting parent case IDs
+        if applicable.
         """
         assert len(list(case_property_mapping)) == 1
         schema = cls()
@@ -2221,6 +2275,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _generate_schema_for_parent_case(cls, app_id, app_version):
+        """This is just a placeholder to indicate that the case has 'parents'.
+        The actual schema is static so not stored in the DB.
+        See ``corehq.apps.export.system_properties.PARENT_CASE_TABLE_PROPERTIES``
+        """
         schema = cls()
         schema.group_schemas.append(ExportGroupSchema(
             path=PARENT_CASE_TABLE,
@@ -2230,7 +2288,11 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
-        """Generates the schema for the Case History tab on the export page"""
+        """Generates the schema for the Case History tab on the export page.
+
+        See ``corehq.apps.export.system_properties.CASE_HISTORY_PROPERTIES`` for
+        additional 'static' schema items.
+        """
         assert len(list(case_property_mapping)) == 1
         schema = cls()
 

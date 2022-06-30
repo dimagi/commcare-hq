@@ -87,8 +87,13 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # create form and case ucrs
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
+        cls.form_data_source.save()
+
         cls.case_data_source = get_case_data_source(cls.app, cls.case_type)
+        cls.case_data_source.save()
+
         cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
+        cls.parent_case_data_source.save()
 
         # create some data - first just create the case
         cls.parent_case_id = cls._create_parent_case(cls.parent_name)
@@ -154,7 +159,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def _create_case(cls, parent_id):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             case_id=case_id,
             case_type=cls.case_type,
             date_opened=cls.case_date_opened,
@@ -170,7 +175,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def _create_closed_case(cls):
         case_id = uuid.uuid4().hex
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             case_id=case_id,
             case_type=cls.case_type,
             date_opened=cls.closed_case_date_opened,
@@ -186,7 +191,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         parent_id = uuid.uuid4().hex
         post_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=parent_id,
                     case_name=case_name,
@@ -206,7 +211,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             received_on=received_on,
         )
         properties = cls._get_case_property_values()
-        caseblock = CaseBlock.deprecated_init(
+        caseblock = CaseBlock(
             case_id=case_id,
             update=properties,
         )

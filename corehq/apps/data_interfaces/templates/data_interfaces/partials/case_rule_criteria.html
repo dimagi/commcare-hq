@@ -18,7 +18,7 @@
       {% endfor %}
     </div>
   {% endif %}
-  {% crispy criteria_form criteria_form.case_type_helper %}
+  {% crispy criteria_form criteria_form.form_beginning_helper %}
   <div data-bind="template: {name: getKoTemplateId, foreach: criteria, afterRender:disableCriteriaField}"></div>
   <div class="form-group" data-bind="template: {afterRender:disableCriteriaField}">
     <label class="col-xs-12 col-sm-4 col-md-4 col-lg-2 control-label">
@@ -50,6 +50,9 @@
           {% if form.is_system_admin %}
             <li data-bind="click: function() { addFilter('custom-filter'); }"><a>{% trans "Custom filter" %}</a></li>
           {% endif %}
+          {% if form.allow_ucr_filter %}
+          <li data-bind="click: function() { addFilter('ucr-filter'); }"><a>{% trans "UCR Filter" %}</a></li>
+        {% endif %}
         </ul>
       </div>
     </div>
@@ -65,7 +68,12 @@
         <button type="button" class="btn btn-danger" data-bind="click: $parent.removeFilter"><i class="fa fa-close"></i></button>
       </div>
       <div class="col-xs-6 text-center">
-        <label class="control-label">{% trans "AND" %}</label>
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ALL' -->
+          <label class="control-label">{% trans "AND" %}</label>
+        <!-- /ko -->
+        <!-- ko if: $index() > 0 && $parent.criteriaOperator() == 'ANY' -->
+          <label class="control-label">{% trans "OR" %}</label>
+        <!-- /ko -->
       </div>
     </div>
   </div>
@@ -197,5 +205,19 @@
     <label class="col-xs-1 control-label">
       <span class="label label-primary">Requires System Admin</span>
     </label>
+  </div>
+</script>
+
+
+{# Template for ucr filter #}
+{# An instance of this template is bound to an instance of the js object UCRFilterDefinition #}
+
+<script type="text/html" id="ucr-filter">
+  <div class="form-group well">
+    <div data-bind="template: {name: 'remove-filter'}"></div>
+    <label class="control-label col-xs-2">{% trans "Filter Definition" %}</label>
+    <div class="controls col-xs-4" data-bind="{template: {afterRender: $parent.enableAce}}">
+      <textarea class="formcontrol observablejsonwidget" name="configured_filter" data-bind="value: configured_filter"></textarea>
+    </div>
   </div>
 </script>

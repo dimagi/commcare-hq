@@ -10,8 +10,8 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
@@ -32,9 +32,11 @@ from corehq.apps.hqwebapp.views import BasePageView, logout
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.registration.forms import WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user_via_reg_form
+from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.decorators import require_can_edit_web_users
 from corehq.apps.users.forms import DomainRequestForm
 from corehq.apps.users.models import CouchUser, DomainRequest, Invitation
+from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_INVITATION
 
 
@@ -112,6 +114,14 @@ class UserInvitationView(object):
             if request.method == "POST":
                 couch_user = CouchUser.from_django_user(request.user, strict=True)
                 invitation.accept_invitation_and_join_domain(couch_user)
+                log_user_change(
+                    by_domain=invitation.domain,
+                    for_domain=invitation.domain,
+                    couch_user=couch_user,
+                    changed_by_user=CouchUser.get_by_user_id(invitation.invited_by),
+                    changed_via=USER_CHANGE_VIA_INVITATION,
+                    change_messages=UserChangeMessage.domain_addition(invitation.domain)
+                )
                 track_workflow(request.couch_user.get_email(),
                                "Current user accepted a project invitation",
                                {"Current user accepted a project invitation": "yes"})
@@ -127,7 +137,7 @@ class UserInvitationView(object):
         else:
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email)
+                idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
                 form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
@@ -143,7 +153,8 @@ class UserInvitationView(object):
                         form,
                         created_by=invited_by_user,
                         created_via=USER_CHANGE_VIA_INVITATION,
-                        domain=invitation.domain
+                        domain=invitation.domain,
+                        is_domain_admin=False,
                     )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
@@ -244,7 +255,7 @@ def delete_invitation(request, domain):
 @method_decorator(always_allow_project_access, name='dispatch')
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
-    page_title = ugettext_lazy("Request Access")
+    page_title = gettext_lazy("Request Access")
     template_name = "users/domain_request.html"
     request_form = None
 

@@ -65,6 +65,8 @@ session variables.
 
 When we add a child module into the mix we need to make sure that the session variables for the child module forms match
 those of the parent in two ways, matching session variable names and adding in any missing variables.
+HQ will also update the references in expressions to match the changes in variable names.
+See ``corehq.apps.app_manager.suite_xml.sections.entries.EntriesHelper.add_parent_datums`` for implementation.
 
 Matching session variable names
 ...............................
@@ -91,6 +93,12 @@ to select the mother case again:
 
     case_id:            load mother case
     case_id_child:      load child case
+
+
+**Note:**
+If you have a case_id in both module A and module B, and you wish to access the ID of the case selected in
+parent module within an expression like the case list filter, then you should use ``parent_id``
+instead of ``case_id``
 
 Inserting missing variables
 ...........................

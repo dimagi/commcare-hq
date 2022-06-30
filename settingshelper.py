@@ -1,11 +1,12 @@
-import subprocess
-from collections import namedtuple
+import logging
 import os
+import re
+import subprocess
 import sys
 import tempfile
 import uuid
+from collections import namedtuple
 
-import re
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 
 
@@ -194,8 +195,8 @@ class CouchSettingsHelper(namedtuple('CouchSettingsHelper',
 
 
 def celery_failure_handler(task, exc, task_id, args, kwargs, einfo):
-    from redis.exceptions import ConnectionError
     from django_redis.exceptions import ConnectionInterrupted
+    from redis.exceptions import ConnectionError
     if isinstance(exc, (ConnectionInterrupted, ConnectionError)):
         task.retry(args=args, kwargs=kwargs, exc=exc, max_retries=3, countdown=60 * 5)
 
@@ -232,11 +233,11 @@ def fix_logger_obfuscation(fix_logger_obfuscation_, logging_config):
 
 def configure_sentry(base_dir, server_env, dsn):
     import sentry_sdk
-    from sentry_sdk.integrations.logging import ignore_logger
-    from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
-    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.logging import ignore_logger
     from sentry_sdk.integrations.redis import RedisIntegration
+    from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
     def _before_send(event, hint):
         # can't import this during load since settings is not fully configured yet
@@ -283,3 +284,22 @@ def get_git_commit(base_dir):
         return out.strip().decode('ascii')
     except OSError:
         pass
+
+
+def update_redis_location_for_tests(settings_caches):
+    if not is_testing():
+        raise Exception("Attempt to update Redis settings outside of tests")
+
+    for name, config in settings_caches.items():
+        if not config.get("BACKEND", "").startswith("django_redis"):
+            continue
+
+        test_location = config.get("TEST_LOCATION")
+        if test_location:
+            config["LOCATION"] = test_location
+        else:
+            logging.warning(
+                "Unable to set Redis DB in '%(name)s' cache for tests. Using '%(location)s'.\n"
+                "\tTo configure a separate Redis DB for tests add a 'TEST_LOCATION' to the"
+                " '%(name)s' cache configuration.", {"name": name, "location": config["LOCATION"]}
+            )

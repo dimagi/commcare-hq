@@ -45,11 +45,15 @@ This should contain:
 
 - A new model and a management command that fetches all couch docs and creates or updates the corresponding SQL model(s).
 
-  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file and also a new management command.
+  - Start by running the management command ``evaluate_couch_model_for_sql django_app_name MyDocType`` on a production environment. This will produce code to add to your models file, a new management command and also a test which will ensure that the couch model and sql model have the same attributes.
 
     - The reason to run on production is that it will examine existing documents to help determine things like ``max_length``. This also means it can take a while. If you have reasonable data locally, running it locally is fine - but since the sql class will often have stricter data validation than couch, it's good to run it on prod at some point.
 
     - If the script encounters any list or dict properties, it'll ask you if they're submodels. If you say no, it'll create them as json columns. If you say yes, it'll skip them, because it doesn't currently handle submodels. For the same reason, it'll skip SchemaProperty and SchemaListProperty attributes. More on this subject below.
+
+    - Properties found on documents in Couch that are not members of the Couch model class will be added to the SQL model. In most cases they can be dropped (and not migrated to SQL).
+
+    - Properties that are present in the Couch model, but always ``null`` or not found in Couch will be added to the SQL model as ``unknown_type(null=True)``. These fields may be able to be dropped (and not migrated to SQL).
 
   - Add the generated models code to your models file. Edit as needed. Note the TODOs marked in the code:
 
@@ -68,7 +72,13 @@ This should contain:
     - Some docs have attributes that are couch ids of other docs. These are weak spots easy to forget when the referenced doc type is migrated. Add a comment so these show up in a grep for the referenced doc type.
 
   - Run ``makemigrations``
-
+  - Add the test that was generated to it's respective place.
+    - The test file uses a `ModelAttrEquality` util which has methods for running the equality tests.
+    - The test class that is generated will have two attributes  `couch_only_attrs`, `sql_only_attrs` and one method `test_have_same_attrs`.
+    - Generally during a migration some attributes and methods are renamed or removed as per need. To accomodate the changes you can update `couch_only_attrs` and `sql_only_attrs`.
+    - `couch_only_attrs` should be a set of attributes and methods which are either removed, renamed or not used anymore in SQL.
+    - `sql_only_attrs` should be a set of attributes and methods that are new in the SQL model.
+    - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated `couch_only_attrs` and `sql_only_attrs` but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
     - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.

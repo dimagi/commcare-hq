@@ -1,11 +1,15 @@
 import importlib
-from django.utils import http
-from . import CACHED_VIEW_PREFIX, rcache, COUCH_CACHE_TIMEOUT, CACHE_VIEWS
+from urllib.parse import quote
+
 from django.conf import settings
-from django_redis.exceptions import ConnectionInterrupted
+
 import simplejson
-from dimagi.utils.couch.cache.cache_core.const import INTERRUPTED, MISSING
 from couchdbkit import ResourceNotFound
+from django_redis.exceptions import ConnectionInterrupted
+
+from dimagi.utils.couch.cache.cache_core.const import INTERRUPTED, MISSING
+
+from . import CACHE_VIEWS, CACHED_VIEW_PREFIX, COUCH_CACHE_TIMEOUT, rcache
 
 
 class GenerationCache(object):
@@ -73,7 +77,7 @@ class GenerationCache(object):
         """
         param_string = ""
         if isinstance(params, dict):
-            param_string = http.urlquote('|'.join(["%s::%s" % (k, v) for k, v in params.items()]))
+            param_string = quote('|'.join(["%s::%s" % (k, v) for k, v in params.items()]))
         elif params == '*':
             param_string = params
 
@@ -92,7 +96,6 @@ class GenerationCache(object):
         from .api import do_cache_doc
         if isinstance(doc_or_docid, dict):
             do_cache_doc(doc_or_docid, cache_expire=cache_expire)
-
 
     def cached_view(self, db, view_name, wrapper=None, cache_expire=COUCH_CACHE_TIMEOUT, force_invalidate=False,
                     **params):
@@ -139,9 +142,12 @@ class GenerationCache(object):
                                 "id": stub['id'],
                                 "value": None,
                                 "key": stub["key"],
-                                # this feels hacky, but for some reason other views are squashing the master cached doc.
-                                # a more true invalidation scheme should have this more readily address this, but for now
-                                # do a db call here and cache it. Should be a _cached_doc_only call here
+                                # this feels hacky, but for some reason other
+                                # views are squashing the master cached doc. a
+                                # more true invalidation scheme should have this
+                                # more readily address this, but for now do a db
+                                # call here and cache it. Should be a
+                                # _cached_doc_only call here
                                 "doc": cached_open_doc(db, stub['id'])
                             }
                             rows.append(row)
@@ -219,13 +225,13 @@ class GlobalCache(GenerationCache):
         return "#global#"
 
     def invalidate_all(self):
-        raise NotImplementedError("You're trying to call a global cache invalidation - does not support invalidation - please rethink your priorities.")
-
+        raise NotImplementedError(
+            "You're trying to call a global cache invalidation - does not "
+            "support invalidation - please rethink your priorities."
+        )
 
     @staticmethod
     def nogen():
         if not GlobalCache._instance:
             GlobalCache._instance = GlobalCache()
         return GlobalCache._instance
-
-

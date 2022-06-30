@@ -36,18 +36,25 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Style,
     Template,
     Text,
-    Xpath,
-    XpathVariable,
+    TextXPath,
+    XPathVariable,
 )
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
     get_sort_and_sort_only_columns,
+    module_loads_registry_case,
     module_offers_search,
+    module_uses_inline_search,
 )
-from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, session_var
+from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
-AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+AUTO_LAUNCH_EXPRESSIONS = {
+    "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
+    "multi-select": ("count(instance('next_input')/results/value) = 0"
+                     " or count(instance('next_input')/results/value"
+                     "[count(instance('casedb')/casedb/case[@case_id = current()/.]) = 0]) > 0")
+}
 
 
 class DetailContributor(SectionContributor):
@@ -142,7 +149,7 @@ class DetailContributor(SectionContributor):
                     title=Text(locale_id=id_strings.detail_tab_title_locale(
                         module, detail_type, tab
                     )),
-                    nodeset=self._get_detail_tab_nodeset(detail, tab),
+                    nodeset=self._get_detail_tab_nodeset(module, detail, tab),
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
                     relevant=tab_relevant,
@@ -152,7 +159,7 @@ class DetailContributor(SectionContributor):
             if len(d.details):
                 helper = EntriesHelper(self.app)
                 datums = helper.get_datum_meta_module(module)
-                d.variables.extend([DetailVariable(name=datum.datum.id, function=datum.datum.value) for datum in datums])
+                d.variables.extend([DetailVariable(name=datum.id, function=datum.datum.value) for datum in datums])
                 return d
             else:
                 return None
@@ -192,8 +199,8 @@ class DetailContributor(SectionContributor):
                     if self.form_is_valid_for_case_list_action(self.app, form, module):
                         d.actions.append(self._get_case_list_form_action(module))
 
-                if module_offers_search(module):
-                    in_search = module.search_config.data_registry or "search" in id
+                if module_offers_search(module) and not module_uses_inline_search(module):
+                    in_search = module_loads_registry_case(module) or "search" in id
                     d.actions.append(self._get_case_search_action(module, in_search=in_search))
 
             try:
@@ -227,7 +234,7 @@ class DetailContributor(SectionContributor):
                 for e in custom_variable_elements
             ])
 
-    def _get_detail_tab_nodeset(self, detail, tab):
+    def _get_detail_tab_nodeset(self, module, detail, tab):
         if not tab.has_nodeset:
             return None
 
@@ -236,10 +243,12 @@ class DetailContributor(SectionContributor):
 
         if tab.nodeset_case_type:
             nodeset = CaseTypeXpath(tab.nodeset_case_type)
-            nodeset = nodeset.case(instance_name=detail.instance_name)
+            nodeset = nodeset.case(instance_name=detail.get_instance_name(module))
             nodeset = nodeset.select(CaseXPath().parent_id(),
                                      CaseXPath("current()").property("@case_id"))
             nodeset = nodeset.select("@status", "open")
+            if tab.nodeset_filter:
+                nodeset = nodeset.select_raw(interpolate_xpath(tab.nodeset_filter))
             return nodeset
 
         return None
@@ -317,8 +326,8 @@ class DetailContributor(SectionContributor):
                     pass
                 else:
                     frame.add_datum(StackDatum(
-                        id=target_meta.datum.id,
-                        value=session_var(source_dm.datum.id))
+                        id=target_meta.id,
+                        value=session_var(source_dm.id))
                     )
             else:
                 s_datum = target_meta.datum
@@ -395,7 +404,10 @@ class DetailContributor(SectionContributor):
         allow_auto_launch = toggles.USH_CASE_CLAIM_UPDATES.enabled(module.get_app().domain) and not in_search
         auto_launch_expression = "false()"
         if allow_auto_launch and module.search_config.auto_launch:
-            auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+            if module.is_multi_select():
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['multi-select'])
+            else:
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['single-select'])
         return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):
@@ -451,9 +463,9 @@ class DetailContributor(SectionContributor):
                     grid_y=0,
                 ),
                 header=Header(text=Text()),
-                template=Template(text=Text(xpath=Xpath(
+                template=Template(text=Text(xpath=TextXPath(
                     function="concat($message, ' ', format-date(date(instance('commcare-reports:index')/report_index/reports/@last_update), '%e/%n/%Y'))",
-                    variables=[XpathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
+                    variables=[XPathVariable(name='message', locale_id=id_strings.reports_last_updated_on())],
                 ))),
             )]
         )
@@ -464,7 +476,7 @@ class DetailContributor(SectionContributor):
             id=id_strings.fixture_detail(module),
             title=Text(),
         )
-        xpath = Xpath(function=module.fixture_select.display_column)
+        xpath = TextXPath(function=module.fixture_select.display_column)
         if module.fixture_select.localize:
             template_text = Text(locale=Locale(child_id=Id(xpath=xpath)))
         else:
@@ -703,7 +715,7 @@ class CaseTileHelper(object):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
-                XpathVariable(
+                XPathVariable(
                     name=mapping.key_as_variable,
                     locale_id=id_strings.detail_column_enum_variable(
                         self.module, self.detail_type, column, mapping.key_as_variable

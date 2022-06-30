@@ -5,7 +5,7 @@ import os
 
 from django.test import SimpleTestCase
 from lxml import html, etree
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format

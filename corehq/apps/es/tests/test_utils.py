@@ -1,8 +1,13 @@
 from datetime import date, datetime
 
+from django.test.testcases import SimpleTestCase
 from pytz import UTC, timezone
 
-from ..utils import es_format_datetime
+from ..utils import (
+    ElasticJSONSerializer,
+    SerializationError,
+    es_format_datetime,
+)
 
 ET = timezone('US/Eastern')
 
@@ -25,3 +30,13 @@ def test_es_format_datetime():
             (ET.localize(datetime(2021, 4, 28, 11, microsecond=1)), "2021-04-28T15:00:00.000001"),
     ]:
         yield _assert_returns, date_or_datetime, expected
+
+
+class TestElasticJSONSerializer(SimpleTestCase):
+
+    def test_raises_elastic_exception(self):
+        serializer = ElasticJSONSerializer()
+        with self.assertRaises(SerializationError):
+            serializer.loads("object")
+        with self.assertRaises(SerializationError):
+            serializer.dumps({"object": object()})

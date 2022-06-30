@@ -16,6 +16,7 @@ from corehq.motech.auth import (
     BearerAuthManager,
     DigestAuthManager,
     OAuth1Manager,
+    OAuth2ClientGrantManager,
     OAuth2PasswordGrantManager,
     api_auth_settings_choices,
     oauth1_api_endpoints,
@@ -28,6 +29,7 @@ from corehq.motech.const import (
     BEARER_AUTH,
     DIGEST_AUTH,
     OAUTH1,
+    OAUTH2_CLIENT,
     OAUTH2_PWD,
     PASSWORD_PLACEHOLDER,
 )
@@ -48,6 +50,12 @@ class RequestLogEntry:
     response_status: int
     response_headers: dict
     response_body: str
+
+
+class ConnectionSoftDeleteManager(models.Manager):
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
 
 
 class ConnectionSettings(models.Model):
@@ -77,9 +85,16 @@ class ConnectionSettings(models.Model):
     client_id = models.CharField(max_length=255, null=True, blank=True)
     client_secret = models.CharField(max_length=255, blank=True)
     skip_cert_verify = models.BooleanField(default=False)
+    token_url = models.CharField(max_length=255, blank=True, null=True)
+    refresh_url = models.CharField(max_length=255, blank=True, null=True)
+    pass_credentials_in_header = models.BooleanField(default=None, null=True)
     notify_addresses_str = models.CharField(max_length=255, default="")
     # last_token is stored encrypted because it can contain secrets
     last_token_aes = models.TextField(blank=True, default="")
+    is_deleted = models.BooleanField(default=False, db_index=True)
+
+    objects = ConnectionSoftDeleteManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return self.name
@@ -148,7 +163,28 @@ class ConnectionSettings(models.Model):
         )
 
     def get_auth_manager(self):
+        # Auth types that don't require a username:
         if self.auth_type is None:
+            return AuthManager()
+        if self.auth_type == OAUTH1:
+            return OAuth1Manager(
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                api_endpoints=self._get_oauth1_api_endpoints(),
+                connection_settings=self,
+            )
+        if self.auth_type == OAUTH2_CLIENT:
+            return OAuth2ClientGrantManager(
+                self.url,
+                client_id=self.client_id,
+                client_secret=self.plaintext_client_secret,
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
+                connection_settings=self,
+            )
+
+        # Auth types that require a username:
+        if not isinstance(self.username, str):
             return AuthManager()
         if self.auth_type == BASIC_AUTH:
             return BasicAuthManager(
@@ -159,13 +195,6 @@ class ConnectionSettings(models.Model):
             return DigestAuthManager(
                 self.username,
                 self.plaintext_password,
-            )
-        if self.auth_type == OAUTH1:
-            return OAuth1Manager(
-                client_id=self.client_id,
-                client_secret=self.plaintext_client_secret,
-                api_endpoints=self._get_oauth1_api_endpoints(),
-                connection_settings=self,
             )
         if self.auth_type == BEARER_AUTH:
             return BearerAuthManager(
@@ -179,24 +208,18 @@ class ConnectionSettings(models.Model):
                 self.plaintext_password,
                 client_id=self.client_id,
                 client_secret=self.plaintext_client_secret,
-                api_settings=self._get_oauth2_api_settings(),
+                token_url=self.token_url,
+                refresh_url=self.refresh_url,
+                pass_credentials_in_header=self.pass_credentials_in_header,
                 connection_settings=self,
             )
+        raise ValueError(f'Unknown auth type {self.auth_type!r}')
 
     def _get_oauth1_api_endpoints(self):
         if self.api_auth_settings in dict(oauth1_api_endpoints):
             return getattr(corehq.motech.auth, self.api_auth_settings)
         raise ValueError(_(
             f'Unable to resolve API endpoints {self.api_auth_settings!r}. '
-            'Please select the applicable API auth settings for the '
-            f'{self.name!r} connection.'
-        ))
-
-    def _get_oauth2_api_settings(self):
-        if self.api_auth_settings in dict(oauth2_api_settings):
-            return getattr(corehq.motech.auth, self.api_auth_settings)
-        raise ValueError(_(
-            f'Unable to resolve API settings {self.api_auth_settings!r}. '
             'Please select the applicable API auth settings for the '
             f'{self.name!r} connection.'
         ))
@@ -223,6 +246,10 @@ class ConnectionSettings(models.Model):
 
         return kinds
 
+    def soft_delete(self):
+        self.is_deleted = True
+        self.save()
+
 
 class RequestLog(models.Model):
     """
@@ -233,7 +260,7 @@ class RequestLog(models.Model):
     log_level = models.IntegerField(null=True)
     # payload_id is set for requests that are caused by a payload (e.g.
     # a form submission -- in which case payload_id will have the value
-    # of XFormInstanceSQL.form_id). It also uniquely identifies a Repeat
+    # of XFormInstance.form_id). It also uniquely identifies a Repeat
     # Record, so it can be used to link a Repeat Record with the
     # requests to send its payload.
     payload_id = models.CharField(max_length=126, blank=True, null=True, db_index=True)

@@ -1,6 +1,6 @@
 import time
 
-import mock
+from unittest import mock
 from django.http import HttpResponse
 from django.test import override_settings, SimpleTestCase, TestCase
 from django.urls import path, include

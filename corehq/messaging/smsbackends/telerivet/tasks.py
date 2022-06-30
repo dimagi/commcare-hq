@@ -13,13 +13,13 @@ from .const import (
     TELERIVET_FAILED_STATUSES,
     DELIVERED,
 )
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
 
 
-@task(serializer='pickle', queue=CELERY_QUEUE, ignore_result=True)
+@task(queue=CELERY_QUEUE, ignore_result=True)
 def process_incoming_message(*args, **kwargs):
     try:
         from corehq.messaging.smsbackends.telerivet.views import TELERIVET_INBOUND_FIELD_MAP
@@ -56,7 +56,7 @@ def process_message_status(sms: SMS, status: str, **kwargs):
         metadata['gateway_delivered'] = True
 
     if status in TELERIVET_FAILED_STATUSES:
-        error = kwargs.get('error_message', ugettext_noop('Error occurred'))
+        error = kwargs.get('error_message', gettext_noop('Error occurred'))
         sms.set_system_error(error)
 
     if metadata:

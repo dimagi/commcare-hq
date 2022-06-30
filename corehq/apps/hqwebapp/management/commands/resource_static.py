@@ -11,7 +11,7 @@ import yaml
 
 class Command(BaseCommand):
     help = """
-        Hashes the contents of all static files and stores the results in resource_versions.yaml.
+        Hashes the contents of all static files and stores the results in resource_versions.yml.
     """
 
     root_dir = settings.FILEPATH
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             old_resources.update(resources)
             resources = old_resources
         if not path:
-            path = os.path.join(self.root_dir, 'resource_versions.yaml')
+            path = os.path.join(self.root_dir, 'resource_versions.yml')
         with open(path, 'w') as fout:
             fout.write(yaml.dump([{'name': name, 'version': version}
                                   for name, version in resources.items()]))

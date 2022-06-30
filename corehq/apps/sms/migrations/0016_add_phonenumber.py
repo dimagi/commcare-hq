@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('phone_number', models.CharField(max_length=126, null=True, db_index=True)),
                 ('backend_id', models.CharField(max_length=126, null=True)),
                 ('ivr_backend_id', models.CharField(max_length=126, null=True)),
-                ('verified', models.NullBooleanField(default=False)),
+                ('verified', models.BooleanField(null=True, default=False)),
                 ('contact_last_modified', models.DateTimeField(null=True)),
             ],
             options={

@@ -1,18 +1,18 @@
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import gettext_lazy, gettext as _
 
 
 class SMSGHBackendForm(BackendForm):
     from_number = TrimmedCharField(
-        label=ugettext_lazy("From Number"),
+        label=gettext_lazy("From Number"),
     )
     client_id = TrimmedCharField(
-        label=ugettext_lazy("Client Id"),
+        label=gettext_lazy("Client Id"),
     )
     client_secret = TrimmedCharField(
-        label=ugettext_lazy("Client Secret"),
+        label=gettext_lazy("Client Secret"),
     )
 
     @property

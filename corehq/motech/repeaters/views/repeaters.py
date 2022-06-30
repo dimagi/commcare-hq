@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 from memoized import memoized
@@ -18,7 +18,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_permission,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 
 from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
@@ -35,10 +35,10 @@ RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
     urlname = 'domain_forwarding'
-    page_title = ugettext_lazy("Data Forwarding")
+    page_title = gettext_lazy("Data Forwarding")
     template_name = 'repeaters/repeaters.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -75,11 +75,11 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
 
 
 class BaseRepeaterView(BaseAdminProjectSettingsView):
-    page_title = ugettext_lazy("Forward Data")
+    page_title = gettext_lazy("Forward Data")
     repeater_form_class = GenericRepeaterForm
     template_name = 'repeaters/add_form_repeater.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(requires_privilege_with_fallback(privileges.DATA_FORWARDING))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseRepeaterView, self).dispatch(request, *args, **kwargs)
@@ -136,6 +136,7 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
+        repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
         return repeater
 
@@ -249,12 +250,14 @@ class AddFormRepeaterView(AddRepeaterView):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
         repeater.include_app_id_param = (
             self.add_repeater_form.cleaned_data['include_app_id_param'])
+        repeater.user_blocklist = (
+            self.add_repeater_form.cleaned_data['user_blocklist'])
         return repeater
 
 
 class EditFormRepeaterView(EditRepeaterView, AddFormRepeaterView):
     urlname = 'edit_form_repeater'
-    page_title = ugettext_lazy("Edit Form Repeater")
+    page_title = gettext_lazy("Edit Form Repeater")
 
     @property
     def page_url(self):
@@ -280,7 +283,7 @@ class AddCaseRepeaterView(AddRepeaterView):
 
 class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     urlname = 'edit_case_repeater'
-    page_title = ugettext_lazy("Edit Case Repeater")
+    page_title = gettext_lazy("Edit Case Repeater")
 
     @property
     def page_url(self):

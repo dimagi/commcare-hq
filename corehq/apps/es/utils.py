@@ -1,6 +1,33 @@
+import json
 from datetime import timezone, datetime
+
 from django.conf import settings
+
+from corehq.util.es.elasticsearch import SerializationError
+from corehq.util.json import CommCareJSONEncoder
 from corehq.util.metrics import metrics_counter
+
+
+class ElasticJSONSerializer(object):
+    """Modified version of ``elasticsearch.serializer.JSONSerializer``
+    that uses the CommCareJSONEncoder for serializing to JSON.
+    """
+    mimetype = 'application/json'
+
+    def loads(self, s):
+        try:
+            return json.loads(s)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(s, e)
+
+    def dumps(self, data):
+        # don't serialize strings
+        if isinstance(data, str):
+            return data
+        try:
+            return json.dumps(data, cls=CommCareJSONEncoder)
+        except (ValueError, TypeError) as e:
+            raise SerializationError(data, e)
 
 
 def values_list(hits, *fields, **kwargs):

@@ -1,4 +1,4 @@
-import mock
+from unittest import mock
 from io import BytesIO
 from django.test import TestCase, SimpleTestCase, override_settings
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache

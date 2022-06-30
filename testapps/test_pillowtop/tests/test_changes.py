@@ -1,5 +1,5 @@
 import uuid
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from django.test import TestCase
 

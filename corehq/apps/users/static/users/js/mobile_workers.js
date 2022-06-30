@@ -31,6 +31,7 @@ hqDefine("users/js/mobile_workers",[
     'users/js/custom_data_fields',
     'hqwebapp/js/components.ko', // for pagination
     'hqwebapp/js/validators.ko', // email address validation
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',
 ], function (
     $,
     ko,
@@ -69,8 +70,11 @@ hqDefine("users/js/mobile_workers",[
             force_account_confirmation: false,
             email: '',
             send_account_confirmation_email: false,
+            force_account_confirmation_by_sms: false,
+            phone_number: '',
             is_active: true,
             is_account_confirmed: true,
+            deactivate_after_date: '',
         });
 
         var self = ko.mapping.fromJS(options);
@@ -86,8 +90,12 @@ hqDefine("users/js/mobile_workers",[
 
         // used by two-stage provisioning
         self.emailRequired = ko.observable(self.force_account_confirmation());
-        self.passwordEnabled = ko.observable(!self.force_account_confirmation());
         self.sendConfirmationEmailEnabled = ko.observable(self.force_account_confirmation());
+
+        // used by two-stage sms provisioning
+        self.phoneRequired = ko.observable(self.force_account_confirmation_by_sms());
+
+        self.passwordEnabled = ko.observable(!(self.force_account_confirmation_by_sms() || self.force_account_confirmation()));
 
         self.action_error = ko.observable('');  // error when activating/deactivating a user
 
@@ -121,6 +129,31 @@ hqDefine("users/js/mobile_workers",[
         self.sendConfirmationEmail = function () {
             var urlName = 'send_confirmation_email';
             var $modal = $('#confirm_' + self.user_id());
+            $modal.find(".btn").disableButton();
+            $.ajax({
+                method: 'POST',
+                url: initialPageData.reverse(urlName, self.user_id()),
+                success: function (data) {
+                    $modal.find(".btn").enableButton();
+                    $modal.modal('hide');
+                    if (data.success) {
+                        self.action_error('');
+                    } else {
+                        self.action_error(data.error);
+                    }
+
+                },
+                error: function () {
+                    $modal.find(".btn").enableButton();
+                    $modal.modal('hide');
+                    self.action_error(gettext("Issue communicating with server. Try again."));
+                },
+            });
+        };
+
+        self.sendConfirmationSMS = function () {
+            var urlName = 'send_confirmation_sms';
+            var $modal = $('#confirm_' + self.user_id());
 
             $modal.find(".btn").addSpinnerToButton();
             $.ajax({
@@ -137,6 +170,7 @@ hqDefine("users/js/mobile_workers",[
                 },
                 error: function () {
                     $modal.modal('hide');
+                    $modal.find(".btn").removeSpinnerFromButton();
                     self.action_error(gettext("Issue communicating with server. Try again."));
                 },
             });
@@ -225,6 +259,7 @@ hqDefine("users/js/mobile_workers",[
             'location_url',
             'require_location_id',
             'strong_mobile_passwords',
+            'show_deactivate_after_date',
         ]);
 
         var self = {};
@@ -255,6 +290,10 @@ hqDefine("users/js/mobile_workers",[
                 return self.STATUS.DISABLED;
             }
 
+            if (self.stagedUser().force_account_confirmation_by_sms()) {
+                return self.STATUS.DISABLED;
+            }
+
             if (!self.useStrongPasswords()) {
                 // No validation
                 return self.STATUS.NONE;
@@ -271,9 +310,10 @@ hqDefine("users/js/mobile_workers",[
             if (!self.skipStandardValidations()) {
                 // Standard validation
                 var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
-                if (score > 1) {
+                var minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
+                if (score >= minimumZxcvbnScore) {
                     return self.STATUS.SUCCESS;
-                } else if (score < 1) {
+                } else if (score < minimumZxcvbnScore - 1) {
                     return self.STATUS.ERROR;
                 }
                 return self.STATUS.WARNING;
@@ -307,6 +347,38 @@ hqDefine("users/js/mobile_workers",[
             } else if (self.emailIsInvalid()) {
                 return gettext('Please enter a valid email address.');
             }
+            return "";
+        });
+
+        self.requiredPhoneMissing = ko.computed(function () {
+            return self.stagedUser() && self.stagedUser().phoneRequired() && !self.stagedUser().phone_number();
+        });
+
+        self.phoneIsInvalid = ko.computed(function () {
+            return self.stagedUser() && self.stagedUser().phone_number() && !self.stagedUser().phone_number().match(/^[0-9]+$/);
+        });
+
+        self.phoneStatus = ko.computed(function () {
+
+            if (!self.stagedUser()) {
+                return self.STATUS.NONE;
+            }
+
+            if (self.phoneStatusMessage()) {
+                return self.STATUS.ERROR;
+            }
+        });
+
+        self.phoneStatusMessage = ko.computed(function () {
+
+            if (self.requiredPhoneMissing()) {
+                return gettext('Phone number is required when users confirm their own accounts by sms.');
+            }
+
+            if (self.phoneIsInvalid()) {
+                return gettext('Phone number should contain only digits 0-9.');
+            }
+
             return "";
         });
 
@@ -411,6 +483,21 @@ hqDefine("users/js/mobile_workers",[
                     user.send_account_confirmation_email(false);
                 }
             });
+            user.force_account_confirmation_by_sms.subscribe(function (enabled) {
+                if (enabled) {
+                    // make phone number required
+                    user.phoneRequired(true);
+                    // clear and disable password input
+                    user.password('');
+                    user.passwordEnabled(false);
+                    user.sendConfirmationEmailEnabled(true);
+                } else {
+                    // make phone number optional
+                    user.phoneRequired(false);
+                    // enable password input
+                    user.passwordEnabled(true);
+                }
+            });
         });
 
         self.initializeUser = function () {
@@ -428,7 +515,19 @@ hqDefine("users/js/mobile_workers",[
                 locationsWidgets.initAutocomplete($locationSelect);
             }
 
+            if (options.show_deactivate_after_date) {
+                $('#id_deactivate_after_date').datetimepicker({
+                    format: 'MM-y',
+                });
+            }
+
             googleAnalytics.track.event('Manage Mobile Workers', 'New Mobile Worker', '');
+        };
+
+        self.getDeactivateAfterDate = function () {
+            if (options.show_deactivate_after_date) {
+                return $('#id_deactivate_after_date').val();
+            }
         };
 
         self.allowSubmit = ko.computed(function () {
@@ -449,6 +548,9 @@ hqDefine("users/js/mobile_workers",[
                 }
             }
             if (self.requiredEmailMissing() || self.emailIsInvalid()) {
+                return false;
+            }
+            if (self.requiredPhoneMissing() || self.phoneIsInvalid()) {
                 return false;
             }
             if (options.require_location_id && !self.stagedUser().location_id()) {
@@ -477,6 +579,7 @@ hqDefine("users/js/mobile_workers",[
             rmi('create_mobile_worker', {
                 user: _.extend(ko.mapping.toJS(newUser), {
                     custom_fields: self.stagedUser().custom_fields.serialize(),
+                    deactivate_after_date: self.getDeactivateAfterDate(),
                 }),
             }).done(function (data) {
                 if (data.success) {
@@ -509,6 +612,7 @@ hqDefine("users/js/mobile_workers",[
             location_url: initialPageData.reverse('location_search'),
             require_location_id: !initialPageData.get('can_access_all_locations'),
             strong_mobile_passwords: initialPageData.get('strong_mobile_passwords'),
+            show_deactivate_after_date: initialPageData.get('show_deactivate_after_date'),
         });
         $("#new-user-modal-trigger").koApplyBindings(newUserCreation);
         $("#new-user-modal").koApplyBindings(newUserCreation);

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import DataRegistry, RegistryInvitation, RegistryGrant, RegistryPermission
+from .models import DataRegistry, RegistryInvitation, RegistryGrant
 
 
 class RegistryInvitationInline(admin.TabularInline):
@@ -13,11 +13,6 @@ class RegistryGrantInline(admin.TabularInline):
     extra = 1
 
 
-class RegistryPermissionInline(admin.TabularInline):
-    model = RegistryPermission
-    extra = 1
-
-
 @admin.register(DataRegistry)
 class DataRegistryAdmin(admin.ModelAdmin):
     list_display = ['domain', 'name', 'slug', 'is_active', 'created_on']
@@ -26,6 +21,5 @@ class DataRegistryAdmin(admin.ModelAdmin):
 
     inlines = [
         RegistryInvitationInline,
-        RegistryGrantInline,
-        RegistryPermissionInline
+        RegistryGrantInline
     ]

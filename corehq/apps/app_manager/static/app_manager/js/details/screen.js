@@ -68,6 +68,10 @@ hqDefine("app_manager/js/details/screen", function () {
         self.customVariablesViewModel.xml.subscribe(function () {
             self.fireChange();
         });
+        self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
+        self.multiSelectEnabled.subscribe(function () {
+            self.fireChange();
+        });
         self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
         self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -121,6 +125,7 @@ hqDefine("app_manager/js/details/screen", function () {
                     hasNodeset: tabs[i].has_nodeset,
                     nodeset: tabs[i].nodeset,
                     nodesetCaseType: tabs[i].nodeset_case_type,
+                    nodesetFilter: tabs[i].nodeset_filter,
                 }, _.pick(tabs[i], ["header", "isTab", "relevant"]))
             );
         }
@@ -325,6 +330,7 @@ hqDefine("app_manager/js/details/screen", function () {
                 data.custom_xml = self.config.customXMLViewModel.xml();
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
+            data.multi_select = self.multiSelectEnabled();
             if (self.containsSearchConfiguration) {
                 data.search_properties = JSON.stringify(self.config.search.serialize());
             }

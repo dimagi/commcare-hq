@@ -4,8 +4,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
@@ -16,7 +16,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
@@ -139,11 +139,11 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
 class OpenmrsImporterView(BaseProjectSettingsView):
     urlname = 'openmrs_importer_view'
-    page_title = ugettext_lazy("OpenMRS Importers")
+    page_title = gettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
     def _update_importer(self, importer, data):
@@ -210,8 +210,8 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     urlname = 'new_openmrs_repeater$'
     repeater_form_class = OpenmrsRepeaterForm
-    page_title = ugettext_lazy("Forward to OpenMRS")
-    page_name = ugettext_lazy("Forward to OpenMRS")
+    page_title = gettext_lazy("Forward to OpenMRS")
+    page_name = gettext_lazy("Forward to OpenMRS")
 
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
@@ -224,4 +224,4 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
 
 class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
     urlname = 'edit_openmrs_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = gettext_lazy("Edit OpenMRS Repeater")

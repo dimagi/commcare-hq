@@ -1,6 +1,6 @@
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 
 class BaseMultimediaUploadController(object):
@@ -73,7 +73,7 @@ class BaseMultimediaUploadController(object):
 class MultimediaBulkUploadController(BaseMultimediaUploadController):
     is_multi_file = True
     uploader_type = "bulk"
-    media_type = ugettext_noop("zip")
+    media_type = gettext_noop("zip")
 
     queue_template = "hqmedia/uploader/queue_multi.html"
     status_template = "hqmedia/uploader/status_multi.html"
@@ -95,7 +95,7 @@ class BaseMultimediaFileUploadController(BaseMultimediaUploadController):
 
 
 class MultimediaImageUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("image")
+    media_type = gettext_noop("image")
     existing_file_template = "hqmedia/uploader/preview_image_single.html"
 
     @property
@@ -109,11 +109,11 @@ class MultimediaImageUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaLogoUploadController(MultimediaImageUploadController):
-    media_type = ugettext_noop("logo")
+    media_type = gettext_noop("logo")
 
 
 class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("audio")
+    media_type = gettext_noop("audio")
 
     existing_file_template = "hqmedia/uploader/preview_audio_single.html"
 
@@ -128,7 +128,7 @@ class MultimediaAudioUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("video")
+    media_type = gettext_noop("video")
 
     existing_file_template = "hqmedia/uploader/preview_video_single.html"
 
@@ -143,7 +143,7 @@ class MultimediaVideoUploadController(BaseMultimediaFileUploadController):
 
 
 class MultimediaHTMLUploadController(BaseMultimediaFileUploadController):
-    media_type = ugettext_noop("text")
+    media_type = gettext_noop("text")
 
     existing_file_template = "hqmedia/uploader/preview_html_single.html"
 

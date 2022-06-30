@@ -5,7 +5,7 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpRespo
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
@@ -69,7 +69,7 @@ class EditMenuView(BasePageView):
     template_name = "builds/edit_menu.html"
     urlname = 'edit_menu'
     doc_id = "config--commcare-builds"
-    page_title = ugettext_lazy("Edit CommCare Builds")
+    page_title = gettext_lazy("Edit CommCare Builds")
 
     @method_decorator(require_superuser)
     @use_jquery_ui

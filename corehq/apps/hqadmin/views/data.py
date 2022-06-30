@@ -2,13 +2,13 @@ import json
 
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.es.es_query import ESQuery
+from corehq.apps.es.registry import get_registry
 from corehq.apps.hqwebapp.doc_lookup import lookup_id_in_databases, get_databases, get_db_from_db_name
-from corehq.elastic import ES_META
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.util.json import CommCareJSONEncoder
 
 
@@ -23,7 +23,7 @@ def doc_in_es(request):
 
     found_indices = {}
     es_doc_type = None
-    for index in ES_META:
+    for index in get_registry():
         es_doc = lookup_doc_in_es(doc_id, index)
         if es_doc:
             found_indices[index] = to_json(es_doc)
@@ -76,7 +76,7 @@ def raw_doc_lookup(doc_id, db_name=None):
     response = {"db_results": db_results}
     if result:
         serialized_doc = result.get_serialized_doc()
-        if isinstance(result.doc, XFormInstanceSQL):
+        if isinstance(result.doc, XFormInstance):
             errors, raw_data = check_form_for_errors(result.doc, serialized_doc)
             response["errors"] = errors
             response["raw_data"] = raw_data

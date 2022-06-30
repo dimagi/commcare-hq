@@ -46,7 +46,7 @@ class TestXFormInstanceResource(APIResourceTest):
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
         form = submit_case_blocks(
-            CaseBlock.deprecated_init(
+            CaseBlock(
                 case_id=case_id,
                 create=True,
             ).as_text(),

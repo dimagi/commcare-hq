@@ -6,7 +6,7 @@ from timeit import Timer
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.blobs.management.commands.run_blob_import import (
     NUM_WORKERS,

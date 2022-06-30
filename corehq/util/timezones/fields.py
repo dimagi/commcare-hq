@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-from django.utils.encoding import smart_text, smart_str
+from django.utils.encoding import smart_str
 
 import pytz
 
@@ -34,12 +34,12 @@ class TimeZoneField(models.CharField):
     def to_python(self, value):
         value = super(TimeZoneField, self).to_python(value)
         if value is None:
-            return None # null=True
+            return None  # null=True
         return coerce_timezone_value(value)
 
     def get_prep_value(self, value):
         if value is not None:
-            return smart_text(value)
+            return smart_str(value)
         return value
 
     def get_db_prep_save(self, value, connection=None):
@@ -52,4 +52,4 @@ class TimeZoneField(models.CharField):
         value = self.get_default() if obj is None else self.value_from_object(obj)
         if value is None:
             value = ""
-        return {self.attname: smart_text(value)}
+        return {self.attname: smart_str(value)}

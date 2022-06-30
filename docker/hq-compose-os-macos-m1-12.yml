@@ -1,0 +1,18 @@
+# Service configurations specific to 'arm64' (Apple M1) architecture for MacOS Monterey (v 12).
+
+version: '2.3'
+
+services:
+  postgres:
+    image: dimagi/docker-postgresql
+    platform: linux/amd64
+  couch:
+    platform: linux/amd64
+  redis:
+    platform: linux/amd64
+  zookeeper:
+    platform: linux/amd64
+  kafka:
+    platform: linux/amd64
+  minio:
+    platform: linux/amd64

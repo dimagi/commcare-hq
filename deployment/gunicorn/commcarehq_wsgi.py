@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 import os
 from manage import _set_source_root_parent, _set_source_root
 

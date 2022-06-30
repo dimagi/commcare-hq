@@ -8,7 +8,7 @@ from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMappin
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message, process_message_status
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 logger = logging.getLogger()
 
@@ -84,7 +84,7 @@ def message_status(request, message_id):
 class TelerivetSetupView(BaseMessagingSectionView):
     template_name = 'telerivet/telerivet_setup.html'
     urlname = 'telerivet_setup'
-    page_title = ugettext_lazy("Telerivet Setup")
+    page_title = gettext_lazy("Telerivet Setup")
 
     @property
     def page_url(self):
@@ -160,7 +160,7 @@ class TelerivetSetupView(BaseMessagingSectionView):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_GET
 def get_last_inbound_sms(request, domain):
@@ -186,7 +186,7 @@ def get_last_inbound_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def send_sample_sms(request, domain):
@@ -236,7 +236,7 @@ def send_sample_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def create_backend(request, domain):

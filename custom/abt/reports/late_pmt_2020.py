@@ -4,7 +4,7 @@ from typing import Dict, Iterator
 
 from django.db.models import Q
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
 
@@ -12,7 +12,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from custom.abt.reports.filters_2020 import (
     LevelFourFilter,
     LevelOneFilter,
@@ -124,7 +124,7 @@ def iter_forms_by_xmlns_received_on(
     xmlns: str,
     start_datetime: datetime,
     end_datetime: datetime,
-) -> Iterator[XFormInstanceSQL]:
+) -> Iterator[XFormInstance]:
     """
     Iterates form submissions of a given ``xmlns`` from
     ``start_datetime`` (incl) to ``end_datetime`` (excl).
@@ -137,12 +137,12 @@ def iter_forms_by_xmlns_received_on(
 
     q_expr = (
         Q(domain=domain)
-        & Q(state=XFormInstanceSQL.NORMAL)
+        & Q(state=XFormInstance.NORMAL)
         & Q(xmlns=xmlns)
         & Q(received_on__gte=start_datetime, received_on__lt=end_datetime)
     )
     return paginate_query_across_partitioned_databases(
-        XFormInstanceSQL, q_expr, load_source='forms_by_xmlns_received_on'
+        XFormInstance, q_expr, load_source='forms_by_xmlns_received_on'
     )
 
 

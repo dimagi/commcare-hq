@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (

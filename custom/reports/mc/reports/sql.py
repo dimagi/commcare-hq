@@ -4,15 +4,21 @@ from sqlagg.base import AliasColumn
 from sqlagg.filters import EQ, OR, AND, BETWEEN, NOTEQ
 from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
-from sqlagg.columns import *
-from django.utils.translation import ugettext as _, ugettext_noop
+from sqlagg.columns import CountColumn, SimpleColumn, SumColumn
+from django.utils.translation import gettext as _, gettext_noop
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter,\
     SqlTabularReport, DictDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, DatespanMixin, ProjectReportParametersMixin
 from corehq.apps.users.util import raw_username
-from .definitions import *
+from .definitions import (
+    DISTRICT_WEEKLY_REPORT,
+    DISTRICT_MONTHLY_REPORT,
+    HF_MONTHLY_REPORT,
+    HF_WEEKLY_MESSAGES,
+    HF_WEEKLY_REPORT,
+)
 
 
 NO_VALUE = '\u2014'
@@ -240,7 +246,7 @@ class DistrictWeekly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_weekly_ucr'
-    name = ugettext_noop("mc_report_dist_weekly")
+    name = gettext_noop("mc_report_dist_weekly")
     section = DISTRICT_WEEKLY_REPORT
 
     @property
@@ -341,7 +347,10 @@ class DistrictWeekly(BaseReport):
                                'doc_id',
                                alias='patients_correctly_referred_num',
                                filters=self.filters + [OR([
-                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([
+                                       EQ('referral_needed_newborn', 'one'),
+                                       EQ('referral_given_newborn', 'one')
+                                   ]),
                                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
                                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
             DatabaseColumn(_('patients_correctly_referred_denum'),
@@ -384,7 +393,7 @@ class DistrictMonthly(BaseReport):
         'custom.reports.mc.reports.fields.DistrictField',
     ]
     slug = 'district_monthly_ucr'
-    name = ugettext_noop("mc_report_dist_monthly")
+    name = gettext_noop("mc_report_dist_monthly")
     section = DISTRICT_MONTHLY_REPORT
 
     @property
@@ -529,7 +538,7 @@ class DistrictMonthly(BaseReport):
                                        filters=self.filters + [EQ('deaths_mothers', 'one')])),
             DatabaseColumn(_('deaths_others'),
                            SumColumn('deaths_others', alias='deaths_other',
-                                       filters=self.filters + [NOTEQ('deaths_others', 'zero')])),
+                                     filters=self.filters + [NOTEQ('deaths_others', 'zero')])),
             AggregateColumn(_('deaths_total'), add_all, [
                 AliasColumn('deaths_newborn'),
                 AliasColumn('deaths_children'),
@@ -538,7 +547,7 @@ class DistrictMonthly(BaseReport):
             ], slug='deaths_total'),
             DatabaseColumn(_('heath_ed_talks'),
                            SumColumn('heath_ed_talks', alias='heath_ed_talks',
-                                       filters=self.filters + [NOTEQ('heath_ed_talks', 'zero')])),
+                                     filters=self.filters + [NOTEQ('heath_ed_talks', 'zero')])),
             DatabaseColumn(_('heath_ed_participants'),
                            SumColumn('heath_ed_participants', alias='heath_ed_participants',
                                      filters=self.filters + [NOTEQ('heath_ed_participants', 'zero')]))
@@ -635,7 +644,7 @@ class HeathFacilityMonthly(DistrictMonthly):
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
-    name = ugettext_noop("mc_report_hf_monthly")
+    name = gettext_noop("mc_report_hf_monthly")
     section = HF_MONTHLY_REPORT
 
 
@@ -647,7 +656,7 @@ class HealthFacilityWeekly(DistrictWeekly):
         'custom.reports.mc.reports.fields.HealthFacilityField',
     ]
     slug = 'hf_weekly_ucr'
-    name = ugettext_noop("mc_report_hf_weekly")
+    name = gettext_noop("mc_report_hf_weekly")
     section = HF_WEEKLY_REPORT
 
     @property
@@ -747,7 +756,10 @@ class HealthFacilityWeekly(DistrictWeekly):
                                'doc_id',
                                alias='patients_correctly_referred_num',
                                filters=self.filters + [OR([
-                                   AND([EQ('referral_needed_newborn', 'one'), EQ('referral_given_newborn', 'one')]),
+                                   AND([
+                                       EQ('referral_needed_newborn', 'one'),
+                                       EQ('referral_given_newborn', 'one'),
+                                   ]),
                                    AND([EQ('referral_needed_child', 'one'), EQ('referral_given_child', 'one')]),
                                    AND([EQ('treatment_preg_ds', 'one'), EQ('referral_given_adult', 'one')])])])),
             DatabaseColumn(_('patients_correctly_referred_denum'),

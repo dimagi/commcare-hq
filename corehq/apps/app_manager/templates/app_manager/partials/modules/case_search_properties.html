@@ -7,6 +7,9 @@
 </legend>
 
 <div data-bind="with: search">
+  <div class="alert alert-info" data-bind="hidden: isEnabled">
+    {% trans "Add at least one search property to activate case search for this case list" %}
+  </div>
   <form>
     <div class="panel panel-appmanager">
       <div class="panel-heading">
@@ -86,7 +89,7 @@
         </p>
       </div>
     </div>
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-bind="visible: isEnabled">
       <div class="panel-heading">
         <h4 class="panel-title panel-title-nolink">{% trans "Search and Claim Options" %}</h4>
       </div>
@@ -95,13 +98,13 @@
           <div class="form-group">
             {% if show_search_workflow %}
               <div class="form-group">
-                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: dataRegistry">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="hidden: restrictWorkflowForDataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow" %}"
                         data-content="{% trans_html_attr "<strong>Normal Case List</strong> is the &quot;classic&quot; case search workflow.  <br><br><strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is typically used for a &quot;Search Cases&quot; module.  <br><br><strong>See More</strong> is the same functionality as Normal Case List, except clicking the search button runs the default searches and returns the results. The user doesn't get to change the search criteria. This enables a workflow where the user sees what's in the local casedb then clicks &quot;See More&quot; to view all cases that fit the criteria.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search. The user never sees the results of the casedb." %}">
                   </span>
                 </label>
-                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: dataRegistry">
+                <label class="control-label {% css_label_class %}" for="search-workflow" data-bind="visible: restrictWorkflowForDataRegistry">
                   {% trans "Web Apps Search Workflow" %}
                   <span class="hq-help-template" data-title="{% trans "Web Apps Search Workflow (Data Registry)" %}"
                         data-content="{% trans_html_attr "<strong>Search First</strong> skips the Normal Case List view and lands the user on the Search screen. This is the default for Data Registry search.  <br><br><strong>Skip to Default Case Search Results</strong> always displays the results from the default case search." %}">
@@ -109,17 +112,33 @@
                 </label>
                 <div class="{% css_field_class %}">
                   <select class="form-control" data-bind="value: workflow" id="search-workflow">
-                    <option value="classic" data-bind="hidden: dataRegistry">{% trans "Normal Case List" %}</option>
+                    <option value="classic" data-bind="hidden: restrictWorkflowForDataRegistry">{% trans "Normal Case List" %}</option>
                     <option value="auto_launch">{% trans "Search First" %}</option>
-                    <option value="see_more" data-bind="hidden: dataRegistry">{% trans "See More" %}</option>
+                    <option value="see_more" data-bind="hidden: restrictWorkflowForDataRegistry">{% trans "See More" %}</option>
                     <option value="es_only">{% trans "Skip to Default Case Search Results" %}</option>
                   </select>
                 </div>
               </div>
             {% endif %}
           </div>
+          {% if request|toggle_enabled:'USH_INLINE_SEARCH' %}
+          <div class="form-group" data-bind="visible: inlineSearchVisible">
+            <label class="control-label {% css_label_class %}">
+              {% trans "Make search input available after search" %}
+              <span class="hq-help-template" data-title="{% trans "Make search input available after search" %}"
+                    data-content="{% trans_html_attr "Stores the search input values and makes the available via the 'search-input' instance. This also disables the 'Search Again' workflow." %}">
+              </span>
+            </label>
+            <div class="{% css_field_class %} checkbox">
+              <label>
+                <input type="checkbox" data-bind="checked: inlineSearch" />
+                <input type="hidden" name="search-input" data-bind="value: inlineSearch"/>
+              </label>
+            </div>
+          </div>
+          {% endif %}
           {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
-          <div class="form-group">
+          <div class="form-group" data-bind="hidden: inlineSearchActive">
             <label for="search_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching" %}"
@@ -129,14 +148,14 @@
               {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input">
+          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
           <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
           <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
               {% include "app_manager/partials/nav_menu_media.html" with qualifier='case_search-search_label_media_' ICON_LABEL="Search Icon" AUDIO_LABEL="Search Audio" %}
             <!-- /ko -->
           </div>
-          <div class="form-group">
+          <div class="form-group" data-bind="hidden: inlineSearchActive">
             <label for="search_again_label" class="{% css_label_class %} control-label">
               {% trans "Label for Searching Again" %}
               <span class="hq-help-template" data-title="{% trans "Label for Searching Again" %}"
@@ -146,7 +165,7 @@
               {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
             </div>
           </div>
-          <div class="case-search-multimedia-input">
+          <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
           <!-- stopBinding to avoid conflicts with the binding of enclosing template to a different object 'search'-->
           <!-- binding for this partial is done via app_manager/js/nav_menu_media-->
             <!-- ko stopBinding: true -->
@@ -208,16 +227,6 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="control-label {% css_label_class %}" for="search-default-relevant">
-              {% trans "Don't claim cases already owned by the user" %}
-            </label>
-            <div class="checkbox {% css_field_class %}">
-              <label>
-                <input type="checkbox" id="search-default-relevant" data-bind="checked: searchDefaultRelevant">
-              </label>
-            </div>
-          </div>
-          <div class="form-group">
             <label for="blacklisted-user-ids" class="control-label {% css_label_class %}">
               {% trans "Don't search cases owned by the following ids" %}
               <span class="hq-help-template" data-title="{% trans "Ignore Owners" %}"
@@ -237,7 +246,7 @@
               </p>
             </div>
           </div>
-          {% if request|toggle_enabled:'DATA_REGISTRY' %}
+          {% if data_registry_enabled %}
           <div class="form-group">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Data Registry" %}
@@ -253,36 +262,47 @@
                   </select>
               </div>
           </div>
-          <div class="form-group">
+          <div class="form-group" data-bind="slideVisible: dataRegistry()">
               <label for="data-registry" class="{% css_label_class %} control-label">
-                  {% trans "Additional Data Registry Queries" %}
+                  {% trans "Data Registry Workflow" %}
+              </label>
+              <div class="{% css_field_class %}">
+                  <select class="form-control" data-bind="value: dataRegistryWorkflow">
+                    {% for slug, name in data_registry_workflow_choices %}
+                      <option value="{{ slug }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
+          </div>
+          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
+              <label for="data-registry" class="{% css_label_class %} control-label">
+                  {% trans "Load Additional Data Registry Cases" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
-                        data-content="{% trans_html_attr "Load additional data into forms in this module by performing extra queries against the data registry." %}">
+                        data-content="{% blocktrans %}
+                        Load additional cases from the Data Registry into the 'registry' instance for forms in this module.
+                        The case type of the case must be configured in the registry and in the module via the module's
+                        case type or the module's 'Additional Case List and Case Search Types' configuration.
+                        {% endblocktrans %}">
+                  </span>
               </label>
               <div class="{% css_field_class %}">
                   <table class="table table-condensed">
-                    <thead data-bind="visible: additionalRegistryQueries().length > 0">
+                    <thead data-bind="visible: additionalRegistryCases().length > 0">
                     <tr>
-                      <th class="col-sm-1"></th>
-                      <th class="col-sm-4">{% trans "Instance Name" %}</th>
-                      <th class="col-sm-4">{% trans "Case Type" %}</th>
-                      <th class="col-sm-4">{% trans "Case ID" %}</th>
+                      <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
                       <th class="col-sm-1"></th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: additionalRegistryQueries, sortableList: additionalRegistryQueries">
+                    <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
                       <tr>
-                        <td class="text-center">
-                          <i class="grip sortable-handle hq-icon-full fa fa-arrows-v"></i>
-                        </td>
                         <td>
-                          <input class="form-control" type="text" data-bind="value: instanceName"/>
-                        </td>
-                        <td>
-                          <input class="form-control" type="text" data-bind="value: caseTypeXpath"/>
-                        </td>
-                        <td>
-                          <input class="form-control" type="text" data-bind="value: caseIdXpath"/>
+                          <textarea data-bind="
+                              value: caseIdXpath,
+                              xpathValidator: {text: caseIdXpath, allowCaseHashtags: false, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                              "
+                                    class="form-control vertical-resize"
+                                    spellcheck="false"
+                          ></textarea>
                         </td>
                         <td>
                           <i style="cursor: pointer;" class="fa fa-remove"
@@ -292,8 +312,30 @@
                     </tbody>
                   </table>
                   <button type="button" class="btn btn-default" data-bind="click: addRegistryQuery">
-                    <i class="fa fa-plus"></i> {% trans "Add Data Registry Query" %}
+                    <i class="fa fa-plus"></i> {% trans "Add Case ID to Data Registry Query" %}
                   </button>
+              </div>
+          </div>
+          {% endif %}
+          {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
+          <div class="form-group">
+              <label for="custom-related-case-property" class="{% css_label_class %} control-label">
+                  {% trans "Case property with additional case id to add to results" %}
+                  <span class="hq-help-template" data-title="{% trans "Custom Related Case Property" %}"
+                        data-content="{% blocktrans %}
+                               Enter in the name of a case property that contains the ID of another
+                               case you'd like included in the results instance.  This is to allow
+                               you to configure your case list display to show properties of that
+                               related case. Read more on the
+                                <a href='https://confluence.dimagi.com/display/USH/Case+Search+Configuration'>Help Site</a>.
+                        {% endblocktrans %}">
+                  </span>
+              </label>
+              <div class="{% css_field_class %}">
+                  <input id="custom-related-case-property"
+                         type="text"
+                         class="form-control"
+                         data-bind="value: customRelatedCaseProperty"/>
               </div>
           </div>
           {% endif %}

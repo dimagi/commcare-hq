@@ -1,12 +1,18 @@
 import json
-
 from contextlib import contextmanager
+from random import randint
 
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.models import Domain
-from corehq.apps.domain.utils import guess_domain_language, get_serializable_wire_invoice_general_credit
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
+from corehq.apps.domain.utils import (
+    get_serializable_wire_invoice_general_credit,
+    guess_domain_language,
+    encrypt_account_confirmation_info,
+)
+from corehq.apps.users.models import CommCareUser
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.util.test_utils import unit_testing_only
 
 
@@ -37,6 +43,15 @@ class UtilsTests(TestCase):
         lang = guess_domain_language(self.domain_name)
         self.assertEqual('en', lang)
 
+    def test_user_info_encryption_decryption(self):
+        commcare_user = CommCareUser.create("22", ''.join(str(randint(1, 100))
+                                            for i in range(3)), "pass22", None, None)
+        encrypted_string = encrypt_account_confirmation_info(commcare_user)
+        decrypted = json.loads(b64_aes_decrypt(encrypted_string))
+        self.assertIsInstance(decrypted, dict)
+        self.assertIsNotNone(decrypted.get("user_id"))
+        self.assertIsNotNone(decrypted.get("time"))
+
 
 class TestGetSerializableWireInvoiceItem(SimpleTestCase):
 
@@ -58,6 +73,7 @@ class TestGetSerializableWireInvoiceItem(SimpleTestCase):
         serialized_items = json.dumps(items)
         self.assertTrue(serialized_items)
 
+
 @contextmanager
 def test_domain(name="domain", skip_full_delete=False):
     """Context manager for use in tests"""
@@ -70,3 +86,16 @@ def test_domain(name="domain", skip_full_delete=False):
             Domain.get_db().delete_doc(domain.get_id)
         else:
             domain.delete()
+
+
+class TestUCRExpressionUtils(TestCase):
+    def test_default_value_when_domain_not_exists(self):
+        self.assertEqual(
+            set(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('blah_domain')),
+            {'base_item_expression', 'related_doc'}
+        )
+
+    def test_when_domain_exists(self):
+        exprn = ['base_item_expression']
+        AllowedUCRExpressionSettings.objects.create(domain='test_domain', allowed_ucr_expressions=exprn)
+        self.assertEqual(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('test_domain'), exprn)

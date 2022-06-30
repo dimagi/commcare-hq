@@ -1,6 +1,6 @@
 from django.template.loader import render_to_string
 # For translations
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext_noop
 
 import pytz
 from memoized import memoized
@@ -102,7 +102,7 @@ class BaseSingleOptionFilter(BaseReportFilter):
         Displays a select field.
     """
     template = "reports/filters/single_option.html"
-    default_text = ugettext_noop("Filter by...")
+    default_text = gettext_noop("Filter by...")
     placeholder = ''
     is_paginated = False
     pagination_source = None  # url for paginated data
@@ -191,7 +191,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
     """
     template = "reports/filters/drilldown_options.html"
     use_only_last = False
-    drilldown_empty_text = ugettext_noop("No Data Available")
+    drilldown_empty_text = gettext_noop("No Data Available")
     is_cacheable = True
 
     @property
@@ -335,7 +335,7 @@ class BaseSimpleFilter(BaseReportFilter):
     template = "reports/filters/simple.html"
     slug = None
 
-    # use ugettext_lazy for below properties
+    # use gettext_lazy for below properties
     label = None
     help_title = None
     help_content = None

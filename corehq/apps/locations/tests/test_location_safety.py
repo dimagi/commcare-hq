@@ -1,6 +1,6 @@
 from django.views.generic.base import View
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.reports.generic import GenericReportView

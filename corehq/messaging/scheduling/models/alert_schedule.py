@@ -122,4 +122,4 @@ class ImmediateBroadcast(Broadcast):
             self.save()
             self.schedule.deleted = True
             self.schedule.save()
-            delete_alert_schedule_instances.delay(self.schedule_id)
+            delete_alert_schedule_instances.delay(self.schedule_id.hex)

@@ -1,6 +1,6 @@
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -72,7 +72,7 @@ class DataRegistry(models.Model):
     is_active = models.BooleanField(default=True)
 
     # [{"case_type": "X"}, {"case_type": "Y"}]
-    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
+    schema = models.JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -110,7 +110,6 @@ class DataRegistry(models.Model):
         return RegistrySchema(self.schema)
 
     def get_granted_domains(self, domain):
-        self.check_domain_has_access(domain)
         return set(
             self.grants.filter(to_domains__contains=[domain])
             .values_list('from_domain', flat=True)
@@ -120,17 +119,6 @@ class DataRegistry(models.Model):
         return set(self.invitations.filter(
             status=RegistryInvitation.STATUS_ACCEPTED,
         ).values_list('domain', flat=True))
-
-    def check_domain_has_access(self, domain):
-        if not self.is_active:
-            raise RegistryAccessDenied()
-        invites = self.invitations.filter(domain=domain)
-        if not invites:
-            raise RegistryAccessDenied()
-        invite = invites[0]
-        if invite.status != RegistryInvitation.STATUS_ACCEPTED:
-            raise RegistryAccessDenied()
-        return True
 
     def check_ownership(self, domain):
         if self.domain != domain:
@@ -222,20 +210,6 @@ class RegistryGrant(models.Model):
                 f"from_domain='{self.from_domain}', to_domains='{self.to_domains}')")
 
 
-class RegistryPermission(models.Model):
-    """This model controls which users in a domain can access the data registry."""
-    registry = models.ForeignKey("DataRegistry", related_name="permissions", on_delete=models.CASCADE)
-    domain = models.CharField(max_length=255)
-    read_only_group_id = models.CharField(max_length=255, null=True)
-
-    class Meta:
-        unique_together = ('registry', 'domain')
-
-    def __repr__(self):
-        return (f"RegistryPermission(registry_id='{self.registry_id}', "
-                f"domain='{self.domain}', read_only_group_id='{self.read_only_group_id}')")
-
-
 class RegistryAuditLog(models.Model):
     """Audit log model used to store logs of user level interactions
     (not system level).
@@ -289,7 +263,7 @@ class RegistryAuditLog(models.Model):
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
     related_object_id = models.CharField(max_length=36)
     related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES, db_index=True)
-    detail = JSONField(null=True)
+    detail = models.JSONField(null=True)
 
     class Meta:
         indexes = [

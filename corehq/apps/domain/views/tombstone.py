@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqadmin.views import BaseAdminSectionView
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.util import reverse
 

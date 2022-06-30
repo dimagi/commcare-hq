@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.models import CaseExportInstance, TableConfiguration

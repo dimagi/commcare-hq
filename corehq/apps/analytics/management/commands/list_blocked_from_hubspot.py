@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from corehq.apps.analytics.utils import (
+from corehq.apps.analytics.utils.hubspot import (
     get_blocked_hubspot_domains,
     get_blocked_hubspot_accounts,
 )

@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -18,6 +19,7 @@ class RepeatDataSourceTestMixin(object):
         self.config = get_data_source_with_repeat()
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class RepeatDataSourceConfigurationTest(RepeatDataSourceTestMixin, SimpleTestCase):
 
     def test_test_doc_matches(self):

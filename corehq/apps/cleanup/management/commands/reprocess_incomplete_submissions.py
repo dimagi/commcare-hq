@@ -89,10 +89,14 @@ class Command(BaseCommand):
                 page = paginator.page(page_number)
                 for stub in page.object_list:
                     result = reprocess_unfinished_stub(stub, save=not dryrun)
-                    if result:
+                    if not result:
+                        logger.info("Processing skipped")
+                    elif result.error:
+                        logger.info(f"Form re-processed failed: {stub.xform_id}: {result.error}")
+                    else:
                         cases = ', '.join([c.case_id for c in result.cases])
                         ledgers = ', '.join([l.ledger_reference for l in result.ledgers])
-                        logger.info("Form re-processed successfully: {}:{}".format(
+                        logger.info("Form re-processed successfully: {}:{} cases={} ledgers={}".format(
                             result.form.domain, result.form.form_id, cases, ledgers
                         ))
                 if not page.has_next():

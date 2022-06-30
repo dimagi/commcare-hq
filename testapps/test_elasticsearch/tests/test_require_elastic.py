@@ -1,9 +1,11 @@
 from unittest import expectedFailure
 from django.test import SimpleTestCase
+from corehq.apps.es.tests.utils import es_test
 from corehq.util.es.elasticsearch import Elasticsearch
 from .utils import require_elasticsearch
 
 
+@es_test
 class RequireElasticsearchTest(SimpleTestCase):
 
     @expectedFailure

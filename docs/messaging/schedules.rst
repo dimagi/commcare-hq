@@ -49,7 +49,7 @@ to denote that it has completed the defined schedule and should not be sent agai
 
 In order to keep messaging responsive to case changes, every time a case is saved, a
 `corehq.messaging.tasks.sync_case_for_messaging <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_
-task is spawned to handle any changes. This is controlled via the ``case_post_save`` signal.
+task is spawned to handle any changes. This is controlled via the ``sql_case_post_save`` signal.
 
 Similarly, any time a rule is updated, a
 `corehq.messaging.tasks.run_messaging_rule <https://github.com/dimagi/commcare-hq/blob/master/corehq/messaging/tasks.py>`_

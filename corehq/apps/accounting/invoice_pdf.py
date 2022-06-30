@@ -111,8 +111,23 @@ def midpoint(x1, x2):
 
 
 class InvoiceTemplate(object):
+    # TODO: improve invoice rendering logic to be more robust:
+    # - More than 4 lines for a "from" address block (more than 4 populated of:
+    #   name, company_name, first_line, second_line, city/region/postal_code,
+    #   country) results in the bottom of the header "from" block being obscured
+    #   by the "BILL TO" block.
+    # - Too much text in a "bank" address (enough to result in a wrap) garbles
+    #   the footer.
+    # - It's unclear if all combinations of `is_wire`, `is_customer` and
+    #   `is_prepayment` are valid together. If there are invalid combinations,
+    #   this class should raise `ValueError` on invalid args.
+    # - Add tests to validate expectations.
+    # - Flywire URL should be parameterized.
+    # - Default logo file path assumes that Django's CWD is at the root of the
+    #   repo, which isn't necessarily a safe assumption to make.
 
-    def __init__(self, filename, logo_filename=LOGO_FILENAME,
+    def __init__(self, filename,
+                 logo_image=os.path.join(os.getcwd(), LOGO_FILENAME),
                  from_address=Address(**settings.INVOICE_FROM_ADDRESS),
                  to_address=None, project_name='',
                  invoice_date=None, invoice_number='',
@@ -129,7 +144,7 @@ class InvoiceTemplate(object):
                  is_wire=False, is_customer=False, is_prepayment=False, account_name=''):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
-        self.logo_filename = os.path.join(os.getcwd(), logo_filename)
+        self.logo_image = logo_image
         self.from_address = from_address
         self.to_address = to_address
         self.project_name = project_name
@@ -173,7 +188,6 @@ class InvoiceTemplate(object):
             self.draw_table_with_header_and_footer(self.items)
 
         # should only call save once to avoid reportlab exception
-        self.canvas.showPage()
         self.canvas.save()
 
     def draw_customer_invoice(self, items, items_to_draw):
@@ -182,12 +196,14 @@ class InvoiceTemplate(object):
         else:
             self.draw_header()
             self.draw_table(items)
+            self.canvas.showPage()
             if len(items_to_draw) == 0:
                 self.draw_totals_on_new_page()
 
     def draw_logo(self):
-        self.canvas.drawImage(self.logo_filename, inches(0.5), inches(2.5),
-                              width=inches(1.2), preserveAspectRatio=True)
+        self.canvas.drawImage(self.logo_image, inches(0.5), inches(10.5),
+                              height=inches(0.75), width=inches(1.25),
+                              preserveAspectRatio=True, anchor="w")
 
     def draw_text(self, string, x, y):
         text = self.canvas.beginText()
@@ -564,6 +580,7 @@ class InvoiceTemplate(object):
             self.draw_table(items)
         self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(3.5))
         self.draw_footer()
+        self.canvas.showPage()
 
     def draw_totals_on_new_page(self):
         self.canvas.setStrokeColor(STROKE_COLOR)
@@ -578,6 +595,7 @@ class InvoiceTemplate(object):
 
         self.draw_totals(totals_x=inches(5.85), line_height=inches(0.25), subtotal_y=inches(7.0))
         self.draw_footer()
+        self.canvas.showPage()
 
     def draw_totals(self, totals_x, line_height, subtotal_y):
         tax_y = subtotal_y - line_height

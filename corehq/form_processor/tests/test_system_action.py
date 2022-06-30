@@ -7,8 +7,9 @@ from testil import eq
 from corehq.apps.receiverwrapper.util import submit_form_locally
 
 from ..exceptions import XFormNotFound
-from ..interfaces.dbaccessors import ARCHIVE_FORM, FormAccessors
+from ..models.forms import ARCHIVE_FORM
 from ..interfaces.processor import HARD_DELETE_CASE_AND_FORMS
+from ..models import XFormInstance
 from ..system_action import SYSTEM_ACTION_XMLNS, UnauthorizedSystemAction
 from ..utils import TestFormMetadata, get_simple_form_xml
 
@@ -23,7 +24,7 @@ class TestSystemActions(TestCase):
         with self.assertRaises(UnauthorizedSystemAction):
             submit_form_locally(xml, domain)
         with self.assertRaises(XFormNotFound):
-            FormAccessors(domain).get_form(form_id)
+            XFormInstance.objects.get_form(form_id, domain)
 
 
 def test_system_action_constants():

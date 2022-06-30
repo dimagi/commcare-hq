@@ -3,6 +3,10 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.views import View
 
+from corehq.apps.analytics.utils.partner_analytics import (
+    track_partner_access,
+    ACCESS_ODATA,
+)
 from corehq.apps.api.odata.utils import (
     get_case_odata_fields_from_config,
     get_form_odata_fields_from_config,
@@ -111,6 +115,7 @@ class ODataCaseMetadataView(BaseODataView):
             'fields': case_fields,
             'primary_key': primary_key,
         })
+        track_partner_access(ACCESS_ODATA, domain)
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 
@@ -165,6 +170,7 @@ class ODataFormMetadataView(BaseODataView):
             'fields': form_fields,
             'primary_key': primary_key,
         })
+        track_partner_access(ACCESS_ODATA, domain)
         return add_odata_headers(HttpResponse(metadata, content_type='application/xml'))
 
 

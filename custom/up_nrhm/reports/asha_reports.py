@@ -13,7 +13,7 @@ from custom.up_nrhm.reports.asha_functionality_checklist_report import ASHAFunct
 from custom.up_nrhm.reports.block_level_af_report import BlockLevelAFReport
 from custom.up_nrhm.reports.block_level_month_report import BlockLevelMonthReport
 from custom.up_nrhm.reports.district_functionality_report import DistrictFunctionalityReport
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import gettext as _, gettext_noop
 from memoized import memoized
 
 
@@ -30,7 +30,7 @@ class ASHAReports(GenericTabularReport, DatespanMixin, CustomProjectReport, Lang
     fields = [SampleFormatFilter, LanguageFilter,
               DatespanFilter, DrillDownOptionFilter,
               ASHAMonthFilter, YearFilter]
-    name = ugettext_noop("ASHA Sangini Reports")
+    name = gettext_noop("ASHA Sangini Reports")
     slug = "asha_reports"
     show_all_rows = True
     default_rows = 20

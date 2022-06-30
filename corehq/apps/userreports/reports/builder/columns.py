@@ -377,11 +377,18 @@ class RawPropertyColumnOption(ColumnOption):
     Column option for raw properties (properties that just reference an existing data source)
     """
 
+    def __init__(self, property, data_types, default_display, source):
+        super().__init__(property, data_types, default_display)
+        self._source = source
+
     def _get_indicator(self, ui_aggregation, is_multiselect_chart_report=False):
         return {
             "type": "expression",
             "column_id": self._property,
             "datatype": self._data_types[0],
-            "display_name": self.get_property(),
-            # "expression": expression,
+            "display_name": self.get_default_display(),
+            "expression": {
+                "type": "property_name",
+                "property_name": self._source
+            },
         }

@@ -1,5 +1,4 @@
 import io
-from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
@@ -7,7 +6,6 @@ import tempfile
 import zipfile
 import csv
 import json
-import bz2
 from collections import OrderedDict
 import openpyxl
 import math
@@ -196,7 +194,7 @@ class ExportWriter(object):
             elif isinstance(name, Promise):
                 # noinspection PyCompatibility
                 name = str(name)
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
+            return re.sub(r"[\n]", '', re.sub(r"[\[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)
@@ -487,7 +485,7 @@ class JsonExportWriter(InMemoryExportWriter):
     def _close(self):
         new_tables = {}
         for tablename, data in self.tables.items():
-            new_tables[self.table_names[tablename]] = {"headers":data[0], "rows": data[1:]}
+            new_tables[self.table_names[tablename]] = {"headers": data[0], "rows": data[1:]}
 
         json_dump = json.dumps(new_tables, cls=self.ConstantEncoder).encode('utf-8')
         self.file.write(json_dump)
@@ -556,60 +554,3 @@ class ZippedHtmlExportWriter(ZippedExportWriter):
     writer_class = HtmlFileWriter
     table_file_extension = ".html"
     format = Format.ZIPPED_HTML
-
-
-class CdiscOdmExportWriter(InMemoryExportWriter):
-    """
-    Write tables to a single CDISC ODM-formatted XML file.
-    """
-    format = Format.CDISC_ODM
-    target_app = 'OpenClinica'  # Export button to say "Export to OpenClinica"
-
-    def _init(self):
-        self.context = {'subjects': []}
-        # We'll keep the keys from the header rows of both tables, so that we can zip them up with the rest of the
-        # rows to create dictionaries for the ODM XML template
-        self.study_keys = []
-        self.subject_keys = []
-
-    def _init_table(self, table_index, table_title):
-        pass
-
-    def _write_row(self, sheet_index, row):
-        if sheet_index == 'study':
-            if not self.study_keys:
-                self.study_keys = row
-            else:
-                # This will give us the study constants. The template needs "study_oid" and file metadata
-                self.context.update(dict(zip(self.study_keys, row)))
-        else:
-            if not self.subject_keys:
-                self.subject_keys = row
-            else:
-                self.context['subjects'].append(dict(zip(self.subject_keys, row)))
-
-    def _close(self):
-        from custom.openclinica.models import OpenClinicaAPI, OpenClinicaSettings
-
-        # Create the subjects and events that are in the ODM export using the API
-        oc_settings = OpenClinicaSettings.for_domain(self.context['domain'])
-        if oc_settings.study.is_ws_enabled:
-            password = bz2.decompress(b64decode(oc_settings.study.password))
-            api = OpenClinicaAPI(
-                oc_settings.study.url,
-                oc_settings.study.username,
-                password,
-                oc_settings.study.protocol_id
-            )
-            subject_keys = api.get_subject_keys()
-            for subject in self.context['subjects']:
-                if subject['subject_key'][3:] not in subject_keys:
-                    # Skip 'SS_' prefix   ^^ that OpenClinica wants in ODM, but isn't in API's subject keys
-                    api.create_subject(subject)
-                    # NOTE: In the interests of keeping data in OpenClinica tidy, we are only scheduling events for
-                    # subjects who don't yet exist in OpenClinica. New events of existing subjects must be added
-                    # manually, or subjects must be deleted from OpenClinica before a re-import.
-                    for event in subject['events']:
-                        api.schedule_event(subject, event)
-
-        self.file.write(render_to_string('couchexport/odm_export.xml', self.context))

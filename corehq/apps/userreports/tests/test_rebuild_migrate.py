@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-import mock
+from unittest import mock
 from sqlalchemy.engine import reflection
 
 from corehq.apps.userreports.models import (

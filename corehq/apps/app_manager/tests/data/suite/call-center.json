@@ -314,13 +314,34 @@
                                 "type": "always"
                             },
                             "update": {
-                                "another_issue": "/data/follow_up/another_issue",
-                                "date_identified": "/data/date_identified",
-                                "debug_level": "/data/debug_level",
-                                "issue_description": "/data/description",
-                                "issue_identified": "/data/issue_identified",
-                                "issue_resolved": "/data/follow_up/issue_resolved",
-                                "phone_number": "/data/info/alt_phone_number"
+                              "another_issue": {
+                                "question_path": "/data/follow_up/another_issue",
+                                "update_mode": "always"
+                              },
+                              "date_identified": {
+                                "question_path": "/data/date_identified",
+                                "update_mode": "always"
+                              },
+                              "debug_level": {
+                                "question_path": "/data/debug_level",
+                                "update_mode": "always"
+                              },
+                              "issue_description": {
+                                "question_path": "/data/description",
+                                "update_mode": "always"
+                              },
+                              "issue_identified": {
+                                "question_path": "/data/issue_identified",
+                                "update_mode": "always"
+                              },
+                              "issue_resolved": {
+                                "question_path": "/data/follow_up/issue_resolved",
+                                "update_mode": "always"
+                              },
+                              "phone_number": {
+                                "question_path": "/data/info/alt_phone_number",
+                                "update_mode": "always"
+                              }
                             }
                         },
                         "update_referral": {
@@ -415,8 +436,14 @@
                                 "type": "always"
                             },
                             "update": {
-                                "best_phone_number": "/data/best_phone_number",
-                                "comments": "/data/comments"
+                              "best_phone_number": {
+                                "question_path": "/data/best_phone_number",
+                                "update_mode": "always"
+                              },
+                              "comments": {
+                                "question_path": "/data/comments",
+                                "update_mode": "always"
+                              }
                             }
                         },
                         "update_referral": {
@@ -713,12 +740,30 @@
                                 "type": "always"
                             },
                             "update": {
-                                "call_back": "/data/call_back",
-                                "issue_resolved": "/data/if_connected/technical_problems_group/resolved_issues",
-                                "new_technical_issue": "/data/if_connected/new_technical_issue",
-                                "outcome": "/data/outcome",
-                                "reason_low_performance": "/data/if_connected/performance_feedback/question89",
-                                "top_of_tech_support_list": "/data/top_of_tech_support_list"
+                              "call_back": {
+                                "question_path": "/data/call_back",
+                                "update_mode": "always"
+                              },
+                              "issue_resolved": {
+                                "question_path": "/data/if_connected/technical_problems_group/resolved_issues",
+                                "update_mode": "always"
+                              },
+                              "new_technical_issue": {
+                                "question_path": "/data/if_connected/new_technical_issue",
+                                "update_mode": "always"
+                              },
+                              "outcome": {
+                                "question_path": "/data/outcome",
+                                "update_mode": "always"
+                              },
+                              "reason_low_performance": {
+                                "question_path": "/data/if_connected/performance_feedback/question89",
+                                "update_mode": "always"
+                              },
+                              "top_of_tech_support_list": {
+                                "question_path": "/data/top_of_tech_support_list",
+                                "update_mode": "always"
+                              }
                             }
                         },
                         "update_referral": {
