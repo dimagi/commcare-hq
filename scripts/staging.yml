@@ -67,12 +67,10 @@ branches:
     - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ml/dhis2-better-errors # Minha June 9
-    #- ad/tableau-request-client-IP # Addison June 14
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding  # Minha April 13
 #    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - akj/call-limit-settings # Akash June 22
-#    - ad/multi-select-auto-launch # Addison/Jenny June 22
     - smh/tableau-loading-ui # Steph June 22
     - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
@@ -80,4 +78,5 @@ branches:
     - rc/hidden-question-geocoder-values # Robert June 27
     - jc/minimum-pwd-length # Jing June 29
     - akj/mw-signup-enhancements # Akash June 30
+    - ad/fix-save-only-edited-wrap-funcs # Addison June 30
 submodules: { }
