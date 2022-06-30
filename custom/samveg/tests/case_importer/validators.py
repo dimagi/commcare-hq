@@ -1,11 +1,12 @@
 import datetime
 import os
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from dateutil.relativedelta import relativedelta
 
 from corehq.apps.case_importer.util import get_spreadsheet
+from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import TestFileMixin
 from custom.samveg.case_importer.exceptions import CallValueInvalidError
 from custom.samveg.case_importer.validators import (
@@ -22,7 +23,6 @@ from custom.samveg.const import (
     OWNER_NAME,
     RCH_BENEFICIARY_IDENTIFIER,
     REQUIRED_COLUMNS,
-    ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
     SKIP_CALL_VALIDATOR,
     SKIP_CALL_VALIDATOR_YES,
     SNCU_BENEFICIARY_IDENTIFIER,
@@ -91,7 +91,8 @@ class TestRequiredValueValidator(SimpleTestCase, TestFileMixin):
                     fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
                 elif SNCU_BENEFICIARY_IDENTIFIER in fields_to_update:
                     fields_to_update['external_id'] = fields_to_update.pop(SNCU_BENEFICIARY_IDENTIFIER)
-                fields_to_update, errors = RequiredValueValidator.run(row_num, raw_row, fields_to_update, {})
+                fields_to_update, errors = RequiredValueValidator.run(
+                    row_num, raw_row, fields_to_update, {}, "test_domain")
                 self.assertEqual(
                     [error.title for error in errors],
                     ['Missing required column(s)']
@@ -119,7 +120,7 @@ class TestCallValidator(SimpleTestCase):
         fields_to_update.pop('Call1')
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
@@ -133,7 +134,7 @@ class TestCallValidator(SimpleTestCase):
         fields_to_update['Call1'] = 'abc'
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
@@ -146,7 +147,7 @@ class TestCallValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
 
         self.assertListEqual(
             [error.title for error in errors],
@@ -160,7 +161,7 @@ class TestCallValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
         self.assertListEqual(
             [error.title for error in errors],
             []
@@ -173,7 +174,7 @@ class TestCallValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
 
-        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = CallValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
         self.assertListEqual(
             [error.title for error in errors],
             ['Unexpected value for skipping call validator column']
@@ -189,7 +190,8 @@ class TestFormatValidator(SimpleTestCase):
         row_num = 1
         import_context = {}
 
-        fields_to_update, errors = FormatValidator.run(row_num, raw_row, fields_to_update, import_context)
+        fields_to_update, errors = FormatValidator.run(
+            row_num, raw_row, fields_to_update, import_context, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
@@ -197,7 +199,17 @@ class TestFormatValidator(SimpleTestCase):
         )
 
 
-class TestUploadLimitValidator(SimpleTestCase):
+class TestUploadLimitValidator(TestCase):
+
+    def setUp(self):
+        super(TestUploadLimitValidator, self).setUp()
+        self.domain = Domain(name="test_domain")
+        self.domain.save()
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestUploadLimitValidator, self).tearDown()
+
     def test_update_counter(self):
         raw_row = _sample_valid_rch_upload()
         fields_to_update = raw_row.copy()
@@ -205,7 +217,8 @@ class TestUploadLimitValidator(SimpleTestCase):
         row_num = 1
         import_context = {}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(
+            row_num, raw_row, fields_to_update, import_context, "test_domain")
 
         self.assertEqual(
             import_context['counter']['watson']['Call1'],
@@ -219,9 +232,10 @@ class TestUploadLimitValidator(SimpleTestCase):
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
         # initialize context to replicate limit reached
-        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': ROW_LIMIT_PER_OWNER_PER_CALL_TYPE}}}
+        import_context = {'counter': {fields_to_update[OWNER_NAME]: {'Call1': self.domain.operator_call_limit}}}
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, import_context)
+        fields_to_update, errors = UploadLimitValidator.run(
+            row_num, raw_row, fields_to_update, import_context, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
@@ -236,7 +250,7 @@ class TestUploadLimitValidator(SimpleTestCase):
         fields_to_update.pop(OWNER_NAME)
         row_num = 1
 
-        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, {})
+        fields_to_update, errors = UploadLimitValidator.run(row_num, raw_row, fields_to_update, {}, "test_domain")
 
         self.assertEqual(
             [error.title for error in errors],
@@ -244,15 +258,25 @@ class TestUploadLimitValidator(SimpleTestCase):
         )
 
 
-class TestSuccessfulUpload(SimpleTestCase):
+class TestSuccessfulUpload(TestCase):
+
+    def setUp(self):
+        super(TestSuccessfulUpload, self).setUp()
+        self.domain = Domain(name="test_domain")
+        self.domain.save()
+
+    def tearDown(self):
+        self.domain.delete()
+        super(TestSuccessfulUpload, self).tearDown()
+
     def test_successful_upload(self):
         raw_row = _sample_valid_rch_upload()
         raw_row['Call1'] = str(datetime.date.today() - relativedelta(months=1))
         fields_to_update = raw_row.copy()
         fields_to_update['external_id'] = fields_to_update.pop(RCH_BENEFICIARY_IDENTIFIER)
         row_num = 1
-        fields_to_update, all_errors = samveg_case_upload_row_operations(None, row_num, raw_row, fields_to_update,
-                                                                         {})
+        fields_to_update, all_errors = samveg_case_upload_row_operations(
+            "test_domain", row_num, raw_row, fields_to_update, {})
         self.assertListEqual(all_errors, [])
 
 

@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from django.utils.translation import gettext as _
 
 from corehq.apps.case_importer.util import EXTERNAL_ID
+from corehq.apps.domain.models import OperatorCallLimitSettings
 from corehq.util.dates import get_previous_month_date_range, iso_string_to_date
 from custom.samveg.case_importer.exceptions import (
     CallNotInLastMonthError,
@@ -24,7 +25,6 @@ from custom.samveg.const import (
     RCH_BENEFICIARY_IDENTIFIER,
     RCH_REQUIRED_COLUMNS,
     REQUIRED_COLUMNS,
-    ROW_LIMIT_PER_OWNER_PER_CALL_TYPE,
     SKIP_CALL_VALIDATOR,
     SKIP_CALL_VALIDATOR_YES,
     SNCU_BENEFICIARY_IDENTIFIER,
@@ -95,7 +95,7 @@ class CallColumnsValidator(BaseSheetValidator):
 
 class RequiredValueValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
         error_messages = []
         error_messages.extend(cls._validate_required_columns(row_num, raw_row, fields_to_update))
         return fields_to_update, error_messages
@@ -125,7 +125,7 @@ class RequiredValueValidator(BaseRowOperation):
 
 class CallValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
         error_messages = []
         if raw_row.get(SKIP_CALL_VALIDATOR):
             # skip the row
@@ -159,7 +159,7 @@ class CallValidator(BaseRowOperation):
 
 class FormatValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
         error_messages = []
         mobile_number = fields_to_update.get(MOBILE_NUMBER)
         if mobile_number and len(str(mobile_number)) != 10:
@@ -169,12 +169,12 @@ class FormatValidator(BaseRowOperation):
 
 class UploadLimitValidator(BaseRowOperation):
     @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
         error_messages = []
         owner_name = fields_to_update.get(OWNER_NAME)
         call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
         if owner_name and call_number:
-            if cls._upload_limit_reached(import_context, owner_name, call_number):
+            if cls._upload_limit_reached(import_context, owner_name, call_number, domain_name):
                 error_messages.append(UploadLimitReachedError())
             else:
                 cls._update_counter(import_context, owner_name, call_number)
@@ -186,8 +186,9 @@ class UploadLimitValidator(BaseRowOperation):
         return fields_to_update, error_messages
 
     @classmethod
-    def _upload_limit_reached(cls, import_context, owner_name, call_number):
-        return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= ROW_LIMIT_PER_OWNER_PER_CALL_TYPE
+    def _upload_limit_reached(cls, import_context, owner_name, call_number, domain):
+        row_limit = OperatorCallLimitSettings.objects.get_or_create(domain=domain).call_limit
+        return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= row_limit
 
     @classmethod
     def _update_counter(cls, import_context, owner_name, call_number):
