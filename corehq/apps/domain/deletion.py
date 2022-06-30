@@ -11,6 +11,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
+from corehq.apps.domain.utils import silence_during_tests
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -25,6 +26,7 @@ from corehq.sql_db.util import (
     get_db_aliases_for_partitioned_query,
     paginate_query_across_partitioned_databases,
 )
+from corehq.util.log import with_progress_bar
 from settings import HQ_ACCOUNT_ROOT
 
 logger = logging.getLogger(__name__)
@@ -167,16 +169,16 @@ def _terminate_subscriptions(domain_name):
 def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
-    for chunk in chunked(case_ids, 1000, list):
-        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
+    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
+        CommCareCase.objects.hard_delete_cases(domain_name, case_id_chunk)
     logger.info('Deleting cases complete.')
 
 
 def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
-    for chunk in chunked(form_ids, 1000, list):
-        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
+    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
+        XFormInstance.objects.hard_delete_forms(domain_name, form_id_chunk)
     logger.info('Deleting forms complete.')
 
 
