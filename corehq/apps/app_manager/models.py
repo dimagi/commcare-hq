@@ -328,6 +328,7 @@ class FormAction(DocumentSchema):
     @classmethod
     def get_action_properties(self, action):
         action_properties = action.properties()
+        # to delete?
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
         if 'case_name' in action_properties:
@@ -399,6 +400,7 @@ class OpenCaseAction(FormAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(OpenCaseAction, cls).wrap(data)
 
 
@@ -428,6 +430,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('case_name', None)
         if 'case_properties' in data:
             data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
         return super(OpenSubCaseAction, cls).wrap(data)
@@ -679,6 +682,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
