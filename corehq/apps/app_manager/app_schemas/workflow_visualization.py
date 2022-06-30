@@ -42,7 +42,6 @@ class Node:
     label = attr.ib()
     type = attr.ib()
     parent = attr.ib(default=None)
-    attrs = attr.ib(factory=dict)
     children = attr.ib(factory=list)
 
 
@@ -93,10 +92,12 @@ class AppWorkflowVisualizer:
         self.fill_stack()
         self.styles = styles or DefaultStyle
 
-        self.module_attrs = {"shape": self.styles.module_shape}
-        self.form_menu_attrs = {"shape": self.styles.form_menu_shape}
-        self.form_entry_attrs = {"shape": self.styles.form_entry_shape}
-        self.case_list_attrs = {"shape": self.styles.case_list_shape}
+        self.node_attrs = {
+            NodeType.MODULE: {"shape": self.styles.module_shape},
+            NodeType.FORM_MENU: {"shape": self.styles.form_menu_shape},
+            NodeType.FORM_ENTRY: {"shape": self.styles.form_entry_shape},
+            NodeType.CASE_LIST: {"shape": self.styles.case_list_shape},
+        }
         self.eof_attrs = {"color": self.styles.eof_color, "constraint": "false"}
         self.form_link_attrs = {"color": self.styles.eof_color}
         self.case_list_form_link_attrs = {"color": self.styles.case_list_form_color, "constraint": "false"}
@@ -135,19 +136,19 @@ class AppWorkflowVisualizer:
         self.pos -= levels_to_move
 
     def add_module(self, unique_id, name, parent_id=None):
-        self.stack_append(Node(unique_id, name, NodeType.MODULE, parent_id or self.START, attrs=self.module_attrs))
+        self.stack_append(Node(unique_id, name, NodeType.MODULE, parent_id or self.START))
 
     def add_form_menu_item(self, unique_id, name, parent_id=None):
         self.stack_append(
-            Node(unique_id, name, NodeType.FORM_MENU, parent_id or self.START, attrs=self.form_menu_attrs))
+            Node(unique_id, name, NodeType.FORM_MENU, parent_id or self.START))
 
     def add_form_entry(self, unique_id, name, parent_id):
         self.stack_append(
-            Node(f"{unique_id}_form_entry", name, NodeType.FORM_ENTRY, parent_id, attrs=self.form_entry_attrs))
+            Node(f"{unique_id}_form_entry", name, NodeType.FORM_ENTRY, parent_id))
 
     def add_case_list(self, node_id, case_type, has_search, parent):
         self.stack_append(Node(
-            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, parent, attrs=self.case_list_attrs
+            node_id, f"Select '{case_type}' case", NodeType.CASE_LIST, parent
         ), is_global=True)
         if has_search:
             self.add_edge(Edge(node_id, node_id, "Search"))
@@ -186,7 +187,8 @@ class AppWorkflowVisualizer:
         )
 
         def _add_node(graph, node):
-            graph.node(node.id, node.label, **node.attrs)
+            attrs = self.node_attrs.get(node.type, {})
+            graph.node(node.id, node.label, **attrs)
 
         root_graph.node(self.ROOT, "Root")
         root_graph.node(self.START, "Start")
