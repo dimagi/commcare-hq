@@ -85,17 +85,17 @@ class AppWorkflowVisualizer:
 
     def __init__(self, styles=None):
         self.global_nodes = []
-        self.node_stack = []
-        self.edges = []
 
         start = Node(self.START, "Start", NodeType.START, parent=self.ROOT)
-        self.nodes_by_id = {
-            "root": Node(self.ROOT, "Root", NodeType.ROOT, children=[start]),
-            "start": start
-        }
+        self.node_stack = [[
+            Node(self.ROOT, "Root", NodeType.ROOT, children=[start]),
+            start
+        ]]
+        self.edges = [Edge(self.ROOT, self.START)]
+        self.nodes_by_id = {node.id: node for node in self.node_stack[0]}
         self.pending_reverse = []
 
-        self.pos = 0
+        self.pos = 1
         self.fill_stack()
         self.styles = styles or DefaultStyle
 
@@ -199,11 +199,13 @@ class AppWorkflowVisualizer:
             attrs = self.node_attrs.get(node.type, {})
             graph.node(node.id, node.label, **attrs)
 
-        root_graph.node(self.ROOT, "Root")
-        root_graph.node(self.START, "Start")
-
         for pos, nodes in enumerate(self.node_stack):
             if not nodes:
+                continue
+
+            if pos == 0:
+                for node in nodes:
+                    _add_node(root_graph, node)
                 continue
 
             with root_graph.subgraph() as sub:
@@ -214,7 +216,6 @@ class AppWorkflowVisualizer:
         for node in self.global_nodes:
             _add_node(root_graph, node)
 
-        root_graph.edge("root", "start")
         for edge in self.edges:
             attrs = self.edge_attrs.get(edge.type, {})
             root_graph.edge(edge.tail, edge.head, label=edge.label or None, **attrs)
