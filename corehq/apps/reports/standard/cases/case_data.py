@@ -1,4 +1,5 @@
 import copy
+import csv
 import io
 import json
 import re
@@ -33,15 +34,16 @@ from django.views.decorators.http import (
     require_http_methods,
     require_POST,
 )
-from django.views.generic.edit import ModelFormMixin, ProcessFormView
 from django.views.generic import View
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import ModelFormMixin, ProcessFormView
 
-import csv
+import langcodes
 import pytz
 from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from no_exceptions.exceptions import Http403
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import close_case, rebuild_case_from_forms
@@ -60,7 +62,6 @@ from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.web import json_response
 
-import langcodes
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_ID, USERCASE_TYPE
@@ -73,9 +74,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
-from corehq.apps.domain.decorators import (
-    login_and_domain_required,
-)
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
@@ -94,8 +93,8 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.locations.permissions import (
     can_edit_form_location,
     conditionally_location_safe,
@@ -139,21 +138,27 @@ from corehq.blobs import CODES, NotFound, get_blob_db, models
 from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import CommCareCase, UserRequestedRebuild, XFormInstance
+from corehq.form_processor.models import (
+    CommCareCase,
+    UserRequestedRebuild,
+    XFormInstance,
+)
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.motech.repeaters.dbaccessors import (
     get_repeat_records_by_payload_id,
 )
-from corehq.motech.repeaters.views.repeat_record_display import RepeatRecordDisplay
+from corehq.motech.repeaters.views.repeat_record_display import (
+    RepeatRecordDisplay,
+)
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
     get_timezone_for_user,
 )
-from corehq.util import cmp
 from corehq.util.view_utils import (
     absolute_reverse,
     get_case_or_404,
@@ -161,12 +166,15 @@ from corehq.util.view_utils import (
     request_as_dict,
     reverse,
 )
-from no_exceptions.exceptions import Http403
 
 from .dispatcher import ProjectReportDispatcher
-from .forms import SavedReportConfigForm, TableauServerForm, TableauVisualizationForm
+from .forms import (
+    SavedReportConfigForm,
+    TableauServerForm,
+    TableauVisualizationForm,
+)
 from .lookup import ReportLookup, get_full_report_name
-from .models import TableauVisualization, TableauServer
+from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
 from .standard.cases.basic import CaseListReport
 
