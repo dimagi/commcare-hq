@@ -474,7 +474,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Mobile workers who are confirming by SMS need not require an email.
+        # Mobile workers who are confirming by SMS need not require an email to input.
         self.fields['email'].widget = forms.HiddenInput()
         self.fields['email'].required = False
 

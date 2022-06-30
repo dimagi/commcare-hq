@@ -4,6 +4,7 @@ from django.utils.translation import override, gettext_lazy as _
 
 from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language
 from corehq.apps.hqwebapp.two_factor_gateways import Gateway
+from corehq.apps.sms.api import send_sms
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix
@@ -76,7 +77,11 @@ def send_account_confirmation_sms(commcare_user):
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
-    return Gateway().send_sms_with_custom_content(commcare_user.default_phone_number, text_content)
+    return send_sms(
+        domain=commcare_user.domain,
+        contact=None,
+        phone_number=commcare_user.default_phone_number,
+        text=text_content)
 
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
