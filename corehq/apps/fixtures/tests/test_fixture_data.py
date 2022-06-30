@@ -13,10 +13,10 @@ from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     FixtureItemField,
     FixtureOwnership,
-    FixtureTypeField,
+    LookupTable,
+    TypeField,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
@@ -35,32 +35,23 @@ class FixtureDataTest(TestCase):
         self.tag = "district"
         delete_all_fixture_data()
 
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain,
             tag=self.tag,
-            name="Districts",
+            description="Districts",
             fields=[
-                FixtureTypeField(
-                    field_name="state_name",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="district_name",
-                    properties=["lang"]
-                ),
-                FixtureTypeField(
-                    field_name="district_id",
-                    properties=[]
-                ),
+                TypeField(name="state_name"),
+                TypeField(name="district_name", properties=["lang"]),
+                TypeField(name="district_id"),
             ],
             item_attributes=[],
         )
         self.data_type.save()
-        self.addCleanup(self.data_type.delete)
+        self.addCleanup(self.data_type._migration_get_couch_object().delete)
 
         self.data_item = FixtureDataItem(
             domain=self.domain,
-            data_type_id=self.data_type.get_id,
+            data_type_id=self.data_type._migration_couch_id,
             fields={
                 "state_name": FieldList(
                     field_list=[
@@ -223,20 +214,15 @@ class FixtureDataTest(TestCase):
         )
 
     def test_empty_data_types(self):
-        empty_data_type = FixtureDataType(
+        empty_data_type = LookupTable(
             domain=self.domain,
             tag='blank',
-            name="blank",
-            fields=[
-                FixtureTypeField(
-                    field_name="name",
-                    properties=[]
-                ),
-            ],
+            description="blank",
+            fields=[TypeField(name="name")],
             item_attributes=[],
         )
         empty_data_type.save()
-        self.addCleanup(empty_data_type.delete)
+        self.addCleanup(empty_data_type._migration_get_couch_object().delete)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
@@ -311,24 +297,24 @@ class FixtureDataTest(TestCase):
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
 
     def make_data_type(self, name, is_global):
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=self.domain,
             tag="{}-index".format(name),
             is_global=is_global,
-            name=name.title(),
+            description=name.title(),
             fields=[
-                FixtureTypeField(field_name="cost", properties=[]),
+                TypeField(name="cost", properties=[]),
             ],
             item_attributes=[],
         )
         data_type.save()
-        self.addCleanup(data_type.delete)
+        self.addCleanup(data_type._migration_get_couch_object().delete)
         return data_type
 
     def make_data_item(self, data_type, cost):
         data_item = FixtureDataItem(
             domain=self.domain,
-            data_type_id=data_type._id,
+            data_type_id=data_type._migration_couch_id,
             fields={
                 "cost": FieldList(
                     field_list=[FixtureItemField(
@@ -352,20 +338,20 @@ class TestFixtureOrdering(TestCase):
         cls.user = CommCareUser.create(cls.domain, 'george', '***', None, None)
         cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
-        cls.data_type = FixtureDataType(
+        cls.data_type = LookupTable(
             domain=cls.domain,
             tag="houses-of-westeros",
             is_global=True,
-            name="Great Houses of Westeros",
+            description="Great Houses of Westeros",
             fields=[
-                FixtureTypeField(field_name="name", properties=[]),
-                FixtureTypeField(field_name="seat", properties=[]),
-                FixtureTypeField(field_name="sigil", properties=[]),
+                TypeField(name="name"),
+                TypeField(name="seat"),
+                TypeField(name="sigil"),
             ],
             item_attributes=[],
         )
         cls.data_type.save()
-        cls.addClassCleanup(cls.data_type.delete)
+        cls.addClassCleanup(cls.data_type._migration_get_couch_object().delete)
 
         cls.data_items = [
             cls._make_data_item(4, "Tyrell", "Highgarden", "Rose"),
@@ -385,7 +371,7 @@ class TestFixtureOrdering(TestCase):
 
         data_item = FixtureDataItem(
             domain=cls.domain,
-            data_type_id=cls.data_type._id,
+            data_type_id=cls.data_type._migration_couch_id,
             fields={
                 "name": field_list(name),
                 "seat": field_list(seat),

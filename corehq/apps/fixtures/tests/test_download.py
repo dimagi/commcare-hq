@@ -1,7 +1,7 @@
 from testil import eq
 
 from .. import download as mod
-from ..models import FixtureDataType, FixtureTypeField
+from ..models import LookupTable, TypeField
 
 
 def test_get_indexed_field_numbers():
@@ -31,25 +31,25 @@ def test_iter_types_headers():
 
 def create_index_tables():
     return [
-        FixtureDataType(fields=[
-            FixtureTypeField(field_name="a1", properties=[], is_indexed=True),
-            FixtureTypeField(field_name="a2", properties=[], is_indexed=True),
-            FixtureTypeField(field_name="a3", properties=[], is_indexed=False),
+        LookupTable(fields=[
+            TypeField(name="a1", is_indexed=True),
+            TypeField(name="a2", is_indexed=True),
+            TypeField(name="a3"),
         ]),
-        FixtureDataType(fields=[
-            FixtureTypeField(field_name="b1", properties=[], is_indexed=True),
-            FixtureTypeField(field_name="b2", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="b3", properties=[], is_indexed=True),
-            FixtureTypeField(field_name="b4", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="b5", properties=[], is_indexed=True),
+        LookupTable(fields=[
+            TypeField(name="b1", is_indexed=True),
+            TypeField(name="b2"),
+            TypeField(name="b3", is_indexed=True),
+            TypeField(name="b4"),
+            TypeField(name="b5", is_indexed=True),
         ]),
-        FixtureDataType(fields=[
-            FixtureTypeField(field_name="c1", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c2", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c3", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c4", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c5", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c6", properties=[], is_indexed=False),
-            FixtureTypeField(field_name="c7", properties=[], is_indexed=True),
+        LookupTable(fields=[
+            TypeField(name="c1"),
+            TypeField(name="c2"),
+            TypeField(name="c3"),
+            TypeField(name="c4"),
+            TypeField(name="c5"),
+            TypeField(name="c6"),
+            TypeField(name="c7", is_indexed=True),
         ]),
     ]

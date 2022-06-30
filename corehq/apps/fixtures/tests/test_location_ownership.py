@@ -1,10 +1,10 @@
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     FixtureItemField,
     FixtureOwnership,
-    FixtureTypeField,
+    LookupTable,
+    TypeField,
 )
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.users.models import CommCareUser
@@ -31,13 +31,13 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         super(TestLocationOwnership, cls).setUpClass()
         cls.tag = "big-mac-index"
 
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=cls.domain,
             tag=cls.tag,
-            name="Big Mac Index",
+            description="Big Mac Index",
             fields=[
-                FixtureTypeField(field_name="cost", properties=[]),
-                FixtureTypeField(field_name="region", properties=[]),
+                TypeField(name="cost"),
+                TypeField(name="region"),
             ],
             item_attributes=[],
         )
@@ -47,7 +47,7 @@ class TestLocationOwnership(LocationHierarchyTestCase):
             """Make a fixture data item and assign it to location_name"""
             data_item = FixtureDataItem(
                 domain=cls.domain,
-                data_type_id=data_type.get_id,
+                data_type_id=data_type._migration_couch_id,
                 fields={
                     "cost": FieldList(
                         field_list=[FixtureItemField(

@@ -7,9 +7,9 @@ from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     FixtureItemField,
-    FixtureTypeField,
+    LookupTable,
+    TypeField,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists
 from corehq.apps.fixtures.utils import is_identifier_invalid
@@ -21,38 +21,23 @@ class FieldNameCleanTest(SimpleTestCase):
     def setUp(self):
         self.domain = 'dirty-fields'
 
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain,
             tag='dirty_fields',
-            name="Dirty Fields",
+            description="Dirty Fields",
             fields=[
-                FixtureTypeField(
-                    field_name="will/crash",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="space cadet",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="yes\\no",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="<with>",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="<crazy / combo><d",
-                    properties=[]
-                )
+                TypeField(name="will/crash"),
+                TypeField(name="space cadet"),
+                TypeField(name="yes\\no"),
+                TypeField(name="<with>"),
+                TypeField(name="<crazy / combo><d")
             ],
             item_attributes=[],
         )
 
         self.data_item = FixtureDataItem(
             domain=self.domain,
-            data_type_id=self.data_type.get_id,
+            data_type_id=self.data_type._migration_couch_id,
             fields={
                 "will/crash": FieldList(
                     field_list=[
