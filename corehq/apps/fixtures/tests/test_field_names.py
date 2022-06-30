@@ -1,6 +1,6 @@
 from xml.etree import cElementTree as ElementTree
 
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 
 from casexml.apps.case.tests.util import check_xml_line_by_line
 
@@ -15,9 +15,8 @@ from corehq.apps.fixtures.fixturegenerators import item_lists
 from corehq.apps.fixtures.utils import is_identifier_invalid
 
 
-class FieldNameCleanTest(TestCase):
-    """Makes sure that bad characters are properly escaped in the xml
-    """
+class FieldNameCleanTest(SimpleTestCase):
+    """Makes sure that bad characters are properly escaped in the xml"""
 
     def setUp(self):
         self.domain = 'dirty-fields'
@@ -50,7 +49,6 @@ class FieldNameCleanTest(TestCase):
             ],
             item_attributes=[],
         )
-        self.data_type.save()
 
         self.data_item = FixtureDataItem(
             domain=self.domain,
@@ -107,15 +105,10 @@ class FieldNameCleanTest(TestCase):
             },
             item_attributes={},
         )
-        self.data_item.save()
-
-    def tearDown(self):
-        self.data_type.delete()
-        self.data_item.delete()
 
     def test_cleaner(self):
         item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_item.data_type
+        item_dict['_data_type'] = self.data_type
         check_xml_line_by_line(self, """
         <dirty_fields>
             <will_crash>yep</will_crash>
