@@ -64,11 +64,6 @@ class FormProcessorSQL(object):
         form_ids = [xform.form_id for xform in xforms]
         XFormInstance.objects.hard_delete_forms(domain, form_ids)
         CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
-        for form in xforms:
-            form.state |= XFormInstance.DELETED
-            publish_form_saved(form)
-        case.deleted = True
-        publish_case_saved(case)
 
     @classmethod
     def new_form_from_old(cls, existing_form, xml, value_responses_map, user_id):

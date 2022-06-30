@@ -12717,6 +12717,10 @@ msgid "Please enter a valid regular expression to match"
 msgstr ""
 
 #: corehq/apps/data_interfaces/forms.py
+msgid "There was a problem with a UCR Filter Definition: "
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr ""
 
@@ -13345,6 +13349,10 @@ msgid "Custom filter"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "UCR Filter"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "AND"
 msgstr ""
 
@@ -13406,6 +13414,10 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Filter Definition"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/find_by_id_form.html
@@ -14512,6 +14524,26 @@ msgid "Add case type"
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid "Synchronous Web Apps Submissions"
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"                Update case search data immediately on web apps form "
+"submission.\n"
+"              "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
+msgid ""
+"\n"
+"              This will slow down submissions but prevent case search data "
+"from going stale.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid "Remove Special Characters"
 msgstr ""
 
@@ -15317,7 +15349,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr ""
 
@@ -19822,62 +19853,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid "Unknown location: '%(name)s'. But the row is successfully added"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid ""
-"Multiple locations found with the name: '%(name)s'.  Try using site code. "
-"But the row is successfully added"
-msgstr ""
-
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
 msgid "type {lookup_table_name} is not defined as global"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown group: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
+msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid ""
+"Multiple locations found with the name: '%(name)s'.  Try using site code. "
+"But the row is successfully added"
 msgstr ""
 
 #: corehq/apps/fixtures/views.py
@@ -22985,10 +22990,6 @@ msgid "Could not find app"
 msgstr ""
 
 #: corehq/apps/linked_domain/tasks.py
-msgid "Updated app but did not build or release: "
-msgstr ""
-
-#: corehq/apps/linked_domain/tasks.py
 msgid "Feature flag for {} is not enabled"
 msgstr ""
 
@@ -25239,6 +25240,11 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
+msgid "Hello %(name)s,"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
 msgid ""
 "\n"
 "Once you confirm your account you will be able to access and submit data in "
@@ -26931,10 +26937,8 @@ msgid "Day"
 msgstr ""
 
 #: corehq/apps/reports/forms.py
-#, fuzzy
-#| msgid "Time"
 msgid "To Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/forms.py
 msgid "Report Start Date"
@@ -29118,10 +29122,9 @@ msgid "Edit Scheduled Report"
 msgstr ""
 
 #: corehq/apps/reports/views.py
-#, fuzzy, python-format
-#| msgid "This report's timezone is %(timezone)s."
+#, python-format
 msgid "This scheduled report's timezone is %s (UTC%s)"
-msgstr "O fuso horário deste relatório é %(timezone)s."
+msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "Create a new"
@@ -33165,6 +33168,10 @@ msgid "{0} filter type must include a \"filters\" list"
 msgstr ""
 
 #: corehq/apps/userreports/filters/factory.py
+msgid "Couldn't find named filter with name: {}"
+msgstr ""
+
+#: corehq/apps/userreports/filters/factory.py
 msgid "Problem creating filter from spec: {}, message is {}"
 msgstr ""
 
@@ -34061,10 +34068,8 @@ msgid "Named Expression"
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
-#, fuzzy
-#| msgid "Date Filter"
 msgid "Named Filter"
-msgstr "Filtro de Data"
+msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py
@@ -35696,12 +35701,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35709,17 +35708,8 @@ msgid ""
 "                              email to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Reporting groups are used in reports "
-#| "to filter and view\n"
-#| "                                    data."
 msgid ""
 "\n"
 "                              Would you like to send the account "
@@ -35727,9 +35717,6 @@ msgid ""
 "                              SMS to this account?\n"
 "                            "
 msgstr ""
-"\n"
-"Grupos de Relatório são usados em relatórios para filtrar e visualizar\n"
-" dados."
 
 #: corehq/apps/users/templates/users/mobile_workers.html
 msgid ""
@@ -36294,32 +36281,24 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/util.py
+#: corehq/apps/users/validation.py
 msgid "Username is required."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not contain consecutive '.' (period)."
+#: corehq/apps/users/validation.py
+msgid "Username '{}' is already taken or reserved."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not end with a '.' (period)."
+#: corehq/apps/users/validation.py
+msgid "Username '{}' must be a valid email address."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+#: corehq/apps/users/validation.py
+msgid "The username component '{}' of '{}' may not contain special characters."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' is already taken."
-msgstr ""
-
-#: corehq/apps/users/util.py
-msgid "Username '{}' is reserved."
+#: corehq/apps/users/validation.py
+msgid "The username email domain '@{}' should be '@{}'."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
