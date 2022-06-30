@@ -733,7 +733,8 @@ class NewMobileWorkerForm(forms.Form):
     phone_number = forms.CharField(
         required=False,
         label=gettext_noop("Phone Number"),
-        help_text="""
+        help_text=gettext_noop("Please enter number including country code, without (+) and in digits only.")
+        + "<br>" + """
             <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
                 <i class="fa fa-exclamation-triangle"
                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
