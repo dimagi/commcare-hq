@@ -1,4 +1,7 @@
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 3'  # Every Wed at 06:00 UTC
 
 name: Update transifex translations
 jobs:
