@@ -228,27 +228,28 @@ class TestDomainGlobalSettingsForm(TestCase):
 class DomainMetadataFormTests(SimpleTestCase):
     def test_all_visible_fields(self):
         form = self._create_form()
-        visible_fields = self._get_visible_fields(form)
+        visible_fields = form.get_visible_field_names()
         self.assertIn('cloudcare_releases', visible_fields)
         self.assertIn('default_geocoder_location', visible_fields)
 
     def test_no_cloudcare_privilege_hides_cloudcare_releases_field(self):
         self.domain_privileges.remove(privileges.CLOUDCARE)
         form = self._create_form()
-        self.assertNotIn('cloudcare_releases', self._get_visible_fields(form))
+        self.assertNotIn('cloudcare_releases', form.get_visible_field_names())
 
     def test_default_cloudcare_releases_hides_cloudcare_releases_field(self):
         self.mock_domain.cloudcare_releases = 'default'
         form = self._create_form()
-        self.assertNotIn('cloudcare_releases', self._get_visible_fields(form))
+        self.assertNotIn('cloudcare_releases', form.get_visible_field_names())
 
     def test_no_privilege_removes_geocoder_field(self):
         self.domain_privileges.remove(privileges.GEOCODER)
         form = self._create_form()
-        self.assertNotIn('default_geocoder_location', self._get_visible_fields(form))
+        self.assertNotIn('default_geocoder_location', form.get_visible_field_names())
 
 # Helpers
     def setUp(self):
+        super().setUp()
         privilege_patcher = patch.object(forms, 'domain_has_privilege')
         self.mock_domain_has_privilege = privilege_patcher.start()
         self.mock_domain_has_privilege.side_effect = self._domain_has_privilege
@@ -268,13 +269,7 @@ class DomainMetadataFormTests(SimpleTestCase):
         self.addCleanup(mock_call_limit_domain_patcher.stop)
 
     def _create_form(self):
-        # MOBILE_UCR toggle
-        # TWO_STAGE_USER_PROVISIONING_BY_SMS
         return DomainMetadataForm(domain=self.mock_domain)
 
     def _domain_has_privilege(self, domain, privilege):
         return privilege in self.domain_privileges
-
-    def _get_visible_fields(self, form):
-        fieldset = form.helper.layout.fields[0]
-        return [field[0] if isinstance(field, LayoutObject) else field for field in fieldset.fields]
