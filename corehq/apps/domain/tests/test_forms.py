@@ -1,11 +1,13 @@
+from crispy_forms.layout import LayoutObject
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
 from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
+from corehq import privileges
 
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
 
-from ..forms import DomainGlobalSettingsForm, PrivacySecurityForm
+from ..forms import DomainGlobalSettingsForm, DomainMetadataForm, PrivacySecurityForm
 from .. import forms
 
 
@@ -145,3 +147,58 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.domain.delete()
         OperatorCallLimitSettings.objects.all().delete()
         super().tearDown()
+
+
+class DomainMetadataFormTests(SimpleTestCase):
+    def test_all_visible_fields(self):
+        form = self._create_form()
+        visible_fields = self._get_visible_fields(form)
+        self.assertIn('cloudcare_releases', visible_fields)
+        self.assertIn('default_geocoder_location', visible_fields)
+
+    def test_no_cloudcare_privilege_hides_cloudcare_releases_field(self):
+        self.domain_privileges.remove(privileges.CLOUDCARE)
+        form = self._create_form()
+        self.assertNotIn('cloudcare_releases', self._get_visible_fields(form))
+
+    def test_default_cloudcare_releases_hides_cloudcare_releases_field(self):
+        self.mock_domain.cloudcare_releases = 'default'
+        form = self._create_form()
+        self.assertNotIn('cloudcare_releases', self._get_visible_fields(form))
+
+    def test_no_privilege_removes_geocoder_field(self):
+        self.domain_privileges.remove(privileges.GEOCODER)
+        form = self._create_form()
+        self.assertNotIn('default_geocoder_location', self._get_visible_fields(form))
+
+# Helpers
+    def setUp(self):
+        privilege_patcher = patch.object(forms, 'domain_has_privilege')
+        self.mock_domain_has_privilege = privilege_patcher.start()
+        self.mock_domain_has_privilege.side_effect = self._domain_has_privilege
+        self.addCleanup(privilege_patcher.stop)
+
+        self.domain_privileges = [privileges.CLOUDCARE, privileges.GEOCODER]
+
+        self.mock_domain = Mock(name='test-domain', confirmation_link_expiry_time=500)
+        self.mock_domain.name = 'test-domain'
+        self.mock_domain.call_center_config.enabled = False
+        self.mock_domain.cloudcare_releases = 'notdefault'
+
+        mock_call_limit_domain_patcher = patch.object(OperatorCallLimitSettings,
+            'objects')
+        mock_call_limit_settings = mock_call_limit_domain_patcher.start()
+        mock_call_limit_settings.values_list.return_value = []
+        self.addCleanup(mock_call_limit_domain_patcher.stop)
+
+    def _create_form(self):
+        # MOBILE_UCR toggle
+        # TWO_STAGE_USER_PROVISIONING_BY_SMS
+        return DomainMetadataForm(domain=self.mock_domain)
+
+    def _domain_has_privilege(self, domain, privilege):
+        return privilege in self.domain_privileges
+
+    def _get_visible_fields(self, form):
+        fieldset = form.helper.layout.fields[0]
+        return [field[0] if isinstance(field, LayoutObject) else field for field in fieldset.fields]
