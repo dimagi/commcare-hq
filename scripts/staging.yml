@@ -80,4 +80,5 @@ branches:
     - akj/mw-signup-enhancements+akj/call-limit-settings # Jenny July 1
     - akj/mw-signup-enhancements # Akash June 30
     - ad/fix-save-only-edited-wrap-funcs # Addison June 30
+    - jls/dd-in-rules-ui # Jenny July 1
 submodules: { }
