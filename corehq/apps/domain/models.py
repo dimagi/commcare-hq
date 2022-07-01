@@ -66,6 +66,8 @@ from .exceptions import (
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -1101,3 +1103,18 @@ class ProjectLimit(models.Model):
     domain = models.CharField(max_length=256, db_index=True)
     limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
     limit_value = models.IntegerField(default=20)
+
+
+class OperatorCallLimitSettings(models.Model):
+    CALL_LIMIT_MINIMUM = 1
+    CALL_LIMIT_MAXIMUM = 1000
+    CALL_LIMIT_DEFAULT = 120
+
+    domain = models.CharField(max_length=256, db_index=True)
+    call_limit = models.IntegerField(
+        default=CALL_LIMIT_DEFAULT,
+        validators=[
+            MinValueValidator(CALL_LIMIT_MINIMUM),
+            MaxValueValidator(CALL_LIMIT_MAXIMUM)
+        ]
+    )
