@@ -99,7 +99,7 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma seperated email addresses",
+        label="Comma/new-line seperated email addresses",
         widget=forms.Textarea(),
         required=False
     )
@@ -118,7 +118,7 @@ class OffboardingUserListForm(forms.Form):
             FormActions(
                 crispy.Submit(
                     'superuser_management',
-                    'Get Users'
+                    'Get Users Not in List'
                 )
             )
         )
@@ -163,7 +163,9 @@ def clean_data(cleaned_data, offboarding_list=False):
 
     if offboarding_list:
         #inverts the given list by default
-        users = [user for user in all_users if user not in users]
+        email_names = [username.split("@")[0] + "+" for username in csv_email_list]
+        users = [user for user in all_users if user not in users
+                 and not list(filter(user.username.startswith, email_names))]
 
     cleaned_data['csv_email_list'] = users
     return cleaned_data

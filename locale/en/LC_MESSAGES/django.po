@@ -20439,8 +20439,8 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid ""
-"Please type comma or new-line separated email addresses of users you want to "
-"offboard."
+"Please type comma or new-line separated email addresses from the official "
+"list of current employees."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
