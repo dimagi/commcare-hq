@@ -15,7 +15,7 @@ from corehq.apps.app_manager.models import (
     Module, DetailColumn, ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
-    AUTO_LAUNCH_EXPRESSION,
+    AUTO_LAUNCH_EXPRESSIONS,
     DetailContributor
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
@@ -406,7 +406,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         expected = f"""
         <partial>
-          <action auto_launch="{AUTO_LAUNCH_EXPRESSION}" redo_last="false">
+          <action auto_launch="{AUTO_LAUNCH_EXPRESSIONS['single-select']}" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>

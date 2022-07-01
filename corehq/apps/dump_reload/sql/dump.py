@@ -96,6 +96,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
                                        SimpleFilter('caseruleaction__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.UpdateCaseDefinition',
                                        SimpleFilter('caseruleaction__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.UCRFilterDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition',
                                  SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleAction', SimpleFilter('rule__domain')),
