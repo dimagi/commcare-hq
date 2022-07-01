@@ -296,7 +296,7 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
 
 def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
     total_size = 0
-    unique_attachment_ids = []
+    unique_attachment_ids = set()
     with open(fpath, 'wb') as zfile:
         with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
             for form_number, form_info in enumerate(forms_info, 1):
@@ -304,8 +304,8 @@ def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
                 for attachment in form_info['attachments']:
                     if attachment['id'] in unique_attachment_ids:
                         continue
-                    else:
-                        unique_attachment_ids.append(attachment['id'])
+
+                    unique_attachment_ids.add(attachment['id'])
                     total_size += attachment['size']
                     if total_size >= MAX_MULTIMEDIA_EXPORT_SIZE:
                         raise Exception("Refusing to make multimedia export bigger than {} GB"
