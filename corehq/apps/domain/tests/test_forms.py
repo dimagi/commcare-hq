@@ -64,6 +64,80 @@ class PrivacySecurityFormTests(SimpleTestCase):
         return [field[0] for field in fieldset.fields]
 
 
+class DomainGlobalSettingsFormTests(SimpleTestCase):
+    def test_all_visible_fields(self):
+        form = self._create_form()
+        self.assertEqual([
+            'hr_name',
+            'project_description',
+            'default_timezone',
+            'default_geocoder_location',
+            'logo',
+            'delete_logo',
+            'call_center_enabled',
+            'call_center_type',
+            'call_center_case_owner',
+            'call_center_case_type',
+            'mobile_ucr_sync_interval',
+            'confirmation_link_expiry'
+        ], form.get_visible_field_names())
+
+    def test_if_cannot_use_custom_logo_logo_fields_are_removed(self):
+        form = self._create_form(can_use_custom_logo=False)
+
+        visible_fields = form.get_visible_field_names()
+        self.assertNotIn('logo', visible_fields)
+        self.assertNotIn('delete_logo', visible_fields)
+
+    def test_if_call_center_config_disabled_call_center_fields_are_removed(self):
+        form = self._create_form(call_center_enabled=False)
+
+        visible_fields = form.get_visible_field_names()
+        self.assertNotIn('call_center_enabled', visible_fields)
+        self.assertNotIn('call_center_type', visible_fields)
+        self.assertNotIn('call_center_case_owner', visible_fields)
+        self.assertNotIn('call_center_case_type', visible_fields)
+
+    def test_if_mobile_ucr_disabled_sync_field_is_removed(self):
+        self.ucr_toggle_enabled = False
+        form = self._create_form()
+
+        self.assertNotIn('mobile_ucr_sync_interval', form.get_visible_field_names())
+
+    def test_if_sms_user_provisioning_disabled_field_is_removed(self):
+        self.sms_user_provisioning_toggle_enabled = False
+        form = self._create_form()
+
+        self.assertNotIn('confirmation_link_expiry', form.get_visible_field_names())
+
+# Helpers
+    def setUp(self):
+        super().setUp()
+        self.mock_domain = Mock(confirmation_link_expiry_time=500)
+        self.mock_domain.name = 'test-domain'
+        self.mock_domain.call_center_enabled = False
+        self.ucr_toggle_enabled = True
+        self.sms_user_provisioning_toggle_enabled = True
+
+        mock_ucr_toggle = patch.object(forms.MOBILE_UCR, 'enabled',
+            side_effect=lambda domain: self.ucr_toggle_enabled)
+        mock_ucr_toggle.start()
+        self.addCleanup(mock_ucr_toggle.stop)
+
+        mock_sms_provisioning_toggle = patch.object(forms.TWO_STAGE_USER_PROVISIONING_BY_SMS, 'enabled',
+            side_effect=lambda domain: self.sms_user_provisioning_toggle_enabled)
+        mock_sms_provisioning_toggle.start()
+        self.addCleanup(mock_sms_provisioning_toggle.stop)
+
+        mock_get_domain_by_name = patch.object(Domain, 'get_by_name', return_value=self.mock_domain)
+        mock_get_domain_by_name.start()
+        self.addCleanup(mock_get_domain_by_name.stop)
+
+    def _create_form(self, can_use_custom_logo=True, call_center_enabled=True):
+        self.mock_domain.call_center_config.enabled = call_center_enabled
+        return DomainGlobalSettingsForm(domain=self.mock_domain, can_use_custom_logo=can_use_custom_logo)
+
+
 class TestDomainGlobalSettingsForm(TestCase):
 
     def setUp(self) -> None:

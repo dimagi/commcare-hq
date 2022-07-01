@@ -37,7 +37,7 @@ from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout, Submit, LayoutObject
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
@@ -429,15 +429,16 @@ class DomainGlobalSettingsForm(forms.Form):
         self.fields['default_timezone'].label = gettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
-            del self.fields['logo']
-            del self.fields['delete_logo']
+            self.remove_fields('logo', 'delete_logo')
 
         if self.project:
             if not self.project.call_center_config.enabled:
-                del self.fields['call_center_enabled']
-                del self.fields['call_center_type']
-                del self.fields['call_center_case_owner']
-                del self.fields['call_center_case_type']
+                self.remove_fields(
+                    'call_center_enabled',
+                    'call_center_type',
+                    'call_center_case_owner',
+                    'call_center_case_type'
+                )
             else:
                 owner_field = self.fields['call_center_case_owner']
                 owner_field.widget.set_url(
@@ -446,10 +447,10 @@ class DomainGlobalSettingsForm(forms.Form):
                 owner_field.widget.set_domain(self.domain)
 
         if not MOBILE_UCR.enabled(self.domain):
-            del self.fields['mobile_ucr_sync_interval']
+            self.remove_fields('mobile_ucr_sync_interval')
 
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            del self.fields['confirmation_link_expiry']
+            self.remove_fields('confirmation_link_expiry')
         else:
             self.fields['confirmation_link_expiry'].initial = Domain.get_by_name(
                 self.domain
@@ -577,6 +578,21 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_timezone_configuration(domain)
         domain.save()
         return True
+
+    def remove_fields(self, *field_names):
+        existing_field_names = self.get_visible_field_names()
+
+        field_indices = [existing_field_names.index(field_name) for field_name in field_names]
+        field_indices.sort(reverse=True)
+        for index in field_indices:
+            self.helper.layout[0].pop(index)
+
+        for field_name in field_names:
+            del self.fields[field_name]
+
+    def get_visible_field_names(self):
+        fieldset = self.helper.layout.fields[0]
+        return [field[0] if isinstance(field, LayoutObject) else field for field in fieldset.fields]
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
