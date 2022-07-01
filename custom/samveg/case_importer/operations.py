@@ -18,7 +18,7 @@ class BaseRowOperation(object):
         :param domain_name: name of the domain for which upload operation is done
         """
         self.fields_to_update = kwargs.get("fields_to_update")
-        self.errors = []
+        self.error_messages = []
 
     def run(self):
         raise NotImplementedError
@@ -32,7 +32,7 @@ class AddCustomCaseProperties(BaseRowOperation):
         """
         self.fields_to_update['last_upload_change'] = str(_get_today_date())
         self.fields_to_update['visit_type'] = self._get_visit_type()
-        return self.fields_to_update, self.errors
+        return self.fields_to_update, self.error_messages
 
     def _get_visit_type(self):
         from custom.samveg.case_importer.validators import _get_latest_call_value_and_number

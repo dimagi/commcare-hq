@@ -174,19 +174,19 @@ class FormatValidator(BaseRowOperation):
 
 class UploadLimitValidator(BaseRowOperation):
 
-    def __init__(self, import_context=None, domain_name=None, **kwargs):
-        super(CallValidator, self).__init__(**kwargs)
+    def __init__(self, import_context=None, domain=None, **kwargs):
+        super(UploadLimitValidator, self).__init__(**kwargs)
         self.import_context = import_context
-        self.domain_name = domain_name
+        self.domain = domain
 
     def run(self):
         owner_name = self.fields_to_update.get(OWNER_NAME)
         _, call_number = _get_latest_call_value_and_number(self.fields_to_update)
         if owner_name and call_number:
-            if self._upload_limit_reached(self.import_context, owner_name, call_number, self.domain_name):
+            if self._upload_limit_reached(owner_name, call_number):
                 self.error_messages.append(UploadLimitReachedError())
             else:
-                self._update_counter(self.import_context, owner_name, call_number)
+                self._update_counter(owner_name, call_number)
         else:
             if not owner_name:
                 self.error_messages.append(OwnerNameMissingError())
@@ -194,13 +194,12 @@ class UploadLimitValidator(BaseRowOperation):
                 self.error_messages.append(CallValuesMissingError())
         return self.fields_to_update, self.error_messages
 
-    @classmethod
     def _upload_limit_reached(self, owner_name, call_number):
-        row_limit = OperatorCallLimitSettings.objects.get_or_create(domain=self.domain).call_limit
-        return self._counter(self.import_context)[owner_name][f"Call{call_number}"] >= row_limit
+        setting_obj, _ = OperatorCallLimitSettings.objects.get_or_create(domain=self.domain)
+        return self._counter()[owner_name][f"Call{call_number}"] >= setting_obj.call_limit
 
     def _update_counter(self, owner_name, call_number):
-        self._counter(self.import_context)[owner_name][f"Call{call_number}"] += 1
+        self._counter()[owner_name][f"Call{call_number}"] += 1
 
     def _counter(self):
         if 'counter' not in self.import_context:
