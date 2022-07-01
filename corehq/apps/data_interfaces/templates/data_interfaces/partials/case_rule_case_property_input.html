@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% if request|toggle_enabled:"DATA_DICTIONARY" %}
-  <select class="form-control" data-bind="value: property_name, autocompleteSelect2: $parent.casePropertyNames" required></select>
+  <select class="form-control" data-bind="value: {{ ko_value }}, autocompleteSelect2: $parent.casePropertyNames" required></select>
 {% else %}
-  <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+  <input type="text" data-bind="value: {{ ko_value }}" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
 {% endif %}

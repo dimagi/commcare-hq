@@ -69,7 +69,7 @@
     <div data-bind="template: {name: 'remove-action'}"></div>
     <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
     <div class="controls col-xs-2">
-      {% include "data_interfaces/partials/case_rule_case_property_input.html" %}
+      {% include "data_interfaces/partials/case_rule_case_property_input.html" with ko_value='name' %}
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: value_type" required>
