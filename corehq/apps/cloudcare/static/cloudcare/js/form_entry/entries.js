@@ -264,7 +264,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.broadcastTopics.forEach(function (broadcastTopic) {
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
-            if ((!broadcastObj || _.isEmpty(broadcastObj)) && question.answer()) {
+            if (_.isEmpty(broadcastObj)) {
                 question.answer(Const.NO_ANSWER);
             } else {
                 question.answer(JSON.stringify(broadcastObj));
