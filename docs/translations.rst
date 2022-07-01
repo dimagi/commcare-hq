@@ -13,7 +13,7 @@ strings that need to be translated, having human translators write translations
 for those strings, and then actually inserting those translations when
 appropriate.
 
-1. ``./manage.py makemessages`` goes over the source code and pulls out strings
+1. ``./manage.py makemessages`` scans the source code and pulls out strings
    that have been tagged for translation. It does not actually execute code, so
    you really can't do anything fancy in these strings.
 2. Transifex is a third party site we use for translating these strings. Human
