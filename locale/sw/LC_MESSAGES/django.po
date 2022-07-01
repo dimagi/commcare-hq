@@ -13863,8 +13863,7 @@ msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, python-brace-format
-msgid "{value_name} should be an integer."
+msgid "{} should be an integer."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
