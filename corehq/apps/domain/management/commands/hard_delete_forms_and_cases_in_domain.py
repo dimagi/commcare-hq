@@ -2,7 +2,7 @@ import logging
 
 from django.core.management import BaseCommand
 
-from .delete_domain import Command as delete_domain
+from ...deletion import delete_all_cases, delete_all_forms
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,6 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
 
-        delete_domain.hard_delete_cases(domain)
-        delete_domain.hard_delete_forms(domain)
+        delete_all_cases(domain)
+        delete_all_forms(domain)
         logger.info('Done.')

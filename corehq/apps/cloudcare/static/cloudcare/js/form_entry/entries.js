@@ -41,6 +41,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // Allows multiple input entries on the same row for Combined Multiple Choice and Combined
     // Checkbox questions in a Question List Group.
     Entry.prototype.getColStyle = function (numChoices) {
+        // Account for number of choices plus column for clear button
         var colWidth = parseInt(12 / (numChoices + 1)) || 1;
         return 'col-xs-' + colWidth;
     };

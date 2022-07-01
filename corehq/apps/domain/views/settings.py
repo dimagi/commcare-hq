@@ -377,21 +377,21 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     def page_context(self):
         apps = get_apps_in_domain(self.domain, include_remote=False)
         case_types = {t for app in apps for t in app.get_case_types() if t}
-        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
+        config = CaseSearchConfig.objects.get_or_none(pk=self.domain) or CaseSearchConfig(domain=self.domain)
         return {
             'case_types': sorted(list(case_types)),
             'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
-                'enabled': current_values.enabled if current_values else False,
-                'synchronous_web_apps': current_values.synchronous_web_apps,
+                'enabled': config.enabled,
+                'synchronous_web_apps': config.synchronous_web_apps,
                 'fuzzy_properties': {
-                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
-                } if current_values else {},
+                    fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
+                },
                 'ignore_patterns': [{
                     'case_type': rc.case_type,
                     'case_property': rc.case_property,
                     'regex': rc.regex
-                } for rc in current_values.ignore_patterns.all()] if current_values else {}
+                } for rc in config.ignore_patterns.all()]
             }
         }
 

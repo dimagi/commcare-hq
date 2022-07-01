@@ -15198,10 +15198,8 @@ msgid "Add case type"
 msgstr "Agregar tipo de caso"
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
-#, fuzzy
-#| msgid "Web Apps Permissions"
 msgid "Synchronous Web Apps Submissions"
-msgstr "Permisos de Aplicaciones Web"
+msgstr ""
 
 #: corehq/apps/domain/templates/domain/admin/case_search.html
 msgid ""
@@ -20635,13 +20633,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr "El cuaderno de trabajo no contiene una hoja llamada tipos"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/run_upload.py
+#, python-brace-format
+msgid "type {lookup_table_name} is not defined as global"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid "Unknown group: '%(name)s'. But the row is successfully added"
+msgstr "Grupo desconocido: '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 "Ubicación desconocida: '%(name)s'. Pero la fila fue agregada exitosamente"
 
-#: corehq/apps/fixtures/upload/location_cache.py
+#: corehq/apps/fixtures/upload/workbook.py
+#, fuzzy, python-format
+#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
+
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid ""
 "Multiple locations found with the name: '%(name)s'.  Try using site code. "
@@ -20649,53 +20670,6 @@ msgid ""
 msgstr ""
 "Se encontraron múltiples ubicaciones con el nombre '%(name)s'. Intente "
 "utilizar el código del sitio. Pero la fila fue agregada exitosamente."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "type {lookup_table_name} is not defined as global"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
-msgstr "'%(UID)s' no es un UID válido. Pero el nuevo tipo está creado."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr "'%(UID)s' no es un UID válido. Pero el nuevo elemento está creado."
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown group: '%(name)s'. But the row is successfully added"
-msgstr "Grupo desconocido: '%(name)s'. Pero la fila fue agregada exitosamente"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
-msgstr "Nombre de usuario inválido:  '%(name)s'. La fila no esta agregada"
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
-msgstr ""
-"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
 
 #: corehq/apps/fixtures/views.py
 #, python-format
@@ -26233,10 +26207,9 @@ msgid "Reset Password on CommCare HQ"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
-#, fuzzy, python-format
-#| msgid "Hello,"
+#, python-format
 msgid "Hello %(name)s,"
-msgstr "Hola,"
+msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
@@ -28084,6 +28057,118 @@ msgstr "Fecha Creada"
 msgid "Modified Date"
 msgstr "Fecha Modificada"
 
+#: corehq/apps/reports/standard/cases/case_data.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Case Data"
+msgstr "Datos de Caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"Sorry, we couldn't find that case. If you think this is a mistake please "
+"report an issue."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"The case creation form could not be found. Usually this happens if the form "
+"that created the case is archived but there are other forms that updated the "
+"case. To fix this you can archive the other forms listed here."
+msgstr ""
+"El formulario de creación del caso no pudo ser encontrado. Usualmente esto "
+"ocurre si el formulario que creó el caso está archivado pero hay otros "
+"formularios que actualizaron el caso. Para arreglar esto, usted puede "
+"archivar los otros formularios listados aquí."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Unknown Product (\"{}\")"
+msgstr "Producto Desconocido (\"{}\")"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Case Attachments"
+msgstr "Archivos adjuntos del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "You don't have permission to access this page."
+msgstr "Usted no tiene permiso para acceder a esta página."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Attachments for case"
+msgstr "Archivos adjuntos para el caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case properties saved for %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "No changes made to %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case %s was rebuilt from its forms."
+msgstr "El caso %s fue desarrollado nuevamente desde sus formularios."
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid ""
+"Case %s was successfully saved. Hopefully it will show up in all reports "
+"momentarily."
+msgstr ""
+"El caso %s fue guardado exitosamente. Esperamos que aparezca en todos los "
+"reportes en un momento. "
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-brace-format
+msgid ""
+"Case {name} has been closed.\n"
+"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
+"            You can also reopen the case in the future by archiving the last "
+"form in the case history.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case id"
+msgstr "id del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case name"
+msgstr "nombre del caso"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "section"
+msgstr "sección"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "date"
+msgstr "fecha"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_id"
+msgstr "id_del producto"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_name"
+msgstr "nombre_del producto"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "transaction amount"
+msgstr "monto de la transacción"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "type"
+msgstr "tipo"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "ending balance"
+msgstr "balance final"
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "unknown product"
+msgstr "producto desconocido"
+
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 msgid "Case List Explorer"
 msgstr ""
@@ -28666,10 +28751,6 @@ msgid "Proportion of users in group who submitted forms in date range."
 msgstr ""
 "Proporción de usuarios en grupo quienes ingresaron formularios en el rango "
 "de fecha."
-
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
-msgid "Case Data"
-msgstr "Datos de Caso"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "# Cases Created"
@@ -30272,113 +30353,6 @@ msgstr "Reporte apagado una vez"
 #: corehq/apps/reports/views.py
 msgid "scheduled report"
 msgstr "reporte agendado"
-
-#: corehq/apps/reports/views.py
-msgid ""
-"Sorry, we couldn't find that case. If you think this is a mistake please "
-"report an issue."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid ""
-"The case creation form could not be found. Usually this happens if the form "
-"that created the case is archived but there are other forms that updated the "
-"case. To fix this you can archive the other forms listed here."
-msgstr ""
-"El formulario de creación del caso no pudo ser encontrado. Usualmente esto "
-"ocurre si el formulario que creó el caso está archivado pero hay otros "
-"formularios que actualizaron el caso. Para arreglar esto, usted puede "
-"archivar los otros formularios listados aquí."
-
-#: corehq/apps/reports/views.py
-msgid "Unknown Product (\"{}\")"
-msgstr "Producto Desconocido (\"{}\")"
-
-#: corehq/apps/reports/views.py
-msgid "Case Attachments"
-msgstr "Archivos adjuntos del caso"
-
-#: corehq/apps/reports/views.py
-msgid "You don't have permission to access this page."
-msgstr "Usted no tiene permiso para acceder a esta página."
-
-#: corehq/apps/reports/views.py
-msgid "Attachments for case"
-msgstr "Archivos adjuntos para el caso"
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case properties saved for %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "No changes made to %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case %s was rebuilt from its forms."
-msgstr "El caso %s fue desarrollado nuevamente desde sus formularios."
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid ""
-"Case %s was successfully saved. Hopefully it will show up in all reports "
-"momentarily."
-msgstr ""
-"El caso %s fue guardado exitosamente. Esperamos que aparezca en todos los "
-"reportes en un momento. "
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case {name} has been closed.\n"
-"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
-"            You can also reopen the case in the future by archiving the last "
-"form in the case history.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "case id"
-msgstr "id del caso"
-
-#: corehq/apps/reports/views.py
-msgid "case name"
-msgstr "nombre del caso"
-
-#: corehq/apps/reports/views.py
-msgid "section"
-msgstr "sección"
-
-#: corehq/apps/reports/views.py
-msgid "date"
-msgstr "fecha"
-
-#: corehq/apps/reports/views.py
-msgid "product_id"
-msgstr "id_del producto"
-
-#: corehq/apps/reports/views.py
-msgid "product_name"
-msgstr "nombre_del producto"
-
-#: corehq/apps/reports/views.py
-msgid "transaction amount"
-msgstr "monto de la transacción"
-
-#: corehq/apps/reports/views.py
-msgid "type"
-msgstr "tipo"
-
-#: corehq/apps/reports/views.py
-msgid "ending balance"
-msgstr "balance final"
-
-#: corehq/apps/reports/views.py
-msgid "unknown product"
-msgstr "producto desconocido"
 
 #: corehq/apps/reports/views.py
 msgid "Duplicate ID fix"

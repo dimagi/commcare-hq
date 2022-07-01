@@ -21,8 +21,8 @@ from dimagi.utils.django.cached_object import (
 
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.reports.standard.cases.case_data import can_view_attachments
 from corehq.apps.reports.views import (
-    can_view_attachments,
     get_form_attachment_response,
     require_form_view_permission,
 )
