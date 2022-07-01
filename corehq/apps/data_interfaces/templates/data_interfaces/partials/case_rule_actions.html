@@ -69,7 +69,7 @@
     <div data-bind="template: {name: 'remove-action'}"></div>
     <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
     <div class="controls col-xs-2">
-      <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+      <select class="form-control" data-bind="value: property_name, autocompleteSelect2: $parent.casePropertyNames" required></select>
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: value_type" required>
