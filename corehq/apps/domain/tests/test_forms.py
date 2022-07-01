@@ -64,32 +64,32 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.domain = Domain(name='test_domain')
-        self.domain.save()
+        self.domain_obj = Domain(name='test_domain')
+        self.domain_obj.save()
 
     def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
         form = self.create_form()
         self.assertTrue('confirmation_link_expiry' not in form.fields)
 
     def test_confirmation_link_expiry_default_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=self.domain.confirmation_link_expiry_time)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form(confirmation_link_expiry=self.domain_obj.confirmation_link_expiry_time)
         form.full_clean()
-        form.save(Mock(), self.domain)
+        form.save(Mock(), self.domain_obj)
         self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(168, self.domain.confirmation_link_expiry_time)
+        self.assertEqual(14, self.domain_obj.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_custom_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=100)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form(confirmation_link_expiry=25)
         form.full_clean()
-        form.save(Mock(), self.domain)
+        form.save(Mock(), self.domain_obj)
         self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(100, self.domain.confirmation_link_expiry_time)
+        self.assertEqual(25, self.domain_obj.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_error_when_invalid_value(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(confirmation_link_expiry='abc')
         form.full_clean()
         self.assertIsNotNone(form.errors)
@@ -148,10 +148,10 @@ class TestDomainGlobalSettingsForm(TestCase):
             for field, value in kwargs.items():
                 data.update({field: value})
         if not domain:
-            domain = self.domain
+            domain = self.domain_obj
         return DomainGlobalSettingsForm(data, domain=domain)
 
     def tearDown(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
-        self.domain.delete()
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
+        self.domain_obj.delete()
         super().tearDown()
