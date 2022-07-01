@@ -75,16 +75,6 @@ class Gateway(object):
                     Error received from SMS partner. If you do not receive a token, please retry in a few minutes.
                 '''))
 
-    def send_sms_with_custom_content(self, receiver_phone_number, sms_content):
-        try:
-            self.client.api.account.messages.create(
-                to=receiver_phone_number,
-                from_=self.from_number,
-                body=sms_content)
-            return True
-        except TwilioRestException:
-            return False
-
     def make_call(self, device, token):
         if rate_limit_two_factor_setup(device):
             return HttpTooManyRequests()
