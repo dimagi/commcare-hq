@@ -39,6 +39,46 @@ appropriate.
       def dumb_gettext(str):
           return TRANSLATIONS[get_language()][str] or str
 
+Concrete Examples
+^^^^^^^^^^^^^^^^^
+
+.. list-table:: Examples
+   :header-rows: 1
+
+   * - What's in code
+     - What gets stored
+     - Comments
+   * - ``_("Hello!")``
+     - "Hello"
+     -
+   * - ``_("Hello, {}").format(name)``
+     - "Hello, {}"
+     - Hard for the translator to understand
+   * - ``_("Hello, {name}").format(name=name)``
+     - "Hello, {name}"
+     - Much better
+   * - ``_("I have a {} {}").format(color, animal)``
+     - "I have a {} {}"
+     - Inscrutable, and the translator can't reorder the args
+   * - ``_("Hello, {name}".format(name=name))``
+     - "Hello, {name}"
+     - This is an error, it'll be interpolated before the lookup, and that
+       string won't be present in the translations file
+   * - ``_(f"Today is {day}")``
+     - "Today is {day}"
+     - Also an error, for the same reason.
+   * - ``DAY = "Friday"; _(DAY)``
+     -
+     - ``DAY`` isn't a string. This is an error, it won't even appear in the
+       translations file.
+   * - ``_("Hello, ") + name``
+     - "Hello, "
+     - Bad idea. The translator can't move ``name`` to the beginning or middle.
+   * - ``_("Hello, ") + name + _(".  How are you?")``
+     - "Hello, " ".  How are you?"
+     - Even worse. This will result in two strings that will not be translated
+       together.
+
 
 Tagging strings in views
 ------------------------
