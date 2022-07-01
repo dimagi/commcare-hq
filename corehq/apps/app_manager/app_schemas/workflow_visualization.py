@@ -196,7 +196,7 @@ class Renderer:
     def render_edge(self, edge):
         raise NotImplementedError
 
-    def subgraph_context(self):
+    def subgraph_context(self, pos):
         raise NotImplementedError
 
     def get_output(self):
@@ -212,7 +212,7 @@ class Renderer:
                     self.render_node(node)
                 continue
 
-            with self.subgraph_context():
+            with self.subgraph_context(pos):
                 for node in nodes:
                     self.render_node(node)
 
@@ -248,7 +248,7 @@ class GraphvisRenderer(Renderer):
         self.current_graph.edge(edge.tail, edge.head, label=edge.label or None, **attrs)
 
     @contextmanager
-    def subgraph_context(self):
+    def subgraph_context(self, pos):
         with self.root_graph.subgraph() as sub:
             sub.attr(rank="same")
             self.current_graph = sub
@@ -265,6 +265,39 @@ class GraphvisRenderer(Renderer):
         )
         self.current_graph = self.root_graph
         return super().render(model)
+
+
+class MermaidRenderer(Renderer):
+    """https://mermaid-js.github.io/mermaid/
+
+    Turns out this won't work because mermaid doesn't give enough control
+    over node positioning (rank)."""
+    def __init__(self, style=None):
+        self.graph = "graph LR\n"
+        self.indent = 2
+
+    @property
+    def px(self):
+        return " " * self.indent
+
+    def render_node(self, node):
+        self.graph += f'{self.px}{node.id}("{node.label}")\n'
+
+    def render_edge(self, edge):
+        label = f'|"{edge.label}"|' if edge.label else ""
+        self.graph += f'{self.px}{edge.tail} -->{label} {edge.head}\n'
+
+    @contextmanager
+    def subgraph_context(self, pos):
+        self.graph += f"{self.px}subgraph {pos}\n"
+        self.indent += 2
+        self.graph += f"{self.px}direction TB\n"
+        yield
+        self.indent -= 2
+        self.graph += f"{self.px}end\n"
+
+    def get_output(self):
+        return self.graph
 
 
 def generate_app_workflow_diagram_model(app):

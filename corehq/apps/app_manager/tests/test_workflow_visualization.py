@@ -1,12 +1,14 @@
 import inspect
 from doctest import OutputChecker
+from io import StringIO
 from unittest import skip
 
+import graphviz
 from testil import eq
 
 from corehq.apps.app_manager.app_schemas.workflow_visualization import (
     generate_app_workflow_diagram_model,
-    _substitute_hashtags, GraphvisRenderer,
+    _substitute_hashtags, GraphvisRenderer, MermaidRenderer,
 )
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
@@ -822,4 +824,14 @@ class TestStyle:
 
 def generate_app_workflow_diagram_source(app):
     model = generate_app_workflow_diagram_model(app)
-    return GraphvisRenderer(TestStyle).render(model)
+    source = GraphvisRenderer(TestStyle).render(model)
+    # graphviz.Source(source).render(view=True)
+    mermaid = MermaidRenderer().render(model)
+    print(f"\n{mermaid}\n")
+    import subprocess
+    proc = subprocess.Popen(["./node_modules/.bin/mmdc",  "-w", "1600", "-o", "out.png"], stdin=subprocess.PIPE)
+    proc.stdin.write(mermaid.encode())
+    proc.stdin.close()
+    while proc.returncode is None:
+        proc.poll()
+    return source
