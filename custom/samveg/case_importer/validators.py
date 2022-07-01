@@ -94,23 +94,26 @@ class CallColumnsValidator(BaseSheetValidator):
 
 
 class RequiredValueValidator(BaseRowOperation):
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
-        error_messages = []
-        error_messages.extend(cls._validate_required_columns(row_num, raw_row, fields_to_update))
-        return fields_to_update, error_messages
 
-    @classmethod
-    def _validate_required_columns(cls, row_num, raw_row, fields_to_update):
+    def __init__(self, row_num=None, raw_row=None, **kwargs):
+        super(RequiredValueValidator, self).__init__(**kwargs)
+        self.row_num = row_num
+        self.raw_row = raw_row
+
+    def run(self):
+        self.error_messages.extend(self._validate_required_columns())
+        return self.fields_to_update, self.error_messages
+
+    def _validate_required_columns(self):
         error_messages = []
         missing_values = set()
 
-        columns = set(raw_row.keys())
+        columns = set(self.raw_row.keys())
         required_columns = get_required_columns(columns)
         required_columns.append(EXTERNAL_ID)
 
         for required_column in required_columns:
-            if not fields_to_update.get(required_column):
+            if not self.fields_to_update.get(required_column):
                 missing_values.add(required_column)
         if missing_values:
             error_messages.append(
@@ -124,81 +127,85 @@ class RequiredValueValidator(BaseRowOperation):
 
 
 class CallValidator(BaseRowOperation):
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
-        error_messages = []
-        if raw_row.get(SKIP_CALL_VALIDATOR):
+
+    def __init__(self, raw_row=None, **kwargs):
+        super(CallValidator, self).__init__(**kwargs)
+        self.raw_row = raw_row
+
+    def run(self):
+        if self.raw_row.get(SKIP_CALL_VALIDATOR):
             # skip the row
             # add error message if the value isn't the only expected value
-            if raw_row.get(SKIP_CALL_VALIDATOR) != SKIP_CALL_VALIDATOR_YES:
-                error_messages.append(
+            if self.raw_row.get(SKIP_CALL_VALIDATOR) != SKIP_CALL_VALIDATOR_YES:
+                self.error_messages.append(
                     UnexpectedSkipCallValidatorValueError()
                 )
-            return fields_to_update, error_messages
+            return self.fields_to_update, self.error_messages
 
         call_date = None
-        call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
+        call_value, _ = _get_latest_call_value_and_number(self.fields_to_update)
         if not call_value:
-            error_messages.append(
+            self.error_messages.append(
                 CallValuesMissingError()
             )
         else:
             try:
                 call_date = iso_string_to_date(call_value)
             except ValueError:
-                error_messages.append(
+                self.error_messages.append(
                     CallValueInvalidError()
                 )
         if call_date:
-            last_month_first_day, last_month_last_day = get_previous_month_date_range(datetime.date.today())
+            last_month_first_day, _ = get_previous_month_date_range(datetime.date.today())
             if call_date.replace(day=1) != last_month_first_day:
-                error_messages.append(CallNotInLastMonthError())
+                self.error_messages.append(CallNotInLastMonthError())
 
-        return fields_to_update, error_messages
+        return self.fields_to_update, self.error_messages
 
 
 class FormatValidator(BaseRowOperation):
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
-        error_messages = []
-        mobile_number = fields_to_update.get(MOBILE_NUMBER)
+
+    def run(self):
+        mobile_number = self.fields_to_update.get(MOBILE_NUMBER)
         if mobile_number and len(str(mobile_number)) != 10:
-            error_messages.append(MobileNumberInvalidError())
-        return fields_to_update, error_messages
+            self.error_messages.append(MobileNumberInvalidError())
+        return self.fields_to_update, self.error_messages
 
 
 class UploadLimitValidator(BaseRowOperation):
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context, domain_name):
-        error_messages = []
-        owner_name = fields_to_update.get(OWNER_NAME)
-        call_value, call_number = _get_latest_call_value_and_number(fields_to_update)
+
+    def __init__(self, import_context=None, domain_name=None, **kwargs):
+        super(CallValidator, self).__init__(**kwargs)
+        self.import_context = import_context
+        self.domain_name = domain_name
+
+    def run(self):
+        owner_name = self.fields_to_update.get(OWNER_NAME)
+        _, call_number = _get_latest_call_value_and_number(self.fields_to_update)
         if owner_name and call_number:
-            if cls._upload_limit_reached(import_context, owner_name, call_number, domain_name):
-                error_messages.append(UploadLimitReachedError())
+            if self._upload_limit_reached(self.import_context, owner_name, call_number, self.domain_name):
+                self.error_messages.append(UploadLimitReachedError())
             else:
-                cls._update_counter(import_context, owner_name, call_number)
+                self._update_counter(self.import_context, owner_name, call_number)
         else:
             if not owner_name:
-                error_messages.append(OwnerNameMissingError())
+                self.error_messages.append(OwnerNameMissingError())
             if not call_number:
-                error_messages.append(CallValuesMissingError())
-        return fields_to_update, error_messages
+                self.error_messages.append(CallValuesMissingError())
+        return self.fields_to_update, self.error_messages
 
     @classmethod
-    def _upload_limit_reached(cls, import_context, owner_name, call_number, domain):
-        row_limit = OperatorCallLimitSettings.objects.get_or_create(domain=domain).call_limit
-        return cls._counter(import_context)[owner_name][f"Call{call_number}"] >= row_limit
+    def _upload_limit_reached(self, owner_name, call_number):
+        row_limit = OperatorCallLimitSettings.objects.get_or_create(domain=self.domain).call_limit
+        return self._counter(self.import_context)[owner_name][f"Call{call_number}"] >= row_limit
 
-    @classmethod
-    def _update_counter(cls, import_context, owner_name, call_number):
-        cls._counter(import_context)[owner_name][f"Call{call_number}"] += 1
+    def _update_counter(self, owner_name, call_number):
+        self._counter(self.import_context)[owner_name][f"Call{call_number}"] += 1
 
-    @classmethod
-    def _counter(cls, import_context):
-        if 'counter' not in import_context:
-            import_context['counter'] = defaultdict(Counter)
-        return import_context['counter']
+    def _counter(self):
+        if 'counter' not in self.import_context:
+            self.import_context['counter'] = defaultdict(Counter)
+        return self.import_context['counter']
 
 
 def get_required_columns(columns):
