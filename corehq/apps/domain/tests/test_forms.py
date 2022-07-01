@@ -65,6 +65,8 @@ class TestDomainGlobalSettingsForm(TestCase):
     def setUp(self) -> None:
         super().setUp()
         self.domain = Domain(name='test_domain')
+        self.call_settings = OperatorCallLimitSettings(domain='test_domain')
+        self.call_settings.save()
         self.domain.save()
 
     def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
@@ -89,54 +91,41 @@ class TestDomainGlobalSettingsForm(TestCase):
         self.assertEqual(100, self.domain.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_error_when_invalid_value(self):
+        OperatorCallLimitSettings.objects.all().delete()
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(confirmation_link_expiry='abc')
         form.full_clean()
-        self.assertIsNotNone(form.errors)
         self.assertEqual(1, len(form.errors))
         self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
 
     def test_operator_call_limit_not_present_when_domain_not_eligible(self):
+        OperatorCallLimitSettings.objects.all().delete()
         form = self.create_form()
         self.assertTrue('operator_call_limit' not in form.fields)
 
     def test_operator_call_limit_default_present_when_domain_eligible(self):
-        domain = Domain(name="test-samveg-quick")
-        domain.save()
-        try:
-            form = self.create_form(domain=domain, operator_call_limit=domain.operator_call_limit)
-            form.full_clean()
-            form.save(Mock(), domain)
-            self.assertTrue('operator_call_limit' in form.fields)
-            self.assertEqual(120, OperatorCallLimitSettings.get(domain="test-samveg-quick").operator_call_limit)
-        finally:
-            domain.delete()
+        form = self.create_form(
+            domain=self.domain, operator_call_limit=OperatorCallLimitSettings.CALL_LIMIT_DEFAULT)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertEqual(120, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
 
     def test_operator_call_limit_custom_present_when_domain_eligible(self):
-        domain = Domain(name="test-samveg-quick")
-        domain.save()
-        try:
-            form = self.create_form(domain=domain, operator_call_limit=50)
-            form.full_clean()
-            form.save(Mock(), domain)
-            self.assertTrue('operator_call_limit' in form.fields)
-            self.assertEqual(50, domain.operator_call_limit)
-        finally:
-            domain.delete()
+        form = self.create_form(domain=self.domain, operator_call_limit=50)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertEqual(50, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
 
     def test_operator_call_limit_error_when_invalid_value(self):
-        domain = Domain(name="test-samveg-quick")
-        domain.save()
-        try:
-            form = self.create_form(domain=domain, operator_call_limit="12a")
-            form.full_clean()
-            form.save(Mock(), domain)
-            self.assertTrue('operator_call_limit' in form.fields)
-            self.assertIsNotNone(form.errors)
-            self.assertEqual(1, len(form.errors))
-            self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
-        finally:
-            domain.delete()
+        form = self.create_form(domain=self.domain, operator_call_limit="12a")
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertIsNotNone(form.errors)
+        self.assertEqual(1, len(form.errors))
+        self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
 
     def create_form(self, domain=None, **kwargs):
         data = {
@@ -154,4 +143,5 @@ class TestDomainGlobalSettingsForm(TestCase):
     def tearDown(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
         self.domain.delete()
+        OperatorCallLimitSettings.objects.all().delete()
         super().tearDown()
