@@ -491,7 +491,7 @@ class DomainGlobalSettingsForm(forms.Form):
         try:
             return int(value)
         except ValueError:
-            raise forms.ValidationError(_("{} should be an integer.".format(value_name)))
+            raise forms.ValidationError(_("{} should be an integer.").format(value_name))
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
