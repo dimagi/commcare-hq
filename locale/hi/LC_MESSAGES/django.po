@@ -13870,6 +13870,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Call limit"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Limit on number of calls allowed to an operator for each call "
+"type.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr ""
 
@@ -13882,7 +13894,7 @@ msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-msgid "Confirmation link expiry should be an integer."
+msgid "{} should be an integer."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
