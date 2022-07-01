@@ -4645,6 +4645,10 @@ msgstr ""
 msgid "Unable to save case configs"
 msgstr ""
 
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
+msgstr ""
+
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Daily"
 msgstr "Diário"
