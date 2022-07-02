@@ -413,6 +413,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
 ]
 
 

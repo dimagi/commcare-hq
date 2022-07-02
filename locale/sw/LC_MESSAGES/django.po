@@ -10283,6 +10283,11 @@ msgid "Reverted to version {old_version}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
+msgid ""
+"Unable to create new build. Please click 'Make New Version' to see errors."
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
 msgid "App diff"
 msgstr ""
 
@@ -13839,6 +13844,18 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+msgid "Call limit"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Limit on number of calls allowed to an operator for each call "
+"type.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr ""
 
@@ -13851,7 +13868,7 @@ msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-msgid "Confirmation link expiry should be an integer."
+msgid "{} should be an integer."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
