@@ -14,9 +14,7 @@ dimagi-memoized
 django-autoslug
 django-braces
 django-bulk-update
-# Switch back to django-celery-result official repo
-# when https://github.com/celery/django-celery-results/pull/316 is released
-django-celery-results @ https://github.com/dimagi/django-celery-results/raw/v2.3.1-patch/releases/django_celery_results-2.3.1_patch-py3-none-any.whl
+django-celery-results
 django-compressor
 django-countries
 django-crispy-forms
