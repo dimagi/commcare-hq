@@ -66,6 +66,8 @@ from .exceptions import (
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -441,7 +443,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    confirmation_link_expiry_time = IntegerProperty(default=168)
+    # Number of hours SMS confirmation link will be valid (default 1 week)
+    confirmation_link_expiry_time = IntegerProperty(default=7 * 24)
 
     ga_opt_out = BooleanProperty(default=False)
 
@@ -1100,3 +1103,18 @@ class ProjectLimit(models.Model):
     domain = models.CharField(max_length=256, db_index=True)
     limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
     limit_value = models.IntegerField(default=20)
+
+
+class OperatorCallLimitSettings(models.Model):
+    CALL_LIMIT_MINIMUM = 1
+    CALL_LIMIT_MAXIMUM = 1000
+    CALL_LIMIT_DEFAULT = 120
+
+    domain = models.CharField(max_length=256, db_index=True)
+    call_limit = models.IntegerField(
+        default=CALL_LIMIT_DEFAULT,
+        validators=[
+            MinValueValidator(CALL_LIMIT_MINIMUM),
+            MaxValueValidator(CALL_LIMIT_MAXIMUM)
+        ]
+    )

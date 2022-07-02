@@ -251,6 +251,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (index === 0) {
                 this.selections = null;
                 this.sessionId = null;
+                this.queryData = null;
             } else {
                 this.selections = this.selections.splice(0, index);
                 var key = this.selections.join(",");
@@ -264,7 +265,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.search = null;
             this.sortIndex = null;
-            this.queryData = null;
             sessionStorage.removeItem('selectedValues');
         };
     };

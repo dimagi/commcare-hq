@@ -7,6 +7,7 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
+    WORKFLOW_MODULE,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -223,7 +224,7 @@ class BuildErrorsTest(SimpleTestCase):
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
         }, factory.app.validate_app())
 
-    def test_search_module_errors__instances(self, *args):
+    def test_search_module_errors_instances(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('basic', 'person')
         factory.form_requires_case(form, 'person')
@@ -258,3 +259,24 @@ class BuildErrorsTest(SimpleTestCase):
             'case search instance used in casedb case details',
             [error['type'] for error in factory.app.validate_app()]
         )
+
+    @flag_enabled('FORM_LINK_WORKFLOW')
+    def test_form_module_validation(self, *args):
+        factory = AppFactory(build_version='2.24.0')
+        app = factory.app
+        m0, m0f0 = factory.new_basic_module('register', 'case')
+
+        m0f0.post_form_workflow = WORKFLOW_MODULE
+
+        m1 = factory.new_shadow_module('shadow', m0, with_form=False)
+        m1.put_in_root = True
+
+        errors = app.validate_app()
+
+        self._clean_unique_id(errors)
+        self.assertIn({
+            'type': 'form link to display only forms',
+            'form_type': 'module_form',
+            'module': {'id': 1, 'name': {'en': 'shadow module'}},
+            'form': {'id': 0, 'name': {'en': 'register form 0'}},
+        }, errors)

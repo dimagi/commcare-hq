@@ -342,3 +342,69 @@ class CaseSearchTests(ElasticTestMixin, TestCase):
             expected,
             validate_query=False
         )
+
+    def test_indices_query(self):
+        criteria = {
+            "indices.parent": "id1"
+        }
+        expected = {
+            "query": {
+                "bool": {
+                    "filter": [
+                        {'terms': {'domain.exact': [DOMAIN]}},
+                        {"terms": {"type.exact": ["case_type"]}},
+                        {"term": {"closed": False}},
+                        {"match_all": {}}
+                    ],
+                    "must": {
+                        "bool": {
+                            "must": [
+                                {
+                                    "nested": {
+                                        "path": "indices",
+                                        "query": {
+                                            "bool": {
+                                                "filter": [
+                                                    {
+                                                        "bool": {
+                                                            "filter": [
+                                                                {
+                                                                    "terms": {
+                                                                        "indices.referenced_id": [
+                                                                            "id1"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "term": {
+                                                                        "indices.identifier": "parent"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                ],
+                                                "must": {
+                                                    "match_all": {}
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "sort": [
+                "_score",
+                "_doc"
+            ],
+            "size": CASE_SEARCH_MAX_RESULTS
+        }
+
+        self.checkQuery(
+            get_case_search_query(DOMAIN, ['case_type'], criteria),
+            expected,
+            validate_query=False
+        )

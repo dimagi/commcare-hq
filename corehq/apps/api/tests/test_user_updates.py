@@ -16,7 +16,7 @@ from corehq.apps.users.audit.change_messages import (
     PASSWORD_FIELD,
     ROLE_FIELD,
 )
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
@@ -131,7 +131,7 @@ class TestUpdateUserMethods(TestCase):
 
     def test_update_user_role_succeeds(self):
         new_role = UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         update(self.user, 'role', 'edit-data')
         self.assertEqual(self.user.get_role(self.domain).get_qualified_id(), new_role.get_qualified_id())
@@ -144,10 +144,10 @@ class TestUpdateUserMethods(TestCase):
 
     def test_update_user_role_raises_exception_if_ambiguous(self):
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
 
         with self.assertRaises(UpdateUserException) as cm:
@@ -306,14 +306,14 @@ class TestUpdateUserMethodsLogChanges(TestCase):
 
     def test_update_user_role_logs_change(self):
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         update(self.user, 'role', 'edit-data', user_change_logger=self.user_change_logger)
         self.assertIn(ROLE_FIELD, self.user_change_logger.change_messages.keys())
 
     def test_update_user_role_does_not_logs_change(self):
         role = UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         self.user.set_role(self.domain, role.get_qualified_id())
 
