@@ -70,15 +70,13 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding  # Minha April 13
 #    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
-    - akj/call-limit-settings # Akash June 22
     - smh/tableau-loading-ui # Steph June 22
     - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - rc/hidden-question-geocoder-values # Robert June 27
     - jc/minimum-pwd-length # Jing June 29
-    #- akj/mw-signup-enhancements+akj/call-limit-settings # Jenny July 1
-    #- akj/mw-signup-enhancements # Akash June 30
+    - akj/mw-signup-enhancements # Akash June 30
     - ad/fix-save-only-edited-wrap-funcs # Addison June 30
     - jls/dd-in-rules-ui # Jenny July 1
 submodules: { }
