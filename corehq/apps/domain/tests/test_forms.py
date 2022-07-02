@@ -64,10 +64,10 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.domain = Domain(name='test_domain')
+        self.domain_obj = Domain(name='test_domain')
         self.call_settings = OperatorCallLimitSettings(domain='test_domain')
         self.call_settings.save()
-        self.domain.save()
+        self.domain_obj.save()
 
     def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
@@ -105,23 +105,23 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_operator_call_limit_default_present_when_domain_eligible(self):
         form = self.create_form(
-            domain=self.domain, operator_call_limit=OperatorCallLimitSettings.CALL_LIMIT_DEFAULT)
+            domain=self.domain_obj, operator_call_limit=OperatorCallLimitSettings.CALL_LIMIT_DEFAULT)
         form.full_clean()
-        form.save(Mock(), self.domain)
+        form.save(Mock(), self.domain_obj)
         self.assertTrue('operator_call_limit' in form.fields)
-        self.assertEqual(120, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
+        self.assertEqual(120, OperatorCallLimitSettings.objects.get(domain=self.domain_obj.name).call_limit)
 
     def test_operator_call_limit_custom_present_when_domain_eligible(self):
-        form = self.create_form(domain=self.domain, operator_call_limit=50)
+        form = self.create_form(domain=self.domain_obj, operator_call_limit=50)
         form.full_clean()
-        form.save(Mock(), self.domain)
+        form.save(Mock(), self.domain_obj)
         self.assertTrue('operator_call_limit' in form.fields)
-        self.assertEqual(50, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
+        self.assertEqual(50, OperatorCallLimitSettings.objects.get(domain=self.domain_obj.name).call_limit)
 
     def test_operator_call_limit_error_when_invalid_value(self):
-        form = self.create_form(domain=self.domain, operator_call_limit="12a")
+        form = self.create_form(domain=self.domain_obj, operator_call_limit="12a")
         form.full_clean()
-        form.save(Mock(), self.domain)
+        form.save(Mock(), self.domain_obj)
         self.assertTrue('operator_call_limit' in form.fields)
         self.assertIsNotNone(form.errors)
         self.assertEqual(1, len(form.errors))
