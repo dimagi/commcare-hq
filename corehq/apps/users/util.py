@@ -20,7 +20,6 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
@@ -45,6 +44,35 @@ USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
 ]
 
 
+def generate_mobile_username(username, domain):
+    """
+    Returns the email formatted mobile username if successfully generated
+    Handles exceptions raised by .validation.validate_mobile_username with user facing messages
+    Any additional validation should live in .validation.validate_mobile_username
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: required str, domain name
+    :return: str, email formatted mobile username
+    Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
+    """
+    from .validation import validate_mobile_username
+    username = get_complete_mobile_username(username, domain)
+    validate_mobile_username(username, domain)
+    return username
+
+
+def get_complete_mobile_username(username, domain):
+    """
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: domain associated with the mobile user
+    :return: the complete username ('example-user@domain.commcarehq.org')
+    """
+    # this method is not responsible for validation, and therefore does the most basic email format check
+    if '@' not in username:
+        username = format_username(username, domain)
+
+    return username
+
+
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
     return ("%s.%s" % (domain, sitewide_domain)).lower()
@@ -56,6 +84,8 @@ def format_username(username, domain):
 
 def normalize_username(username, domain=None):
     """
+    DEPRECATED: use generate_mobile_username instead
+
     Returns a lower-case username. Checks that it is a valid e-mail
     address, or a valid "local part" of an e-mail address.
 
@@ -451,3 +481,27 @@ def bulk_auto_deactivate_commcare_users(user_ids, domain):
         # FYI we don't call the save() method individually because
         # it is ridiculously inefficient! Unfortunately, it's harder to get
         # around caches and signals in a bulk way.
+
+
+def is_dimagi_email(email):
+    return email.endswith('@dimagi.com')
+
+
+def is_username_available(username):
+    """
+    Checks if the username is available to use
+    :param username: expects complete/email formatted username (e.g., user@example.commcarehq.org)
+    :return: boolean
+    """
+    from corehq.apps.users.dbaccessors import user_exists
+
+    local_username = username
+    if '@' in local_username:
+        # assume email format since '@' is an invalid character for usernames
+        local_username = username.split('@')[0]
+    reserved_usernames = ['admin', 'demo_user']
+    if local_username in reserved_usernames:
+        return False
+
+    exists = user_exists(username)
+    return not exists.exists

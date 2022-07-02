@@ -45,6 +45,7 @@ cffi==1.14.3
     # via
     #   cryptography
     #   csiphash
+    #   pynacl
 chardet==3.0.4
     # via
     #   ghdiff
@@ -170,7 +171,7 @@ django-user-agents==0.4.0
     # via -r base-requirements.in
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
     # via -r base-requirements.in
-djangorestframework==3.12.2
+djangorestframework==3.13.1
     # via -r base-requirements.in
 dnspython==1.15.0
     # via
@@ -284,7 +285,7 @@ kombu==5.2.4
     # via celery
 laboratory==0.2.0
     # via -r base-requirements.in
-lxml==4.7.1
+lxml==4.9.0
     # via
     #   -r base-requirements.in
     #   eulxml
@@ -361,7 +362,7 @@ pycryptodomex==3.14.1
     # via
     #   oic
     #   pyjwkest
-pygithub==1.54.1
+pygithub==1.55
     # via -r base-requirements.in
 pygments==2.11.2
     # via sphinx
@@ -369,10 +370,12 @@ pygooglechart==0.4.0
     # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
-pyjwt==1.7.1
+pyjwt==2.4.0
     # via
     #   pygithub
     #   twilio
+pynacl==1.5.0
+    # via pygithub
 pyparsing==2.4.7
     # via
     #   httplib2
@@ -400,6 +403,7 @@ pytz==2022.1
     #   babel
     #   celery
     #   django
+    #   djangorestframework
     #   twilio
 pyyaml==5.4.1
     # via

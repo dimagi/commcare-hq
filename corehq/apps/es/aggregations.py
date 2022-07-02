@@ -504,27 +504,46 @@ class RangeAggregation(Aggregation):
         return self
 
 
+class DateHistogramResult(BucketResult):
+
+    @property
+    def normalized_buckets(self):
+        return [{
+            'key': b['key_as_string'],
+            'doc_count': b['doc_count'],
+        } for b in self.raw_buckets]
+
+
+_Interval = namedtuple('_Interval', 'interval result_format')
+
+
 class DateHistogram(Aggregation):
     """
     Aggregate by date range.  This can answer questions like "how many forms
     were created each day?".
 
-    This class can be instantiated by the ``ESQuery.date_histogram`` method.
-
     :param name: what do you want to call this aggregation
     :param datefield: the document's date field to look at
-    :param interval: the date interval to use: "year", "quarter", "month",
-        "week", "day", "hour", "minute", "second"
+    :param interval: the date interval to use - from DateHistogram.Interval
     :param timezone: do bucketing using this time zone instead of UTC
     """
     type = "date_histogram"
-    result_class = BucketResult
+    result_class = DateHistogramResult
+
+    class Interval:
+        # Feel free to add more options here
+        # year, quarter, month, week, day, hour, minute, second
+        YEAR = _Interval('year', 'yyyy')
+        MONTH = _Interval('month', 'yyyy-MM')
+        DAY = _Interval('day', 'yyyy-MM-dd')
 
     def __init__(self, name, datefield, interval, timezone=None):
         self.name = name
         self.body = {
             'field': datefield,
-            'interval': interval,
+            'interval': interval.interval,
+            'format': interval.result_format,
+            'min_doc_count': 1,  # Only include buckets with results
         }
 
         if timezone:

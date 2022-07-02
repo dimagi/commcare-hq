@@ -1,7 +1,11 @@
-from django.test import SimpleTestCase
-from unittest.mock import patch
+from django.test import SimpleTestCase, TestCase
+from unittest.mock import Mock, patch
+from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
 
-from ..forms import PrivacySecurityForm
+from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.toggles.shortcuts import set_toggle
+
+from ..forms import DomainGlobalSettingsForm, PrivacySecurityForm
 from .. import forms
 
 
@@ -54,3 +58,90 @@ class PrivacySecurityFormTests(SimpleTestCase):
     def get_visible_fields(self, form):
         fieldset = form.helper.layout.fields[0]
         return [field[0] for field in fieldset.fields]
+
+
+class TestDomainGlobalSettingsForm(TestCase):
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.domain = Domain(name='test_domain')
+        self.call_settings = OperatorCallLimitSettings(domain='test_domain')
+        self.call_settings.save()
+        self.domain.save()
+
+    def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form()
+        self.assertTrue('confirmation_link_expiry' not in form.fields)
+
+    def test_confirmation_link_expiry_default_present_when_flag_set(self):
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form(confirmation_link_expiry=self.domain.confirmation_link_expiry_time)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('confirmation_link_expiry' in form.fields)
+        self.assertEqual(168, self.domain.confirmation_link_expiry_time)
+
+    def test_confirmation_link_expiry_custom_present_when_flag_set(self):
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form(confirmation_link_expiry=100)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('confirmation_link_expiry' in form.fields)
+        self.assertEqual(100, self.domain.confirmation_link_expiry_time)
+
+    def test_confirmation_link_expiry_error_when_invalid_value(self):
+        OperatorCallLimitSettings.objects.all().delete()
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
+        form = self.create_form(confirmation_link_expiry='abc')
+        form.full_clean()
+        self.assertEqual(1, len(form.errors))
+        self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
+
+    def test_operator_call_limit_not_present_when_domain_not_eligible(self):
+        OperatorCallLimitSettings.objects.all().delete()
+        form = self.create_form()
+        self.assertTrue('operator_call_limit' not in form.fields)
+
+    def test_operator_call_limit_default_present_when_domain_eligible(self):
+        form = self.create_form(
+            domain=self.domain, operator_call_limit=OperatorCallLimitSettings.CALL_LIMIT_DEFAULT)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertEqual(120, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
+
+    def test_operator_call_limit_custom_present_when_domain_eligible(self):
+        form = self.create_form(domain=self.domain, operator_call_limit=50)
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertEqual(50, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
+
+    def test_operator_call_limit_error_when_invalid_value(self):
+        form = self.create_form(domain=self.domain, operator_call_limit="12a")
+        form.full_clean()
+        form.save(Mock(), self.domain)
+        self.assertTrue('operator_call_limit' in form.fields)
+        self.assertIsNotNone(form.errors)
+        self.assertEqual(1, len(form.errors))
+        self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
+
+    def create_form(self, domain=None, **kwargs):
+        data = {
+            "hr_name": "foo",
+            "project_description": "sample",
+            "default_timezone": "UTC",
+        }
+        if kwargs:
+            for field, value in kwargs.items():
+                data.update({field: value})
+        if not domain:
+            domain = self.domain
+        return DomainGlobalSettingsForm(data, domain=domain)
+
+    def tearDown(self):
+        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
+        self.domain.delete()
+        OperatorCallLimitSettings.objects.all().delete()
+        super().tearDown()

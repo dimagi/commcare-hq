@@ -39,12 +39,6 @@ class FormES(HQESQuery):
     def user_aggregation(self):
         return self.terms_aggregation('form.meta.userID', 'user')
 
-    def completed_histogram(self, timezone=None):
-        return self.date_histogram('date_histogram', 'form.meta.timeEnd', 'day', timezone=timezone)
-
-    def submitted_histogram(self, timezone=None):
-        return self.date_histogram('date_histogram', 'received_on', 'day', timezone=timezone)
-
     def domain_aggregation(self):
         return self.terms_aggregation('domain.exact', 'domain')
 

@@ -40,7 +40,7 @@ from corehq.apps.users.models import (
     WebUser,
     DeactivateMobileWorkerTrigger,
     DeactivateMobileWorkerTriggerUpdateMessage,
-    Permissions,
+    HqPermissions,
 )
 from corehq.apps.users.model_log import UserModelAction
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -63,7 +63,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         create_enterprise_permissions("a@a.com", cls.domain_name, [cls.other_domain.name])
 
         cls.role_with_upload_permission = UserRole.create(
-            cls.domain, 'edit-web-users', permissions=Permissions(edit_web_users=True)
+            cls.domain, 'edit-web-users', permissions=HqPermissions(edit_web_users=True)
         )
         cls.uploading_user = WebUser.create(cls.domain_name, "admin@xyz.com", 'password', None, None,
                                             role_id=cls.role_with_upload_permission.get_id)

@@ -21,7 +21,8 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE, \
+    RESULTS_INSTANCE_INLINE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -540,7 +541,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="commcaresession" src="jr://instance/session"/>
             <session>
-                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
                   <data key="case_type" ref="'case'"/>
                   <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
@@ -552,7 +553,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
                 <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">

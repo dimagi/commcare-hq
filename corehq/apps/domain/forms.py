@@ -101,6 +101,8 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
+    Domain,
+    OperatorCallLimitSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
     AllowedUCRExpressionSettings
@@ -113,7 +115,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, Ge
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS
+    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -384,6 +386,28 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    confirmation_link_expiry = IntegerField(
+        label=gettext_lazy("Account confirmation link expiry"),
+        required=True,
+        min_value=1,
+        max_value=720,
+        help_text=gettext_lazy(
+            """
+            Default time (in hours) for which account confirmation link will be valid.
+            """
+        )
+    )
+
+    operator_call_limit = IntegerField(
+        label=gettext_lazy("Call limit"),
+        required=True,
+        help_text=gettext_lazy(
+            """
+            Limit on number of calls allowed to an operator for each call type.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -424,6 +448,24 @@ class DomainGlobalSettingsForm(forms.Form):
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
+        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            del self.fields['confirmation_link_expiry']
+        else:
+            self.fields['confirmation_link_expiry'].initial = Domain.get_by_name(
+                self.domain
+            ).confirmation_link_expiry_time
+
+        self._handle_call_limit_visibility()
+
+    def _handle_call_limit_visibility(self):
+        if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
+            del self.fields['operator_call_limit']
+            return
+        existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
+        self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
+        self.fields['operator_call_limit'].min_value = OperatorCallLimitSettings.CALL_LIMIT_MINIMUM
+        self.fields['operator_call_limit'].max_value = OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -435,6 +477,21 @@ class DomainGlobalSettingsForm(forms.Form):
         if isinstance(data, dict):
             return data
         return json.loads(data or '{}')
+
+    def clean_confirmation_link_expiry(self):
+        data = self.cleaned_data['confirmation_link_expiry']
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
+
+    def clean_operator_call_limit(self):
+        data = self.cleaned_data['operator_call_limit']
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    @staticmethod
+    def validate_integer_value(value, value_name):
+        try:
+            return int(value)
+        except ValueError:
+            raise forms.ValidationError(_("{} should be an integer.").format(value_name))
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -507,6 +564,11 @@ class DomainGlobalSettingsForm(forms.Form):
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        domain.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
+        if self.cleaned_data.get("operator_call_limit"):
+            setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
+            setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")
+            setting_obj.save()
         try:
             self._save_logo_configuration(domain)
         except IOError as err:

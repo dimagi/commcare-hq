@@ -21,9 +21,10 @@ from corehq.apps.userreports.filters.specs import (
     PropertyMatchFilterSpec,
 )
 from corehq.apps.userreports.operators import equal, get_operator
+from corehq.apps.userreports.specs import FactoryContext
 
 
-def _build_compound_filter(spec, context):
+def _build_compound_filter(spec, factory_context):
     compound_type_map = {
         'or': ORFilter,
         'and': ANDFilter,
@@ -36,16 +37,16 @@ def _build_compound_filter(spec, context):
     elif not isinstance(spec.get('filters'), list):
         raise BadSpecError(_('{0} filter type must include a "filters" list'.format(spec['type'])))
 
-    filters = [FilterFactory.from_spec(subspec, context) for subspec in spec['filters']]
+    filters = [FilterFactory.from_spec(subspec, factory_context) for subspec in spec['filters']]
     return compound_type_map[spec['type']](filters)
 
 
-def _build_not_filter(spec, context):
+def _build_not_filter(spec, factory_context):
     wrapped = NotFilterSpec.wrap(spec)
-    return NOTFilter(FilterFactory.from_spec(wrapped.filter, context))
+    return NOTFilter(FilterFactory.from_spec(wrapped.filter, factory_context))
 
 
-def _build_property_match_filter(spec, context):
+def _build_property_match_filter(spec, factory_context):
     warnings.warn(
         "property_match are deprecated. Use boolean_expression instead.",
         DeprecationWarning,
@@ -58,18 +59,21 @@ def _build_property_match_filter(spec, context):
     )
 
 
-def _build_boolean_expression_filter(spec, context):
+def _build_boolean_expression_filter(spec, factory_context):
     wrapped = BooleanExpressionFilterSpec.wrap(spec)
     return SinglePropertyValueFilter(
-        expression=ExpressionFactory.from_spec(wrapped.expression, context),
+        expression=ExpressionFactory.from_spec(wrapped.expression, factory_context),
         operator=get_operator(wrapped.operator),
-        reference_expression=ExpressionFactory.from_spec(wrapped.property_value, context),
+        reference_expression=ExpressionFactory.from_spec(wrapped.property_value, factory_context),
     )
 
 
-def _build_named_filter(spec, context):
+def _build_named_filter(spec, factory_context):
     wrapped = NamedFilterSpec.wrap(spec)
-    filter = context.named_filters[wrapped.name]
+    try:
+        filter = factory_context.named_filters[wrapped.name]
+    except KeyError as e:
+        raise BadSpecError(_("Couldn't find named filter with name: {}").format(str(e)))
     return NamedFilter(wrapped.name, filter)
 
 
@@ -84,10 +88,11 @@ class FilterFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec, context=None):
+    def from_spec(cls, spec, factory_context=None):
+        factory_context = factory_context or FactoryContext.empty()
         cls.validate_spec(spec)
         try:
-            return cls.constructor_map[spec['type']](spec, context)
+            return cls.constructor_map[spec['type']](spec, factory_context)
         except (AssertionError, BadValueError, WrappingAttributeError) as e:
             raise BadSpecError(_('Problem creating filter from spec: {}, message is {}').format(
                 json.dumps(spec, indent=2),

@@ -108,13 +108,13 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, WebUser
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
@@ -134,7 +134,7 @@ def toggles_and_previews(request, domain):
 @login_or_api_key
 @require_linked_domain
 def auto_update_rules(request, domain):
-    return JsonResponse(get_auto_update_rules(domain))
+    return JsonResponse({'rules': get_auto_update_rules(domain)})
 
 
 @login_or_api_key
@@ -187,14 +187,14 @@ def case_search_config(request, domain):
 
 @login_or_api_key
 @require_linked_domain
-@require_permission(Permissions.view_reports)
+@require_permission(HqPermissions.view_reports)
 def linkable_ucr(request, domain):
     """Returns a list of reports to be used by the downstream
     domain on a remote server to create linked reports by calling the
     `ucr_config` view below
 
     """
-    reports = get_report_configs_for_domain(domain)
+    reports = get_report_and_registry_report_configs_for_domain(domain)
     return JsonResponse({
         "reports": [
             {"id": report._id, "title": report.title} for report in reports]

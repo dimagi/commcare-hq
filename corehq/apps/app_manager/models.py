@@ -119,7 +119,10 @@ from corehq.apps.app_manager.suite_xml.generator import (
     MediaSuiteGenerator,
     SuiteGenerator,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import (
+    RESULTS_INSTANCE,
+    RESULTS_INSTANCE_INLINE
+)
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans, trans
@@ -1206,8 +1209,8 @@ class FormBase(DocumentSchema):
     def timing_context(self):
         return self.get_app().timing_context
 
-    def validate_for_build(self, validate_module=True):
-        return self.validator.validate_for_build(validate_module)
+    def validate_for_build(self):
+        return self.validator.validate_for_build()
 
     def get_unique_id(self):
         """
@@ -2071,8 +2074,11 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
-        if value_is_the_default and module_loads_registry_case(module) or module_uses_inline_search(module):
-            return RESULTS_INSTANCE
+        if value_is_the_default:
+            if module_uses_inline_search(module):
+                return RESULTS_INSTANCE_INLINE
+            elif module_loads_registry_case(module):
+                return RESULTS_INSTANCE
         return self.instance_name
 
     def get_tab_spans(self):
@@ -2817,7 +2823,11 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
         return any(action for action in self.actions.load_update_cases if match(action.case_type))
 
     def uses_usercase(self):
-        return self.uses_case_type(USERCASE_TYPE)
+        return (
+            self.uses_case_type(USERCASE_TYPE)
+            or any(action for action in self.actions.load_update_cases
+                   if action.auto_select and action.auto_select.mode == AUTO_SELECT_USERCASE)
+        )
 
     def all_other_forms_require_a_case(self):
         m = self.get_module()
