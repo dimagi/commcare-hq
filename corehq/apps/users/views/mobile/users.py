@@ -44,6 +44,7 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
+from corehq.apps.domain.models import AccountConfirmationSettings
 from corehq.apps.sms.api import send_sms
 from corehq.apps.domain.utils import guess_domain_language
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
@@ -1522,11 +1523,12 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         return context
 
     def send_success_sms(self):
+        settings = AccountConfirmationSettings.get_settings(self.domain.name)
         template_params = {
             'name': self.user.full_name,
             'domain': self.user.domain,
             'username': self.user.raw_username,
-            'hq_name': commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']
+            'hq_name': settings.project_name
         }
         lang = guess_domain_language(self.user.domain)
         with override(lang):
@@ -1539,6 +1541,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
 
     def is_invite_valid(self):
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
-        if hours_elapsed <= self.domain_object.confirmation_link_expiry_time:
+        settings_obj = AccountConfirmationSettings.get_settings(self.domain.name)
+        if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False

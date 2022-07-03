@@ -101,6 +101,7 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
+    AccountConfirmationSettings,
     Domain,
     OperatorCallLimitSettings,
     TransferDomainRequest,
@@ -389,8 +390,6 @@ class DomainGlobalSettingsForm(forms.Form):
     confirmation_link_expiry = IntegerField(
         label=gettext_lazy("Account confirmation link expiry"),
         required=True,
-        min_value=1,
-        max_value=30,
         help_text=gettext_lazy(
             """
             Default time (in days) for which account confirmation link will be valid.
@@ -406,6 +405,12 @@ class DomainGlobalSettingsForm(forms.Form):
             Limit on number of calls allowed to an operator for each call type.
             """
         )
+    )
+
+    confirmation_sms_project_name = CharField(
+        label=gettext_lazy("Project name"),
+        required=True,
+        help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -448,14 +453,24 @@ class DomainGlobalSettingsForm(forms.Form):
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
+        self._handle_call_limit_visibility()
+        self._handle_account_confirmation_by_sms_settings()
+
+    def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
             del self.fields['confirmation_link_expiry']
+            del self.fields['confirmation_sms_project_name']
         else:
-            self.fields['confirmation_link_expiry'].initial = Domain.get_by_name(
-                self.domain
-            ).confirmation_link_expiry_time
+            settings_obj = AccountConfirmationSettings.get_settings(self.domain)
+            min_value_expiry = AccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
+            max_value_expiry = AccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
+            self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
+            self.fields['confirmation_link_expiry'].min_value = min_value_expiry
+            self.fields['confirmation_link_expiry'].max_value = max_value_expiry
 
-        self._handle_call_limit_visibility()
+            project_max_length = OperatorCallLimitSettings.PROJECT_NAME_MAX_LENGTH
+            self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
+            self.fields['confirmation_sms_project_name'].max_length = project_max_length
 
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
@@ -559,12 +574,17 @@ class DomainGlobalSettingsForm(forms.Form):
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
 
+    def _save_account_confirmation_settings(self, domain):
+        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
+            settings = AccountConfirmationSettings.get_settings(domain.name)
+            settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
+            settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
-        domain.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
         if self.cleaned_data.get("operator_call_limit"):
             setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
             setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")
@@ -575,6 +595,7 @@ class DomainGlobalSettingsForm(forms.Form):
             messages.error(request, _('Unable to save custom logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
+        self._save_account_confirmation_settings(domain)
         domain.save()
         return True
 
