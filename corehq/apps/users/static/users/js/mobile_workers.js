@@ -12,7 +12,7 @@
  *  - By default, passwords are not validated.
  *  - If the project requires strong mobile passwords (Project Settings > Privacy and Security), the
  *    password has to meet a minimum strength requirement, based on the zxcvbn strength algorithm,
- *    as well as a minimum length requirment (8+ chars).
+ *    as well as a minimum length requirment (the length is configurable).
  *  - If any validation is being used, we automatically generate a suggested password that passes validation.
  *  - Independently of password validation, if the server setting OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE is on,
  *    passwords are encrypted before the new user is sent to the server for creation.
