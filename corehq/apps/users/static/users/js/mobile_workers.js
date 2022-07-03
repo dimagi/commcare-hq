@@ -344,9 +344,6 @@ hqDefine("users/js/mobile_workers",[
                 if (!password) {
                     return true;
                 }
-                if (self.isSuggestedPassword()) {
-                    return true;
-                }
                 if (password.length < minimumPasswordLength) {
                     return false;
                 }
