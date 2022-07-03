@@ -41,6 +41,13 @@
                   Contact your administrator if you think this is a mistake.
                 {% endblocktrans %}
               </h3>
+            {% elif invite_expired %}
+              <h3>
+                {% blocktrans %}
+                  Invitation link has expired.
+                  Contact your project administrator to send new invite.
+                {% endblocktrans %}
+              </h3>
             {% else %}
               <h2>
                 {% blocktrans %}Confirm Your Account{% endblocktrans %}
