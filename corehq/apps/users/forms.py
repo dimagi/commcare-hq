@@ -946,8 +946,10 @@ class NewMobileWorkerForm(forms.Form):
                     ),
                     data_bind='''
                         css: {
-                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
-                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
+                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS &&
+                            $root.passwordSatisfyLength() === true,
+                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING &&
+                            $root.passwordSatisfyLength() === true,
                             'has-error': $root.passwordStatus() === $root.STATUS.ERROR ||
                              $root.passwordSatisfyLength() === false,
                         }
