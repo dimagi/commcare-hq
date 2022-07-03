@@ -449,7 +449,7 @@ class CaseRuleCriteriaForm(forms.Form):
         self.form_beginning_helper.layout = Layout(
             Fieldset(
                 _("Rule Criteria"),
-                Field('case_type', data_bind="value: caseType", css_class="hqwebapp-select2"),
+                Field('case_type', data_bind="value: caseType, staticSelect2: {}"),
                 Field('criteria_operator'),
             )
         )

@@ -32,6 +32,7 @@ from corehq.apps.casegroups.dbaccessors import (
     get_number_of_case_groups_in_domain,
 )
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.deduplication import (
     reset_and_backfill_deduplicate_rule,
 )
@@ -833,6 +834,10 @@ class AddCaseRuleView(DataInterfaceSection):
             'criteria_form': self.criteria_form,
             'actions_form': self.actions_form,
             'read_only_mode': self.read_only_mode,
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
         }
 
     def post(self, request, *args, **kwargs):
