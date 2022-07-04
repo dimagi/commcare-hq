@@ -468,7 +468,7 @@ class DomainGlobalSettingsForm(forms.Form):
             self.fields['confirmation_link_expiry'].min_value = min_value_expiry
             self.fields['confirmation_link_expiry'].max_value = max_value_expiry
 
-            project_max_length = OperatorCallLimitSettings.PROJECT_NAME_MAX_LENGTH
+            project_max_length = AccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
             self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
             self.fields['confirmation_sms_project_name'].max_length = project_max_length
 

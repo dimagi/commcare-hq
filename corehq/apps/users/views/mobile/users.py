@@ -127,7 +127,6 @@ from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
-from corehq.util.context_processors import commcare_hq_names
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.metrics import metrics_counter
 from corehq.util.workbook_json.excel import (
