@@ -28,6 +28,7 @@ from corehq.apps.locations.tests.util import setup_locations_and_types, restrict
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_all_user_ids_submitted,
+    get_attachments_size,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_case_types_for_domain_es,
@@ -216,6 +217,45 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
         output = media_export_is_too_big(es_query)
         self.assertTrue(output)
+
+        export_instance.delete()
+
+    def test_get_attachments_size(self):
+        attachment_sizes = [1000, 2000, 3000]
+        expected_total = 0
+
+        for size in range(0, len(attachment_sizes)):
+            expected_total += attachment_sizes[size]
+
+        xmlns = 'http://test.org'
+        app_id = 'test_app'
+        user_id = self.user.username
+
+        export_instance = FormExportInstance(
+            name='test_export',
+            domain=self.domain,
+            app_id=app_id,
+            xmlns=xmlns
+        )
+
+        export_instance.save()
+
+        es_query = export_instance.get_query(include_filters=False)
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2021, 12, 30),
+            user_id=user_id,
+            attachment_dict={
+                'test_image1': {'content_type': 'image/jpg', 'content_length': attachment_sizes[0], 'id': 1},
+                'test_image2': {'content_type': 'image/jpg', 'content_legth': attachment_sizes[1], 'id': 2},
+                'test_image3': {'content_type': 'image/jpg', 'content_length': attachment_sizes[2], 'id': 3},
+                'test_image4': {'content_type': 'image/jpg', 'content_length': attachment_sizes[1], 'id': 2}
+            }
+        )
+
+        self.assertEqual(expected_total, get_attachments_size(es_query))
 
         export_instance.delete()
 
