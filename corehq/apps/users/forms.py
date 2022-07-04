@@ -897,14 +897,19 @@ class NewMobileWorkerForm(forms.Form):
                             </p>
                             <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
                                 <!-- ko ifnot: $root.skipStandardValidations() -->
-                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
-                                        <i class="fa fa-check"></i> {strong}
+                                    <!-- ko ifnot: $root.passwordSatisfyLength() -->
+                                        <i class="fa fa-warning"></i> {short}
                                     <!-- /ko -->
-                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
-                                        {almost}
-                                    <!-- /ko -->
-                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {weak}
+                                    <!-- ko if: $root.passwordSatisfyLength() -->
+                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                            <i class="fa fa-check"></i> {strong}
+                                        <!-- /ko -->
+                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
+                                            {almost}
+                                        <!-- /ko -->
+                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                            <i class="fa fa-warning"></i> {weak}
+                                        <!-- /ko -->
                                     <!-- /ko -->
                                 <!-- /ko -->
 
@@ -934,6 +939,8 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
+                            short=_(f"Your password should have at least {settings.MINIMUM_PASSWORD_LENGTH} \
+                            characters."),
                         )),
                         required=True,
                     ),
@@ -941,7 +948,8 @@ class NewMobileWorkerForm(forms.Form):
                         css: {
                             'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
                             'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
-                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
+                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR ||
+                             $root.passwordSatisfyLength() === false,
                         }
                     ''' if not has_custom_clean_password() else ''
                 ),
