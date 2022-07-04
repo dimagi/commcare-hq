@@ -320,25 +320,28 @@ hqDefine("users/js/mobile_workers",[
             return self.STATUS.SUCCESS;
         });
 
-        self.passwordSatisfyLength = ko.computed(function () {
+        self.requireLengthValidation = ko.computed(function () {
             if (!self.stagedUser()) {
-                return true;
+                return false;
             }
-
             if (self.stagedUser().force_account_confirmation()) {
-                return true;
+                return false;
             }
-
             if (self.stagedUser().force_account_confirmation_by_sms()) {
-                return true;
+                return false;
             }
-
             if (!self.useStrongPasswords()) {
                 // No validation
-                return true;
+                return false;
             }
+            if (self.skipStandardValidations()) {
+                return false;
+            }
+            return true;
+        });
 
-            if (!self.skipStandardValidations()) {
+        self.passwordSatisfyLength = ko.computed(function () {
+            if (self.stagedUser() && self.requireLengthValidation()) {
                 var minimumPasswordLength = initialPageData.get('minimumPasswordLength');
                 var password = self.stagedUser().password();
                 if (!password) {
