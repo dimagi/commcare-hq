@@ -13882,7 +13882,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "\n"
-"            Default time (in hours) for which account confirmation link will "
+"            Default time (in days) for which account confirmation link will "
 "be valid.\n"
 "            "
 msgstr ""
@@ -25089,11 +25089,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
@@ -25145,9 +25147,19 @@ msgstr ""
 msgid "Reset Password on CommCare HQ"
 msgstr ""
 
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "Hello %(name)s,"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Your account with username %(username)s is confirmed successfully.\n"
+"You can now login and submit data in the \"%(domain)s\" project on "
+"%(hq_name)s.\n"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
@@ -34535,6 +34547,11 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid ""
+"Please enter number including country code, without (+) and in digits only."
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
 msgstr ""
@@ -34933,6 +34950,14 @@ msgid ""
 "                  It looks like your account has been deactivated.\n"
 "                  Contact your administrator if you think this is a "
 "mistake.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
+msgid ""
+"\n"
+"                  Invitation link has expired.\n"
+"                  Contact your project administrator to send new invite.\n"
 "                "
 msgstr ""
 
