@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             if (self.displayOptions === undefined) {
                 return false;
             }
-            return ko.utils.unwrapObservable(self.displayOptions.oneQuestionPerScreen);
+            return self.displayOptions.oneQuestionPerScreen;
         };
         /**
          * Sends a request to the touchforms server
@@ -433,7 +433,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     _accumulateAnswers;
 
                 _accumulateAnswers = function (o) {
-                    if (ko.utils.unwrapObservable(o.type) !== 'question') {
+                    if (o.type !== 'question') {
                         if (_.has(o, "children")) {
                             $.each(o.children(), function (i, val) {
                                 _accumulateAnswers(val);
@@ -441,7 +441,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                         }
                     } else {
                         if (o.isValid()) {
-                            if (ko.utils.unwrapObservable(o.datatype) !== "info") {
+                            if (o.datatype !== "info") {
                                 _answers[UI.getIx(o)] = ko.utils.unwrapObservable(o.answer);
                             } else {
                                 _answers[UI.getIx(o)] = "OK";

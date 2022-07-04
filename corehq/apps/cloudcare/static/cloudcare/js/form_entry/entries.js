@@ -188,7 +188,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     function FreeTextEntry(question, options) {
         var self = this;
         EntrySingleAnswer.call(self, question, options);
-        var isPassword = ko.utils.unwrapObservable(question.control) === Const.CONTROL_SECRET;
+        var isPassword = question.control === Const.CONTROL_SECRET;
         if (isPassword) {
             self.templateType = 'password';
         } else {
@@ -565,7 +565,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.options = ko.computed(function () {
-            return [{text: "", id: undefined}].concat(_.map(question.choices, function (choice, idx) {
+            return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
                 return {
                     text: choice,
                     id: idx + 1,
@@ -804,7 +804,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var style = "",
             is12Hour = false;
         if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
+            style = question.style.raw;
             if (style === Const.TIME_12_HOUR) {
                 this.clientFormat = 'h:mm a';
                 is12Hour = true;
@@ -995,11 +995,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var style;
 
         if (question.style) {
-            style = ko.utils.unwrapObservable(question.style.raw);
+            style = question.style.raw;
         }
 
         var displayOptions = _getDisplayOptions(question);
-        var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
+        var isPhoneMode = displayOptions.phoneMode;
         var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
         switch (question.datatype) {
@@ -1068,7 +1068,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                          *
                          * The second word designates the matching type
                          */
-                        matchType: question.style.raw().split(' ')[1],
+                        matchType: question.style.raw.split(' ')[1],
                         receiveStyle: receiveStyle,
                     });
                 } else if (isLabel) {

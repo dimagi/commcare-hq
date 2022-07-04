@@ -71,7 +71,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function getForIx(o, ix) {
-        if (ko.utils.unwrapObservable(o.type) === 'question') {
+        if (o.type === 'question') {
             return (getIx(o) === ix ? o : null);
         } else {
             for (var i = 0; i < o.children().length; i++) {
@@ -84,12 +84,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     }
 
     function getQuestions(o) {
-        if (ko.utils.unwrapObservable(o.type) === 'question') {
+        if (o.type === 'question') {
             return [o];
         } else {
             var qs = [];
             for (var i = 0; i < o.children().length; i++) {
-                if (ko.utils.unwrapObservable(o.children()[i].type) === 'question') {
+                if (o.children()[i].type === 'question') {
                     qs.push(o.children()[i]);
                 } else {
                     qs = qs.concat(getQuestions(o.children()[i]));
@@ -152,7 +152,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
          */
         self.childTemplate = function (child) {
-            return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
+            return child.type + '-fullform-ko-template';
         };
 
         self.hasError = ko.computed(function () {
@@ -210,7 +210,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     return options.target;
                 },
                 key: function (data) {
-                    return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
+                    return data.uuid || data.ix;
                 },
             },
         };
@@ -244,8 +244,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
 
         self.showInFormNavigation = ko.computed(function () {
-            return self.displayOptions.oneQuestionPerScreen !== undefined
-            && self.displayOptions.oneQuestionPerScreen() === true;
+            return self.displayOptions.oneQuestionPerScreen === true;
         });
 
         self.isCurrentRequiredSatisfied = ko.computed(function () {
@@ -254,7 +253,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             }
 
             return _.every(self.children(), function (q) {
-                return (q.answer() === Const.NO_ANSWER && !q.required()) || q.answer() !== null;
+                return (q.answer() === Const.NO_ANSWER && !q.required) || q.answer() !== null;
             });
         });
         self.isCurrentRequiredSatisfied.subscribe(function (isSatisfied) {
@@ -303,7 +302,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             for (var i = 0; i < questions.length; i++) {
                 // eslint-disable-next-line
                 if (questions[i].error() != null || questions[i].serverError() != null
-                            || (questions[i].required() && questions[i].answer() == null)) {
+                            || (questions[i].required && questions[i].answer() == null)) {
                     qs.push(questions[i]);
                 }
             }
@@ -471,7 +470,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.childrenRequired = ko.computed(function () {
             return _.find(self.children(), function (child) {
-                return child.required() || child.childrenRequired && child.childrenRequired();
+                return child.required || child.childrenRequired && child.childrenRequired();
             });
         });
 
@@ -490,9 +489,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.hasAnyNestedQuestions = function () {
             return _.any(self.children(), function (d) {
-                if (d.type() === 'question' || d.type() === 'repeat-juncture') {
+                if (d.type === 'question' || d.type === 'repeat-juncture') {
                     return true;
-                } else if (d.type() === 'sub-group') {
+                } else if (d.type === 'sub-group') {
                     return d.hasAnyNestedQuestions();
                 }
             });
@@ -600,7 +599,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.form = function () {
             var parent = self.parent;
-            while (parent.type && parent.type() !== null) {
+            while (parent.type && parent.type !== null) {
                 parent = parent.parent;
             }
             return parent;
@@ -668,7 +667,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Question.prototype.stylesContaining = function (pattern) {
         var self = this;
         var retVal = [];
-        var styleStr = (self.style) ? ko.utils.unwrapObservable(self.style.raw) : null;
+        var styleStr = self.style ? self.style.raw : null;
         if (styleStr) {
             var styles = styleStr.split(' ');
             styles.forEach(function (style) {

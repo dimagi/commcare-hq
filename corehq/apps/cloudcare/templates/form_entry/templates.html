@@ -6,7 +6,7 @@
         class: isRepetition ? 'repetition' : '',
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type !== 'question' }),
           'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions(),
           'panel panel-default': collapsible,
           'required-group': !showChildren() && childrenRequired(),
@@ -30,7 +30,7 @@
         <legend>
           <span class="caption webapp-markdown-output"
                 data-bind="
-                  html: $data.caption_markdown || caption(),
+                  html: $data.caption_markdown || caption,
                 "></span>
           <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                       visible: isRepetition,
@@ -44,7 +44,7 @@
               css: {'fa-angle-double-right': !showChildren(), 'fa-angle-double-down': showChildren()},
           "></i>
         </div>
-        <span class="caption" data-bind="html: caption(), attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
+        <span class="caption" data-bind="html: caption, attr: {id: captionId()}"></span><!-- Markdown interferes with header styling -->
         <i class="fa fa-warning text-danger pull-right" data-bind="visible: hasError() && !showChildren()"></i>
         <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                     visible: isRepetition,
