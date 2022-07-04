@@ -3974,6 +3974,12 @@ msgstr ""
 msgid "Failed to re-process"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
 msgid "Save Filters"
 msgstr ""
