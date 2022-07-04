@@ -1,0 +1,10 @@
+{% load i18n %}
+{% blocktrans %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans %}
+Your account with username {{ username }} is confirmed successfully.
+You can now login and submit data in the "{{ domain }}" project on {{ hq_name }}.
+{% endblocktrans %}
+
+{% blocktrans %}Thanks,{% endblocktrans %}
+{% blocktrans %}-The {{ hq_name }} team{% endblocktrans %}
