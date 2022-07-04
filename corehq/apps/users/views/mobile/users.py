@@ -1522,7 +1522,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         return context
 
     def send_success_sms(self):
-        settings = AccountConfirmationSettings.get_settings(self.domain.name)
+        settings = AccountConfirmationSettings.get_settings(self.user.domain)
         template_params = {
             'name': self.user.full_name,
             'domain': self.user.domain,
@@ -1540,7 +1540,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
 
     def is_invite_valid(self):
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
-        settings_obj = AccountConfirmationSettings.get_settings(self.domain.name)
+        settings_obj = AccountConfirmationSettings.get_settings(self.user.domain)
         if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False

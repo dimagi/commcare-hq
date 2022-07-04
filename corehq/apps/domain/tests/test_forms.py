@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
-from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
+from corehq.apps.domain.models import AccountConfirmationSettings, Domain, OperatorCallLimitSettings
 
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
@@ -66,6 +66,7 @@ class TestDomainGlobalSettingsForm(TestCase):
         super().setUp()
         self.domain_obj = Domain(name='test_domain')
         self.call_settings = OperatorCallLimitSettings(domain='test_domain')
+        self.account_confirmation_settings = AccountConfirmationSettings.get_settings("test_domain")
         self.call_settings.save()
         self.domain_obj.save()
 
@@ -76,11 +77,12 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_confirmation_link_expiry_default_present_when_flag_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=self.domain_obj.confirmation_link_expiry_time)
+        form = self.create_form(
+            confirmation_link_expiry=self.account_confirmation_settings.confirmation_link_expiry_time)
         form.full_clean()
         form.save(Mock(), self.domain_obj)
         self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(14, self.domain_obj.confirmation_link_expiry_time)
+        self.assertEqual(14, self.account_confirmation_settings.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_custom_present_when_flag_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)

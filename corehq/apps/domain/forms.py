@@ -408,7 +408,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
 
     confirmation_sms_project_name = CharField(
-        label=gettext_lazy("Project name"),
+        label=gettext_lazy("Confirmation SMS project name"),
         required=True,
         help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
@@ -579,6 +579,7 @@ class DomainGlobalSettingsForm(forms.Form):
             settings = AccountConfirmationSettings.get_settings(domain.name)
             settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
             settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
+            settings.save()
 
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']

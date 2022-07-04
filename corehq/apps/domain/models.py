@@ -1138,7 +1138,6 @@ class AccountConfirmationSettings(models.Model):
     )
 
     @staticmethod
-    @quickcache(['domain'], timeout=24 * 60 * 60)
     def get_settings(domain):
         domain_obj, _ = AccountConfirmationSettings.objects.get_or_create(domain=domain)
         return domain_obj
