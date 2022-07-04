@@ -478,6 +478,10 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
         self.fields['email'].widget = forms.HiddenInput()
         self.fields['email'].required = False
 
+    def clean_email(self):
+        # Return email without any validation
+        return self.cleaned_data['email'].strip().lower()
+
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
 #
