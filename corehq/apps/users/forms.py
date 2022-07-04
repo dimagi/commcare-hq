@@ -939,8 +939,8 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
-                            short=_(f"Your password should have at least {settings.MINIMUM_PASSWORD_LENGTH} \
-                            characters."),
+                            short=_("Password must have at least {password_length} characters."
+                                    ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),

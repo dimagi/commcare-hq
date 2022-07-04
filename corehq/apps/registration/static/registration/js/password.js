@@ -58,7 +58,8 @@ hqDefine('registration/js/password', [
             if (!self.password()) {
                 return '';
             } else if (self.length() < self.minimumPasswordLength) {
-                return gettext(`Your password must be at least ${self.minimumPasswordLength} characters long.`);
+                return _.template(gettext("Password must have at least (<%- passwordLength %>)" +
+                 " characters."))({passwordLength: self.minimumPasswordLength});
             } else if (self.strength() >= self.minimumZxcvbnScore && self.isSuggestedPassword()) {
                 return gettext("<i class='fa fa-warning'></i>" +
                     "This password is automatically generated. " +

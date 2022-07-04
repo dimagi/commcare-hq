@@ -1491,8 +1491,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], f'Password should have at least {settings.MINIMUM_PASSWORD_LENGTH} \
-characters.')
+        self.assertEqual(rows[0]['flag'],
+        'Password must have at least {settings.MINIMUM_PASSWORD_LENGTH} characters.')
 
 
 class TestUserUploadRecord(TestCase):
