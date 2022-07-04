@@ -13,7 +13,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         self.question = question;
         self.answer = question.answer;
-        self.datatype = question.datatype();
+        self.datatype = question.datatype;
         self.entryId = _.uniqueId(this.datatype);
 
         // Returns true if the rawAnswer is valid, false otherwise
@@ -194,10 +194,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         } else {
             self.templateType = 'text';
         }
-        self.datatype = question.datatype();
-        self.domain = question.domain ? question.domain() : 'full';
+        self.datatype = question.datatype;
+        self.domain = question.domain ? question.domain : 'full';
         self.lengthLimit = options.lengthLimit || 100000;
-        self.prose = question.domain_meta ? question.domain_meta().longtext : false;
+        self.prose = question.domain_meta ? question.domain_meta.longtext : false;
 
         self.isValid = function (rawAnswer) {
             var errmsg = self.getErrorMessage(rawAnswer);
@@ -246,7 +246,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.templateType = 'address';
         self.broadcastTopics = [];
         self.editing = true;
-        let isRequired = self.question.required() ? "Yes" : "No";
+        let isRequired = self.question.required ? "Yes" : "No";
         $(function () {
             let entry = $(`#${self.entryId}`);
             entry.on("change", function () {
@@ -565,7 +565,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.options = ko.computed(function () {
-            return [{text: "", id: undefined}].concat(_.map(question.choices(), function (choice, idx) {
+            return [{text: "", id: undefined}].concat(_.map(question.choices, function (choice, idx) {
                 return {
                     text: choice,
                     id: idx + 1,
@@ -1002,7 +1002,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var isPhoneMode = ko.utils.unwrapObservable(displayOptions.phoneMode);
         var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
-        switch (question.datatype()) {
+        switch (question.datatype) {
             case Const.STRING:
                 // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
             case Const.BARCODE:     // eslint-disable-line no-fallthrough
@@ -1019,7 +1019,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                             broadcastStyles: question.stylesContaining(/broadcast-*/),
                         });
                     } else {
-                        window.console.warn('No active entry for: ' + question.datatype());
+                        window.console.warn('No active entry for: ' + question.datatype);
                         entry = new UnsupportedEntry(question, options);
                     }
                 } else if (question.stylesContains(Const.NUMERIC)) {
@@ -1076,7 +1076,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         hideLabel: hideLabel,
                     });
                     if (!hideLabel) {
-                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        let isRequired = entry.question.required ? "Yes" : "No";
                         kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
@@ -1107,7 +1107,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         hideLabel: false,
                     });
                     if (!hideLabel) {
-                        let isRequired = entry.question.required() ? "Yes" : "No";
+                        let isRequired = entry.question.required ? "Yes" : "No";
                         kissmetrics.track.event("Accessibility Tracking - Tabular Question Seen", {
                             "Required": isRequired,
                         });
@@ -1142,7 +1142,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 entry = new InfoEntry(question, {});
                 break;
             default:
-                window.console.warn('No active entry for: ' + question.datatype());
+                window.console.warn('No active entry for: ' + question.datatype);
                 entry = new UnsupportedEntry(question, options);
         }
         return entry;

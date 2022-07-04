@@ -615,8 +615,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
             return self.error() === null && self.serverError() === null;
         };
 
-        self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
-        self.isLabel = self.datatype() === 'info';
+        self.is_select = (self.datatype === 'select' || self.datatype === 'multiselect');
+        self.isLabel = self.datatype === 'info';
         self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';

@@ -30,7 +30,7 @@
         <legend>
           <span class="caption webapp-markdown-output"
                 data-bind="
-                  html: ko.utils.unwrapObservable($data.caption_markdown) || caption(),
+                  html: $data.caption_markdown || caption(),
                 "></span>
           <button class="btn btn-xs btn-danger del pull-right" href="#" data-bind="
                       visible: isRepetition,
@@ -130,7 +130,7 @@
               {% endblocktrans %}
               <ul data-bind="foreach: erroredQuestions">
                   <li>
-                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
+                      <a href="#" data-bind="click: navigateTo, html: caption_markdown || caption || question_id || gettext('Unknown Question')"></a>
                       <span data-bind="visible: serverError, text: serverError"></span>
                       <span data-bind="if: error">
                         <!-- ko text: error --><!-- /ko -->
@@ -187,7 +187,7 @@
 
 
 <script type="text/html" id="question-fullform-ko-template">
-  <!-- ko if: datatype() !== 'info' -->
+  <!-- ko if: datatype !== 'info' -->
   <div class="q form-group" data-bind="
             css: {
                 error: error,
@@ -197,7 +197,7 @@
         ">
     <label class="caption control-label" data-bind="css: labelWidth, attr: {'for': entry.entryId}">
       <div>
-        <!-- ko if: help() -->
+        <!-- ko if: help -->
         <a
           class="help-text-trigger"
           role="button"
@@ -215,10 +215,10 @@
           </div>
         </div>
         <!-- /ko -->
-        <span class="webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption()"></span>
+        <span class="webapp-markdown-output" data-bind="html: $data.caption_markdown || caption"></span>
       </div>
-      <i class="hint-text" data-bind="text: ko.utils.unwrapObservable($data.hint)"></i>
-      <!-- ko if: required() -->
+      <i class="hint-text" data-bind="text: $data.hint"></i>
+      <!-- ko if: required -->
       <span class="sr-only">{% trans "A response is required for this question." %}</span>
       <!-- /ko -->
     </label>
@@ -255,11 +255,11 @@
                       on: $root.forceRequiredVisible,
                     }">{% trans 'Sorry, this response is required!' %}</div>
   <!-- /ko -->
-  <!-- ko if: datatype() === 'info' -->
+  <!-- ko if: datatype === 'info' -->
   <div class="info panel panel-default">
     <div class="panel-body">
       <span class="ix" data-bind="text: ixInfo($data)">></span>
-      <span class="caption webapp-markdown-output" data-bind="html: ko.utils.unwrapObservable($data.caption_markdown) || caption(), attr: {'for': entry.entryId}"></span>
+      <span class="caption webapp-markdown-output" data-bind="html: $data.caption_markdown || caption, attr: {'for': entry.entryId}"></span>
       <div class="widget-multimedia" data-bind="
                 template: { name: 'widget-multimedia-ko-template', data: $data }"
       >
@@ -298,13 +298,13 @@
 
 <script type="text/html" id="widget-multimedia-ko-template">
   <img class="img-responsive" data-bind="
-         attr: { src: mediaSrc($data.caption_image()) },
-         visible: mediaSrc($data.caption_image())
+         attr: { src: mediaSrc($data.caption_image) },
+         visible: mediaSrc($data.caption_image)
          " />
-  <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
+  <audio controls="controls" data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio) }">
     {% trans "Your browser does not support audio" %}
   </audio>
-  <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+  <video controls="controls" data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video) }">
     {% trans "Your browser does not support video" %}
   </video>
 </script>
@@ -319,7 +319,7 @@
         attr: {
             maxlength: lengthLimit,
             id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
+            'aria-required': $parent.required ? 'true' : 'false',
         },
     "></textarea>
   <span class="help-block type" aria-hidden="true" data-bind="
@@ -333,7 +333,7 @@
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         id: entryId,
-        attr: {'aria-required': $parent.required() ? 'true' : 'false'},
+        attr: {'aria-required': $parent.required ? 'true' : 'false'},
     "/>
   <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
@@ -349,7 +349,7 @@
             maxlength: lengthLimit,
             id: entryId,
             placeholder: placeholderText,
-            'aria-required': $parent.required() ? 'true' : 'false',
+            'aria-required': $parent.required ? 'true' : 'false',
         }
     "/>
   <span class="help-block type" aria-hidden="true" data-bind="
@@ -454,7 +454,7 @@
         value: rawAnswer,
         attr: {
             id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
+            'aria-required': $parent.required ? 'true' : 'false',
         },
         valueAllowUnset: true,
         ">
@@ -475,7 +475,7 @@
         selectedOptions: rawAnswer,
         attr: {
             id: entryId,
-            'aria-required': $parent.required() ? 'true' : 'false',
+            'aria-required': $parent.required ? 'true' : 'false',
         },
         valueAllowUnset: true,
         ">
@@ -516,14 +516,14 @@
 </script>
 <script type="text/html" id="date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>
 
 <script type="text/html" id="datetime-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
   </div>
 </script>
@@ -531,7 +531,7 @@
 <script type="text/html" id="time-entry-ko-template">
   <span class="help-block sr-only" data-bind="text: helpText()"></span>
   <div class="input-group">
-    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
   <span class="help-block" aria-hidden="true" data-bind="text: helpText()"></span>
@@ -539,7 +539,7 @@
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">
   <div class="input-group">
-    <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
+    <input type="text" class="form-control" autocomplete="off" data-bind="attr: { id: entryId, 'aria-required': $parent.required ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
   </div>
 </script>
