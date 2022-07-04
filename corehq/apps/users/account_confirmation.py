@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import override, gettext_lazy as _
-from corehq.apps.domain.models import AccountConfirmationSettings
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
 
 from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language
 from corehq.apps.sms.api import send_sms
@@ -86,7 +86,7 @@ def send_account_confirmation_sms(commcare_user):
 
 def _get_account_confirmation_template_params(commcare_user, message_token, url_name):
     url = absolute_reverse(url_name, args=[commcare_user.domain, message_token])
-    settings_obj = AccountConfirmationSettings.get_settings(commcare_user.domain)
+    settings_obj = SMSAccountConfirmationSettings.get_settings(commcare_user.domain)
     return {
         'name': commcare_user.full_name,
         'domain': commcare_user.domain,

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
-from corehq.apps.domain.models import AccountConfirmationSettings, Domain, OperatorCallLimitSettings
+from corehq.apps.domain.models import SMSAccountConfirmationSettings, Domain, OperatorCallLimitSettings
 
 from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.toggles.shortcuts import set_toggle
@@ -64,11 +64,12 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        self.domain_obj = Domain(name='test_domain')
-        self.call_settings = OperatorCallLimitSettings(domain='test_domain')
-        self.account_confirmation_settings = AccountConfirmationSettings.get_settings("test_domain")
-        self.call_settings.save()
+        self.domain = Domain.generate_name('test_domain')
+        self.domain_obj = Domain(name=self.domain)
         self.domain_obj.save()
+        self.call_settings = OperatorCallLimitSettings(domain=self.domain)
+        self.call_settings.save()
+        self.account_confirmation_settings = SMSAccountConfirmationSettings.get_settings(self.domain)
 
     def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
@@ -78,7 +79,8 @@ class TestDomainGlobalSettingsForm(TestCase):
     def test_confirmation_link_expiry_default_present_when_flag_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
         form = self.create_form(
-            confirmation_link_expiry=self.account_confirmation_settings.confirmation_link_expiry_time)
+            confirmation_link_expiry=self.account_confirmation_settings.confirmation_link_expiry_time,
+            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
         form.full_clean()
         form.save(Mock(), self.domain_obj)
         self.assertTrue('confirmation_link_expiry' in form.fields)
@@ -86,16 +88,21 @@ class TestDomainGlobalSettingsForm(TestCase):
 
     def test_confirmation_link_expiry_custom_present_when_flag_set(self):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=25)
+        form = self.create_form(
+            confirmation_link_expiry=25,
+            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
         form.full_clean()
         form.save(Mock(), self.domain_obj)
         self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(25, self.domain_obj.confirmation_link_expiry_time)
+        settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
+        self.assertEqual(25, settings_obj.confirmation_link_expiry_time)
 
     def test_confirmation_link_expiry_error_when_invalid_value(self):
         OperatorCallLimitSettings.objects.all().delete()
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry='abc')
+        form = self.create_form(
+            confirmation_link_expiry='abc',
+            confirmation_sms_project_name=self.account_confirmation_settings.project_name)
         form.full_clean()
         self.assertEqual(1, len(form.errors))
         self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
@@ -146,4 +153,5 @@ class TestDomainGlobalSettingsForm(TestCase):
         set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain_obj, False, namespace=NAMESPACE_DOMAIN)
         self.domain_obj.delete()
         OperatorCallLimitSettings.objects.all().delete()
+        SMSAccountConfirmationSettings.objects.all().delete()
         super().tearDown()

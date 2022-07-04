@@ -101,7 +101,7 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
-    AccountConfirmationSettings,
+    SMSAccountConfirmationSettings,
     Domain,
     OperatorCallLimitSettings,
     TransferDomainRequest,
@@ -461,14 +461,14 @@ class DomainGlobalSettingsForm(forms.Form):
             del self.fields['confirmation_link_expiry']
             del self.fields['confirmation_sms_project_name']
         else:
-            settings_obj = AccountConfirmationSettings.get_settings(self.domain)
-            min_value_expiry = AccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
-            max_value_expiry = AccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
+            settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
+            min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
+            max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
             self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
             self.fields['confirmation_link_expiry'].min_value = min_value_expiry
             self.fields['confirmation_link_expiry'].max_value = max_value_expiry
 
-            project_max_length = AccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
+            project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
             self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
             self.fields['confirmation_sms_project_name'].max_length = project_max_length
 
@@ -576,7 +576,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _save_account_confirmation_settings(self, domain):
         if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
-            settings = AccountConfirmationSettings.get_settings(domain.name)
+            settings = SMSAccountConfirmationSettings.get_settings(domain.name)
             settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
             settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
             settings.save()

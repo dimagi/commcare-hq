@@ -1117,7 +1117,7 @@ class OperatorCallLimitSettings(models.Model):
     )
 
 
-class AccountConfirmationSettings(models.Model):
+class SMSAccountConfirmationSettings(models.Model):
     PROJECT_NAME_DEFAULT = "Commcare HQ"
     PROJECT_NAME_MAX_LENGTH = 30
     CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
@@ -1139,5 +1139,5 @@ class AccountConfirmationSettings(models.Model):
 
     @staticmethod
     def get_settings(domain):
-        domain_obj, _ = AccountConfirmationSettings.objects.get_or_create(domain=domain)
+        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
         return domain_obj

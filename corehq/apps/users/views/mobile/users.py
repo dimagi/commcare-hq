@@ -5,7 +5,6 @@ import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -44,7 +43,7 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
-from corehq.apps.domain.models import AccountConfirmationSettings
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
 from corehq.apps.sms.api import send_sms
 from corehq.apps.domain.utils import guess_domain_language
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
@@ -1511,7 +1510,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             return MobileWorkerAccountConfirmationBySMSForm(initial={
                 'username': self.user.raw_username,
                 'full_name': self.user.full_name,
-                'email': f"{self.user.raw_username}@{self.domain}.{settings.HQ_ACCOUNT_ROOT}",
+                'email': "",
             })
 
     def get_context_data(self, **kwargs):
@@ -1522,7 +1521,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
         return context
 
     def send_success_sms(self):
-        settings = AccountConfirmationSettings.get_settings(self.user.domain)
+        settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
         template_params = {
             'name': self.user.full_name,
             'domain': self.user.domain,
@@ -1540,7 +1539,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
 
     def is_invite_valid(self):
         hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
-        settings_obj = AccountConfirmationSettings.get_settings(self.user.domain)
+        settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
         if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False
