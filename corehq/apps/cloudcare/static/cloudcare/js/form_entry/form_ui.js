@@ -561,8 +561,18 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
      */
     function Question(json, parent) {
-        var self = this;
-        self.fromJS(json);
+        var self = _.extend(this, json);
+
+        // Turn dynamic attributes into observables
+        self.answer = ko.observable(self.answer);
+        self.ix = ko.observable(self.ix);
+        self.choices = ko.observableArray(self.choices);
+
+        // Sanitize HTML attributes
+        self.caption = self.caption ? DOMPurify.sanitize(self.caption.replace(/\n/g, '<br/>')) : null;
+        self.caption_markdown = self.caption_markdown ? md.render(self.caption_markdown) : null;
+        self.help = self.help ? md.render(DOMPurify.sanitize(self.help)) : null;
+
         self.parent = parent;
         // Grab the parent pubsub so questions can interact with other questions on the same form/group.
         self.parentPubSub = (parent) ? parent.pubsub : new ko.subscribable();
@@ -654,33 +664,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         };
     }
 
-    /**
-     * Reconciles the JSON representation of a Question and renders it into
-     * a knockout representation.
-     * @param {Object} json - The JSON returned from touchforms to represent a Question
-     */
-    Question.prototype.fromJS = function (json) {
-        var self = this;
-        var mapping = {
-            caption: {
-                update: function (options) {
-                    return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
-                },
-            },
-            caption_markdown: {
-                update: function (options) {
-                    return options.data ? md.render(options.data) : null;
-                },
-            },
-            help: {
-                update: function (options) {
-                    return options.data ? md.render(DOMPurify.sanitize(options.data)) : null;
-                },
-            },
-        };
-
-        ko.mapping.fromJS(json, mapping, self);
-    };
     /**
      * Returns a list of style strings that match the given pattern.
      * If a regex is provided, returns regex matches. If a string is provided
