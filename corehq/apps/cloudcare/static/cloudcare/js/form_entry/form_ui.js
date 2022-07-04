@@ -143,6 +143,10 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.pubsub = new ko.subscribable();
         self.fromJS(json);
 
+        // Sanitize HTML attributes
+        self.caption = self.caption ? DOMPurify.sanitize(self.caption.replace(/\n/g, '<br/>')) : null;
+        self.caption_markdown = self.caption_markdown ? md.render(self.caption_markdown) : null;
+
         /**
          * Used in KO template to determine what template to use for a child
          * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
@@ -166,16 +170,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
     Container.prototype.fromJS = function (json) {
         var self = this;
         var mapping = {
-            caption: {
-                update: function (options) {
-                    return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
-                },
-            },
-            caption_markdown: {
-                update: function (options) {
-                    return options.data ? md.render(options.data) : null;
-                },
-            },
+            copy: _.without(_.keys(json), "children", "ix"),
             children: {
                 create: function (options) {
                     if (options.data.type === Const.QUESTION_TYPE) {

@@ -163,9 +163,9 @@ describe('Fullform UI', function () {
         form.fromJS({ children: [repeatNestJSON] });
         assert.equal(form.children().length, 1);
         // Each repeat is a group with questions
-        assert.equal(form.children()[0].type(), Const.REPEAT_TYPE);
+        assert.equal(form.children()[0].type, Const.REPEAT_TYPE);
         assert.equal(form.children()[0].children().length, 1);
-        assert.equal(form.children()[0].children()[0].type(), Const.GROUP_TYPE);
+        assert.equal(form.children()[0].children()[0].type, Const.GROUP_TYPE);
         assert.isTrue(form.children()[0].children()[0].isRepetition);
         assert.equal(form.children()[0].children()[0].children()[0].type(), Const.QUESTION_TYPE);
     });
