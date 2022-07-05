@@ -32,7 +32,7 @@ class PasswordStrengthTest(SimpleTestCase):
         self.assert_good_password(PASSWORDS_BY_STRENGTH[3])
 
     # Test minimum password length
-    @override_settings(MINIMUM_PASSWORD_LENGTH=8)
+    @override_settings(MINIMUM_PASSWORD_LENGTH=8, MINIMUM_ZXCVBN_SCORE=0)
     def test_length_5_password(self):
         self.assert_bad_password("e3r4f")
 
