@@ -944,6 +944,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(results[0], {
             '_id': self.user._id,
             '__group_ids': [],
+            'domain': self.user.domain,
             'username': self.user.username,
             'is_active': True,
             'first_name': self.user.first_name,
@@ -960,6 +961,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(results[0], {
             '_id': self.user._id,
             '__group_ids': [],
+            'domain': self.user.domain,
             'username': self.user.username,
             'is_active': False,
             'first_name': self.user.first_name,

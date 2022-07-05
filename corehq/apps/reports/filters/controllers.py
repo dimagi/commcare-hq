@@ -115,7 +115,7 @@ class EmwfOptionsController(object):
         else:
             user_query = self.active_user_es_query(query)
         users = (user_query
-                 .fields(SimplifiedUserInfo.ES_FIELDS + ['domain'])
+                 .fields(SimplifiedUserInfo.ES_FIELDS)
                  .start(start)
                  .size(size)
                  .sort("username.exact"))
