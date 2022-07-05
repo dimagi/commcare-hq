@@ -1,7 +1,10 @@
 import uuid
-from collections import defaultdict
 import json
 import logging
+from collections import defaultdict
+from contextlib import ExitStack
+
+from django.db.transaction import atomic
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
@@ -84,9 +87,20 @@ class CouchTransaction(object):
                             for doc in self.preview_save(cls=_cls)]
 
     def commit(self):
+        def start_sql_transaction():
+            nonlocal started
+            if not started:
+                context.enter_context(atomic())
+                started = True
+        started = False
+        with ExitStack() as context:
+            self._commit(start_sql_transaction)
+
+    def _commit(self, start_sql_transaction):
         for cls, docs in self.docs_to_delete.items():
             if issubclass(cls, SyncCouchToSQLMixin):
                 def delete(chunk):
+                    start_sql_transaction()
                     ids = [doc._id for doc in chunk if doc._id]
                     cls.bulk_delete(chunk)
                     sql_class.objects.filter(**{id_name + "__in": ids}).delete()
@@ -103,6 +117,7 @@ class CouchTransaction(object):
                     if any(doc._rev is not None for doc in chunk):
                         raise NotImplementedError([d for d in chunk if d._rev])
                     cls.bulk_save(chunk)
+                    start_sql_transaction()
                     sql_class = cls._migration_get_sql_model_class()
                     id_name = sql_class._migration_couch_id_name
                     new_sql_docs = []

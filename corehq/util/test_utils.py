@@ -24,6 +24,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
@@ -873,6 +874,25 @@ class capture_sql(ContextDecorator):
             print('\n{}'.format(indent('\n'.join(wrap(out, width)), '\t')))
             if with_traceback:
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
+
+
+@contextmanager
+def new_db_connection(alias=DEFAULT_DB_ALIAS):
+    """Context manager to setup a new database connection
+
+    Use to test transaction isolation when a transaction is in progress
+    on the current/existing connection.
+    """
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    cn = backend.DatabaseWrapper(db, alias)
+    try:
+        with mock.patch("django.db.connections._connections.default", cn):
+            yield cn
+    finally:
+        cn.close()
 
 
 def require_db_context(fn):
