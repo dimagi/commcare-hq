@@ -15,8 +15,7 @@ hqDefine("reports/js/tableau", function () {
             },
             dataType: 'json',
             success: function (data) {
-                var loadingDiv = document.getElementById("loadingDiv");
-                loadingDiv.style.display = "none";
+                $('#loadingDiv').addClass("hide");
                 if (data.success) {
                     self.initViz(data.ticket);
                 } else {
@@ -24,13 +23,11 @@ hqDefine("reports/js/tableau", function () {
                 }
             },
             error: function () {
-                var loadingDiv = document.getElementById("loadingDiv");
-                loadingDiv.style.display = "none";
-                var errorMessage = document.getElementById("errorMessage");
+                $('#loadingDiv').addClass("hide");
                 var requestErrorMessage = gettext("An error occured with the tableau server request, please ensure " +
                     "the server configuration is correct and try again.");
-                errorMessage.style.display = "block";
-                errorMessage.innerHTML = requestErrorMessage;
+                $('#errorMessage').removeClass("hide");
+                document.getElementById("errorMessage").innerHTML = requestErrorMessage;
             },
         });
     };
