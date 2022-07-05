@@ -1,14 +1,14 @@
 from django.core.management.base import BaseCommand
 
 from dimagi.utils.chunked import chunked
-from corehq.apps.users.models import SQLPermission, UserRole
+from corehq.apps.users.models import Permission, UserRole
 
 
 class Command(BaseCommand):
     help = "Adds download_reports permission to user role if not already present."
 
     def handle(self, **options):
-        permission, created = SQLPermission.objects.get_or_create(value='download_reports')
+        permission, created = Permission.objects.get_or_create(value='download_reports')
         num_roles_modified = 0
         all_role_ids = set(UserRole.objects.all().values_list("id", flat=True))
         role_ids_with_new_permission = set(UserRole.objects.filter(rolepermission__permission_fk_id=permission.id)

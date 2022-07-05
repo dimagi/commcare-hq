@@ -3116,6 +3116,10 @@ msgstr ""
 msgid "Submit Invoice Request"
 msgstr ""
 
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr ""
+
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr ""
@@ -3820,10 +3824,8 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
-#, fuzzy
-#| msgid "Time"
 msgid "From Time"
-msgstr "Hora"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js

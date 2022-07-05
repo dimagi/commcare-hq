@@ -3107,6 +3107,10 @@ msgstr ""
 msgid "Submit Invoice Request"
 msgstr ""
 
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr ""
+
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
 msgstr ""

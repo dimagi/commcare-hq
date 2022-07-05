@@ -1278,7 +1278,7 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         users = _get_selected_users(self.domain, self.request)
         user_ids = [user.user_id for user in users]
         xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
-        app_ids = [form['app_id'] for form in self.all_relevant_forms.values()]
+        app_ids = [form['app_id'] for form in self.all_relevant_forms.values() if form['app_id']]
 
         paged_result = get_forms(
             self.domain,
