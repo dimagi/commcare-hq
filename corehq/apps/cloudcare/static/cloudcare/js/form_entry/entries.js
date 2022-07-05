@@ -238,7 +238,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * The entry that represents an address entry.
      * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
      * the address item that is selected. Item contains `full`, `street`, `city`, `us_state`, `us_state_long`,
-     * `zipcode`, `country`, `country_short`, `region`.
+     * `postcode`, `zipcode`, `district`, `county`, `country`, `country_short`, `region`.
      */
     function AddressEntry(question, options) {
         var self = this;
@@ -261,10 +261,15 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
+            var broadcastObj = Utils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
+            if (_.isEmpty(broadcastObj)) {
+                question.answer(Const.NO_ANSWER);
+            } else {
+                question.answer(JSON.stringify(broadcastObj));
+            }
             // The default full address returned to the search bar
             return item.place_name;
         };
