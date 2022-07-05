@@ -253,12 +253,12 @@ class SyncSQLToCouchMixin(object):
         """
         raise NotImplementedError()
 
-    def _migration_get_couch_object(self):
+    def _migration_get_couch_object(self, **kw):
         if not self._migration_couch_id:
             return None
         cls = self._migration_get_couch_model_class()
         try:
-            return cls.get(str(self._migration_couch_id))
+            return cls.get(str(self._migration_couch_id), **kw)
         except ResourceNotFound:
             return None
 

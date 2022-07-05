@@ -4,7 +4,10 @@ from contextlib import contextmanager
 from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
+from attrs import asdict
+
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -21,14 +24,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from couchdbkit import ResourceNotFound
-
 from corehq.apps.hqwebapp.decorators import waf_allow
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response
-from soil import CachedDownload, DownloadBase
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
@@ -46,10 +47,9 @@ from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
-    FixtureTypeField,
     LookupTableRow,
     LookupTable,
+    TypeField,
 )
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
@@ -71,23 +71,6 @@ from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
-
-
-def strip_json(obj, disallow_basic=None, disallow=None):
-    disallow = disallow or []
-    if disallow_basic is None:
-        disallow_basic = ['_rev', 'domain', 'doc_type']
-    disallow += disallow_basic
-    ret = {}
-    try:
-        obj = obj.to_json()
-    except Exception:
-        pass
-    for key in obj:
-        if key not in disallow:
-            ret[key] = obj[key]
-
-    return ret
 
 
 def _to_kwargs(req):
@@ -112,27 +95,28 @@ def update_tables(request, domain, data_type_id=None):
     data_type = None
     if data_type_id:
         try:
-            data_type = FixtureDataType.get(data_type_id)
-        except ResourceNotFound:
+            data_type = LookupTable.objects.get(id=data_type_id, domain=domain)
+        except (LookupTable.DoesNotExist, ValidationError):
             raise Http404()
 
         if data_type.domain != domain:
             raise Http404()
 
         if request.method == 'GET':
-            return json_response(strip_json(data_type))
+            return json_response(_table_json(data_type))
 
         elif request.method == 'DELETE':
             # HACK ensure we get the latest version. Bypass Couch concurrency
             # protection because caching is hard, and the client does
             # not specify what version they are deleting anyway.
-            data_type.clear_caches()
-            data_type = FixtureDataType.get(data_type_id)
+            couch_type = data_type._migration_get_couch_object(dont_cache_docs=True)
+            couch_type.clear_caches()
             try:
                 with CouchTransaction() as transaction:
-                    data_type.recursive_delete(transaction)
+                    couch_type.recursive_delete(transaction)
+                data_type.delete(sync_to_couch=False)
             finally:
-                clear_fixture_quickcache(domain, [data_type])
+                clear_fixture_quickcache(domain, [couch_type])
                 clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
@@ -176,10 +160,6 @@ def update_tables(request, domain, data_type_id=None):
         try:
             with CouchTransaction() as transaction:
                 if data_type_id:
-                    # HACK ensure we get the latest version. Bypass Couch concurrency
-                    # protection because caching is hard, and the client does
-                    # not specify what version they are updating anyway.
-                    data_type.clear_caches()
                     data_type = _update_types(
                         fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
                     _update_items(fields_patches, domain, data_type_id, transaction)
@@ -187,13 +167,24 @@ def update_tables(request, domain, data_type_id=None):
                     data_type = _create_types(
                         fields_patches, domain, data_tag, is_global, description, transaction)
         finally:
-            clear_fixture_quickcache(domain, [data_type] if data_type is not None else [])
+            couch_type = data_type._migration_get_couch_object()
+            clear_fixture_quickcache(domain, [couch_type])
             clear_fixture_cache(domain)
-        return json_response(strip_json(data_type))
+        return json_response(_table_json(data_type))
+
+
+def _table_json(table):
+    data = {
+        '_id': table.id.hex,
+        'fields': [asdict(f) for f in table.fields],
+    }
+    for key in ['description', 'is_global', 'item_attributes', 'tag']:
+        data[key] = getattr(table, key)
+    return data
 
 
 def _update_types(patches, domain, data_type_id, data_tag, is_global, description, transaction):
-    data_type = FixtureDataType.get(data_type_id)
+    data_type = LookupTable.objects.get(id=data_type_id)
     fields_patches = deepcopy(patches)
     old_fields = data_type.fields
     new_fixture_fields = []
@@ -213,17 +204,18 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
         if "is_new" in patch:
-            new_fixture_fields.append(FixtureTypeField(
-                field_name=new_field_name,
-                properties=[]
-            ))
+            new_fixture_fields.append(TypeField(name=new_field_name))
     data_type.fields = new_fixture_fields
 
     def update_sql_objects():
-        data_type._migration_do_sync()
+        # HACK ensure we update the latest version. Bypass Couch concurrency
+        # protection because caching is hard, and the client does
+        # not specify what version they are updating anyway.
+        data_type._migration_get_couch_object().clear_caches()
+        data_type.save()
+        return []
 
-    transaction.set_sql_save_action(FixtureDataType, update_sql_objects)
-    transaction.save(data_type)
+    transaction.set_sql_save_action(LookupTable, update_sql_objects)
     return data_type
 
 
@@ -278,11 +270,11 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
 
 
 def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):
-    data_type = FixtureDataType(
+    data_type = LookupTable(
         domain=domain,
         tag=data_tag,
         is_global=is_global,
-        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
+        fields=[TypeField(name=field) for field in fields_patches],
         item_attributes=[],
         description=description,
     )

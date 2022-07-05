@@ -17,6 +17,7 @@ from ..models import LookupTable, LookupTableRow, Field, TypeField
 DOMAIN = "lookup"
 USER = "test@test.com"
 PASS = "password"
+UNKNOWN_ID = '69aa2070e28e4b6fbadbb32af702a718'
 
 
 class LookupTableViewsTest(TestCase):
@@ -32,6 +33,100 @@ class LookupTableViewsTest(TestCase):
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, DOMAIN, deleted_by=None)
         cls.addClassCleanup(delete_all_fixture_data, DOMAIN)
+
+    def test_update_tables_get(self):
+        table = self.create_lookup_table()
+        with self.get_client() as client:
+            response = client.get(self.url(data_type_id=table.id.hex))
+            data = response.json()
+        for key, value in {
+            '_id': table.id.hex,
+            'tag': 'atable',
+            'description': 'A Table',
+            'is_global': True,
+            'item_attributes': [],
+        }.items():
+            self.assertEqual(data.get(key), value, f"unexpected value for {key!r}")
+        field, = data["fields"]
+        for key, value in {
+            'name': 'wing',
+            'is_indexed': False,
+            'properties': [],
+        }.items():
+            self.assertEqual(field.get(key), value, f"unexpected value for {key!r}")
+
+    def test_update_tables_get_wrong_domain(self):
+        table = self.create_lookup_table()
+        with self.get_client() as client:
+            response = client.get(self.url(data_type_id=table.id.hex, domain="wrong"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_get_not_found(self):
+        with self.get_client() as client:
+            response = client.get(self.url(data_type_id=UNKNOWN_ID))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_get_invalid_id(self):
+        with self.get_client() as client:
+            response = client.get(self.url(data_type_id='invalid-id'))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_delete(self):
+        table = self.create_lookup_table()
+        row = self.create_row(table)
+        with self.get_client() as client:
+            response = client.delete(self.url(data_type_id=table.id.hex))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {})
+        with self.assertRaises(LookupTable.DoesNotExist):
+            LookupTable.objects.get(id=table.id)
+        with self.assertRaises(LookupTableRow.DoesNotExist):
+            LookupTableRow.objects.get(id=row.id)
+
+    def test_update_tables_delete_wrong_domain(self):
+        table = self.create_lookup_table()
+        with self.get_client() as client:
+            response = client.delete(self.url(data_type_id=table.id.hex, domain="wrong"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_delete_not_found(self):
+        with self.get_client() as client:
+            response = client.delete(self.url(data_type_id=UNKNOWN_ID))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_delete_invalid_id(self):
+        with self.get_client() as client:
+            response = client.delete(self.url(data_type_id='invalid-id'))
+        self.assertEqual(response.status_code, 404)
+
+    def test_update_tables_post_duplicate_table(self):
+        self.create_lookup_table()
+        data = {
+            'tag': 'atable',
+            'description': 'A Table',
+            'is_global': True,
+            'fields': {'wing': {}},
+        }
+        with self.get_client(data) as client:
+            response = client.post(self.url(), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, b'DuplicateFixture')
+
+    def test_update_tables_post_create_table(self):
+        data = {
+            'tag': 'atable',
+            'description': 'A Table',
+            'is_global': True,
+            'fields': {'wing': {}},
+        }
+        with self.get_client(data) as client:
+            response = client.post(self.url(), data)
+        self.assertEqual(response.status_code, 200)
+        table = LookupTable.objects.get(domain=DOMAIN, tag="atable")
+        self.addCleanup(table._migration_get_couch_object().delete)
+        self.assertTrue(table.is_global)
+        self.assertEqual(table.description, "A Table")
+        self.assertEqual(table.fields, [TypeField(name="wing")])
 
     def test_update_tables_post_without_data_type_id(self):
         data = {
