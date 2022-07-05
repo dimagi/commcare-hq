@@ -1,12 +1,14 @@
 hqDefine('registration/js/password', [
     'jquery',
     'knockout',
+    'underscore',
     'zxcvbn/dist/zxcvbn',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/knockout_bindings.ko', // password initializeValue binding
 ], function (
     $,
     ko,
+    _,
     zxcvbn,
     initialPageData
 ) {
@@ -58,7 +60,7 @@ hqDefine('registration/js/password', [
             if (!self.password()) {
                 return '';
             } else if (self.length() < self.minimumPasswordLength) {
-                return _.template(gettext("Password must have at least (<%- passwordLength %>)" +
+                return _.template(gettext("Password must have at least <%- passwordLength %>" +
                  " characters."))({passwordLength: self.minimumPasswordLength});
             } else if (self.strength() >= self.minimumZxcvbnScore && self.isSuggestedPassword()) {
                 return gettext("<i class='fa fa-warning'></i>" +

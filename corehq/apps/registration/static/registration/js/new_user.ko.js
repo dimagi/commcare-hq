@@ -166,7 +166,7 @@ hqDefine('registration/js/new_user.ko', [
             .extend(_rateLimit)
             .extend({
                 minimumPasswordLength: {params: initialPageData.get('minimumPasswordLength'),
-                    message: _.template(gettext("Password must have at least (<%- passwordLength %>)" +
+                    message: _.template(gettext("Password must have at least <%- passwordLength %>" +
                     " characters."))({passwordLength: initialPageData.get('minimumPasswordLength')})},
                 zxcvbnPassword: initialPageData.get('minimumZxcvbnScore'),
             });
