@@ -223,8 +223,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'exclude_from_search_enabled': app.enable_exclude_from_search,
-            'required_search_fields_enabled': app.enable_required_search_fields,
+            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),

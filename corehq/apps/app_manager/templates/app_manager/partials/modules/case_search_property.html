@@ -145,7 +145,7 @@
                   </div>
                 </div>
                 </fieldset>
-                {% if js_options.has_geocoder_privs or js_options.exclude_from_search_enabled %}
+                {% if js_options.has_geocoder_privs or js_options.ush_case_claim_2_53 %}
                     <fieldset>
                       <legend>{% trans "Advanced Options" %}</legend>
                       {% if js_options.has_geocoder_privs %}
@@ -168,7 +168,7 @@
                           </div>
                         </div>
                       {% endif %}
-                      {% if js_options.exclude_from_search_enabled %}
+                      {% if js_options.ush_case_claim_2_53 %}
                         <div class="form-group">
                           <label class="control-label col-xs-12 col-sm-3">
                             {% trans "Exclude From Search Filters" %}
@@ -177,8 +177,6 @@
                             <input type="checkbox" data-bind="checked: exclude"/>
                           </div>
                         </div>
-                      {% endif %}
-                      {% if js_options.required_search_fields_enabled %}
                         <div class="form-group">
                           <label class="control-label col-xs-12 col-sm-3">
                             {% trans "Required" %}
