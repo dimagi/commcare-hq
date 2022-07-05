@@ -460,7 +460,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
-            del self.fields['operator_call_limit']
+            self.remove_fields('operator_call_limit')
             return
         existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
         self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
@@ -561,6 +561,9 @@ class DomainGlobalSettingsForm(forms.Form):
                 WebUser.bulk_save(users_to_save)
 
     def save(self, request, domain):
+        if not self.is_valid():
+            return False
+
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)

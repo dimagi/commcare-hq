@@ -1,11 +1,7 @@
-from crispy_forms.layout import LayoutObject
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase
 from unittest.mock import Mock, patch
 from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
 from corehq import privileges
-
-from corehq.toggles import NAMESPACE_DOMAIN, TWO_STAGE_USER_PROVISIONING_BY_SMS
-from corehq.toggles.shortcuts import set_toggle
 
 from ..forms import DomainGlobalSettingsForm, DomainMetadataForm, PrivacySecurityForm
 from .. import forms
@@ -110,12 +106,61 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
 
         self.assertNotIn('confirmation_link_expiry', form.get_visible_field_names())
 
+    def test_confirmation_link_expiry_error_when_invalid_value(self):
+        self.sms_user_provisioning_toggle_enabled = True
+        form = self._create_form(confirmation_link_expiry='abc')
+        form.full_clean()
+        self.assertEqual({'confirmation_link_expiry': ['Enter a whole number.']}, form.errors)
+
+    def test_save_writes_confirmation_link_expiry(self):
+        domain_obj = self._create_mock_domain(confirmation_link_expiry_time=500)
+        form = self._create_form(confirmation_link_expiry=100)
+        form.save(Mock(), domain_obj)
+        self.assertEqual(100, domain_obj.confirmation_link_expiry_time)
+        domain_obj.save.assert_called()
+
+    def test_operator_call_limit_not_present_when_domain_not_eligible(self):
+        self.mock_call_limit_settings.values_list.return_value = []  # No domain has call limit settings
+        form = self._create_form()
+        self.assertNotIn('operator_call_limit', form.get_visible_field_names())
+
+    def test_operator_call_limit_field_configured_with_all_values(self):
+        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
+        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        self.mock_call_limit_settings.get.return_value = call_settings
+
+        form = self._create_form()
+
+        self.assertIn('operator_call_limit', form.get_visible_field_names())
+        self.assertEqual(form.fields['operator_call_limit'].initial, 50)
+        self.assertEqual(form.fields['operator_call_limit'].min_value, 1)
+        self.assertEqual(form.fields['operator_call_limit'].max_value, 1000)
+
+    def test_operator_call_limit_error_when_invalid_value(self):
+        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
+        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        self.mock_call_limit_settings.get.return_value = call_settings
+
+        form = self._create_form(operator_call_limit='12a')
+        form.full_clean()
+        self.assertEqual({'operator_call_limit': ['Enter a whole number.']}, form.errors)
+
+    def test_save_writes_call_limit(self):
+        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
+        call_settings.save = Mock()
+        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        self.mock_call_limit_settings.get.return_value = call_settings
+
+        form = self._create_form(operator_call_limit=95)
+        form.save(Mock(), self.mock_domain)
+
+        self.assertEqual(call_settings.call_limit, 95)
+        call_settings.save.assert_called()
+
 # Helpers
     def setUp(self):
         super().setUp()
-        self.mock_domain = Mock(confirmation_link_expiry_time=500)
-        self.mock_domain.name = 'test-domain'
-        self.mock_domain.call_center_enabled = False
+        self.mock_domain = self._create_mock_domain()
         self.ucr_toggle_enabled = True
         self.sms_user_provisioning_toggle_enabled = True
 
@@ -133,96 +178,35 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         mock_get_domain_by_name.start()
         self.addCleanup(mock_get_domain_by_name.stop)
 
-    def _create_form(self, can_use_custom_logo=True, call_center_enabled=True):
+        mock_call_limit_domain_patcher = patch.object(OperatorCallLimitSettings,
+            'objects')
+        self.mock_call_limit_settings = mock_call_limit_domain_patcher.start()
+        self.mock_call_limit_settings.values_list.return_value = []
+        self.addCleanup(mock_call_limit_domain_patcher.stop)
+
+    def _create_form(self, can_use_custom_logo=True, call_center_enabled=True, **kwargs):
         self.mock_domain.call_center_config.enabled = call_center_enabled
-        return DomainGlobalSettingsForm(domain=self.mock_domain, can_use_custom_logo=can_use_custom_logo)
-
-
-class TestDomainGlobalSettingsForm(TestCase):
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.domain = Domain(name='test_domain')
-        self.call_settings = OperatorCallLimitSettings(domain='test_domain')
-        self.call_settings.save()
-        self.domain.save()
-
-    def test_confirmation_link_expiry_not_present_when_flag_not_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form()
-        self.assertTrue('confirmation_link_expiry' not in form.fields)
-
-    def test_confirmation_link_expiry_default_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=self.domain.confirmation_link_expiry_time)
-        form.full_clean()
-        form.save(Mock(), self.domain)
-        self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(168, self.domain.confirmation_link_expiry_time)
-
-    def test_confirmation_link_expiry_custom_present_when_flag_set(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry=100)
-        form.full_clean()
-        form.save(Mock(), self.domain)
-        self.assertTrue('confirmation_link_expiry' in form.fields)
-        self.assertEqual(100, self.domain.confirmation_link_expiry_time)
-
-    def test_confirmation_link_expiry_error_when_invalid_value(self):
-        OperatorCallLimitSettings.objects.all().delete()
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-        form = self.create_form(confirmation_link_expiry='abc')
-        form.full_clean()
-        self.assertEqual(1, len(form.errors))
-        self.assertEqual(['Enter a whole number.'], form.errors.get("confirmation_link_expiry"))
-
-    def test_operator_call_limit_not_present_when_domain_not_eligible(self):
-        OperatorCallLimitSettings.objects.all().delete()
-        form = self.create_form()
-        self.assertTrue('operator_call_limit' not in form.fields)
-
-    def test_operator_call_limit_default_present_when_domain_eligible(self):
-        form = self.create_form(
-            domain=self.domain, operator_call_limit=OperatorCallLimitSettings.CALL_LIMIT_DEFAULT)
-        form.full_clean()
-        form.save(Mock(), self.domain)
-        self.assertTrue('operator_call_limit' in form.fields)
-        self.assertEqual(120, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
-
-    def test_operator_call_limit_custom_present_when_domain_eligible(self):
-        form = self.create_form(domain=self.domain, operator_call_limit=50)
-        form.full_clean()
-        form.save(Mock(), self.domain)
-        self.assertTrue('operator_call_limit' in form.fields)
-        self.assertEqual(50, OperatorCallLimitSettings.objects.get(domain=self.domain.name).call_limit)
-
-    def test_operator_call_limit_error_when_invalid_value(self):
-        form = self.create_form(domain=self.domain, operator_call_limit="12a")
-        form.full_clean()
-        form.save(Mock(), self.domain)
-        self.assertTrue('operator_call_limit' in form.fields)
-        self.assertIsNotNone(form.errors)
-        self.assertEqual(1, len(form.errors))
-        self.assertEqual(['Enter a whole number.'], form.errors.get("operator_call_limit"))
-
-    def create_form(self, domain=None, **kwargs):
         data = {
-            "hr_name": "foo",
-            "project_description": "sample",
-            "default_timezone": "UTC",
+            'hr_name': 'foo',
+            'project_description': 'sample',
+            'default_timezone': 'UTC',
+            'confirmation_link_expiry': 500
         }
-        if kwargs:
-            for field, value in kwargs.items():
-                data.update({field: value})
-        if not domain:
-            domain = self.domain
-        return DomainGlobalSettingsForm(data, domain=domain)
+        data.update(**kwargs)
+        return DomainGlobalSettingsForm(
+            data, domain=self.mock_domain, can_use_custom_logo=can_use_custom_logo)
 
-    def tearDown(self):
-        set_toggle(TWO_STAGE_USER_PROVISIONING_BY_SMS.slug, self.domain, False, namespace=NAMESPACE_DOMAIN)
-        self.domain.delete()
-        OperatorCallLimitSettings.objects.all().delete()
-        super().tearDown()
+    def _create_mock_domain(self, name='test-domain', **kwargs):
+        domain_properties = {
+            'confirmation_link_expiry_time': 500,
+            'call_center_enabled': False,
+            'default_timezone': 'UTC'
+        }
+        domain_properties.update(kwargs)
+        domain_obj = Mock(**domain_properties)
+        domain_obj.name = name
+
+        return domain_obj
 
 
 class DomainMetadataFormTests(SimpleTestCase):
@@ -257,10 +241,10 @@ class DomainMetadataFormTests(SimpleTestCase):
 
         self.domain_privileges = [privileges.CLOUDCARE, privileges.GEOCODER]
 
-        self.mock_domain = Mock(name='test-domain', confirmation_link_expiry_time=500)
+        self.mock_domain = Mock(name='test-domain', confirmation_link_expiry_time=500,
+            cloudcare_releases='notdefault')
         self.mock_domain.name = 'test-domain'
         self.mock_domain.call_center_config.enabled = False
-        self.mock_domain.cloudcare_releases = 'notdefault'
 
         mock_call_limit_domain_patcher = patch.object(OperatorCallLimitSettings,
             'objects')
