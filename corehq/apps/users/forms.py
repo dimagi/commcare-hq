@@ -897,17 +897,17 @@ class NewMobileWorkerForm(forms.Form):
                             </p>
                             <p class="help-block" data-bind="ifnot: $root.isSuggestedPassword()">
                                 <!-- ko ifnot: $root.skipStandardValidations() -->
-                                    <!-- ko ifnot: $root.passwordSatisfyLength() -->
-                                        <i class="fa fa-warning"></i> {short}
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
+                                        <i class="fa fa-check"></i> {strong}
                                     <!-- /ko -->
-                                    <!-- ko if: $root.passwordSatisfyLength() -->
-                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.SUCCESS -->
-                                            <i class="fa fa-check"></i> {strong}
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
+                                        {almost}
+                                    <!-- /ko -->
+                                    <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <!-- ko ifnot: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {short}
                                         <!-- /ko -->
-                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.WARNING -->
-                                            {almost}
-                                        <!-- /ko -->
-                                        <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
+                                        <!-- ko if: $root.passwordSatisfyLength() -->
                                             <i class="fa fa-warning"></i> {weak}
                                         <!-- /ko -->
                                     <!-- /ko -->
@@ -946,12 +946,9 @@ class NewMobileWorkerForm(forms.Form):
                     ),
                     data_bind='''
                         css: {
-                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS &&
-                            $root.passwordSatisfyLength() === true,
-                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING &&
-                            $root.passwordSatisfyLength() === true,
-                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR ||
-                             $root.passwordSatisfyLength() === false,
+                            'has-success': $root.passwordStatus() === $root.STATUS.SUCCESS,
+                            'has-warning': $root.passwordStatus() === $root.STATUS.WARNING,
+                            'has-error': $root.passwordStatus() === $root.STATUS.ERROR,
                         }
                     ''' if not has_custom_clean_password() else ''
                 ),

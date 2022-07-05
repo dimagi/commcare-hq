@@ -310,38 +310,23 @@ hqDefine("users/js/mobile_workers",[
                 // Standard validation
                 var score = zxcvbn(password, ['dimagi', 'commcare', 'hq', 'commcarehq']).score;
                 var minimumZxcvbnScore = initialPageData.get('minimumZxcvbnScore');
-                if (score >= minimumZxcvbnScore) {
-                    return self.STATUS.SUCCESS;
-                } else if (score < minimumZxcvbnScore - 1) {
+                if (self.passwordSatisfyLength()) {
+                    if (score >= minimumZxcvbnScore) {
+                        return self.STATUS.SUCCESS;
+                    } else if (self < minimumZxcvbnScore - 1) {
+                        return self.STATUS.ERROR;
+                    }
+                    return self.STATUS.WARNING;
+
+                } else {
                     return self.STATUS.ERROR;
                 }
-                return self.STATUS.WARNING;
             }
             return self.STATUS.SUCCESS;
         });
 
-        self.requireLengthValidation = ko.computed(function () {
-            if (!self.stagedUser()) {
-                return false;
-            }
-            if (self.stagedUser().force_account_confirmation()) {
-                return false;
-            }
-            if (self.stagedUser().force_account_confirmation_by_sms()) {
-                return false;
-            }
-            if (!self.useStrongPasswords()) {
-                // No validation
-                return false;
-            }
-            if (self.skipStandardValidations()) {
-                return false;
-            }
-            return true;
-        });
-
         self.passwordSatisfyLength = ko.computed(function () {
-            if (self.stagedUser() && self.requireLengthValidation()) {
+            if (self.stagedUser()) {
                 var minimumPasswordLength = initialPageData.get('minimumPasswordLength');
                 var password = self.stagedUser().password();
                 if (!password) {
