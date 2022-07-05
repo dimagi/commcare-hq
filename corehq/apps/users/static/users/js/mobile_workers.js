@@ -365,7 +365,10 @@ hqDefine("users/js/mobile_workers",[
             }
 
             if (self.phoneStatusMessage()) {
+                $("#phone-help").hide();
                 return self.STATUS.ERROR;
+            } else {
+                $("#phone-help").show();
             }
         });
 
