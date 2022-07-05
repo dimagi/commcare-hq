@@ -880,9 +880,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <validation xpath="2 + 2 = 5">
+            <validation test="2 + 2 = 5">
               <text>
-                <locale id="search_property.m0.name.validation_msg"/>
+                <locale id="search_property.m0.name.validation.message"/>
               </text>
             </validation>
           </prompt>
@@ -892,9 +892,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.email"/>
               </text>
             </display>
-            <validation xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')">
+            <validation test="contains(instance('search-input:results')/input/field[@name='email'], '@')">
               <text>
-                <locale id="search_property.m0.email.validation_msg"/>
+                <locale id="search_property.m0.email.validation.message"/>
               </text>
             </validation>
           </prompt>

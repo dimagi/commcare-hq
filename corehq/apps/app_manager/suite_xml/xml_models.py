@@ -503,7 +503,7 @@ class Assertion(XmlObject):
 
 class Validation(XmlObject):
     ROOT_NAME = 'validation'
-    xpath = XPathField('@xpath')
+    test = XPathField('@test')
     text = NodeField('text', Text)
 
 
