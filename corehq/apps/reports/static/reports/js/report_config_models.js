@@ -4,13 +4,14 @@ hqDefine("reports/js/report_config_models", [
     'underscore',
     'analytix/js/google',
     'reports/js/standard_hq_report',
-    'jquery-ui/ui/widgets/datepicker',
+    'bootstrap-daterangepicker/daterangepicker',
 ], function (
     $,
     ko,
     _,
     googleAnalytics,
-    standardHQReportModule
+    standardHQReportModule,
+    dateRangePicker  // eslint-disable-line no-unused-vars
 ) {
     var reportConfig = function (data) {
         var self = ko.mapping.fromJS(data, {
@@ -18,6 +19,7 @@ hqDefine("reports/js/report_config_models", [
         });
 
         self.error = ko.observable(false);
+        self.errorMessage = ko.observable();
 
         self.isNew = ko.computed(function () {
             return typeof self._id === "undefined";
@@ -29,22 +31,34 @@ hqDefine("reports/js/report_config_models", [
         });
 
         self.validate = function () {
-            var date_range = self.date_range(),
+            let dateRange = self.date_range(),
                 error = false;
+
+            let errorMessage = gettext("Some required fields are missing. Please complete them before saving.");
 
             if (_.isEmpty(self.name())) {
                 error = true;
-            } else if (date_range === 'lastn') {
+            } else if (dateRange === 'lastn') {
                 var days = parseInt(self.days());
                 if (!_.isNumber(days) || _.isNaN(days)) {
                     error = true;
                 }
-            } else if ((date_range === 'since' || date_range === 'range') && _.isEmpty(ko.utils.unwrapObservable(self.start_date))) {
+            } else if ((dateRange === 'since' || dateRange === 'range') && _.isEmpty(ko.utils.unwrapObservable(self.start_date))) {
                 error = true;
-            } else if (date_range === 'range' && _.isEmpty(ko.utils.unwrapObservable(self.end_date))) {
-                error = true;
+            } else if (dateRange === 'range') {
+                let startDate = ko.utils.unwrapObservable(self.start_date);
+                let endDate = ko.utils.unwrapObservable(self.end_date);
+                if (_.isEmpty(endDate) || (startDate > endDate)) {
+                    error = true;
+                    if (startDate > endDate) {
+                        errorMessage = gettext("Start date cannot be after end date.");
+                    }
+                }
             }
             self.error(error);
+            if (error) {
+                self.errorMessage(errorMessage);
+            }
             return !error;
         };
 
@@ -62,17 +76,6 @@ hqDefine("reports/js/report_config_models", [
             }
             return data;
         };
-
-        self.dateRangeSubs = self.date_range.subscribe(function (newValue) {
-            if (newValue === 'since' || newValue === 'range') {
-                $('.date-picker').datepicker({
-                    changeMonth: true,
-                    changeYear: true,
-                    showButtonPanel: true,
-                    dateFormat: 'yy-mm-dd',
-                });
-            }
-        });
 
         return self;
     };
@@ -218,12 +221,11 @@ hqDefine("reports/js/report_config_models", [
             self.configBeingEdited(self.configBeingViewed());
             self.modalSaveButton.state('save');
 
-            // Required to initialise datepicker if modal opened with date_range in ('since', 'range')
-            $(".date-picker").datepicker({
-                changeMonth: true,
-                changeYear: true,
-                showButtonPanel: true,
-                dateFormat: 'yy-mm-dd',
+            $(".date-picker").daterangepicker({
+                locale: {
+                    format: 'YYYY-MM-DD',
+                },
+                singleDatePicker: true,
             });
         };
 
@@ -246,6 +248,12 @@ hqDefine("reports/js/report_config_models", [
             state: ko.observable(),
             saveOptions: function () {
                 var configData = self.configBeingEdited().unwrap();
+
+                if (configData['date_range'] === 'since') {
+                    // if the range was changed from 'range', a previous end_date might still be present
+                    configData['end_date'] = null;
+                }
+
                 for (var key in configData.filters) {
                     // remove null filters
                     if (configData.filters.hasOwnProperty(key)) {
@@ -254,6 +262,7 @@ hqDefine("reports/js/report_config_models", [
                         }
                     }
                 }
+
                 return {
                     url: options.saveUrl,
                     type: 'post',

@@ -65,6 +65,7 @@ from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
+    use_daterangepicker,
     use_jquery_ui,
     use_multiselect,
 )
@@ -198,6 +199,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @use_jquery_ui
     @use_datatables
+    @use_daterangepicker
     def dispatch(self, request, *args, **kwargs):
         return super(MySavedReportsView, self).dispatch(request, *args, **kwargs)
 
