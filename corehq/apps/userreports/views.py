@@ -872,7 +872,7 @@ def delete_report(request, domain, report_id):
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
     redirect = request.GET.get("redirect", None)
     if not redirect:
-        redirect = reverse('configurable_reports_home', args=[domain])
+        redirect = reverse('saved_reports', args=[domain])
     return HttpResponseRedirect(redirect)
 
 
