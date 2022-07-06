@@ -147,9 +147,14 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
         from dimagi.utils.couch import get_redis_lock, release_lock
+        serializer = task_kwargs.pop('serializer', 'json')
 
-        @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
-              max_retries=max_retries, **task_kwargs)
+        @task(
+            serializer=serializer, bind=True,
+            queue=queue, ignore_result=ignore_result,
+            default_retry_delay=default_retry_delay,
+            max_retries=max_retries, **task_kwargs
+        )
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis

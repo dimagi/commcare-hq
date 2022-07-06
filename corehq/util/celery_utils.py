@@ -26,7 +26,8 @@ def no_result_task(*args, **kwargs):
     kwargs['backend'] = DisabledBackend(current_app)
 
     def wrapper(fcn):
-        return task(*args, **kwargs)(fcn)
+        serializer = kwargs.pop('serializer', 'json')
+        return task(serializer=serializer, *args, **kwargs)(fcn)
 
     return wrapper
 
