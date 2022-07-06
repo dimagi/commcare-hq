@@ -15,6 +15,8 @@ class Command(BaseCommand):
     If forms and cases have been hard deleted, you should restore the SQL form and case docs before running this
     Note you need the "s3:ListBucketVersions", "s3:GetObjectVersion" permissions added to the policy responsible
     for accessing S3 for this to work properly
+    This command was only used to restore form xml and form attachments (BLOB_CODES 2 and 3). You may need to
+    modify this to handle other types, specifically how the content is formatted in _get_stream_for_object_version
     """
 
     def handle(self, domain, **options):
