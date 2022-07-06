@@ -102,7 +102,6 @@ from corehq.apps.domain.models import (
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
     SMSAccountConfirmationSettings,
-    Domain,
     OperatorCallLimitSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
