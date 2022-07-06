@@ -35309,6 +35309,7 @@ msgid "Expected {} but was {}"
 msgstr "Attendus {} mais était {}"
 
 #: corehq/apps/userreports/ui/forms.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
 #: corehq/motech/openmrs/forms.py
 msgid "Save Changes"
 msgstr "Enregistrer les changements"
@@ -40436,6 +40437,12 @@ msgstr ""
 msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
+#, fuzzy
+#| msgid "Form Changes"
+msgid "Form config"
+msgstr "Modifications de formulaire"
+
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
 msgstr ""
@@ -40479,6 +40486,10 @@ msgstr "Identifiant de l'element de données"
 #: corehq/motech/dhis2/views.py
 msgid "CategoryOptionComboID"
 msgstr "Identifiant de la catégorie de l'option combinaison"
+
+#: corehq/motech/dhis2/views.py
+msgid "DHIS2 Anonymous Events configuration saved"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "You cannot have more than one case config for the same case type."
