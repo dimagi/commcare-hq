@@ -5,8 +5,8 @@
 #
 # Translators:
 # Michelle B. Sultan <msultan@dimagi.com>, 2021
-# Gladys Teos <info@enestranslations.com>, 2022
 # Dimagi Dev <devops@dimagi.com>, 2022
+# Gladys Teos <info@enestranslations.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -4049,6 +4049,8 @@ msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
 #: corehq/apps/reports/static/reports/js/report_config_models.js
 msgid "Some required fields are missing. Please complete them before saving."
 msgstr ""
+"Hacen falta algunos campos obligatorios. Por favor complete antes de "
+"guardar. "
 
 #: corehq/apps/reports/static/reports/js/report_config_models.js
 msgid "Start date cannot be after end date."

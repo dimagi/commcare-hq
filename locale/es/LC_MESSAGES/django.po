@@ -20671,11 +20671,9 @@ msgstr ""
 "Ubicación desconocida: '%(name)s'. Pero la fila fue agregada exitosamente"
 
 #: corehq/apps/fixtures/upload/workbook.py
-#, fuzzy, python-format
-#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+#, python-format
 msgid "Invalid username: '%(name)s'. But the row is successfully added"
 msgstr ""
-"Usuario desconocido:  '%(name)s'. Pero la fila fue agregada exitosamente"
 
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
@@ -37644,16 +37642,12 @@ msgid "Username is required."
 msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Name '%s' is already taken."
 msgid "Username '{}' is already taken or reserved."
-msgstr "El nombre '%s' no está disponible. "
+msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Username '{}' must be a valid email address."
-msgstr "Por favor ingrese una dirección de correo válida."
+msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username component '{}' of '{}' may not contain special characters."
@@ -42766,12 +42760,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#, fuzzy
-#~| msgid "Please enter number, including country code, in digits only."
-#~ msgid ""
-#~ "Please enter number including country code, without (+) and in digits "
-#~ "only."
-#~ msgstr ""
-#~ "Por favor ingrese el número, incluyendo el código de país, solo en "
-#~ "dígitos. "

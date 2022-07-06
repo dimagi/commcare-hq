@@ -37,7 +37,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2015-2016,2022\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -20546,12 +20546,9 @@ msgstr ""
 "Emplacement inconnu: %(name)s. Toutefois, la rangéé a été ajoutée avec succès"
 
 #: corehq/apps/fixtures/upload/workbook.py
-#, fuzzy, python-format
-#| msgid "Unknown user: '%(name)s'. But the row is successfully added"
+#, python-format
 msgid "Invalid username: '%(name)s'. But the row is successfully added"
 msgstr ""
-"Utilisateur inconnu : '%(name)s'. Toutefois, la colonne a été ajoutée avec "
-"succès"
 
 #: corehq/apps/fixtures/upload/workbook.py
 #, python-format
@@ -37551,16 +37548,12 @@ msgid "Username is required."
 msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Name '%s' is already taken."
 msgid "Username '{}' is already taken or reserved."
-msgstr "Le nom '%s' est déjà en cours d'utilisation."
+msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Username '{}' must be a valid email address."
-msgstr "Veuillez entrer une adresse mail valide."
+msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username component '{}' of '{}' may not contain special characters."
@@ -42710,12 +42703,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#, fuzzy
-#~| msgid "Please enter number, including country code, in digits only."
-#~ msgid ""
-#~ "Please enter number including country code, without (+) and in digits "
-#~ "only."
-#~ msgstr ""
-#~ "Veuillez entrer le numéro, y compris le code international, en chiffres "
-#~ "uniquement."
