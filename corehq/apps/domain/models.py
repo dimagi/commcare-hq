@@ -1118,7 +1118,7 @@ class OperatorCallLimitSettings(models.Model):
 
 
 class SMSAccountConfirmationSettings(models.Model):
-    PROJECT_NAME_DEFAULT = "Commcare HQ"
+    PROJECT_NAME_DEFAULT = "CommCare HQ"
     PROJECT_NAME_MAX_LENGTH = 30
     CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
     CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
