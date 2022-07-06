@@ -740,13 +740,19 @@ class NewMobileWorkerForm(forms.Form):
     phone_number = forms.CharField(
         required=False,
         label=gettext_noop("Phone Number"),
-        help_text="""
-            <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-exclamation-triangle"
-                   data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
-                <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
-            </span>
-        """
+        help_text=gettext_noop(
+            """
+            <div data-bind="visible: $root.phoneStatusMessage().length === 0">
+                    Please enter number including country code, without (+) and in digits only.
+            </div>
+            <div id="phone-error">
+                <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
+                    <i class="fa fa-exclamation-triangle"
+                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
+                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
+                </span>
+            </div>
+        """)
     )
 
     def __init__(self, project, request_user, *args, **kwargs):
