@@ -37,7 +37,7 @@ msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2014-03-24 22:36+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2015-2016,2022\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2014\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -29668,13 +29668,6 @@ msgstr "Heure VS. jour de semaine"
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
-"sauvegarder."
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Date Filter"
 msgstr "Filtrer par date"
 
@@ -34948,6 +34941,12 @@ msgstr ""
 msgid "Edit Report"
 msgstr "Editer rapport"
 
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
+"sauvegarder."
+
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
 msgid "Thanks for previewing Report Builder!"
 msgstr ""
@@ -37483,16 +37482,12 @@ msgid "Username is required."
 msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Name '%s' is already taken."
 msgid "Username '{}' is already taken or reserved."
-msgstr "Le nom '%s' est déjà en cours d'utilisation."
+msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Username '{}' must be a valid email address."
-msgstr "Veuillez entrer une adresse mail valide."
+msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username component '{}' of '{}' may not contain special characters."
@@ -42642,3 +42637,17 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "'%(UID)s' is not a valid UID. But the new type is created."
+#~ msgstr ""
+#~ "'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le "
+#~ "nouveau type a été créé."
+
+#~ msgid "'%(UID)s' is not a valid UID. But the new item is created."
+#~ msgstr ""
+#~ "'%(UID)s' n'est pas un identifiant utilisateur valide. Toutefois, le "
+#~ "nouvel élément a été créé."
+
+#~ msgid "Invalid username: '%(name)s'. Row is not added"
+#~ msgstr ""
+#~ "Nom d'utilisateur non valide : '%(name)s'. La ligne n'a pas été ajoutée"

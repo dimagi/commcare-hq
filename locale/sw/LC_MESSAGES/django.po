@@ -28494,11 +28494,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Date Filter"
 msgstr ""
 
@@ -33594,6 +33589,10 @@ msgstr ""
 #: corehq/apps/userreports/templates/userreports/partials/edit_report_button.html
 #: corehq/apps/userreports/views.py
 msgid "Edit Report"
+msgstr ""
+
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
 msgstr ""
 
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html

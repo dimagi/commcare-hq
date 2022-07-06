@@ -29767,13 +29767,6 @@ msgstr "Hora vs. Día de la Semana"
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-"Hacen falta algunos campos obligatorios. Por favor complete antes de "
-"guardar. "
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Date Filter"
 msgstr "Filtro de Fecha"
 
@@ -35035,6 +35028,12 @@ msgstr ""
 msgid "Edit Report"
 msgstr "Editar Reporte"
 
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Hacen falta algunos campos obligatorios. Por favor complete antes de "
+"guardar. "
+
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
 msgid "Thanks for previewing Report Builder!"
 msgstr ""
@@ -37585,16 +37584,12 @@ msgid "Username is required."
 msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Name '%s' is already taken."
 msgid "Username '{}' is already taken or reserved."
-msgstr "El nombre '%s' no está disponible. "
+msgstr ""
 
 #: corehq/apps/users/validation.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Username '{}' must be a valid email address."
-msgstr "Por favor ingrese una dirección de correo válida."
+msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username component '{}' of '{}' may not contain special characters."
@@ -42707,3 +42702,12 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#~ msgid "'%(UID)s' is not a valid UID. But the new type is created."
+#~ msgstr "'%(UID)s' no es un UID válido. Pero el nuevo tipo está creado."
+
+#~ msgid "'%(UID)s' is not a valid UID. But the new item is created."
+#~ msgstr "'%(UID)s' no es un UID válido. Pero el nuevo elemento está creado."
+
+#~ msgid "Invalid username: '%(name)s'. Row is not added"
+#~ msgstr "Nombre de usuario inválido:  '%(name)s'. La fila no esta agregada"
