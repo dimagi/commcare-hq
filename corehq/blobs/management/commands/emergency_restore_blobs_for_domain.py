@@ -11,7 +11,8 @@ from corehq.form_processor.models.forms import XFormInstance
 
 class Command(BaseCommand):
     """
-    If blobs have been deleted from S3 and need to be restored, run this command on the impacted domain
+    WARNING: intended to only be used in the rare circumstance blobs are unintentionally deleted from a domain
+    If forms and cases have been hard deleted, you should restore the SQL form and case docs before running this
     Note you need the "s3:ListBucketVersions", "s3:GetObjectVersion" permissions added to the policy responsible
     for accessing S3 for this to work properly
     """
