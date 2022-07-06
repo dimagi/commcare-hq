@@ -109,7 +109,7 @@ class FixtureDataTest(TestCase):
 
     def test_xml(self):
         item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_item.data_type
+        item_dict['_data_type'] = self.data_type
         check_xml_line_by_line(self, """
         <district>
             <state_name>Delhi_state</state_name>

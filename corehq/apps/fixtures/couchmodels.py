@@ -25,7 +25,6 @@ from corehq.apps.fixtures.dbaccessors import (
 )
 from corehq.apps.fixtures.exceptions import (
     FixtureException,
-    FixtureTypeCheckError,
     FixtureVersionError,
 )
 from corehq.apps.fixtures.utils import remove_deleted_ownerships
@@ -343,12 +342,6 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             return {key: value.to_api_json()
                     for key, value in self.fields.items()}
 
-    @property
-    def data_type(self):
-        if not hasattr(self, '_data_type'):
-            self._data_type = FixtureDataType.get(self.data_type_id)
-        return self._data_type
-
     def add_owner(self, owner, owner_type, transaction=None):
         assert(owner.domain == self.domain)
         with transaction or CouchTransaction() as transaction:
@@ -400,18 +393,6 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     def remove_location(self, location):
         return self.remove_owner(location, 'location')
-
-    def type_check(self):
-        fields = set(self.fields.keys())
-        for field in self.data_type.fields:
-            if field.field_name in fields:
-                fields.remove(field)
-            else:
-                raise FixtureTypeCheckError(
-                    f"field {field.field_name} not in fixture data {self.get_id}")
-        if fields:
-            raise FixtureTypeCheckError(
-                f"fields {', '.join(fields)} from fixture data {self.get_id} not in fixture data type")
 
     def get_groups(self, wrap=True):
         group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
