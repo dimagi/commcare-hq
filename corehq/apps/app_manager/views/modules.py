@@ -1009,22 +1009,19 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
-    current = {p.name: p.label for p in module.search_config.properties}
+    props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
-        if prop['name'] in current:
-            label = current[prop['name']].copy()
-            label.update({lang: prop['label']})
-        else:
-            label = {lang: prop['label']}
-        hint = {lang: prop['hint']}
+        current = props_by_name.get(prop['name'])
+
+        _current_label = current.label if current else {}
+        _current_hint = current.hint if current else {}
         ret = {
             'name': prop['name'],
-            'label': label,
+            'label': {**_current_label, lang: prop['label']},
+            'hint': {**_current_hint, lang: prop['hint']},
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
-        if prop['hint']:
-            ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
         if prop['allow_blank_value']:
@@ -1034,9 +1031,10 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop['required']:
             ret['required'] = prop['required']
         if prop['validation_xpath']:
+            _current_msg = current.validation[0].message if current and current.validation else {}
             ret['validation'] = [{
                 'xpath': prop['validation_xpath'],
-                'message': {'en': prop['validation_message']},  # TODO
+                'message': {**_current_msg, lang: prop['validation_message']},
             }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
