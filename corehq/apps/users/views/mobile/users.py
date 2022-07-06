@@ -45,7 +45,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
 from corehq.apps.sms.api import send_sms
-from corehq.apps.domain.utils import guess_domain_language
+from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -1528,7 +1528,7 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
             'username': self.user.raw_username,
             'hq_name': settings.project_name
         }
-        lang = guess_domain_language(self.user.domain)
+        lang = guess_domain_language_for_sms(self.user.domain)
         with override(lang):
             text_content = render_to_string(
                 "registration/mobile/mobile_worker_account_confirmation_success_sms.txt", template_params

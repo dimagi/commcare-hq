@@ -3,9 +3,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import override, gettext_lazy as _
 from corehq.apps.domain.models import SMSAccountConfirmationSettings
 
-from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language
+from corehq.apps.domain.utils import encrypt_account_confirmation_info, guess_domain_language_for_sms
 from corehq.apps.sms.api import send_sms
-from corehq.util.context_processors import commcare_hq_names
 from corehq.util.view_utils import absolute_reverse
 from dimagi.utils.web import get_static_url_prefix
 
@@ -55,7 +54,7 @@ def send_account_confirmation(commcare_user):
         commcare_user, commcare_user.get_id, CommCareUserConfirmAccountView.urlname
     )
 
-    lang = guess_domain_language(commcare_user.domain)
+    lang = guess_domain_language_for_sms(commcare_user.domain)
     with override(lang):
         text_content = render_to_string("registration/email/mobile_worker_confirm_account.txt",
                                         template_params)
@@ -73,7 +72,7 @@ def send_account_confirmation_sms(commcare_user):
     template_params = _get_account_confirmation_template_params(
         commcare_user, encrypted_user_info, CommCareUserConfirmAccountBySMSView.urlname
     )
-    lang = guess_domain_language(commcare_user.domain)
+    lang = guess_domain_language_for_sms(commcare_user.domain)
     with override(lang):
         text_content = render_to_string("registration/mobile/mobile_worker_confirm_account_sms.txt",
                                         template_params)
