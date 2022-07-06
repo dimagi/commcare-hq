@@ -1,4 +1,3 @@
-from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from corehq.blobs import get_blob_db
 from casexml.apps.phone.utils import MockDevice
@@ -12,7 +11,6 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.form_processor.tests.utils import sharded
 
 DOMAIN = 'fixture-test'
@@ -45,70 +43,12 @@ class OtaFixtureTest(TestCase):
 
         cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
 
-    def _check_fixture(self, fixture_xml, has_groups=True, item_lists=None):
-        fixture_xml = list(fixture_xml)
-        item_lists = item_lists or []
-        expected_len = sum([has_groups, len(item_lists)])
-        self.assertEqual(len(fixture_xml), expected_len)
-
-        if has_groups:
-            expected = _get_group_fixture(self.user.get_id, [self.group1, self.group2])
-            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0], encoding='utf-8'))
-
-        if item_lists:
-            for i, item_list_tag in enumerate(item_lists):
-                data_type, data_item = self.item_lists[item_list_tag]
-                item_list_xml = [
-                    ElementTree.tostring(fixture, encoding='utf-8')
-                    for fixture in fixture_xml if item_list_tag in fixture.attrib.get("id")
-                ]
-                self.assertEqual(len(item_list_xml), 1)
-
-                expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
-                check_xml_line_by_line(self, expected, item_list_xml[0])
-
     def test_skip_fixture(self):
         device = MockDevice(self.domain, self.restore_user)
         restore = device.sync().payload.decode('utf-8')
         self.assertIn('<fixture ', restore)
         restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
         self.assertNotIn('<fixture ', restore_without_fixture)
-
-
-def _get_group_fixture(user_id, groups):
-    groups = sorted(groups, key=lambda g: g.get_id)
-    group_blocks = ["""
-    <group id="{id}">
-        <name>{name}</name>
-    </group>
-    """.format(id=group.get_id, name=group.name) for group in groups]
-
-    groups_xml = """
-    <groups>
-        {}
-    </groups>
-    """.format(''.join(group_blocks)) if group_blocks else "<groups/>"
-
-    return """
-    <fixture id="user-groups" user_id="{user_id}">
-        {groups}
-    </fixture>
-    """.format(user_id=user_id, groups=groups_xml)
-
-
-def _get_item_list_fixture(user_id, tag, fixture_item):
-    template = """
-    <fixture id="item-list:{tag}" user_id="{user_id}">
-      <{tag}_list>
-        {item_xml}
-      </{tag}_list>
-    </fixture>
-    """
-    return template.format(
-        user_id=user_id,
-        tag=tag,
-        item_xml=ElementTree.tostring(fixture_item.to_xml(), encoding='utf-8')
-    )
 
 
 def make_item_lists(tag, item_name):
