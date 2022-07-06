@@ -24,9 +24,9 @@ def delete_all_domains():
 
 
 class UtilsTests(TestCase):
-    domain_name = Domain.generate_name('test_domain')
 
     def setUp(self):
+        self.domain_name = Domain.generate_name('test_domain')
         domain = Domain(name=self.domain_name)
         domain.save()
 
