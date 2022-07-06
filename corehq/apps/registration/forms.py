@@ -463,9 +463,24 @@ class WebUserInvitationForm(BaseUserInvitationForm):
 
 class MobileWorkerAccountConfirmationForm(BaseUserInvitationForm):
     """
-    For Mobile Workers to confirm their accounts.
+    For Mobile Workers to confirm their accounts using Email.
     """
     pass
+
+
+class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
+    """
+    For Mobile Workers to confirm their accounts using SMS.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Mobile workers who are confirming by SMS need not require an email to input.
+        self.fields['email'].widget = forms.HiddenInput()
+        self.fields['email'].required = False
+
+    def clean_email(self):
+        # Return email without any validation
+        return self.cleaned_data['email'].strip().lower()
 
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
