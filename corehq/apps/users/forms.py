@@ -55,8 +55,9 @@ from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISION
 
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import DeactivateMobileWorkerTrigger, UserRole
+from .models import DeactivateMobileWorkerTrigger, UserRole, CouchUser
 from .util import cc_user_domain, format_username, log_user_change
+from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -582,6 +583,12 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             return clean_password(password1)
         return password1
+
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        couch_user = CouchUser.from_django_user(self.user)
+        clear_login_attempts(couch_user)
+        return user
 
 
 class CommCareAccountForm(forms.Form):
