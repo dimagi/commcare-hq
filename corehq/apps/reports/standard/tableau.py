@@ -43,8 +43,9 @@ class TableauView(BaseDomainView):
     def dispatch(self, request, *args, **kwargs):
         if self.visualization is None:
             raise Http404()
-        if not self.request.couch_user.can_view_tableau_viz(self.domain, f"{self.kwargs.get('viz_id')}"):
-            raise Http403
+        if hasattr(self.request, 'couch_user'):
+            if not self.request.couch_user.can_view_tableau_viz(self.domain, f"{self.kwargs.get('viz_id')}"):
+                raise Http403
         return super().dispatch(request, *args, **kwargs)
 
     @property
