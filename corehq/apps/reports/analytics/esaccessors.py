@@ -585,13 +585,24 @@ def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
 
 
 def media_export_is_too_big(es_query):
+    size = get_attachments_size(es_query)
+    if size > MAX_MULTIMEDIA_EXPORT_SIZE:
+        return True
+    return False
+
+
+def get_attachments_size(es_query):
     size = 0
+    unique_attachments = set()
+
     for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
-            size += attachment.get('content_length', 0)
-            if size > MAX_MULTIMEDIA_EXPORT_SIZE:
-                return True
-    return False
+            attachment_id = attachment.get('id', None)
+            if attachment_id is not None and attachment_id not in unique_attachments:
+                size += attachment.get('content_length', 0)
+                unique_attachments.add(attachment_id)
+
+    return size
 
 
 def scroll_case_names(domain, case_ids):
