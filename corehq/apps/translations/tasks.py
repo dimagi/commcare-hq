@@ -20,7 +20,7 @@ from corehq.apps.translations.integrations.transifex.project_migrator import (
 from corehq.apps.translations.integrations.transifex.transifex import Transifex
 
 
-@task
+@task(serializer='json')
 def delete_resources_on_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,
@@ -44,7 +44,7 @@ def delete_resources_on_transifex(domain, data, email):
     email.send()
 
 
-@task
+@task(serializer='json')
 def push_translation_files_to_transifex(domain, data, email):
     upload_status = None
     if data.get('target_lang'):
@@ -83,7 +83,7 @@ def push_translation_files_to_transifex(domain, data, email):
         email.send()
 
 
-@task
+@task(serializer='json')
 def pull_translation_files_from_transifex(domain, data, user_email=None):
     def notify_error(error):
         email = EmailMessage(
@@ -123,7 +123,7 @@ def pull_translation_files_from_transifex(domain, data, user_email=None):
             os.remove(translation_file.name)
 
 
-@task
+@task(serializer='json')
 def backup_project_from_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,
@@ -159,7 +159,7 @@ def backup_project_from_transifex(domain, data, email):
         email.send()
 
 
-@task
+@task(serializer='json')
 def email_project_from_hq(domain, data, email):
     """Emails the requester with an excel file translations to be sent to Transifex.
 
@@ -188,7 +188,7 @@ def email_project_from_hq(domain, data, email):
             pass
 
 
-@task
+@task(serializer='json')
 def migrate_project_on_transifex(domain, transifex_project_slug, source_app_id, target_app_id, mappings, email):
     def consolidate_errors_messages():
         error_messages = []

@@ -27,7 +27,7 @@ from soil import DownloadBase
 from soil.util import expose_blob_download
 
 
-@task(bind=True)
+@task(serializer='json', bind=True)
 def generate_toggle_csv_download(self, tag, download_id, username):
     toggles = _get_toggles_with_tag(tag)
     total = _get_toggle_item_count(toggles)

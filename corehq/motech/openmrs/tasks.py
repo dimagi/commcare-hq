@@ -252,7 +252,7 @@ def import_patients_to_domain(domain_name, force=False):
             import_patients_with_importer.delay(importer.to_json())
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def import_patients_with_importer(importer_json):
     importer = OpenmrsImporter.wrap(importer_json)
     password = b64_aes_decrypt(importer.password)
@@ -334,7 +334,7 @@ def import_patients():
         import_patients_to_domain(domain_name)
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in OpenmrsRepeater.by_domain(domain_name):
         errors = []

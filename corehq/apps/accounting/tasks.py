@@ -267,7 +267,7 @@ def update_subscriptions():
     check_credit_line_balances.delay()
 
 
-@task
+@task(serializer='json')
 def check_credit_line_balances():
     for credit_line in CreditLine.objects.all():
         expected_balance = sum(credit_line.creditadjustment_set.values_list('amount', flat=True))
@@ -472,7 +472,7 @@ def send_subscription_reminder_emails_dimagi_contact(num_days):
             subscription.send_dimagi_ending_reminder_email()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='json', ignore_result=True, acks_late=True)
 @transaction.atomic()
 def create_wire_credits_invoice(domain_name,
                                 amount,
@@ -510,7 +510,7 @@ def create_wire_credits_invoice(domain_name,
         record.save()
 
 
-@task(ignore_result=True, acks_late=True)
+@task(serializer='json', ignore_result=True, acks_late=True)
 def send_purchase_receipt(payment_record_id, domain, template_html, template_plaintext, additional_context):
     context = get_context_to_send_purchase_receipt(payment_record_id, domain, additional_context)
 
@@ -526,7 +526,7 @@ def send_purchase_receipt(payment_record_id, domain, template_html, template_pla
     )
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@task(serializer='json', queue='background_queue', ignore_result=True, acks_late=True)
 def send_autopay_failed(invoice_id):
     context = get_context_to_send_autopay_failed_email(invoice_id)
 
@@ -691,7 +691,7 @@ def run_downgrade_process():
     downgrade_eligible_domains()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='json', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def archive_logos(self, domain_name):
     try:
@@ -710,7 +710,7 @@ def archive_logos(self, domain_name):
         raise e
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
+@task(serializer='json', queue='background_queue', ignore_result=True, acks_late=True,
       default_retry_delay=10, max_retries=10, bind=True)
 def restore_logos(self, domain_name):
     try:

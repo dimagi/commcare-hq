@@ -72,7 +72,7 @@ def sync_usercases_if_applicable(user, spawn_task):
             sync_usercases(user, user.domain)
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def sync_usercases_task(user_id, domain):
     user = CouchUser.get_by_user_id(user_id)
     sync_usercases(user, domain)

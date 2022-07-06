@@ -52,7 +52,7 @@ def email_enterprise_report(domain, slug, couch_user):
     send_html_email_async(subject, couch_user.get_email(), body)
 
 
-@task
+@task(serializer='json')
 def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
     try:
         config = EnterprisePermissions.objects.get(id=config_id)
@@ -67,7 +67,7 @@ def clear_enterprise_permissions_cache_for_all_users(config_id, domain=None):
             get_enterprise_links_for_dropdown.clear(user)
 
 
-@task()
+@task(serializer='json')
 def auto_deactivate_mobile_workers():
     time_started = datetime.datetime.utcnow()
     date_deactivation = datetime.date.today()

@@ -39,7 +39,7 @@ from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 logger = logging.getLogger('export_migration')
 
 
-@task(queue=EXPORT_DOWNLOAD_QUEUE)
+@task(serializer='json', queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(domain, export_ids, exports_type, username,
                                   es_filters, download_id, owner_id,
                                   filename=None, expiry=10 * 60):
@@ -104,7 +104,7 @@ def populate_export_download_task(domain, export_ids, exports_type, username,
     email_requests.delete()
 
 
-@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
+@task(serializer='json', queue=SAVED_EXPORTS_QUEUE, ignore_result=False, acks_late=True)
 def _start_export_task(export_instance_id):
     export_instance = get_properly_wrapped_export_instance(export_instance_id)
     rebuild_export(export_instance, progress_tracker=_start_export_task)
@@ -205,7 +205,7 @@ def _cached_add_inferred_export_properties(sender, domain, case_type, properties
     inferred_schema.save()
 
 
-@task(queue='background_queue', bind=True)
+@task(serializer='json', queue='background_queue', bind=True)
 def generate_schema_for_all_builds(self, export_type, domain, app_id, identifier):
     from .views.utils import GenerateSchemaFromAllBuildsView
     export_cls = GenerateSchemaFromAllBuildsView.export_cls(export_type)
@@ -226,7 +226,7 @@ def generate_incremental_exports():
         process_incremental_export.delay(incremental_export.id)
 
 
-@task
+@task(serializer='json')
 def process_incremental_export(incremental_export_id):
     incremental_export = IncrementalExport.objects.get(id=incremental_export_id)
     last_valid_checkpoint = incremental_export.last_valid_checkpoint

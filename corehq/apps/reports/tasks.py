@@ -52,7 +52,7 @@ def update_calculated_properties():
         update_calculated_properties_for_domains.delay(chunk)
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def update_calculated_properties_for_domains(domains):
     """
     :param domains: list of {'name': <name>, '_id': <id>} entries

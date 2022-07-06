@@ -292,7 +292,7 @@ class CaseTimedScheduleInstanceRefresher(ScheduleInstanceRefresher):
         return False
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(serializer='json', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_alert_schedule_instances(schedule_id, recipients):
     """
     :param schedule_id: the AlertSchedule schedule_id
@@ -309,7 +309,7 @@ def refresh_alert_schedule_instances(schedule_id, recipients):
         ).refresh()
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
+@task(serializer='json', queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True)
 def refresh_timed_schedule_instances(schedule_id, recipients, start_date_iso_string=None):
     """
     :param schedule_id: type str that is hex representation of the TimedSchedule schedule_id (UUID)

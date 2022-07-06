@@ -361,7 +361,7 @@ def _queue_indicators(async_indicators, use_agg_queue=False):
             build_async_indicators.delay(indicator_doc_ids)
 
 
-@task(queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
+@task(serializer='json', queue='icds_aggregation_queue', ignore_result=True, acks_late=True)
 def build_indicators_with_agg_queue(indicator_doc_ids):
     build_async_indicators(indicator_doc_ids)
 

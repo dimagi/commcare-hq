@@ -30,7 +30,7 @@ def send_datasets_for_all_domains():
             send_datasets.delay(domain)
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def send_datasets(domain_name, send_now=False, send_date=None):
     """
     send_date is a string formatted as YYYY-MM-DD

@@ -62,7 +62,7 @@ def build_last_month_GIR():
     )
 
 
-@task(queue='malt_generation_queue')
+@task(serializer='json', queue='malt_generation_queue')
 def update_malt(month_dict, domains):
     month = DateSpan.from_month(month_dict['month'], month_dict['year'])
     generate_malt([month], domains=domains)

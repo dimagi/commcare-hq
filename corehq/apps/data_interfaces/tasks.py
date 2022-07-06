@@ -79,7 +79,7 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
     backfill_deduplicate_rule(domain, rule)
 
 
-@task(queue='background_queue')
+@task(serializer='json', queue='background_queue')
 def delete_duplicates_for_cases(case_ids):
     CaseDuplicate.bulk_remove_unique_cases(case_ids)
     CaseDuplicate.remove_duplicates_for_case_ids(case_ids)

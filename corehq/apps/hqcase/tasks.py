@@ -19,7 +19,7 @@ from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.models import CommCareCase, XFormInstance
 
 
-@task
+@task(serializer='json')
 def explode_case_task(domain, user_id, factor):
     return explode_cases(domain, user_id, factor, explode_case_task)
 
@@ -105,7 +105,7 @@ def topological_sort_case_blocks(cases):
     return toposort_flatten(tree)
 
 
-@task
+@task(serializer='json')
 def delete_exploded_case_task(domain, explosion_id):
     return delete_exploded_cases(domain, explosion_id, delete_exploded_case_task)
 

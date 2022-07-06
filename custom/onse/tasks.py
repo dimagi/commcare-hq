@@ -73,7 +73,7 @@ def update_facility_cases_from_dhis2_data_elements():
     _update_facility_cases_from_dhis2_data_elements.delay()
 
 
-@task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
+@task(serializer='json', bind=True, max_retries=MAX_RETRY_ATTEMPTS)
 def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
     if not domain_exists(DOMAIN):
         return

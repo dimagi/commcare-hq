@@ -93,23 +93,23 @@ def test_import_tasks():
 
 
 def test_get_domain_from_task():
-    @task()
+    @task(serializer='json', )
     def example_task_1(domain, var1, var2):
         pass
 
-    @task()
+    @task(serializer='json', )
     def example_task_2(var1, domain, var2):
         pass
 
-    @task()
+    @task(serializer='json', )
     def example_task_3(var1, var2, domain=None):
         pass
 
-    @task()
+    @task(serializer='json', )
     def example_task_4(domain_name):
         pass
 
-    @task()
+    @task(serializer='json', )
     def example_task_5(var1, var2):
         pass
 

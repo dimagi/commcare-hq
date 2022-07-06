@@ -284,7 +284,7 @@ def remove_unused_custom_fields_from_users_task(domain):
     remove_unused_custom_fields_from_users(domain)
 
 
-@task()
+@task(serializer='json', )
 def update_domain_date(user_id, domain):
     from corehq.apps.users.models import WebUser
     user = WebUser.get_by_user_id(user_id)
@@ -348,7 +348,7 @@ def process_reporting_metadata_staging():
         process_reporting_metadata_staging.delay()
 
 
-@task(queue='background_queue', acks_late=True)
+@task(serializer='json', queue='background_queue', acks_late=True)
 def apply_correct_demo_mode_to_loadtest_user(commcare_user_id):
     """
     If ``loadtest_factor`` is set on a non-demo user, then that user
