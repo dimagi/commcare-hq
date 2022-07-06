@@ -185,6 +185,22 @@
                             <textarea class="form-control vertical-resize" data-bind="value: required" placeholder="true()"></textarea>
                           </div>
                         </div>
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Validation Condition" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <input class="form-control" type="text" data-bind="value: validationXPath" placeholder="true()"/>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label class="control-label col-xs-12 col-sm-3">
+                            {% trans "Validation Message" %}
+                          </label>
+                          <div class="col-xs-12 col-sm-9">
+                            <textarea class="form-control vertical-resize" data-bind="value: validationMessage"></textarea>
+                          </div>
+                        </div>
                       {% endif %}
                     </fieldset>
                 {% endif %}

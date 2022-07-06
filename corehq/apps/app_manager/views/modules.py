@@ -1033,6 +1033,11 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['exclude'] = prop['exclude']
         if prop['required']:
             ret['required'] = prop['required']
+        if prop['validation_xpath']:
+            ret['validation'] = [{
+                'xpath': prop['validation_xpath'],
+                'message': {'en': prop['validation_message']},  # TODO
+            }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'

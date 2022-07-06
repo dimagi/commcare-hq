@@ -92,6 +92,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
             itemsetOptions: {},
             exclude: false,
             required: '',
+            validationXPath: '',
+            validationMessage: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -105,6 +107,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hidden = ko.observable(options.hidden);
         self.exclude = ko.observable(options.exclude);
         self.required = ko.observable(options.required);
+        self.validationXPath = ko.observable(options.validationXPath);
+        self.validationMessage = ko.observable(options.validationMessage);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -156,7 +160,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
-            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude', 'required',
+            'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
+            'required', 'validationXPath', 'validationMessage',
         ], saveButton);
         return self;
     };
@@ -336,7 +341,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
                     appearance = searchProperties[i].input_;
                 }
-                var isMultiselect = searchProperties[i].input_ === "select";
+                var isMultiselect = searchProperties[i].input_ === "select",
+                    // The model supports multiple validation conditions, but we don't need the UI for it yet
+                    validation = searchProperties[i].validation[0];
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: label,
@@ -346,6 +353,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     allowBlankValue: searchProperties[i].allow_blank_value,
                     exclude: searchProperties[i].exclude,
                     required: searchProperties[i].required,
+                    validationXPath: validation ? validation.xpath : '',
+                    validationMessage: validation ? validation.message[lang] : '',
                     defaultValue: searchProperties[i].default_value,
                     hidden: searchProperties[i].hidden,
                     receiverExpression: searchProperties[i].receiver_expression,
@@ -386,6 +395,8 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
                         required: p.required(),
+                        validation_xpath: p.validationXPath(),
+                        validation_message: p.validationMessage(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
