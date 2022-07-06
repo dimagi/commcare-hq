@@ -14448,6 +14448,17 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
+#, fuzzy
+#| msgid "Confirmation Email Sent"
+msgid "Confirmation SMS project name"
+msgstr "Courriel de confirmation envoyé"
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Name of the project to be used in SMS sent for account confirmation to users."
+msgstr ""
+
+#: corehq/apps/domain/forms.py
 msgid "Edit Basic Information"
 msgstr "Modifier les informations de base"
 
@@ -26052,13 +26063,11 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Thanks,"
 msgstr "Merci,"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "-The %(hq_name)s team"
@@ -26111,19 +26120,32 @@ msgid "Reset Password on CommCare HQ"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "Once you confirm your account you will be able to access and submit data "
+#| "in the \"%(domain)s\" project on %(hq_name)s.\n"
+#| "Your username to login is %(username)s\n"
+msgid ""
+"\n"
+"Hello %(name)s,\n"
+"\n"
+"Your account with username %(username)s is confirmed successfully.\n"
+"You can now log in and submit data in the \"%(domain)s\" project on "
+"%(hq_name)s.\n"
+"\n"
+"Thanks,\n"
+"-The %(hq_name)s team\n"
+msgstr ""
+"\n"
+"Une fois que vous aurez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le \"%(domain)s\" projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter est %(username)s\n"
+
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "Hello %(name)s,"
 msgstr "Bonjour %(name)s,"
-
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
-#, python-format
-msgid ""
-"\n"
-"Your account with username %(username)s is confirmed successfully.\n"
-"You can now login and submit data in the \"%(domain)s\" project on "
-"%(hq_name)s.\n"
-msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
@@ -29677,13 +29699,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/partials/punchcard.html
 msgid "Hour vs. Weekday"
 msgstr "Heure VS. jour de semaine"
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
-"sauvegarder."
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
@@ -34960,6 +34975,12 @@ msgstr ""
 msgid "Edit Report"
 msgstr "Editer rapport"
 
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
+"sauvegarder."
+
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
 msgid "Thanks for previewing Report Builder!"
 msgstr ""
@@ -35864,13 +35885,24 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/forms.py
-#, fuzzy
-#| msgid "Please enter number, including country code, in digits only."
 msgid ""
-"Please enter number including country code, without (+) and in digits only."
+"\n"
+"            <div data-bind=\"visible: $root.phoneStatusMessage().length === "
+"0\">\n"
+"                    Please enter number including country code, without (+) "
+"and in digits only.\n"
+"            </div>\n"
+"            <div id=\"phone-error\">\n"
+"                <span data-bind=\"visible: $root.phoneStatus() !== $root."
+"STATUS.NONE\">\n"
+"                    <i class=\"fa fa-exclamation-triangle\"\n"
+"                    data-bind=\"visible: $root.phoneStatus() === $root."
+"STATUS.ERROR\"></i>\n"
+"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+"                </span>\n"
+"            </div>\n"
+"        "
 msgstr ""
-"Veuillez entrer le numéro, y compris le code international, en chiffres "
-"uniquement."
 
 #: corehq/apps/users/forms.py
 msgid ""
@@ -42678,3 +42710,12 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#, fuzzy
+#~| msgid "Please enter number, including country code, in digits only."
+#~ msgid ""
+#~ "Please enter number including country code, without (+) and in digits "
+#~ "only."
+#~ msgstr ""
+#~ "Veuillez entrer le numéro, y compris le code international, en chiffres "
+#~ "uniquement."
