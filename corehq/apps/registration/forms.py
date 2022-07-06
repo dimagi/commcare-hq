@@ -473,6 +473,7 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
     For Mobile Workers to confirm their accounts using SMS.
     """
     email = forms.CharField(widget=forms.HiddenInput(), required=False)
+    
     # Email address is enforced blank for mobile workers who confirm by SMS.
     def clean_email(self):
         return ''
