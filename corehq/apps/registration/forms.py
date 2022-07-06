@@ -473,10 +473,10 @@ class MobileWorkerAccountConfirmationBySMSForm(BaseUserInvitationForm):
     For Mobile Workers to confirm their accounts using SMS.
     """
     email = forms.CharField(widget=forms.HiddenInput(), required=False)
-    
+
     # Email address is enforced blank for mobile workers who confirm by SMS.
     def clean_email(self):
-        return ''
+        return ""
 
 
 # From http://www.peterbe.com/plog/automatically-strip-whitespace-in-django-app_manager
