@@ -319,6 +319,7 @@ domain
  0013_accountconfirmationsettings
  0014_alter_accountconfirmationsettings_project_name
  0015_rename_accountconfirmationsettings_smsaccountconfirmationsettings
+ 0016_alter_smsaccountconfirmationsettings_project_name
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
