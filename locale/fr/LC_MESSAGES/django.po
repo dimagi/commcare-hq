@@ -13850,7 +13850,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "\n"
-"            Default time (in hours) for which account confirmation link will "
+"            Default time (in days) for which account confirmation link will "
 "be valid.\n"
 "            "
 msgstr ""
@@ -13865,6 +13865,15 @@ msgid ""
 "            Limit on number of calls allowed to an operator for each call "
 "type.\n"
 "            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Confirmation SMS project name"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Name of the project to be used in SMS sent for account confirmation to users."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -25127,6 +25136,20 @@ msgstr ""
 msgid "Reset Password on CommCare HQ"
 msgstr ""
 
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Hello %(name)s,\n"
+"\n"
+"Your account with username %(username)s is confirmed successfully.\n"
+"You can now log in and submit data in the \"%(domain)s\" project on "
+"%(hq_name)s.\n"
+"\n"
+"Thanks,\n"
+"-The %(hq_name)s team\n"
+msgstr ""
+
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid "Hello %(name)s,"
@@ -28542,11 +28565,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/punchcard.html
 msgid "Hour vs. Weekday"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
@@ -33648,6 +33666,10 @@ msgstr ""
 msgid "Edit Report"
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
 msgid "Thanks for previewing Report Builder!"
 msgstr ""
@@ -34515,6 +34537,26 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid ""
+"\n"
+"            <div data-bind=\"visible: $root.phoneStatusMessage().length === "
+"0\">\n"
+"                    Please enter number including country code, without (+) "
+"and in digits only.\n"
+"            </div>\n"
+"            <div id=\"phone-error\">\n"
+"                <span data-bind=\"visible: $root.phoneStatus() !== $root."
+"STATUS.NONE\">\n"
+"                    <i class=\"fa fa-exclamation-triangle\"\n"
+"                    data-bind=\"visible: $root.phoneStatus() === $root."
+"STATUS.ERROR\"></i>\n"
+"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+"                </span>\n"
+"            </div>\n"
+"        "
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
 msgstr ""
@@ -34913,6 +34955,14 @@ msgid ""
 "                  It looks like your account has been deactivated.\n"
 "                  Contact your administrator if you think this is a "
 "mistake.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
+msgid ""
+"\n"
+"                  Invitation link has expired.\n"
+"                  Contact your project administrator to send new invite.\n"
 "                "
 msgstr ""
 
