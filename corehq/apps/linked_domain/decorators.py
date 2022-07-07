@@ -32,18 +32,12 @@ def require_existing_domain_link(fn):
     """
     @wraps(fn)
     def _inner(request, domain, *args, **kwargs):
-        if not hasattr(request, 'couch_user'):
-            raise Http404()
 
         requester = request.META.get(REMOTE_REQUESTER_HEADER, None)
         if not requester:
             return HttpResponseBadRequest()
 
-        domain_link = get_domain_link(upstream=domain, downstream=requester)
-        if not domain_link:
-            return HttpResponseForbidden()
-
-        if not can_user_access_linked_domains(request.couch_user, domain):
+        if not get_domain_link(upstream=domain, downstream=requester):
             return HttpResponseForbidden()
 
         return fn(request, domain, *args, **kwargs)
