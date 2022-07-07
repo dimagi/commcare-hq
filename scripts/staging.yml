@@ -77,4 +77,5 @@ branches:
     - akj/mw-signup-enhancements # Akash June 30
     - jls/dd-in-rules-ui # Jenny July 1
     - ad/save-only-edited-fields-migration # Addison July 7
+    - ml/mobile-worker-download-bug # Minha July 7
 submodules: { }
