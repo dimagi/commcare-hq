@@ -1,5 +1,7 @@
+from datetime import timedelta
 import logging
 from collections import namedtuple
+from time import time
 
 from django.core.management import BaseCommand
 
@@ -56,6 +58,7 @@ class AppMigrationCommandBase(BaseCommand):
         )
 
     def handle(self, **options):
+        start_time = time()
         self.options = options
         if self.options['domain']:
             domains = [self.options['domain']]
@@ -65,7 +68,9 @@ class AppMigrationCommandBase(BaseCommand):
             app_ids = self.get_app_ids(domain)
             logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
-        logger.info('done')
+        end_time = time()
+        execution_time_seconds = end_time - start_time
+        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
 
     @property
     def is_dry_run(self):
