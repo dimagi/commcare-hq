@@ -86,7 +86,8 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.assertNotIn('delete_logo', visible_fields)
 
     def test_if_call_center_config_disabled_call_center_fields_are_removed(self):
-        form = self._create_form(call_center_enabled=False)
+        self.domain = self._create_domain(call_center_config_enabled=False)
+        form = self._create_form()
 
         visible_fields = form.get_visible_field_names()
         self.assertNotIn('call_center_enabled', visible_fields)
@@ -113,7 +114,7 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.assertEqual({'confirmation_link_expiry': ['Enter a whole number.']}, form.errors)
 
     def test_save_writes_confirmation_link_expiry(self):
-        domain_obj = self._create_mock_domain(confirmation_link_expiry_time=500)
+        domain_obj = self._create_domain(confirmation_link_expiry_time=500)
         form = self._create_form(confirmation_link_expiry=100)
         form.save(Mock(), domain_obj)
         self.assertEqual(100, domain_obj.confirmation_link_expiry_time)
@@ -125,8 +126,8 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.assertNotIn('operator_call_limit', form.get_visible_field_names())
 
     def test_operator_call_limit_field_configured_with_all_values(self):
-        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
-        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        call_settings = OperatorCallLimitSettings(domain=self.domain.name, call_limit=50)
+        self.mock_call_limit_settings.values_list.return_value = [self.domain.name]
         self.mock_call_limit_settings.get.return_value = call_settings
 
         form = self._create_form()
@@ -137,8 +138,8 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.assertEqual(form.fields['operator_call_limit'].max_value, 1000)
 
     def test_operator_call_limit_error_when_invalid_value(self):
-        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
-        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        call_settings = OperatorCallLimitSettings(domain=self.domain.name, call_limit=50)
+        self.mock_call_limit_settings.values_list.return_value = [self.domain.name]
         self.mock_call_limit_settings.get.return_value = call_settings
 
         form = self._create_form(operator_call_limit='12a')
@@ -146,13 +147,13 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.assertEqual({'operator_call_limit': ['Enter a whole number.']}, form.errors)
 
     def test_save_writes_call_limit(self):
-        call_settings = OperatorCallLimitSettings(domain=self.mock_domain.name, call_limit=50)
+        call_settings = OperatorCallLimitSettings(domain=self.domain.name, call_limit=50)
         call_settings.save = Mock()
-        self.mock_call_limit_settings.values_list.return_value = [self.mock_domain.name]
+        self.mock_call_limit_settings.values_list.return_value = [self.domain.name]
         self.mock_call_limit_settings.get.return_value = call_settings
 
         form = self._create_form(operator_call_limit=95)
-        form.save(Mock(), self.mock_domain)
+        form.save(Mock(), self.domain)
 
         self.assertEqual(call_settings.call_limit, 95)
         call_settings.save.assert_called()
@@ -160,7 +161,12 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
 # Helpers
     def setUp(self):
         super().setUp()
-        self.mock_domain = self._create_mock_domain()
+
+        domain_patcher = patch.object(Domain, 'save')
+        domain_patcher.start()
+        self.addCleanup(domain_patcher.stop)
+
+        self.domain = self._create_domain()
         self.ucr_toggle_enabled = True
         self.sms_user_provisioning_toggle_enabled = True
 
@@ -174,7 +180,7 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         mock_sms_provisioning_toggle.start()
         self.addCleanup(mock_sms_provisioning_toggle.stop)
 
-        mock_get_domain_by_name = patch.object(Domain, 'get_by_name', return_value=self.mock_domain)
+        mock_get_domain_by_name = patch.object(Domain, 'get_by_name', return_value=self.domain)
         mock_get_domain_by_name.start()
         self.addCleanup(mock_get_domain_by_name.stop)
 
@@ -184,8 +190,7 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.mock_call_limit_settings.values_list.return_value = []
         self.addCleanup(mock_call_limit_domain_patcher.stop)
 
-    def _create_form(self, can_use_custom_logo=True, call_center_enabled=True, **kwargs):
-        self.mock_domain.call_center_config.enabled = call_center_enabled
+    def _create_form(self, can_use_custom_logo=True, **kwargs):
         data = {
             'hr_name': 'foo',
             'project_description': 'sample',
@@ -194,18 +199,18 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         }
         data.update(**kwargs)
         return DomainGlobalSettingsForm(
-            data, domain=self.mock_domain, can_use_custom_logo=can_use_custom_logo)
+            data, domain=self.domain, can_use_custom_logo=can_use_custom_logo)
 
-    def _create_mock_domain(self, name='test-domain', **kwargs):
+    def _create_domain(self, call_center_config_enabled=True, **kwargs):
         domain_properties = {
+            'name': 'test-domain',
             'confirmation_link_expiry_time': 500,
             'call_center_enabled': False,
             'default_timezone': 'UTC'
         }
         domain_properties.update(kwargs)
-        domain_obj = Mock(**domain_properties)
-        domain_obj.name = name
-
+        domain_obj = Domain(**domain_properties)
+        domain_obj.call_center_config.enabled = call_center_config_enabled
         return domain_obj
 
 
@@ -222,7 +227,7 @@ class DomainMetadataFormTests(SimpleTestCase):
         self.assertNotIn('cloudcare_releases', form.get_visible_field_names())
 
     def test_default_cloudcare_releases_hides_cloudcare_releases_field(self):
-        self.mock_domain.cloudcare_releases = 'default'
+        self.domain.cloudcare_releases = 'default'
         form = self._create_form()
         self.assertNotIn('cloudcare_releases', form.get_visible_field_names())
 
@@ -241,10 +246,7 @@ class DomainMetadataFormTests(SimpleTestCase):
 
         self.domain_privileges = [privileges.CLOUDCARE, privileges.GEOCODER]
 
-        self.mock_domain = Mock(name='test-domain', confirmation_link_expiry_time=500,
-            cloudcare_releases='notdefault')
-        self.mock_domain.name = 'test-domain'
-        self.mock_domain.call_center_config.enabled = False
+        self.domain = self._create_domain()
 
         mock_call_limit_domain_patcher = patch.object(OperatorCallLimitSettings,
             'objects')
@@ -253,7 +255,18 @@ class DomainMetadataFormTests(SimpleTestCase):
         self.addCleanup(mock_call_limit_domain_patcher.stop)
 
     def _create_form(self):
-        return DomainMetadataForm(domain=self.mock_domain)
+        return DomainMetadataForm(domain=self.domain)
 
     def _domain_has_privilege(self, domain, privilege):
         return privilege in self.domain_privileges
+
+    def _create_domain(self, call_center_config_enabled=True, **kwargs):
+        domain_properties = {
+            'name': 'test-domain',
+            'confirmation_link_expiry_time': 500,
+            'cloudcare_releases': 'stars',
+        }
+        domain_properties.update(kwargs)
+        domain_obj = Domain(**domain_properties)
+        domain_obj.call_center_config.enabled = call_center_config_enabled
+        return domain_obj
