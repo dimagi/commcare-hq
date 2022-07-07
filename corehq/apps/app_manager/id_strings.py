@@ -274,10 +274,9 @@ def search_property_hint_locale(module, search_prop):
     return "search_property.m{module.id}.{search_prop}.hint".format(module=module, search_prop=search_prop)
 
 
-@pattern('search_property.m%d.%s.validation.message')
-def search_property_validation_msg(module, search_prop):
-    return "search_property.m{module.id}.{search_prop}.validation.message".format(
-        module=module, search_prop=search_prop)
+@pattern('search_property.m%d.%s.validation.%d.message')
+def search_property_validation_msg(module, search_prop, index):
+    return f"search_property.m{module.id}.{search_prop}.validation.{index}.message"
 
 
 @pattern('custom_assertion.m%d.f%d.%d')

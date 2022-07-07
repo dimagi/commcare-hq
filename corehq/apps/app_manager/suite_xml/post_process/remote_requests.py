@@ -279,9 +279,9 @@ class RemoteRequestFactory(object):
                 kwargs['validation'] = [
                     Validation(
                         test=condition.xpath,
-                        text=Text(locale_id=id_strings.search_property_validation_msg(self.module, prop.name)),
+                        text=Text(locale_id=id_strings.search_property_validation_msg(self.module, prop.name, i)),
                     )
-                    for condition in prop.validation
+                    for i, condition in enumerate(prop.validation)
                 ]
             prompts.append(QueryPrompt(**kwargs))
         return prompts

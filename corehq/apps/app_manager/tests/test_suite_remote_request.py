@@ -882,7 +882,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </display>
             <validation test="2 + 2 = 5">
               <text>
-                <locale id="search_property.m0.name.validation.message"/>
+                <locale id="search_property.m0.name.validation.0.message"/>
               </text>
             </validation>
           </prompt>
@@ -894,7 +894,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </display>
             <validation test="contains(instance('search-input:results')/input/field[@name='email'], '@')">
               <text>
-                <locale id="search_property.m0.email.validation.message"/>
+                <locale id="search_property.m0.email.validation.0.message"/>
               </text>
             </validation>
           </prompt>
