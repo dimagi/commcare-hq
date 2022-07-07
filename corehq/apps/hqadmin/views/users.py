@@ -166,7 +166,7 @@ class AdminRestoreView(TemplateView):
         if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
             full_username = format_username(username, domain)
 
-        self.user = CommCareUser.get_by_username(full_username)
+        self.user = CouchUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
