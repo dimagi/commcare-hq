@@ -50,6 +50,15 @@ class TestLookupTableCouchToSQLDiff(SimpleTestCase):
             r"^fields: couch value \[[^q]+\] != sql value \[.+\]$",
         )
 
+    def test_diff_old_style_fields(self):
+        doc, obj = create_lookup_table()
+        doc['fields'] = ['amount']
+        error, = self.diff(doc, obj)
+        self.assertRegex(
+            error,
+            r"^fields: couch value \[[^q]+\] != sql value \[.+\]$",
+        )
+
     def test_diff_item_attributes(self):
         doc, obj = create_lookup_table()
         obj.item_attributes = ['age']
@@ -57,6 +66,18 @@ class TestLookupTableCouchToSQLDiff(SimpleTestCase):
             self.diff(doc, obj),
             ["item_attributes: couch value ['name'] != sql value ['age']"],
         )
+
+    def test_diff_doc_without_item_attributes(self):
+        doc, obj = create_lookup_table()
+
+        del doc["item_attributes"]
+        self.assertEqual(
+            self.diff(doc, obj),
+            ["item_attributes: couch value None != sql value ['name']"],
+        )
+
+        obj.item_attributes = []
+        self.assertEqual(self.diff(doc, obj), [])  # None in Couch == [] in SQL
 
     def test_diff_description(self):
         doc, obj = create_lookup_table()
@@ -156,6 +177,28 @@ class TestLookupTableCouchToSQLMigration(TestCase):
         call_command('populate_lookuptables')
         self.assertEqual(
             self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id)),
+            [],
+        )
+
+    def test_migration_with_old_doc_format(self):
+        doc, obj = create_lookup_table()
+        doc['fields'] = ['amount', 'qty']
+        del doc['item_attributes']
+        self.db.save_doc(doc)
+        call_command('populate_lookuptables')
+        self.assertEqual(
+            self.diff(doc, LookupTable.objects.get(id=doc['_id'])),
+            [],
+        )
+
+        # Additional call should apply any updates
+        doc['tag'] = 'cost'
+        doc['fields'] = ['value', 'qty']
+        assert 'item_attributes' not in doc, doc
+        self.db.save_doc(doc)
+        call_command('populate_lookuptables')
+        self.assertEqual(
+            self.diff(doc, LookupTable.objects.get(id=doc['_id'])),
             [],
         )
 
