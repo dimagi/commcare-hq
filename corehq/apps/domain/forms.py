@@ -562,7 +562,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def save(self, request, domain):
         if not self.is_valid():
-            return False
+            raise ValidationError(self.errors)
 
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']

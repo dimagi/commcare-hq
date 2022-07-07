@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from django.test import SimpleTestCase
 from unittest.mock import Mock, patch
 from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
@@ -157,6 +158,11 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
 
         self.assertEqual(call_settings.call_limit, 95)
         call_settings.save.assert_called()
+
+    def test_invalid_form_cannot_be_saved(self):
+        form = self._create_form(confirmation_link_expiry='abc')
+        with self.assertRaises(ValidationError):
+            form.save(Mock(), self.domain)
 
 # Helpers
     def setUp(self):
