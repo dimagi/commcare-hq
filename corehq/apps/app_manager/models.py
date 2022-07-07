@@ -328,6 +328,7 @@ class FormAction(DocumentSchema):
     @classmethod
     def get_action_properties(self, action):
         action_properties = action.properties()
+        # to delete?
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
         if 'case_name' in action_properties:
