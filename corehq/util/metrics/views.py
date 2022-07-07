@@ -13,7 +13,7 @@ def prometheus_metrics(request):
     if not settings.DEBUG:
         return HttpResponseNotFound()
 
-    if "prometheus_multiproc_dir" in os.environ:
+    if "PROMETHEUS_MULTIPROC_DIR" in os.environ:
         registry = prometheus_client.CollectorRegistry()
         multiprocess.MultiProcessCollector(registry)
     else:
