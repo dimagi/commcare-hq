@@ -735,6 +735,11 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
         self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
+    def test_lookup_table(self):
+        from corehq.apps.fixtures.models import LookupTable
+        LookupTable.objects.create(domain=self.domain_name, tag="dump-load")
+        self._dump_and_load(Counter({LookupTable: 1}))
+
 
 @mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)
 class TestSqlLoadWithError(BaseDumpLoadTest):

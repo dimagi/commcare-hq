@@ -1,6 +1,61 @@
-from django.test import SimpleTestCase
+from django.db import IntegrityError
+from django.test import SimpleTestCase, TestCase
 
-from ..models import FieldList, FixtureItemField, FixtureTypeField
+from corehq.util.test_utils import generate_cases
+from corehq.util.tests.test_jsonattrs import set_json_value
+
+from ..models import (
+    FieldList,
+    FixtureItemField,
+    FixtureTypeField,
+    LookupTable,
+    TypeField,
+)
+
+
+class TestLookupTable(TestCase):
+
+    def test_default_domain_is_not_valid(self):
+        table = LookupTable(tag="x")
+        with self.assertRaises(IntegrityError):
+            table.save()
+
+    def test_default_tag_is_not_valid(self):
+        table = LookupTable(domain="test")
+        with self.assertRaises(IntegrityError):
+            table.save()
+
+    def test_fields(self):
+        table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
+        self.assertEqual(table.fields[0].name, "vera")
+        self.assertEqual(table.fields[0].properties, [])
+        table.save(sync_to_couch=False)
+        new = LookupTable.objects.get(id=table.id)
+        self.assertEqual(new.fields, table.fields)
+        self.assertIsNot(new.fields, table.fields)
+
+    @generate_cases([
+        # Detect incompatibilities between the JSON data stored in the
+        # database and LookupTable.fields and/or TypeField type. One or more
+        # of these tests will fail if the field definition changes in an
+        # incompatible way.
+        #
+        # Do not change any of these data formats as long as rows with the
+        # same format may exist in a database somewhere.
+        ([],),
+        ([{"name": "vera", "properties": [], "is_indexed": False}],),
+        ([{"name": "vera", "properties": ["album"], "is_indexed": True}],),
+    ])
+    def test_persistent_formats(self, value):
+        obj = LookupTable()
+        set_json_value(obj, "fields", value)
+        if value:
+            self.assertTrue(
+                all(isinstance(f, TypeField) for f in obj.fields),
+                obj.fields
+            )
+        else:
+            self.assertEqual(obj.fields, value)
 
 
 class TestFieldTypes(SimpleTestCase):
