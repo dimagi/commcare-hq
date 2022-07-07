@@ -103,7 +103,7 @@ class AppMigrationCommandBase(BaseCommand):
 
     @staticmethod
     def increment_app_version(app_doc):
-        if not app_doc.get('copy_of') and app_doc.get('version'):
+        if not getattr(app_doc, 'copy_of', False) and getattr(app_doc, 'version', False):
             app_doc['version'] = app_doc['version'] + 1
         return app_doc
 
