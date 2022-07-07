@@ -3882,6 +3882,14 @@ msgstr ""
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Please check your Internet connection!"
 msgstr ""
@@ -3963,6 +3971,12 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js

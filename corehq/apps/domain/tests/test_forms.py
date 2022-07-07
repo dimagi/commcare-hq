@@ -1,7 +1,7 @@
 from django.forms import ValidationError
 from django.test import SimpleTestCase
 from unittest.mock import Mock, patch
-from corehq.apps.domain.models import Domain, OperatorCallLimitSettings
+from corehq.apps.domain.models import Domain, OperatorCallLimitSettings, SMSAccountConfirmationSettings
 from corehq import privileges
 
 from ..forms import DomainGlobalSettingsForm, DomainMetadataForm, PrivacySecurityForm
@@ -76,7 +76,8 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
             'call_center_case_owner',
             'call_center_case_type',
             'mobile_ucr_sync_interval',
-            'confirmation_link_expiry'
+            'confirmation_link_expiry',
+            'confirmation_sms_project_name'
         ], form.get_visible_field_names())
 
     def test_if_cannot_use_custom_logo_logo_fields_are_removed(self):
@@ -118,8 +119,8 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         domain_obj = self._create_domain(confirmation_link_expiry_time=500)
         form = self._create_form(confirmation_link_expiry=100)
         form.save(Mock(), domain_obj)
-        self.assertEqual(100, domain_obj.confirmation_link_expiry_time)
-        domain_obj.save.assert_called()
+        self.assertEqual(100, self.sms_settings.confirmation_link_expiry_time)
+        self.sms_settings.save.assert_called()
 
     def test_operator_call_limit_not_present_when_domain_not_eligible(self):
         self.mock_call_limit_settings.values_list.return_value = []  # No domain has call limit settings
@@ -196,21 +197,32 @@ class DomainGlobalSettingsFormTests(SimpleTestCase):
         self.mock_call_limit_settings.values_list.return_value = []
         self.addCleanup(mock_call_limit_domain_patcher.stop)
 
+        mock_get_sms_settings_patcher = patch.object(SMSAccountConfirmationSettings, 'get_settings')
+        self.mock_get_sms_settings = mock_get_sms_settings_patcher.start()
+        self.sms_settings = self._create_sms_settings()
+        self.mock_get_sms_settings.side_effect = lambda domain: self.sms_settings
+
     def _create_form(self, can_use_custom_logo=True, **kwargs):
         data = {
             'hr_name': 'foo',
             'project_description': 'sample',
             'default_timezone': 'UTC',
-            'confirmation_link_expiry': 500
+            'confirmation_link_expiry': 500,
+            'confirmation_sms_project_name': 'test-project'
         }
         data.update(**kwargs)
         return DomainGlobalSettingsForm(
             data, domain=self.domain, can_use_custom_logo=can_use_custom_logo)
 
+    def _create_sms_settings(self, confirmation_link_expiry_time=500):
+        self.sms_settings = SMSAccountConfirmationSettings(domain=self.domain,
+            confirmation_link_expiry_time=confirmation_link_expiry_time)
+        self.sms_settings.save = Mock()
+        return self.sms_settings
+
     def _create_domain(self, call_center_config_enabled=True, **kwargs):
         domain_properties = {
             'name': 'test-domain',
-            'confirmation_link_expiry_time': 500,
             'call_center_enabled': False,
             'default_timezone': 'UTC'
         }
