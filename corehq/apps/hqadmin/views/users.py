@@ -625,7 +625,8 @@ class OffboardingUserList(UserAdministration):
 
     def __init__(self):
         self.users = []
-        self.table_title = ""
+        self.table_title = ''
+        self.validation_errors = []
 
     @method_decorator(require_superuser)
     def dispatch(self, *args, **kwargs):
@@ -640,16 +641,20 @@ class OffboardingUserList(UserAdministration):
             'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
             'offboarding': True,
-            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title
+            'table_title': _('All superusers and staff users') if not self.table_title else self.table_title,
+            'validation_errors': self.validation_errors,
         }
 
     def post(self, request, *args, **kwargs):
         form = OffboardingUserListForm(self.request.POST)
         if form.is_valid():
             users = form.cleaned_data['csv_email_list']
+            self.validation_errors = form.cleaned_data.get('validation_errors')
             if users:
                 self.users = augmented_superusers(users=users, include_accounting_admin=True)
             else:
                 self.users = users
             self.table_title = "Users that need their privileges revoked/account disabled"
+            messages.success(request, _("Successfully retrieved users to offboard."))
+
         return self.get(request, *args, **kwargs)

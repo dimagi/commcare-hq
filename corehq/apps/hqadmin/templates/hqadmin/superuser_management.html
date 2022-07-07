@@ -18,6 +18,12 @@
   </div>
   <div class="row">
     <div class="col-xs-12">
+      {% if validation_errors %}
+        <h4> {% translate "The following users do not exist on this site and so do not need to be offboarded. Please remove them from the official list of employees." %} </h4>
+          {% for error in validation_errors %}
+            {{ error }} <br>
+          {% endfor %}
+      {% endif %}
       {% if not offboarding %}
         <h2>{% translate "All superusers and staff users" %}</h2>
         <a class="btn btn-primary" href="{% url "superuser_table" %}" target="_blank"><i class="fa fa-download"></i> Download</a>

@@ -145,21 +145,26 @@ def clean_data(cleaned_data, offboarding_list=False):
         )
 
     users = []
-    validationErrors = []
+    validation_errors = []
     for username in csv_email_list:
         if not offboarding_list:
             if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-                validationErrors.append(ValidationError(_("Email address '{}' is not a "
+                validation_errors.append(ValidationError(_("Email address '{}' is not a "
                                                           "dimagi email address".format(username))))
                 continue
         try:
             users.append(User.objects.get(username=username))
         except User.DoesNotExist:
-            validationErrors.append(ValidationError(_(
-                "User with email address '{}' does not exist on "
-                "this site, please have the user registered first".format(username))))
-    if validationErrors:
-        raise ValidationError(validationErrors)
+            if not offboarding_list:
+                validation_errors.append(ValidationError(username))
+            else:
+                validation_errors.append(username)
+    if not offboarding_list and validation_errors:
+        validation_errors.insert(0, ValidationError(_(
+            "The following users do not exist on this site, please have the user registered first.")))
+        raise ValidationError(validation_errors)
+    if offboarding_list and validation_errors:
+        cleaned_data['validation_errors'] = validation_errors
 
     if offboarding_list:
         #inverts the given list by default
