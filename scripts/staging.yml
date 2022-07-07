@@ -76,6 +76,5 @@ branches:
     - jc/minimum-pwd-length # Jing June 29
     - akj/mw-signup-enhancements # Akash June 30
     - jls/dd-in-rules-ui # Jenny July 1
-    - jm/django-3.2.14 # Amit July 6
     - ad/save-only-edited-fields-migration # Addison July 7
 submodules: { }
