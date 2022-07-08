@@ -20,8 +20,8 @@ class Command(BaseCommand):
             sys.exit(1)
 
         for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
-            docs = hqESQuery().domain(domain).run().hits
-            if not docs:
+            doc_ids = hqESQuery().domain(domain).source(['_id']).run().hits
+            if not doc_ids:
                 continue
             adapter = doc_adapter_from_info(registry_entry(hqESQuery.index))
-            adapter.bulk_delete(docs)
+            adapter.bulk_delete(doc_ids)
