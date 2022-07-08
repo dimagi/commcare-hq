@@ -893,6 +893,37 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
+    /**
+     * Represents blah blah blah
+     */
+    function FileEntry(question, options) {
+        var self = this;
+        EntrySingleAnswer.call(this, question, options);
+        self.templateType = 'file';
+
+        self.accept = "image/*,.pdf";
+        self.file = ko.observable();
+
+        self.helpText = function () {
+            return "";      // file input is already pretty helpful
+        };
+
+    }
+    FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        if (newValue !== Const.NO_ANSWER) {
+            var $input = $('#' + self.entryId);
+            self.answer(newValue.replace(Const.FILE_PREFIX, ""));
+            self.file($input[0].files[0]);
+        } else {
+            self.answer(newValue);
+            self.file(null);
+        }
+        this.question.onchange();
+    };
+
     function GeoPointEntry(question, options) {
         var self = this;
         EntryArrayAnswer.call(self, question, options);
