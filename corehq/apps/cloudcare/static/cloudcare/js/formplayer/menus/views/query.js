@@ -251,8 +251,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // geocoderItemCallback sets the value on the model
             } else {
                 if (!this.isValid()) {
-                    FormplayerFrontend.trigger('showInputError', this.model.get("error") ||
-                    "Please enter a value for this field.", this);
+                    FormplayerFrontend.trigger('showInputError', gettext(this.model.get("error")) ||
+                    gettext("Please enter a value for this field."), this);
                     return;
                 }
                 this.model.set('value', $(e.currentTarget).val());
@@ -428,8 +428,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
-                    FormplayerFrontend.trigger('showInputError', childView.model.get("error") ||
-                    "Please enter a value for this field.", childView);
+                    FormplayerFrontend.trigger('showInputError', gettext(childView.model.get("error")) ||
+                    gettext("Please enter a value for this field."), childView);
                 }
             });
 
