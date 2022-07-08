@@ -56,7 +56,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
         };
 
         self.submit = function (form) {
-            var editors = baseAce.returnEditors();
+            var editors = baseAce.getEditors();
             for (let i = 0; i < editors.length; i++) {
                 var value = editors[i].getValue();
                 try {
@@ -70,7 +70,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                     return self;
                 }
             }
-            self.errorMessage('');
+            self.errorMessage(''); // clears error message from page before submitting
             $.post(
                 form.action,
                 {'case_configs': JSON.stringify(self.oCaseConfigs())},

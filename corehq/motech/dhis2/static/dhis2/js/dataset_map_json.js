@@ -30,7 +30,7 @@ hqDefine('dhis2/js/dataset_map_json', [
         };
 
         self.submit = function (form) {
-            var editors = baseAce.returnEditors();
+            var editors = baseAce.getEditors();
             var value = editors[0].getValue();
             try {
                 jsonParse.parseJson(value, null, 30);
@@ -38,7 +38,7 @@ hqDefine('dhis2/js/dataset_map_json', [
                 self.errorMessage(error);
                 return self;
             }
-            self.errorMessage('');
+            self.errorMessage(''); // clears error message from page before submitting
             $.post(
                 form.action,
                 {'dataset_map': self.dataSetMap()},

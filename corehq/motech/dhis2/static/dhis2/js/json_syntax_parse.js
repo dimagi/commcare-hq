@@ -16,26 +16,38 @@ hqDefine('dhis2/js/json_syntax_parse', [
             };
         }
         var badToken = error.message.startsWith('Unexpected token') ?
-            error.message.match(/^Unexpected token (.|\n) .*position\s+(\d+)/i)
-            : error.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i);
+            error.message.match(/^Unexpected token (.|\n) .*position\s+(\d+)/i) :
+            error.message.match(/^Unexpected ([^\s]+) .*position\s+(\d+)/i);
 
-        var errorIndex = badToken ? +badToken[2]
-            : error.message.match(/^Unexpected end of JSON.*/i) ? text.length - 1
-                : null;
+        var tokenIndex = 1;
+        var positionIndex = 2;
 
-        var errorMsg = badToken ? error.message.replace(/^Unexpected token ./, `Unexpected token ${
-            JSON.stringify(badToken[1])
-        }`)
-            : error.message;
-
-        if (badToken !== null && badToken[1] === '\n') {
-            errorMsg = errorMsg.replace(/[\n\r]/, 'at end of row');
+        var errorIndex;
+        if (badToken) {
+            errorIndex = +badToken[positionIndex];
+        } else if (error.message.match(/^Unexpected end of JSON.*/i)) {
+            errorIndex = text.length - 1;
+        } else {
+            errorIndex = null;
         }
 
-        var helpText = "";
+        var errorMsg;
+        if (badToken) {
+            errorMsg = error.message.replace(/^Unexpected token ./,
+                `Unexpected token ${JSON.stringify(badToken[tokenIndex])}`);
+            if (badToken[tokenIndex] === '\n') {
+                errorMsg = errorMsg.replace(/[\n\r]/, 'at end of row');
+            }
+        } else {
+            errorMsg = error.message;
+        }
+
+        var helpText;
         if (error.message.startsWith('Unexpected token')) {
-            if (badToken[1] === '\n') {
+            if (badToken[tokenIndex] === '\n') {
                 helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, [';
+            } else if (badToken[tokenIndex] === '{' || badToken[tokenIndex] === '[') {
+                helpText = "Expected: }, :, ',', ]";
             } else {
                 helpText = "Expected: }, ',', ]";
             }

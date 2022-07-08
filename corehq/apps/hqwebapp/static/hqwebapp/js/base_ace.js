@@ -55,7 +55,7 @@ hqDefine('hqwebapp/js/base_ace', [
         });
     };
 
-    var returnEditors = function () {
+    var getEditors = function () {
         return self.editor;
     };
 
@@ -115,6 +115,6 @@ hqDefine('hqwebapp/js/base_ace', [
         initJsonWidget: initJsonWidget,
         initObservableJsonWidget: initObservableJsonWidget,
         initAceEditor: initAceEditor,
-        returnEditors: returnEditors,
+        getEditors: getEditors,
     };
 });

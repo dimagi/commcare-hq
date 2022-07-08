@@ -31,7 +31,7 @@ hqDefine('dhis2/js/dhis2_events_config', [
         };
 
         self.submit = function (form) {
-            var editors = baseAce.returnEditors();
+            var editors = baseAce.getEditors();
             var value = editors[0].getValue();
             try {
                 jsonParse.parseJson(value, null, 30);
@@ -39,7 +39,7 @@ hqDefine('dhis2/js/dhis2_events_config', [
                 self.errorMessage(error);
                 return self;
             }
-            self.errorMessage('');
+            self.errorMessage(''); // clears error message from page before submitting
             $.post(
                 form.action,
                 {'form_configs': self.formConfigs()},
