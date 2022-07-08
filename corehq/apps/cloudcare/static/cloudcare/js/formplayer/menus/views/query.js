@@ -422,23 +422,23 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             e.preventDefault();
             FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
             var invalidFields = [];
-                this.children.each(function (childView) {
-                    if (!childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                        FormplayerFrontend.trigger('showInputError', childView.model.get("error") ||
-                        "Please enter a value for this field.", childView.model.get("text"));
-                    }
-                });
-
-                if (invalidFields.length) {
-                    var errorHTML = "Please check the following fields:";
-                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                        return "<li>" + f + "</li>";
-                    }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true);
-
-                    return;
+            this.children.each(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                    FormplayerFrontend.trigger('showInputError', childView.model.get("error") ||
+                    "Please enter a value for this field.", childView.model.get("text"));
                 }
+            });
+
+            if (invalidFields.length) {
+                var errorHTML = "Please check the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + f + "</li>";
+                }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true);
+
+                return;
+            }
 
             FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
