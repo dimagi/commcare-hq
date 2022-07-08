@@ -21,6 +21,7 @@ class Command(BaseCommand):
 
         for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             doc_ids = hqESQuery().domain(domain).source(['_id']).run().hits
+            doc_ids = [doc['_id'] for doc in doc_ids]
             if not doc_ids:
                 continue
             adapter = doc_adapter_from_info(registry_entry(hqESQuery.index))
