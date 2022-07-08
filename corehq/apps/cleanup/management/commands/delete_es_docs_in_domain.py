@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         domain_obj = Domain.get_by_name(domain)
-        if domain_obj:
+        if domain_obj and not domain_obj.doc_type.endswith('-Deleted'):
             print(f"{domain} has not been deleted. This command is intended for use on deleted domains only.")
             sys.exit(1)
 
