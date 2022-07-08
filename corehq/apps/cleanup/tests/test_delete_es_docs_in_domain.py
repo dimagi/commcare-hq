@@ -1,4 +1,4 @@
-from django.core.management import call_command, CommandError
+from django.core.management import CommandError, call_command
 from django.test import TestCase
 
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -9,10 +9,16 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.pillows.mappings import XFORM_INDEX_INFO, CASE_INDEX_INFO, CASE_SEARCH_INDEX_INFO, APP_INDEX_INFO, \
-    GROUP_INDEX_INFO, USER_INDEX_INFO
+from corehq.pillows.mappings import (
+    APP_INDEX_INFO,
+    CASE_INDEX_INFO,
+    CASE_SEARCH_INDEX_INFO,
+    GROUP_INDEX_INFO,
+    USER_INDEX_INFO,
+    XFORM_INDEX_INFO,
+)
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import reset_es_index, ensure_index_deleted
+from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 @es_test
