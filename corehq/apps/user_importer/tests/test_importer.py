@@ -50,6 +50,8 @@ from corehq.extensions.interface import disable_extensions
 from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
 
+from django.conf import settings
+
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -1489,7 +1491,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+        self.assertEqual(rows[0]['flag'],
+        f'Password must have at least {settings.MINIMUM_PASSWORD_LENGTH} characters.')
 
 
 class TestUserUploadRecord(TestCase):
