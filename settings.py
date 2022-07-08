@@ -586,7 +586,7 @@ CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
 # Default serializer should be changed back to 'json' after
 # https://github.com/celery/celery/issues/6759 is fixed
-CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_TASK_SERIALIZER = 'pickle'  # default is 'json'. See corehq.apps.celery.shared_task
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # in seconds
