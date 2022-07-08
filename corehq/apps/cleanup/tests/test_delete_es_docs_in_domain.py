@@ -1,4 +1,4 @@
-from django.core.management import call_command
+from django.core.management import call_command, CommandError
 from django.test import TestCase
 
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -79,7 +79,7 @@ class TestDeleteESDocsInDomain(TestCase):
         self.assertEqual(1, len(XFormInstance.objects.get_forms([form.form_id], domain_name)))
 
     def test_fails_on_active_domain(self):
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(CommandError):
             call_command('delete_es_docs_in_domain', self.active_domain.name)
 
     def _setup_es(self):

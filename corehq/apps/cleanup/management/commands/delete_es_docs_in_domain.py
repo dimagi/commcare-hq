@@ -1,6 +1,6 @@
 import sys
 
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
@@ -16,8 +16,9 @@ class Command(BaseCommand):
     def handle(self, domain, **options):
         domain_obj = Domain.get_by_name(domain)
         if domain_obj and not domain_obj.doc_type.endswith('-Deleted'):
-            print(f"{domain} has not been deleted. This command is intended for use on deleted domains only.")
-            sys.exit(1)
+            raise CommandError(
+                f"{domain} has not been deleted. This command is intended for use on deleted domains only."
+            )
 
         for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             doc_ids = hqESQuery().domain(domain).source(['_id']).run().hits
