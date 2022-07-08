@@ -487,14 +487,16 @@ def validate_push(user, domain, downstream_domains):
             message=gettext("No downstream project spaces were selected. Please contact support.")
         )
 
-    try:
-        domain_links = [
-            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
-        ]
-    except DomainLink.DoesNotExist:
-        raise InvalidPushException(
-            message=gettext("Links between one or more project spaces do not exist. Please contact support.")
-        )
+    domain_links = []
+    for dd in downstream_domains:
+        try:
+            domain_links.append(DomainLink.objects.get(master_domain=domain, linked_domain=dd))
+        except DomainLink.DoesNotExist:
+            raise InvalidPushException(
+                message=gettext(
+                    "The project space link between {} and {} does not exist. Ensure the link was not recently "
+                    "deleted.").format(domain, dd)
+            )
 
     if not user_has_access_in_all_domains(user, downstream_domains):
         raise InvalidPushException(

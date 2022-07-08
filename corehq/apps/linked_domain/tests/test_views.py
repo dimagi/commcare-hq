@@ -99,7 +99,8 @@ class ValidatePushTests(TestCase):
         with self.assertRaises(InvalidPushException) as cm:
             validate_push(self.user, 'upstream', ['downstream'])
         self.assertEqual(cm.exception.message,
-                         'Links between one or more project spaces do not exist. Please contact support.')
+                         "The project space link between upstream and downstream does not exist. Ensure the "
+                         "link was not recently deleted.")
 
     def test_raises_exception_if_user_does_not_have_permission(self):
         DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
