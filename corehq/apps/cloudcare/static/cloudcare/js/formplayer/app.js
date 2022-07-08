@@ -141,9 +141,8 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
     });
 
-    FormplayerFrontend.on('showInputError', function (errorMessage, inputId) {
-        let jQueryFriendlyId = "#" + inputId.replace(" ", "\\ ");
-        showError(errorMessage, $(jQueryFriendlyId).parent());
+    FormplayerFrontend.on('showInputError', function (errorMessage, childView) {
+        showError(errorMessage, $(childView.el).find('.query-input-group'));
     });
 
     FormplayerFrontend.on('showWarning', function (message) {

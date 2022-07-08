@@ -204,7 +204,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _isValid: function () {
-            if (!this.model.get('required') && !this.model.get("error")) {
+            if (this.model.get("error")) {
+                return false;
+            }
+            if (!this.model.get('required')) {
                 return true;
             }
             var answer = this.getEncodedValue();
@@ -249,7 +252,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else {
                 if (!this.isValid()) {
                     FormplayerFrontend.trigger('showInputError', this.model.get("error") ||
-                    "Please enter a value for this field.", this.model.get("text"));
+                    "Please enter a value for this field.", this);
                     return;
                 }
                 this.model.set('value', $(e.currentTarget).val());
@@ -426,7 +429,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
                     FormplayerFrontend.trigger('showInputError', childView.model.get("error") ||
-                    "Please enter a value for this field.", childView.model.get("text"));
+                    "Please enter a value for this field.", childView);
                 }
             });
 
