@@ -1146,6 +1146,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
+            case Const.BINARY:
+                if (style === Const.SIGNATURE) {
+                    entry = new FileEntry(question, {});
+                    break;
+                }
+                // otherwise, deliberately fall through to default (unsupported)
             default:
                 window.console.warn('No active entry for: ' + question.datatype());
                 entry = new UnsupportedEntry(question, options);

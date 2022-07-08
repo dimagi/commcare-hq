@@ -17,6 +17,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         GEO: 'geo',
         INFO: 'info',
         BARCODE: 'barcode',
+        BINARY: 'binary',
 
         // Appearance attributes
         NUMERIC: 'numeric',
@@ -32,6 +33,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COLLAPSIBLE_CLOSED: 'collapse-closed',
         TIME_12_HOUR: '12-hour',
         ETHIOPIAN: 'ethiopian',
+        SIGNATURE: 'signature',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
