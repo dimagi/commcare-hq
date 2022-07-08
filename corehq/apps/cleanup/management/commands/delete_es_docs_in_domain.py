@@ -1,5 +1,3 @@
-import sys
-
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
