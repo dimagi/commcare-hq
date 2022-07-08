@@ -109,7 +109,7 @@ class TestUserSyncToEs(SimpleTestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
             '_id': user._id,
-            'domain': self.user.domain,
+            'domain': user.domain,
             'username': user.username,
             'is_active': True,
             'first_name': user.first_name,
