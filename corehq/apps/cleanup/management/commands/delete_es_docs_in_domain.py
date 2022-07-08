@@ -7,6 +7,9 @@ from corehq.apps.es.transient_util import doc_adapter_from_info
 
 
 class Command(BaseCommand):
+    """
+    Intended for use in the event that a domain has been deleted, but ES docs have not been fully cleaned up
+    """
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
