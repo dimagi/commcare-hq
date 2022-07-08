@@ -19,9 +19,9 @@
   <div class="row">
     <div class="col-xs-12">
       {% if validation_errors %}
-        <h4> {% translate "The following users do not exist on this site and so do not need to be offboarded. Please remove them from the official list of employees." %} </h4>
-          {% for error in validation_errors %}
-            {{ error }} <br>
+        <h4> {% translate "The following users do not exist on this site and so do not need to be offboarded." %} </h4>
+          {% for user in validation_errors %}
+            {{ user }} <br>
           {% endfor %}
       {% endif %}
       {% if not offboarding %}
