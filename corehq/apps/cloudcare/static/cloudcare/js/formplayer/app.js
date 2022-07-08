@@ -141,6 +141,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
     });
 
+    FormplayerFrontend.on('showInputError', function (errorMessage, inputId) {
+        let jQueryFriendlyId = "#" + inputId.replace(" ", "\\ ");
+        showError(errorMessage, $(jQueryFriendlyId).parent());
+    });
+
     FormplayerFrontend.on('showWarning', function (message) {
         showWarning(message, $("#cloudcare-notifications"));
     });
