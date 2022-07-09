@@ -115,13 +115,13 @@ def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, curr
         return None
 
     current_message_seq_num = str(
-        ((schedule_iteration_num - 1) * num_events) +
-        current_event_num + 1
+        ((schedule_iteration_num - 1) * num_events) + current_event_num + 1
     )
     custom_messages = FixtureDataItem.by_field_value(
         domain, message_bank, RISK_PROFILE_FIELD, risk_profile
     )
-    custom_messages = [m for m in custom_messages if m.fields_without_attributes['sequence'] == current_message_seq_num]
+    custom_messages = [m for m in custom_messages
+        if m.fields_without_attributes['sequence'] == current_message_seq_num]
 
     if len(custom_messages) != 1:
         if not custom_messages:
