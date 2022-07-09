@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import partial
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -8,9 +8,8 @@ from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
     get_or_cache_global_fixture,
 )
-from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
-from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataItem, LookupTable
+from corehq.apps.fixtures.models import FIXTURE_BUCKET, LookupTable, LookupTableRow
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.util.metrics import metrics_histogram
@@ -114,7 +113,7 @@ class ItemListsProvider(FixtureProvider):
             if data_type.is_global:
                 global_types[data_type._migration_couch_id] = data_type
             else:
-                user_types[data_type._migration_couch_id] = data_type
+                user_types[data_type.id] = data_type
         items = []
         user_items_count = 0
         if global_types:
@@ -148,9 +147,7 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
-            for item in iter_fixture_items_for_data_type(domain, data_type._migration_couch_id, wrap=False):
-                self._set_cached_type(item, data_type)
-                yield item
+            return LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
 
         return self._get_fixtures(global_types, get_items_by_type, GLOBAL_USER_ID)
 
@@ -158,22 +155,15 @@ class ItemListsProvider(FixtureProvider):
         user_items_count = 0
         items_by_type = defaultdict(list)
         for item in restore_user.get_fixture_data_items():
-            data_type = user_types.get(item['data_type_id'])
+            data_type = user_types.get(item.table_id)
             if data_type:
-                self._set_cached_type(item, data_type)
                 items_by_type[data_type].append(item)
                 user_items_count += 1
 
         def get_items_by_type(data_type):
-            return sorted(items_by_type.get(data_type, []),
-                          key=itemgetter('sort_key'))
+            return items_by_type.get(data_type, [])
 
         return self._get_fixtures(user_types, get_items_by_type, restore_user.user_id), user_items_count
-
-    def _set_cached_type(self, item, data_type):
-        # set the cached version used by the object so that it doesn't
-        # have to do another db trip later
-        item['_data_type'] = data_type
 
     def _get_fixtures(self, data_types, get_items_by_type, user_id):
         fixtures = []
@@ -195,11 +185,7 @@ class ItemListsProvider(FixtureProvider):
         item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:
-            try:
-                xml = self.to_xml(item)
-            except KeyError:
-                # catch docs missed in prior lazy migrations
-                xml = self.to_xml(FixtureDataItem.wrap(item).to_json())
+            xml = self.to_xml(item, data_type)
             item_list_element.append(xml)
         return fixture_element
 
@@ -209,30 +195,29 @@ class ItemListsProvider(FixtureProvider):
         return get_index_schema_node(fixture_id, attrs_to_index)
 
     @staticmethod
-    def to_xml(item):
-        xData = ElementTree.Element(item['_data_type'].tag)
-        for attribute in item['_data_type'].item_attributes:
+    def to_xml(item, data_type):
+        xData = ElementTree.Element(data_type.tag)
+        for attribute in data_type.item_attributes:
             try:
-                xData.attrib[attribute] = serialize(item['item_attributes'][attribute])
+                xData.attrib[attribute] = serialize(item.item_attributes[attribute])
             except KeyError:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
                 raise FixtureTypeCheckError(
-                    f"Table with tag {item['_data_type'].tag} has an item with "
-                    f"id {item['_id']} that doesn't have an attribute as "
+                    f"Table with tag {data_type.tag} has an item with "
+                    f"id {item.id.hex} that doesn't have an attribute as "
                     "defined in its types definition"
                 )
-        for field in item['_data_type'].fields:
+        for field in data_type.fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)
-            if field.field_name not in item.get('fields', {}):
+            if field.field_name not in item.fields:
                 xField = ElementTree.SubElement(xData, escaped_field_name)
                 xField.text = ""
             else:
-                for field_with_attr in item['fields'][field.field_name]['field_list']:
+                for field_with_attr in item.fields[field.field_name]:
                     xField = ElementTree.SubElement(xData, escaped_field_name)
-                    xField.text = serialize(field_with_attr['field_value'])
-                    for attribute in field_with_attr['properties']:
-                        val = field_with_attr['properties'][attribute]
+                    xField.text = serialize(field_with_attr.value)
+                    for attribute, val in field_with_attr.properties.items():
                         xField.attrib[attribute] = serialize(val)
 
         return xData

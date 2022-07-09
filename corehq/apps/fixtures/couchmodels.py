@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -15,17 +15,13 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_items_for_data_type,
     get_owner_ids_by_type,
 )
-from corehq.apps.fixtures.exceptions import (
-    FixtureException,
-    FixtureVersionError,
-)
+from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.utils import remove_deleted_ownerships
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
@@ -342,44 +338,16 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
                     for key, value in self.fields.items()}
 
     def add_owner(self, owner, owner_type, transaction=None):
-        assert(owner.domain == self.domain)
-        with transaction or CouchTransaction() as transaction:
-            o = FixtureOwnership(
-                domain=self.domain,
-                owner_type=owner_type,
-                owner_id=owner.get_id,
-                data_item_id=self.get_id,
-            )
-            transaction.save(o)
-        return o
+        raise NotImplementedError("no longer used")
 
     def remove_owner(self, owner, owner_type):
-        for ownership in FixtureOwnership.view('fixtures/ownership',
-            key=[self.domain, 'by data_item and ' + owner_type, self.get_id, owner.get_id],
-            reduce=False,
-            include_docs=True
-        ):
-            try:
-                ownership.delete()
-            except ResourceNotFound:
-                # looks like it was already deleted
-                pass
-            except ResourceConflict:
-                raise FixtureException((
-                    "couldn't remove ownership {owner_id} for item {fixture_id} of type "
-                    "{data_type_id} in domain {domain}. It was updated elsewhere"
-                ).format(
-                    owner_id=ownership._id,
-                    fixture_id=self._id,
-                    data_type_id=self.data_type_id,
-                    domain=self.domain
-                ))
+        raise NotImplementedError("no longer used")
 
     def add_user(self, user, transaction=None):
-        return self.add_owner(user, 'user', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_user(self, user):
-        return self.remove_owner(user, 'user')
+        raise NotImplementedError("no longer used")
 
     def add_group(self, group, transaction=None):
         return self.add_owner(group, 'group', transaction=transaction)
@@ -431,7 +399,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             return user_ids | set([user.get_id for user in users_in_groups])
 
     def get_all_users(self, wrap=True):
-        return self.get_users(wrap=wrap, include_groups=True)
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized

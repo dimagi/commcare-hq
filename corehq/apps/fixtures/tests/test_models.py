@@ -12,6 +12,8 @@ from ..models import (
     FixtureTypeField,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 
@@ -98,6 +100,87 @@ class TestLookupTable(TestCase):
             )
         else:
             self.assertEqual(obj.fields, value)
+
+
+class TestLookupTableRowManager(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name("lookup-table-domain", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+        cls.table = LookupTable(fields=[TypeField("vera")])
+        cls.table.save(sync_to_couch=False)
+
+    def test_iter_rows(self):
+        self.create_rows(10)
+        with self.assertNumQueries(4):
+            rows = list(LookupTableRow.objects.iter_rows(
+                self.domain.name, table_id=self.table.id, batch_size=3))
+            self.assertEqual(
+                [r.fields["num"][0].value for r in rows],
+                [str(x) for x in range(10)],
+            )
+
+    def test_iter_rows_with_duplicate_sort_keys(self):
+        created = self.create_rows(10, sort_key=0)
+        expected = sorted(created, key=lambda r: r.id)
+
+        rows = list(LookupTableRow.objects.iter_rows(
+            self.domain.name, table_id=self.table.id, batch_size=3))
+        self.assertEqual(
+            [r.fields["num"][0].value for r in rows],
+            [r.fields["num"][0].value for r in expected],
+        )
+
+    def test_iter_by_user(self):
+        class bob:
+            domain = self.domain.name
+            user_id = "bob"
+            sql_location = None
+        created = self.create_rows(20)
+        even_rows = [created[i] for i in range(0, 20, 2)]
+        self.add_owner(bob, even_rows)
+        with self.assertNumQueries(4):
+            rows = list(LookupTableRow.objects.iter_by_user(bob, batch_size=3))
+            self.assertEqual(
+                [r.fields["num"][0].value for r in rows],
+                [str(x) for x in range(0, 20, 2)],
+            )
+
+    def test_iter_by_user_with_duplicate_sort_keys(self):
+        class bob:
+            domain = self.domain.name
+            user_id = "bob"
+            sql_location = None
+        created = self.create_rows(20, sort_key=0)
+        even_rows = [created[i] for i in range(0, 20, 2)]
+        expected = sorted(even_rows, key=lambda r: r.id)
+        self.add_owner(bob, even_rows)
+
+        rows = list(LookupTableRow.objects.iter_by_user(bob, batch_size=3))
+        nums = [r.fields["num"][0].value for r in rows]
+        self.assertEqual(nums, [r.fields["num"][0].value for r in expected])
+        self.assertEqual(len(rows), 10, nums)
+
+    def create_rows(self, count, sort_key=None):
+        rows = [LookupTableRow(
+            domain=self.domain.name,
+            table=self.table,
+            fields={"num": [Field(value=str(index))]},
+            sort_key=index if sort_key is None else sort_key,
+        ) for index in range(count)]
+        LookupTableRow.objects.bulk_create(rows)
+        return rows
+
+    def add_owner(self, user, rows):
+        owners = [LookupTableRowOwner(
+            domain=self.domain.name,
+            row_id=row.id,
+            owner_type=OwnerType.User,
+            owner_id=user.user_id,
+        ) for row in rows]
+        LookupTableRowOwner.objects.bulk_create(owners)
 
 
 class TestLookupTableRow(TestCase):

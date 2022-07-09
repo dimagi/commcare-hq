@@ -5,10 +5,9 @@ from django.test import SimpleTestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
 
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureItemField,
+    Field,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists
@@ -35,65 +34,21 @@ class FieldNameCleanTest(SimpleTestCase):
             item_attributes=[],
         )
 
-        self.data_item = FixtureDataItem(
+        self.data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=self.data_type._migration_couch_id,
+            table_id=self.data_type.id,
             fields={
-                "will/crash": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="yep",
-                            properties={}
-                        )
-                    ]
-                ),
-                "space cadet": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="major tom",
-                            properties={}
-                        )
-                    ]
-                ),
-                "yes\\no": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="no, duh",
-                            properties={}
-                        )
-                    ]
-                ),
-                "<with>": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="so fail",
-                            properties={}
-                        )
-                    ]
-                ),
-                "<crazy / combo><d": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="just why",
-                            properties={}
-                        )
-                    ]
-                ),
-                "xmlbad": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="badxml",
-                            properties={}
-                        )
-                    ]
-                )
+                "will/crash": [Field(value="yep")],
+                "space cadet": [Field(value="major tom")],
+                "yes\\no": [Field(value="no, duh")],
+                "<with>": [Field(value="so fail")],
+                "<crazy / combo><d": [Field(value="just why")],
+                "xmlbad": [Field(value="badxml")],
             },
             item_attributes={},
         )
 
     def test_cleaner(self):
-        item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_type
         check_xml_line_by_line(self, """
         <dirty_fields>
             <will_crash>yep</will_crash>
@@ -102,7 +57,7 @@ class FieldNameCleanTest(SimpleTestCase):
             <_with_>so fail</_with_>
             <_crazy___combo__d>just why</_crazy___combo__d>
         </dirty_fields>
-        """, ElementTree.tostring(item_lists.to_xml(item_dict), encoding='utf-8'))
+        """, ElementTree.tostring(item_lists.to_xml(self.data_item, self.data_type), encoding='utf-8'))
 
 
 class FieldNameValidationTest(SimpleTestCase):

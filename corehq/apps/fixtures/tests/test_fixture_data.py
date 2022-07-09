@@ -11,11 +11,11 @@ from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
-    FieldList,
+    Field,
     FixtureDataItem,
-    FixtureItemField,
     FixtureOwnership,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 from corehq.apps.users.models import CommCareUser
@@ -49,67 +49,49 @@ class FixtureDataTest(TestCase):
         self.data_type.save()
         self.addCleanup(self.data_type._migration_get_couch_object().delete)
 
-        self.data_item = FixtureDataItem(
+        self.data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=self.data_type._migration_couch_id,
+            table_id=self.data_type.id,
             fields={
-                "state_name": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_state",
-                            properties={}
-                        )
-                    ]
-                ),
-                "district_name": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_in_HIN",
-                            properties={"lang": "hin"}
-                        ),
-                        FixtureItemField(
-                            field_value="Delhi_in_ENG",
-                            properties={"lang": "eng"}
-                        )
-                    ]
-                ),
-                "district_id": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_id",
-                            properties={}
-                        )
-                    ]
-                )
+                "state_name": [
+                    Field(value="Delhi_state")
+                ],
+                "district_name": [
+                    Field(value="Delhi_in_HIN", properties={"lang": "hin"}),
+                    Field(value="Delhi_in_ENG", properties={"lang": "eng"})
+                ],
+                "district_id": [
+                    Field(value="Delhi_id")
+                ]
             },
             item_attributes={},
+            sort_key=0,
         )
         self.data_item.save()
-        self.addCleanup(self.data_item.delete)
+        self.addCleanup(self.data_item._migration_get_couch_object().delete)
 
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
         def delete_ownership():
             from couchdbkit import ResourceNotFound
-            try:
-                ownership.delete()
-            except ResourceNotFound:
-                pass  # ignore if already deleted
+            if self.ownership is not None:
+                try:
+                    self.ownership.delete()
+                except ResourceNotFound:
+                    pass  # ignore if already deleted
 
-        ownership = FixtureOwnership(
+        self.ownership = FixtureOwnership(
             domain=self.domain,
             owner_id=self.user.get_id,
             owner_type='user',
-            data_item_id=self.data_item.get_id
+            data_item_id=self.data_item._migration_couch_id
         )
-        ownership.save()
+        self.ownership.save()
         self.addCleanup(delete_ownership)
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
-        item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_type
         check_xml_line_by_line(self, """
         <district>
             <state_name>Delhi_state</state_name>
@@ -117,11 +99,12 @@ class FixtureDataTest(TestCase):
             <district_name lang="eng">Delhi_in_ENG</district_name>
             <district_id>Delhi_id</district_id>
         </district>
-        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(item_dict), encoding='utf-8'))
+        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(
+            self.data_item, self.data_type), encoding='utf-8'))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, include_docs=False))
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        row_ids = [r.id for r in LookupTableRow.objects.iter_by_user(self.user)]
+        self.assertItemsEqual([self.data_item.id], row_ids)
 
         fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
 
@@ -138,20 +121,13 @@ class FixtureDataTest(TestCase):
         </fixture>
         """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
 
-        self.data_item.remove_user(self.user)
-        self.assertItemsEqual([], self.data_item.get_all_users())
-
-        fixture_ownership = self.data_item.add_user(self.user)
-        self.addCleanup(fixture_ownership.delete)
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
-
     def test_fixture_removal(self):
         """
         An empty fixture list should be generated for each fixture that the
         use does not have access to (within the domain).
         """
-
-        self.data_item.remove_user(self.user)
+        self.ownership.delete()
+        self.ownership = None
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(1, len(fixtures))
@@ -175,7 +151,7 @@ class FixtureDataTest(TestCase):
     def test_get_item_by_field_value(self):
         self.assertEqual(
             FixtureDataItem.by_field_value(self.domain, self.data_type, 'state_name', 'Delhi_state').one().get_id,
-            self.data_item.get_id
+            self.data_item._migration_couch_id
         )
 
     def test_fixture_is_indexed(self):
@@ -312,21 +288,15 @@ class FixtureDataTest(TestCase):
         return data_type
 
     def make_data_item(self, data_type, cost):
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=data_type._migration_couch_id,
-            fields={
-                "cost": FieldList(
-                    field_list=[FixtureItemField(
-                        field_value=cost,
-                        properties={},
-                    )]
-                ),
-            },
+            table_id=data_type.id,
+            fields={"cost": [Field(value=cost)]},
             item_attributes={},
+            sort_key=0,
         )
         data_item.save()
-        self.addCleanup(data_item.delete)
+        self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
 
@@ -351,7 +321,6 @@ class TestFixtureOrdering(TestCase):
             item_attributes=[],
         )
         cls.data_type.save()
-        cls.addClassCleanup(cls.data_type._migration_get_couch_object().delete)
 
         cls.data_items = [
             cls._make_data_item(4, "Tyrell", "Highgarden", "Rose"),
@@ -362,20 +331,17 @@ class TestFixtureOrdering(TestCase):
             cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
             cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
         ]
-        cls.addClassCleanup(FixtureDataItem.delete_docs, cls.data_items)
+        cls.addClassCleanup(delete_all_fixture_data, cls.domain)
 
     @classmethod
     def _make_data_item(cls, sort_key, name, seat, sigil):
-        def field_list(value):
-            return FieldList(field_list=[FixtureItemField(field_value=value, properties={})])
-
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=cls.domain,
-            data_type_id=cls.data_type._migration_couch_id,
+            table_id=cls.data_type.id,
             fields={
-                "name": field_list(name),
-                "seat": field_list(seat),
-                "sigil": field_list(sigil),
+                "name": [Field(value=name)],
+                "seat": [Field(value=seat)],
+                "sigil": [Field(value=sigil)],
             },
             item_attributes={},
             sort_key=sort_key,

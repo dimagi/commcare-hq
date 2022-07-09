@@ -1,4 +1,6 @@
 from datetime import datetime
+from functools import reduce
+from itertools import chain
 from uuid import UUID, uuid4
 
 from attrs import define, field
@@ -6,6 +8,7 @@ from django.db import models
 
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
+from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
@@ -136,6 +139,59 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
         return any(f.is_indexed for f in self.fields)
 
 
+class LookupTableRowManager(models.Manager):
+
+    def iter_rows(self, domain, *, table_id, **kw):
+        """Get rows for lookup table
+
+        Returned rows are sorted by sort_key.
+        """
+        where = models.Q(table_id=table_id)
+        return self._iter_sorted(domain, where, **kw)
+
+    def iter_by_user(self, user, **kw):
+        """Get rows owned by the user, their location, or their group
+
+        Returned rows are sorted by table_id and sort_key.
+        """
+        def make_conditions(owner_type, ids):
+            return [models.Q(owner_type=owner_type, owner_id=x) for x in ids]
+
+        group_ids = Group.by_user_id(user.user_id, wrap=False)
+        locaction_ids = user.sql_location.path if user.sql_location else []
+        where = models.Q(
+            id__in=models.Subquery(
+                LookupTableRowOwner.objects.filter(
+                    reduce(models.Q.__or__, chain(
+                        make_conditions(OwnerType.User, [user.user_id]),
+                        make_conditions(OwnerType.Group, group_ids),
+                        make_conditions(OwnerType.Location, locaction_ids),
+                    )),
+                    domain=user.domain,
+                ).values("row_id")
+            ),
+        )
+        return self._iter_sorted(user.domain, where, **kw)
+
+    def _iter_sorted(self, domain, where, batch_size=1000):
+        # Depends on ["domain", "table_id", "sort_key", "id"] index for
+        # efficient pagination and sorting.
+        query = self.filter(where, domain=domain).order_by("table_id", "sort_key", "id")
+        next_page = models.Q()
+        while True:
+            results = query.filter(next_page)[:batch_size]
+            yield from results
+            if len(results) < batch_size:
+                break
+            row = results._result_cache[-1]
+            next_page = models.Q(
+                sort_key=row.sort_key,
+                id__gt=row.id,
+            ) | models.Q(
+                sort_key__gt=row.sort_key
+            )
+
+
 @define
 class Field:
     value = field()
@@ -175,6 +231,8 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
     }
     ```
     """
+    objects = LookupTableRowManager()
+
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
     table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE)
