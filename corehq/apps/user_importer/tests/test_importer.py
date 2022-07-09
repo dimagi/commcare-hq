@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
+from django.utils.translation import gettext as _
 
 from unittest.mock import patch
 
@@ -1492,7 +1493,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'],
-        f'Password must have at least {settings.MINIMUM_PASSWORD_LENGTH} characters.')
+        _("Password must have at least {password_length} characters."
+          ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH))
 
 
 class TestUserUploadRecord(TestCase):
