@@ -3,9 +3,7 @@ import uuid
 from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.models import (
-    LookupTable, FixtureDataItem, FieldList, FixtureItemField, TypeField
-)
+from corehq.apps.fixtures.models import Field, LookupTable, LookupTableRow, TypeField
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, CustomContent
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
@@ -83,36 +81,16 @@ class TestUCLACustomHandler(TestCase):
         self._setup_data_item()
 
     def _setup_data_item(self, risk='risk1', sequence='1', message='message1'):
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=self.domain_name,
-            data_type_id=self.data_type._migration_couch_id,
+            table_id=self.data_type.id,
             fields={
-                "risk_profile": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value=risk,
-                            properties={}
-                        )
-                    ]
-                ),
-                "sequence": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value=sequence,
-                            properties={}
-                        )
-                    ]
-                ),
-                "message": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value=message,
-                            properties={}
-                        )
-                    ]
-                ),
+                "risk_profile": [Field(value=risk)],
+                "sequence": [Field(value=sequence)],
+                "message": [Field(value=message)],
             },
             item_attributes={},
+            sort_key=0,
         )
         data_item.save()
         self.addCleanup(data_item.delete)

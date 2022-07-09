@@ -1,8 +1,8 @@
+from uuid import UUID
 from collections import defaultdict, namedtuple
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
-from corehq.apps.fixtures.models import FixtureDataItem, LookupTable
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 
 REQUIRED_FIXTURE_DATA_TYPES = (
     'level_1_eco',
@@ -93,9 +93,9 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
         filter_out={'other': '1'},
     )
     l3_data_items = get_fixture_items_for_data_type(
-        domain, data_type_id=data_types_by_tag["level_3_eco"],
+        domain, data_types_by_tag["level_3_eco"],
     )
-    country_has_level_3 = len(l3_data_items) > 1
+    country_has_level_3 = l3_data_items.count() > 1
     if country_has_level_3:
         l3s_by_l2 = get_fixture_dicts_by_key(
             domain,
@@ -108,9 +108,9 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
             filter_out={'other': '1'},
         )
         l4_data_items = get_fixture_items_for_data_type(
-            domain, data_type_id=data_types_by_tag["level_4_eco"],
+            domain, data_types_by_tag["level_4_eco"],
         )
-        country_has_level_4 = len(l4_data_items) > 1
+        country_has_level_4 = l4_data_items.count() > 1
         if country_has_level_4:
             l4s_by_l3 = get_fixture_dicts_by_key(
                 domain,
@@ -127,7 +127,7 @@ def get_sorted_levels(domain, filters) -> Tuple[list, dict, dict, dict]:
 
 def get_data_type_ids_by_tag(domain):
     ids_by_tag = {
-        table.tag: table._migration_couch_id
+        table.tag: table.id
         for table in LookupTable.objects.by_domain(domain)
     }
     for data_type in REQUIRED_FIXTURE_DATA_TYPES:
@@ -138,7 +138,7 @@ def get_data_type_ids_by_tag(domain):
 
 def get_fixture_dicts(
     domain: str,
-    data_type_id: str,
+    data_type_id: UUID,
     filter_in: Optional[Dict[str, Optional[Iterable]]] = None,
     filter_out: Optional[Dict[str, Any]] = None,
 ) -> List[Dict]:
@@ -158,7 +158,7 @@ def get_fixture_dicts(
 
 def get_fixture_dicts_by_key(
     domain: str,
-    data_type_id: str,
+    data_type_id: UUID,
     key: str,
     filter_in: Optional[Dict[str, list]] = None,
     filter_out: Optional[Dict[str, Any]] = None,
@@ -182,31 +182,27 @@ def get_fixture_dicts_by_key(
     return dicts_by_key
 
 
-def fixture_data_item_to_dict(
-    data_item: FixtureDataItem,
-) -> dict:
-    """
-    Transforms a FixtureDataItem to a dictionary.
+def get_fixture_items_for_data_type(domain, table_id):
+    return LookupTableRow.objects.iter_rows(domain, table_id=table_id)
 
-    A ``FixtureDataItem.fields`` value looks like this::
+
+def fixture_data_item_to_dict(data_item: LookupTableRow) -> dict:
+    """
+    Transforms a LookupTableRow to a dictionary.
+
+    A ``LookupTableRow.fields`` value looks like this::
 
         {
-            'id': FieldList(
-                doc_type='FieldList',
-                field_list=[
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='migori_county',
+            'id': [
+                    Field(
+                        value='migori_county',
                         properties={}
                     )
                 ]
             ),
-            'name': FieldList(
-                doc_type='FieldList',
-                field_list=[
-                    FixtureItemField(
-                        doc_type='FixtureItemField',
-                        field_value='Migori',
+            'name': [
+                    Field(
+                        value='Migori',
                         properties={'lang': 'en'}
                     )
                 ]
@@ -227,7 +223,7 @@ def fixture_data_item_to_dict(
 
     """
     return {
-        key: field_list.field_list[0].field_value if field_list.field_list else None
+        key: field_list[0].value if field_list else None
         for key, field_list in data_item.fields.items()
     }
 

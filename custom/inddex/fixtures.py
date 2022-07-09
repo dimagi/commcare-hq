@@ -4,8 +4,7 @@ from django.utils.functional import cached_property
 
 from attr import attrib, attrs, fields_dict
 
-from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
-from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 
 
 class InddexFixtureError(Exception):
@@ -94,9 +93,8 @@ class FixtureAccessor:
 
     def _get_fixture_dicts(self, data_type_tag):
         data_type_id = self._data_types_ids[data_type_tag]
-        for item in iter_fixture_items_for_data_type(self.domain, data_type_id):
-            yield {field_name: field_list.field_list[0].field_value
-                   for field_name, field_list in item.fields.items()}
+        for item in LookupTableRow.objects.iter_rows(self.domain, table_id=data_type_id):
+            yield {name: vals[0].value for name, vals in item.fields.items()}
 
     @cached_property
     def recipes(self):

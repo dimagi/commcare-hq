@@ -109,7 +109,11 @@ class TestLookupTableRowManager(TestCase):
         super().setUpClass()
         cls.domain = Domain.get_or_create_with_name("lookup-table-domain", is_active=True)
         cls.addClassCleanup(cls.domain.delete)
-        cls.table = LookupTable(fields=[TypeField("vera")])
+        cls.table = LookupTable(
+            domain=cls.domain.name,
+            tag="pink",
+            fields=[TypeField("vera")],
+        )
         cls.table.save(sync_to_couch=False)
 
     def test_iter_rows(self):
@@ -132,6 +136,27 @@ class TestLookupTableRowManager(TestCase):
             [r.fields["num"][0].value for r in rows],
             [r.fields["num"][0].value for r in expected],
         )
+
+    def test_iter_rows_with_tag(self):
+        self.create_rows(7)
+        rows = list(LookupTableRow.objects.iter_rows(self.domain.name, tag="pink"))
+        self.assertEqual(
+            [r.fields["num"][0].value for r in rows],
+            [str(x) for x in range(7)],
+        )
+
+    def test_iter_rows_with_tag_and_unknown_domain(self):
+        self.create_rows(1)
+        rows = list(LookupTableRow.objects.iter_rows("unknown", tag="pink"))
+        self.assertEqual(rows, [])
+
+    def test_iter_rows_too_many_args(self):
+        with self.assertRaisesRegex(TypeError, "Too many arguments"):
+            LookupTableRow.objects.iter_rows("x", table_id="y", tag="z")
+
+    def test_iter_rows_not_enough_args(self):
+        with self.assertRaisesRegex(TypeError, "Not enough arguments"):
+            LookupTableRow.objects.iter_rows("x")
 
     def test_iter_by_user(self):
         class bob:
@@ -163,11 +188,28 @@ class TestLookupTableRowManager(TestCase):
         self.assertEqual(nums, [r.fields["num"][0].value for r in expected])
         self.assertEqual(len(rows), 10, nums)
 
-    def create_rows(self, count, sort_key=None):
+    def test_with_value(self):
+        self.create_rows(2)
+        row = LookupTableRow.objects.with_value(self.domain.name, self.table.id, "num", "1").get()
+        self.assertEqual(row.fields["num"][0].value, "1")
+
+    def test_with_value_not_first_value(self):
+        self.create_rows(2, get_fields=lambda i: [Field(value=str(i)), Field(value="10")])
+        rows = LookupTableRow.objects.with_value(self.domain.name, self.table.id, "num", "10")
+        self.assertEqual({r.fields["num"][0].value for r in rows}, {"0", "1"})
+        self.assertEqual({r.fields["num"][1].value for r in rows}, {"10"})
+        self.assertEqual({r.sort_key for r in rows}, {0, 1})
+
+    def test_with_value_with_duplicate_values(self):
+        self.create_rows(1, get_fields=lambda i: [Field(value="10"), Field(value="10")])
+        rows = LookupTableRow.objects.with_value(self.domain.name, self.table.id, "num", "10")
+        self.assertEqual(rows.count(), 1)
+
+    def create_rows(self, count, sort_key=None, get_fields=lambda i: [Field(value=str(i))]):
         rows = [LookupTableRow(
             domain=self.domain.name,
             table=self.table,
-            fields={"num": [Field(value=str(index))]},
+            fields={"num": get_fields(index)},
             sort_key=index if sort_key is None else sort_key,
         ) for index in range(count)]
         LookupTableRow.objects.bulk_create(rows)

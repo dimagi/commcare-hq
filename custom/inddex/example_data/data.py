@@ -1,14 +1,16 @@
 import csv
 import os
-import uuid
 
 from casexml.apps.case.mock import CaseBlock
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
+    Field,
     FixtureDataItem,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 from corehq.apps.hqcase.utils import submit_case_blocks
@@ -121,32 +123,33 @@ def _import_fixtures(domain):
         data_type.save()
 
         with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
-            for i, vals in enumerate(rows):
-                fixture_data_item = _mk_fixture_data_item(domain, data_type._migration_couch_id, fields, vals, i)
-                iter_db.save(fixture_data_item)
+            items = (
+                _mk_fixture_data_item(domain, data_type.id, fields, vals, i)
+                for i, vals in enumerate(rows)
+            )
+            for chunk in chunked(items, 1000, list):
+                LookupTableRow.objects.bulk_create(chunk)
+
+                # save chunk to Couch
+                for row in chunk:
+                    iter_db.save(_to_doc_dict(row))
 
 
-def _mk_fixture_data_item(domain, data_type_id, fields, vals, i):
-    """Fixtures are wicked slow, so just do it in JSON"""
-    return {
-        "_id": uuid.uuid4().hex,
-        "doc_type": "FixtureDataItem",
-        "domain": domain,
-        "data_type_id": data_type_id,
-        "fields": {
-            field_name: {
-                "doc_type": "FieldList",
-                "field_list": [{
-                    "doc_type": "FixtureItemField",
-                    "field_value": field_value,
-                    "properties": {},
-                }]
-            }
-            for field_name, field_value in zip(fields, vals)
-        },
-        "item_attributes": {},
-        "sort_key": i,
-    }
+def _mk_fixture_data_item(domain, table_id, fields, vals, i):
+    return LookupTableRow(
+        domain=domain,
+        table_id=table_id,
+        fields={name: [Field(value=val)] for name, val in zip(fields, vals)},
+        item_attributes={},
+        sort_key=i,
+    )
+
+
+def _to_doc_dict(row):
+    couch_class = row._migration_get_couch_model_class()
+    doc = couch_class(_id=row._migration_couch_id)
+    row._migration_sync_to_couch(doc, save=False)
+    return doc.to_json()
 
 
 def _rebuild_datasource(domain):

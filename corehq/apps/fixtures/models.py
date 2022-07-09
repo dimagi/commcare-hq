@@ -5,6 +5,7 @@ from uuid import UUID, uuid4
 
 from attrs import define, field
 from django.db import models
+from django.db.models.expressions import RawSQL
 
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
@@ -22,6 +23,7 @@ from .couchmodels import (  # noqa: F401
     FixtureOwnership,
     FixtureTypeField,
 )
+from .exceptions import FixtureVersionError
 
 
 class LookupTableManager(models.Manager):
@@ -141,11 +143,21 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
 
 class LookupTableRowManager(models.Manager):
 
-    def iter_rows(self, domain, *, table_id, **kw):
+    def iter_rows(self, domain, *, table_id=None, tag=None, **kw):
         """Get rows for lookup table
 
         Returned rows are sorted by sort_key.
         """
+        if table_id is not None and tag is not None:
+            raise TypeError("Too many arguments: 'table_id' and 'tag' are mutually exclusive.")
+        if table_id is None:
+            if tag is None:
+                raise TypeError("Not enough arguments. Either 'table_id' or 'tag' is required.")
+            try:
+                table_id = LookupTable.objects.filter(
+                    domain=domain, tag=tag).values("id").get()["id"]
+            except LookupTable.DoesNotExist:
+                return []
         where = models.Q(table_id=table_id)
         return self._iter_sorted(domain, where, **kw)
 
@@ -190,6 +202,22 @@ class LookupTableRowManager(models.Manager):
             ) | models.Q(
                 sort_key__gt=row.sort_key
             )
+
+    def with_value(self, domain, table_id, field_name, value):
+        """Get all rows having a field matching the given name/value pair
+
+        WARNING may be inefficient for large lookup tables because field
+        values are not indexed so the query will scan every row in the
+        table (that is, all rows matching domain and table_id).
+        """
+        # Postgres 12 can replace the subquery with a WHERE predicate like:
+        # fields @@ '$.field_name[*] ? (@.value == "value")'
+        row_ids = RawSQL(f"""
+            SELECT row.id FROM {self.model._meta.db_table} AS row,
+                jsonb_to_recordset(row.fields->%s) AS val(value text)
+            WHERE row.domain = %s AND row.table_id = %s AND val.value = %s
+        """, [field_name, domain, table_id, value])
+        return self.filter(id__in=row_ids)
 
 
 @define
@@ -287,6 +315,23 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
             obj = cls(_id=self._migration_couch_id)
             obj.save(sync_to_sql=False)
         return obj
+
+    @property
+    def fields_without_attributes(self):
+        """Get a dict of field names mapped to respective field values
+
+        :raises: ``FixtureVersionError`` if any field has more than one value.
+        :raises: ``IndexError`` if any field does not have at least one value.
+        """
+        fields = {}
+        for name, values in self.fields.items():
+            # if the field has properties, a unique field_val can't be generated for FixtureItem
+            if len(values) > 1:
+                raise FixtureVersionError(
+                    "This method is not supported for fields with properties."
+                    f" field '{name}' has properties")
+            fields[name] = values[0].value
+        return fields
 
 
 class OwnerType(models.IntegerChoices):

@@ -1,4 +1,4 @@
-from corehq.apps.fixtures.models import LookupTable, FixtureDataItem
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.soft_assert import soft_assert
@@ -117,8 +117,8 @@ def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, curr
     current_message_seq_num = str(
         ((schedule_iteration_num - 1) * num_events) + current_event_num + 1
     )
-    custom_messages = FixtureDataItem.by_field_value(
-        domain, message_bank, RISK_PROFILE_FIELD, risk_profile
+    custom_messages = LookupTableRow.objects.with_value(
+        domain, message_bank.id, RISK_PROFILE_FIELD, risk_profile
     )
     custom_messages = [m for m in custom_messages
         if m.fields_without_attributes['sequence'] == current_message_seq_num]

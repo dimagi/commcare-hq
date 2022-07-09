@@ -1,5 +1,5 @@
 import json
-from corehq.apps.fixtures.models import LookupTable, FixtureDataItem
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.reports.filters.base import BaseReportFilter
 from django.urls import reverse
 
@@ -19,9 +19,9 @@ class AsyncDrillableFilter(BaseReportFilter):
 
     def fdi_to_json(self, fdi):
         return {
-            'fixture_type': fdi.data_type_id,
+            'fixture_type': fdi.table_id.hex,
             'fields': fdi.fields_without_attributes,
-            'id': fdi.get_id,
+            'id': fdi.id.hex,
             'children': getattr(fdi, '_children', None),
         }
 
@@ -46,12 +46,12 @@ class AsyncDrillableFilter(BaseReportFilter):
         ret = []
         for i, h in enumerate(self.hierarchy):
             new_h = dict(h)
-            new_h['id'] = self.data_types(i)._migration_couch_id
+            new_h['id'] = self.data_types(i).id.hex
             ret.append(new_h)
         return ret
 
     def generate_lineage(self, leaf_type, leaf_item_id):
-        leaf_fdi = FixtureDataItem.get(leaf_item_id)
+        leaf_fdi = LookupTableRow.objects.get(id=leaf_item_id)
 
         index = None
         for i, h in enumerate(self.hierarchy[::-1]):
@@ -69,19 +69,19 @@ class AsyncDrillableFilter(BaseReportFilter):
                 continue
             real_index = len(self.hierarchy) - (i + 1)
             lineage.insert(
-                0, FixtureDataItem.by_field_value(
+                0, LookupTableRow.objects.with_value(
                     self.domain,
-                    self.data_types(real_index - 1),
+                    self.data_types(real_index - 1).id,
                     h["references"],
                     lineage[0].fields_without_attributes[h["parent_ref"]]
-                ).one())
+                ).get())
 
         return lineage
 
     @property
     def filter_context(self):
-        root_fdis = [self.fdi_to_json(f) for f in FixtureDataItem.by_data_type(
-            self.domain, self.data_types(0)._migration_couch_id)]
+        root_fdis = [self.fdi_to_json(f) for f in LookupTableRow.objects.iter_sorted(
+            self.domain, self.data_types(0).id)]
 
         f_id = self.request.GET.get('fixture_id', None)
         selected_fdi_type = f_id.split(':')[0] if f_id else None
@@ -95,9 +95,9 @@ class AsyncDrillableFilter(BaseReportFilter):
                             if f['id'] == fdi.get_id][0]
                 next_h = self.hierarchy[i + 1]
                 this_fdi['children'] = [self.fdi_to_json(f) for f in
-                                        FixtureDataItem.by_field_value(
+                                        LookupTableRow.objects.with_value(
                                             self.domain,
-                                            self.data_types(i + 1),
+                                            self.data_types(i + 1).id,
                                             next_h["parent_ref"],
                                             fdi.fields_without_attributes[next_h["references"]])]
                 parent = this_fdi
