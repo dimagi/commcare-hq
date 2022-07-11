@@ -92,6 +92,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             itemsetOptions: {},
             exclude: false,
             required: '',
+            requiredMessage: '',
             validationXPath: '',
             validationMessage: '',
         });
@@ -107,6 +108,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.hidden = ko.observable(options.hidden);
         self.exclude = ko.observable(options.exclude);
         self.required = ko.observable(options.required);
+        self.requiredMessage = ko.observable(options.requiredMessage);
         self.validationXPath = ko.observable(options.validationXPath);
         self.validationMessage = ko.observable(options.validationMessage);
         self.appearanceFinal = ko.computed(function () {
@@ -161,7 +163,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
             'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
-            'required', 'validationXPath', 'validationMessage',
+            'required', 'requiredMessage', 'validationXPath', 'validationMessage',
         ], saveButton);
         return self;
     };
@@ -322,9 +324,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // searchProperties is a list of CaseSearchProperty objects
-                // property labels/hints come in keyed by lang.
-                var label = searchProperties[i].label[lang];
-                var hint = searchProperties[i].hint[lang] || "";
                 var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
                 if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
                     var uri = searchProperties[i].itemset.instance_uri;
@@ -341,18 +340,18 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
                     appearance = searchProperties[i].input_;
                 }
-                var isMultiselect = searchProperties[i].input_ === "select",
-                    // The model supports multiple validation conditions, but we don't need the UI for it yet
-                    validation = searchProperties[i].validation[0];
+                // The model supports multiple validation conditions, but we don't need the UI for it yet
+                var validation = searchProperties[i].validation[0];
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
-                    label: label,
-                    hint: hint,
+                    label: searchProperties[i].label[lang],
+                    hint: searchProperties[i].hint[lang] || "",
                     appearance: appearance,
-                    isMultiselect: isMultiselect,
+                    isMultiselect: searchProperties[i].input_ === "select",
                     allowBlankValue: searchProperties[i].allow_blank_value,
                     exclude: searchProperties[i].exclude,
                     required: searchProperties[i].required,
+                    requiredMessage: searchProperties[i].required_message[lang],
                     validationXPath: validation ? validation.xpath : '',
                     validationMessage: validation ? validation.message[lang] : '',
                     defaultValue: searchProperties[i].default_value,
@@ -395,6 +394,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
                         required: p.required(),
+                        required_message: p.requiredMessage(),
                         validation_xpath: p.validationXPath(),
                         validation_message: p.validationMessage(),
                         default_value: p.defaultValue(),

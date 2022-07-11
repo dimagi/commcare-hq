@@ -1030,6 +1030,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['exclude'] = prop['exclude']
         if prop['required']:
             ret['required'] = prop['required']
+            _current_msg = current.required_message if current else {}
+            ret['required_message'] = {**_current_msg, lang: prop['required_message']}
         if prop['validation_xpath']:
             _current_msg = current.validation[0].message if current and current.validation else {}
             ret['validation'] = [{
