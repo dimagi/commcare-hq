@@ -78,6 +78,7 @@ branches:
     - ml/mobile-worker-download-bug # Minha July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
-    - jc/bulk-load-password-validation  # Joel July 9
+    - jc/bulk-load-password-validation  # Jing July 9
     - rc/search-input-validation # Robert July 11
+    - jc/disable-submit-when-password-fail-validation  # Jing July 11
 submodules: { }
