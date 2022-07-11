@@ -134,7 +134,7 @@ class TestCommCareUserResource(APIResourceTest):
         })
 
     def test_create(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
         self.addCleanup(group.delete)
 
@@ -196,7 +196,7 @@ class TestCommCareUserResource(APIResourceTest):
     def test_update(self):
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
 
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
