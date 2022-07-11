@@ -36014,6 +36014,10 @@ msgid "Subscription Info"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid "Local App Config"
+msgstr ""
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Manage All"
 msgstr ""
 
