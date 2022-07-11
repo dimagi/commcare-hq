@@ -22,7 +22,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 @es_test
-class TestDeleteESDocsInDomain(TestCase):
+class TestDeleteESDocsForDomain(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -46,7 +46,7 @@ class TestDeleteESDocsInDomain(TestCase):
         self.assertEqual(1, FormES().domain(domain_name).count())
 
         # run command
-        call_command('delete_es_docs_in_domain', domain_name)
+        call_command('delete_es_docs_for_domain', domain_name)
 
         # assert that docs are no longer in ES, but are still in SQL/couch
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
@@ -61,7 +61,7 @@ class TestDeleteESDocsInDomain(TestCase):
         self.assertEqual(1, FormES().domain('obliterated-domain').count())
 
         # run command
-        call_command('delete_es_docs_in_domain', 'obliterated-domain')
+        call_command('delete_es_docs_for_domain', 'obliterated-domain')
 
         # assert that docs are no longer in ES, but are still in SQL/couch
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
@@ -77,7 +77,7 @@ class TestDeleteESDocsInDomain(TestCase):
         self.assertEqual(1, FormES().domain(domain_name).count())
 
         # run command
-        call_command('delete_es_docs_in_domain', 'obliterated-domain')
+        call_command('delete_es_docs_for_domain', 'obliterated-domain')
 
         # assert that docs are no longer in ES, but are still in SQL/couch
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
@@ -86,7 +86,7 @@ class TestDeleteESDocsInDomain(TestCase):
 
     def test_fails_on_active_domain(self):
         with self.assertRaises(CommandError):
-            call_command('delete_es_docs_in_domain', self.active_domain.name)
+            call_command('delete_es_docs_for_domain', self.active_domain.name)
 
     def _setup_es(self):
         self.es = get_es_new()
