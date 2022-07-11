@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
 from django.test import SimpleTestCase, TestCase
+from django.utils.translation import gettext as _
 
 from unittest.mock import patch
 
@@ -49,6 +50,8 @@ from corehq.extensions.interface import disable_extensions
 
 from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
+
+from django.conf import settings
 
 
 
@@ -1489,7 +1492,9 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+        self.assertEqual(rows[0]['flag'],
+        _("Password must have at least {password_length} characters."
+          ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH))
 
 
 class TestUserUploadRecord(TestCase):
