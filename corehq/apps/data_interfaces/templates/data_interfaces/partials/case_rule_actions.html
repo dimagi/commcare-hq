@@ -78,7 +78,10 @@
       </select>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: value" required />
+      <input type="text" class="textinput form-control" data-bind="value: value, visible: value_type() === '{{ form.constants.VALUE_TYPE_EXACT }}'" required />
+      <!-- ko if: value_type() === '{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}' -->
+        {% include "data_interfaces/partials/case_rule_case_property_input.html" with ko_value='value' %}
+      <!-- /ko -->
     </div>
   </div>
 </script>
