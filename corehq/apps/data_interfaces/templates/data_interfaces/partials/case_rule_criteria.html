@@ -103,7 +103,7 @@
     <div data-bind="template: {name: 'remove-filter'}"></div>
     <label class="control-label col-xs-2">{% trans "Case property" %}</label>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      {% include "data_interfaces/partials/case_property_input.html" with ko_value='property_name' %}
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: match_type">
@@ -139,7 +139,7 @@
       <label class="control-label">{% trans "the date in case property" %}</label>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      {% include "data_interfaces/partials/case_property_input.html" with ko_value='property_name' %}
     </div>
   </div>
 </script>
@@ -161,7 +161,7 @@
       <label class="control-label">{% trans "the date in case property" %}</label>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: property_name" required placeholder="{% trans 'case property name' %}" />
+      {% include "data_interfaces/partials/case_property_input.html" with ko_value='property_name' %}
     </div>
     <div class="controls col-xs-1">
       <select class="select form-control" data-bind="value: plus_minus">
