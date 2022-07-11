@@ -314,6 +314,27 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var _getAppearance = function (searchProperty) {
+        // init with blank string to avoid triggering save button
+        var appearance = searchProperty.appearance || "";
+        if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
+            var uri = searchProperty.itemset.instance_uri;
+            if (uri !== null && uri.includes("commcare-reports")) {
+                appearance = "report_fixture";
+            }
+            else {
+                appearance = "lookup_table_fixture";
+            }
+        }
+        if (searchProperty.appearance === "address") {
+            appearance = "address";
+        }
+        if (["date", "daterange"].indexOf(searchProperty.input_) !== -1) {
+            appearance = searchProperty.input_;
+        }
+        return appearance;
+    };
+
     var searchViewModel = function (searchProperties, defaultProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
         var self = {};
 
@@ -324,29 +345,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
                 // searchProperties is a list of CaseSearchProperty objects
-                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
-                    var uri = searchProperties[i].itemset.instance_uri;
-                    if (uri !== null && uri.includes("commcare-reports")) {
-                        appearance = "report_fixture";
-                    }
-                    else {
-                        appearance = "lookup_table_fixture";
-                    }
-                }
-                if (searchProperties[i].appearance === "address") {
-                    appearance = "address";
-                }
-                if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
-                    appearance = searchProperties[i].input_;
-                }
                 // The model supports multiple validation conditions, but we don't need the UI for it yet
                 var validation = searchProperties[i].validation[0];
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperties[i].name,
                     label: searchProperties[i].label[lang],
                     hint: searchProperties[i].hint[lang] || "",
-                    appearance: appearance,
+                    appearance: _getAppearance(searchProperties[i]),
                     isMultiselect: searchProperties[i].input_ === "select",
                     allowBlankValue: searchProperties[i].allow_blank_value,
                     exclude: searchProperties[i].exclude,
