@@ -1,9 +1,13 @@
+import logging
+
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.es.registry import registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
+
+logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -28,3 +32,4 @@ class Command(BaseCommand):
                 continue
             adapter = doc_adapter_from_info(registry_entry(hqESQuery.index))
             adapter.bulk_delete(doc_ids)
+            logger.info(f"Deleted {len(doc_ids)} {hqESQuery.index} for {domain} in ES")
