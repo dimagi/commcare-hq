@@ -54,7 +54,6 @@ from dimagi.utils.dates import add_months_to_date
 from django.conf import settings
 
 
-
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
     def setUpClass(cls):
@@ -884,6 +883,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             False
         )
         self.assertTrue(self.user.is_active)
+
+    def test_password_is_not_string(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(password=123)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )['messages']['rows']
+        self.assertEqual(rows[0]['row']['password'], "123")
 
     def test_update_user_no_username(self):
         import_users_and_groups(
