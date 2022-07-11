@@ -917,7 +917,12 @@ class NewMobileWorkerForm(forms.Form):
                                         {almost}
                                     <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {weak}
+                                        <!-- ko ifnot: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {short}
+                                        <!-- /ko -->
+                                        <!-- ko if: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {weak}
+                                        <!-- /ko -->
                                     <!-- /ko -->
                                 <!-- /ko -->
 
@@ -947,6 +952,8 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
+                            short=_("Password must have at least {password_length} characters."
+                                    ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),
