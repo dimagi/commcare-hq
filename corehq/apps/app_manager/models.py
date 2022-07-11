@@ -203,6 +203,10 @@ LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
 
+class LabelProperty(DictProperty):
+    """Stores a {lang_code: translated_string} dict"""
+
+
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
     parent = jsonpath.Parent().find(datum_context)[0]
@@ -2142,7 +2146,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
-    label = DictProperty()
+    label = LabelProperty()
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
@@ -2154,7 +2158,7 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
 class CaseSearchValidationCondition(DocumentSchema):
     xpath = StringProperty()
-    message = DictProperty()  # eg: {'en': 'bad format'})
+    message = LabelProperty()
 
 
 class Itemset(DocumentSchema):
@@ -2173,11 +2177,11 @@ class CaseSearchProperty(DocumentSchema):
     Case properties available to search on.
     """
     name = StringProperty()
-    label = DictProperty()
+    label = LabelProperty()
     appearance = StringProperty(exclude_if_none=True)
     input_ = StringProperty(exclude_if_none=True)
     default_value = StringProperty(exclude_if_none=True)
-    hint = DictProperty()
+    hint = LabelProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
@@ -2201,19 +2205,19 @@ class BaseCaseSearchLabel(NavMenuItemMediaMixin):
 
 
 class CaseSearchLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search All Cases'})
+    label = LabelProperty(default={'en': 'Search All Cases'})
 
 
 class CaseSearchAgainLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search Again'})
+    label = LabelProperty(default={'en': 'Search Again'})
 
 
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    command_label = DictProperty(default={'en': 'Search All Cases'})
-    again_label = DictProperty(default={'en': 'Search Again'})
+    command_label = LabelProperty(default={'en': 'Search All Cases'})
+    again_label = LabelProperty(default={'en': 'Search Again'})
     search_label = SchemaProperty(CaseSearchLabel)
     search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
@@ -2228,7 +2232,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
-    title_label = DictProperty(default={})
+    title_label = LabelProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
