@@ -222,18 +222,21 @@ class ConfigurableReportTableManager(UcrTableManager):
         ]
 
     def get_filtered_configs(self, configs=None):
-        configs = configs or self.get_all_configs()
 
-        if self.exclude_ucrs:
-            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
+        if configs is None:
+            configs = self.get_all_configs()
 
-        if self.include_ucrs:
-            configs = [config for config in configs if config.table_id in self.include_ucrs]
-        elif self.ucr_division:
-            configs = _filter_by_hash(configs, self.ucr_division)
+        if configs:
+            if self.exclude_ucrs:
+                configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
 
-        configs = _filter_domains_to_skip(configs)
-        configs = _filter_invalid_config(configs)
+            if self.include_ucrs:
+                configs = [config for config in configs if config.table_id in self.include_ucrs]
+            elif self.ucr_division:
+                configs = _filter_by_hash(configs, self.ucr_division)
+
+            configs = _filter_domains_to_skip(configs)
+            configs = _filter_invalid_config(configs)
 
         return configs
 
@@ -315,7 +318,8 @@ class RegistryDataSourceTableManager(UcrTableManager):
         return self.data_source_provider.get_data_sources()
 
     def get_filtered_configs(self, configs=None):
-        configs = configs or self.get_all_configs()
+        if configs is None:
+            configs = self.get_all_configs()
         configs = _filter_invalid_config(configs)
         return configs
 
