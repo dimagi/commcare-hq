@@ -68,7 +68,7 @@ class EntryInstances(PostProcessor):
                 if prompt.itemset:
                     xpaths.add(prompt.itemset.nodeset)
                 if prompt.required:
-                    xpaths.add(prompt.required)
+                    xpaths.add(prompt.required.test)
                 if prompt.default_value:
                     xpaths.add(prompt.default_value)
         if entry.post:

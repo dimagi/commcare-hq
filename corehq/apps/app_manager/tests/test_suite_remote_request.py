@@ -847,12 +847,17 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name" required="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
+            <required test="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+              <text>
+                <locale id="search_property.m0.name.required.message"/>
+              </text>
+            </required>
           </prompt>
         </partial>
         """

@@ -2186,6 +2186,7 @@ class CaseSearchProperty(DocumentSchema):
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
     required = StringProperty(exclude_if_none=True)
+    required_message = LabelProperty()
     validation = SchemaListProperty(CaseSearchValidationCondition)
 
     # applicable when appearance is a receiver
