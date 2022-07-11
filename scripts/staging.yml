@@ -80,4 +80,5 @@ branches:
     - jc/bulk-load-password-validation  # Jing July 9
     - rc/search-input-validation # Robert July 11
     - jc/disable-submit-when-password-fail-validation  # Jing July 11
+    - es/required  # Ethan July 11
 submodules: { }
