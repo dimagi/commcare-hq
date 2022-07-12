@@ -1028,17 +1028,17 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['allow_blank_value'] = prop['allow_blank_value']
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
-        if prop['required']:
+        if prop['required_test']:
             _current_text = current.required.text if current.required else {}
             ret['required'] = {
-                'test': prop['required'],
-                'text': {**_current_text, lang: prop['required_message']}
+                'test': prop['required_test'],
+                'text': {**_current_text, lang: prop['required_text']}
             }
-        if prop['validation_xpath']:
+        if prop['validation_test']:
             _current_text = current.validations[0].text if current and current.validations else {}
             ret['validations'] = [{
-                'test': prop['validation_xpath'],
-                'text': {**_current_text, lang: prop['validation_message']},
+                'test': prop['validation_test'],
+                'text': {**_current_text, lang: prop['validation_text']},
             }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):

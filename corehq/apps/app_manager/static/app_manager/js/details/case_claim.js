@@ -91,10 +91,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             receiverExpression: '',
             itemsetOptions: {},
             exclude: false,
-            required: '',
-            requiredMessage: '',
-            validationXPath: '',
-            validationMessage: '',
+            requiredTest: '',
+            requiredText: '',
+            validationTest: '',
+            validationText: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -107,10 +107,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.exclude = ko.observable(options.exclude);
-        self.required = ko.observable(options.required);
-        self.requiredMessage = ko.observable(options.requiredMessage);
-        self.validationXPath = ko.observable(options.validationXPath);
-        self.validationMessage = ko.observable(options.validationMessage);
+        self.requiredTest = ko.observable(options.requiredTest);
+        self.requiredText = ko.observable(options.requiredText);
+        self.validationTest = ko.observable(options.validationTest);
+        self.validationText = ko.observable(options.validationText);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -163,7 +163,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
             'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
-            'required', 'requiredMessage', 'validationXPath', 'validationMessage',
+            'requiredTest', 'requiredText', 'validationTest', 'validationText',
         ], saveButton);
         return self;
     };
@@ -353,10 +353,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 isMultiselect: searchProperty.input_ === "select",
                 allowBlankValue: searchProperty.allow_blank_value,
                 exclude: searchProperty.exclude,
-                required: searchProperty.required,
-                requiredMessage: searchProperty.required_message[lang],
-                validationXPath: validation ? validation.xpath : '',
-                validationMessage: validation ? validation.message[lang] : '',
+                requiredTest: searchProperty.required.test,
+                requiredText: searchProperty.required.text[lang],
+                validationTest: validation ? validation.test : '',
+                validationText: validation ? validation.text[lang] : '',
                 defaultValue: searchProperty.default_value,
                 hidden: searchProperty.hidden,
                 receiverExpression: searchProperty.receiver_expression,
@@ -397,10 +397,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
-                        required: p.required(),
-                        required_message: p.requiredMessage(),
-                        validation_xpath: p.validationXPath(),
-                        validation_message: p.validationMessage(),
+                        required_test: p.requiredTest(),
+                        required_text: p.requiredText(),
+                        validation_test: p.validationTest(),
+                        validation_text: p.validationText(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
