@@ -1,4 +1,5 @@
 import json
+from unittest import mock
 
 from unittest.mock import patch
 
@@ -77,7 +78,8 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
         url = reverse('linked_domain:case_search_config', args=[self.domain])
         headers = self.auth_headers.copy()
         headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
-        resp = self.client.get(url, **headers)
+        with mock.patch('corehq.apps.linked_domain.decorators.can_user_access_linked_domains', return_value=True):
+            resp = self.client.get(url, **headers)
 
         fake_case_search_config_getter.return_value = json.loads(resp.content)
 
