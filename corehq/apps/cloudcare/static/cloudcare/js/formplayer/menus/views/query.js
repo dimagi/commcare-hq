@@ -426,8 +426,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
-                    // childView.model.set("errorMessage", (childView.model.get("error") ||
-                    // "Please enter a value for this field."));
                 }
             });
 
