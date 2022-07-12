@@ -159,13 +159,13 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
                 value = this.options.model.get('value');
-                errorMessage = this.options.model.get('error');
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
                 hasError: this.hasError,
+                errorMessage: this.errorMessage,
             };
         },
 
@@ -173,6 +173,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.hasError = false;
+            this.errorMessage = "";
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -218,6 +219,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         isValid: function () {
             var hasError = !this._isValid();
             if (hasError !== this.hasError) {
+                this.errorMessage = this.model.get("error") || "Please enter a value for this field.";
                 this.hasError = hasError;
                 this.render();
             }
@@ -227,7 +229,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         clear: function () {
             var self = this;
             self.model.set('value', '');
-            self.model.set('errorMessage', '');
             self.model.set('searchForBlank', false);
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
@@ -425,8 +426,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
-                    childView.model.set("errorMessage", (childView.model.get("error") ||
-                    "Please enter a value for this field."));
+                    // childView.model.set("errorMessage", (childView.model.get("error") ||
+                    // "Please enter a value for this field."));
                 }
             });
 
