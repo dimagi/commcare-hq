@@ -1454,6 +1454,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             'domain_name': self.domain_object.display_name(),
             'user': self.user,
             'form': self.form,
+            'button_label': _('Confirm Account')
         })
         return context
 
