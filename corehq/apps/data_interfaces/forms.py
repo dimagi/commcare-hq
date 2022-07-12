@@ -457,11 +457,13 @@ class CaseRuleCriteriaForm(forms.Form):
         self.custom_filters = settings.AVAILABLE_CUSTOM_RULE_CRITERIA.keys()
 
     def user_locations(self):
-        user_locations = SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
-        return [
-            {'location_id': location.location_id, 'name': location.name}
-            for location in user_locations
-        ]
+        if self.couch_user:
+            user_locations = SQLLocation.objects.accessible_to_user(self.domain, self.couch_user)
+            return [
+                {'location_id': location.location_id, 'name': location.name}
+                for location in user_locations
+            ]
+        return []
 
     @property
     @memoized
