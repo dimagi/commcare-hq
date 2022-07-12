@@ -433,7 +433,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (invalidFields.length) {
                 var errorHTML = "Please check the following fields:";
                 errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                    return "<li>" + f + "</li>";
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
                 }).join("") + "</ul>";
                 FormplayerFrontend.trigger('showError', errorHTML, true);
 
