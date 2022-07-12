@@ -67,7 +67,6 @@ branches:
     - ml/dhis2-better-errors # Minha June 9
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding  # Minha April 13
-#    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
     - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
@@ -75,6 +74,7 @@ branches:
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/dd-in-rules-ui # Jenny July 1
+    - jls/query-js-adjustments # Jenny July 12
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
