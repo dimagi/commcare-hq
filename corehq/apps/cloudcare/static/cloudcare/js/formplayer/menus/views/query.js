@@ -159,6 +159,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUri = this.options.model.get('audioUri'),
                 appId = this.model.collection.appId,
                 value = this.options.model.get('value');
+                errorMessage = this.options.model.get('error');
 
             return {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -226,6 +227,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         clear: function () {
             var self = this;
             self.model.set('value', '');
+            self.model.set('errorMessage', '');
             self.model.set('searchForBlank', false);
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
@@ -250,11 +252,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
-                if (!this.isValid()) {
-                    FormplayerFrontend.trigger('showInputError', gettext(this.model.get("error")) ||
-                    gettext("Please enter a value for this field."), this);
-                    return;
-                }
                 this.model.set('value', $(e.currentTarget).val());
             }
             this.parentView.setStickyQueryInputs();
@@ -428,8 +425,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
-                    FormplayerFrontend.trigger('showInputError', gettext(childView.model.get("error")) ||
-                    gettext("Please enter a value for this field."), childView);
+                    childView.model.set("errorMessage", (childView.model.get("error") ||
+                    "Please enter a value for this field."));
                 }
             });
 
