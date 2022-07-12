@@ -51,9 +51,6 @@ from corehq.extensions.interface import disable_extensions
 from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
 
-from django.conf import settings
-
-
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
     @classmethod
