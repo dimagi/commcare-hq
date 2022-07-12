@@ -2243,6 +2243,11 @@ class CaseSearch(DocumentSchema):
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
 
+    def get_search_title_label(self, app, lang, for_default=False):
+        if for_default:
+            lang = app.default_language
+        return self.title_label.get(lang, '')
+
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
             self.properties = src_config.properties
@@ -2339,6 +2344,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
+            self.search_config.title_label._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -4790,7 +4796,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 label_dict = {lang: label.get('case.search.title')
                     for lang, label in translations.items() if label}
                 search_config = getattr(module, 'search_config')
-                default_label_dict = getattr(search_config, 'title_label')
+                default_label_dict = getattr(search_config, 'title_label') or {}
                 label_dict.update(default_label_dict)
                 setattr(search_config, 'title_label', label_dict)
 
