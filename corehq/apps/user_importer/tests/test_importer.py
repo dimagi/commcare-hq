@@ -2,7 +2,7 @@ import datetime
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils.translation import gettext as _
 
 from unittest.mock import patch
@@ -1480,6 +1480,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
     @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
+    @override_settings(MINIMUM_PASSWORD_LENGTH=8)
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
@@ -1493,8 +1494,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             False
         )['messages']['rows']
         self.assertEqual(rows[0]['flag'],
-        _("Password must have at least {password_length} characters."
-          ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH))
+        _("Password must have at least 8 characters."))
 
 
 class TestUserUploadRecord(TestCase):
