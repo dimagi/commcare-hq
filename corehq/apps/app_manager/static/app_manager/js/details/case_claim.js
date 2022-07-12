@@ -339,42 +339,41 @@ hqDefine("app_manager/js/details/case_claim", function () {
         var self = {};
 
         self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
-        self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
 
-        if (searchProperties.length > 0) {
-            // searchProperties is a list of CaseSearchProperty objects
-            _.each(searchProperties, function (searchProperty) {
-                // The model supports multiple validation conditions, but we don't need the UI for it yet
-                var validation = searchProperty.validation[0];
-                self.searchProperties.push(searchPropertyModel({
-                    name: searchProperty.name,
-                    label: searchProperty.label[lang],
-                    hint: searchProperty.hint[lang],
-                    appearance: _getAppearance(searchProperty),
-                    isMultiselect: searchProperty.input_ === "select",
-                    allowBlankValue: searchProperty.allow_blank_value,
-                    exclude: searchProperty.exclude,
-                    required: searchProperty.required,
-                    requiredMessage: searchProperty.required_message[lang],
-                    validationXPath: validation ? validation.xpath : '',
-                    validationMessage: validation ? validation.message[lang] : '',
-                    defaultValue: searchProperty.default_value,
-                    hidden: searchProperty.hidden,
-                    receiverExpression: searchProperty.receiver_expression,
-                    itemsetOptions: {
-                        instance_id: searchProperty.itemset.instance_id,
-                        instance_uri: searchProperty.itemset.instance_uri,
-                        nodeset: searchProperty.itemset.nodeset,
-                        label: searchProperty.itemset.label,
-                        value: searchProperty.itemset.value,
-                        sort: searchProperty.itemset.sort,
-                    },
-                }, saveButton));
-            });
-        } else {
-            self.searchProperties.push(searchPropertyModel({}, saveButton));
-        }
+        // searchProperties is a list of CaseSearchProperty objects
+        var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
+            // The model supports multiple validation conditions, but we don't need the UI for it yet
+            var validation = searchProperty.validation[0];
+            return searchPropertyModel({
+                name: searchProperty.name,
+                label: searchProperty.label[lang],
+                hint: searchProperty.hint[lang],
+                appearance: _getAppearance(searchProperty),
+                isMultiselect: searchProperty.input_ === "select",
+                allowBlankValue: searchProperty.allow_blank_value,
+                exclude: searchProperty.exclude,
+                required: searchProperty.required,
+                requiredMessage: searchProperty.required_message[lang],
+                validationXPath: validation ? validation.xpath : '',
+                validationMessage: validation ? validation.message[lang] : '',
+                defaultValue: searchProperty.default_value,
+                hidden: searchProperty.hidden,
+                receiverExpression: searchProperty.receiver_expression,
+                itemsetOptions: {
+                    instance_id: searchProperty.itemset.instance_id,
+                    instance_uri: searchProperty.itemset.instance_uri,
+                    nodeset: searchProperty.itemset.nodeset,
+                    label: searchProperty.itemset.label,
+                    value: searchProperty.itemset.value,
+                    sort: searchProperty.itemset.sort,
+                },
+            }, saveButton);
+        });
+
+        self.searchProperties = ko.observableArray(
+            wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
+        );
 
         self.addProperty = function () {
             self.searchProperties.push(searchPropertyModel({}, saveButton));
