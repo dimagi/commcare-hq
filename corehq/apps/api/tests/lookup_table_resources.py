@@ -1,4 +1,9 @@
 import json
+import uuid
+
+from django.utils.http import urlencode
+
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
@@ -10,10 +15,140 @@ from corehq.apps.fixtures.models import (
     TypeField,
 )
 from corehq.apps.fixtures.resources.v0_1 import (
+    FixtureResource,
     LookupTableItemResource,
     LookupTableResource,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
+
+
+class TestFixtureResource(APIResourceTest):
+    resource = FixtureResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.state = LookupTable(
+            domain=cls.domain.name,
+            tag="state",
+            fields=[TypeField("state")],
+            item_attributes=[]
+        )
+        cls.state.save()
+        cls.city = LookupTable(
+            domain=cls.domain.name,
+            tag="city",
+            fields=[TypeField("state"), TypeField("city")],
+            item_attributes=[]
+        )
+        cls.city.save()
+        cls.ohio = cls._create_data_item(cls.state, {"state": "Ohio"}, 0)
+        cls.akron = cls._create_data_item(cls.city, {"city": "Akron", "state": "Ohio"}, 0)
+        cls.toledo = cls._create_data_item(cls.city, {"city": "Toledo", "state": "Ohio"}, 1)
+        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        expect = [self.ohio, self.akron, self.toledo]
+        # Result order is non-deterministic because the table id (UUID)
+        # is part of the sort key. Additionally, backwards table row
+        # ordering (originating in FixtureDataItem.by_domain()) seems
+        # like a bug (inconsistent with other results from this same API).
+        self.assertCountEqual(result, [self._data_item_json(r) for r in expect])
+
+    def test_get_list_for_value(self):
+        response = self._assert_auth_get_resource(self.api_url(
+            parent_id=self.ohio.id.hex,
+            child_type=self.city.id.hex,
+            parent_ref_name='state',
+            references='state',
+        ))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        # Result order is non-deterministic
+        self.assertCountEqual(result, [self._data_item_json(r) for r in [self.akron, self.toledo]])
+
+    def test_get_list_for_type_id(self):
+        response = self._assert_auth_get_resource(self.api_url(fixture_type_id=self.city.id.hex))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        self.assertEqual(result, [self._data_item_json(r) for r in [self.akron, self.toledo]])
+
+    def test_get_list_for_type_tag(self):
+        response = self._assert_auth_get_resource(self.api_url(fixture_type="state"))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        self.assertEqual(result, [self._data_item_json(self.ohio)])
+
+    def test_get_single(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(self.ohio.id.hex))
+        self.assertEqual(response.status_code, 200)
+
+        fixture_data_type = json.loads(response.content)
+        self.assertEqual(fixture_data_type, self._data_item_json(self.ohio))
+
+    def test_dehydrate_fields(self):
+        obj = LookupTableRow(table_id=uuid.uuid4(), fields={
+            "1": [Field("one", {"lang": "en"})],
+            "2": [Field("two", {"lang": "en"})],
+        })
+        item = obj._migration_get_couch_model_class()()
+        item._id = obj.id.hex
+        obj._migration_sync_to_couch(item, save=False)
+        obj = item
+        bundle = Bundle(obj=obj, data={})
+        result = FixtureResource().full_dehydrate(bundle).data["fields"]
+        self.assertEqual(result, {'1': "one", '2': "two"})
+
+    def test_dehydrate_fields_with_version_error(self):
+        obj = LookupTableRow(table_id=uuid.uuid4(), fields={
+            "1": [Field("one", {"lang": "en"}), Field("uno", {"lang": "es"})],
+            "2": [Field("two", {"lang": "en"})],
+        })
+        item = obj._migration_get_couch_model_class()()
+        item._id = obj.id.hex
+        obj._migration_sync_to_couch(item, save=False)
+        obj = item
+        bundle = Bundle(obj=obj, data={})
+        result = FixtureResource().full_dehydrate(bundle).data["fields"]
+        self.assertEqual(result, {
+            '1': {'field_list': [
+                {'field_value': 'one', 'properties': {"lang": "en"}},
+                {'field_value': 'uno', 'properties': {"lang": "es"}},
+            ]},
+            '2': {'field_list': [
+                {'field_value': 'two', 'properties': {"lang": "en"}},
+            ]},
+        })
+
+    @classmethod
+    def _create_data_item(cls, table, field_map, sort_key):
+        data_item = LookupTableRow(
+            domain=cls.domain.name,
+            table_id=table.id,
+            fields={k: [Field(value=v)] for k, v in field_map.items()},
+            sort_key=sort_key
+        )
+        data_item.save()
+        return data_item
+
+    def api_url(self, **params):
+        return f'{self.list_endpoint}?{urlencode(params, doseq=True)}'
+
+    def _data_item_json(self, row):
+        return {
+            "id": row.id.hex,
+            "fixture_type": row.table.tag,
+            "fields": {n: v[0].value for n, v in row.fields.items()},
+            "resource_uri": "",
+        }
 
 
 class TestLookupTableResource(APIResourceTest):
