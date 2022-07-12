@@ -344,7 +344,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         // searchProperties is a list of CaseSearchProperty objects
         var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
             // The model supports multiple validation conditions, but we don't need the UI for it yet
-            var validation = searchProperty.validation[0];
+            var validation = searchProperty.validations[0];
             return searchPropertyModel({
                 name: searchProperty.name,
                 label: searchProperty.label[lang],

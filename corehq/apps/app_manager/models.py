@@ -901,13 +901,17 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
-class CustomAssertion(DocumentSchema):
+class Assertion(DocumentSchema):
+    test = StringProperty()
+    text = DictProperty(StringProperty)
+
+
+class CustomAssertion(Assertion):
     """Custom assertions to add to the assertions block
     test: The actual assertion to run
     locale_id: The id of the localizable string
     """
     test = StringProperty(required=True)
-    text = DictProperty(StringProperty)
 
 
 class CustomInstance(DocumentSchema):
@@ -2156,11 +2160,6 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
-class CaseSearchValidationCondition(DocumentSchema):
-    xpath = StringProperty()
-    message = LabelProperty()
-
-
 class Itemset(DocumentSchema):
     instance_id = StringProperty(exclude_if_none=True)
     instance_uri = StringProperty(exclude_if_none=True)
@@ -2185,13 +2184,35 @@ class CaseSearchProperty(DocumentSchema):
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
-    required = StringProperty(exclude_if_none=True)
-    required_message = LabelProperty()
-    validation = SchemaListProperty(CaseSearchValidationCondition)
+    required = SchemaProperty(Assertion)
+    validations = SchemaListProperty(Assertion)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
+
+    @classmethod
+    def wrap(cls, data):
+        original = deepcopy(data)
+        required = data.pop('required', None)
+        if required:
+            # TODO its always str
+            if isinstance(required, str):
+                data['required'] = {'test': required}
+            elif isinstance(required, list):
+                data['required'] = required[0]
+            else:
+                data['required'] = required
+
+        old_validations = data.pop('validation', None)  # it was changed to plural
+        if old_validations:
+            data['validations'] = [{
+                'test': old['xpath'],
+                'text': old['message'],
+            } for old in old_validations if old.get('xpath')]
+
+        data.pop('required_message', None)
+        return super().wrap(data)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):

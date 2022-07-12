@@ -6,11 +6,11 @@ from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    Assertion,
     CaseSearch,
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
-    CaseSearchValidationCondition,
     DefaultCaseSearchProperty,
     Itemset,
     Module, DetailColumn, ShadowModule,
@@ -843,7 +843,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
     def test_required(self, *args):
-        self.module.search_config.properties[0].required = "#session/user/data/is_supervisor = 'n'"
+        self.module.search_config.properties[0].required = Assertion(
+            test="#session/user/data/is_supervisor = 'n'",
+        )
         suite = self.app.create_suite()
         expected = """
         <partial>
@@ -855,7 +857,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </display>
             <required test="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
               <text>
-                <locale id="search_property.m0.name.required.message"/>
+                <locale id="search_property.m0.name.required.text"/>
               </text>
             </required>
           </prompt>
@@ -865,14 +867,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
     def test_case_search_validation_conditions(self, *args):
         self.module.search_config.properties = [
-            CaseSearchProperty(name='name', label={'en': 'Name'}, validation=[
-                CaseSearchValidationCondition(xpath='2 + 2 = 5')
+            CaseSearchProperty(name='name', label={'en': 'Name'}, validations=[
+                Assertion(test='2 + 2 = 5')
             ]),
-            CaseSearchProperty(name='email', label={'en': 'Email'}, validation=[
-                CaseSearchValidationCondition(
-                    xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')",
-                    message={"en": "Please enter a valid email address",
-                             "it": "Si prega di inserire un indirizzo email valido"},
+            CaseSearchProperty(name='email', label={'en': 'Email'}, validations=[
+                Assertion(
+                    test="contains(instance('search-input:results')/input/field[@name='email'], '@')",
+                    text={"en": "Please enter a valid email address",
+                          "it": "Si prega di inserire un indirizzo email valido"},
                 )
             ]),
         ]
@@ -887,7 +889,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </display>
             <validation test="2 + 2 = 5">
               <text>
-                <locale id="search_property.m0.name.validation.0.message"/>
+                <locale id="search_property.m0.name.validation.0.text"/>
               </text>
             </validation>
           </prompt>
@@ -899,7 +901,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </display>
             <validation test="contains(instance('search-input:results')/input/field[@name='email'], '@')">
               <text>
-                <locale id="search_property.m0.email.validation.0.message"/>
+                <locale id="search_property.m0.email.validation.0.text"/>
               </text>
             </validation>
           </prompt>

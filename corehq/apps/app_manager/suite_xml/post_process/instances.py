@@ -71,7 +71,7 @@ class EntryInstances(PostProcessor):
                     xpaths.add(prompt.required.test)
                 if prompt.default_value:
                     xpaths.add(prompt.default_value)
-                for validation in prompt.validation:
+                for validation in prompt.validations:
                     xpaths.add(validation.test)
         if entry.post:
             if entry.post.relevant:
