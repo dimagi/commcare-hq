@@ -2240,6 +2240,11 @@ class CaseSearch(DocumentSchema):
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
 
+    def get_search_title_label(self, app, lang, for_default=False):
+        if for_default:
+            lang = app.default_language
+        return self.title_label.get(lang, '')
+
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
             self.properties = src_config.properties
