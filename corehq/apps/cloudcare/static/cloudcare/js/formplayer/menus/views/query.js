@@ -243,18 +243,21 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.model.get('input') === 'date') {
                 // Skip because dates get handled by changeDateQueryField
                 return;
-            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
-                this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
-                this.model.set('value', $(e.currentTarget).val());
+                this._changeQueryField(e);
             }
             this.parentView.setStickyQueryInputs();
         },
+
         changeDateQueryField: function (e) {
-            this.changeQueryField(e);
-            this.parentView.setStickyQueryInputs();
+            this._changeQueryField(e);
+        },
+
+        _changeQueryField: function (e) {
+            this.model.set('value', $(e.currentTarget).val());
+            this.parentView.notifyFieldChange(e);
         },
 
         toggleBlankSearch: function (e) {
@@ -362,21 +365,19 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        changeDropdown: function (e) {
+        notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
             var $fields = $(".query-field");
-
-            // If there aren't at least two dropdowns, there are no dependencies
-            if ($fields.filter("select").length < 2) {
-                return;
-            }
 
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
             urlObject.setQueryData(this.getAnswers(), false);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
+                // TODO: move invalidFields logic from submitAction into here
+
+                // Handle any change in dropdown options
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
