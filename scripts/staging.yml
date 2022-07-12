@@ -83,4 +83,5 @@ branches:
     - rc/search-input-validation # Robert July 11
     - jc/disable-submit-when-password-fail-validation  # Jing July 11
     - es/required  # Ethan July 11
+    - jls/py3-max # Jenny July 12
 submodules: { }
