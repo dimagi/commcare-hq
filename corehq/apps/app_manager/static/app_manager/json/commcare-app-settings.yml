@@ -72,6 +72,7 @@
   hide_if_not_enabled: true
   widget: text
   toggle: CUSTOM_APP_BASE_URL
+  supports_linked_app: true
 
 - id: case_sharing
   name: "Case Sharing"
