@@ -205,10 +205,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _isValid: function () {
+            if (this.model.get("error")) {
+                return false;
+            }
             if (!this.model.get('required')) {
                 return true;
             }
-
             var answer = this.getEncodedValue();
             return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
         },
@@ -249,6 +251,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
+                if (!this.isValid()) {
+                    FormplayerFrontend.trigger('showInputError', gettext(this.model.get("error")) ||
+                    gettext("Please enter a value for this field."), this);
+                    return;
+                }
                 this.model.set('value', $(e.currentTarget).val());
             }
             this.parentView.setStickyQueryInputs();
@@ -418,18 +425,22 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
-
             var invalidFields = [];
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
+                    FormplayerFrontend.trigger('showInputError', gettext(childView.model.get("error")) ||
+                    gettext("Please enter a value for this field."), childView);
                 }
             });
 
             if (invalidFields.length) {
-                var errorHTML = "Please enter values for the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
+                var errorHTML = "Please check the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + f + "</li>";
+                }).join("") + "</ul>";
                 FormplayerFrontend.trigger('showError', errorHTML, true);
+
                 return;
             }
 
