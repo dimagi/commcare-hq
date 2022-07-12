@@ -57,6 +57,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
 
         self.submit = function (form) {
             var editors = baseAce.getEditors();
+            var errors = [];
             for (let i = 0; i < editors.length; i++) {
                 var value = editors[i].getValue();
                 try {
@@ -66,9 +67,12 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                         jsonParse.parseJson(value, null, 30);
                     }
                 } catch (error) {
-                    self.errorMessage(error);
-                    return self;
+                    errors.push(String(error));
                 }
+            }
+            if (errors) {
+                self.errorMessage(errors.join('\n----------------------\n'));
+                return self;
             }
             self.errorMessage(''); // clears error message from page before submitting
             $.post(

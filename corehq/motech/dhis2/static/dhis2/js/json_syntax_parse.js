@@ -44,12 +44,14 @@ hqDefine('dhis2/js/json_syntax_parse', [
 
         var helpText;
         if (error.message.startsWith('Unexpected token')) {
-            if (badToken[tokenIndex] === '\n') {
+            var badChar = badToken[tokenIndex];
+            if (badChar === '\n' || badChar === '}' || badChar === ']') {
                 helpText = 'Expected: STRING, NUMBER, NULL, TRUE, FALSE, {, [';
-            } else if (badToken[tokenIndex] === '{' || badToken[tokenIndex] === '[') {
-                helpText = "Expected: }, :, ',', ]";
             } else {
                 helpText = "Expected: }, ',', ]";
+            }
+            if (badChar === '{' || badChar === '[') {
+                helpText = helpText + ", :";
             }
         } else {
             helpText = "Expected: }, :, ',', ]";
