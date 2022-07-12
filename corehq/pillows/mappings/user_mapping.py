@@ -216,7 +216,10 @@ USER_MAPPING = {
                 },
                 "timezone": {
                     "type": "string"
-                }
+                },
+                'assigned_location_ids': {
+                    'type': 'string'
+                },
             }
         },
         "eulas": {
