@@ -10,7 +10,7 @@ from corehq.apps.app_manager.models import (
     CaseSearchAgainLabel,
     CaseSearchLabel,
     CaseSearchProperty,
-    CaseSearchValidationCondition,
+    CustomAssertion,
     DefaultCaseSearchProperty,
     Itemset,
     Module, DetailColumn, ShadowModule,
@@ -843,7 +843,9 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
     def test_required(self, *args):
-        self.module.search_config.properties[0].required = "#session/user/data/is_supervisor = 'n'"
+        self.module.search_config.properties[0].required = CustomAssertion(
+            test="#session/user/data/is_supervisor = 'n'",
+        )
         suite = self.app.create_suite()
         expected = """
         <partial>
@@ -865,14 +867,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
     def test_case_search_validation_conditions(self, *args):
         self.module.search_config.properties = [
-            CaseSearchProperty(name='name', label={'en': 'Name'}, validation=[
-                CaseSearchValidationCondition(xpath='2 + 2 = 5')
+            CaseSearchProperty(name='name', label={'en': 'Name'}, validations=[
+                CustomAssertion(test='2 + 2 = 5')
             ]),
-            CaseSearchProperty(name='email', label={'en': 'Email'}, validation=[
-                CaseSearchValidationCondition(
-                    xpath="contains(instance('search-input:results')/input/field[@name='email'], '@')",
-                    message={"en": "Please enter a valid email address",
-                             "it": "Si prega di inserire un indirizzo email valido"},
+            CaseSearchProperty(name='email', label={'en': 'Email'}, validations=[
+                CustomAssertion(
+                    test="contains(instance('search-input:results')/input/field[@name='email'], '@')",
+                    text={"en": "Please enter a valid email address",
+                          "it": "Si prega di inserire un indirizzo email valido"},
                 )
             ]),
         ]

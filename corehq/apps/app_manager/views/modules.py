@@ -1029,14 +1029,16 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
         if prop['required']:
-            ret['required'] = prop['required']
-            _current_msg = current.required_message if current else {}
-            ret['required_message'] = {**_current_msg, lang: prop['required_message']}
+            _current_text = current.required.text if current.required else {}
+            ret['required'] = {
+                'test': prop['required'],
+                'text': {**_current_text, lang: prop['required_message']}
+            }
         if prop['validation_xpath']:
-            _current_msg = current.validation[0].message if current and current.validation else {}
-            ret['validation'] = [{
-                'xpath': prop['validation_xpath'],
-                'message': {**_current_msg, lang: prop['validation_message']},
+            _current_text = current.validations[0].text if current and current.validations else {}
+            ret['validations'] = [{
+                'test': prop['validation_xpath'],
+                'text': {**_current_text, lang: prop['validation_message']},
             }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):

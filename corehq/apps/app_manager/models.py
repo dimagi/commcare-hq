@@ -2156,11 +2156,6 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
         return self._module.get_app()
 
 
-class CaseSearchValidationCondition(DocumentSchema):
-    xpath = StringProperty()
-    message = LabelProperty()
-
-
 class Itemset(DocumentSchema):
     instance_id = StringProperty(exclude_if_none=True)
     instance_uri = StringProperty(exclude_if_none=True)
@@ -2185,13 +2180,27 @@ class CaseSearchProperty(DocumentSchema):
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
-    required = StringProperty(exclude_if_none=True)
-    required_message = LabelProperty()
-    validation = SchemaListProperty(CaseSearchValidationCondition)
+    required = SchemaProperty(CustomAssertion, required=False)
+    validations = SchemaListProperty(CustomAssertion)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
+
+    @classmethod
+    def wrap(cls, data):
+        required = data.get('required')
+        if isinstance(required, str):
+            data['required'] = {'test': required}
+
+        old_validations = data.pop('validation', None)  # it was changed to plural
+        if old_validations:
+            data['validations'] = [{
+                'test': old['xpath']
+                'text': old['message']
+            } for old in old_validations]
+
+        return super().wrap(data)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):

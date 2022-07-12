@@ -521,7 +521,7 @@ class QueryPrompt(DisplayNode):
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
     required = NodeField('required', Required, required=False)
-    validation = NodeListField('validation', Validation)
+    validations = NodeListField('validation', Validation)
 
     itemset = NodeField('itemset', Itemset)
 
