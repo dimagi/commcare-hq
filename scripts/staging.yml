@@ -58,7 +58,6 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
@@ -73,6 +72,8 @@ branches:
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - jc/minimum-pwd-length # Jing June 29
+    - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
+    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/dd-in-rules-ui # Jenny July 1
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
