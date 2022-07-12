@@ -27,11 +27,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestPost,
     RemoteRequestQuery,
     RemoteRequestSession,
+    Required,
     SessionDatum,
     Stack,
     StackJump,
     Text,
     TextXPath,
+    Validation,
     XPathVariable,
 )
 from corehq.apps.app_manager.util import (
@@ -279,7 +281,18 @@ class RemoteRequestFactory(object):
             if prop.exclude:
                 kwargs['exclude'] = "true()"
             if prop.required:
-                kwargs['required'] = interpolate_xpath(prop.required)
+                kwargs['required'] = Required(
+                    test=interpolate_xpath(prop.required),
+                    text=[Text(locale_id=id_strings.search_property_required_msg(self.module, prop.name))],
+                )
+            if prop.validation:
+                kwargs['validation'] = [
+                    Validation(
+                        test=interpolate_xpath(condition.xpath),
+                        text=[Text(locale_id=id_strings.search_property_validation_msg(self.module, prop.name, i))],
+                    )
+                    for i, condition in enumerate(prop.validation)
+                ]
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
