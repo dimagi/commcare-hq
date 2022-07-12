@@ -20,10 +20,11 @@ def task(*args, **kwargs):
 
         All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options # noqa E501
     """
-    kwargs.setdefault('serializer', 'json')
-
+    
     if len(args) == 1 and callable(args[0]) and not kwargs:
         return shared_task()(args[0])
+
+    kwargs.setdefault('serializer', 'json')
 
     def task(fn):
         return shared_task(*args, **kwargs)(fn)
