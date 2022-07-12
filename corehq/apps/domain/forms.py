@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import transaction
 from django.forms.fields import (
     BooleanField,
@@ -464,9 +465,9 @@ class DomainGlobalSettingsForm(forms.Form):
             min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
             max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
             self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
-            self.fields['confirmation_link_expiry'].min_value = min_value_expiry
-            self.fields['confirmation_link_expiry'].max_value = max_value_expiry
-
+            self._add_range_validation_to_integer_input(
+                "confirmation_link_expiry", min_value_expiry, max_value_expiry
+            )
             project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
             self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
             self.fields['confirmation_sms_project_name'].max_length = project_max_length
@@ -477,8 +478,16 @@ class DomainGlobalSettingsForm(forms.Form):
             return
         existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
         self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
-        self.fields['operator_call_limit'].min_value = OperatorCallLimitSettings.CALL_LIMIT_MINIMUM
-        self.fields['operator_call_limit'].max_value = OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
+        self._add_range_validation_to_integer_input(
+            "operator_call_limit", OperatorCallLimitSettings.CALL_LIMIT_MINIMUM,
+            OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
+        )
+
+    def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
+        setting = self.fields.get(settings_name)
+        min_validator = MinValueValidator(min_value)
+        max_validator = MaxValueValidator(max_value)
+        setting.validators.extend([min_validator, max_validator])
 
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
