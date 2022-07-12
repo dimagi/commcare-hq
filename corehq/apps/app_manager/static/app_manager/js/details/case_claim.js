@@ -355,6 +355,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 exclude: searchProperty.exclude,
                 requiredTest: searchProperty.required.test,
                 requiredText: searchProperty.required.text[lang],
+                // requiredText: searchProperty.required ? searchProperty.required.text[lang] : "",
                 validationTest: validation ? validation.test : '',
                 validationText: validation ? validation.text[lang] : '',
                 defaultValue: searchProperty.default_value,

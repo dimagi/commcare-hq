@@ -901,13 +901,17 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
-class CustomAssertion(DocumentSchema):
+class Assertion(DocumentSchema):
+    test = StringProperty()
+    text = DictProperty(StringProperty)
+
+
+class CustomAssertion(Assertion):
     """Custom assertions to add to the assertions block
     test: The actual assertion to run
     locale_id: The id of the localizable string
     """
     test = StringProperty(required=True)
-    text = DictProperty(StringProperty)
 
 
 class CustomInstance(DocumentSchema):
@@ -2180,8 +2184,8 @@ class CaseSearchProperty(DocumentSchema):
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
-    required = SchemaProperty(CustomAssertion, required=False)
-    validations = SchemaListProperty(CustomAssertion)
+    required = SchemaProperty(Assertion)
+    validations = SchemaListProperty(Assertion)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
@@ -2189,17 +2193,23 @@ class CaseSearchProperty(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        required = data.get('required')
-        if isinstance(required, str):
-            data['required'] = {'test': required}
+        original = deepcopy(data)
+        required = data.pop('required', None)
+        if required:
+            # TODO its always str
+            if isinstance(required, str):
+                data['required_conditions'] = {'test': required}
+            else:
+                data['required_conditions'] = required
 
         old_validations = data.pop('validation', None)  # it was changed to plural
         if old_validations:
             data['validations'] = [{
-                'test': old['xpath']
-                'text': old['message']
-            } for old in old_validations]
+                'test': old['xpath'],
+                'text': old['message'],
+            } for old in old_validations if old.get('xpath')]
 
+        data.pop('required_message', None)
         return super().wrap(data)
 
 
