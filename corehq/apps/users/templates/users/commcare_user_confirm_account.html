@@ -66,14 +66,6 @@
                   {% endwith %}
                 </h4>
                 {% include 'users/partials/register_user_form_fields.html' %}
-                  <div class="form-bubble-actions">
-                    <button type="submit"
-                            class="btn btn-lg btn-primary"
-                            data-bind="enable: passwordSufficient">
-                      {% trans "Confirm Account" %}
-                    </button>
-                  </div>
-                </fieldset>
               </form>
           {% endif %}
           </div>
