@@ -3,9 +3,10 @@ import json
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
-    FieldList,
+    Field,
     FixtureDataItem,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 from corehq.apps.fixtures.resources.v0_1 import (
@@ -134,22 +135,21 @@ class TestLookupTableItemResource(APIResourceTest):
         clear_fixture_quickcache(self.domain.name, [self.data_type._migration_get_couch_object()])
 
     def _create_data_item(self, cleanup=True, data_type=None):
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=self.domain.name,
-            data_type_id=(data_type or self.data_type)._migration_couch_id,
+            table_id=(data_type or self.data_type).id,
             fields={
-                "state_name": FieldList.wrap({
-                    "field_list": [
-                        {"field_value": "Tennessee", "properties": {"lang": "en"}},
-                        {"field_value": "田納西", "properties": {"lang": "zh"}},
-                    ]})
+                "state_name": [
+                    Field(value="Tennessee", properties={"lang": "en"}),
+                    Field(value="田納西", properties={"lang": "zh"}),
+                ]
             },
             item_attributes={},
             sort_key=1
         )
         data_item.save()
         if cleanup:
-            self.addCleanup(data_item.delete)
+            self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
     def _data_item_json(self, id_, sort_key):
@@ -176,25 +176,25 @@ class TestLookupTableItemResource(APIResourceTest):
 
         fixture_data_types = json.loads(response.content)['objects']
         self.assertEqual(len(fixture_data_types), 1)
-        self.assertEqual(fixture_data_types, [self._data_item_json(data_item._id, data_item.sort_key)])
+        self.assertEqual(fixture_data_types, [self._data_item_json(data_item.id.hex, data_item.sort_key)])
 
     def test_get_single(self):
         data_item = self._create_data_item()
-        response = self._assert_auth_get_resource(self.single_endpoint(data_item._id))
+        response = self._assert_auth_get_resource(self.single_endpoint(data_item.id.hex))
         self.assertEqual(response.status_code, 200)
 
         fixture_data_type = json.loads(response.content)
-        self.assertEqual(fixture_data_type, self._data_item_json(data_item._id, data_item.sort_key))
+        self.assertEqual(fixture_data_type, self._data_item_json(data_item.id.hex, data_item.sort_key))
 
     def test_delete(self):
         data_item = self._create_data_item(cleanup=False)
         assert FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)  # populate cache
         self.assertEqual(1, len(FixtureDataItem.by_domain(self.domain.name)))
-        response = self._assert_auth_post_resource(self.single_endpoint(data_item._id), '', method='DELETE')
+        response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
-        self.assertEqual(0, len(FixtureDataItem.by_domain(self.domain.name)))
+        self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
         cached_docs = FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)
-        self.assertNotIn(data_item._id, [d._id for d in cached_docs], "stale cache")
+        self.assertNotIn(data_item._migration_couch_id, [d._id for d in cached_docs], "stale cache")
 
     def test_create(self):
         assert not FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)  # populate cache
@@ -213,14 +213,14 @@ class TestLookupTableItemResource(APIResourceTest):
         response = self._assert_auth_post_resource(
             self.list_endpoint, json.dumps(data_item_json), content_type='application/json')
         self.assertEqual(response.status_code, 201)
-        data_item = FixtureDataItem.by_domain(self.domain.name).first()
+        data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.addCleanup(data_item.delete)
-        self.assertEqual(data_item.data_type_id, self.data_type._migration_couch_id)
+        self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
-        self.assertEqual(data_item.fields['state_name'].field_list[0].field_value, 'Massachusetts')
-        self.assertEqual(data_item.fields['state_name'].field_list[0].properties, {"lang": "en"})
+        self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')
+        self.assertEqual(data_item.fields['state_name'][0].properties, {"lang": "en"})
         cached_docs = FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)
-        self.assertIn(data_item._id, [d._id for d in cached_docs], "stale cache")
+        self.assertIn(data_item._migration_couch_id, [d._id for d in cached_docs], "stale cache")
 
     def test_update(self):
         data_item = self._create_data_item()
@@ -242,13 +242,13 @@ class TestLookupTableItemResource(APIResourceTest):
         }
 
         response = self._assert_auth_post_resource(
-            self.single_endpoint(data_item._id), json.dumps(data_item_update), method="PUT")
-        data_item = FixtureDataItem.get(data_item._id)
+            self.single_endpoint(data_item.id.hex), json.dumps(data_item_update), method="PUT")
+        data_item = LookupTableRow.objects.get(id=data_item.id)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(data_item.data_type_id, self.data_type._migration_couch_id)
+        self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
-        self.assertEqual(data_item.fields['state_name'].field_list[0].field_value, 'Massachusetts')
-        self.assertEqual(data_item.fields['state_name'].field_list[0].properties, {"lang": "en"})
+        self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')
+        self.assertEqual(data_item.fields['state_name'][0].properties, {"lang": "en"})
         self.assertEqual(data_item.item_attributes, {"attribute1": "cool_attr_value"})
         cached, = FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)
         self.assertEqual(cached.item_attributes, {"attribute1": "cool_attr_value"}, "stale cache")
