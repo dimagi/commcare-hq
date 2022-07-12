@@ -22,8 +22,8 @@ def task(*args, **kwargs):
     """
     kwargs.setdefault('serializer', 'json')
 
-    if len(args) == 1 and callable(args[0]):
-        return shared_task(**kwargs)(args[0])
+    if len(args) == 1 and callable(args[0]) and not kwargs:
+        return shared_task()(args[0])
 
     def task(fn):
         return shared_task(*args, **kwargs)(fn)
