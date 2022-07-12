@@ -37,7 +37,7 @@ from captcha.fields import ReCaptchaField
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
 from crispy_forms.bootstrap import StrictButton
-from crispy_forms.layout import Layout, Submit
+from crispy_forms.layout import Layout, Submit, LayoutObject
 from dateutil.relativedelta import relativedelta
 from django_countries.data import COUNTRIES
 from memoized import memoized
@@ -433,15 +433,16 @@ class DomainGlobalSettingsForm(forms.Form):
         self.fields['default_timezone'].label = gettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
-            del self.fields['logo']
-            del self.fields['delete_logo']
+            self.remove_fields('logo', 'delete_logo')
 
         if self.project:
             if not self.project.call_center_config.enabled:
-                del self.fields['call_center_enabled']
-                del self.fields['call_center_type']
-                del self.fields['call_center_case_owner']
-                del self.fields['call_center_case_type']
+                self.remove_fields(
+                    'call_center_enabled',
+                    'call_center_type',
+                    'call_center_case_owner',
+                    'call_center_case_type'
+                )
             else:
                 owner_field = self.fields['call_center_case_owner']
                 owner_field.widget.set_url(
@@ -450,15 +451,14 @@ class DomainGlobalSettingsForm(forms.Form):
                 owner_field.widget.set_domain(self.domain)
 
         if not MOBILE_UCR.enabled(self.domain):
-            del self.fields['mobile_ucr_sync_interval']
+            self.remove_fields('mobile_ucr_sync_interval')
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
-            del self.fields['confirmation_link_expiry']
-            del self.fields['confirmation_sms_project_name']
+            self.remove_fields('confirmation_link_expiry', 'confirmation_sms_project_name')
         else:
             settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
             min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
@@ -473,7 +473,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
     def _handle_call_limit_visibility(self):
         if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
-            del self.fields['operator_call_limit']
+            self.remove_fields('operator_call_limit')
             return
         existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
         self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
@@ -581,6 +581,9 @@ class DomainGlobalSettingsForm(forms.Form):
             settings.save()
 
     def save(self, request, domain):
+        if not self.is_valid():
+            raise ValidationError(self.errors)
+
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
@@ -598,6 +601,21 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_account_confirmation_settings(domain)
         domain.save()
         return True
+
+    def remove_fields(self, *field_names):
+        existing_field_names = self.get_visible_field_names()
+
+        field_indices = [existing_field_names.index(field_name) for field_name in field_names]
+        field_indices.sort(reverse=True)
+        for index in field_indices:
+            self.helper.layout[0].pop(index)
+
+        for field_name in field_names:
+            del self.fields[field_name]
+
+    def get_visible_field_names(self):
+        fieldset = self.helper.layout.fields[0]
+        return [field[0] if isinstance(field, LayoutObject) else field for field in fieldset.fields]
 
 
 class DomainMetadataForm(DomainGlobalSettingsForm):
@@ -621,9 +639,9 @@ class DomainMetadataForm(DomainGlobalSettingsForm):
                 or not domain_has_privilege(self.domain, privileges.CLOUDCARE):
             # if the cloudcare_releases flag was just defaulted, don't bother showing
             # this setting at all
-            del self.fields['cloudcare_releases']
+            self.remove_fields('cloudcare_releases')
         if not domain_has_privilege(self.domain, privileges.GEOCODER):
-            del self.fields['default_geocoder_location']
+            self.remove_fields('default_geocoder_location')
 
     def save(self, request, domain):
         res = DomainGlobalSettingsForm.save(self, request, domain)
