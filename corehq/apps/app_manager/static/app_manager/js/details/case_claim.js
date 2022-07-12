@@ -350,7 +350,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 self.searchProperties.push(searchPropertyModel({
                     name: searchProperty.name,
                     label: searchProperty.label[lang],
-                    hint: searchProperty.hint[lang] || "",
+                    hint: searchProperty.hint[lang],
                     appearance: _getAppearance(searchProperty),
                     isMultiselect: searchProperty.input_ === "select",
                     allowBlankValue: searchProperty.allow_blank_value,
