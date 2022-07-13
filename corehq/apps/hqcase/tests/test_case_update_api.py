@@ -9,7 +9,7 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
@@ -35,7 +35,7 @@ class TestCaseAPI(TestCase):
         super().setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         role = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True, access_api=True)
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
         )
         cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
 

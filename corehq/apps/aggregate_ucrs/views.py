@@ -19,7 +19,7 @@ from corehq.apps.userreports.views import (
     swallow_programming_errors,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 @method_decorator(toggles.AGGREGATE_UCRS.required_decorator(), name='dispatch')
@@ -75,7 +75,7 @@ class PreviewAggregateUCRView(BaseAggregateUCRView):
 
 
 @login_or_basic
-@require_permission(Permissions.view_reports)
+@require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
 def export_aggregate_ucr(request, domain, table_id):
     table_definition = get_object_or_404(

@@ -4,10 +4,10 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 require_can_edit_fixtures = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
+    require_permission(HqPermissions.edit_data)(
         requires_privilege_with_fallback(privileges.LOOKUP_TABLES)(*args, **kwargs)
     )
 )

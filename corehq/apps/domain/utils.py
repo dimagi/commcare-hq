@@ -108,6 +108,21 @@ def guess_domain_language(domain_name):
     return counter.most_common(1)[0][0] if counter else 'en'
 
 
+def guess_domain_language_for_sms(domain_name):
+    """
+    A domain does not have a default language, but its apps do. Return
+    the language code of the most common default language across apps.
+    In other cases, such as tie, English is returned as the default language.
+    """
+    domain_obj = Domain.get_by_name(domain_name)
+    counter = Counter([app.default_language for app in domain_obj.applications() if not app.is_remote_app()])
+    most_common = counter.most_common(2)
+    multiple_most_common = len(most_common) > 1 and most_common[0][1] == most_common[1][1]
+    if not most_common or multiple_most_common:
+        return 'en'
+    return counter.most_common(1)[0][0]
+
+
 def silence_during_tests():
     if settings.UNIT_TESTING:
         return open(os.devnull, 'w')

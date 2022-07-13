@@ -66,7 +66,7 @@ In its very basic form (a simple paginated view) it should look like:
                 }
             ]
             """
-            for puppy in Puppy.get_all():
+            for puppy in Puppy.get_all()[self.skip:self.skip + self.limit]:
                 yield {
                     'itemData': {
                         'id': puppy._id,

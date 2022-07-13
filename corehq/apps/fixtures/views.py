@@ -32,6 +32,7 @@ from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -62,7 +63,7 @@ from corehq.apps.fixtures.utils import (
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
@@ -430,6 +431,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
 @require_POST
 @api_auth
 @require_can_edit_fixtures
+@api_throttle
 def upload_fixture_api(request, domain, **kwargs):
     """
         Use following curl-command to test.
@@ -567,7 +569,7 @@ def _get_fixture_upload_args_from_request(request, domain):
 
     is_async = request.POST.get("async", "").lower() == "true"
 
-    if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
+    if not request.couch_user.has_permission(domain, HqPermissions.edit_data.name):
         raise FixtureAPIRequestError(
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))

@@ -10291,6 +10291,11 @@ msgid "Reverted to version {old_version}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
+msgid ""
+"Unable to create new build. Please click 'Make New Version' to see errors."
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
 msgid "App diff"
 msgstr ""
 
@@ -13841,9 +13846,30 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid ""
 "\n"
-"            Default time (in hours) for which account confirmation link will "
+"            Default time (in days) for which account confirmation link will "
 "be valid.\n"
 "            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Call limit"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"\n"
+"            Limit on number of calls allowed to an operator for each call "
+"type.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid "Confirmation SMS project name"
+msgstr ""
+
+#: corehq/apps/domain/forms.py
+msgid ""
+"Name of the project to be used in SMS sent for account confirmation to users."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -13859,7 +13885,7 @@ msgid "Default timezone"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-msgid "Confirmation link expiry should be an integer."
+msgid "{} should be an integer."
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -15255,7 +15281,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/email/domain_invite.txt
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
-#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 msgid "Hey there,"
 msgstr ""
 
@@ -19716,62 +19741,36 @@ msgstr ""
 msgid "Workbook does not contain a sheet called types"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid "Unknown location: '%(name)s'. But the row is successfully added"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/location_cache.py
-#, python-format
-msgid ""
-"Multiple locations found with the name: '%(name)s'.  Try using site code. "
-"But the row is successfully added"
-msgstr ""
-
 #: corehq/apps/fixtures/upload/run_upload.py
 #, python-brace-format
 msgid "type {lookup_table_name} is not defined as global"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid ""
-"Error occurred while creating {lookup_table_name}. This table was not created"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Pre-existing definition of {lookup_table_name} deleted"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-brace-format
-msgid "Table {lookup_table_name} successfully uploaded"
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "'%(UID)s' is not a valid UID. But the new type is created."
+msgid "Unknown user: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
-#, python-format
-msgid "'%(UID)s' is not a valid UID. But the new item is created."
-msgstr ""
-
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
 msgid "Unknown group: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Invalid username: '%(name)s'. Row is not added"
+msgid "Unknown location: '%(name)s'. But the row is successfully added"
 msgstr ""
 
-#: corehq/apps/fixtures/upload/run_upload.py
+#: corehq/apps/fixtures/upload/workbook.py
 #, python-format
-msgid "Unknown user: '%(name)s'. But the row is successfully added"
+msgid "Invalid username: '%(name)s'. But the row is successfully added"
+msgstr ""
+
+#: corehq/apps/fixtures/upload/workbook.py
+#, python-format
+msgid ""
+"Multiple locations found with the name: '%(name)s'.  Try using site code. "
+"But the row is successfully added"
 msgstr ""
 
 #: corehq/apps/fixtures/views.py
@@ -22863,10 +22862,6 @@ msgid "Could not find app"
 msgstr ""
 
 #: corehq/apps/linked_domain/tasks.py
-msgid "Updated app but did not build or release: "
-msgstr ""
-
-#: corehq/apps/linked_domain/tasks.py
 msgid "Feature flag for {} is not enabled"
 msgstr ""
 
@@ -25097,6 +25092,25 @@ msgstr ""
 msgid "Reset Password on CommCare HQ"
 msgstr ""
 
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
+#, python-format
+msgid ""
+"\n"
+"Hello %(name)s,\n"
+"\n"
+"Your account with username %(username)s is confirmed successfully.\n"
+"You can now log in and submit data in the \"%(domain)s\" project on "
+"%(hq_name)s.\n"
+"\n"
+"Thanks,\n"
+"-The %(hq_name)s team\n"
+msgstr ""
+
+#: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
+#, python-format
+msgid "Hello %(name)s,"
+msgstr ""
+
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
 msgid ""
@@ -26885,6 +26899,112 @@ msgstr ""
 msgid "Modified Date"
 msgstr ""
 
+#: corehq/apps/reports/standard/cases/case_data.py
+#: corehq/apps/reports/standard/monitoring.py
+msgid "Case Data"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"Sorry, we couldn't find that case. If you think this is a mistake please "
+"report an issue."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid ""
+"The case creation form could not be found. Usually this happens if the form "
+"that created the case is archived but there are other forms that updated the "
+"case. To fix this you can archive the other forms listed here."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Unknown Product (\"{}\")"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Case Attachments"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "You don't have permission to access this page."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "Attachments for case"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case properties saved for %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "No changes made to %s."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid "Case %s was rebuilt from its forms."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-format
+msgid ""
+"Case %s was successfully saved. Hopefully it will show up in all reports "
+"momentarily."
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+#, python-brace-format
+msgid ""
+"Case {name} has been closed.\n"
+"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
+"            You can also reopen the case in the future by archiving the last "
+"form in the case history.\n"
+"        "
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case id"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "case name"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "section"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "date"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_id"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "product_name"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "transaction amount"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "type"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "ending balance"
+msgstr ""
+
+#: corehq/apps/reports/standard/cases/case_data.py
+msgid "unknown product"
+msgstr ""
+
 #: corehq/apps/reports/standard/cases/case_list_explorer.py
 msgid "Case List Explorer"
 msgstr ""
@@ -27435,10 +27555,6 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Proportion of users in group who submitted forms in date range."
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
-msgid "Case Data"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
@@ -28409,11 +28525,6 @@ msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
-msgid "Some required fields are missing. Please complete them before saving."
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/save_reports_modal.html
-#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 msgid "Date Filter"
 msgstr ""
 
@@ -28995,107 +29106,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "scheduled report"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid ""
-"Sorry, we couldn't find that case. If you think this is a mistake please "
-"report an issue."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid ""
-"The case creation form could not be found. Usually this happens if the form "
-"that created the case is archived but there are other forms that updated the "
-"case. To fix this you can archive the other forms listed here."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Unknown Product (\"{}\")"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Case Attachments"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "You don't have permission to access this page."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Attachments for case"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case properties saved for %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "No changes made to %s."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid "Case %s was rebuilt from its forms."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-format
-msgid ""
-"Case %s was successfully saved. Hopefully it will show up in all reports "
-"momentarily."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case {name} has been closed.\n"
-"            <a href=\"{url}\" class=\"post-link\">Undo</a>.\n"
-"            You can also reopen the case in the future by archiving the last "
-"form in the case history.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "case id"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "case name"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "section"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "date"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "product_id"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "product_name"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "transaction amount"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "type"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "ending balance"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "unknown product"
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -33612,6 +33622,10 @@ msgstr ""
 msgid "Edit Report"
 msgstr ""
 
+#: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
 #: corehq/apps/userreports/templates/userreports/partials/preview_warning.html
 msgid "Thanks for previewing Report Builder!"
 msgstr ""
@@ -34478,6 +34492,26 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid ""
+"\n"
+"            <div data-bind=\"visible: $root.phoneStatusMessage().length === "
+"0\">\n"
+"                    Please enter number including country code, without (+) "
+"and in digits only.\n"
+"            </div>\n"
+"            <div id=\"phone-error\">\n"
+"                <span data-bind=\"visible: $root.phoneStatus() !== $root."
+"STATUS.NONE\">\n"
+"                    <i class=\"fa fa-exclamation-triangle\"\n"
+"                    data-bind=\"visible: $root.phoneStatus() === $root."
+"STATUS.ERROR\"></i>\n"
+"                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->\n"
+"                </span>\n"
+"            </div>\n"
+"        "
+msgstr ""
+
+#: corehq/apps/users/forms.py
+msgid ""
 "This password is automatically generated. Please copy it or create your own. "
 "It will not be shown again."
 msgstr ""
@@ -34869,6 +34903,14 @@ msgid ""
 "                  It looks like your account has been deactivated.\n"
 "                  Contact your administrator if you think this is a "
 "mistake.\n"
+"                "
+msgstr ""
+
+#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
+msgid ""
+"\n"
+"                  Invitation link has expired.\n"
+"                  Contact your project administrator to send new invite.\n"
 "                "
 msgstr ""
 
@@ -36066,32 +36108,24 @@ msgstr ""
 msgid "Copy and paste admin emails"
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not contain special characters."
-msgstr ""
-
-#: corehq/apps/users/util.py
+#: corehq/apps/users/validation.py
 msgid "Username is required."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not contain consecutive '.' (period)."
+#: corehq/apps/users/validation.py
+msgid "Username '{}' is already taken or reserved."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' may not end with a '.' (period)."
+#: corehq/apps/users/validation.py
+msgid "Username '{}' must be a valid email address."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' belonged to a user that was deleted and cannot be reused."
+#: corehq/apps/users/validation.py
+msgid "The username component '{}' of '{}' may not contain special characters."
 msgstr ""
 
-#: corehq/apps/users/util.py
-msgid "Username '{}' is already taken."
-msgstr ""
-
-#: corehq/apps/users/util.py
-msgid "Username '{}' is reserved."
+#: corehq/apps/users/validation.py
+msgid "The username email domain '@{}' should be '@{}'."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py

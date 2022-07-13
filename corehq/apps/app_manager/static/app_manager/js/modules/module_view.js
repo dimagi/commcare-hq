@@ -47,7 +47,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     titleLabel: options.title_label,
                     searchFilter: options.search_filter,
                     blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
-                    dataRegistry: options.data_registry,
+                    dataRegistry: options.data_registry || "",
                     dataRegistryWorkflow: options.data_registry_workflow,
                     additionalRegistryCases: options.additional_registry_cases,
                     customRelatedCaseProperty: options.custom_related_case_property,

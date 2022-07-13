@@ -11,10 +11,10 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2020
 # Rowena Luk <rluk@dimagi.com>, 2021
-# Ismaïla Diene <idiene@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Aissetou Sawadogo <ais107@hotmail.com>, 2022
 # Tyler Wymer <twymer@dimagi.com>, 2022
+# Ismaïla Diene <idiene@dimagi.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -22,7 +22,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
+"Last-Translator: Ismaïla Diene <idiene@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3146,10 +3146,8 @@ msgid "Submit Invoice Request"
 msgstr "Soumettre la demande de Facture"
 
 #: corehq/apps/domain/static/domain/js/case_search.js
-#, fuzzy
-#| msgid "You have unchanged case settings"
 msgid "You have unchanged settings"
-msgstr "Vous avez des paramètres de dossier non sauvegardées"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -3927,6 +3925,16 @@ msgstr ""
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
+"sauvegarder."
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Please check your Internet connection!"
 msgstr ""
@@ -4010,6 +4018,12 @@ msgstr "Échoué "
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
