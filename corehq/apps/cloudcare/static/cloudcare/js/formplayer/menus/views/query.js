@@ -166,6 +166,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
                 hasError: this.hasError,
+                errorMessage: this.errorMessage,
             };
         },
 
@@ -173,6 +174,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.hasError = false;
+            this.errorMessage = "";
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -205,10 +207,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _isValid: function () {
+            if (this.model.get("error")) {
+                return false;
+            }
             if (!this.model.get('required')) {
                 return true;
             }
-
             var answer = this.getEncodedValue();
             return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
         },
@@ -216,6 +220,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         isValid: function () {
             var hasError = !this._isValid();
             if (hasError !== this.hasError) {
+                this.errorMessage = this.model.get("error");
                 this.hasError = hasError;
                 this.render();
             }
@@ -418,7 +423,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         submitAction: function (e) {
             e.preventDefault();
             FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
-
             var invalidFields = [];
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
@@ -427,9 +431,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
 
             if (invalidFields.length) {
-                var errorHTML = "Please enter values for the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
+                var errorHTML = "Please check the following fields:";
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                }).join("") + "</ul>";
                 FormplayerFrontend.trigger('showError', errorHTML, true);
+
                 return;
             }
 
