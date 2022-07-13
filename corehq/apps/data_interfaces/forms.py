@@ -618,7 +618,10 @@ class CaseRuleCriteriaForm(forms.Form):
     def clean_location_filter_definition(self):
         value = self.cleaned_data.get('location_filter_definition')
         try:
-            value = json.loads(value)
+            if value:
+                value = json.loads(value)
+            else:
+                return ''
         except (TypeError, ValueError):
             self._json_fail_hard()
 
