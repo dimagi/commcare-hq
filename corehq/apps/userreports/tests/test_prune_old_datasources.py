@@ -18,7 +18,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 class TestPruneOldDatasources(TestCase):
 
     def test_empty_tables_are_not_dropped(self):
-        config = self._create_data_source_config(self.domain.name)
+        config = self._create_data_source_config(self.active_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
 
@@ -27,7 +27,7 @@ class TestPruneOldDatasources(TestCase):
         self.assertTrue(adapter.table_exists)
 
     def test_empty_tables_are_dropped(self):
-        config = self._create_data_source_config(self.domain.name)
+        config = self._create_data_source_config(self.active_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
 
@@ -35,11 +35,50 @@ class TestPruneOldDatasources(TestCase):
 
         self.assertFalse(adapter.table_exists)
 
+    def test_tables_for_deleted_domains_are_not_dropped(self):
+        config = self._create_data_source_config(self.deleted_domain.name)
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+
+        call_command('prune_old_datasources')
+
+        self.assertTrue(adapter.table_exists)
+
+    def test_tables_for_deleted_domains_are_dropped(self):
+        config = self._create_data_source_config(self.deleted_domain.name)
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+
+        call_command('prune_old_datasources', '--drop-deleted-tables')
+
+        self.assertFalse(adapter.table_exists)
+
+    def test_tables_for_active_domains_are_not_dropped(self):
+        config = self._create_data_source_config(self.active_domain.name)
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+
+        call_command('prune_old_datasources', '--drop-deleted-tables')
+
+        self.assertTrue(adapter.table_exists)
+
+    def test_tables_for_missing_domains_are_not_dropped(self):
+        config = self._create_data_source_config('unknown-domain')
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+
+        call_command('prune_old_datasources', '--drop-deleted-tables')
+
+        self.assertTrue(adapter.table_exists)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.domain = create_domain('test')
-        cls.addClassCleanup(cls.domain.delete)
+        cls.active_domain = create_domain('test')
+        cls.deleted_domain = create_domain('deleted-domain')
+        cls.deleted_domain.delete(leave_tombstone=True)
+        cls.addClassCleanup(cls.active_domain.delete)
+        cls.addClassCleanup(cls.deleted_domain.delete)
 
     def setUp(self):
         super().setUp()
