@@ -901,7 +901,13 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
+# It's a shame to have both Assertion and CustomAssertion, as they're
+# essentially the same, but some usages of Assertion are optional
+# SchemaPropertys, and marking `test` as required precludes that. Setting the
+# SchemaProperty itself as optional doesn't work
+# https://github.com/dimagi/commcare-hq/pull/31885#discussion_r918391347
 class Assertion(DocumentSchema):
+    """Parallel of the Assertion xml entity in the suite file"""
     test = StringProperty()
     text = DictProperty(StringProperty)
 
