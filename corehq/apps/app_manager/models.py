@@ -203,6 +203,10 @@ LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
 
+class LabelProperty(DictProperty):
+    """Stores a {lang_code: translated_string} dict"""
+
+
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
     parent = jsonpath.Parent().find(datum_context)[0]
@@ -900,13 +904,17 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
-class CustomAssertion(DocumentSchema):
+class Assertion(DocumentSchema):
+    test = StringProperty()
+    text = DictProperty(StringProperty)
+
+
+class CustomAssertion(Assertion):
     """Custom assertions to add to the assertions block
     test: The actual assertion to run
     locale_id: The id of the localizable string
     """
     test = StringProperty(required=True)
-    text = DictProperty(StringProperty)
 
 
 class CustomInstance(DocumentSchema):
@@ -2145,7 +2153,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
-    label = DictProperty()
+    label = LabelProperty()
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
@@ -2171,19 +2179,43 @@ class CaseSearchProperty(DocumentSchema):
     Case properties available to search on.
     """
     name = StringProperty()
-    label = DictProperty()
+    label = LabelProperty()
     appearance = StringProperty(exclude_if_none=True)
     input_ = StringProperty(exclude_if_none=True)
     default_value = StringProperty(exclude_if_none=True)
-    hint = DictProperty()
+    hint = LabelProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
-    required = StringProperty(exclude_if_none=True)
+    required = SchemaProperty(Assertion)
+    validations = SchemaListProperty(Assertion)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
+
+    @classmethod
+    def wrap(cls, data):
+        original = deepcopy(data)
+        required = data.pop('required', None)
+        if required:
+            # TODO its always str
+            if isinstance(required, str):
+                data['required'] = {'test': required}
+            elif isinstance(required, list):
+                data['required'] = required[0]
+            else:
+                data['required'] = required
+
+        old_validations = data.pop('validation', None)  # it was changed to plural
+        if old_validations:
+            data['validations'] = [{
+                'test': old['xpath'],
+                'text': old['message'],
+            } for old in old_validations if old.get('xpath')]
+
+        data.pop('required_message', None)
+        return super().wrap(data)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2198,19 +2230,19 @@ class BaseCaseSearchLabel(NavMenuItemMediaMixin):
 
 
 class CaseSearchLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search All Cases'})
+    label = LabelProperty(default={'en': 'Search All Cases'})
 
 
 class CaseSearchAgainLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search Again'})
+    label = LabelProperty(default={'en': 'Search Again'})
 
 
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    command_label = DictProperty(default={'en': 'Search All Cases'})
-    again_label = DictProperty(default={'en': 'Search Again'})
+    command_label = LabelProperty(default={'en': 'Search All Cases'})
+    again_label = LabelProperty(default={'en': 'Search Again'})
     search_label = SchemaProperty(CaseSearchLabel)
     search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
@@ -2225,7 +2257,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
-    title_label = DictProperty(default={})
+    title_label = LabelProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
