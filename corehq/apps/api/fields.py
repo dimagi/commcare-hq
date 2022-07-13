@@ -1,6 +1,8 @@
 '''
 Fields for use in Tastypie Resources
 '''
+from uuid import UUID
+
 from tastypie.fields import ApiField, CharField
 
 import dimagi.utils.modules
@@ -257,3 +259,8 @@ class UUIDField(ApiField):
         if value is None:
             return None
         return value.hex
+
+    def hydrate(self, bundle):
+        if self.instance_name in bundle.data:
+            return UUID(bundle.data[self.instance_name])
+        return super().hydrate(bundle)

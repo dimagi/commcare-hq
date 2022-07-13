@@ -330,12 +330,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @property
     def try_fields_without_attributes(self):
-        """This is really just for the API"""
-        try:
-            return self.fields_without_attributes
-        except FixtureVersionError:
-            return {key: value.to_api_json()
-                    for key, value in self.fields.items()}
+        raise NotImplementedError("no longer used")
 
     def add_owner(self, owner, owner_type, transaction=None):
         raise NotImplementedError("no longer used")
@@ -477,13 +472,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type',
-            startkey=[domain, {}],
-            endkey=[domain],
-            reduce=False,
-            include_docs=True,
-            descending=True
-        )
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):

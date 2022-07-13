@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from couchdbkit import ResourceNotFound
+from django.db.models import Max
+
 from tastypie import fields as tp_f
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpAccepted
@@ -9,14 +10,15 @@ from tastypie.resources import Resource
 from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.api.fields import UUIDField
-from corehq.apps.api.resources import CouchResourceMixin, HqBaseResource
+from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_obj, get_object_or_not_exist, object_does_not_exist
+from corehq.apps.api.util import get_obj, object_does_not_exist
+from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
+    Field,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
@@ -24,27 +26,43 @@ from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import HqPermissions
 
 
-def convert_fdt(fdi):
-    try:
-        fdt = LookupTable.objects.get(id=fdi.data_type_id)
-        fdi.fixture_type = fdt.tag
+def convert_fdt(fdi, type_cache=None):
+    def get_tag(table_id):
+        try:
+            return LookupTable.objects.values("tag").get(id=table_id)["tag"]
+        except LookupTable.DoesNotExist:
+            return None
+
+    if type_cache is None:
+        tag = get_tag(fdi.table_id)
+    else:
+        try:
+            tag = type_cache[fdi.table_id]
+        except KeyError:
+            tag = type_cache[fdi.table_id] = get_tag(fdi.table_id)
+    if tag is None:
         return fdi
-    except LookupTable.DoesNotExist:
-        return fdi
+    fdi.fixture_type = tag
+    return fdi
 
 
-class FixtureResource(CouchResourceMixin, HqBaseResource):
+class FixtureResource(HqBaseResource):
     type = "fixture"
-    fields = tp_f.DictField(attribute='try_fields_without_attributes',
-                            readonly=True, unique=True)
+    fields = tp_f.DictField(attribute='fields', readonly=True, unique=True)
     # when null, that means the ref'd fixture type was not found
     fixture_type = tp_f.CharField(attribute='fixture_type', readonly=True,
                                   null=True)
-    id = tp_f.CharField(attribute='_id', readonly=True, unique=True)
+    id = UUIDField(attribute='id', readonly=True, unique=True)
+
+    def dehydrate_fields(self, bundle):
+        try:
+            return bundle.obj.fields_without_attributes
+        except FixtureVersionError:
+            return LookupTableItemResource.dehydrate_fields(None, bundle)
 
     def obj_get(self, bundle, **kwargs):
-        return convert_fdt(get_object_or_not_exist(
-            FixtureDataItem, kwargs['pk'], kwargs['domain']))
+        return convert_fdt(get_sql_object_or_not_exist(
+            LookupTableRow, kwargs['pk'], kwargs['domain']))
 
     def obj_get_list(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -56,23 +74,27 @@ class FixtureResource(CouchResourceMixin, HqBaseResource):
         type_tag = bundle.request.GET.get("fixture_type", None)
 
         if parent_id and parent_ref_name and child_type and references:
-            parent_fdi = FixtureDataItem.get(parent_id)
+            parent_fdi = LookupTableRow.objects.get(id=parent_id)
             fdis = list(
-                FixtureDataItem.by_field_value(
+                LookupTableRow.objects.with_value(
                     domain, child_type, parent_ref_name,
                     parent_fdi.fields_without_attributes[references])
             )
         elif type_id or type_tag:
             type_id = type_id or LookupTable.objects.by_domain_tag(domain, type_tag)
-            fdis = list(FixtureDataItem.by_data_type(domain, type_id))
+            fdis = list(LookupTableRow.objects.iter_rows(domain, table_id=type_id))
         else:
-            fdis = list(FixtureDataItem.by_domain(domain))
+            fdis = list(LookupTableRow.objects.filter(domain=domain))
 
-        return [convert_fdt(fdi) for fdi in fdis]
+        type_cache = {}
+        return [convert_fdt(fdi, type_cache) for fdi in fdis]
+
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {'pk': get_obj(bundle_or_obj).id.hex}
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_apps)
-        object_class = FixtureDataItem
+        object_class = LookupTableRow
         resource_name = 'fixture'
         limit = 0
 
@@ -85,7 +107,7 @@ class InternalFixtureResource(FixtureResource):
 
     class Meta(CustomResourceMeta):
         authentication = RequirePermissionAuthentication(HqPermissions.edit_apps, allow_session_auth=True)
-        object_class = FixtureDataItem
+        object_class = LookupTableRow
         resource_name = 'fixture_internal'
         limit = 0
 
@@ -186,10 +208,30 @@ class LookupTableResource(HqBaseResource):
         resource_name = 'lookup_table'
 
 
-class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
-    id = tp_f.CharField(attribute='get_id', readonly=True, unique=True)
-    data_type_id = tp_f.CharField(attribute='data_type_id')
-    fields = tp_f.DictField(attribute='fields')
+class FieldsDictField(tp_f.DictField):
+    # NOTE LookupTableItemResource.hydrate_fields() does not work
+    # because whatever value it sets on bundle.obj is subquently
+    # overwritten by the result of ApiField.hydrate().
+
+    def hydrate(self, bundle):
+        def make_field(data):
+            if "field_value" in data:
+                data = data.copy()
+                data["value"] = data.pop("field_value")
+            return Field(**data)
+
+        if self.instance_name not in bundle.data:
+            return super().hydrate(bundle)
+        return {
+            name: [make_field(f) for f in items["field_list"]]
+            for name, items in bundle.data[self.instance_name].items()
+        }
+
+
+class LookupTableItemResource(HqBaseResource):
+    id = UUIDField(attribute='id', readonly=True, unique=True)
+    data_type_id = UUIDField(attribute='table_id')
+    fields = FieldsDictField(attribute='fields')
     item_attributes = tp_f.DictField(attribute='item_attributes')
 
     # It appears that sort_key is not included in any user facing UI. It is only defined as
@@ -198,30 +240,36 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
     sort_key = tp_f.IntegerField(attribute='sort_key')
 
     def dehydrate_fields(self, bundle):
+        def field_json(values):
+            return {"field_list": [
+                {"field_value": field.value, "properties": field.properties}
+                for field in values
+            ]}
         return {
-            field_name: field_list.to_api_json()
+            field_name: field_json(field_list)
             for field_name, field_list in bundle.obj.fields.items()
         }
 
     def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(FixtureDataItem, kwargs['pk'], kwargs['domain'])
+        return get_sql_object_or_not_exist(LookupTableRow, kwargs['pk'], kwargs['domain'])
 
     def obj_get_list(self, bundle, domain, **kwargs):
-        return list(FixtureDataItem.by_domain(domain))
+        return list(LookupTableRow.objects.filter(domain=domain))
 
     def obj_delete(self, bundle, **kwargs):
         try:
-            data_item = FixtureDataItem.get(kwargs['pk'])
-        except ResourceNotFound:
+            row = LookupTableRow.objects.get(id=kwargs['pk'])
+        except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
         try:
             with CouchTransaction() as transaction:
-                data_item.recursive_delete(transaction)
+                row._migration_get_couch_object().recursive_delete(transaction)
+            row.delete(sync_to_couch=False)
         finally:
             class data_type:
-                _migration_couch_id = data_item.data_type_id
-            clear_fixture_quickcache(data_item.domain, [data_type])
-            clear_fixture_cache(data_item.domain)
+                _migration_couch_id = row.table_id.hex
+            clear_fixture_quickcache(row.domain, [data_type])
+            clear_fixture_cache(row.domain)
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -233,15 +281,16 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         if not LookupTable.objects.filter(id=data_type_id).exists():
             raise NotFound('Lookup table not found')
 
-        number_items = len(FixtureDataItem.by_data_type(kwargs['domain'], data_type_id))
-        bundle.obj = FixtureDataItem(bundle.data)
+        self.full_hydrate(bundle)
         bundle.obj.domain = kwargs['domain']
-        bundle.obj.sort_key = number_items + 1
+        bundle.obj.sort_key = LookupTableRow.objects.filter(
+            domain=kwargs['domain'], table_id=data_type_id
+        ).aggregate(value=Max('sort_key') + 1)["value"] or 0
         try:
             bundle.obj.save()
         finally:
             class data_type:
-                _migration_couch_id = data_type_id
+                _migration_couch_id = UUID(data_type_id).hex
             clear_fixture_quickcache(kwargs['domain'], [data_type])
             clear_fixture_cache(kwargs['domain'])
         return bundle
@@ -251,40 +300,32 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             raise BadRequest("data_type_id must be specified")
 
         try:
-            bundle.obj = FixtureDataItem.get(kwargs['pk'])
-        except ResourceNotFound:
+            bundle.obj = LookupTableRow.objects.get(id=kwargs['pk'])
+        except LookupTableRow.DoesNotExist:
             raise NotFound('Lookup table item not found')
 
         if bundle.obj.domain != kwargs['domain']:
             raise NotFound('Lookup table item not found')
 
-        save = False
-        if 'fields' in bundle.data:
-            save = True
-            bundle.obj.fields = {
-                field_name: FieldList.wrap(field_list)
-                for field_name, field_list in bundle.data['fields'].items()
-            }
-
-        if 'item_attributes' in bundle.data:
-            save = True
-            bundle.obj.item_attributes = bundle.data['item_attributes']
-
-        if save:
+        bundle = self.full_hydrate(bundle)
+        if 'fields' in bundle.data or 'item_attributes' in bundle.data:
             try:
                 bundle.obj.save()
             finally:
                 data_item = bundle.obj
 
                 class data_type:
-                    _migration_couch_id = data_item.data_type_id
+                    _migration_couch_id = data_item.table_id.hex
                 clear_fixture_quickcache(data_item.domain, [data_type])
                 clear_fixture_cache(data_item.domain)
 
         return bundle
 
+    def detail_uri_kwargs(self, bundle_or_obj):
+        return {'pk': get_obj(bundle_or_obj).id.hex}
+
     class Meta(CustomResourceMeta):
-        object_class = FixtureDataItem
+        object_class = LookupTableRow
         detail_allowed_methods = ['get', 'put', 'delete']
         list_allowed_methods = ['get', 'post']
         resource_name = 'lookup_table_item'

@@ -1,6 +1,9 @@
 import json
 import uuid
+from contextlib import contextmanager
+from unittest.mock import patch
 
+from django.test import SimpleTestCase
 from django.utils.http import urlencode
 
 from tastypie.bundle import Bundle
@@ -18,6 +21,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
     FixtureResource,
     LookupTableItemResource,
     LookupTableResource,
+    convert_fdt,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 
@@ -99,10 +103,6 @@ class TestFixtureResource(APIResourceTest):
             "1": [Field("one", {"lang": "en"})],
             "2": [Field("two", {"lang": "en"})],
         })
-        item = obj._migration_get_couch_model_class()()
-        item._id = obj.id.hex
-        obj._migration_sync_to_couch(item, save=False)
-        obj = item
         bundle = Bundle(obj=obj, data={})
         result = FixtureResource().full_dehydrate(bundle).data["fields"]
         self.assertEqual(result, {'1': "one", '2': "two"})
@@ -112,10 +112,6 @@ class TestFixtureResource(APIResourceTest):
             "1": [Field("one", {"lang": "en"}), Field("uno", {"lang": "es"})],
             "2": [Field("two", {"lang": "en"})],
         })
-        item = obj._migration_get_couch_model_class()()
-        item._id = obj.id.hex
-        obj._migration_sync_to_couch(item, save=False)
-        obj = item
         bundle = Bundle(obj=obj, data={})
         result = FixtureResource().full_dehydrate(bundle).data["fields"]
         self.assertEqual(result, {
@@ -324,7 +320,6 @@ class TestLookupTableItemResource(APIResourceTest):
     def test_delete(self):
         data_item = self._create_data_item(cleanup=False)
         assert FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)  # populate cache
-        self.assertEqual(1, len(FixtureDataItem.by_domain(self.domain.name)))
         response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
         self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
@@ -387,3 +382,68 @@ class TestLookupTableItemResource(APIResourceTest):
         self.assertEqual(data_item.item_attributes, {"attribute1": "cool_attr_value"})
         cached, = FixtureDataItem.get_item_list(self.domain.name, self.data_type.tag)
         self.assertEqual(cached.item_attributes, {"attribute1": "cool_attr_value"}, "stale cache")
+
+
+FAKE_TABLE = {"tag": "faketable"}
+
+
+class FakeRow:
+    def __init__(self):
+        self.table_id = uuid.uuid4()
+        self.data_type_id = self.table_id.hex
+
+
+class TestConvertFDT(SimpleTestCase):
+
+    def test_without_cache(self):
+        with self.patch_query():
+            row = convert_fdt(FakeRow())
+        self.assertEqual(row.fixture_type, FAKE_TABLE["tag"])
+
+    def test_missing_table_without_cache(self):
+        with self.patch_query(LookupTable.DoesNotExist):
+            row = convert_fdt(FakeRow())
+        self.assertFalse(hasattr(row, "fixture_type"))
+
+    def test_cache_miss(self):
+        cache = {}
+        with self.patch_query():
+            row = convert_fdt(FakeRow(), cache)
+        self.assertEqual(row.fixture_type, FAKE_TABLE["tag"])
+        self.assertIn(row.table_id, cache)
+
+    def test_cache_hit(self):
+        row = FakeRow()
+        cache = {row.table_id: "atag"}
+        with self.patch_query(Exception("should not happen")):
+            row = convert_fdt(row, cache)
+        self.assertEqual(row.fixture_type, "atag")
+
+    def test_missing_table_cache_miss(self):
+        cache = {}
+        with self.patch_query(LookupTable.DoesNotExist):
+            row = convert_fdt(FakeRow(), cache)
+        self.assertFalse(hasattr(row, "fixture_type"))
+        self.assertIn(row.table_id, cache)
+
+    def test_missing_table_cache_hit(self):
+        row = FakeRow()
+        cache = {row.table_id: None}
+        with self.patch_query(Exception("should not happen")):
+            row = convert_fdt(row, cache)
+        self.assertIn(row.table_id, cache)
+
+    @staticmethod
+    def patch_query(result=FAKE_TABLE):
+        def fake_get(self, id):
+            if isinstance(result, (type, Exception)):
+                raise result
+            return result
+
+        @contextmanager
+        def context():
+            from django.db.models.query import QuerySet
+            with patch.object(QuerySet, "get", fake_get):
+                yield
+
+        return context()
