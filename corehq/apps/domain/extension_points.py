@@ -27,6 +27,9 @@ def validate_password_rules(password) -> Optional[str]:
     Returns:
         An error message to show
     """
+    if len(password) < settings.MINIMUM_PASSWORD_LENGTH:
+        return _("Password must have at least {password_length} characters."
+                 ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
     strength = zxcvbn(password, user_inputs=['commcare', 'hq', 'dimagi', 'commcarehq'])
     if strength['score'] < settings.MINIMUM_ZXCVBN_SCORE:
         return _('Password is not strong enough. Try making your password more complex.')
