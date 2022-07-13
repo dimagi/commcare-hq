@@ -1,3 +1,5 @@
+{% load i18n %}
+
 {% csrf_token %}
 {% for global_error in form.non_field_errors %}
   <div class="alert alert-danger">
@@ -27,4 +29,15 @@
       </div>
     {% endif %}
   {% endfor %}
+  <div class="form-bubble-actions">
+    <button type="submit"
+            class="btn btn-lg btn-primary"
+            data-bind="enable: passwordSufficient, click:submitCheck">
+      {% if is_sso %}
+        {% trans "Continue to Single Sign-On" %}
+      {% else %}
+        {{ button_label }}
+      {% endif %}
+    </button>
+  </div>
 </fieldset>
