@@ -552,7 +552,7 @@ sh==1.14.2
     #   git-build-branch
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
     # via -r base-requirements.in
-simplejson==3.17.2
+simplejson==3.17.6
     # via
     #   -r base-requirements.in
     #   django-prbac
