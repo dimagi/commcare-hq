@@ -69,7 +69,6 @@ branches:
 #    - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
-    - jc/minimum-pwd-length # Jing June 29
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/dd-in-rules-ui # Jenny July 1
@@ -78,7 +77,6 @@ branches:
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
     - rc/search-input-validation # Robert July 11
-    - jc/disable-submit-when-password-fail-validation  # Jing July 11
     - es/required  # Ethan July 11
     - jls/py3-max # Jenny July 12
     - jc/pagination-api-keys-page  # Jing July 12
