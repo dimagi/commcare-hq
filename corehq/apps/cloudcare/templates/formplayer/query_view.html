@@ -83,7 +83,7 @@
            data-receive="<%- receive %>"
            <% if (required) { %> aria-required="true"<% } %>>
            <% } %>
-           <% if (errorMessage) { %> <span  class="text-danger"> "<%- errorMessage || "" %>"  <% } %>
+           <% if (errorMessage) { %> <span  class="help-block has-error"> "<%- errorMessage || "" %>"  <% } %>
            <% if (allow_blank_value) { %>
             <label class="control-label">
               <input type="checkbox" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
