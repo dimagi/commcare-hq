@@ -2193,16 +2193,9 @@ class CaseSearchProperty(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        original = deepcopy(data)
-        required = data.pop('required', None)
-        if required:
-            # TODO its always str
-            if isinstance(required, str):
-                data['required'] = {'test': required}
-            elif isinstance(required, list):
-                data['required'] = required[0]
-            else:
-                data['required'] = required
+        required = data.get('required')
+        if required and isinstance(required, str):
+            data['required'] = {'test': required}
 
         old_validations = data.pop('validation', None)  # it was changed to plural
         if old_validations:
@@ -2211,7 +2204,6 @@ class CaseSearchProperty(DocumentSchema):
                 'text': old['message'],
             } for old in old_validations if old.get('xpath')]
 
-        data.pop('required_message', None)
         return super().wrap(data)
 
 
