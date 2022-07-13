@@ -8,7 +8,6 @@ from django.db import connections
 from celery.schedules import crontab
 from celery.task import periodic_task
 
-from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.hqwebapp.tasks import mail_admins_async
@@ -26,18 +25,18 @@ def clear_expired_sessions():
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_cases_without_existing_domain():
-    case_count_by_missing_domain = {}
-    for domain in _get_missing_domains():
+    case_count_by_deleted_domain = {}
+    for domain in Domain.get_deleted_domain_names():
         case_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
             case_count += CommCareCase.objects.using(db_name).filter(domain=domain).count()
         if case_count:
-            case_count_by_missing_domain[domain] = case_count
+            case_count_by_deleted_domain[domain] = case_count
 
-    if case_count_by_missing_domain:
+    if case_count_by_deleted_domain:
         mail_admins_async.delay(
-            'There exist SQL cases belonging to a missing domain',
-            f'{case_count_by_missing_domain}\nConsider hard_delete_forms_and_cases_in_domain'
+            'There exist SQL cases belonging to a deleted domain',
+            f'{case_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -47,18 +46,18 @@ def check_for_sql_cases_without_existing_domain():
 
 @periodic_task(run_every=crontab(minute=0, hour=1), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_sql_forms_without_existing_domain():
-    form_count_by_missing_domain = {}
-    for domain in _get_missing_domains():
+    form_count_by_deleted_domain = {}
+    for domain in Domain.get_deleted_domain_names():
         form_count = 0
         for db_name in get_db_aliases_for_partitioned_query():
             form_count += XFormInstance.objects.using(db_name).filter(domain=domain).count()
         if form_count:
-            form_count_by_missing_domain[domain] = form_count
+            form_count_by_deleted_domain[domain] = form_count
 
-    if form_count_by_missing_domain:
+    if form_count_by_deleted_domain:
         mail_admins_async.delay(
-            'There exist SQL forms belonging to a missing domain',
-            f'{form_count_by_missing_domain}\nConsider hard_delete_forms_and_cases_in_domain'
+            'There exist SQL forms belonging to a deleted domain',
+            f'{form_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
     elif _is_monday():
         mail_admins_async.delay(
@@ -69,14 +68,14 @@ def check_for_sql_forms_without_existing_domain():
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_elasticsearch_data_without_existing_domain():
     issue_found = False
-    for domain_name in _get_missing_domains():
+    for domain_name in Domain.get_deleted_domain_names():
         for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             query = hqESQuery().domain(domain_name)
             count = query.count()
             if query.count() != 0:
                 issue_found = True
                 mail_admins_async.delay(
-                    'ES index "%s" contains %s items belonging to missing domain "%s"' % (
+                    'ES index "%s" contains %s items belonging to a deleted domain "%s"' % (
                         query.index, count, domain_name
                     ), ''
                 )
@@ -88,35 +87,27 @@ def check_for_elasticsearch_data_without_existing_domain():
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def check_for_ucr_tables_without_existing_domain():
-    all_domain_names = Domain.get_all_names()
+    deleted_domain_names = Domain.get_deleted_domain_names()
 
     connection_name = ConnectionManager().get_django_db_alias(UCR_ENGINE_ID)
     table_names = connections[connection_name].introspection.table_names()
     ucr_table_names = [name for name in table_names if name.startswith('config_report')]
 
-    missing_domains_to_tables = defaultdict(list)
+    deleted_domains_to_tables = defaultdict(list)
 
     for ucr_table_name in ucr_table_names:
         table_domain = ucr_table_name.split('_')[2]
-        if table_domain not in all_domain_names:
-            missing_domains_to_tables[table_domain].append(ucr_table_name)
+        if table_domain in deleted_domain_names:
+            deleted_domains_to_tables[table_domain].append(ucr_table_name)
 
-    if missing_domains_to_tables:
-        for missing_domain in missing_domains_to_tables:
+    if deleted_domains_to_tables:
+        for deleted_domain in deleted_domains_to_tables:
             mail_admins_async.delay(
-                f'Missing domain "{missing_domain}" has remaining UCR tables',
-                f'{missing_domains_to_tables[missing_domain]}\nConsider prune_old_datasources'
+                f'Deleted domain "{deleted_domain}" has remaining UCR tables',
+                f'{deleted_domains_to_tables[deleted_domain]}\nConsider prune_old_datasources'
             )
     elif _is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
-
-
-def _get_missing_domains():
-    return set(_get_all_domains_that_have_ever_had_subscriptions()) - set(Domain.get_all_names())
-
-
-def _get_all_domains_that_have_ever_had_subscriptions():
-    return Subscription.visible_and_suppressed_objects.values_list('subscriber__domain', flat=True).distinct()
 
 
 def _is_monday():
