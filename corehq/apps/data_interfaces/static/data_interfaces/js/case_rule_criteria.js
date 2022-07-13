@@ -114,6 +114,19 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return result;
         });
 
+        self.locationFilterDefinition = ko.computed(function () {
+            var result = [];
+            $.each(self.criteria(), function (index, value) {
+                if (value.koTemplateId === 'locations-filter') {
+                    result.push({
+                        location_id: value.location_id() || '',
+                        include_child_locations: value.include_child_locations() || '',
+                    });
+                }
+            });
+            return JSON.stringify(result);
+        });
+
         self.getKoTemplateId = function (obj) {
             return obj.koTemplateId;
         };
@@ -156,6 +169,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             } else if (caseFilterId === 'parent-closed-filter') {
                 if (!self.filterAlreadyAdded(caseFilterId)) {
                     self.criteria.push(closedParentDefinition(caseFilterId));
+                }
+            } else if (caseFilterId === 'locations-filter') {
+                if (!self.filterAlreadyAdded('locations-filter')) {
+                    self.criteria.push(locationDefinition(caseFilterId));
                 }
             } else if (caseFilterId === 'custom-filter') {
                 self.criteria.push(customMatchDefinition(caseFilterId));
@@ -213,6 +230,14 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 obj.name(value.name);
                 self.criteria.push(obj);
             });
+
+            if (initial.location_filter_definition) {
+                obj = locationDefinition('locations-filter');
+                obj.name(initial.location_filter_definition.name);
+                obj.location_id(initial.location_filter_definition.location_id);
+                obj.include_child_locations(initial.location_filter_definition.include_child_locations);
+                self.criteria.push(obj);
+            }
 
             $.each(initial.ucr_filter_definitions, function (index, value) {
                 obj = ucrFilterDefinition('ucr-filter');
@@ -287,6 +312,18 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             self.koTemplateId = koTemplateId;
 
             // This model matches the Django model with the same name
+            return self;
+        };
+
+        var locationDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            self.location_id = ko.observable();
+            self.include_child_locations = ko.observable();
+            self.name = ko.observable();
             return self;
         };
 
