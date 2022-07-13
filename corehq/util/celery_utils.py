@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta
-from time import sleep, time
+from time import sleep
 
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
-import kombu.five
 
 
 def no_result_task(*args, **kwargs):
@@ -37,9 +36,8 @@ class TaskInfo(object):
     def __init__(self, _id, name, time_start=None):
         self.id = _id
         self.name = name
-        # http://stackoverflow.com/questions/20091505/celery-task-with-a-time-start-attribute-in-1970
         if time_start:
-            self.time_start = datetime.fromtimestamp(time() - kombu.five.monotonic() + time_start)
+            self.time_start = datetime.fromtimestamp(time_start)
         else:
             self.time_start = None
 
@@ -127,11 +125,11 @@ def revoke_tasks(task_names, interval=5):
             for worker, task_dicts in result.items():
                 tasks.extend(_get_task_info_fcn(task_state)(task_dicts))
 
-        for task in tasks:
-            if task.name in task_names and task.id not in task_ids:
-                app.control.revoke(task.id, terminate=True)
-                task_ids.add(task.id)
-                print(datetime.utcnow(), 'Revoked', task.id, task.name)
+        for current_task in tasks:
+            if current_task.name in task_names and current_task.id not in task_ids:
+                app.control.revoke(current_task.id, terminate=True)
+                task_ids.add(current_task.id)
+                print(datetime.utcnow(), 'Revoked', current_task.id, current_task.name)
 
         sleep(interval)
 
