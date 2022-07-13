@@ -22,7 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = value.join(selectDelimiter);
             }
 
-            var queryProvided = _.isObject(value) ? value.length : !!value;
+            var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
                 return selectDelimiter + value;
             } else if (queryProvided) {
