@@ -128,8 +128,8 @@ def patch_celery_task():
 
         @cached_property
         def task(self):
-            from celery import shared_task
-            return shared_task
+            from corehq.apps.celery.shared_task import task
+            return task
 
         @cached_property
         def periodic_task(self):
