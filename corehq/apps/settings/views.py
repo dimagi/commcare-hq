@@ -639,7 +639,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for api_key in self.base_query.order_by('-created').all():
+        for api_key in self.base_query.order_by('-created').all()[self.skip:self.skip + self.limit]:
             redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
             yield {
                 "itemData": {
