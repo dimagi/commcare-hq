@@ -21,6 +21,11 @@
              default_search="false"
              storage-instance="results"
              template="case">
+        <title>
+          <text>
+            <locale id="case_search.m0.inputs"/>
+          </text>
+        </title>
         <data key="case_type" ref="'case'"/>
         <data key="commcare_blacklisted_owner_ids" ref="instance('commcaresession')/session/context/userid"/>
         <prompt key="name">
