@@ -219,7 +219,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         isValid: function () {
             var hasError = !this._isValid();
             if (hasError !== this.hasError) {
-                this.errorMessage = this.model.get("error") || "Please enter a value for this field.";
+                this.errorMessage = this.model.get("error");
                 this.hasError = hasError;
                 this.render();
             }
