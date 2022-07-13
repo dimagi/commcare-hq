@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.conf import settings
 from django.core.management import call_command
 
@@ -12,6 +10,7 @@ from corehq.apps.cleanup.dbaccessors import (
     find_sql_forms_for_deleted_domains,
     find_ucr_tables_for_deleted_domains,
 )
+from corehq.apps.cleanup.tests.util import is_monday
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
@@ -30,7 +29,7 @@ def check_for_sql_cases_without_existing_domain():
             'There exist SQL cases belonging to deleted domain(s)',
             f'{case_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
-    elif _is_monday():
+    elif is_monday():
         mail_admins_async.delay(
             'All SQL cases belong to valid domains', ''
         )
@@ -44,7 +43,7 @@ def check_for_sql_forms_without_existing_domain():
             'There exist SQL forms belonging to deleted domain(s)',
             f'{form_count_by_deleted_domain}\nConsider hard_delete_forms_and_cases_in_domain'
         )
-    elif _is_monday():
+    elif is_monday():
         mail_admins_async.delay(
             'All SQL forms belong to valid domains', ''
         )
@@ -59,7 +58,7 @@ def check_for_elasticsearch_data_without_existing_domain():
                 f'Deleted domain "{domain}" has remaining ES docs',
                 f'{es_docs}\nConsider delete_es_docs_for_domain'
             )
-    elif _is_monday():
+    elif is_monday():
         mail_admins_async.delay(
             'All data in ES belongs to valid domains', ''
         )
@@ -74,9 +73,5 @@ def check_for_ucr_tables_without_existing_domain():
                 f'Deleted domain "{deleted_domain}" has remaining UCR tables',
                 f'{deleted_domains_to_tables[deleted_domain]}\nConsider prune_old_datasources'
             )
-    elif _is_monday():
+    elif is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
-
-
-def _is_monday():
-    return datetime.utcnow().isoweekday() == 1
