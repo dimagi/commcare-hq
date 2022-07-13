@@ -79,6 +79,5 @@ branches:
     - rc/search-input-validation # Robert July 11
     - es/required  # Ethan July 11
     - jls/py3-max # Jenny July 12
-    - jc/pagination-api-keys-page  # Jing July 12
-    - dependabot/pip/requirements/boto3-1.24.28 # Amit July 13
+    - dependabot/pip/requirements/boto3-1.24.28+ap/celery-upgrade-patch # Amit July 13
 submodules: { }
