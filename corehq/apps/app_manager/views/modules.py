@@ -223,8 +223,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'exclude_from_search_enabled': app.enable_exclude_from_search,
-            'required_search_fields_enabled': app.enable_required_search_fields,
+            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
@@ -1012,30 +1011,37 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
-    current = {p.name: p.label for p in module.search_config.properties}
+    props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
-        if prop['name'] in current:
-            label = current[prop['name']].copy()
-            label.update({lang: prop['label']})
-        else:
-            label = {lang: prop['label']}
-        hint = {lang: prop['hint']}
+        current = props_by_name.get(prop['name'])
+
+        _current_label = current.label if current else {}
+        _current_hint = current.hint if current else {}
         ret = {
             'name': prop['name'],
-            'label': label,
+            'label': {**_current_label, lang: prop['label']},
+            'hint': {**_current_hint, lang: prop['hint']},
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
-        if prop['hint']:
-            ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
         if prop['allow_blank_value']:
             ret['allow_blank_value'] = prop['allow_blank_value']
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
-        if prop['required']:
-            ret['required'] = prop['required']
+        if prop['required_test']:
+            _current_text = current.required.text if current.required else {}
+            ret['required'] = {
+                'test': prop['required_test'],
+                'text': {**_current_text, lang: prop['required_text']}
+            }
+        if prop['validation_test']:
+            _current_text = current.validations[0].text if current and current.validations else {}
+            ret['validations'] = [{
+                'test': prop['validation_test'],
+                'text': {**_current_text, lang: prop['validation_text']},
+            }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
