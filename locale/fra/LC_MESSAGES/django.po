@@ -14448,10 +14448,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/forms.py
-#, fuzzy
-#| msgid "Confirmation Email Sent"
 msgid "Confirmation SMS project name"
-msgstr "Courriel de confirmation envoyé"
+msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid ""
@@ -24105,30 +24103,6 @@ msgid "You do not have permission to pull content into this project space."
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-msgid "No downstream project spaces were selected. Please contact support."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"Links between one or more project spaces do not exist. Please contact "
-"support."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"\n"
-"                The attempted push from {} to {} is disallowed. Please "
-"contact support.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"You do not have permission to push to all specified downstream project "
-"spaces."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
 msgid ""
 "\n"
 "                Your release has begun. You will receive an email when it is "
@@ -24152,6 +24126,28 @@ msgstr ""
 #: corehq/apps/linked_domain/views.py
 msgid ""
 "You do not have adequate permissions in both project spaces to create a link."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid "No downstream project spaces were selected. Please contact support."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"The project space link between {} and {} does not exist. Ensure the link was "
+"not recently deleted."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"You do not have permission to push to all specified downstream project "
+"spaces."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"The attempted push is disallowed because it includes the following domains "
+"that can only be pushed to one at a time: {}"
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
@@ -26117,12 +26113,7 @@ msgid "Reset Password on CommCare HQ"
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_account_confirmation_success_sms.txt
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "Once you confirm your account you will be able to access and submit data "
-#| "in the \"%(domain)s\" project on %(hq_name)s.\n"
-#| "Your username to login is %(username)s\n"
+#, python-format
 msgid ""
 "\n"
 "Hello %(name)s,\n"
@@ -26134,10 +26125,6 @@ msgid ""
 "Thanks,\n"
 "-The %(hq_name)s team\n"
 msgstr ""
-"\n"
-"Une fois que vous aurez confirmé votre compte, vous pourrez accéder et "
-"soumettre des données dans le \"%(domain)s\" projet sur %(hq_name)s.\n"
-"Votre nom d'utilisateur pour vous connecter est %(username)s\n"
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
@@ -36310,19 +36297,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                                    Change my project's plan\n"
-#| "                                "
 msgid ""
 "\n"
 "                  Invitation link has expired.\n"
 "                  Contact your project administrator to send new invite.\n"
 "                "
 msgstr ""
-"\n"
-"Changer mon plan de projet."
 
 #: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 msgid "Confirm Your Account"
