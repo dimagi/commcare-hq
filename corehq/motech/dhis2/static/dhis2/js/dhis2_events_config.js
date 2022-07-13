@@ -1,4 +1,4 @@
-hqDefine('dhis2/js/dataset_map_json', [
+hqDefine('dhis2/js/dhis2_events_config', [
     'jquery',
     'underscore',
     'knockout',
@@ -17,13 +17,14 @@ hqDefine('dhis2/js/dataset_map_json', [
 ) {
     var ViewModel = function (data) {
         var self = {};
-        self.dataSetMap = ko.observable(JSON.stringify(data, null, 4));
+        data = data ? data : [];
+        self.formConfigs = ko.observable(JSON.stringify(data, null, 2));
         self.errorMessage = ko.observable('');
         self.isError = ko.computed(function () {
             return self.errorMessage() !== '';
         });
 
-        self.initMapConfigTemplate = function (elements) {
+        self.initFormConfigTemplate = function (elements) {
             _.each(elements, function (element) {
                 _.each($(element).find('.jsonwidget'), baseAce.initObservableJsonWidget);
             });
@@ -41,21 +42,23 @@ hqDefine('dhis2/js/dataset_map_json', [
             self.errorMessage(''); // clears error message from page before submitting
             $.post(
                 form.action,
-                {'dataset_map': self.dataSetMap()},
+                {'form_configs': self.formConfigs()},
                 function (data) {
                     alertUser.alert_user(data['success'], 'success', true);
                 }
-            ).fail(function () {
-                var msg = gettext('Unable to save DataSet map');
-                alertUser.alert_user(msg, 'danger');
-            });
+            ).fail(
+                function (data) {
+                    var errors = '<ul><li>' + data.responseJSON['errors'].join('</li><li>') + '</li></ul>';
+                    alertUser.alert_user(gettext('Unable to save form configs') + errors, 'danger');
+                }
+            );
         };
 
         return self;
     };
 
     $(function () {
-        var viewModel = ViewModel(initialPageData.get('dataset_map'));
-        $('#dataset-map').koApplyBindings(viewModel);
+        var viewModel = ViewModel(initialPageData.get('form_configs'));
+        $('#dhis2-form-config').koApplyBindings(viewModel);
     });
 });
