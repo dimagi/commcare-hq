@@ -245,6 +245,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Skip because dates get handled by changeDateQueryField
                 return;
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+                this.model.set('value', $(e.currentTarget).val());
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
