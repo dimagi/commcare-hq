@@ -69,7 +69,7 @@
     <div data-bind="template: {name: 'remove-action'}"></div>
     <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
     <div class="controls col-xs-2">
-      <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+      {% include "data_interfaces/partials/case_property_input.html" with ko_value='name' %}
     </div>
     <div class="controls col-xs-2">
       <select class="select form-control" data-bind="value: value_type" required>
@@ -78,7 +78,10 @@
       </select>
     </div>
     <div class="controls col-xs-2">
-      <input type="text" class="textinput form-control" data-bind="value: value" required />
+      <input type="text" class="textinput form-control" data-bind="value: value, visible: value_type() === '{{ form.constants.VALUE_TYPE_EXACT }}'" required />
+      <!-- ko if: value_type() === '{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}' -->
+        {% include "data_interfaces/partials/case_property_input.html" with ko_value='value' %}
+      <!-- /ko -->
     </div>
   </div>
 </script>
