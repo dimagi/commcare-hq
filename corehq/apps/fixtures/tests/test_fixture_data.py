@@ -8,11 +8,9 @@ from casexml.apps.phone.tests.utils import \
 
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
-from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     Field,
-    FixtureDataItem,
     FixtureOwnership,
     LookupTable,
     LookupTableRow,
@@ -141,17 +139,11 @@ class FixtureDataTest(TestCase):
             ElementTree.tostring(fixtures[0], encoding='utf-8')
         )
 
-    def test_get_indexed_items(self):
-        with self.assertRaises(FixtureVersionError):
-            fixtures = FixtureDataItem.get_indexed_items(
-                self.domain, self.tag, 'state_name')
-            delhi_id = fixtures['Delhi_state']['district_id']
-            self.assertEqual(delhi_id, 'Delhi_id')
-
     def test_get_item_by_field_value(self):
         self.assertEqual(
-            FixtureDataItem.by_field_value(self.domain, self.data_type, 'state_name', 'Delhi_state').one().get_id,
-            self.data_item._migration_couch_id
+            LookupTableRow.objects.with_value(
+                self.domain, self.data_type.id, 'state_name', 'Delhi_state').get().id,
+            self.data_item.id
         )
 
     def test_fixture_is_indexed(self):

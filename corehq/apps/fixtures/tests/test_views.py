@@ -11,7 +11,7 @@ from dimagi.utils.couch.bulk import CouchTransaction
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
-from ..dbaccessors import delete_all_fixture_data
+from ..dbaccessors import delete_all_fixture_data, get_fixture_items_for_data_type
 from ..models import LookupTable, LookupTableRow, Field, TypeField
 
 DOMAIN = "lookup"
@@ -258,7 +258,7 @@ class LookupTableViewsTest(TestCase):
             FixtureDataItem.get(row1._migration_couch_id),
             FixtureDataItem.get(row2._migration_couch_id),
         ]
-        rows.extend(FixtureDataItem.by_data_type(table.domain, table._migration_couch_id))
+        rows.extend(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
         for row in rows:
             self.assertIn("foot", row.fields)
 
@@ -289,7 +289,7 @@ class LookupTableViewsTest(TestCase):
             FixtureDataItem.get(row1._migration_couch_id),
             FixtureDataItem.get(row2._migration_couch_id),
         ]
-        rows.extend(FixtureDataItem.by_data_type(table.domain, table._migration_couch_id))
+        rows.extend(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
         for row in rows:
             self.assertIn("foot", row.fields)
 
@@ -337,7 +337,7 @@ class LookupTableViewsTest(TestCase):
         # to and from the client.
 
         # populate caches
-        couch_rows = LookupTableRow._migration_get_couch_model_class().get_item_list(table.domain, table.tag)
+        couch_rows = get_fixture_items_for_data_type(table.domain, table._migration_couch_id)
         with CouchTransaction() as tx:
             # transaction does not clear caches -> stale caches
             for row in couch_rows:
@@ -352,8 +352,7 @@ class LookupTableViewsTest(TestCase):
         db = LookupTable._migration_get_couch_model_class().get_db()
         couch_rows = db.view("_all_docs", keys=doc_ids)
         self.assertTrue(all(r["value"]["deleted"] for r in couch_rows), couch_rows)
-        self.assertFalse(LookupTableRow._migration_get_couch_model_class()
-            .by_data_type(table.domain, table._migration_couch_id))
+        self.assertFalse(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
 
     @contextmanager
     def get_client(self, data=None):

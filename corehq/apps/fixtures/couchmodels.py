@@ -18,9 +18,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
-from corehq.apps.fixtures.exceptions import FixtureVersionError
-from corehq.apps.fixtures.utils import remove_deleted_ownerships
-from corehq.apps.groups.models import Group
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -137,7 +134,7 @@ class FixtureDataType(SyncCouchToSQLMixin, Document):
 
     def recursive_delete(self, transaction):
         item_ids = []
-        for item in FixtureDataItem.by_data_type(self.domain, self.get_id, bypass_cache=True):
+        for item in get_fixture_items_for_data_type(self.domain, self.get_id, bypass_cache=True):
             transaction.delete(item)
             item_ids.append(item.get_id)
         for item_id_chunk in chunked(item_ids, 1000):
@@ -314,14 +311,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @property
     def fields_without_attributes(self):
-        fields = {}
-        for field in self.fields:
-            # if the field has properties, a unique field_val can't be generated for FixtureItem
-            if len(self.fields[field].field_list) > 1:
-                raise FixtureVersionError("This method is not supported for fields with properties."
-                                          " field '%s' has properties" % field)
-            fields[field] = self.fields[field].field_list[0].field_value
-        return fields
+        raise NotImplementedError("no longer used")
 
     @property
     def try_fields_without_attributes(self):
@@ -377,51 +367,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_user(cls, user, include_docs=True):
-        """
-        This method returns all fixture data items owned by the user, their location, or their group.
-
-        :param include_docs: whether to return the fixture data item dicts or just a set of ids
-        """
-        group_ids = Group.by_user_id(user.user_id, wrap=False)
-        loc_ids = user.sql_location.path if user.sql_location else []
-
-        def make_keys(owner_type, ids):
-            return [[user.domain, 'data_item by {}'.format(owner_type), id_]
-                    for id_ in ids]
-
-        fixture_ids = set(
-            FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=(make_keys('user', [user.user_id])
-                      + make_keys('group', group_ids)
-                      + make_keys('location', loc_ids)),
-                reduce=False,
-                wrapper=lambda r: r['value'],
-            )
-        )
-        if include_docs:
-            results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
-
-            # sort the results into those corresponding to real documents
-            # and those corresponding to deleted or non-existent documents
-            docs = []
-            deleted_fixture_ids = set()
-
-            for result in results:
-                if result.get('doc'):
-                    docs.append(result['doc'])
-                elif result.get('error'):
-                    assert result['error'] == 'not_found'
-                    deleted_fixture_ids.add(result['key'])
-                else:
-                    assert result['value']['deleted'] is True
-                    deleted_fixture_ids.add(result['id'])
-            if deleted_fixture_ids:
-                # delete ownership documents pointing deleted/non-existent fixture documents
-                # this cleanup is necessary since we used to not do this
-                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
-            return docs
-        else:
-            return fixture_ids
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_group(cls, group, wrap=True):
@@ -429,7 +375,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):
-        return get_fixture_items_for_data_type(domain, _id_from_doc(data_type), bypass_cache)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_domain(cls, domain):
@@ -437,31 +383,15 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
-        data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
-                        reduce=False, include_docs=True)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def get_item_list(cls, domain, tag, **kw):
-        from .models import LookupTable
-        try:
-            data_type = LookupTable.objects.by_domain_tag(domain, tag)
-        except LookupTable.DoesNotExist:
-            return []
-        return cls.by_data_type(domain, data_type, **kw)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def get_indexed_items(cls, domain, tag, index_field):
-        """
-        Looks up an item list and converts to mapping from `index_field`
-        to a dict of all fields for that item.
-
-            fixtures = FixtureDataItem.get_indexed_items('my_domain',
-                'item_list_tag', 'index_field')
-            result = fixtures['index_val']['result_field']
-        """
-        fixtures = cls.get_item_list(domain, tag)
-        return dict((f.fields_without_attributes[index_field], f.fields_without_attributes) for f in fixtures)
+        raise NotImplementedError("no longer used")
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
@@ -470,16 +400,6 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
     def recursive_delete(self, transaction):
         self.delete_ownerships(transaction)
         transaction.delete(self)
-
-
-def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, str):
-        doc_id = doc_or_doc_id
-    else:
-        # ._migration_couch_id was used so usages of this function are
-        # revisited or removed by the time the migration is complete.
-        doc_id = doc_or_doc_id._migration_couch_id if doc_or_doc_id else None
-    return doc_id
 
 
 class FixtureOwnership(SyncCouchToSQLMixin, Document):

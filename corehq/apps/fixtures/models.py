@@ -14,7 +14,6 @@ from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
 from .couchmodels import (  # noqa: F401
-    _id_from_doc,
     FIXTURE_BUCKET,
     FieldList,
     FixtureDataItem,
