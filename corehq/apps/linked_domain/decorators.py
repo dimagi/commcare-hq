@@ -24,22 +24,3 @@ def require_access_to_linked_domains(view_func):
             return HttpResponseForbidden()
 
     return _inner
-
-
-def require_existing_domain_link(fn):
-    """
-    Ensure the requesting domain is linked downstream of the specified domain
-    """
-    @wraps(fn)
-    def _inner(request, domain, *args, **kwargs):
-
-        requester = request.META.get(REMOTE_REQUESTER_HEADER, None)
-        if not requester:
-            return HttpResponseBadRequest()
-
-        if not get_domain_link(upstream=domain, downstream=requester):
-            return HttpResponseForbidden()
-
-        return fn(request, domain, *args, **kwargs)
-
-    return _inner

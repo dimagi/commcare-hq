@@ -48,10 +48,7 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
     get_upstream_domain_link,
 )
-from corehq.apps.linked_domain.decorators import (
-    require_access_to_linked_domains,
-    require_existing_domain_link,
-)
+from corehq.apps.linked_domain.decorators import require_access_to_linked_domains
 from corehq.apps.linked_domain.exceptions import (
     AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
@@ -120,28 +117,24 @@ from corehq.util.timezones.utils import get_timezone_for_request
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def tableau_server_and_visualizations(request, domain):
     return JsonResponse(get_tableau_server_and_visualizations(domain))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def toggles_and_previews(request, domain):
     return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def auto_update_rules(request, domain):
     return JsonResponse({'rules': get_auto_update_rules(domain)})
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def custom_data_models(request, domain):
     limit_types = request.GET.getlist('type')
@@ -149,42 +142,36 @@ def custom_data_models(request, domain):
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def fixture(request, domain, tag):
     return JsonResponse(get_fixture(domain, tag))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def brief_apps(request, domain):
     return JsonResponse({'brief_apps': get_brief_app_docs_in_domain(domain, include_remote=False)})
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def app_by_version(request, domain, app_id, version):
     return JsonResponse({'app': get_build_doc_by_version(domain, app_id, version)})
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def released_app_versions(request, domain):
     return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain)})
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def case_search_config(request, domain):
     try:
@@ -196,7 +183,6 @@ def case_search_config(request, domain):
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 @require_permission(HqPermissions.view_reports)
 def linkable_ucr(request, domain):
@@ -213,7 +199,6 @@ def linkable_ucr(request, domain):
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def ucr_config(request, domain, config_id):
     report_config = ReportConfiguration.get(config_id)
@@ -229,7 +214,6 @@ def ucr_config(request, domain, config_id):
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
@@ -244,28 +228,24 @@ def get_latest_released_app_source(request, domain, app_id):
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def dialer_settings(request, domain):
     return JsonResponse(get_dialer_settings(domain))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def otp_settings(request, domain):
     return JsonResponse(get_otp_settings(domain))
 
 
 @login_or_api_key
-@require_existing_domain_link
 @require_access_to_linked_domains
 def hmac_callout_settings(request, domain):
     return JsonResponse(get_hmac_callout_settings(domain))
