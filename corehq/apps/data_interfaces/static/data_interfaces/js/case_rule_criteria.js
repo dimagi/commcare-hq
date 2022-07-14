@@ -300,6 +300,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return self;
         };
 
+        self.loadInitial()
+        self.setScheduleTabVisibility();
         return self;
     };
 

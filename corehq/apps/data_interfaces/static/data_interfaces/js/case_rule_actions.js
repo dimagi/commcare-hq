@@ -113,6 +113,8 @@ hqDefine("data_interfaces/js/case_rule_actions", [
                 self.actions.push(obj);
             });
         };
+
+        self.loadInitial();
         return self;
     };
 
