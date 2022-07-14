@@ -15,7 +15,7 @@ hqDefine("data_interfaces/js/case_rule_main", [
             initialPageData.get('criteria_initial'),
             initialPageData.get('criteria_constants'),
             initialPageData.get('all_case_properties')
-        );
+        ));
 
         $('#rule-actions').koApplyBindings(CaseRuleActions(
             initialPageData.get('actions_initial'),
