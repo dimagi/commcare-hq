@@ -11,21 +11,15 @@ hqDefine("data_interfaces/js/case_rule_main", [
     CaseRuleActions
 ) {
     $(function () {
-        var criteriaModel = CaseRuleCriteria(
+        $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
             initialPageData.get('criteria_constants'),
             initialPageData.get('all_case_properties')
-        );
-        // setup tab
-        criteriaModel.setScheduleTabVisibility();
-        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
-        criteriaModel.loadInitial();
+        ));
 
-        var actionsModel = CaseRuleActions(
+        $('#rule-actions').koApplyBindings(CaseRuleActions(
             initialPageData.get('actions_initial'),
             criteriaModel.casePropertyNames
-        );
-        $('#rule-actions').koApplyBindings(actionsModel);
-        actionsModel.loadInitial();
+        ));
     });
 });
