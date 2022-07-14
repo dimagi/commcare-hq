@@ -7,10 +7,13 @@
   <div class="row-fluid">
     <table class="table table-striped table-bordered">
       <thead>
+      {% firstof show_session_timeout|yesno:"col-md-4,col-md-6" as col_class %}
       <tr>
-        <th class="col-md-4">{% trans "Project" %}</th>
-        <th class="col-md-4">{% trans "Status" %}</th>
-        <th class="col-md-4">{% trans "Session Timeout (minutes)" %}</th>
+        <th class="{{ col_class }}">{% trans "Project" %}</th>
+        <th class="{{ col_class }}">{% trans "Status" %}</th>
+        {% if show_session_timeout %}
+        <th class="{{ col_class }}">{% trans "Session Timeout (minutes)" %}</th>
+        {% endif %}
       </tr>
       </thead>
       <tbody>
@@ -21,10 +24,10 @@
       {% endif %}
       {% for domain in domains %}
         <tr>
-          <td class="col-md-4">
+          <td class="{{ col_class }}">
             <a href="{% url "domain_homepage" domain.name %}">{{ domain.name }}</a>
           </td>
-          <td class="col-md-4">
+          <td class="{{ col_class }}">
             {% if not domain.is_admin %}
               <a class="btn btn-danger"
                  data-toggle="modal"
@@ -68,7 +71,9 @@
               <p class="text-muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
             {% endif %}
           </td>
-          <td class="col-md-4">{{ domain.session_timeout }}</td>
+          {% if show_session_timeout %}
+          <td class="{{ col_class }}">{{ domain.session_timeout }}{{ total }}</td>
+          {% endif %}
         </tr>
       {% endfor %}
       </tbody>

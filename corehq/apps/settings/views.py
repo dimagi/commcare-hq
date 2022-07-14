@@ -278,7 +278,8 @@ class MyProjectsList(BaseMyAccountView):
                 'is_admin': self.request.couch_user.is_domain_admin(d),
                 'session_timeout': Domain.secure_timeout(d) or "",
             } for d in self.request.couch_user.get_domains()],
-            'web_user': self.request.couch_user.is_web_user
+            'web_user': self.request.couch_user.is_web_user,
+            'show_session_timeout': self.request.user.is_superuser
         }
 
     @property
