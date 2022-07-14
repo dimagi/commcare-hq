@@ -2,7 +2,6 @@ from functools import wraps
 
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
 
-from corehq.apps.linked_domain.dbaccessors import get_domain_link
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
 
 REMOTE_REQUESTER_HEADER = 'HTTP_HQ_REMOTE_REQUESTER'

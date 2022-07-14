@@ -83,13 +83,11 @@ class DomainLink(models.Model):
     def save(self, *args, **kwargs):
         super(DomainLink, self).save(*args, **kwargs)
         from corehq.apps.linked_domain.dbaccessors import (
-            get_domain_link,
             get_linked_domains,
             get_upstream_domain_link,
             is_active_downstream_domain,
             is_active_upstream_domain,
         )
-        get_domain_link.clear(self.master_domain, self.linked_domain)
         get_upstream_domain_link.clear(self.linked_domain)
         is_active_downstream_domain.clear(self.linked_domain)
 

@@ -13,19 +13,6 @@ from corehq.privileges import RELEASE_MANAGEMENT, LITE_RELEASE_MANAGEMENT
 from corehq.util.quickcache import quickcache
 
 
-@quickcache(['upstream', 'downstream'], timeout=60 * 60)
-def get_domain_link(upstream, downstream):
-    """
-    :param upstream: upstream domain name
-    :param downstream: downstream domain name
-    :returns: ``DomainLink`` object or None if no link exists
-    """
-    try:
-        return DomainLink.objects.get(master_domain=upstream, linked_domain=downstream)
-    except DomainLink.DoesNotExist:
-        return None
-
-
 @quickcache(['domain'], timeout=60 * 60)
 def get_upstream_domain_link(domain):
     """
