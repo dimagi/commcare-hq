@@ -17,15 +17,10 @@ from dimagi.ext.couchdbkit import (
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_items_for_data_type,
-    get_owner_ids_by_type,
-)
+from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.utils import remove_deleted_ownerships
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -357,41 +352,15 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         return self.remove_owner(location, 'location')
 
     def get_groups(self, wrap=True):
-        group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
-        if wrap:
-            return set(Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True,
-            ))
-        else:
-            return set(group_ids)
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized
     def groups(self):
-        return self.get_groups()
+        raise NotImplementedError("no longer used")
 
     def get_users(self, wrap=True, include_groups=False):
-        user_ids = set(get_owner_ids_by_type(self.domain, 'user', self.get_id))
-        if include_groups:
-            group_ids = self.get_groups(wrap=False)
-        else:
-            group_ids = set()
-        users_in_groups = [
-            group.get_users(only_commcare=True)
-            for group in Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True)]
-        if wrap:
-            return set(CommCareUser.view(
-                '_all_docs',
-                keys=list(user_ids),
-                include_docs=True
-            )).union(*users_in_groups)
-        else:
-            return user_ids | set([user.get_id for user in users_in_groups])
+        raise NotImplementedError("no longer used")
 
     def get_all_users(self, wrap=True):
         raise NotImplementedError("no longer used")
@@ -399,13 +368,12 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
     @property
     @memoized
     def users(self):
-        return self.get_users()
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized
     def locations(self):
-        loc_ids = get_owner_ids_by_type(self.domain, 'location', self.get_id)
-        return SQLLocation.objects.filter(location_id__in=loc_ids)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_user(cls, user, include_docs=True):

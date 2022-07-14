@@ -1,4 +1,5 @@
 import io
+from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import zip_longest
 
@@ -7,16 +8,21 @@ from django.utils.translation import gettext as _
 
 from couchexport.export import export_raw
 from couchexport.models import Format
+from dimagi.utils.couch.database import iter_docs
 from soil import DownloadBase
 from soil.util import expose_cached_download
 
 from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import (
-    FixtureDataItem,
     LookupTable,
-    _id_from_doc,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
 )
 from corehq.apps.fixtures.upload import DELETE_HEADER
+from corehq.apps.groups.models import Group
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 
 
 def prepare_fixture_download(table_ids, domain, task, download_id, owner_id):
@@ -140,6 +146,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             u'growth_chart': {'field 2 : property 2': u'maxWeight'}
           }
     """
+    owner_names = OwnerNames(data_types_view)
     type_field_properties = {}
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
@@ -164,22 +171,21 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         max_users = 0
         max_groups = 0
         max_locations = 0
-        max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
-        fixture_data = sorted(FixtureDataItem.by_data_type(domain, data_type.get_id),
-                              key=lambda x: x.sort_key)
-        num_rows = len(fixture_data)
+        max_field_prop_combos = {field.name: 0 for field in data_type.fields}
+        fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
+        num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)
             data_items_book_by_type[data_type.tag].append(item_row)
-            max_groups = max(max_groups, len(item_row.groups))
-            max_users = max(max_users, len(item_row.users))
-            max_locations = max(max_locations, len(item_row.locations))
+            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
+            max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
+            max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
             for field_key in item_row.fields:
                 if field_key in max_field_prop_combos:
-                    max_combos = max_field_prop_combos[field_key]
-                    cur_combo_len = len(item_row.fields[field_key].field_list)
-                    max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
-                    max_field_prop_combos[field_key] = max_combos
+                    max_field_prop_combos[field_key] = max(
+                        max_field_prop_combos[field_key],
+                        len(item_row.fields[field_key]),
+                    )
 
         item_helpers = {
             "max_users": max_users,
@@ -273,32 +279,29 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         )
         excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
-            common_vals = [str(_id_from_doc(item_row)), "N"]
-            user_vals = ([user.raw_username for user in item_row.users]
-                         + empty_padding_list(max_users - len(item_row.users)))
-            group_vals = ([group.name for group in item_row.groups]
-                          + empty_padding_list(max_groups - len(item_row.groups)))
-            location_vals = ([loc.site_code for loc in item_row.locations]
-                             + empty_padding_list(max_locations - len(item_row.locations)))
+            common_vals = [str(item_row.id.hex), "N"]
+            users = owner_names.get_usernames(item_row)
+            groups = owner_names.get_group_names(item_row)
+            locations = owner_names.get_location_codes(item_row)
+            user_vals = (users + empty_padding_list(max_users - len(users)))
+            group_vals = (groups + empty_padding_list(max_groups - len(groups)))
+            location_vals = (locations + empty_padding_list(max_locations - len(locations)))
             field_vals = []
             item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
             for field in data_type.fields:
                 if len(field.properties) == 0:
-                    fixture_fields = item_row.fields.get(field.field_name)
-                    if fixture_fields and any(fixture_fields.field_list):
-                        value = item_row.fields.get(field.field_name).field_list[0].field_value
-                    else:
-                        value = ""
+                    field_values = item_row.fields[field.name]
+                    value = field_values[0].value if field_values else ""
                     field_vals.append(value)
                 else:
                     field_prop_vals = []
-                    cur_combo_count = len(item_row.fields.get(field.field_name).field_list)
+                    cur_combo_count = len(item_row.fields[field.name])
                     cur_prop_count = len(field.properties)
-                    for count, field_prop_combo in enumerate(item_row.fields.get(field.field_name).field_list):
+                    for field_prop_combo in item_row.fields[field.name]:
                         for property in field.properties:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
-                        field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = ((max_field_prop_combos[field.field_name] - cur_combo_count)
+                        field_prop_vals.append(field_prop_combo.value)
+                    padding_list_len = ((max_field_prop_combos[field.name] - cur_combo_count)
                                         * (cur_prop_count + 1))
                     field_prop_vals.extend(empty_padding_list(padding_list_len))
                     field_vals.extend(field_prop_vals)
@@ -315,6 +318,58 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         excel_sheets[data_type.tag] = item_sheet
 
     return data_types_book, excel_sheets
+
+
+class OwnerNames:
+
+    def __init__(self, tables):
+        # owners = {row_id: {owner_type: owner_ids_set, ...}, ...}
+        self.owners = owners = defaultdict(lambda: defaultdict(set))
+        row_owners = LookupTableRowOwner.objects.filter(
+            row__table_id__in=[t.id for t in tables]
+        ).values_list("row_id", "owner_type", "owner_id", named=True)
+        for rec in row_owners:
+            owners[rec.row_id][rec.owner_type].add(rec.owner_id)
+        self.usernames = self._load_usernames(owners)
+        self.group_names = self._load_group_names(owners)
+        self.location_codes = self._load_location_codes(owners)
+
+    def _load_usernames(self, owners):
+        docs = self._iter_couch_docs(owners, OwnerType.User, CommCareUser)
+        return {u._id: u.raw_username for u in docs}
+
+    def _load_group_names(self, owners):
+        docs = self._iter_couch_docs(owners, OwnerType.Group, Group)
+        return {g._id: g.name for g in docs}
+
+    def _iter_couch_docs(self, owners, owner_type, couch_model):
+        doc_ids = {id for ids in owners.values() for id in ids[owner_type]}
+        if doc_ids:
+            db = couch_model.get_db()
+            yield from (couch_model.wrap(g) for g in iter_docs(db, doc_ids))
+
+    def _load_location_codes(self, owners):
+        loc_ids = {id for ids in owners.values() for id in ids[OwnerType.Location]}
+        if not loc_ids:
+            return {}
+        codes = SQLLocation.objects.filter(
+            location_id__in=list(loc_ids)).values_list("location_id", "site_code")
+        return dict(codes)
+
+    def count(self, row, owner_type):
+        return len(self.owners[row.id][owner_type])
+
+    def get_usernames(self, row):
+        user_ids = self.owners[row.id][OwnerType.User]
+        return sorted(self.usernames[doc_id] for doc_id in user_ids)
+
+    def get_group_names(self, row):
+        group_ids = self.owners[row.id][OwnerType.Group]
+        return sorted(self.group_names[doc_id] for doc_id in group_ids)
+
+    def get_location_codes(self, row):
+        loc_ids = self.owners[row.id][OwnerType.Location]
+        return sorted(self.location_codes[loc_id] for loc_id in loc_ids)
 
 
 def get_indexed_field_numbers(tables):

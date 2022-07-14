@@ -62,18 +62,6 @@ def count_fixture_items(domain, data_type_id):
     ).first()['value']
 
 
-def get_owner_ids_by_type(domain, owner_type, data_item_id):
-    from corehq.apps.fixtures.models import FixtureOwnership
-    assert owner_type in FixtureOwnership.owner_type.choices, \
-        "Owner type must be in {}".format(FixtureOwnership.owner_type.choices)
-    return FixtureOwnership.get_db().view(
-        'fixtures/ownership',
-        key=[domain, '{} by data_item'.format(owner_type), data_item_id],
-        reduce=False,
-        wrapper=lambda r: r['value']
-    )
-
-
 @unit_testing_only
 def delete_all_fixture_data(domain_name=None):
     from .couchmodels import FixtureDataType, FixtureDataItem, FixtureOwnership
