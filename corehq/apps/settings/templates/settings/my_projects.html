@@ -8,22 +8,23 @@
     <table class="table table-striped table-bordered">
       <thead>
       <tr>
-        <th class="col-md-6">{% trans "Project" %}</th>
-        <th class="col-md-6">{% trans "Status" %}</th>
+        <th class="col-md-4">{% trans "Project" %}</th>
+        <th class="col-md-4">{% trans "Status" %}</th>
+        <th class="col-md-4">{% trans "Session Timeout (minutes)" %}</th>
       </tr>
       </thead>
       <tbody>
       {% if not domains %}
         <tr>
-          <td colspan="2">{% blocktrans %}You are currently not a member of any projects.{% endblocktrans %}</td>
+          <td colspan="3">{% blocktrans %}You are currently not a member of any projects.{% endblocktrans %}</td>
         </tr>
       {% endif %}
       {% for domain in domains %}
         <tr>
-          <td class="col-md-6">
+          <td class="col-md-4">
             <a href="{% url "domain_homepage" domain.name %}">{{ domain.name }}</a>
           </td>
-          <td class="col-md-6">
+          <td class="col-md-4">
             {% if not domain.is_admin %}
               <a class="btn btn-danger"
                  data-toggle="modal"
@@ -67,6 +68,7 @@
               <p class="text-muted">{% blocktrans %}You are this project's administrator.{% endblocktrans %}</p>
             {% endif %}
           </td>
+          <td class="col-md-4">{{ domain.session_timeout }}</td>
         </tr>
       {% endfor %}
       </tbody>
