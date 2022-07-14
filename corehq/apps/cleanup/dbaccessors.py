@@ -7,6 +7,7 @@ from corehq.apps.es import AppES, CaseES, CaseSearchES, FormES, GroupES, UserES
 from corehq.apps.userreports.util import (
     LEGACY_UCR_TABLE_PREFIX,
     UCR_TABLE_PREFIX,
+    get_domain_for_ucr_table_name,
 )
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.sql_db.connections import UCR_ENGINE_ID, ConnectionManager
@@ -60,15 +61,8 @@ def find_ucr_tables_for_deleted_domains():
     deleted_domains_to_tables = defaultdict(list)
 
     for ucr_table_name in ucr_table_names:
-        table_domain = _get_domain_for_table_name(ucr_table_name)
+        table_domain = get_domain_for_ucr_table_name(ucr_table_name)
         if table_domain in deleted_domain_names:
             deleted_domains_to_tables[table_domain].append(ucr_table_name)
 
     return deleted_domains_to_tables
-
-
-def _get_domain_for_table_name(ucr_table_name):
-    if ucr_table_name.startswith(UCR_TABLE_PREFIX):
-        return ucr_table_name.split('_')[1]
-    else:
-        return ucr_table_name.split('_')[2]

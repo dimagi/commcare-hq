@@ -342,3 +342,12 @@ def wrap_report_config_by_type(config, allow_deleted=False):
         }[doc_type].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
+
+
+def get_domain_for_ucr_table_name(table_name):
+    if table_name.startswith(UCR_TABLE_PREFIX):
+        return table_name.split('_')[1]
+    elif table_name.startswith(LEGACY_UCR_TABLE_PREFIX):
+        return table_name.split('_')[2]
+    else:
+        raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
