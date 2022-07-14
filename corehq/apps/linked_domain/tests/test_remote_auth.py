@@ -1,9 +1,10 @@
 import json
-from unittest import mock
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.linked_domain import decorators
 from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
 from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.users.models import HQApiKey, WebUser
@@ -37,7 +38,7 @@ class RemoteAuthTest(TestCase):
             'HTTP_AUTHORIZATION': f'apikey test:{self.api_key.key}',
             REMOTE_REQUESTER_HEADER: self.downstream_domain_requester,
         }
-        with mock.patch('corehq.apps.linked_domain.decorators.can_user_access_linked_domains', return_value=False):
+        with patch.object(decorators, 'can_user_access_linked_domains', return_value=False):
             resp = self.client.get(self.url, **headers)
 
         self.assertEqual(resp.status_code, 403)
@@ -48,7 +49,7 @@ class RemoteAuthTest(TestCase):
             REMOTE_REQUESTER_HEADER: self.downstream_domain_requester,
         }
 
-        with mock.patch('corehq.apps.linked_domain.decorators.can_user_access_linked_domains', return_value=True):
+        with patch.object(decorators, 'can_user_access_linked_domains', return_value=True):
             resp = self.client.get(self.url, **headers)
 
         self.assertEqual(resp.status_code, 200)
@@ -56,7 +57,7 @@ class RemoteAuthTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(RemoteAuthTest, cls).setUpClass()
+        super().setUpClass()
 
         cls.upstream_domain = 'upstream'
         cls.downstream_domain = 'downstream'
