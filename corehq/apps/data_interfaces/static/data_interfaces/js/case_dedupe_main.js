@@ -3,9 +3,15 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets',
     'data_interfaces/js/case_rule_criteria',
-], function ($, ko, _, initialPageData) {
+    'hqwebapp/js/widgets',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    CaseRuleCriteria
+) {
     var caseDedupe = function (
         initialName,
         initialCaseType,
@@ -101,6 +107,12 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         );
 
         $("#caseFilters").append(caseFilterElement);
+
+        $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
+            initialPageData.get('criteria_initial'),
+            initialPageData.get('criteria_constants'),
+            initialPageData.get('all_case_properties')
+        ));
     });
 });
 
