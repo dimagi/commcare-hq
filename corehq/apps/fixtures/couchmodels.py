@@ -340,16 +340,16 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         raise NotImplementedError("no longer used")
 
     def add_group(self, group, transaction=None):
-        return self.add_owner(group, 'group', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_group(self, group):
-        return self.remove_owner(group, 'group')
+        raise NotImplementedError("no longer used")
 
     def add_location(self, location, transaction=None):
-        return self.add_owner(location, 'location', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_location(self, location):
-        return self.remove_owner(location, 'location')
+        raise NotImplementedError("no longer used")
 
     def get_groups(self, wrap=True):
         raise NotImplementedError("no longer used")
@@ -425,14 +425,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_group(cls, group, wrap=True):
-        fixture_ids = cls.get_db().view('fixtures/ownership',
-            key=[group.domain, 'data_item by group', group.get_id],
-            reduce=False,
-            wrapper=lambda r: r['value'],
-            descending=True
-        ).all()
-
-        return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):

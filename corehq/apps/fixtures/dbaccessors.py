@@ -52,16 +52,6 @@ def iter_fixture_items_for_data_type(domain, data_type_id, wrap=True):
             yield row['doc']
 
 
-def count_fixture_items(domain, data_type_id):
-    from corehq.apps.fixtures.models import FixtureDataItem
-    return FixtureDataItem.view(
-        'fixtures/data_items_by_domain_type',
-        startkey=[domain, data_type_id],
-        endkey=[domain, data_type_id, {}],
-        reduce=True,
-    ).first()['value']
-
-
 @unit_testing_only
 def delete_all_fixture_data(domain_name=None):
     from .couchmodels import FixtureDataType, FixtureDataItem, FixtureOwnership
