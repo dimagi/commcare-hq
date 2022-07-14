@@ -15,42 +15,48 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 
 def find_sql_forms_for_deleted_domains():
-    form_count_by_deleted_domain = {}
-    for domain in Domain.get_deleted_domain_names():
-        form_count = 0
-        for db_name in get_db_aliases_for_partitioned_query():
-            form_count += XFormInstance.objects.using(db_name).filter(domain=domain).count()
-        if form_count:
-            form_count_by_deleted_domain[domain] = form_count
-
-    return form_count_by_deleted_domain
+    return _find_sql_model_for_deleted_domains(XFormInstance)
 
 
 def find_sql_cases_for_deleted_domains():
-    case_count_by_deleted_domain = {}
-    for domain in Domain.get_deleted_domain_names():
-        case_count = 0
-        for db_name in get_db_aliases_for_partitioned_query():
-            case_count += CommCareCase.objects.using(db_name).filter(domain=domain).count()
-        if case_count:
-            case_count_by_deleted_domain[domain] = case_count
+    return _find_sql_model_for_deleted_domains(CommCareCase)
 
-    return case_count_by_deleted_domain
+
+def _find_sql_model_for_deleted_domains(model):
+    """
+    :param model: a form or case SQL model
+    :return: a dictionary {<deleted_domain>: <doc_count>, ...}
+    """
+    count_by_deleted_domain = {}
+    for domain in Domain.get_deleted_domain_names():
+        count = 0
+        for db_name in get_db_aliases_for_partitioned_query():
+            count += model.objects.using(db_name).filter(domain=domain).count()
+        if count:
+            count_by_deleted_domain[domain] = count
+
+    return count_by_deleted_domain
 
 
 def find_es_docs_for_deleted_domains():
+    """
+    :return: a dictionary {<deleted_domain>: {<es_index>: <doc_count>, ...}, ...}
+    """
     es_doc_counts_by_deleted_domain = defaultdict(dict)
     for domain in Domain.get_deleted_domain_names():
         for hqESQuery in [AppES, CaseES, CaseSearchES, FormES, GroupES, UserES]:
             query = hqESQuery().domain(domain)
             count = query.count()
-            if count != 0:
+            if count:
                 es_doc_counts_by_deleted_domain[domain][hqESQuery.index] = count
 
     return es_doc_counts_by_deleted_domain
 
 
 def find_ucr_tables_for_deleted_domains():
+    """
+    :return: a dictionary {<deleted_domain>: [<ucr_table_name>, ...], ...}
+    """
     deleted_domain_names = Domain.get_deleted_domain_names()
 
     connection_name = ConnectionManager().get_django_db_alias(UCR_ENGINE_ID)
