@@ -224,6 +224,18 @@ class TableauServer(models.Model):
                                                       site=self.target_site)
 
 
+class TableauConnection(models.Model):
+    domain = models.CharField(max_length=64, default='', unique=True)
+    server_name = models.CharField(max_length=128)
+    site_name = models.CharField(max_length=64, default='Default')
+    secret = models.CharField(max_length=64)
+
+    def __str__(self):
+        return '{domain} {server} {site_name}'.format(server=self.server_name,
+                                                      domain=self.domain,
+                                                      site_name=self.site_name)
+
+
 class TableauVisualization(models.Model):
     title = models.CharField(max_length=32, null=True)
     domain = models.CharField(max_length=64)
