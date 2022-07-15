@@ -1,10 +1,8 @@
 from functools import wraps
 
-from django.http import HttpResponseBadRequest, HttpResponseForbidden, Http404
+from django.http import Http404, HttpResponseForbidden
 
 from corehq.apps.linked_domain.util import can_user_access_linked_domains
-
-REMOTE_REQUESTER_HEADER = 'HTTP_HQ_REMOTE_REQUESTER'
 
 
 def require_access_to_linked_domains(view_func):
