@@ -5,25 +5,17 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/base_ace',  // ace editor for UCR filter
     'hqwebapp/js/components.ko',    // select toggle widget
-    'hqwebapp/js/select2_knockout_bindings.ko',     // case property autocompletes
 ], function ($, _, ko, initialPageData, baseAce) {
 
-    var CaseRuleCriteria = function (initial, constants, allCaseProperties) {
+    var CaseRuleCriteria = function (initial, constants) {
         'use strict';
         var self = {};
 
-        self.allCaseProperties = allCaseProperties;
         self.constants = constants;
         self.caseType = ko.observable(initial.case_type);
         self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
 
-        self.casePropertyNames = ko.computed(function() {
-            if (!self.allCaseProperties) {
-                return [];
-            }
-            return self.allCaseProperties[self.caseType()] || [];
-        });
 
         self.filterOnServerModified = ko.computed(function () {
             var result = 'false';
@@ -337,6 +329,8 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return self;
         };
 
+        self.loadInitial();
+        self.setScheduleTabVisibility();
         return self;
     };
 

@@ -1,20 +1,18 @@
 hqDefine("data_interfaces/js/case_rule_actions", [
     'jquery',
     'knockout',
-    'hqwebapp/js/select2_knockout_bindings.ko',     // case property autocompletes
 ], function (
     $,
     ko
 ) {
-    var CaseRuleActions = function (initial, casePropertyNamesObservable) {
+    var CaseRuleActions = function (initial, caseTypeObservable) {
         'use strict';
         var self = {};
 
         self.actions = ko.observableArray();
 
-        // This is poorly encapsulated. The case property observable is owned by a different model,
-        // but this model needs to listen to it in order to populate dropdowns of case properties.
-        self.casePropertyNames = casePropertyNamesObservable;
+        // For the sake of passing to case property input component
+        self.caseType = caseTypeObservable;
 
         self.getKoTemplateId = function (obj) {
             return obj.template_id;
@@ -113,6 +111,8 @@ hqDefine("data_interfaces/js/case_rule_actions", [
                 self.actions.push(obj);
             });
         };
+
+        self.loadInitial();
         return self;
     };
 
