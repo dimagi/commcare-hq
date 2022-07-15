@@ -218,12 +218,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         isValid: function () {
             var hasError = !this._isValid();
-            if (hasError) {
-                this.errorMessage = this.model.get("error");
-            } else {
-                this.errorMessage = "";
-            }
             if (hasError !== this.hasError) {
+                if (hasError) {
+                    this.errorMessage = this.model.get("error");
+                } else {
+                    this.errorMessage = "";
+                }
                 this.hasError = hasError;
                 this.render();
             }
@@ -233,7 +233,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         clear: function () {
             var self = this;
             self.model.set('value', '');
-            this.errorMessage = "";
+            self.errorMessage = "";
             self.model.set('searchForBlank', false);
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
