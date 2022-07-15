@@ -16,16 +16,11 @@ hqDefine("data_interfaces/js/case_rule_main", [
             initialPageData.get('criteria_constants'),
             initialPageData.get('all_case_properties')
         );
-        // setup tab
-        criteriaModel.setScheduleTabVisibility();
         $('#rule-criteria-panel').koApplyBindings(criteriaModel);
-        criteriaModel.loadInitial();
 
-        var actionsModel = CaseRuleActions(
+        $('#rule-actions').koApplyBindings(CaseRuleActions(
             initialPageData.get('actions_initial'),
             criteriaModel.casePropertyNames
-        );
-        $('#rule-actions').koApplyBindings(actionsModel);
-        actionsModel.loadInitial();
+        ));
     });
 });
