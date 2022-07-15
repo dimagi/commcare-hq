@@ -4,6 +4,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'knockout',
     'hqwebapp/js/initial_page_data',
     'data_interfaces/js/case_rule_criteria',
+    'data_interfaces/js/case_property_input',
     'hqwebapp/js/widgets',
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
@@ -12,7 +13,8 @@ hqDefine("scheduling/js/conditional_alert_main", [
     _,
     ko,
     initialPageData,
-    CaseRuleCriteria
+    CaseRuleCriteria,
+    casePropertyInput
 ) {
     function BasicInformationTab(name) {
         var self = {};
@@ -37,6 +39,8 @@ hqDefine("scheduling/js/conditional_alert_main", [
     }
 
     $(function () {
+        casePropertyInput.register();
+
         $("#conditional-alert-basic-info-panel").koApplyBindings(BasicInformationTab(
             initialPageData.get('rule_name')
         ));
