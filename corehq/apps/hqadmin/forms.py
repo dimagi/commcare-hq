@@ -60,7 +60,8 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma or new-line separated email addresses",
-        widget=forms.Textarea()
+        widget=forms.Textarea(),
+        required=True
     )
     privileges = forms.MultipleChoiceField(
         choices=[
@@ -129,7 +130,7 @@ def clean_data(cleaned_data, offboarding_list=False):
     csv_email_list = cleaned_data.get('csv_email_list', '')
     all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
                                     | (Q(is_active=True) & Q(username__endswith='@dimagi.com')))
-    if not csv_email_list:
+    if offboarding_list and not csv_email_list:
         cleaned_data['csv_email_list'] = all_users
         return cleaned_data
 
