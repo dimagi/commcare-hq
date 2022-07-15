@@ -25,7 +25,7 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
             });
         };
 
-        self.update = function (element, valueAccessor, allBindings) {
+        self.update = function () {
             // Do nothing, this should never get called
         };
 

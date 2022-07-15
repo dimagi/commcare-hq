@@ -45,7 +45,7 @@ hqDefine('data_interfaces/js/case_property_input', [
             self.valueObservable = params.valueObservable;
 
             self.allCaseProperties = initialPageData.get("all_case_properties");
-            self.casePropertyNames = ko.computed(function() {
+            self.casePropertyNames = ko.computed(function () {
                 if (!self.allCaseProperties) {
                     return [];
                 }
