@@ -63,7 +63,6 @@ branches:
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
-    - ml/dhis2-better-errors # Minha June 9
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding  # Minha April 13
 #    - do/case-claim-title # Dominic June 23
