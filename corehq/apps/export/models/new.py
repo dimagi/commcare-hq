@@ -2431,8 +2431,12 @@ def _merge_dicts(one, two):
     }
 
     def resolvefn(a, b):
-        if a is None or b is None:
-            return a or b
+        if a is None:
+            return b
+
+        if b is None:
+            return a
+
         return max(a, b)
 
     # merge keys that exist in both
