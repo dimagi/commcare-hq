@@ -70,7 +70,7 @@ hqDefine('dhis2/js/dhis2_entity_config', [
                     errors.push(String(error));
                 }
             }
-            if (errors) {
+            if (errors.length > 0) {
                 self.errorMessage(errors.join('\n----------------------\n'));
                 return self;
             }
