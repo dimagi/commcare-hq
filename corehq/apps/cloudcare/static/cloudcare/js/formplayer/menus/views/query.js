@@ -218,8 +218,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         isValid: function () {
             var hasError = !this._isValid();
-            if (hasError !== this.hasError) {
+            if (hasError) {
                 this.errorMessage = this.model.get("error");
+            } else {
+                this.errorMessage = "";
+            }
+            if (hasError !== this.hasError) {
                 this.hasError = hasError;
                 this.render();
             }
