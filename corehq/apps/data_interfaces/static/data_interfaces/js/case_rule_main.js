@@ -11,11 +11,12 @@ hqDefine("data_interfaces/js/case_rule_main", [
     CaseRuleActions
 ) {
     $(function () {
-        $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
+        var criteriaModel = CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
             initialPageData.get('criteria_constants'),
             initialPageData.get('all_case_properties')
-        ));
+        );
+        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
 
         $('#rule-actions').koApplyBindings(CaseRuleActions(
             initialPageData.get('actions_initial'),
