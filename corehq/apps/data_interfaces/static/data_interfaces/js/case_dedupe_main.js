@@ -19,22 +19,13 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
         initialMatchType,
         initialCaseProperties,
         initialIncludeClosed,
-        initialPropertiesToUpdate,
-        allCaseProperties
+        initialPropertiesToUpdate
     ) {
         var self = {};
         self.name = ko.observable(initialName);
 
         self.caseType = ko.observable(initialCaseType);
         self.caseTypeOptions = caseTypeOptions;
-
-        self.allCaseProperties = allCaseProperties;
-        self.casePropertyNames = ko.computed(function() {
-            if (!self.allCaseProperties) {
-                return [];
-            }
-            return self.allCaseProperties[self.caseType()] || [];
-        });
 
         self.matchType = ko.observable(initialMatchType);
         self.matchTypeText = ko.computed(function () {
@@ -111,8 +102,7 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
                 initialPageData.get('match_type'),
                 initialPageData.get('case_properties'),
                 initialPageData.get('include_closed'),
-                initialPageData.get('properties_to_update'),
-                initialPageData.get('all_case_properties')
+                initialPageData.get('properties_to_update')
             )
         );
 
