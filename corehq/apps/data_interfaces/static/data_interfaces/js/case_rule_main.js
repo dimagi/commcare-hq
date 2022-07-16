@@ -17,8 +17,7 @@ hqDefine("data_interfaces/js/case_rule_main", [
 
         var criteriaModel = CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants'),
-            initialPageData.get('all_case_properties')
+            initialPageData.get('criteria_constants')
         );
         $('#rule-criteria-panel').koApplyBindings(criteriaModel);
 
