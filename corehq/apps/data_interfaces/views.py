@@ -968,8 +968,14 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
     @property
     def page_context(self):
         context = super().page_context
-        context['case_types'] = sorted(list(get_case_types_for_domain(self.domain)))
-        context['criteria_form'] = self.case_filter_form
+        context.update({
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
+            'case_types': sorted(list(get_case_types_for_domain(self.domain))),
+            'criteria_form': self.case_filter_form,
+        })
         return context
 
     def get_context_data(self, **kwargs):

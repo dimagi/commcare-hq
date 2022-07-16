@@ -47,8 +47,7 @@ hqDefine("scheduling/js/conditional_alert_main", [
 
         $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
             initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants'),
-            initialPageData.get('all_case_properties')
+            initialPageData.get('criteria_constants')
         ));
     });
 });

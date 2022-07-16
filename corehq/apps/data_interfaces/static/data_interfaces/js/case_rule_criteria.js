@@ -7,15 +7,14 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'hqwebapp/js/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData, baseAce) {
 
-    var CaseRuleCriteria = function (initial, constants) {
+    var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {
         'use strict';
         var self = {};
 
         self.constants = constants;
-        self.caseType = ko.observable(initial.case_type);
+        self.caseType = caseTypeObservable || ko.observable(initial.case_type);
         self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
-
 
         self.filterOnServerModified = ko.computed(function () {
             var result = 'false';
