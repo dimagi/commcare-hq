@@ -334,5 +334,4 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     };
 
     return CaseRuleCriteria;
-
 });
