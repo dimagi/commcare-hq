@@ -63,7 +63,6 @@ branches:
     # - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     # - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
-    - ml/dhis2-better-errors # Minha June 9
     - bmb/sso/api/test-001  # Biyeun June 15
     - ml/all-in-one-offboarding  # Minha April 13
 #    - do/case-claim-title # Dominic June 23
@@ -72,12 +71,10 @@ branches:
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/dd-in-rules-ui # Jenny July 1
-    - jls/query-js-adjustments # Jenny July 12
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
     - rc/search-input-validation # Robert July 11
     - es/required  # Ethan July 11
-    - jls/py3-max # Jenny July 12
     - dependabot/pip/requirements/boto3-1.24.28+ap/celery-upgrade-patch # Amit July 13
 submodules: { }
