@@ -6,6 +6,7 @@ from django.test import SimpleTestCase
 from couchexport.export import export_raw
 from couchexport.models import Format
 
+from ..models import OwnerType
 from ..upload.workbook import get_workbook
 
 
@@ -38,7 +39,7 @@ class TestFixtureWorkbook(SimpleTestCase):
         rows = workbook.iter_rows(table, {})
         for row, expected in zip_longest(rows, expected_owners):
             errors = []
-            ownerships = list(workbook.iter_ownerships(row, row.id.hex, OWNER_IDS, errors))
+            ownerships = list(workbook.iter_ownerships(row, row.id, OWNER_IDS, errors))
             actual = map_ownerships(ownerships)
             self.assertEqual(actual, expected)
             self.assertFalse(errors)
@@ -70,12 +71,12 @@ class TestFixtureWorkbook(SimpleTestCase):
 
 def map_ownerships(ownerships):
     return {
-        owner_type: [
+        owner_type.name.lower(): [
             OWNERS_BY_ID[ownership.owner_id]
             for ownership in ownerships
             if ownership.owner_type == owner_type
         ]
-        for owner_type in ["user", "group", "location"]
+        for owner_type in OwnerType
     }
 
 

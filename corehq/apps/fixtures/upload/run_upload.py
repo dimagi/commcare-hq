@@ -11,13 +11,12 @@ from django.db.models.functions import Lower
 from django.utils.translation import gettext as _
 
 from dimagi.utils.couch.bulk import CouchTransaction
-from dimagi.utils.couch.database import retry_on_couch_error as retry
 from soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
 )
 from corehq.apps.fixtures.upload.definitions import FixtureUploadResult
 from corehq.apps.fixtures.upload.const import INVALID, MULTIPLE
@@ -53,18 +52,21 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
                 return  # fast upload does not do ownership
             owners.process(
                 workbook,
-                old_owners.get(row._migration_couch_id, []),
-                workbook.iter_ownerships(new_row, row.id.hex, owner_ids, result.errors),
+                old_owners.get(row.id, []),
+                workbook.iter_ownerships(new_row, row.id, owner_ids, result.errors),
                 owner_key,
-                deleted_key=attrgetter("_id"),
+                deleted_key=attrgetter("id"),
             )
 
         old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
         sort_keys = {r.id.hex: r.sort_key for r in old_rows}
         if not skip_orm:
             old_owners = defaultdict(list)
-            for owner in retry(FixtureOwnership.for_all_item_ids)(list(sort_keys), domain):
-                old_owners[owner.data_item_id].append(owner)
+            for owner in LookupTableRowOwner.objects.filter(
+                domain=domain,
+                row_id__in=list(sort_keys),
+            ):
+                old_owners[owner.row_id].append(owner)
 
         rows.process(
             workbook,

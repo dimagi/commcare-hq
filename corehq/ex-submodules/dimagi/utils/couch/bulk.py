@@ -61,7 +61,7 @@ class CouchTransaction(object):
     def __init__(self):
         self.depth = 0
         self.docs_to_delete = defaultdict(set)
-        self.docs_to_save = defaultdict(set)
+        self.docs_to_save = defaultdict(list)
         self.sql_save_actions = {}
         self.post_commit_actions = []
 
@@ -81,7 +81,7 @@ class CouchTransaction(object):
             raise TypeError("Updated SQL objects must be returned by save "
                 f"action ({self.sql_save_actions[cls]}), not added to "
                 "the transaction with CouchTransaction.save()")
-        self.docs_to_save[cls].add(doc)
+        self.docs_to_save[cls].append(doc)
 
     def set_sql_save_action(self, doc_class, action):
         """Set action callback to perform instead of bulk SQL insert
@@ -102,7 +102,7 @@ class CouchTransaction(object):
                 f"{self.docs_to_save[doc_class]}. Updated SQL objects must be "
                 "returned by save action, not added to the transaction with "
                 "CouchTransaction.save()")
-        self.docs_to_save.setdefault(doc_class, set())
+        self.docs_to_save.setdefault(doc_class, [])
         self.sql_save_actions[doc_class] = action
 
     def commit(self):
@@ -198,7 +198,6 @@ def iter_couch_docs(cls, sql_objects):
         doc = couch_docs.get(obj._migration_couch_id)
         if doc is None:
             doc = couch_class(_id=obj._migration_couch_id)
-        assert doc._id is not None, obj
         obj._migration_sync_to_couch(doc, save=False)
         yield doc
 

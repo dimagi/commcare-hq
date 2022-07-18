@@ -14,7 +14,6 @@ from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import (
     Field,
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
     LookupTableRowOwner,
@@ -644,7 +643,7 @@ class TestFixtureUpload(TestCase):
         region.save()
         SQLLocation(domain=self.domain, name="loc", location_type=region).save()
 
-        headers = TestFixtureOwnershipUpload.headers
+        headers = TestLookupTableOwnershipUpload.headers
         data = [
             ('types', [('N', 'things', 'yes', 'name')]),
             ('things', [(None, 'N', 'apple', 'user', None, 'loc')]),
@@ -653,7 +652,7 @@ class TestFixtureUpload(TestCase):
         result = self.upload(workbook, skip_orm=True)
         apple_id, = [r._migration_couch_id for r in self.get_rows(None)]
 
-        ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
+        ownerships = list(LookupTableRowOwner.objects.filter(domain=self.domain, row_id=apple_id))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
 
@@ -679,7 +678,7 @@ class TestFixtureUpload(TestCase):
         self.assertTrue(did_check)
 
 
-class TestFixtureOwnershipUpload(TestCase):
+class TestLookupTableOwnershipUpload(TestCase):
     do_upload = _run_upload
 
     @classmethod
@@ -755,7 +754,7 @@ class TestFixtureOwnershipUpload(TestCase):
         workbook = TestFixtureUpload.get_workbook_from_data(self.headers, data)
         type(self).do_upload(self.domain, workbook)
 
-        ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
+        ownerships = list(LookupTableRowOwner.objects.filter(domain=self.domain, row_id=apple_id))
         self.assertEqual(ownerships, [])
 
     def test_unknown_owners(self):
@@ -1033,17 +1032,17 @@ class TestRowKey(SimpleTestCase):
 class TestOwnerKey(SimpleTestCase):
 
     def test_owner_type(self):
-        t1 = FixtureOwnership(owner_type="user")
-        t2 = FixtureOwnership(owner_type="user")
+        t1 = LookupTableRowOwner(owner_type=OwnerType.User)
+        t2 = LookupTableRowOwner(owner_type=OwnerType.User)
         self.assertEqual(mod.owner_key(t1), mod.owner_key(t2))
 
-        t3 = FixtureOwnership(owner_type="group")
+        t3 = LookupTableRowOwner(owner_type=OwnerType.Group)
         self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))
 
     def test_owner_id(self):
-        t1 = FixtureOwnership(owner_id="abc")
-        t2 = FixtureOwnership(owner_id="abc")
+        t1 = LookupTableRowOwner(owner_id="abc")
+        t2 = LookupTableRowOwner(owner_id="abc")
         self.assertEqual(mod.owner_key(t1), mod.owner_key(t2))
 
-        t3 = FixtureOwnership(owner_id="def")
+        t3 = LookupTableRowOwner(owner_id="def")
         self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))

@@ -14,9 +14,10 @@ from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
 
 from ..models import (
     Field,
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 
@@ -160,9 +161,11 @@ class _FixtureWorkbook(object):
             yield item
 
     def get_key(self, obj):
+        if isinstance(obj, LookupTableRowOwner):
+            return None
         return self.item_keys.get(obj)
 
-    def iter_ownerships(self, row, data_item_id, owner_ids_map, errors):
+    def iter_ownerships(self, row, row_id, owner_ids_map, errors):
         ownerships = self.ownership[row]
         if not ownerships:
             return
@@ -173,10 +176,10 @@ class _FixtureWorkbook(object):
                     key = (owner_id, owner_type)
                     errors.append(self.ownership_errors[key] % {'name': name})
                     continue
-                yield FixtureOwnership(
+                yield LookupTableRowOwner(
                     domain=row.domain,
-                    data_item_id=data_item_id,
-                    owner_type=owner_type,
+                    row_id=row_id,
+                    owner_type=OwnerType.from_string(owner_type),
                     owner_id=owner_id,
                 )
 
