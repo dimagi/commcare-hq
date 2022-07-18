@@ -91,9 +91,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             receiverExpression: '',
             itemsetOptions: {},
             exclude: false,
-            required: '',
-            validationXPath: '',
-            validationMessage: '',
+            requiredTest: '',
+            requiredText: '',
+            validationTest: '',
+            validationText: '',
         });
         var self = {};
         self.uniqueId = generateSemiRandomId();
@@ -106,9 +107,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
         self.defaultValue = ko.observable(options.defaultValue);
         self.hidden = ko.observable(options.hidden);
         self.exclude = ko.observable(options.exclude);
-        self.required = ko.observable(options.required);
-        self.validationXPath = ko.observable(options.validationXPath);
-        self.validationMessage = ko.observable(options.validationMessage);
+        self.requiredTest = ko.observable(options.requiredTest);
+        self.requiredText = ko.observable(options.requiredText);
+        self.validationTest = ko.observable(options.validationTest);
+        self.validationText = ko.observable(options.validationText);
         self.appearanceFinal = ko.computed(function () {
             var appearance = self.appearance();
             if (appearance === 'report_fixture' || appearance === 'lookup_table_fixture') {
@@ -161,7 +163,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         subscribeToSave(self, [
             'name', 'label', 'hint', 'appearance', 'defaultValue', 'hidden',
             'receiverExpression', 'isMultiselect', 'allowBlankValue', 'exclude',
-            'required', 'validationXPath', 'validationMessage',
+            'requiredTest', 'requiredText', 'validationTest', 'validationText',
         ], saveButton);
         return self;
     };
@@ -312,65 +314,66 @@ hqDefine("app_manager/js/details/case_claim", function () {
         return self;
     };
 
+    var _getAppearance = function (searchProperty) {
+        // init with blank string to avoid triggering save button
+        var appearance = searchProperty.appearance || "";
+        if (searchProperty.input_ === "select1" || searchProperty.input_ === "select") {
+            var uri = searchProperty.itemset.instance_uri;
+            if (uri !== null && uri.includes("commcare-reports")) {
+                appearance = "report_fixture";
+            }
+            else {
+                appearance = "lookup_table_fixture";
+            }
+        }
+        if (searchProperty.appearance === "address") {
+            appearance = "address";
+        }
+        if (["date", "daterange"].indexOf(searchProperty.input_) !== -1) {
+            appearance = searchProperty.input_;
+        }
+        return appearance;
+    };
+
     var searchViewModel = function (searchProperties, defaultProperties, searchConfigOptions, lang, saveButton, searchFilterObservable) {
         var self = {};
 
         self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
-        self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
 
-        if (searchProperties.length > 0) {
-            for (var i = 0; i < searchProperties.length; i++) {
-                // searchProperties is a list of CaseSearchProperty objects
-                // property labels/hints come in keyed by lang.
-                var label = searchProperties[i].label[lang];
-                var hint = searchProperties[i].hint[lang] || "";
-                var appearance = searchProperties[i].appearance || "";  // init with blank string to avoid triggering save button
-                if (searchProperties[i].input_ === "select1" || searchProperties[i].input_ === "select") {
-                    var uri = searchProperties[i].itemset.instance_uri;
-                    if (uri !== null && uri.includes("commcare-reports")) {
-                        appearance = "report_fixture";
-                    }
-                    else {
-                        appearance = "lookup_table_fixture";
-                    }
-                }
-                if (searchProperties[i].appearance === "address") {
-                    appearance = "address";
-                }
-                if (["date", "daterange"].indexOf(searchProperties[i].input_) !== -1) {
-                    appearance = searchProperties[i].input_;
-                }
-                var isMultiselect = searchProperties[i].input_ === "select",
-                    // The model supports multiple validation conditions, but we don't need the UI for it yet
-                    validation = searchProperties[i].validation[0];
-                self.searchProperties.push(searchPropertyModel({
-                    name: searchProperties[i].name,
-                    label: label,
-                    hint: hint,
-                    appearance: appearance,
-                    isMultiselect: isMultiselect,
-                    allowBlankValue: searchProperties[i].allow_blank_value,
-                    exclude: searchProperties[i].exclude,
-                    required: searchProperties[i].required,
-                    validationXPath: validation ? validation.xpath : '',
-                    validationMessage: validation ? validation.message[lang] : '',
-                    defaultValue: searchProperties[i].default_value,
-                    hidden: searchProperties[i].hidden,
-                    receiverExpression: searchProperties[i].receiver_expression,
-                    itemsetOptions: {
-                        instance_id: searchProperties[i].itemset.instance_id,
-                        instance_uri: searchProperties[i].itemset.instance_uri,
-                        nodeset: searchProperties[i].itemset.nodeset,
-                        label: searchProperties[i].itemset.label,
-                        value: searchProperties[i].itemset.value,
-                        sort: searchProperties[i].itemset.sort,
-                    },
-                }, saveButton));
-            }
-        } else {
-            self.searchProperties.push(searchPropertyModel({}, saveButton));
-        }
+        // searchProperties is a list of CaseSearchProperty objects
+        var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
+            // The model supports multiple validation conditions, but we don't need the UI for it yet
+            var validation = searchProperty.validations[0];
+            return searchPropertyModel({
+                name: searchProperty.name,
+                label: searchProperty.label[lang],
+                hint: searchProperty.hint[lang],
+                appearance: _getAppearance(searchProperty),
+                isMultiselect: searchProperty.input_ === "select",
+                allowBlankValue: searchProperty.allow_blank_value,
+                exclude: searchProperty.exclude,
+                requiredTest: searchProperty.required.test,
+                requiredText: searchProperty.required.text[lang],
+                validationTest: validation ? validation.test : '',
+                validationText: validation ? validation.text[lang] : '',
+                defaultValue: searchProperty.default_value,
+                hidden: searchProperty.hidden,
+                receiverExpression: searchProperty.receiver_expression,
+                itemsetOptions: {
+                    instance_id: searchProperty.itemset.instance_id,
+                    instance_uri: searchProperty.itemset.instance_uri,
+                    nodeset: searchProperty.itemset.nodeset,
+                    label: searchProperty.itemset.label,
+                    value: searchProperty.itemset.value,
+                    sort: searchProperty.itemset.sort,
+                },
+            }, saveButton);
+        });
+
+        self.searchProperties = ko.observableArray(
+            wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
+        );
 
         self.addProperty = function () {
             self.searchProperties.push(searchPropertyModel({}, saveButton));
@@ -394,9 +397,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
-                        required: p.required(),
-                        validation_xpath: p.validationXPath(),
-                        validation_message: p.validationMessage(),
+                        required_test: p.requiredTest(),
+                        required_text: p.requiredText(),
+                        validation_test: p.validationTest(),
+                        validation_text: p.validationText(),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),
