@@ -233,6 +233,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         clear: function () {
             var self = this;
             self.model.set('value', '');
+            self.model.set('error', '');
             self.errorMessage = "";
             self.model.set('searchForBlank', false);
             if (self.ui.date.length) {
