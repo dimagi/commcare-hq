@@ -11,6 +11,28 @@ hqDefine("hqwebapp/js/select2_knockout_bindings.ko", [
     DOMPurify
 ) {
     /**
+     * Converts the bound element to a select2 widget, using the element's existing
+     * options as data. This does not allow the options to change dynamically.
+     * The binding's value is ignored. This is useful for select2s that are part of
+     * a knockout-controlled UI but don't need dynamic options.
+     */
+    ko.bindingHandlers.staticSelect2 = function () {
+        var self = {};
+
+        self.init = function (element) {
+            $(element).select2({
+                width: "element",
+            });
+        };
+
+        self.update = function () {
+            // Do nothing, this should never get called
+        };
+
+        return self;
+    }();
+
+    /**
      * Converts the bound element to a select2 widget. The value of the binding is
      * a list of strings, or a list of objects with the keys 'id' and 'text' used
      * for the select2's options.
