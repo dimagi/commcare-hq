@@ -2803,10 +2803,10 @@ jquery-ui-built-themes@1.12.1:
   resolved "https://registry.yarnpkg.com/jquery-ui-built-themes/-/jquery-ui-built-themes-1.12.1.tgz#fb21015159e6a7e9400bb514dc17b00f0078a457"
   integrity sha512-yoTQms/8MJqccVfz7OGCos18IrtOaxSjxwfzyErY4yKn0lWB2JHSaDRIDSOxURnrDhrp0VSypNkvkFLud2Wcww==
 
-jquery-ui@1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/jquery-ui/-/jquery-ui-1.13.0.tgz#ab5ac65f37ca093c51b3478c4097f55bbc008f36"
-  integrity sha512-Osf7ECXNTYHtKBkn9xzbIf9kifNrBhfywFEKxOeB/OVctVmLlouV9mfc2qXCp6uyO4Pn72PXKOnj09qXetopCw==
+jquery-ui@1.13.2:
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/jquery-ui/-/jquery-ui-1.13.2.tgz#de03580ae6604773602f8d786ad1abfb75232034"
+  integrity sha512-wBZPnqWs5GaYJmo1Jj0k/mrSkzdQzKDwhXNtHKcBdAcKVxMM3KNYFq+iJ2i1rwiG53Z8M4mTn3Qxrm17uH1D4Q==
   dependencies:
     jquery ">=1.8.0 <4.0.0"
 
