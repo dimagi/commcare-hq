@@ -69,7 +69,7 @@ branches:
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - jls/dd-in-rules-ui # Jenny July 1
+    - jls/stop-the-constant-rendering # Jenny July 18
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
