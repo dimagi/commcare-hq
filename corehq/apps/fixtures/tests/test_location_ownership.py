@@ -1,9 +1,10 @@
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     Field,
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -57,12 +58,12 @@ class TestLocationOwnership(LocationHierarchyTestCase):
             )
             data_item.save()
 
-            FixtureOwnership(
+            LookupTableRowOwner(
                 domain=cls.domain,
                 owner_id=cls.locations[location_name].location_id,
-                owner_type='location',
-                data_item_id=data_item._migration_couch_id
-            ).save()
+                owner_type=OwnerType.Location,
+                row_id=data_item.id,
+            ).save(sync_to_couch=False)
 
         make_data_item('Suffolk', '8')
         make_data_item('Boston', '10')

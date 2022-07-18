@@ -11,9 +11,10 @@ from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     Field,
-    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 from corehq.apps.users.models import CommCareUser
@@ -71,22 +72,13 @@ class FixtureDataTest(TestCase):
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-        def delete_ownership():
-            from couchdbkit import ResourceNotFound
-            if self.ownership is not None:
-                try:
-                    self.ownership.delete()
-                except ResourceNotFound:
-                    pass  # ignore if already deleted
-
-        self.ownership = FixtureOwnership(
+        self.ownership = LookupTableRowOwner(
             domain=self.domain,
             owner_id=self.user.get_id,
-            owner_type='user',
-            data_item_id=self.data_item._migration_couch_id
+            owner_type=OwnerType.User,
+            row_id=self.data_item.id,
         )
-        self.ownership.save()
-        self.addCleanup(delete_ownership)
+        self.ownership.save(sync_to_couch=False)
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
