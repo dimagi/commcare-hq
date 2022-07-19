@@ -76,4 +76,5 @@ branches:
     - rc/search-input-validation # Robert July 11
     - es/validation-conditions  # Ethan July 11
     - dependabot/pip/requirements/boto3-1.24.28+ap/celery-upgrade-patch # Amit July 13
+    - jls/move-select2-binding # Jenny July 19
 submodules: { }
