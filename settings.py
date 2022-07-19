@@ -1803,16 +1803,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'ReportCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'ReportXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
@@ -1921,21 +1911,6 @@ COUCH_CACHE_BACKENDS = [
     'corehq.apps.cachehq.cachemodels.ReportGenerationCache',
     'corehq.apps.cachehq.cachemodels.UserReportsDataSourceCache',
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
-]
-
-# Custom fully indexed domains for ReportCase index/pillowtop
-# Adding a domain will not automatically index that domain's existing cases
-ES_CASE_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-    'crs-remind',
-]
-
-# Custom fully indexed domains for ReportXForm index/pillowtop --
-# only those domains that don't require custom pre-processing before indexing,
-# otherwise list in XFORM_PILLOW_HANDLERS
-# Adding a domain will not automatically index that domain's existing forms
-ES_XFORM_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
 ]
 
 CUSTOM_UCR_EXPRESSIONS = [

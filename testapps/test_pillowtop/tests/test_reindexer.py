@@ -29,8 +29,6 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.pillows.reportcase import ReportCaseReindexerFactory
-from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import SqlFormReindexerFactory
@@ -149,8 +147,6 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
     (UserReindexerFactory, 'UserPillow'),
     (GroupReindexerFactory, 'GroupPillow'),
     (SmsReindexerFactory, 'SqlSMSPillow'),
-    (ReportCaseReindexerFactory, 'ReportCaseToElasticsearchPillow'),
-    (ReportFormReindexerFactory, 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing
@@ -181,8 +177,6 @@ def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     (SqlCaseReindexerFactory, 'case-pillow'),
     (SqlFormReindexerFactory, 'xform-pillow'),
     (GroupToUserReindexerFactory, 'UserPillow'),
-    (ReportCaseReindexerFactory, 'case-pillow'),
-    (ReportFormReindexerFactory, 'xform-pillow'),
     (UserReindexerFactory, 'user-pillow'),
     (GroupReindexerFactory, 'group-pillow'),
 ], CheckpointCreationTest)
