@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
@@ -650,32 +651,40 @@ class TestFixtureUpload(TestCase):
         ]
         workbook = self.get_workbook_from_data(headers, data)
         result = self.upload(workbook, skip_orm=True)
-        apple_id, = [r._migration_couch_id for r in self.get_rows(None)]
+        apple_id, = [r.id for r in self.get_rows(None)]
 
         ownerships = list(LookupTableRowOwner.objects.filter(domain=self.domain, row_id=apple_id))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
 
     def test_sql_transaction(self):
+        @contextmanager
         def checked_tx():
-            tx = CouchTransaction()
-            tx.add_post_commit_action(check)
-            return tx
-
-        def check():
-            with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
-                get_table()
-            did_check.append(True)
+            with atomic():
+                yield
+                with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
+                    get_table()
+                did_check.append(True)
 
         def get_table():
             return LookupTable.objects.get(domain=self.domain, tag='things')
 
-        CouchTransaction = mod.CouchTransaction
+        atomic = mod.atomic
         did_check = []
-        with patch.object(mod, "CouchTransaction", checked_tx):
+        with patch.object(mod, "atomic", checked_tx):
             self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
+
+    def test_upload_should_clear_cache_on_error(self):
+        def error_tx():
+            raise Exception("cannot save")
+
+        upload_error = patch.object(mod, "atomic", error_tx)
+        clear_patch = patch.object(mod, "clear_fixture_cache")
+        with upload_error, clear_patch as clear_cache, self.assertRaises(Exception):
+            self.upload([(None, 'N', 'orange')])
+        clear_cache.assert_called_once()
 
 
 class TestLookupTableOwnershipUpload(TestCase):
