@@ -5,8 +5,8 @@
 #
 # Translators:
 # Michelle B. Sultan <msultan@dimagi.com>, 2021
-# Gladys Teos <info@enestranslations.com>, 2022
 # Dimagi Dev <devops@dimagi.com>, 2022
+# Gladys Teos <info@enestranslations.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
+"Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -3256,10 +3256,8 @@ msgid "Submit Invoice Request"
 msgstr "Ingrese Solicitud de Factura"
 
 #: corehq/apps/domain/static/domain/js/case_search.js
-#, fuzzy
-#| msgid "You have unchanged case settings"
 msgid "You have unchanged settings"
-msgstr "Tiene configuraciones de caso sin cambio"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -4048,6 +4046,16 @@ msgstr "No hay datos disponibles en la tabla"
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
 
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Hacen falta algunos campos obligatorios. Por favor complete antes de "
+"guardar. "
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Please check your Internet connection!"
 msgstr "¡Por favor revise su conexión de Internet!"
@@ -4145,6 +4153,12 @@ msgstr "Falló"
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
+msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
 msgid "Save Filters"
@@ -4836,6 +4850,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
 msgid "Unable to save case configs"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
