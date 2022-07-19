@@ -4,7 +4,7 @@ from celery import shared_task
 def task(*args, **kwargs):
     """
     A wrapper over shared_task decorator which enforces the default task
-    serializer as JSON this decorator to create celery tasks in HQ.
+    serializer as JSON. You should use this decorator to create celery tasks in HQ.
 
     This is planned to be used until https://github.com/celery/celery/issues/6759 is fixed.
     After the fix goes out
@@ -18,7 +18,7 @@ def task(*args, **kwargs):
 
         queue (string): Name of the queue in which task is supposed to run
 
-        All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options # noqa E501
+        All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options
     """
 
     if len(args) == 1 and callable(args[0]) and not kwargs:
