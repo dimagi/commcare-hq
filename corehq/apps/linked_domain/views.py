@@ -53,12 +53,10 @@ from corehq.apps.linked_domain.decorators import (
     require_linked_domain,
 )
 from corehq.apps.linked_domain.exceptions import (
-    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
-    DomainLinkNotFound,
-    NoDownstreamDomainsProvided,
+    InvalidPushException,
     UnsupportedActionError,
     UserDoesNotHavePermission,
 )
@@ -408,31 +406,13 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
-        error_message = ''
         try:
             validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
-        except NoDownstreamDomainsProvided:
-            error_message = gettext("No downstream project spaces were selected. Please contact support.")
-        except DomainLinkNotFound:
-            error_message = gettext(
-                "Links between one or more project spaces do not exist. Please contact support."
-            )
-        except AttemptedPushViolatesConstraints:
-            formatted_domains = ', '.join(in_data['linked_domains'])
-            error_message = gettext('''
-                The attempted push from {} to {} is disallowed. Please contact support.
-            '''.format(self.domain, formatted_domains))
-            notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
-        except UserDoesNotHavePermission:
-            error_message = gettext(
-                "You do not have permission to push to all specified downstream project spaces."
-            )
-        finally:
-            if error_message:
-                return {
-                    'success': False,
-                    'message': error_message,
-                }
+        except InvalidPushException as e:
+            return {
+                'success': False,
+                'message': e.message,
+            }
 
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
@@ -503,17 +483,25 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
 
 def validate_push(user, domain, downstream_domains):
     if not downstream_domains:
-        raise NoDownstreamDomainsProvided
+        raise InvalidPushException(
+            message=gettext("No downstream project spaces were selected. Please contact support.")
+        )
 
-    try:
-        domain_links = [
-            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
-        ]
-    except DomainLink.DoesNotExist:
-        raise DomainLinkNotFound
+    domain_links = []
+    for dd in downstream_domains:
+        try:
+            domain_links.append(DomainLink.objects.get(master_domain=domain, linked_domain=dd))
+        except DomainLink.DoesNotExist:
+            raise InvalidPushException(
+                message=gettext(
+                    "The project space link between {} and {} does not exist. Ensure the link was not recently "
+                    "deleted.").format(domain, dd)
+            )
 
     if not user_has_access_in_all_domains(user, downstream_domains):
-        raise UserDoesNotHavePermission
+        raise InvalidPushException(
+            message=gettext("You do not have permission to push to all specified downstream project spaces.")
+        )
 
     check_if_push_violates_constraints(user, domain_links)
 
@@ -535,7 +523,11 @@ def check_if_push_violates_constraints(user, domain_links):
         # all links are full access
         return
 
-    raise AttemptedPushViolatesConstraints
+    limited_domains = [d.linked_domain for d in limited_access_links]
+    error_message = gettext(
+        "The attempted push is disallowed because it includes the following domains that can only be pushed to "
+        "one at a time: {}".format(', '.join(limited_domains)))
+    raise InvalidPushException(message=error_message)
 
 
 def validate_pull(user, domain_link):

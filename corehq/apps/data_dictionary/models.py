@@ -93,10 +93,14 @@ class CaseProperty(models.Model):
                 prop = CaseProperty.objects.create(case_type=case_type_obj, name=name)
             return prop
 
-    def save(self, *args, **kwargs):
+    @classmethod
+    def clear_caches(cls, domain, case_type):
         from .util import get_data_dict_props_by_case_type, get_gps_properties
-        get_data_dict_props_by_case_type.clear(self.case_type.domain)
-        get_gps_properties.clear(self.case_type.domain, self.case_type.name)
+        get_data_dict_props_by_case_type.clear(domain)
+        get_gps_properties.clear(domain, case_type)
+
+    def save(self, *args, **kwargs):
+        self.clear_caches(self.case_type.domain, self.case_type.name)
         return super(CaseProperty, self).save(*args, **kwargs)
 
     def check_validity(self, value):

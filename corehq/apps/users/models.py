@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -1894,10 +1895,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         desired = set(group_ids)
         current = set(self.get_group_ids())
         touched = []
+        faulty_groups = []
         for to_add in desired - current:
             group = Group.get(to_add)
+            if group.domain != self.domain:
+                faulty_groups.append(to_add)
+                continue
             group.add_user(self._id, save=False)
             touched.append(group)
+        if faulty_groups:
+            raise ValidationError("Unable to save groups. The following group_ids are not in the current domain: "
+                                  + ', '.join(faulty_groups))
         for to_remove in current - desired:
             group = Group.get(to_remove)
             group.remove_user(self._id)
