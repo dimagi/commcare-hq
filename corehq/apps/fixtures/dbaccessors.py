@@ -4,17 +4,6 @@ from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.couch_helpers import paginate_view
 
 
-def get_fixture_items_for_data_type(domain, data_type_id):
-    from .couchmodels import FixtureDataItem
-    return list(FixtureDataItem.view(
-        'fixtures/data_items_by_domain_type',
-        startkey=[domain, data_type_id],
-        endkey=[domain, data_type_id, {}],
-        reduce=False,
-        include_docs=True,
-    ))
-
-
 def delete_fixture_items_for_data_type(domain, data_type_id):
     from .couchmodels import FixtureDataItem
     from .models import LookupTableRow
