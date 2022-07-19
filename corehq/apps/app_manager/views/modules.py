@@ -429,7 +429,7 @@ def get_all_case_modules(app, module):
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.get_modules() if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
@@ -1120,6 +1120,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
+        detail.short.multi_select = multi_select
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -1146,8 +1147,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
-    if multi_select is not None:
-        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:

@@ -399,6 +399,7 @@ class OpenCaseAction(FormAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(OpenCaseAction, cls).wrap(data)
 
 
@@ -428,6 +429,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('case_name', None)
         if 'case_properties' in data:
             data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
         return super(OpenSubCaseAction, cls).wrap(data)
@@ -679,6 +681,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
@@ -1209,8 +1212,8 @@ class FormBase(DocumentSchema):
     def timing_context(self):
         return self.get_app().timing_context
 
-    def validate_for_build(self, validate_module=True):
-        return self.validator.validate_for_build(validate_module)
+    def validate_for_build(self):
+        return self.validator.validate_for_build()
 
     def get_unique_id(self):
         """
@@ -2239,6 +2242,11 @@ class CaseSearch(DocumentSchema):
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
+
+    def get_search_title_label(self, app, lang, for_default=False):
+        if for_default:
+            lang = app.default_language
+        return self.title_label.get(lang, '')
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:

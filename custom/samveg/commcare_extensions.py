@@ -43,11 +43,21 @@ def samveg_case_upload_checks(domain, case_upload):
 def samveg_case_upload_row_operations(domain, row_num, raw_row, fields_to_update, import_context):
     all_errors = []
     for operation in row_level_validations:
-        fields_to_update, errors = operation.run(row_num, raw_row, fields_to_update, import_context)
+        fields_to_update, errors = operation(
+            row_num=row_num,
+            raw_row=raw_row,
+            fields_to_update=fields_to_update,
+            import_context=import_context,
+            domain=domain).run()
         all_errors.extend(errors)
     if not all_errors:
         for operation in additional_row_level_operations:
-            fields_to_update, errors = operation.run(row_num, raw_row, fields_to_update, import_context)
+            fields_to_update, errors = operation(
+                row_num=row_num,
+                raw_row=raw_row,
+                fields_to_update=fields_to_update,
+                import_context=import_context,
+                domain=domain).run()
             if errors:
                 # add errors and break out to avoid calling more additional operations
                 all_errors.extend(errors)
