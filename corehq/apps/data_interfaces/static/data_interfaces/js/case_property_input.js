@@ -16,7 +16,7 @@
  *   which should be an object where keys are case type names and values are arrays
  *   of case property names.
  * - The calling code must call the `register` function to initialize the component
- *   Note this must be done on DOM ready, so taht initial page data is available.
+ *   Note this must be done on DOM ready, so that initial page data is available.
  * - The widget itself is a custom HTML element:
  *     <case-property-input params="
  *       valueObservable: name,

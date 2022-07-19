@@ -32,6 +32,7 @@ from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -430,6 +431,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
 @require_POST
 @api_auth
 @require_can_edit_fixtures
+@api_throttle
 def upload_fixture_api(request, domain, **kwargs):
     """
         Use following curl-command to test.

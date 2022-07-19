@@ -489,10 +489,11 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             password = ''.join(random.choices(string_set, k=10))
             row['password'] = password
 
+        if(row.get('password')):
+            row['password'] = str(row.get('password'))
         try:
             domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-                                        group_memoizer)
-
+            group_memoizer)
             for validator in domain_info.validators:
                 validator(row)
         except UserUploadError as e:
