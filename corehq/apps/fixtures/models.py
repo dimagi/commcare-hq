@@ -1,22 +1,16 @@
 from datetime import datetime
 from functools import reduce
 from itertools import chain
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from attrs import define, field
 from django.db import models
 from django.db.models.expressions import RawSQL
 
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin
-
 from corehq.apps.groups.models import Group
 from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
-from .couchmodels import (  # noqa: F401
-    FixtureDataType,
-    FixtureTypeField,
-)
 from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET = 'domain-fixtures'
@@ -60,7 +54,7 @@ class TypeField:
         return hash((self.name, tuple(self.properties), self.is_indexed))
 
 
-class LookupTable(SyncSQLToCouchMixin, models.Model):
+class LookupTable(models.Model):
     """Lookup Table
 
     `fields` structure:
@@ -93,44 +87,6 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
     class Meta:
         app_label = 'fixtures'
         unique_together = [('domain', 'tag')]
-
-    _migration_couch_id_name = "id"
-
-    @property
-    def _migration_couch_id(self):
-        return self.id.hex
-
-    @_migration_couch_id.setter
-    def _migration_couch_id(self, value):
-        self.id = UUID(value)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "is_global",
-            "tag",
-            "item_attributes",
-        ]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if self.fields != couch_object._sql_fields:
-            couch_object.fields = [FixtureTypeField.from_sql(f) for f in self.fields]
-        if self.description != (couch_object.description or ""):
-            couch_object.description = self.description
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureDataType
-
-    def _migration_get_or_create_couch_object(self):
-        cls = self._migration_get_couch_model_class()
-        obj = self._migration_get_couch_object()
-        if obj is None:
-            obj = cls(_id=self._migration_couch_id)
-            obj.save(sync_to_sql=False)
-        return obj
 
     @property
     def is_indexed(self):

@@ -181,7 +181,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         empty_data_type.save()
-        self.addCleanup(empty_data_type._migration_get_couch_object().delete)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
@@ -267,7 +266,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         data_type.save()
-        self.addCleanup(data_type._migration_get_couch_object().delete)
         return data_type
 
     def make_data_item(self, data_type, cost):

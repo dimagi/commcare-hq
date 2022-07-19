@@ -12,7 +12,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
 
@@ -57,7 +56,7 @@ class FixtureTypeField(DocumentSchema):
         )
 
 
-class FixtureDataType(SyncCouchToSQLMixin, Document):
+class FixtureDataType(Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
@@ -79,36 +78,6 @@ class FixtureDataType(SyncCouchToSQLMixin, Document):
             obj['item_attributes'] = []
 
         return super(FixtureDataType, cls).wrap(obj)
-
-    @property
-    def _migration_couch_id(self):
-        return self._id
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "is_global",
-            "tag",
-            "item_attributes",
-        ]
-
-    def _migration_sync_to_sql(self, sql_object, save=True):
-        fields = self._sql_fields
-        if sql_object.fields != fields:
-            sql_object.fields = fields
-        if sql_object.description != (self.description or ""):
-            sql_object.description = self.description or ""
-        super()._migration_sync_to_sql(sql_object, save=save)
-
-    @property
-    def _sql_fields(self):
-        return [f.to_sql() for f in self.fields]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from .models import LookupTable
-        return LookupTable
 
     # support for old fields
     @property
