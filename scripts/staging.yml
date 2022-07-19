@@ -64,7 +64,7 @@ branches:
     - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - bmb/sso/api/test-001  # Biyeun June 15
-#    - do/case-claim-title # Dominic June 23
+    - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
