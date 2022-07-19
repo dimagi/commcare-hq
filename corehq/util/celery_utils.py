@@ -112,7 +112,7 @@ def revoke_tasks(task_names, interval=5):
     revoke_tasks(['couchexport.tasks.export_async'])
     """
     app = Celery()
-    app.config_from_object(settings)
+    app.config_from_object('django.conf:settings', namespace='CELERY')
     task_ids = set()
     while True:
         tasks = []
@@ -146,7 +146,7 @@ def print_tasks(worker, task_state):
     _validate_task_state(task_state)
 
     app = Celery()
-    app.config_from_object(settings)
+    app.config_from_object('django.conf:settings', namespace='CELERY')
     inspect = app.control.inspect([worker])
     fcn = getattr(inspect, task_state)
     result = fcn()
@@ -176,7 +176,7 @@ def print_tasks(worker, task_state):
 
 def get_running_workers(timeout=10):
     app = Celery()
-    app.config_from_object(settings)
+    app.config_from_object('django.conf:settings', namespace='CELERY')
     result = app.control.ping(timeout=timeout)
 
     worker_names = []
