@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 from django.db import transaction
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import iter_couch_docs
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
@@ -249,6 +248,20 @@ def update_fixture(domain_link, tag):
         save_to_couch(list(iter_couch_docs(LookupTableRow, chunk)))
 
     clear_fixture_cache(domain_link.linked_domain)
+
+
+def iter_couch_docs(cls, sql_objects):
+    from dimagi.utils.couch.bulk import get_docs
+    couch_class = cls._migration_get_couch_model_class()
+    db = couch_class.get_db()
+    ids = [x._migration_couch_id for x in sql_objects]
+    couch_docs = {d["_id"]: couch_class.wrap(d) for d in get_docs(db, ids)}
+    for obj in sql_objects:
+        doc = couch_docs.get(obj._migration_couch_id)
+        if doc is None:
+            doc = couch_class(_id=obj._migration_couch_id)
+        obj._migration_sync_to_couch(doc, save=False)
+        yield doc
 
 
 def update_user_roles(domain_link):
