@@ -58,29 +58,22 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
 #    - mjr/odata_enterprise_report # Matt May 23
     - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
     - ap/celery-upgrade-patch # Amit June 1
     - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
-    - ml/dhis2-better-errors # Minha June 9
     - bmb/sso/api/test-001  # Biyeun June 15
-    - ml/all-in-one-offboarding  # Minha April 13
 #    - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
-    - jc/minimum-pwd-length # Jing June 29
     - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - jls/dd-in-rules-ui # Jenny July 1
-    - jls/query-js-adjustments # Jenny July 12
+    - jls/stop-the-constant-rendering # Jenny July 18
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
     - rc/search-input-validation # Robert July 11
-    - jc/disable-submit-when-password-fail-validation  # Jing July 11
-    - es/required  # Ethan July 11
-    - jls/py3-max # Jenny July 12
-    - jc/pagination-api-keys-page  # Jing July 12
+    - es/validation-conditions  # Ethan July 11
+    - dependabot/pip/requirements/boto3-1.24.28+ap/celery-upgrade-patch # Amit July 13
 submodules: { }

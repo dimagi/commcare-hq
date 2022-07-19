@@ -429,7 +429,7 @@ def get_all_case_modules(app, module):
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.get_modules() if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
