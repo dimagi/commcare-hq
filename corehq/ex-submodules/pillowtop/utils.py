@@ -381,13 +381,24 @@ def change_checkpoint_id(old_id, new_id):
     @skip_on_fresh_install
     def _change_checkpoint_id(*args, **kwargs):
         for old in KafkaCheckpoint.objects.filter(checkpoint_id=old_id):
-            KafkaCheckpoint.objects.create(
+            # These may have been already created by validate_kafka_pillow_checkpoints,
+            # but the offset should be 0 if they haven't been used
+            new, created = KafkaCheckpoint.objects.get_or_create(
                 checkpoint_id=new_id,
                 topic=old.topic,
                 partition=old.partition,
-                offset=old.offset,
-                doc_modification_time=old.doc_modification_time,
+                defaults={"offset": 0},
             )
+            if not created and new.offset != 0:
+                raise Exception(
+                    f"KafkaCheckpoint(checkpoint_id={new_id}, topic={old.topic}, "
+                    f"partition={old.partition}) already exists and has an "
+                    f"offset of {new.offset}"
+                )
+
+            new.offset = old.offset
+            new.doc_modification_time = old.doc_modification_time
+            new.save()
 
     return migrations.RunPython(
         _change_checkpoint_id,
