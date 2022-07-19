@@ -19,8 +19,6 @@ from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
 
-FIXTURE_BUCKET = 'domain-fixtures'
-
 
 class FixtureTypeField(DocumentSchema):
     field_name = StringProperty()

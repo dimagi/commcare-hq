@@ -14,7 +14,6 @@ from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
 from .couchmodels import (  # noqa: F401
-    FIXTURE_BUCKET,
     FieldList,
     FixtureDataItem,
     FixtureDataType,
@@ -23,6 +22,8 @@ from .couchmodels import (  # noqa: F401
     FixtureTypeField,
 )
 from .exceptions import FixtureVersionError
+
+FIXTURE_BUCKET = 'domain-fixtures'
 
 
 class LookupTableManager(models.Manager):
