@@ -1,7 +1,6 @@
 import json
 from collections import OrderedDict
 from contextlib import contextmanager
-from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
 from attrs import asdict
@@ -146,8 +145,9 @@ def update_tables(request, domain, data_type_id=None):
 
         with atomic():
             if data_type_id:
+                assert data_type is not None, data_type_id
                 data_type = _update_types(
-                    fields_patches, domain, data_type_id, data_tag, is_global, description)
+                    data_type, fields_patches, data_tag, is_global, description)
                 _update_items(fields_patches, domain, data_type_id)
             else:
                 data_type = _create_types(
@@ -166,9 +166,8 @@ def table_json(table):
     return data
 
 
-def _update_types(patches, domain, data_type_id, data_tag, is_global, description):
-    data_type = LookupTable.objects.get(id=data_type_id)
-    fields_patches = deepcopy(patches)
+def _update_types(data_type, patches, data_tag, is_global, description):
+    fields_patches = dict(patches)
     old_fields = data_type.fields
     new_fixture_fields = []
     data_type.tag = data_tag
@@ -179,10 +178,8 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
         if not any(patch):
             new_fixture_fields.append(old_field)
         if "update" in patch:
-            setattr(old_field, "field_name", patch["update"])
+            old_field.name = patch["update"]
             new_fixture_fields.append(old_field)
-        if "remove" in patch:
-            continue
     new_fields = list(fields_patches.keys())
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
@@ -254,9 +251,15 @@ def data_table(request, domain):
     headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
     data_table["headers"] = DataTablesHeader(*headers)
     if selected_sheet["headers"] and selected_sheet["rows"]:
-        data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+        data_table["rows"] = [
+            [format_datatables_data(x or "--", "a") for x in row]
+            for row in selected_sheet["rows"]
+        ]
     else:
-        messages.info(request, _("No items are added in this table type. Upload using excel to add some rows to this table"))
+        messages.info(request, _(
+            "No items are added in this table type. "
+            "Upload using excel to add some rows to this table"
+        ))
         data_table["rows"] = [["--" for x in range(0, len(headers))]]
     return data_table
 
@@ -306,7 +309,7 @@ class UploadItemLists(TemplateView):
         file_ref = expose_cached_download(
             request.file.read(),
             file_extension=file_extention_from_filename(request.file.name),
-            expiry=1*60*60,
+            expiry=60 * 60,
         )
 
         # catch basic validation in the synchronous UI
