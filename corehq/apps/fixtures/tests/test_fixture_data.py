@@ -7,7 +7,6 @@ from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw
 
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
     Field,
@@ -32,7 +31,6 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).setUp()
         self.domain = 'qwerty'
         self.tag = "district"
-        delete_all_fixture_data()
 
         self.data_type = LookupTable(
             domain=self.domain,
@@ -77,7 +75,6 @@ class FixtureDataTest(TestCase):
             row_id=self.data_item.id,
         )
         self.ownership.save()
-        self.addCleanup(delete_all_fixture_data, self.domain)
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
@@ -311,7 +308,6 @@ class TestFixtureOrdering(TestCase):
             cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
             cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
         ]
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain)
 
     @classmethod
     def _make_data_item(cls, sort_key, name, seat, sigil):

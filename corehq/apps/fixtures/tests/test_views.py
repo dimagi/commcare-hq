@@ -8,7 +8,6 @@ from django.urls import reverse
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
-from ..dbaccessors import delete_all_fixture_data
 from ..interface import FixtureEditInterface
 from ..models import LookupTable, LookupTableRow, Field, TypeField
 
@@ -30,7 +29,6 @@ class LookupTableViewsTest(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.addClassCleanup(cls.user.delete, DOMAIN, deleted_by=None)
-        cls.addClassCleanup(delete_all_fixture_data, DOMAIN)
 
     def test_update_tables_get(self):
         table = self.create_lookup_table()

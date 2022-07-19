@@ -11,7 +11,6 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import (
     Field,
@@ -400,13 +399,6 @@ class TestFixtureUpload(TestCase):
         cls.project = create_domain(cls.domain)
         cls.addClassCleanup(cls.project.delete)
 
-    def setUp(self):
-        self.upload_domains = {self.domain}
-
-    def tearDown(self):
-        for domain_name in self.upload_domains:
-            delete_all_fixture_data(domain_name)
-
     @staticmethod
     def get_workbook_from_data(headers, rows):
         file = BytesIO()
@@ -420,7 +412,6 @@ class TestFixtureUpload(TestCase):
         else:
             workbook = rows_or_workbook
         domain = kw.pop("domain", self.domain)
-        self.upload_domains.add(domain)
         return type(self).do_upload(domain, workbook, **kw)
 
     def get_table(self, domain=None):
@@ -730,9 +721,6 @@ class TestLookupTableOwnershipUpload(TestCase):
         cls.loc2.save()
         cls.loc3 = SQLLocation(domain=cls.domain, name="3", location_type=cls.region)
         cls.loc3.save()
-
-    def tearDown(self):
-        delete_all_fixture_data(self.domain)
 
     def test_row_ownership(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])

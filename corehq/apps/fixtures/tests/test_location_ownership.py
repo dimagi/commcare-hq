@@ -1,4 +1,3 @@
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     Field,
     LookupTable,
@@ -68,7 +67,6 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         make_data_item('Suffolk', '8')
         make_data_item('Boston', '10')
         make_data_item('Somerville', '7')
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain)
 
         cls.no_location_user = CommCareUser.create(cls.domain, 'no_location', '***', None, None)
         cls.suffolk_user = CommCareUser.create(cls.domain, 'guy-from-suffolk', '***', None, None)

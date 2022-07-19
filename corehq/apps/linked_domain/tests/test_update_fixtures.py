@@ -1,4 +1,3 @@
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     LookupTable,
     LookupTableRow,
@@ -25,7 +24,6 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             ],
         )
         cls.table.save()
-        cls.addClassCleanup(delete_all_fixture_data)
 
     def setUp(self):
         # Reset table content for each test

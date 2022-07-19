@@ -9,7 +9,6 @@ from django.utils.http import urlencode
 from tastypie.bundle import Bundle
 
 from corehq.apps.api.tests.utils import APIResourceTest
-from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     Field,
     LookupTable,
@@ -48,7 +47,6 @@ class TestFixtureResource(APIResourceTest):
         cls.ohio = cls._create_data_item(cls.state, {"state": "Ohio"}, 0)
         cls.akron = cls._create_data_item(cls.city, {"city": "Akron", "state": "Ohio"}, 0)
         cls.toledo = cls._create_data_item(cls.city, {"city": "Toledo", "state": "Ohio"}, 1)
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
 
     def test_get_list(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
@@ -158,7 +156,6 @@ class TestLookupTableResource(APIResourceTest):
             item_attributes=[]
         )
         self.data_type.save()
-        self.addCleanup(delete_all_fixture_data, self.domain.name)
 
     def _data_type_json(self):
         return {
@@ -255,7 +252,6 @@ class TestLookupTableItemResource(APIResourceTest):
             item_attributes=[]
         )
         cls.data_type.save()
-        cls.addClassCleanup(delete_all_fixture_data, cls.domain.name)
 
     def _create_data_item(self, data_type=None):
         data_item = LookupTableRow(
