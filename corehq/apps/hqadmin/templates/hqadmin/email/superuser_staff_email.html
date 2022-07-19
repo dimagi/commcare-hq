@@ -1,0 +1,28 @@
+<p>The following users had changes to their superuser and staff statuses (changes in RED):</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Users</td>
+      <td>is Superuser</td>
+      <td>is Staff</td>
+    </tr>
+    {% for user in user_changes %}
+      <tr>
+        <td>{{ user.email }}</td>
+        {% if user.staff_change %}
+          <td style="color:red">{{ user.is_staff }}</td>
+        {% else %}
+          <td>{{ user.is_staff }}</td>
+        {% endif %}
+        {% if user.superuser_change %}
+          <td style="color:red">{{ user.is_superuser }}</td>
+        {% else %}
+          <td>{{ user.is_superuser }}</td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<p>Footer message test</p>

@@ -90,6 +90,17 @@ class SuperuserManagement(UserAdministration):
             'users': augmented_superusers(),
         }
 
+    def send_email_notif(self, user_changes):
+        recipient_list = ["mlee@dimagi.com", "minhalee999@gmail.com"]
+        send_HTML_email(
+            "Superuser privilege / Staff status was changed",
+            recipient_list,
+            render_to_string('hqadmin/email/superuser_staff_email.html', context={
+                'user_changes': user_changes
+            }),
+        )
+        return
+
     def post(self, request, *args, **kwargs):
         can_toggle_is_staff = request.user.is_staff
         form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
@@ -97,8 +108,9 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-            fields_changed = {}
+            user_changes = []
             for user in users:
+                fields_changed = {}
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
@@ -116,6 +128,22 @@ class SuperuserManagement(UserAdministration):
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
                                     by_domain_required_for_log=False,
                                     for_domain_required_for_log=False)
+
+                    #formatting for user_changes list
+                    fields_changed['email'] = user.username
+                    if 'is_superuser' not in fields_changed:
+                        fields_changed['is_superuser'] = user.is_superuser
+                        fields_changed['superuser_change'] = False
+                    else:
+                        fields_changed['superuser_change'] = True
+                    if 'is_staff' not in fields_changed:
+                        fields_changed['is_staff'] = user.is_staff
+                        fields_changed['staff_change'] = False
+                    else:
+                        fields_changed['staff_change'] = True
+                    user_changes.append(fields_changed)
+            if user_changes:
+                self.send_email_notif(user_changes)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
