@@ -173,11 +173,15 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                     lang, for_default=for_default, build_profile_id=build_profile_id)
                 search_again_label_audio = module.search_config.search_again_label.audio_app_string(
                     lang, for_default=for_default, build_profile_id=build_profile_id)
+                title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
                 if search_again_label_icon:
                     yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
                 if search_again_label_audio:
                     yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
+
+                yield id_strings.case_search_title_translation(module), title_label
             else:
+                yield id_strings.case_search_title_translation(module), trans(CaseSearch.title_label.default())
                 yield id_strings.case_search_locale(module), trans(CaseSearch.search_label.default().label)
                 yield (id_strings.case_search_again_locale(module),
                        trans(CaseSearch.search_again_label.default().label))
