@@ -7,7 +7,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'hqwebapp/js/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData, baseAce) {
 
-    var caseRuleCriteria = function (initial, constants) {
+    var CaseRuleCriteria = function (initial, constants) {
         'use strict';
         var self = {};
 
@@ -15,6 +15,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         self.caseType = ko.observable(initial.case_type);
         self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
+
 
         self.filterOnServerModified = ko.computed(function () {
             var result = 'false';
@@ -231,83 +232,70 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             $("#schedule-nav").removeClass("hidden");
             $('#schedule-nav').find('a').trigger('click');
         };
+
+        var notModifiedSinceDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model does not match a Django model; the `days` are stored as the `server_modified_boundary` on the rule
+            self.days = ko.observable();
+            return self;
+        };
+
+        var matchPropertyDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+            self.plus_minus = ko.observable();
+
+            // This model matches the Django model with the same name
+            self.property_name = ko.observable();
+            self.property_value = ko.observable();
+            self.match_type = ko.observable();
+
+            self.showPropertyValueInput = ko.computed(function () {
+                return (
+                    self.match_type() !== constants.MATCH_HAS_VALUE &&
+                    self.match_type() !== constants.MATCH_HAS_NO_VALUE
+                );
+            });
+            return self;
+        };
+
+        var customMatchDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            self.name = ko.observable();
+            return self;
+        };
+
+        var closedParentDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            return self;
+        };
+
+        var ucrFilterDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            self.configured_filter = ko.observable();
+            // This model matches the Django model with the same name
+            return self;
+        };
+
+        self.loadInitial();
+        self.setScheduleTabVisibility();
         return self;
     };
 
-    var notModifiedSinceDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model does not match a Django model; the `days` are stored as the `server_modified_boundary` on the rule
-        self.days = ko.observable();
-        return self;
-    };
-
-    var matchPropertyDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-        self.plus_minus = ko.observable();
-
-        // This model matches the Django model with the same name
-        self.property_name = ko.observable();
-        self.property_value = ko.observable();
-        self.match_type = ko.observable();
-
-        self.showPropertyValueInput = ko.computed(function () {
-            return (
-                self.match_type() !== criteriaModel.constants.MATCH_HAS_VALUE &&
-                self.match_type() !== criteriaModel.constants.MATCH_HAS_NO_VALUE
-            );
-        });
-        return self;
-    };
-
-    var customMatchDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model matches the Django model with the same name
-        self.name = ko.observable();
-        return self;
-    };
-
-    var closedParentDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model matches the Django model with the same name
-        return self;
-    };
-
-    var ucrFilterDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        self.configured_filter = ko.observable();
-        // This model matches the Django model with the same name
-        return self;
-    };
-
-    var criteriaModel = null;
-
-    $(function () {
-        criteriaModel = caseRuleCriteria(
-            initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants')
-        );
-        // setup tab
-        criteriaModel.setScheduleTabVisibility();
-        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
-        criteriaModel.loadInitial();
-    });
-
-    return {
-        get_criteria_model: function () {return criteriaModel;},
-    };
-
+    return CaseRuleCriteria;
 });

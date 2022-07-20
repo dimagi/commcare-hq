@@ -2,7 +2,22 @@ from django.conf.urls import include, re_path as url
 
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
-from corehq.apps.reports.standard.tableau import TableauView
+from corehq.apps.reports.standard.cases.case_data import (
+    CaseAttachmentsView,
+    CaseDataView,
+    case_forms,
+    case_property_changes,
+    case_property_names,
+    case_xml,
+    close_case_view,
+    download_case_history,
+    edit_case_view,
+    export_case_transactions,
+    rebuild_case_view,
+    resave_case_view,
+    undo_close_case_view,
+)
+from corehq.apps.reports.standard.tableau import TableauView, tableau_visualization_ajax
 from corehq.apps.userreports.reports.view import (
     ConfigurableReportView,
     CustomConfigurableReportDispatcher,
@@ -25,37 +40,24 @@ from .dispatcher import (
 from .filters import urls as filter_urls
 from .views import (
     AddSavedReportConfigView,
-    CaseAttachmentsView,
-    CaseDataView,
     EditFormInstance,
     FormDataView,
     MySavedReportsView,
     ScheduledReportsView,
     archive_form,
     case_form_data,
-    case_forms,
-    case_property_changes,
-    case_property_names,
-    case_xml,
-    close_case_view,
     delete_config,
     delete_scheduled_report,
-    download_case_history,
     download_form,
-    edit_case_view,
     edit_form,
     email_report,
-    export_case_transactions,
     export_report,
     project_health_user_details,
-    rebuild_case_view,
     reports_home,
-    resave_case_view,
     resave_form_view,
     restore_edit,
     send_test_scheduled_report,
     unarchive_form,
-    undo_close_case_view,
     view_form_attachment,
     view_scheduled_report,
 )
@@ -153,6 +155,7 @@ urlpatterns = [
     url(r'^v2/', include('corehq.apps.reports.v2.urls')),
 
     url(r'^tableau/(?P<viz_id>[\d]+)/$', TableauView.as_view(), name=TableauView.urlname),
+    url(r'^tableau/visualization/$', tableau_visualization_ajax, name='tableau_visualization_ajax'),
 
     # Internal Use
     url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),

@@ -1,16 +1,10 @@
+from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.exceptions import (
-    InvalidUsernameException,
-    UsernameAlreadyExists,
-)
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.validation import (
-    ReservedUsernameException,
-    _check_for_reserved_usernames,
-    _ensure_username_is_available,
-    _ensure_valid_username,
+    _validate_complete_username,
     validate_mobile_username,
 )
 
@@ -27,98 +21,79 @@ class TestMobileUsernameValidation(TestCase):
         cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
         cls.addClassCleanup(cls.user.delete, cls.domain, None)
 
-    def test_valid_username_returns_successfully(self):
-        username = validate_mobile_username('test-user-1', self.domain)
-        self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
+    def test_no_exception_rasied_if_valid_username(self):
+        validate_mobile_username('test-user-1@test-domain.commcarehq.org', self.domain)
 
-    def test_none_username_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+    def test_exception_raised_if_username_is_none(self):
+        with self.assertRaises(ValidationError) as cm:
             validate_mobile_username(None, self.domain)
 
-    def test_reserved_username_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
-            validate_mobile_username('admin', self.domain)
+        self.assertEqual(cm.exception.message, "Username is required.")
 
-    def test_empty_username_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
+    def test_exception_raised_if_username_is_empty(self):
+        with self.assertRaises(ValidationError) as cm:
             validate_mobile_username('', self.domain)
 
-    def test_invalid_email_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            validate_mobile_username('test..user', self.domain)
+        self.assertEqual(cm.exception.message, "Username is required.")
 
-    def test_already_used_username_raises_exception(self):
-        with self.assertRaises(UsernameAlreadyExists):
-            validate_mobile_username('test-user', self.domain)
+    def test_exception_raised_if_invalid_username(self):
+        """See TestValidateCompleteUsername for more detailed tests"""
+        with self.assertRaises(ValidationError):
+            validate_mobile_username('invalid&test@test-domain.commcarehq.org', self.domain)
 
+    def test_exception_raised_if_username_is_reserved(self):
+        with self.assertRaises(ValidationError) as cm:
+            validate_mobile_username('admin@test-domain.commcarehq.org', self.domain)
 
-class TestCheckForReservedUsernames(SimpleTestCase):
+        self.assertEqual(cm.exception.message,
+                         "Username 'admin@test-domain.commcarehq.org' is already taken or reserved.")
 
-    def test_non_reserved_username_does_not_raise_exception(self):
-        try:
-            _check_for_reserved_usernames('not-reserved')
-        except ReservedUsernameException:
-            self.fail(f'Unexpected raised exception: {ReservedUsernameException}')
+    def test_exception_raised_if_username_is_actively_in_use(self):
+        with self.assertRaises(ValidationError) as cm:
+            validate_mobile_username('test-user@test-domain.commcarehq.org', self.domain)
 
-    def test_admin_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
-            _check_for_reserved_usernames('admin')
+        self.assertEqual(cm.exception.message,
+                         "Username 'test-user@test-domain.commcarehq.org' is already taken or reserved.")
 
-    def test_demo_user_raises_exception(self):
-        with self.assertRaises(ReservedUsernameException):
-            _check_for_reserved_usernames('demo_user')
-
-
-class TestEnsureValidUsername(SimpleTestCase):
-
-    def test_valid_email_does_not_raise_exception(self):
-        try:
-            _ensure_valid_username('username@domain.commcarehq.org')
-        except InvalidUsernameException:
-            self.fail(f'Unexpected raised exception: {InvalidUsernameException}')
-
-    def test_invalid_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('username%domain.commcarehq.org')
-
-    def test_trailing_period_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('username.@domain.commcarehq.org')
-
-    def test_double_period_raises_exception(self):
-        with self.assertRaises(InvalidUsernameException):
-            _ensure_valid_username('user..name@domain.commcarehq.org')
-
-
-class TestEnsureUsernameIsAvailable(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.domain = 'test-domain'
-        cls.domain_obj = create_domain('test-domain')
-        cls.addClassCleanup(cls.domain_obj.delete)
-
-        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
-        cls.addClassCleanup(cls.user.delete, cls.domain, None)
-
-    def test_username_is_available(self):
-        try:
-            _ensure_username_is_available('unused-test-user@test-domain.commcarehq.org')
-        except UsernameAlreadyExists:
-            self.fail(f'Unexpected raised exception: {InvalidUsernameException}')
-
-    def test_username_is_actively_in_use(self):
-        with self.assertRaises(UsernameAlreadyExists) as cm:
-            _ensure_username_is_available('test-user@test-domain.commcarehq.org')
-        self.assertFalse(cm.exception.is_deleted)
-
-    def test_username_was_previously_used(self):
+    def test_exception_raised_if_username_was_previously_used(self):
         retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
         self.addCleanup(retired_user.delete, self.domain, None)
         retired_user.retire(self.domain, None)
 
-        with self.assertRaises(UsernameAlreadyExists) as cm:
-            _ensure_username_is_available('retired@test-domain.commcarehq.org')
+        with self.assertRaises(ValidationError) as cm:
+            validate_mobile_username('retired@test-domain.commcarehq.org', self.domain)
 
-        self.assertTrue(cm.exception.is_deleted)
+        self.assertEqual(cm.exception.message,
+                         "Username 'retired@test-domain.commcarehq.org' is already taken or reserved.")
+
+
+class TestValidateCompleteUsername(SimpleTestCase):
+
+    def test_no_exception_raised_if_valid_email(self):
+        try:
+            _validate_complete_username('username@domain.commcarehq.org', 'domain')
+        except ValidationError:
+            self.fail(f'Unexpected raised exception: {ValidationError}')
+
+    def test_exception_raised_if_invalid_email(self):
+        with self.assertRaises(ValidationError) as cm:
+            _validate_complete_username('username%domain.commcarehq.org', 'domain')
+
+        self.assertEqual(cm.exception.message,
+                         "Username 'username%domain.commcarehq.org' must be a valid email address.")
+
+    def test_exception_raised_if_invalid_username(self):
+        """Invalid username refers to the first component of the email being invalid for HQ standards"""
+        with self.assertRaises(ValidationError) as cm:
+            _validate_complete_username('test%user@domain.commcarehq.org', 'domain')
+
+        self.assertEqual(cm.exception.message,
+                         "The username component 'test%user' of 'test%user@domain.commcarehq.org' may not "
+                         "contain special characters.")
+
+    def test_exception_raised_if_incorrect_email_domain(self):
+        with self.assertRaises(ValidationError) as cm:
+            _validate_complete_username('user@domain2.commcarehq.org', 'domain')
+
+        self.assertEqual(cm.exception.message,
+                         "The username email domain '@domain2.commcarehq.org' should be '@domain.commcarehq.org'.")
