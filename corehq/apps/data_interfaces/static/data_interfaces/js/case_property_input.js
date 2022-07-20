@@ -56,10 +56,12 @@ hqDefine('data_interfaces/js/case_property_input', [
             self.placeholder = gettext("case property name");
         },
         template: '<div>\
-          <select class="form-control"\
-                  required\
-                  data-bind="visible: showDropdown, value: valueObservable, autocompleteSelect2: casePropertyNames"\
-          ></select>\
+          <!-- ko if: showDropdown -->\
+            <select class="form-control"\
+                    required\
+                    data-bind="value: valueObservable, autocompleteSelect2: casePropertyNames"\
+            ></select>\
+          <!-- /ko -->\
           <input type="text"\
                  required\
                  class="textinput form-control"\
