@@ -78,8 +78,8 @@ from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import (
     ReportsSidebarOrdering,
-    TableauServer,
-    TableauVisualization,
+    TableauAppConnection,
+    TableauDomainDetails,
 )
 from corehq.apps.sms.models import (
     SMS,
@@ -669,34 +669,39 @@ class TestDeleteDomain(TestCase):
         self._assert_ota_counts(self.domain.name, 0)
         self._assert_ota_counts(self.domain2.name, 1)
 
-    def _assert_reports_counts(self, domain_name, count):
-        self._assert_queryset_count([
-            ReportsSidebarOrdering.objects.filter(domain=domain_name),
-            TableauServer.objects.filter(domain=domain_name),
-            TableauVisualization.objects.filter(domain=domain_name),
-        ], count)
+    def _assert_num_report_objects(self, domain_name, count):
+        self.assertEqual((
+            len(ReportsSidebarOrdering.objects.filter(domain=domain_name))
+            + len(TableauAppConnection.objects.all())
+            + len(TableauDomainDetails.objects.filter(domain=domain_name))
+        ), count)
 
     def test_reports_delete(self):
+        app_connection = TableauAppConnection.objects.create(
+            server_name='test_server',
+            site_name='test_site',
+            app_client_id='asdf1234',
+            secret_id='zxcv5678',
+        )
+        app_connection.plaintext_secret_value = 'qwer1234'
+        app_connection.save()
         for domain_name in [self.domain.name, self.domain2.name]:
             ReportsSidebarOrdering.objects.create(domain=domain_name)
-            server = TableauServer.objects.create(
+            TableauDomainDetails.objects.create(
                 domain=domain_name,
-                server_type='server',
-                server_name='my_server',
-                target_site='my_site',
-                domain_username='my_username',
+                app_connection=app_connection
             )
-            TableauVisualization.objects.create(
-                domain=domain_name,
-                server=server,
-                view_url='my_url',
-            )
-            self._assert_reports_counts(domain_name, 1)
+
+        self._assert_num_report_objects(self.domain.name, 3)
+        self._assert_num_report_objects(self.domain2.name, 3)
 
         self.domain.delete()
+        # 1 object remains because TableauAppConnection should only be deleted if the last associated domain
+        # is deleted.
+        self._assert_num_report_objects(self.domain.name, 1)
 
-        self._assert_reports_counts(self.domain.name, 0)
-        self._assert_reports_counts(self.domain2.name, 1)
+        self.domain2.delete()
+        self._assert_num_report_objects(self.domain2.name, 0)
 
     def _assert_phone_counts(self, domain_name, count):
         self._assert_queryset_count([

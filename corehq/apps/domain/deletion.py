@@ -12,6 +12,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.domain.utils import silence_during_tests
+from corehq.apps.reports.models import delete_tableau_connected_app_if_last_domain
 from corehq.apps.userreports.dbaccessors import (
     delete_all_ucr_tables_for_domain,
 )
@@ -415,6 +416,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
     ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
     ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
+    CustomDeletion('reports', delete_tableau_connected_app_if_last_domain, []),
+    ModelDeletion('reports', 'TableauDomainDetails', 'domain'),
 ]
 
 

@@ -247,6 +247,15 @@ class TableauAppConnection(models.Model):
         self.secret_value = b64_aes_encrypt(plaintext)
 
 
+def delete_tableau_connected_app_if_last_domain(domain):
+    try:
+        domain_details_obj = TableauDomainDetails.objects.get(domain=domain)
+        if len(TableauDomainDetails.objects.filter(app_connection=domain_details_obj.app_connection)) <= 1:
+            domain_details_obj.app_connection.delete()
+    except TableauDomainDetails.DoesNotExist:
+        return
+
+
 class TableauDomainDetails(models.Model):
     domain = models.CharField(max_length=64, default='', unique=True)
     app_connection = models.ForeignKey(TableauAppConnection, on_delete=models.CASCADE)
