@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.signals import setup_logging
 from django.apps import AppConfig
 
 
@@ -18,3 +19,10 @@ def _init_celery_app():
     app.config_from_object('django.conf:settings', namespace='CELERY')
     app.autodiscover_tasks()
     app.set_default()
+
+
+@setup_logging.connect()
+def config_loggers(*args, **kwargs):
+    from logging.config import dictConfig
+    from django.conf import settings
+    dictConfig(settings.LOGGING)
