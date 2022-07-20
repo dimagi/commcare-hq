@@ -3048,6 +3048,10 @@ msgstr ""
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
 "<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
@@ -3629,6 +3633,11 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a password."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
