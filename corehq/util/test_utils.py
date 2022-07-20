@@ -29,7 +29,6 @@ from django.test.utils import CaptureQueriesContext
 
 from unittest import mock
 
-from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
 
@@ -731,22 +730,6 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
                 relationship=relationship
             )],
         )
-    )
-
-
-def update_case(domain, case_id, case_properties, user_id=None):
-    from casexml.apps.case.mock import CaseBlock
-
-    kwargs = {
-        'case_id': case_id,
-        'update': case_properties,
-    }
-
-    if user_id:
-        kwargs['user_id'] = user_id
-
-    submit_case_blocks(
-        [CaseBlock.deprecated_init(**kwargs).as_text()], domain=domain
     )
 
 
