@@ -736,10 +736,16 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
     def test_lookup_table(self):
-        from corehq.apps.fixtures.models import LookupTable, LookupTableRow
+        from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
         table = LookupTable.objects.create(domain=self.domain_name, tag="dump-load")
-        LookupTableRow.objects.create(domain=self.domain_name, table_id=table.id, sort_key=0)
-        self._dump_and_load(Counter({LookupTable: 1, LookupTableRow: 1}))
+        row = LookupTableRow.objects.create(domain=self.domain_name, table_id=table.id, sort_key=0)
+        LookupTableRowOwner.objects.create(
+            domain=self.domain_name,
+            row_id=row.id,
+            owner_type=OwnerType.User,
+            owner_id="abc",
+        )
+        self._dump_and_load(Counter({LookupTable: 1, LookupTableRow: 1, LookupTableRowOwner: 1}))
 
 
 @mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)

@@ -44,4 +44,20 @@ class Migration(migrations.Migration):
             model_name='lookuptablerow',
             index=models.Index(fields=['domain', 'table_id', 'sort_key', 'id'], name='fixtures_lo_domain_96d65b_idx'),
         ),
+        migrations.CreateModel(
+            name='LookupTableRowOwner',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('domain', corehq.sql_db.fields.CharIdField(default=None, max_length=126)),
+                ('owner_type', models.PositiveSmallIntegerField(choices=[(0, 'User'), (1, 'Group'), (2, 'Location')])),
+                ('owner_id', corehq.sql_db.fields.CharIdField(default=None, max_length=126)),
+                ('couch_id', corehq.sql_db.fields.CharIdField(db_index=True, max_length=126, null=True)),
+                ('row', models.ForeignKey(db_index=False, on_delete=django.db.models.deletion.CASCADE, to='fixtures.lookuptablerow')),
+            ],
+            bases=(dimagi.utils.couch.migration.SyncSQLToCouchMixin, models.Model),
+        ),
+        migrations.AddIndex(
+            model_name='lookuptablerowowner',
+            index=models.Index(fields=['domain', 'owner_type', 'owner_id'], name='fixtures_lo_domain_6a5d50_idx'),
+        ),
     ]

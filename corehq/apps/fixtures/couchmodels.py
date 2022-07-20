@@ -590,11 +590,31 @@ def _id_from_doc(doc_or_doc_id):
     return doc_id
 
 
-class FixtureOwnership(Document):
+class FixtureOwnership(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group', 'location'])
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "owner_id",
+        ]
+
+    def _migration_sync_to_sql(self, sql_object):
+        from .models import OwnerType
+        if sql_object.row_id is None or sql_object.row_id != UUID(self.data_item_id):
+            sql_object.row_id = UUID(self.data_item_id)
+        if OwnerType.from_string(self.owner_type) != sql_object.owner_type:
+            sql_object.owner_type = OwnerType.from_string(self.owner_type)
+        super()._migration_sync_to_sql(sql_object)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from .models import LookupTableRowOwner
+        return LookupTableRowOwner
 
     @classmethod
     def by_item_id(cls, item_id, domain):

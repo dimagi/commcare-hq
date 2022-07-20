@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import IntEnum, unique
 from uuid import UUID, uuid4
 
 from attrs import define, field
@@ -200,6 +201,50 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
             obj = cls(_id=self._migration_couch_id)
             obj.save(sync_to_sql=False)
         return obj
+
+
+@unique
+class OwnerType(IntEnum):
+    User = 0
+    Group = 1
+    Location = 2
+
+    @classmethod
+    def from_string(cls, value):
+        return getattr(cls, value.title())
+
+    @classmethod
+    def choices(cls):
+        return [(t.value, t.name) for t in cls]
+
+
+class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
+    domain = CharIdField(max_length=126, default=None)
+    owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices())
+    owner_id = CharIdField(max_length=126, default=None)
+    row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE, db_index=False)
+    couch_id = CharIdField(max_length=126, null=True, db_index=True)
+
+    class Meta:
+        app_label = 'fixtures'
+        indexes = [
+            models.Index(fields=["domain", "owner_type", "owner_id"])
+        ]
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "owner_id"]
+
+    def _migration_sync_to_couch(self, couch_object):
+        if couch_object.data_item_id is None or UUID(couch_object.data_item_id) != self.row_id:
+            couch_object.data_item_id = self.row_id.hex
+        if OwnerType(self.owner_type).name.lower() != couch_object.owner_type:
+            couch_object.owner_type = OwnerType(self.owner_type).name.lower()
+        super()._migration_sync_to_couch(couch_object)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return FixtureOwnership
 
 
 class UserLookupTableType:

@@ -5,12 +5,16 @@ from django.test import SimpleTestCase, TestCase
 
 from ..management.commands.populate_lookuptables import Command as LookupTableCommand
 from ..management.commands.populate_lookuptablerows import Command as LookupTableRowCommand
+from ..management.commands.populate_lookuptablerowowners import Command as LookupTableRowOwnerCommand
 from ..models import (
     Field,
     FixtureDataItem,
     FixtureDataType,
+    FixtureOwnership,
     LookupTable,
     LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 from corehq.dbaccessors.couchapps.all_docs import get_all_docs_with_doc_types
@@ -203,6 +207,64 @@ class TestLookupTableRowCouchToSQLDiff(SimpleTestCase):
 
     def diff(self, doc, obj):
         return do_diff(LookupTableRowCommand, doc, obj)
+
+
+class TestLookupTableRowOwnerCouchToSQLDiff(SimpleTestCase):
+
+    def test_no_diff(self):
+        doc, obj = create_lookup_table_row_owner()
+        self.assertEqual(self.diff(doc, obj), [])
+
+    def test_diff_domain(self):
+        doc, obj = create_lookup_table_row_owner()
+        doc['domain'] = 'other-domain'
+        self.assertEqual(
+            self.diff(doc, obj),
+            ["domain: couch value 'other-domain' != sql value 'some-domain'"],
+        )
+
+    def test_diff_owner_type(self):
+        doc, obj = create_lookup_table_row_owner()
+        doc['owner_type'] = "location"
+        error, = self.diff(doc, obj)
+        self.assertEqual(
+            self.diff(doc, obj),
+            ["owner_type: couch value <OwnerType.Location: 2> != sql value <OwnerType.User: 0>"],
+        )
+
+    def test_diff_owner_id(self):
+        doc, obj = create_lookup_table_row_owner()
+        doc['owner_id'] = "rebmun"
+        error, = self.diff(doc, obj)
+        self.assertRegex(
+            error,
+            r"^owner_id: couch value 'rebmun' != sql value 'modnar'",
+        )
+
+    def test_diff_row_id(self):
+        doc, obj = create_lookup_table_row_owner()
+        doc['data_item_id'] = couch_id = '8a81d0a9c05d4db7ac2535b3775daffb'
+        sql_id = UUID('1d2d7c7dc5cf4acfa04ba9346470bd43')
+        self.assertEqual(
+            self.diff(doc, obj),
+            [f"row_id: couch value {UUID(couch_id)!r} != sql value {sql_id!r}"],
+        )
+
+    def test_diff_multiple(self):
+        doc, obj = create_lookup_table_row_owner()
+        obj.owner_type = OwnerType.Group
+        doc['data_item_id'] = couch_id = '8a81d0a9c05d4db7ac2535b3775daffb'
+        sql_id = UUID('1d2d7c7dc5cf4acfa04ba9346470bd43')
+        self.assertEqual(
+            self.diff(doc, obj),
+            [
+                "owner_type: couch value <OwnerType.User: 0> != sql value <OwnerType.Group: 1>",
+                f"row_id: couch value {UUID(couch_id)!r} != sql value {sql_id!r}",
+            ],
+        )
+
+    def diff(self, doc, obj):
+        return do_diff(LookupTableRowOwnerCommand, doc, obj)
 
 
 class TestLookupTableCouchToSQLMigration(TestCase):
@@ -417,6 +479,87 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         return do_diff(LookupTableRowCommand, doc, obj)
 
 
+class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.db = FixtureOwnership.get_db()
+        cls.type_doc = create_lookup_table(unwrap_doc=False)[0]
+        cls.type_doc.save()
+        cls.table_obj = LookupTable.objects.get(id=cls.type_doc._id)
+        cls.addClassCleanup(cls.type_doc.delete)
+
+        cls.row = LookupTableRow.objects.create(
+            domain=cls.table_obj.domain,
+            table_id=cls.table_obj.id,
+            sort_key=0,
+        )
+        cls.addClassCleanup(lambda: FixtureOwnership.get(cls.row.id.hex).delete())
+
+    def tearDown(self):
+        docs = list(get_all_docs_with_doc_types(self.db, ['FixtureOwnership']))
+        self.db.bulk_delete(docs)
+        super().tearDown()
+
+    def test_sync_to_couch(self):
+        doc, obj = self.create_owner()
+        obj.save()
+        self.assertEqual(self.diff(self.db.get(obj.couch_id), obj), [])
+
+        obj.owner_type = OwnerType.Group
+        obj.owner_id = 'snoil'
+        obj.save()
+        doc = self.db.get(obj.couch_id)
+        self.assertEqual(doc['owner_type'], 'group')
+        self.assertEqual(doc['owner_id'], 'snoil')
+
+    def test_sync_to_sql(self):
+        doc, obj = self.create_owner()
+        doc.save()
+        self.assertEqual(
+            self.diff(doc.to_json(), LookupTableRowOwner.objects.get(couch_id=doc._id)),
+            [],
+        )
+
+        doc.owner_type = 'group'
+        doc.owner_id = 'snoil'
+        doc.save()
+        obj = LookupTableRowOwner.objects.get(couch_id=doc._id)
+        self.assertEqual(obj.owner_type, OwnerType.Group)
+        self.assertEqual(obj.owner_id, 'snoil')
+
+    def test_migration(self):
+        doc, obj = self.create_owner()
+        doc.save(sync_to_sql=False)
+        call_command('populate_lookuptablerowowners')
+        self.assertEqual(
+            self.diff(doc.to_json(), LookupTableRowOwner.objects.get(couch_id=doc._id)),
+            [],
+        )
+
+        # Additional call should apply any updates
+        doc = FixtureOwnership.get(doc._id)
+        doc.owner_type = 'group'
+        doc.owner_id = 'snoil'
+        doc.save(sync_to_sql=False)
+        call_command('populate_lookuptablerowowners')
+        self.assertEqual(
+            self.diff(doc.to_json(), LookupTableRowOwner.objects.get(couch_id=doc._id)),
+            [],
+        )
+
+    def create_owner(self):
+        doc, obj = create_lookup_table_row_owner(unwrap_doc=False)
+        obj.row = row = self.row
+        doc.data_item_id = row._migration_couch_id
+        assert obj.row_id == row.id, (obj.row_id, row.id)
+        return doc, obj
+
+    def diff(self, doc, obj):
+        return do_diff(LookupTableRowOwnerCommand, doc, obj)
+
+
 def create_lookup_table(unwrap_doc=True):
     def fields_data(name="name"):
         return [
@@ -482,6 +625,27 @@ def create_lookup_table_row(unwrap_doc=True):
                 {"field_value": "3", "properties": {"loc": "Miami"}},
             ]},
         },
+    ))
+    if unwrap_doc:
+        doc = doc.to_json()
+    return doc, obj
+
+
+def create_lookup_table_row_owner(unwrap_doc=True):
+    def data(**extra):
+        return {
+            'domain': 'some-domain',
+            'owner_id': 'modnar',
+            **extra,
+        }
+    obj = jsonattrify(LookupTableRowOwner, data(
+        owner_type=OwnerType.User,
+        row_id=UUID('1d2d7c7dc5cf4acfa04ba9346470bd43'),
+    ))
+    doc = FixtureOwnership.wrap(data(
+        doc_type="FixtureOwnership",
+        owner_type='user',
+        data_item_id="1d2d7c7dc5cf4acfa04ba9346470bd43",
     ))
     if unwrap_doc:
         doc = doc.to_json()
