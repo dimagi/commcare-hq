@@ -90,17 +90,6 @@ class SuperuserManagement(UserAdministration):
             'users': augmented_superusers(),
         }
 
-    def send_email_notif(self, user_changes):
-        recipient_list = ["mlee@dimagi.com", "minhalee999@gmail.com"]
-        send_HTML_email(
-            "Superuser privilege / Staff status was changed",
-            recipient_list,
-            render_to_string('hqadmin/email/superuser_staff_email.html', context={
-                'user_changes': user_changes
-            }),
-        )
-        return
-
     def post(self, request, *args, **kwargs):
         can_toggle_is_staff = request.user.is_staff
         form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
@@ -132,21 +121,26 @@ class SuperuserManagement(UserAdministration):
                     #formatting for user_changes list
                     fields_changed['email'] = user.username
                     if 'is_superuser' not in fields_changed:
-                        fields_changed['is_superuser'] = user.is_superuser
-                        fields_changed['superuser_change'] = False
-                    else:
-                        fields_changed['superuser_change'] = True
+                        fields_changed['same_superuser'] = user.is_superuser
                     if 'is_staff' not in fields_changed:
-                        fields_changed['is_staff'] = user.is_staff
-                        fields_changed['staff_change'] = False
-                    else:
-                        fields_changed['staff_change'] = True
+                        fields_changed['same_staff'] = user.is_staff
                     user_changes.append(fields_changed)
             if user_changes:
-                self.send_email_notif(user_changes)
+                send_email_notif(user_changes)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+
+def send_email_notif(user_changes):
+    mail_admins(
+        "Superuser privilege / Staff status was changed",
+        "The following users had changes to their superuser and staff statuses (changes in RED):",
+        html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
+            'user_changes': user_changes
+        })
+    )
+    return
 
 
 @require_superuser
