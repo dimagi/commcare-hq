@@ -67,7 +67,6 @@ branches:
 #    - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
-    - jls/dd-in-rules-ui+cs/SC-1945-ability-to-add-filter-to-rules
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/stop-the-constant-rendering # Jenny July 18
     - ad/save-only-edited-fields-migration # Addison July 7
