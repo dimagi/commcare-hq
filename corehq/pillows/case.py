@@ -14,7 +14,6 @@ from corehq.messaging.pillow import CaseMessagingSyncProcessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.pillows.case_search import get_case_search_processor
-from corehq.pillows.reportcase import get_case_to_report_es_processor
 from corehq.pillows.utils import get_user_type
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow, KafkaPillowCheckpoint
@@ -133,8 +132,6 @@ def get_case_pillow(
     processors = [case_to_es_processor, CaseMessagingSyncProcessor()]
     if settings.RUN_CASE_SEARCH_PILLOW:
         processors.append(case_search_processor)
-    if not settings.ENTERPRISE_MODE:
-        processors.append(get_case_to_report_es_processor())
     if not skip_ucr:
         # this option is useful in tests to avoid extra UCR setup where unneccessary
         processors = [ucr_processor, ucr_dr_processor] + processors
