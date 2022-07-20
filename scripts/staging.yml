@@ -59,7 +59,6 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
-#    - mjr/odata_enterprise_report # Matt May 23
     - ap/celery-upgrade-patch # Amit June 1
     - bmb/sso/api/test-001  # Biyeun June 15
 #    - do/case-claim-title # Dominic June 23
@@ -74,4 +73,5 @@ branches:
     - ml/notify-user-changes # Minha July 19
     - es/report-cases-forms  # Ethan July 19
     - rp/fix-case-properties-modal-styling # Rynhard 20 July
+    - mjr/report-logging-verification # Matt July 20
 submodules: { }
