@@ -1,6 +1,9 @@
+from django.apps import AppConfig
+
 from celery import Celery
 from celery.signals import setup_logging
-from django.apps import AppConfig
+
+from corehq.apps.celery.periodic import periodic_task  # noqa F401; Imported to give an idea of where it is defined
 
 
 class Config(AppConfig):
