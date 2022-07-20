@@ -868,7 +868,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def test_case_search_validation_conditions(self, *args):
         self.module.search_config.properties = [
             CaseSearchProperty(name='name', label={'en': 'Name'}, validations=[
-                Assertion(test='2 + 2 = 5')
+                Assertion(test='2 + 2 = 5', text={"en": ""})
             ]),
             CaseSearchProperty(name='email', label={'en': 'Email'}, validations=[
                 Assertion(
@@ -887,11 +887,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <validation test="2 + 2 = 5">
-              <text>
-                <locale id="search_property.m0.name.validation.0.text"/>
-              </text>
-            </validation>
+            <validation test="2 + 2 = 5" />
           </prompt>
           <prompt key="email">
             <display>

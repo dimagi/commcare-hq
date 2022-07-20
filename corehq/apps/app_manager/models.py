@@ -911,6 +911,10 @@ class Assertion(DocumentSchema):
     test = StringProperty()
     text = DictProperty(StringProperty)
 
+    @property
+    def has_text(self):
+        return any(self.text.values())
+
 
 class CustomAssertion(Assertion):
     """Custom assertions to add to the assertions block
