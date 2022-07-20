@@ -3,6 +3,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -222,6 +223,37 @@ class TableauServer(models.Model):
         return '{server} {server_type} {site}'.format(server=self.server_name,
                                                       server_type=self.server_type,
                                                       site=self.target_site)
+
+
+class TableauAppConnection(models.Model):
+    server_name = models.CharField(max_length=128)
+    site_name = models.CharField(max_length=64, default='Default')
+    app_client_id = models.CharField(max_length=64)
+    secret_id = models.CharField(max_length=64)
+    # Encrypted field. Do not set directly (use `plaintext_secret_value` instead).
+    encrypted_secret_value = models.CharField(max_length=64)
+
+    def __str__(self):
+        return '{server} {site_name} {app_client_id}'.format(server=self.server_name,
+                                                      site_name=self.site_name,
+                                                      app_client_id=self.app_client_id)
+
+    @property
+    def plaintext_secret_value(self):
+        return b64_aes_decrypt(self.secret_value)
+
+    @plaintext_secret_value.setter
+    def plaintext_secret_value(self, plaintext):
+        self.secret_value = b64_aes_encrypt(plaintext)
+
+
+class TableauDomainDetails(models.Model):
+    domain = models.CharField(max_length=64, default='', unique=True)
+    app_connection = models.ForeignKey(TableauAppConnection, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return '{domain} {app_connection.app_client_id}'.format(domain=self.domain,
+            app_connection=self.app_connection)
 
 
 class TableauVisualization(models.Model):
