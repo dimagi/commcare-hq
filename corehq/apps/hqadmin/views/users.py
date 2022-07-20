@@ -135,7 +135,7 @@ class SuperuserManagement(UserAdministration):
 def send_email_notif(user_changes):
     mail_admins(
         "Superuser privilege / Staff status was changed",
-        "The following users had changes to their superuser and staff statuses (changes in RED):",
+        "",
         html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
             'user_changes': user_changes
         })
