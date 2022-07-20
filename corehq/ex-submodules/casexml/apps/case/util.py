@@ -12,7 +12,7 @@ from iso8601 import iso8601
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
-from casexml.apps.phone.xml import get_case_element
+from casexml.apps.phone.xml import get_case_xml
 from corehq.util.soft_assert import soft_assert
 from corehq.form_processor.models import XFormInstance
 
@@ -76,6 +76,7 @@ def create_real_cases_from_dummy_cases(cases):
     returns a tuple of two lists: forms posted and cases created
 
     """
+    from corehq.apps.hqcase.utils import submit_case_blocks
     posted_cases = []
     posted_forms = []
     case_blocks_by_domain = defaultdict(list)
@@ -84,10 +85,10 @@ def create_real_cases_from_dummy_cases(cases):
             case.modified_on = datetime.datetime.utcnow()
         if not case._id:
             case._id = uuid.uuid4().hex
-        case_blocks_by_domain[case.domain].append(get_case_element(
+        case_blocks_by_domain[case.domain].append(get_case_xml(
             case, (CASE_ACTION_CREATE, CASE_ACTION_UPDATE), version='2.0'))
     for domain, case_blocks in case_blocks_by_domain.items():
-        form, cases = post_case_blocks(case_blocks, domain=domain)
+        form, cases = submit_case_blocks(case_blocks, domain=domain)
         posted_forms.append(form)
         posted_cases.extend(cases)
     return posted_forms, posted_cases
