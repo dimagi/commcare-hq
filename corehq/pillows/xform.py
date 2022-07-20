@@ -18,7 +18,6 @@ from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
@@ -183,7 +182,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     # avoid circular dependency
-    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     from corehq.pillows.mappings.user_mapping import USER_INDEX
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
@@ -214,8 +212,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
-    checkpoint_id = "{}-{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -228,16 +226,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(form_meta_processor)
     if settings.RUN_DEDUPLICATION_PILLOW:
         processors.append(CaseDeduplicationProcessor())
-
-    if not settings.ENTERPRISE_MODE:
-        xform_to_report_es_processor = BulkElasticProcessor(
-            elasticsearch=get_es_new(),
-            index_info=REPORT_XFORM_INDEX_INFO,
-            doc_prep_fn=transform_xform_for_report_forms_index,
-            doc_filter_fn=report_xform_filter,
-            change_filter_fn=is_couch_change_for_sql_domain
-        )
-        processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
 
