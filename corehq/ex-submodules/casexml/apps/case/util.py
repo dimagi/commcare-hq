@@ -1,20 +1,20 @@
 from __future__ import generator_stop
-from collections import defaultdict, namedtuple
-import uuid
 
-from xml.etree import cElementTree as ElementTree
 import datetime
+import uuid
+from collections import defaultdict, namedtuple
 
-from django.conf import settings
 from django.utils.dateparse import parse_datetime
+
 from iso8601 import iso8601
 
-from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
+from casexml.apps.case.const import CASE_ACTION_CREATE, CASE_ACTION_UPDATE
 from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.phone.models import delete_synclogs
 from casexml.apps.phone.xml import get_case_xml
-from corehq.util.soft_assert import soft_assert
+
 from corehq.form_processor.models import XFormInstance
+from corehq.util.soft_assert import soft_assert
 
 
 def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
@@ -35,35 +35,6 @@ def validate_phone_datetime(datetime_string, none_ok=False, form_id=None):
         return iso8601.parse_date(datetime_string)
     except iso8601.ParseError:
         raise PhoneDateValueError('{!r}'.format(datetime_string))
-
-
-def post_case_blocks(case_blocks, form_extras=None, domain=None, user_id=None, device_id=None):
-    """
-    Post case blocks.
-
-    Extras is used to add runtime attributes to the form before
-    sending it off to the case (current use case is sync-token pairing)
-
-    See `device_id` parameter documentation at
-    `corehq.apps.hqcase.utils.submit_case_blocks`.
-    """
-    from corehq.apps.hqcase.utils import submit_case_blocks
-
-    if form_extras is None:
-        form_extras = {}
-
-    domain = domain or form_extras.pop('domain', None)
-    if getattr(settings, 'UNIT_TESTING', False):
-        from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-        domain = domain or TEST_DOMAIN_NAME
-
-    return submit_case_blocks(
-        [ElementTree.tostring(case_block, encoding='utf-8').decode('utf-8') for case_block in case_blocks],
-        domain=domain,
-        form_extras=form_extras,
-        user_id=user_id,
-        device_id=device_id,
-    )
 
 
 def create_real_cases_from_dummy_cases(cases):
