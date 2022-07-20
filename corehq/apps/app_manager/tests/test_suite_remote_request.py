@@ -887,11 +887,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
-            <validation test="2 + 2 = 5">
-              <text>
-                <locale id="search_property.m0.name.validation.0.text"/>
-              </text>
-            </validation>
+            <validation test="2 + 2 = 5" />
           </prompt>
           <prompt key="email">
             <display>
