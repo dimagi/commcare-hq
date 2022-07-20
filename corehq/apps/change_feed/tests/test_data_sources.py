@@ -150,7 +150,7 @@ def ledger_data():
                 date=datetime.utcnow(),
                 section_id='test',
                 entry=Entry(id='chocolate', quantity=4),
-            ).as_string()
+            ).as_text()
             for case_id in case_ids
         ]
         form, _ = factory.post_case_blocks(balance_blocks)
