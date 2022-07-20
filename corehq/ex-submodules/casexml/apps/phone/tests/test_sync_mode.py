@@ -671,7 +671,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.device.post_changes(create=True, case_id=parent_id)
         case_id = uuid.uuid4().hex
         case_xml = self.device.case_factory.get_case_block(
-            case_id, create=True, close=True)
+            case_id, create=True, close=True).as_xml()
         # hackily insert an <index> block after the close
         index_wrapper = ElementTree.Element('index')
         index_elem = ElementTree.Element('parent')

@@ -79,7 +79,7 @@ class CaseFactory(object):
     def get_case_block(self, case_id, **kwargs):
         for k, v in self.case_defaults.items():
             kwargs.setdefault(k, v)
-        return CaseBlock(case_id=case_id, **kwargs).as_xml()
+        return CaseBlock(case_id=case_id, **kwargs)
 
     def get_case_blocks(self, case_structures):
 
@@ -149,7 +149,7 @@ class CaseFactory(object):
     def create_or_update_cases(self, case_structures, form_extras=None, user_id=None, device_id=None):
         from corehq.form_processor.models import CommCareCase
         self.post_case_blocks(
-            self.get_case_blocks(case_structures),
+            [b.as_xml() for b in self.get_case_blocks(case_structures)],
             form_extras,
             user_id=user_id,
             device_id=device_id,
