@@ -66,7 +66,6 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
 #    - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
-    - rp/add_check_for_duplicates_multimedia_export # Rynhard June 27
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - jls/stop-the-constant-rendering # Jenny July 18
     - ad/save-only-edited-fields-migration # Addison July 7
@@ -77,4 +76,5 @@ branches:
     - dependabot/pip/requirements/boto3-1.24.28+ap/celery-upgrade-patch # Amit July 13
     - ml/notify-user-changes # Minha July 19
     - es/report-cases-forms  # Ethan July 19
+    - rp/fix-case-properties-modal-styling # Rynhard 20 July
 submodules: { }
