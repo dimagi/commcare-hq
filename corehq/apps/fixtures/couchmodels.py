@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 
@@ -233,7 +235,7 @@ class FieldList(DocumentSchema):
         return hash(tuple(self.field_list))
 
 
-class FixtureDataItem(Document):
+class FixtureDataItem(SyncCouchToSQLMixin, Document):
     """
     Example old Item:
         domain = "hq-domain"
@@ -303,6 +305,35 @@ class FixtureDataItem(Document):
             obj['item_attributes'] = {}
 
         return super(FixtureDataItem, cls).wrap(obj)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "item_attributes"]
+
+    def _migration_sync_to_sql(self, sql_object):
+        if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
+            sql_object.table_id = UUID(self.data_type_id)
+        fields = self._sql_fields
+        if sql_object.fields != fields:
+            sql_object.fields = fields
+        sql_object.sort_key = self.sort_key or 0
+        super()._migration_sync_to_sql(sql_object)
+
+    @property
+    def _sql_fields(self):
+        from .models import Field
+        return {
+            name: [
+                Field(val.field_value, val.properties)
+                for val in values.field_list
+            ]
+            for name, values in self.fields.items()
+        }
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from .models import LookupTableRow
+        return LookupTableRow
 
     @property
     def fields_without_attributes(self):

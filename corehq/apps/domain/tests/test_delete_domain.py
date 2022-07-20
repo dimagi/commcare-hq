@@ -65,7 +65,7 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
-from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
@@ -1007,13 +1007,20 @@ class TestDeleteDomain(TestCase):
     def test_lookup_tables(self):
         def count_lookup_tables(domain):
             return LookupTable.objects.filter(domain=domain).count()
+
+        def count_lookup_table_rows(domain):
+            return LookupTableRow.objects.filter(domain=domain).count()
+
         for domain_name in [self.domain.name, self.domain2.name]:
-            LookupTable.objects.create(domain=domain_name, tag="domain-deletion")
+            table = LookupTable.objects.create(domain=domain_name, tag="domain-deletion")
+            LookupTableRow.objects.create(domain=domain_name, table_id=table.id, sort_key=0)
 
         self.domain.delete()
 
         self.assertEqual(count_lookup_tables(self.domain.name), 0)
+        self.assertEqual(count_lookup_table_rows(self.domain.name), 0)
         self.assertEqual(count_lookup_tables(self.domain2.name), 1)
+        self.assertEqual(count_lookup_table_rows(self.domain2.name), 1)
 
 
 class TestHardDeleteSQLFormsAndCases(TestCase):

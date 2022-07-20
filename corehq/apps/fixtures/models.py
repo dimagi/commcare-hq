@@ -7,7 +7,7 @@ from django.db import models
 from dimagi.utils.couch.migration import SyncSQLToCouchMixin
 
 from corehq.sql_db.fields import CharIdField
-from corehq.util.jsonattrs import AttrsList
+from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
 from .couchmodels import (  # noqa: F401
     _id_from_doc,
@@ -101,6 +101,97 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
     @classmethod
     def _migration_get_couch_model_class(cls):
         return FixtureDataType
+
+    def _migration_get_or_create_couch_object(self):
+        cls = self._migration_get_couch_model_class()
+        obj = self._migration_get_couch_object()
+        if obj is None:
+            obj = cls(_id=self._migration_couch_id)
+            obj.save(sync_to_sql=False)
+        return obj
+
+
+@define
+class Field:
+    value = field()
+    properties = field(factory=dict)
+
+
+class LookupTableRow(SyncSQLToCouchMixin, models.Model):
+    """Lookup Table Row data model
+
+    `fields` structure:
+    ```py
+    {
+        "country": [
+            {"value": "India", "properties": {}},
+        ],
+        "state_name": [
+            {"value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
+            {"value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
+        ],
+        "state_id": [
+            {"value": "DEL", "properties": {}}
+        ],
+    }
+    ```
+
+    `item_attributes` structure:
+    ```py
+    {
+        "attr1": "value1",
+        "attr2": "value2",
+    }
+    ```
+    """
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    domain = CharIdField(max_length=126, db_index=True, default=None)
+    table = models.ForeignKey(LookupTable, on_delete=models.CASCADE)
+    fields = AttrsDict(list_of(Field), default=dict)
+    item_attributes = models.JSONField(default=dict)
+    sort_key = models.IntegerField()
+
+    class Meta:
+        app_label = 'fixtures'
+        indexes = [
+            models.Index(fields=["domain", "table_id", "sort_key", "id"]),
+        ]
+
+    _migration_couch_id_name = "id"
+
+    @property
+    def _migration_couch_id(self):
+        return self.id.hex
+
+    @_migration_couch_id.setter
+    def _migration_couch_id(self, value):
+        self.id = UUID(value)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "item_attributes",
+            "sort_key",
+        ]
+
+    def _migration_sync_to_couch(self, couch_object):
+        if couch_object.data_type_id is None or UUID(couch_object.data_type_id) != self.table_id:
+            couch_object.data_type_id = self.table_id.hex
+        if self.fields != couch_object._sql_fields:
+            couch_object.fields = {
+                name: FieldList(field_list=[
+                    FixtureItemField(
+                        field_value=val.value,
+                        properties=val.properties,
+                    ) for val in values
+                ]) for name, values in self.fields.items()
+            }
+        super()._migration_sync_to_couch(couch_object)
+
+    @classmethod
+    def _migration_get_couch_model_class(cls):
+        return FixtureDataItem
 
     def _migration_get_or_create_couch_object(self):
         cls = self._migration_get_couch_model_class()

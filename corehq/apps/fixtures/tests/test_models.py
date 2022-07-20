@@ -5,10 +5,12 @@ from corehq.util.test_utils import generate_cases
 from corehq.util.tests.test_jsonattrs import set_json_value
 
 from ..models import (
+    Field,
     FieldList,
     FixtureItemField,
     FixtureTypeField,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 
@@ -52,6 +54,49 @@ class TestLookupTable(TestCase):
         if value:
             self.assertTrue(
                 all(isinstance(f, TypeField) for f in obj.fields),
+                obj.fields
+            )
+        else:
+            self.assertEqual(obj.fields, value)
+
+
+class TestLookupTableRow(TestCase):
+
+    def test_fields(self):
+        table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
+        row = LookupTableRow(domain="test", table=table, fields={
+            "vera": [Field("What has become of you?")],
+        }, sort_key=0)
+        self.assertEqual(row.fields["vera"][0].value, "What has become of you?")
+        self.assertEqual(row.fields["vera"][0].properties, {})
+        table.save(sync_to_couch=False)
+        row.save(sync_to_couch=False)
+        new = LookupTableRow.objects.get(id=row.id)
+        self.assertEqual(new.fields, row.fields)
+        self.assertIsNot(new.fields, row.fields)
+
+    @generate_cases([
+        # Detect incompatibilities between the JSON data stored in the
+        # database and TestLookupTableRow.fields and/or Field type. One or
+        # more of these tests will fail if the field definition changes in
+        # an incompatible way.
+        #
+        # Do not change any of these data formats as long as rows with the
+        # same format may exist in a database somewhere.
+        ({},),
+        ({"vera": []},),
+        ({"vera": [{"value": "What has become of you?", "properties": {}}]},),
+        ({"vera": [{
+            "value": "What has become of you?",
+            "properties": {"album": "The Wall"}
+        }]},),
+    ])
+    def test_persistent_formats(self, value):  # noqa: F811
+        obj = LookupTableRow()
+        set_json_value(obj, "fields", value)
+        if value.get("vera"):
+            self.assertTrue(
+                all(isinstance(f, Field) for v in obj.fields.values() for f in v),
                 obj.fields
             )
         else:
