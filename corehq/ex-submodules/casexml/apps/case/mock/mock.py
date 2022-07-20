@@ -71,7 +71,7 @@ class CaseFactory(object):
     """
 
     def __init__(self, domain=None, case_defaults=None, form_extras=None):
-        self.domain = domain
+        self.domain = domain or 'test-domain'
         self.case_defaults = case_defaults if case_defaults is not None else {}
         self.form_extras = form_extras if form_extras is not None else {}
 
