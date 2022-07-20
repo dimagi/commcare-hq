@@ -680,7 +680,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         index_elem.text = parent_id
         index_wrapper.append(index_elem)
         case_xml.append(index_wrapper)
-        self.device.case_blocks.append(case_xml)
+
+        class FakeBlock:
+            def as_text(self):
+                return ElementTree.tostring(case_xml, encoding='unicode')
+
+        self.device.case_blocks.append(FakeBlock())
         self.device.post_changes()
         sync_log = self.device.last_sync.get_log()
         # before this test was written, the case stayed on the sync log even though it was closed
