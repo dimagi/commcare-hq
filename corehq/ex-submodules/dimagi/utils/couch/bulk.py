@@ -1,4 +1,3 @@
-import uuid
 import json
 import logging
 from collections import defaultdict
@@ -60,7 +59,8 @@ class CouchTransaction(object):
     def __init__(self):
         self.depth = 0
         self.docs_to_delete = defaultdict(set)
-        self.docs_to_save = defaultdict(dict)
+        self.docs_to_save = defaultdict(set)
+        self.sql_save_actions = {}
         self.post_commit_actions = []
 
     def add_post_commit_action(self, action):
@@ -75,16 +75,19 @@ class CouchTransaction(object):
 
     def save(self, doc):
         cls = doc.__class__
-        if not doc.get_id:
-            doc._id = uuid.uuid4().hex
-        self.docs_to_save[cls][doc.get_id] = doc
+        self.docs_to_save[cls].add(doc)
 
-    def preview_save(self, cls=None):
-        if cls:
-            return list(self.docs_to_save[cls].values())
-        else:
-            return [doc for _cls in self.docs_to_save
-                            for doc in self.preview_save(cls=_cls)]
+    def set_sql_save_action(self, doc_class, action):
+        """Set action callback to perform instead of bulk SQL insert
+
+        This must be used when updating existing documents since it is
+        not possible for the transaction to efficiently apply updates to
+        large numbers of existing SQL rows.
+        """
+        if doc_class in self.sql_save_actions:
+            raise TypeError(f"Save action already set for {doc_class.__name__}")
+        self.docs_to_save.setdefault(doc_class, set())
+        self.sql_save_actions[doc_class] = action
 
     def commit(self):
         def start_sql_transaction():
@@ -111,11 +114,17 @@ class CouchTransaction(object):
             for chunk in chunked(docs, 1000):
                 delete(chunk)
 
-        for cls, doc_map in self.docs_to_save.items():
-            if issubclass(cls, SyncCouchToSQLMixin):
+        for cls, docs in self.docs_to_save.items():
+            if cls in self.sql_save_actions:
+                start_sql_transaction()
+                self.sql_save_actions[cls]()
+                save = cls.bulk_save
+            elif issubclass(cls, SyncCouchToSQLMixin) and cls not in self.sql_save_actions:
                 def save(chunk):
                     if any(doc._rev is not None for doc in chunk):
-                        raise NotImplementedError([d for d in chunk if d._rev])
+                        raise NotImplementedError("Cannot update "
+                            f"{cls.__name__}. Use CouchTransaction."
+                            "set_sql_save_action() to update objects in bulk.")
                     cls.bulk_save(chunk)
                     start_sql_transaction()
                     sql_class = cls._migration_get_sql_model_class()
@@ -129,8 +138,8 @@ class CouchTransaction(object):
                     sql_class.objects.bulk_create(new_sql_docs)
             else:
                 save = cls.bulk_save
-            for docs in chunked(doc_map.values(), 1000, list):
-                save(docs)
+            for chunk in chunked(docs, 1000, list):
+                save(chunk)
 
         for action in self.post_commit_actions:
             action()
