@@ -106,6 +106,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
 
     def test_modern_prefix(self):
         domain = get_domain_url_slug('test')
+        self.assertEqual(domain, 'test')
         table_name = get_table_name(domain, '1234', prefix=UCR_TABLE_PREFIX)
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -114,6 +115,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
 
     def test_legacy_prefix(self):
         domain = get_domain_url_slug('test')
+        self.assertEqual(domain, 'test')
         table_name = get_table_name(domain, '1234', prefix=LEGACY_UCR_TABLE_PREFIX)
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -122,6 +124,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
 
     def test_domain_name_with_underscore(self):
         domain = get_domain_url_slug('test_domain')
+        self.assertEqual(domain, 'test-domain')
         table_name = get_table_name(domain, '1234')
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -136,3 +139,12 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
         result = get_domain_for_ucr_table_name(table_name)
 
         self.assertEqual(result, 'test-u4500')
+
+    def test_domain_name_with_illegal_name(self):
+        # should not be possible, but ensures unicode roundtrip works
+        domain = 'test\u4500'
+        table_name = get_table_name(domain, '1234')
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, domain)
