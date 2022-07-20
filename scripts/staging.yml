@@ -71,7 +71,6 @@ branches:
     - rc/search-input-validation # Robert July 11
     - es/validation-conditions  # Ethan July 11
     - ml/notify-user-changes # Minha July 19
-    - es/report-cases-forms  # Ethan July 19
     - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging-verification # Matt July 20
 submodules: { }
