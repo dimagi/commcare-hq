@@ -5,12 +5,12 @@ from django.test import TestCase
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.util import post_case_blocks
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_user, create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation, Grant
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.models import ConnectionSettings
@@ -66,13 +66,13 @@ class DataRegistryCaseUpdateRepeaterTest(TestCase, TestXmlMixin, DomainSubscript
 
         cls.target_case_id_1 = uuid.uuid4().hex
         cls.target_case_id_2 = uuid.uuid4().hex
-        post_case_blocks(
+        submit_case_blocks(
             [
                 CaseBlock(
                     case_id=case_id,
                     create=True,
                     case_type="patient",
-                ).as_xml()
+                ).as_text()
                 for case_id in [cls.target_case_id_1, cls.target_case_id_2]
             ],
             domain=cls.target_domain
