@@ -584,7 +584,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
-CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+# Default serializer should be changed back to 'json' after
+# https://github.com/celery/celery/issues/6759 is fixed
+CELERY_TASK_SERIALIZER = 'pickle'  # this value is ignored in commcare hq code, which will continue to default to json. it is used only for the celery inspect module". See corehq.apps.celery.shared_task
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # in seconds
