@@ -1408,7 +1408,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],

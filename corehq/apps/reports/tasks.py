@@ -174,12 +174,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         report.domain = report.request.couch_user.get_domains()[0]
 
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
-    logger.error(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
+    logger.info(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
-        logger.error(f'Sent {report.name} with hash {hash_id} to {recipient}')
+        logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
