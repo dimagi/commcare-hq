@@ -1,3 +1,31 @@
+"""
+JSON and JSONB functions and operators for PostgreSQL
+
+Reference: https://www.postgresql.org/docs/10/functions-json.html
+
+In particular, `JsonGet`, `JsonSet`, and `JsonDelete` can be nested to perform
+multiple transformation operations on a JSONB value.
+
+For example, the following expression renames the top-level "values" key to
+"items" and removes the "score" key/value pair from a table column named
+"json_data":
+
+```py
+transformed_data = JsonDelete(
+    JsonSet(
+        JsonDelete("json_data", "values"),
+        ["items"],
+        JsonGet("json_data", "values"),
+    ),
+    "score",
+)
+SomeModel.objects.filter(...).update(json_data=transformed_data)
+
+# Example "json_data" before/after above transformation
+# Before: {"values": [1, 2, 3], "other": "something", "score": 3}
+# After:  {"items": [1, 2, 3], "other": "something"}
+```
+"""
 import json
 
 from django.db.models.expressions import Expression, Func, RawSQL, Value
@@ -6,6 +34,8 @@ from django.db.models import JSONField
 
 class JsonDelete(Func):
     """Delete item(s) from JSONB value
+
+    A Django expression for the `-` operator as it pertains to JSONB values.
 
     :param expression: JSONB field name or value expression.
     :param *items: Names of items to delete.
@@ -24,6 +54,9 @@ class JsonDelete(Func):
 class JsonGet(Func):
     """Get item from JSON or JSONB value
 
+    A Django expression for the `->` operator as it pertains to JSON and
+    JSONB values.
+
     :param expression: JSON/JSONB field name or value expression.
     :param field: Name of item to get.
     """
@@ -39,6 +72,8 @@ class JsonGet(Func):
 
 class JsonSet(Func):
     """Replace value at path in JSONB value
+
+    A Django expression for the `jsonb_set()` function.
 
     :param expression: JSONB field name or value expression.
     :param path: Sequence of keys or indexes representing the path of
