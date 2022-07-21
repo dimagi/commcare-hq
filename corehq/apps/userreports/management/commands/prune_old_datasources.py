@@ -2,6 +2,8 @@ from collections import defaultdict
 
 from django.core.management.base import BaseCommand
 
+from sqlalchemy.exc import ProgrammingError
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -61,8 +63,10 @@ def prune_tables(tables_to_remove_by_engine, drop_empty_tables, drop_deleted_tab
             with engine.begin() as connection:
                 try:
                     result = connection.execute(f'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"')
-                except Exception:
+                except ProgrammingError:
                     print(f"\t{tablename}: no inserted_at column, probably not UCR")
+                except Exception as e:
+                    print(f"\tAn error was encountered when attempting to read from {tablename}: {e}")
                 else:
                     row_count, idle_since = result.fetchone()
                     if should_delete or (drop_empty_tables and row_count == 0):
