@@ -37,7 +37,7 @@ class Command(PopulateSQLCommand):
         diffs = [cls.diff_attr(name, couch, sql) for name in fields]
         diffs.append(cls.diff_value(
             "owner_type",
-            OWNER_TYPE_MAP[couch["owner_type"]],
+            OwnerType.from_string(couch["owner_type"]),
             sql.owner_type,
         ))
         diffs.append(cls.diff_value(
@@ -53,14 +53,7 @@ class Command(PopulateSQLCommand):
             defaults={
                 "domain": doc["domain"],
                 "row_id": UUID(doc["data_item_id"]),
-                "owner_type": OWNER_TYPE_MAP[doc["owner_type"]],
+                "owner_type": OwnerType.from_string(doc["owner_type"]),
                 "owner_id": doc.get("owner_id"),
             })
         return model, created
-
-
-OWNER_TYPE_MAP = {
-    "user": OwnerType.User,
-    "group": OwnerType.Group,
-    "location": OwnerType.Location,
-}
