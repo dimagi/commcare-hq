@@ -80,10 +80,11 @@ class FormDisplay():
 
 class _FormType(object):
 
-    def __init__(self, domain, xmlns, app_id):
+    def __init__(self, domain, xmlns, app_id, form_name):
         self.domain = domain
         self.xmlns = xmlns
         self.app_id = app_id
+        self.form_name = form_name
 
     def get_label(self, lang=None, separator=None):
         if separator is None:
@@ -91,8 +92,8 @@ class _FormType(object):
 
         return (
             self.get_label_from_app(lang, separator)
-            or self.get_name_from_xml()
-            or self.xmlns
+            or self.get_name_from_xml(separator)
+            or self.append_form_name(self.xmlns, separator)
         )
 
     def get_label_from_app(self, lang, separator):
@@ -128,10 +129,16 @@ class _FormType(object):
             title += " [Multiple Forms]"
         return title
 
-    def get_name_from_xml(self):
+    def get_name_from_xml(self, separator):
         if self.xmlns in SYSTEM_FORM_XMLNS_MAP:
-            return SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+            readable_xmlns = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+            return self.append_form_name(readable_xmlns, separator)
+
+    def append_form_name(self, name, separator):
+        if self.form_name:
+            name = separator.join([name, self.form_name])
+        return name
 
 
-def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None):
-    return _FormType(domain, xmlns, app_id).get_label(lang, separator)
+def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None, form_name=None):
+    return _FormType(domain, xmlns, app_id, form_name).get_label(lang, separator)
