@@ -88,39 +88,49 @@ class _FormType(object):
     def get_label(self, lang=None, separator=None):
         if separator is None:
             separator = " > "
+
+        return (
+            self.get_label_from_app(lang, separator)
+            or self.get_name_from_xml()
+            or self.xmlns
+        )
+
+    def get_label_from_app(self, lang, separator):
         form = get_form_analytics_metadata(self.domain, self.app_id, self.xmlns)
-        if form and form.get('app'):
-            langs = form['app']['langs']
-            app_name = form['app']['name']
+        app = form and form.get('app')
+        if not app:
+            return
 
-            if form.get('is_user_registration'):
-                form_name = "User Registration"
-                title = separator.join([app_name, form_name])
-            else:
-                def _menu_name(menu, lang):
-                    if lang and menu.get(lang):
-                        return menu.get(lang)
-                    else:
-                        for lang in langs + list(menu):
-                            menu_name = menu.get(lang)
-                            if menu_name is not None:
-                                return menu_name
-                        return "?"
+        langs = form['app']['langs']
+        app_name = form['app']['name']
 
-                module_name = _menu_name(form["module"]["name"], lang)
-                form_name = _menu_name(form["form"]["name"], lang)
-                title = separator.join([app_name, module_name, form_name])
-
-            if form.get('app_deleted'):
-                title += ' [Deleted]'
-            if form.get('duplicate'):
-                title += " [Multiple Forms]"
-            name = title
-        elif self.xmlns in SYSTEM_FORM_XMLNS_MAP:
-            name = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+        if form.get('is_user_registration'):
+            form_name = "User Registration"
+            title = separator.join([app_name, form_name])
         else:
-            name = self.xmlns
-        return name
+            def _menu_name(menu, lang):
+                if lang and menu.get(lang):
+                    return menu.get(lang)
+                else:
+                    for lang in langs + list(menu):
+                        menu_name = menu.get(lang)
+                        if menu_name is not None:
+                            return menu_name
+                    return "?"
+
+            module_name = _menu_name(form["module"]["name"], lang)
+            form_name = _menu_name(form["form"]["name"], lang)
+            title = separator.join([app_name, module_name, form_name])
+
+        if form.get('app_deleted'):
+            title += ' [Deleted]'
+        if form.get('duplicate'):
+            title += " [Multiple Forms]"
+        return title
+
+    def get_name_from_xml(self):
+        if self.xmlns in SYSTEM_FORM_XMLNS_MAP:
+            return SYSTEM_FORM_XMLNS_MAP[self.xmlns]
 
 
 def xmlns_to_name(domain, xmlns, app_id, lang=None, separator=None):
