@@ -26,7 +26,7 @@ class StringWithAttributes(str):
         return StringWithAttributes(string)
 
 
-class FormDisplay():
+class FormDisplay:
 
     def __init__(self, form_doc, report, lang=None):
         self.form = form_doc
@@ -74,7 +74,8 @@ class FormDisplay():
             self.report.domain,
             self.form.get("xmlns"),
             app_id=self.form.get("app_id"),
-            lang=self.lang
+            lang=self.lang,
+            form_name=self.form.get("@name"),
         )
 
 
