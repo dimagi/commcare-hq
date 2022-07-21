@@ -50,6 +50,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
     make it easier to trace the source. All new code should use this
     argument. A human recognizable value is recommended outside of test
     code. Example: "auto-close-rule-<GUID>"
+    :param form_extras: Dict of additional kwargs to pass through to ``SubmissionPost``
     :param max_wait: Maximum time (in seconds) to allow the process to be delayed if
     the project is over its submission rate limit.
     See the docstring for submit_form_locally for meaning of values.
@@ -63,7 +64,7 @@ def submit_case_blocks(case_blocks, domain, username="system", user_id=None,
         case_blocks = ''.join(case_blocks)
     form_id = form_id or uuid.uuid4().hex
     form_xml = render_to_string('hqcase/xml/case_block.xml', {
-        'xmlns': xmlns or form_extras.pop('xmlns', SYSTEM_FORM_XMLNS),
+        'xmlns': xmlns or SYSTEM_FORM_XMLNS,
         'case_block': case_blocks,
         'time': now,
         'uid': form_id,

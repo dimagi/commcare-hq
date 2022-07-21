@@ -534,7 +534,7 @@ def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, device_id=None,
         ],
         domain=domain,
         device_id=device_id,
-        form_extras={'xmlns': xmlns}
+        xmlns=xmlns,
     )
 
 
