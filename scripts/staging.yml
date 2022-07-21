@@ -75,4 +75,5 @@ branches:
     - mjr/report-logging-verification # Matt July 20
     - jls/stop-the-constant-rendering # Jenny July something
     - es/select-vals  # Ethan July 21
+    - dm/sql-lookup-tables-pr1  # Daniel July 21
 submodules: { }
