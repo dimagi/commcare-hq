@@ -94,8 +94,10 @@ class CaseFactory(object):
                     for block in get_blocks(index.related_structure):
                         yield block
 
-        return [block for structure in case_structures
-                      for block in get_blocks(structure)]
+        return [
+            block for structure in case_structures
+            for block in get_blocks(structure)
+        ]
 
     def post_case_blocks(self, caseblocks, submission_extras=None, user_id=None, device_id=None, xmlns=None):
         from corehq.apps.hqcase.utils import submit_case_blocks
@@ -144,12 +146,20 @@ class CaseFactory(object):
         """
         return self.create_or_update_case(CaseStructure(case_id=case_id, attrs={'close': True}))[0]
 
-    def create_or_update_case(self, case_structure, submission_extras=None, user_id=None, device_id=None, xmlns=None):
+    def create_or_update_case(
+        self, case_structure, submission_extras=None, user_id=None, device_id=None, xmlns=None
+    ):
         return self.create_or_update_cases(
-            [case_structure], submission_extras=submission_extras, user_id=user_id, device_id=device_id, xmlns=xmlns
+            [case_structure],
+            submission_extras=submission_extras,
+            user_id=user_id,
+            device_id=device_id,
+            xmlns=xmlns
         )
 
-    def create_or_update_cases(self, case_structures, submission_extras=None, user_id=None, device_id=None, xmlns=None):
+    def create_or_update_cases(
+        self, case_structures, submission_extras=None, user_id=None, device_id=None, xmlns=None
+    ):
         from corehq.form_processor.models import CommCareCase
         self.post_case_blocks(
             [b.as_text() for b in self.get_case_blocks(case_structures)],
