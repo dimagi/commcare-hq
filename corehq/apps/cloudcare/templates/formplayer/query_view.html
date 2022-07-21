@@ -82,13 +82,13 @@
            value="<%- value %>"
            data-receive="<%- receive %>"
            <% if (required) { %> aria-required="true"<% } %>>
-    <% } %>
-
-    <% if (allow_blank_value) { %>
-    <label class="control-label">
-        <input type="checkbox" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
-        {% trans "Include results where '<%- text %>' is blank" %}
-    </label>
-    <% } %>
+           <% } %>
+           <% if (errorMessage) { %> <span  class="help-block has-error"> "<%- errorMessage || "" %>"  <% } %>
+           <% if (allow_blank_value) { %>
+            <label class="control-label">
+              <input type="checkbox" class="search-for-blank" <% if (searchForBlank) { %>checked<% } %>>
+              {% trans "Include results where '<%- text %>' is blank" %}
+            </label>
+            <% } %>
   </td>
 </script>
