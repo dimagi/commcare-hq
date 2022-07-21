@@ -12,7 +12,7 @@ import os
 import traceback
 import uuid
 from collections import namedtuple
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, closing, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
@@ -887,12 +887,11 @@ def new_db_connection(alias=DEFAULT_DB_ALIAS):
     connections.prepare_test_settings(alias)
     db = connections.databases[alias]
     backend = load_backend(db['ENGINE'])
-    cn = backend.DatabaseWrapper(db, alias)
-    try:
-        with mock.patch("django.db.connections._connections.default", cn):
-            yield cn
-    finally:
-        cn.close()
+    with (
+        closing(backend.DatabaseWrapper(db, alias)) as cn,
+        mock.patch("django.db.connections._connections.default", cn)
+    ):
+        yield cn
 
 
 def require_db_context(fn):
