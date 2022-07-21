@@ -7,9 +7,10 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.utils import (
+    encrypt_account_confirmation_info,
+    get_domain_url_slug,
     get_serializable_wire_invoice_general_credit,
     guess_domain_language,
-    encrypt_account_confirmation_info,
     guess_domain_language_for_sms,
 )
 from corehq.apps.users.models import CommCareUser
@@ -147,3 +148,25 @@ class TestUCRExpressionUtils(TestCase):
         exprn = ['base_item_expression']
         AllowedUCRExpressionSettings.objects.create(domain='test_domain', allowed_ucr_expressions=exprn)
         self.assertEqual(AllowedUCRExpressionSettings.get_allowed_ucr_expressions('test_domain'), exprn)
+
+
+class TestGetDomainURLSlug(SimpleTestCase):
+
+    def test_defaults_to_project(self):
+        self.assertEqual('project', get_domain_url_slug(''))
+
+    def test_one_word(self):
+        self.assertEqual('simpletest', get_domain_url_slug('simpletest'))
+
+    def test_name_with_underscore(self):
+        self.assertEqual('name-with-underscore', get_domain_url_slug('name_with_underscore'))
+
+    def test_unicode_treated_literally(self):
+        self.assertEqual('test-u2500', get_domain_url_slug('test\\u2500'))
+
+    def test_max_length_is_enforced(self):
+        # cuts off entire word if exceeds max_length
+        self.assertEqual('test', get_domain_url_slug('test-length', max_length=8))
+
+    def test_stop_words_excluded(self):
+        self.assertEqual('name-stop-words', get_domain_url_slug('long name with stop words in it', max_length=30))

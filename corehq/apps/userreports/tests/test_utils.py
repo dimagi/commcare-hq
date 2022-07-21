@@ -4,7 +4,6 @@ from testil import eq
 
 from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
 
-from corehq.apps.domain.utils import get_domain_url_slug
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.util import (
     LEGACY_UCR_TABLE_PREFIX,
@@ -105,8 +104,7 @@ def test_remove_deleted_doc_type_suffix():
 class TestGetDomainForUCRTableName(SimpleTestCase):
 
     def test_modern_prefix(self):
-        domain = get_domain_url_slug('test')
-        self.assertEqual(domain, 'test')
+        domain = 'test'
         table_name = get_table_name(domain, '1234', prefix=UCR_TABLE_PREFIX)
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -114,8 +112,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
         self.assertEqual(result, 'test')
 
     def test_legacy_prefix(self):
-        domain = get_domain_url_slug('test')
-        self.assertEqual(domain, 'test')
+        domain = 'test'
         table_name = get_table_name(domain, '1234', prefix=LEGACY_UCR_TABLE_PREFIX)
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -123,8 +120,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
         self.assertEqual(result, 'test')
 
     def test_domain_name_with_underscore(self):
-        domain = get_domain_url_slug('test_domain')
-        self.assertEqual(domain, 'test-domain')
+        domain = 'test-domain'
         table_name = get_table_name(domain, '1234')
 
         result = get_domain_for_ucr_table_name(table_name)
@@ -132,8 +128,7 @@ class TestGetDomainForUCRTableName(SimpleTestCase):
         self.assertEqual(result, 'test-domain')
 
     def test_domain_name_with_unicode(self):
-        # domain names are typically unicode escaped prior to this call
-        domain = get_domain_url_slug('test\\u4500')
+        domain = 'test-u4500'
         table_name = get_table_name(domain, '1234')
 
         result = get_domain_for_ucr_table_name(table_name)
