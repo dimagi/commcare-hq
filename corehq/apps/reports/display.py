@@ -131,7 +131,7 @@ class _FormType(object):
 
     def get_name_from_xml(self, separator):
         if self.xmlns in SYSTEM_FORM_XMLNS_MAP:
-            readable_xmlns = SYSTEM_FORM_XMLNS_MAP[self.xmlns]
+            readable_xmlns = str(SYSTEM_FORM_XMLNS_MAP[self.xmlns])
             return self.append_form_name(readable_xmlns, separator)
 
     def append_form_name(self, name, separator):
