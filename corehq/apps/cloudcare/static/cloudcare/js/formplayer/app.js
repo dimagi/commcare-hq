@@ -180,9 +180,9 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         data.onerror = function (resp) {
             var message = resp.human_readable_message || resp.exception || "Unexpected Error";
             if (resp.is_html) {
-                showHTMLError(message, $("#cloudcare-notifications"));
+                showHTMLError(message, $("#cloudcare-notifications"), resp.reportToHq);
             } else {
-                showError(message, $("#cloudcare-notifications"));
+                showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
