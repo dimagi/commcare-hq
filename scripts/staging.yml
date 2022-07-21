@@ -74,4 +74,5 @@ branches:
     - ap/celery-upgrade-patch # Amit June 1
     - mjr/report-logging-verification # Matt July 20
     - jls/stop-the-constant-rendering # Jenny July something
+    - es/select-vals  # Ethan July 21
 submodules: { }
