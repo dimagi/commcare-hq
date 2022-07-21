@@ -222,7 +222,7 @@ class MockDevice(object):
         if all(isinstance(s, CaseStructure) for s in cases):
             self.case_blocks.extend(factory.get_case_blocks(cases))
         else:
-            self.case_blocks.extend(b.as_xml() for b in cases)
+            self.case_blocks.extend(cases)
 
     def post_changes(self, *args, **kw):
         """Post enqueued changes from device to HQ
@@ -240,7 +240,7 @@ class MockDevice(object):
             # post device case changes
             token = self.last_sync.restore_id if self.last_sync else None
             form = self.case_factory.post_case_blocks(
-                self.case_blocks,
+                [b.as_text() for b in self.case_blocks],
                 device_id=self.id,
                 form_extras={"last_sync_token": token},
                 user_id=self.user_id,

@@ -9,7 +9,6 @@ from casexml.apps.case import const
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone import xml
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.xml import V2, V2_NAMESPACE
 from casexml.apps.case.xml.parser import case_update_from_block
 
@@ -109,12 +108,12 @@ class Version2CaseParsingTest(TestCase):
 
         user_id = "bar-user-id"
         for prereq in ["some_referenced_id", "some_other_referenced_id"]:
-            post_case_blocks([
+            submit_case_blocks([
                 CaseBlock(
                     create=True, case_id=prereq,
                     user_id=user_id
-                ).as_xml()
-            ])
+                ).as_text()
+            ], 'test-domain')
 
         file_path = os.path.join(os.path.dirname(__file__), "data", "v2", "index_update.xml")
         with open(file_path, "rb") as f:

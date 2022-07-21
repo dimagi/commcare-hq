@@ -7,10 +7,10 @@ from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 
 from corehq import toggles
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
@@ -38,9 +38,9 @@ class ConfigurableReportTestMixin(object):
             case_id=id,
             case_type=cls.case_type,
             update=properties,
-        ).as_xml()
+        ).as_text()
         with drop_connected_signals(sql_case_post_save):
-            post_case_blocks([case_block], {'domain': cls.domain})
+            submit_case_blocks(case_block, domain=cls.domain)
         return CommCareCase.objects.get_case(id, cls.domain)
 
     @classmethod
