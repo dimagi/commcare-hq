@@ -296,7 +296,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
             # added by django choicefield in models
             'get_request_method_display',
-            'to_json',
+            'to_json', '_make_serializable_dict',
             '_optionvalue_fields'
         }
 
