@@ -173,7 +173,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
             this.hasError = false;
-            this.errorMessage = "";
+            this.errorMessage = null;
 
             var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
@@ -222,8 +222,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 if (hasError) {
                     this.errorMessage = this.model.get("error");
                 } else {
-                    this.model.set("error", "");
-                    this.errorMessage = "";
+                    this.model.set("error", null);
+                    this.errorMessage = null;
                 }
                 this.hasError = hasError;
                 this.render();
@@ -234,8 +234,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         clear: function () {
             var self = this;
             self.model.set('value', '');
-            self.model.set('error', '');
-            self.errorMessage = "";
+            self.model.set('error', null);
+            self.errorMessage = null;
             self.model.set('searchForBlank', false);
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
