@@ -2060,6 +2060,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/deployments.py
 #: corehq/apps/reports/standard/forms/reports.py
@@ -12902,8 +12903,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "case property name"
 msgstr ""
 
@@ -13145,6 +13144,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/views/incremental.py
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
@@ -13769,6 +13769,11 @@ msgstr ""
 
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
+msgstr ""
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
 msgstr ""
 
 #: corehq/apps/domain/extension_points.py
@@ -20393,6 +20398,16 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
+msgid "Email address '{}' is not a dimagi email address"
+msgstr ""
+
+#: corehq/apps/hqadmin/forms.py
+msgid ""
+"The following users do not exist on this site, please have the user "
+"registered first."
+msgstr ""
+
+#: corehq/apps/hqadmin/forms.py
 msgid "Confirm the username"
 msgstr ""
 
@@ -20591,10 +20606,42 @@ msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid ""
-"\n"
-"          Please type comma-separated email addresses of users to grant/"
-"revoke superuser privileges.\n"
-"        "
+"Please type comma or new-line separated email addresses from the official "
+"list of current employees."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"Please type comma or new-line separated email addresses of users to grant/"
+"revoke superuser privileges."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/apps/hqadmin/views/users.py
+msgid "All superusers and staff users"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Developer"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Superuser"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/reports.py
+msgid "Accounting Admin"
+msgstr "Administração de Contabilidade"
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Two Factor Enabled"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
@@ -20703,6 +20750,14 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Two-Factor Auth successfully disabled."
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "Get users to offboard"
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "Successfully retrieved users to offboard."
 msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
@@ -23360,30 +23415,6 @@ msgid "You do not have permission to pull content into this project space."
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
-msgid "No downstream project spaces were selected. Please contact support."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"Links between one or more project spaces do not exist. Please contact "
-"support."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"\n"
-"                The attempted push from {} to {} is disallowed. Please "
-"contact support.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
-msgid ""
-"You do not have permission to push to all specified downstream project "
-"spaces."
-msgstr ""
-
-#: corehq/apps/linked_domain/views.py
 msgid ""
 "\n"
 "                Your release has begun. You will receive an email when it is "
@@ -23407,6 +23438,28 @@ msgstr ""
 #: corehq/apps/linked_domain/views.py
 msgid ""
 "You do not have adequate permissions in both project spaces to create a link."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid "No downstream project spaces were selected. Please contact support."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"The project space link between {} and {} does not exist. Ensure the link was "
+"not recently deleted."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"You do not have permission to push to all specified downstream project "
+"spaces."
+msgstr ""
+
+#: corehq/apps/linked_domain/views.py
+msgid ""
+"The attempted push is disallowed because it includes the following domains "
+"that can only be pushed to one at a time: {}"
 msgstr ""
 
 #: corehq/apps/linked_domain/views.py
@@ -25501,6 +25554,7 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr ""
 
@@ -25582,8 +25636,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr ""
 
@@ -29694,6 +29748,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
+msgid "Inactivity Timeout (minutes)"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
 msgstr ""
 
@@ -33085,6 +33143,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr ""
@@ -34201,6 +34263,7 @@ msgid "Expected {} but was {}"
 msgstr ""
 
 #: corehq/apps/userreports/ui/forms.py corehq/motech/dhis2/forms.py
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
 #: corehq/motech/openmrs/forms.py
 msgid "Save Changes"
 msgstr ""
@@ -35021,10 +35084,6 @@ msgid ""
 "                    To accept this %(invite_type_lower)s invitation, you "
 "must create an account.\n"
 "                  "
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
@@ -36137,6 +36196,10 @@ msgstr ""
 msgid ""
 "Phone numbers can only contain digits and we were unable to convert yours "
 "automatically."
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html
@@ -39242,6 +39305,10 @@ msgstr ""
 msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
+#: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
+msgid "Form config"
+msgstr ""
+
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
 msgstr ""
@@ -39284,6 +39351,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "CategoryOptionComboID"
+msgstr ""
+
+#: corehq/motech/dhis2/views.py
+msgid "DHIS2 Anonymous Events configuration saved"
 msgstr ""
 
 #: corehq/motech/dhis2/views.py
@@ -40248,10 +40319,6 @@ msgid "Edit Data"
 msgstr "Editar dados"
 
 #: corehq/reports.py
-msgid "Accounting Admin"
-msgstr "Administração de Contabilidade"
-
-#: corehq/reports.py
 msgid "SMS Billing Administration"
 msgstr "Administração de Faturação de SMS"
 
@@ -40464,6 +40531,10 @@ msgstr ""
 
 #: corehq/tabs/tabclasses.py
 msgid "Grant superuser privileges"
+msgstr ""
+
+#: corehq/tabs/tabclasses.py
+msgid "Get users for offboarding"
 msgstr ""
 
 #: corehq/tabs/tabclasses.py

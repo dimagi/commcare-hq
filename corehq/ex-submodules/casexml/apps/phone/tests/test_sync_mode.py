@@ -5,7 +5,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from unittest.mock import patch
 
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex, CaseFactory
@@ -14,6 +13,7 @@ from casexml.apps.phone.utils import get_restore_config, MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
@@ -671,7 +671,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.device.post_changes(create=True, case_id=parent_id)
         case_id = uuid.uuid4().hex
         case_xml = self.device.case_factory.get_case_block(
-            case_id, create=True, close=True)
+            case_id, create=True, close=True).as_xml()
         # hackily insert an <index> block after the close
         index_wrapper = ElementTree.Element('index')
         index_elem = ElementTree.Element('parent')
@@ -680,7 +680,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         index_elem.text = parent_id
         index_wrapper.append(index_elem)
         case_xml.append(index_wrapper)
-        self.device.case_blocks.append(case_xml)
+
+        class FakeBlock:
+            def as_text(self):
+                return ElementTree.tostring(case_xml, encoding='unicode')
+
+        self.device.case_blocks.append(FakeBlock())
         self.device.post_changes()
         sync_log = self.device.last_sync.get_log()
         # before this test was written, the case stayed on the sync log even though it was closed
@@ -1184,13 +1189,13 @@ class SyncTokenCachingTest(BaseSyncTest):
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
         case_id = "cache_noninvalidation"
-        post_case_blocks([CaseBlock(
+        submit_case_blocks([CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             case_type=PARENT_TYPE,
-        ).as_xml()])
+        ).as_text()], TEST_DOMAIN_NAME)
         self.device.last_sync = sync0
         sync2 = self.device.sync(version=V2)
         self.assertEqual(sync1.payload, sync2.payload)
@@ -1923,10 +1928,10 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
         # this is just asserting that an exception is not raised when there's no synclog
-        post_case_blocks(
-            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
+        submit_case_blocks(
+            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_text()],
+            'submission-domain-with-toggle',
             form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
-            domain='submission-domain-with-toggle',
         )
 
     def test_restore_with_bad_log_toggle_enabled(self):
