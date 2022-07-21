@@ -64,6 +64,7 @@ class.
 
 """
 import inspect
+import json
 import traceback
 import warnings
 from collections import OrderedDict
@@ -330,6 +331,23 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         repeater_dict.pop('is_deleted', None)
         repeater_dict.pop('next_attempt_at', None)
         repeater_dict.pop('last_attempt_at', None)
+
+        return self._make_serializable_dict(repeater_dict)
+
+    def _make_serializable_dict(self, repeater_dict):
+        for key, val in repeater_dict.items():
+            try:
+                json.dumps(val)
+            except Exception as e:
+                if isinstance(val, datetime):
+                    repeater_dict[key] = json_format_datetime(val)
+                    continue
+                notify_exception(
+                    None,
+                    f"""Unable to serialize {key} for repeater_id {self.repeater_id}.
+                    You may implement to_json for {self.repeater_type}"""
+                )
+                raise e
         return repeater_dict
 
     def get_url(self, record):
