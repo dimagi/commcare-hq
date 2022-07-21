@@ -9,8 +9,8 @@ from datetime import datetime
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
-from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
+from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.apps.es import filters
 
 

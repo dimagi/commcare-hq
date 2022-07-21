@@ -1,8 +1,5 @@
-from corehq.apps.data_interfaces.models import (
-    AUTO_UPDATE_XMLNS,
-    CaseRuleActionResult,
-)
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
+from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from custom.gcc_sangath.const import (
     DATE_OF_PEER_REVIEW_CASE_PROP,

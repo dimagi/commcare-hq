@@ -19,10 +19,12 @@ from corehq.form_processor.models import CommCareCase
 CASEBLOCK_CHUNKSIZE = 100
 SYSTEM_FORM_XMLNS = 'http://commcarehq.org/case'
 EDIT_FORM_XMLNS = 'http://commcarehq.org/case/edit'
+AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 SYSTEM_FORM_XMLNS_MAP = {
     SYSTEM_FORM_XMLNS: gettext_lazy('System Form'),
     EDIT_FORM_XMLNS: gettext_lazy('Data Cleaning Form'),
+    AUTO_UPDATE_XMLNS: gettext_lazy('Automatic Case Update Rule'),
 }
 
 ALLOWED_CASE_IDENTIFIER_TYPES = [
