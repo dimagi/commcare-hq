@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import SimpleTestCase
 
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, SYSTEM_FORM_XMLNS_MAP
@@ -10,6 +12,7 @@ KNOWN_XMLNS = SYSTEM_FORM_XMLNS
 KNOWN_XMLNS_DISPLAY = SYSTEM_FORM_XMLNS_MAP[KNOWN_XMLNS]
 
 
+@patch("corehq.apps.reports.display.get_form_analytics_metadata", new=lambda *a, **k: None)
 class TestXmlnsToName(SimpleTestCase):
     @generate_cases([
         (UNKNOWN_XMLNS, UNKNOWN_XMLNS),
