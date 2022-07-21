@@ -2,7 +2,6 @@ from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import *
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 
@@ -20,11 +19,13 @@ class Command(BaseCommand):
                 for module in app.modules:
                     if hasattr(module, 'search_config'):
                         print(f"Looking at Module: {module.name[app.default_language]}")
-                        search_config = getattr(module, "search_config")
-                        title_label = getattr(search_config, 'title_label')
-                        new_labels = title_label.copy()
-                        for lang, string in title_label.items():
-                            if string is None:
-                                print(f"Fixing translation: {{{lang}: {string}}}")
-                                new_labels[lang] = ""
-                        setattr(search_config, 'title_label', new_labels)
+                        try:
+                            title_label = module.search_config.title_label
+                            for lang, string in title_label.items():
+                                if string is None:
+                                    print(f"Fixing translation: {{{lang}: {string}}}")
+                                    module.search_config.title_label[lang] = ""
+                                    app.save()
+                        except:
+                            print("Skipping Module.")
+                            pass
