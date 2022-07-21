@@ -225,6 +225,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
+            self.render();
         },
 
         getEncodedValue: function () {
