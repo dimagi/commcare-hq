@@ -15,7 +15,7 @@ from corehq.apps.domain.utils import (
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt
-from corehq.util.test_utils import unit_testing_only
+from corehq.util.test_utils import generate_cases, unit_testing_only
 
 
 @unit_testing_only
@@ -168,5 +168,9 @@ class TestGetDomainURLSlug(SimpleTestCase):
         # cuts off entire word if exceeds max_length
         self.assertEqual('test', get_domain_url_slug('test-length', max_length=8))
 
-    def test_stop_words_excluded(self):
-        self.assertEqual('name-stop-words', get_domain_url_slug('long name with stop words in it', max_length=30))
+    @generate_cases([
+        ('long name with stop words in it', 30, 'name-stop-words'),
+        ('long name with stop words in it', 14, 'name-stop'),
+    ])
+    def test_stop_words_excluded(self, hr_name, max_length, expected):
+        self.assertEqual(expected, get_domain_url_slug(hr_name, max_length=max_length))
