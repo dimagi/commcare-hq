@@ -557,17 +557,14 @@ class TestSQLRepeaterToJSON(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.conn = ConnectionSettings.objects.create(id=1, url='http://fake.com')
         cls.repeater_map = _create_repeater_data_map()
-        return super().setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         for type, rep in cls.repeater_map.items():
             rep['couch'].delete()
-        cls.conn.delete()
-        SQLRepeater.objects.all().delete()
-        ConnectionSettings.objects.all().delete()
         return super().tearDownClass()
 
     @classmethod
