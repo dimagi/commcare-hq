@@ -240,11 +240,11 @@ class TableauAppConnection(models.Model):
 
     @property
     def plaintext_secret_value(self):
-        return b64_aes_decrypt(self.secret_value)
+        return b64_aes_decrypt(self.encrypted_secret_value)
 
     @plaintext_secret_value.setter
     def plaintext_secret_value(self, plaintext):
-        self.secret_value = b64_aes_encrypt(plaintext)
+        self.encrypted_secret_value = b64_aes_encrypt(plaintext)
 
 
 def delete_tableau_connected_app_if_last_domain(domain):

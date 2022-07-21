@@ -32,25 +32,17 @@ class Command(BaseCommand):
         parser.add_argument(
             '--app-client-id',
             required=True,
-            help='''The unique ID for the connected app.'''
+            help="The unique ID for the connected app."
         )
-        parser.add_argument(
-            '--secret-id',
-            required=True,
-            help='''The ID of a secret generated for the connected app. See:
-                 https://help.tableau.com/current/server/en-us/connected_apps.htm#step-2-generate-a-secret'''
-        )
-        parser.add_argument(
-            '--secret-value',
-            required=True,
-            help="The value of a secret generated for the connected app.",
-        )
+
+    def prompt_for_secret_details(self):
+        self.secret_id = input('Please enter in the ID of the secret for the connected app:\n')
+        self.secret_value = input('Please enter in the value for this secret:\n')
 
     def handle(self, **options):
         self.options = options
-        self.server_name, self.site_name, self.domains, self.app_client_id, self.secret_id, self.secret_value = \
-            self.options['server_name'], self.options['site_name'], self.options['domains'], \
-            self.options['app_client_id'], self.options['secret_id'], self.options['secret_value']
+        self.server_name, self.site_name, self.domains, self.app_client_id = self.options['server_name'], \
+            self.options['site_name'], self.options['domains'], self.options['app_client_id']
 
         app_connection = None
         try:
@@ -59,6 +51,7 @@ class Command(BaseCommand):
             overwrite_secret = input("This connected app has been recognized in HQ. Want to overwrite the "
                                      "ID and value for the existing stored secret? (y/n)")
             if overwrite_secret == 'y':
+                self.prompt_for_secret_details()
                 app_connection.secret_id = self.secret_id
                 app_connection.plaintext_secret_value = self.secret_value
                 app_connection.save()
@@ -67,6 +60,7 @@ class Command(BaseCommand):
                 logger.info("The secret will not be updated. The inputted domains will be associated with this "
                             "recognized connected app.")
         except TableauAppConnection.DoesNotExist:
+            self.prompt_for_secret_details()
             app_connection = TableauAppConnection(
                 server_name=self.server_name,
                 site_name=self.site_name,
