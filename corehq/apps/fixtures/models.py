@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import IntEnum, unique
 from uuid import UUID, uuid4
 
 from attrs import define, field
@@ -203,8 +202,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
         return obj
 
 
-@unique
-class OwnerType(IntEnum):
+class OwnerType(models.IntegerChoices):
     User = 0
     Group = 1
     Location = 2
@@ -213,14 +211,10 @@ class OwnerType(IntEnum):
     def from_string(cls, value):
         return getattr(cls, value.title())
 
-    @classmethod
-    def choices(cls):
-        return [(t.value, t.name) for t in cls]
-
 
 class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
     domain = CharIdField(max_length=126, default=None)
-    owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices())
+    owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
     row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE, db_index=False)
     couch_id = CharIdField(max_length=126, null=True, db_index=True)
