@@ -17,7 +17,7 @@
         </div>
         <i class="fa fa-spinner fa-spin fa-3x" data-bind="visible: showSpinner"></i>
         <div data-bind="visible: !showSpinner() && !showError()">
-          <table class="table table-striped table-hover">
+          <table class="table table-striped table-hover" id="case-property-table">
             <thead>
             <th>{% trans 'Received' %} ({{ timezone }})</th>
             <th>{% trans 'Form' %}</th>
