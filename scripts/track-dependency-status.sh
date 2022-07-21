@@ -2,10 +2,10 @@
 
 total_python_deps="$(pip list| wc -l)"
 outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/pip-dep-debt.py)"
-outdated_python_deps="$(echo ${outdated_python_deps_list} | wc -l)"
-major_outdated_python_deps="$(echo ${outdated_python_deps_list} | grep '^[^0]' | wc -l)"
-minor_outdated_python_deps="$(echo ${outdated_python_deps_list} | grep '^0\.[^0]' | wc -l)"
-patch_outdated_python_deps="$(echo ${outdated_python_deps_list} | grep '^0\.0\.[^0]' | wc -l)"
+outdated_python_deps=$(echo "${outdated_python_deps_list}" | wc -l)
+major_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^[^0]' | wc -l)
+minor_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^0\.[^0]' | wc -l)
+patch_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^0\.0\.[^0]' | wc -l)
 
 # Get outdated JS dependency count
 
