@@ -1080,7 +1080,7 @@ class FormValidator(IndexedFormBaseValidator):
 
 
 class AdvancedFormValidator(IndexedFormBaseValidator):
-    def check_actions(self):1
+    def check_actions(self):
         # HELPME
         #
         # This method has been flagged for refactoring due to its complexity and
