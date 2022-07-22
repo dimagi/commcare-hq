@@ -428,6 +428,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         submitAction: function (e) {
             e.preventDefault();
+
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            var urlObject = Util.currentUrlToObject();
+            urlObject.setQueryData(this.getAnswers(), false);
+            FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+
             FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
             var invalidFields = [];
             this.children.each(function (childView) {
