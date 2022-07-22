@@ -1,7 +1,13 @@
 # Get total count of python dependencies and outdated python dependencies
 
-total_python_deps="$(pip list| wc -l)"
-outdated_python_deps="$(pip list --outdated| wc -l)"
+# skip 2 header lines (produced by pip list)
+total_python_deps="$(pip list | tail -n +3 | wc -l)"
+# skip 1 header line (produced by pip-dep-debt.py)
+outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/pip-dep-debt.py | tail -n +2)"
+outdated_python_deps=$(echo "${outdated_python_deps_list}" | wc -l)
+major_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^[^0]' | wc -l)
+minor_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^0\.[^0]' | wc -l)
+patch_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^0\.0\.[^0]' | wc -l)
 
 # Get outdated JS dependency count
 
@@ -41,6 +47,9 @@ source scripts/datadog-utils.sh
 
 send_metric_to_datadog "commcare.static_analysis.dependency.python.total" $total_python_deps "gauge"
 send_metric_to_datadog "commcare.static_analysis.dependency.python.outdated" $outdated_python_deps "gauge"
+send_metric_to_datadog "commcare.static_analysis.dependency.python.major_outdated" $major_outdated_python_deps "gauge"
+send_metric_to_datadog "commcare.static_analysis.dependency.python.minor_outdated" $minor_outdated_python_deps "gauge"
+send_metric_to_datadog "commcare.static_analysis.dependency.python.patch_outdated" $patch_outdated_python_deps "gauge"
 
 
 send_metric_to_datadog "commcare.static_analysis.dependency.js.total" $total_js_deps "gauge"
