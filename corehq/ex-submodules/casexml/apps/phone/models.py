@@ -840,7 +840,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.index_tree.delete_index(index.case_id, index.identifier)
         self.extension_index_tree.delete_index(index.case_id, index.identifier)
 
-        def update_phone_lists(self, xform, case_list):
+    def update_phone_lists(self, xform, case_list):
         # HELPME
         #
         # This method has been flagged for refactoring due to its complexity and
