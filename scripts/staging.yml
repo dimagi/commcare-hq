@@ -67,13 +67,12 @@ branches:
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
     - rc/search-input-validation # Robert July 11
-    - es/validation-conditions-qa  # Ethan July 11
+    - es/validation-conditions  # Ethan July 11
     - ml/notify-user-changes # Minha July 19
     - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging+celery-upgrade-patch # Matt July 20
     - ap/celery-upgrade-patch # Amit June 1
     - mjr/report-logging-verification # Matt July 20
     - jls/stop-the-constant-rendering # Jenny July something
-    - es/select-vals  # Ethan July 21
     - dm/sql-lookup-tables-pr1  # Daniel July 21
 submodules: { }
