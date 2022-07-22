@@ -3,10 +3,18 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets',
+    'data_interfaces/js/case_property_input',
     'data_interfaces/js/case_rule_criteria',
-], function ($, ko, _, initialPageData) {
-    var caseDedupe = function (
+    'hqwebapp/js/widgets',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData,
+    casePropertyInput,
+    CaseRuleCriteria
+) {
+    var CaseDedupe = function (
         initialName,
         initialCaseType,
         caseTypeOptions,
@@ -83,24 +91,31 @@ hqDefine("data_interfaces/js/case_dedupe_main", [
     };
 
     $(function () {
+        casePropertyInput.register();
+
         // This is a little hacky; it prevents the "multiple bindings to same
         // element" error.
         var caseFilterElement = $("#caseFiltersForm");
         caseFilterElement.detach();
 
-        $("#case-dedupe-rule-definition").koApplyBindings(
-            caseDedupe(
-                initialPageData.get('name'),
-                initialPageData.get('case_type'),
-                initialPageData.get('case_types'),
-                initialPageData.get('match_type'),
-                initialPageData.get('case_properties'),
-                initialPageData.get('include_closed'),
-                initialPageData.get('properties_to_update')
-            )
+        var caseDedupe = CaseDedupe(
+            initialPageData.get('name'),
+            initialPageData.get('case_type'),
+            initialPageData.get('case_types'),
+            initialPageData.get('match_type'),
+            initialPageData.get('case_properties'),
+            initialPageData.get('include_closed'),
+            initialPageData.get('properties_to_update')
         );
+        $("#case-dedupe-rule-definition").koApplyBindings(caseDedupe);
 
         $("#caseFilters").append(caseFilterElement);
+
+        $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
+            initialPageData.get('criteria_initial'),
+            initialPageData.get('criteria_constants'),
+            caseDedupe.caseType
+        ));
     });
 });
 

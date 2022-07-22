@@ -15,6 +15,7 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
+CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
 
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
@@ -70,6 +71,14 @@ class SearchCriteria:
     @property
     def is_ancestor_query(self):
         return '/' in self.key
+
+    @property
+    def is_index_query(self):
+        return self.key.startswith(CASE_SEARCH_INDEX_KEY_PREFIX)
+
+    @property
+    def index_query_identifier(self):
+        return self.key.removeprefix(CASE_SEARCH_INDEX_KEY_PREFIX)
 
     def get_date_range(self):
         """The format is __range__YYYY-MM-DD__YYYY-MM-DD"""

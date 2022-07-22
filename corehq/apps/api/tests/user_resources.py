@@ -83,7 +83,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @sync_users_to_es()
     def test_get_list(self):
-
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
@@ -111,7 +110,6 @@ class TestCommCareUserResource(APIResourceTest):
 
     @flaky
     def test_get_single(self):
-
         commcare_user = CommCareUser.create(domain=self.domain.name, username='fake_user', password='*****',
                                             created_by=None, created_via=None)
         self.addCleanup(commcare_user.delete, self.domain.name, deleted_by=None)
@@ -136,8 +134,7 @@ class TestCommCareUserResource(APIResourceTest):
         })
 
     def test_create(self):
-
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
         self.addCleanup(group.delete)
 
@@ -162,8 +159,8 @@ class TestCommCareUserResource(APIResourceTest):
             }
         }
         response = self._assert_auth_post_resource(self.list_endpoint,
-                                    json.dumps(user_json),
-                                    content_type='application/json')
+                                                   json.dumps(user_json),
+                                                   content_type='application/json')
         self.assertEqual(response.status_code, 201)
         [user_back] = CommCareUser.by_domain(self.domain.name)
         self.addCleanup(user_back.delete, self.domain.name, deleted_by=None)
@@ -192,16 +189,14 @@ class TestCommCareUserResource(APIResourceTest):
                                                    json.dumps(user_json),
                                                    content_type='application/json')
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.content.decode('utf-8'),
-            '{"error": "Username \'jdoe\' is already taken."}'
-        )
+        self.assertEqual(response.content.decode('utf-8'),
+                         f'{{"error": "Username \'jdoe@{self.domain.name}.commcarehq.org\' is already taken or '
+                         f'reserved."}}')
 
     def test_update(self):
-
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.domain.name})
         group.save()
 
         self.addCleanup(user.delete, self.domain.name, deleted_by=None)
@@ -276,7 +271,6 @@ class TestCommCareUserResource(APIResourceTest):
         self.assertEqual(user_history.changed_via, USER_CHANGE_VIA_API)
 
     def test_update_fails(self):
-
         user = CommCareUser.create(domain=self.domain.name, username="test", password="qwer1234",
                                    created_by=None, created_via=None, phone_number="50253311398")
         group = Group({"name": "test"})
@@ -514,7 +508,6 @@ class TestBulkUserAPI(APIResourceTest):
 
 @es_test
 class TestIdentityResource(APIResourceTest):
-
     resource = v0_5.IdentityResource
     api_name = 'v0.5'
 
@@ -526,8 +519,8 @@ class TestIdentityResource(APIResourceTest):
     @classmethod
     def _get_list_endpoint(cls):
         return reverse('api_dispatch_list',
-                kwargs=dict(api_name=cls.api_name,
-                            resource_name=cls.resource._meta.resource_name))
+                       kwargs=dict(api_name=cls.api_name,
+                                   resource_name=cls.resource._meta.resource_name))
 
     @sync_users_to_es()
     def test_get_list(self):

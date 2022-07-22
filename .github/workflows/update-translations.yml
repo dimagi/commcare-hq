@@ -1,4 +1,7 @@
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 3'  # Every Wed at 06:00 UTC
 
 name: Update transifex translations
 jobs:
@@ -47,11 +50,9 @@ jobs:
           branch-suffix: short-commit-hash
           commit-message: |
             Update translations
+
+            [ci skip]
           title: 'Update Translations'
           labels: product/invisible
           body: |
             GitHub Actions automatically ran update-translations.sh and used [create-pull-request](https://github.com/peter-evans/create-pull-request) to open this pull request.
-
-            Please **close and reopen** this pull request to have tests run.<sup>†</sup>
-
-            <sup>†</sup> Workaround for [this GitHub Actions constraint](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow)
