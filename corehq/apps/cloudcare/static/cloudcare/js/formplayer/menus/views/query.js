@@ -432,27 +432,30 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
             urlObject.setQueryData(this.getAnswers(), false);
-            FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            var parent = this;
+            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
 
-            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
-            var invalidFields = [];
-            this.children.each(function (childView) {
-                if (!childView.isValid()) {
-                    invalidFields.push(childView.model.get('text'));
+            $.when(fetchingPrompts).done(function (response) {
+                FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
+                var invalidFields = [];
+                parent.children.each(function (childView) {
+                    if (!childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                if (invalidFields.length) {
+                    var errorHTML = "Please check the following fields:";
+                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                    }).join("") + "</ul>";
+                    FormplayerFrontend.trigger('showError', errorHTML, true);
+
+                    return;
                 }
+                FormplayerFrontend.trigger("menu:query", parent.getAnswers());
             });
 
-            if (invalidFields.length) {
-                var errorHTML = "Please check the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                }).join("") + "</ul>";
-                FormplayerFrontend.trigger('showError', errorHTML, true);
-
-                return;
-            }
-
-            FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
 
         setStickyQueryInputs: function () {
