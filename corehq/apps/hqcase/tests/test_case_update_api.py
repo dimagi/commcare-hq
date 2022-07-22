@@ -349,7 +349,7 @@ class TestCaseAPI(TestCase):
         existing_case = self._make_case()
         res = self._bulk_update_cases([
             {
-                # update existing case
+                'create': False,
                 'case_id': existing_case.case_id,
                 'case_name': 'Beth Harmon',
                 'owner_id': 'us_chess_federation',
@@ -359,7 +359,7 @@ class TestCaseAPI(TestCase):
                 },
             },
             {
-                # No case_id means this is a new case
+                'create': True,
                 'case_type': 'player',
                 'case_name': 'Jolene',
                 'external_id': 'jolene',
@@ -379,9 +379,19 @@ class TestCaseAPI(TestCase):
         new_case = CommCareCase.objects.get_case_by_external_id(self.domain, 'jolene')
         self.assertEqual(new_case.name, 'Jolene')
 
+    def test_bulk_without_create_flag(self):
+        res = self._bulk_update_cases([{
+            # valid except it needs 'create' specified
+            'case_type': 'player',
+            'case_name': 'Jolene',
+            'owner_id': 'methuen_home',
+        }])
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json(), {'error': "A 'create' flag is required for each update."})
+
     def test_bulk_update_too_big(self):
         res = self._bulk_update_cases([
-            {'case_name': f'case {i}', 'case_type': 'player'}
+            {'create': True, 'case_name': f'case {i}', 'case_type': 'player'}
             for i in range(103)
         ])
         self.assertEqual(res.status_code, 400)
@@ -394,23 +404,26 @@ class TestCaseAPI(TestCase):
         res = self._bulk_update_cases([
             {
                 # attempt to update existing case, but it doesn't exist
+                'create': False,
                 'case_id': 'notarealcaseid',
                 'case_name': 'Beth Harmon',
                 'owner_id': 'us_chess_federation',
             },
             {
                 # Also have a (valid) case creation, though it shouldn't go through
+                'create': True,
                 'case_type': 'player',
                 'case_name': 'Jolene',
                 'owner_id': 'methuen_home',
             },
         ])
-        self.assertEqual(res.json()['error'], "The following case IDs were not found: notarealcaseid")
+        self.assertEqual(res.json()['error'], "No case found with ID 'notarealcaseid'")
         self.assertEqual(CommCareCase.objects.get_case_ids_in_domain(self.domain), [])
 
     def test_create_parent_and_child_together(self):
         res = self._bulk_update_cases([
             {
+                'create': True,
                 'case_type': 'player',
                 'case_name': 'Elizabeth Harmon',
                 'owner_id': 'us_chess_federation',
@@ -418,6 +431,7 @@ class TestCaseAPI(TestCase):
                 'temporary_id': 'beth_harmon',
             },
             {
+                'create': True,
                 'case_type': 'match',
                 'case_name': 'Harmon/Luchenko',
                 'owner_id': 'harmon',
@@ -443,6 +457,7 @@ class TestCaseAPI(TestCase):
     def test_create_child_with_no_parent(self):
         res = self._bulk_update_cases([
             {
+                'create': True,
                 'case_type': 'match',
                 'case_name': 'Harmon/Luchenko',
                 'owner_id': 'harmon',
@@ -465,12 +480,14 @@ class TestCaseAPI(TestCase):
     def test_index_reference_to_uncreated_external_id(self):
         res = self._bulk_update_cases([
             {
+                'create': True,
                 'case_type': 'player',
                 'case_name': 'Elizabeth Harmon',
                 'owner_id': 'us_chess_federation',
                 'external_id': 'beth',
             },
             {
+                'create': True,
                 'case_type': 'match',
                 'case_name': 'Harmon/Luchenko',
                 'external_id': 'harmon-luchenko',
@@ -489,6 +506,53 @@ class TestCaseAPI(TestCase):
         parent = CommCareCase.objects.get_case_by_external_id(self.domain, 'beth')
         child = CommCareCase.objects.get_case_by_external_id(self.domain, 'harmon-luchenko')
         self.assertEqual(parent.case_id, child.get_index('parent').referenced_id)
+
+    def test_update_by_external_id(self):
+        case = self._make_case()
+        res = self.client.put(
+            reverse('case_api', args=(self.domain,)),
+            {
+                'external_id': case.external_id,
+                'properties': {'champion': 'true'},
+            },
+            content_type="application/json;charset=utf-8",
+        )
+        self.assertEqual(res.status_code, 200)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertEqual(case.dynamic_case_properties().get('champion'), 'true')
+
+    def test_update_by_external_id_doesnt_exist(self):
+        case = self._make_case()
+        res = self.client.put(
+            reverse('case_api', args=(self.domain,)),
+            {
+                'external_id': 'notarealcaseid',
+                'properties': {'champion': 'true'},
+            },
+            content_type="application/json;charset=utf-8",
+        )
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json()['error'], "Could not find a case with external_id 'notarealcaseid'")
+
+    def test_bulk_update_by_external_id(self):
+        case = self._make_case()
+        res = self._bulk_update_cases([{
+            'create': False,
+            'external_id': case.external_id,
+            'owner_id': 'us_chess_federation',
+        }])
+        self.assertEqual(res.status_code, 200)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
+        self.assertEqual(case.owner_id, 'us_chess_federation')
+
+    def test_bulk_update_external_id_doesnt_exist(self):
+        res = self._bulk_update_cases([{
+            'create': False,
+            'external_id': 'notarealcaseid',
+            'owner_id': 'us_chess_federation',
+        }])
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(res.json()['error'], "Could not find a case with external_id 'notarealcaseid'")
 
     def test_non_json_data(self):
         res = self._create_case("this isn't json")

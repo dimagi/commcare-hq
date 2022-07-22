@@ -1,5 +1,7 @@
 import uuid
 
+from django.utils.functional import cached_property
+
 import jsonobject
 from jsonobject.exceptions import BadValueError
 from memoized import memoized
@@ -57,7 +59,13 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
                 raise BadValueError(f"'{attr}' is not a valid field.")
         return super().wrap(obj)
 
-    def get_caseblock(self):
+    def get_caseblock(self, case_db):
+
+        self._case_db = case_db  # code smell - fix this!
+
+        # I don't like mixing between case_id and get_case_id - figure that out
+        if not self._is_case_creation and self.case_id and self.case_id not in case_db.real_case_ids:
+            raise UserError(f"No case found with ID '{self.case_id}'")
 
         def _if_specified(value):
             return value if value is not None else CaseBlock.undefined
@@ -73,10 +81,22 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             update=dict(self.properties),
             close=self.close,
             index={
-                name: IndexAttrs(index.case_type, index.case_id, index.relationship)
-                for name, index in self.indices.items()
+                name: IndexAttrs(
+                    case_type=index.case_type,
+                    case_id=self._get_index_id(index, case_db),
+                    relationship=index.relationship
+                ) for name, index in self.indices.items()
             },
         ).as_text()
+
+    def _get_index_id(self, index, case_db):
+        if index.case_id:
+            return index.case_id
+        if index.temporary_id:
+            return case_db.lookup_id(index.temporary_id, 'temporary_id')
+        if index.external_id:
+            return case_db.lookup_id(index.external_id, 'external_id')
+        raise Exception("Validation should've caught this situation")
 
 
 class JsonCaseCreation(BaseJsonCaseChange):
@@ -95,23 +115,29 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
 
 class JsonCaseUpdate(BaseJsonCaseChange):
-    case_id = jsonobject.StringProperty(required=True)
+    case_id = jsonobject.StringProperty()
     _is_case_creation = False
 
+    def validate(self, *args, **kwargs):
+        super().validate(*args, **kwargs)
+        if not self.case_id and not self.external_id:
+            raise BadValueError("Case updates must provide either a case_id or external_id")
+
     def get_case_id(self):
-        return self.case_id
+        return self.case_id or self._case_db.lookup_id(self.external_id, 'external_id')
 
 
-def handle_case_update(domain, data, user, device_id, case_id=None):
+def handle_case_update(domain, data, user, device_id, is_creation):
     is_bulk = isinstance(data, list)
     if is_bulk:
         updates = _get_bulk_updates(domain, data, user)
     else:
-        updates = [_get_individual_update(domain, data, user, case_id)]
+        updates = [_get_individual_update(domain, data, user, is_creation)]
 
-    _populate_index_case_ids(domain, updates)
+    case_db = CaseIDLookerUpper(domain, updates)
 
-    xform, cases = _submit_case_updates(updates, domain, user, device_id)
+    case_blocks = [update.get_caseblock(case_db) for update in updates]
+    xform, cases = _submit_case_blocks(case_blocks, domain, user, device_id)
     if xform.is_error:
         raise SubmissionError(xform.problem, xform.form_id,)
 
@@ -121,32 +147,31 @@ def handle_case_update(domain, data, user, device_id, case_id=None):
         return xform, cases[0]
 
 
-def _get_individual_update(domain, data, user, case_id=None):
-    if case_id is not None and _missing_cases(domain, [case_id]):
-        raise UserError(f"No case found with ID '{case_id}'")
-
+def _get_individual_update(domain, data, user, is_creation):
+    update_class = JsonCaseCreation if is_creation else JsonCaseUpdate
+    data['user_id'] = user.user_id
     try:
-        return _get_case_update(data, user.user_id, case_id)
+        update = update_class.wrap(data)
     except BadValueError as e:
         raise UserError(str(e))
+    return update
 
 
 def _get_bulk_updates(domain, all_data, user):
     if len(all_data) > CASEBLOCK_CHUNKSIZE:
         raise UserError(f"You cannot submit more than {CASEBLOCK_CHUNKSIZE} updates in a single request")
 
-    existing_ids = [c['case_id'] for c in all_data if isinstance(c, dict) and 'case_id' in c]
-    missing = _missing_cases(domain, existing_ids)
-    if missing:
-        raise UserError(f"The following case IDs were not found: {', '.join(missing)}")
-
     updates = []
     errors = []
     for i, data in enumerate(all_data, start=1):
         try:
-            update = _get_case_update(data, user.user_id, data.pop('case_id', None))
-            updates.append(update)
-        except BadValueError as e:
+            is_creation = data.pop('create')
+        except KeyError:
+            raise UserError("A 'create' flag is required for each update.")
+
+        try:
+            updates.append(_get_individual_update(domain, data, user, is_creation))
+        except UserError as e:
             errors.append(f'Error in row {i}: {e}')
 
     if errors:
@@ -155,62 +180,63 @@ def _get_bulk_updates(domain, all_data, user):
     return updates
 
 
-def _missing_cases(domain, case_ids):
-    real_case_ids = CommCareCase.objects.get_case_ids_that_exist(domain, case_ids)
-    return set(case_ids) - set(real_case_ids)
+class CaseIDLookerUpper:
+    def __init__(self, domain, updates):
+        self.domain = domain
+        self.updates = updates
+
+    @cached_property
+    def real_case_ids(self):
+        case_ids = filter(None, (getattr(update, 'case_id', None) for update in self.updates))
+        return set(CommCareCase.objects.get_case_ids_that_exist(self.domain, case_ids))
+
+    @cached_property
+    def ids(self):
+        case_ids = {}
+        case_ids['temporary_id'] = {
+            update.temporary_id: update.get_case_id()
+            for update in self.updates
+            if getattr(update, 'temporary_id', None) and update._is_case_creation
+        }
+        case_ids['external_id'] = {
+            update.external_id: update.get_case_id()
+            for update in self.updates if update.external_id and update._is_case_creation
+        }
+
+        external_ids_to_find = {
+            update.external_id for update in self.updates if not update._is_case_creation and not update.case_id
+        } | {
+            index.external_id for update in self.updates for index in update.indices.values()
+        }
+        external_ids_to_find -= set(case_ids['external_id'])
+        case_ids['external_id'].update(self._get_case_ids_by_external_id(external_ids_to_find))
+        return case_ids
+
+    def _get_case_ids_by_external_id(self, external_ids):
+        external_ids = list(filter(None, external_ids))
+
+        case_ids_by_external_id = {}
+        for db_name in get_db_aliases_for_partitioned_query():
+            query = (CommCareCase.objects.using(db_name)
+                     .filter(domain=self.domain, external_id__in=external_ids)
+                     .values_list('external_id', 'case_id'))
+            for external_id, case_id in query:
+                if external_id in case_ids_by_external_id:
+                    raise UserError(f"There are multiple cases with external_id {external_id}")
+                case_ids_by_external_id[external_id] = case_id
+
+        return case_ids_by_external_id
+
+    def lookup_id(self, key, id_prop):
+        try:
+            return self.ids[id_prop][key]
+        except KeyError:
+            raise UserError(f"Could not find a case with {id_prop} '{key}'")
 
 
-def _populate_index_case_ids(domain, updates):
-    case_ids = {}
-    case_ids['temporary_id'] = {
-        update.temporary_id: update.get_case_id()
-        for update in updates if getattr(update, 'temporary_id', None)
-    }
-    case_ids['external_id'] = _get_case_ids_by_external_id(domain, [
-        index.external_id for update in updates for index in update.indices.values()
-    ])
-    case_ids['external_id'].update(
-        (update.external_id, update.get_case_id())
-        for update in updates if update.external_id
-    )
-    for update in updates:
-        for index in update.indices.values():
-            for id_prop in case_ids:
-                key = getattr(index, id_prop)
-                if key:
-                    try:
-                        index.case_id = case_ids[id_prop][key]
-                    except KeyError:
-                        raise UserError(f"Could not find a case with {id_prop} '{key}'")
-
-
-def _get_case_ids_by_external_id(domain, external_ids):
-    external_ids = list(filter(None, set(external_ids)))
-
-    case_ids_by_external_id = {}
-    for db_name in get_db_aliases_for_partitioned_query():
-        query = (CommCareCase.objects.using(db_name)
-                 .filter(domain=domain, external_id__in=external_ids)
-                 .values_list('external_id', 'case_id'))
-        for external_id, case_id in query:
-            if external_id in case_ids_by_external_id:
-                raise UserError(f"There are multiple cases with external_id {external_id}")
-            case_ids_by_external_id[external_id] = case_id
-
-    return case_ids_by_external_id
-
-
-def _get_case_update(data, user_id, case_id=None):
-    update_class = JsonCaseCreation if case_id is None else JsonCaseUpdate
-    additonal_args = {'user_id': user_id}
-    if case_id is not None:
-        additonal_args['case_id'] = case_id
-    return update_class.wrap({**data, **additonal_args})
-
-
-def _submit_case_updates(updates, domain, user, device_id):
+def _submit_case_blocks(case_blocks, domain, user, device_id):
     return submit_case_blocks(
-        case_blocks=[update.get_caseblock() for update in updates],
+        case_blocks=case_blocks,
         domain=domain,
         username=user.username,
         user_id=user.user_id,
