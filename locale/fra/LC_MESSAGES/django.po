@@ -13393,8 +13393,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "case property name"
 msgstr "Nom de la propriété de dossier"
 
@@ -14285,6 +14283,11 @@ msgstr ""
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
 msgstr "Nombre de tentatives de saisie du mot de passe dépassé"
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
+msgstr ""
 
 #: corehq/apps/domain/extension_points.py
 msgid "Password is not strong enough. Try making your password more complex."
@@ -21102,8 +21105,8 @@ msgstr "Veuillez entrer une adresse mail valide."
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"User with email address '{}' does not exist on this site, please have the "
-"user registered first"
+"The following users do not exist on this site, please have the user "
+"registered first."
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -21322,6 +21325,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
@@ -21465,6 +21474,12 @@ msgstr ""
 #: corehq/apps/hqadmin/views/users.py
 msgid "Get users to offboard"
 msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+#, fuzzy
+#| msgid "Successfully restored report \"{name}\""
+msgid "Successfully retrieved users to offboard."
+msgstr "Rapport restauré avec succès \"{name}\""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
@@ -26447,6 +26462,7 @@ msgstr "Créer un compte"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr "Créer compte"
 
@@ -26528,8 +26544,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr "Confirmer le compte"
 
@@ -30757,6 +30773,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
+#, fuzzy
+#| msgid "Shorten Inactivity Timeout"
+msgid "Inactivity Timeout (minutes)"
+msgstr "Raccourcir temps d'inactivité"
+
+#: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
 msgstr "Vous ne faites partie d'aucun projet actuellement."
 
@@ -34243,6 +34265,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr "Le nom d'utilisateur ne peut contenir des espaces ou des symboles"
@@ -36278,10 +36304,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
 msgid "Already have an account?"
 msgstr "Vous avez déjà un compte?"
 
@@ -37400,6 +37422,10 @@ msgid ""
 msgstr ""
 "Les numéros de téléphone ne peuvent contenir que des chiffres et nous "
 "n'avons pas été en mesure de convertir le vôtre automatiquement."
+
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html
 msgid "Checking Email Address"

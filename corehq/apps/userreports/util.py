@@ -1,5 +1,6 @@
 import collections
 import hashlib
+import re
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
@@ -342,3 +343,15 @@ def wrap_report_config_by_type(config, allow_deleted=False):
         }[doc_type].wrap(config)
     except KeyError:
         raise ReportConfigurationNotFoundError()
+
+
+def get_domain_for_ucr_table_name(table_name):
+    def unescape(value):
+        return value.encode('utf-8').decode('unicode-escape')
+
+    pattern = fr"(?:{UCR_TABLE_PREFIX}|{LEGACY_UCR_TABLE_PREFIX})([^_]+)"
+    match = re.match(pattern, table_name)
+    if match:
+        # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
+        return unescape(unescape(match.group(1)))
+    raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")

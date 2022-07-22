@@ -7,7 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.app_manager.util import enable_usercase
@@ -49,13 +49,13 @@ class CaseCommandsTest(TestCase):
             call_command('add_hq_user_id_to_case', self.domain, 'checkin', '--username=afakeuserthatdoesnotexist')
 
     def submit_case_block(self, create, case_id, **kwargs):
-        return post_case_blocks(
+        return submit_case_blocks(
             [
                 CaseBlock(
                     create=create,
                     case_id=case_id,
                     **kwargs
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
 

@@ -16,6 +16,7 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
 
+
         self.filterOnServerModified = ko.computed(function () {
             var result = 'false';
             $.each(self.criteria(), function (index, value) {
@@ -307,11 +308,11 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
         };
 
         var locationDefinition = function (koTemplateId) {
+            // This model matches the Django model with the same name
             'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
 
-            // This model matches the Django model with the same name
             self.location_id = ko.observable();
             self.include_child_locations = ko.observable();
             self.name = ko.observable();
@@ -322,7 +323,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             'use strict';
             var self = {};
             self.koTemplateId = koTemplateId;
-
             self.configured_filter = ko.observable();
             // This model matches the Django model with the same name
             return self;

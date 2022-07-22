@@ -12914,8 +12914,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "case property name"
 msgstr ""
 
@@ -13806,6 +13804,11 @@ msgstr ""
 
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
+msgstr ""
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
 msgstr ""
 
 #: corehq/apps/domain/extension_points.py
@@ -20421,8 +20424,8 @@ msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"User with email address '{}' does not exist on this site, please have the "
-"user registered first"
+"The following users do not exist on this site, please have the user "
+"registered first."
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -20635,6 +20638,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
@@ -20766,6 +20775,10 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Get users to offboard"
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "Successfully retrieved users to offboard."
 msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
@@ -25562,6 +25575,7 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr ""
 
@@ -25643,8 +25657,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr ""
 
@@ -29755,6 +29769,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
+msgid "Inactivity Timeout (minutes)"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
 msgstr ""
 
@@ -33146,6 +33164,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr ""
@@ -35086,10 +35108,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
 msgid "Already have an account?"
 msgstr ""
 
@@ -36199,6 +36217,10 @@ msgstr ""
 msgid ""
 "Phone numbers can only contain digits and we were unable to convert yours "
 "automatically."
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html

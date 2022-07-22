@@ -9,7 +9,6 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
-    AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseRuleActionResult,
     CaseRuleSubmission,
@@ -1051,7 +1050,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
             # When the last update is an auto case update, we don't run the rule on save
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule_patch:
                 hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'},
-                    xmlns=AUTO_UPDATE_XMLNS)
+                    xmlns=hqcase.utils.AUTO_UPDATE_XMLNS)
                 run_rule_patch.assert_not_called()
 
     def test_do_not_run_on_save_when_flag_is_disabled(self):
