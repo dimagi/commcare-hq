@@ -286,6 +286,20 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
         self.checkQuery(query, json_output)
 
+    def test_scroll_uses_scroll_size_from_query(self):
+        query = HQESQuery('forms').size(1)
+        self.assertEqual(1, query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll())
+
+    def test_scroll_without_query_size_uses_default_scroll_size(self):
+        query = HQESQuery('forms')
+        self.assertIsNone(query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll())
+
     def test_scroll_ids_uses_scroll_size_from_query(self):
         query = HQESQuery('forms').size(1)
         self.assertEqual(1, query._size)
