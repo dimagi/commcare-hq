@@ -250,7 +250,7 @@ class TableauAppConnection(models.Model):
 def delete_tableau_connected_app_if_last_domain(domain):
     try:
         domain_details_obj = TableauDomainDetails.objects.get(domain=domain)
-        if len(TableauDomainDetails.objects.filter(app_connection=domain_details_obj.app_connection)) <= 1:
+        if domain_details_obj.app_connection.tableaudomaindetails_set.count() <= 1:
             domain_details_obj.app_connection.delete()
     except TableauDomainDetails.DoesNotExist:
         return

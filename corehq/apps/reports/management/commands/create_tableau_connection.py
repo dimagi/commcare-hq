@@ -36,8 +36,9 @@ class Command(BaseCommand):
         )
 
     def prompt_for_secret_details(self):
-        self.secret_id = input('Please enter in the ID of the secret for the connected app:\n')
-        self.secret_value = input('Please enter in the value for this secret:\n')
+        secret_id = input('Please enter in the ID of the secret for the connected app:\n')
+        secret_value = input('Please enter in the value for this secret:\n')
+        return secret_id, secret_value
 
     def handle(self, **options):
         self.options = options
@@ -51,23 +52,23 @@ class Command(BaseCommand):
             overwrite_secret = input("This connected app has been recognized in HQ. Want to overwrite the "
                                      "ID and value for the existing stored secret? (y/n)")
             if overwrite_secret == 'y':
-                self.prompt_for_secret_details()
-                app_connection.secret_id = self.secret_id
-                app_connection.plaintext_secret_value = self.secret_value
+                secret_id, secret_value = self.prompt_for_secret_details()
+                app_connection.secret_id = secret_id
+                app_connection.plaintext_secret_value = secret_value
                 app_connection.save()
                 logger.info("The secret for the connected app has been updated!")
             else:
                 logger.info("The secret will not be updated. The inputted domains will be associated with this "
                             "recognized connected app.")
         except TableauAppConnection.DoesNotExist:
-            self.prompt_for_secret_details()
+            secret_id, secret_value = self.prompt_for_secret_details()
             app_connection = TableauAppConnection(
                 server_name=self.server_name,
                 site_name=self.site_name,
                 app_client_id=self.app_client_id,
-                secret_id=self.secret_id,
+                secret_id=secret_id,
             )
-            app_connection.plaintext_secret_value = self.secret_value
+            app_connection.plaintext_secret_value = secret_value
             app_connection.save()
             logger.info("The connected app with its secret details are now stored in HQ.")
 
