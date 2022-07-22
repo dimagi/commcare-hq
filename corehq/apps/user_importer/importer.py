@@ -459,6 +459,17 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     from corehq.apps.user_importer.helpers import CommCareUserImporter, WebUserImporter
 
     domain_info_by_domain = {}

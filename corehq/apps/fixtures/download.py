@@ -53,6 +53,17 @@ def prepare_fixture_html(table_ids, domain):
 
 
 def _prepare_fixture(table_ids, domain, html_response=False, task=None):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     if table_ids and table_ids[0]:
         try:
             data_types_view = [FixtureDataType.get(id) for id in table_ids]
