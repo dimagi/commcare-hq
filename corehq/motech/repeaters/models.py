@@ -332,9 +332,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         repeater_dict.pop('next_attempt_at', None)
         repeater_dict.pop('last_attempt_at', None)
 
-        return self._make_serializable_dict(repeater_dict)
+        self._convert_to_serializable(repeater_dict)
+        return repeater_dict
 
-    def _make_serializable_dict(self, repeater_dict):
+    def _convert_to_serializable(self, repeater_dict):
         for key, val in repeater_dict.items():
             try:
                 json.dumps(val)
@@ -348,7 +349,6 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                     You may implement to_json for {self.repeater_type}"""
                 )
                 raise e
-        return repeater_dict
 
     def get_url(self, record):
         return self.repeater.get_url(record)
