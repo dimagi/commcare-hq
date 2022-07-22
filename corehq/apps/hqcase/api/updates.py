@@ -25,8 +25,8 @@ class JsonIndex(jsonobject.JsonObject):
     case_type = jsonobject.StringProperty(required=True)
     relationship = jsonobject.StringProperty(required=True, choices=('child', 'extension'))
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def validate(self, *args, **kwargs):
+        super().validate(*args, **kwargs)
         if len(list(filter(None, [self.case_id, self.external_id, self.temporary_id]))) != 1:
             raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
 
@@ -49,9 +49,9 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         string_conversions = ()
 
     @classmethod
-    def wrap(self, obj):
+    def wrap(cls, obj):
         for attr, _ in obj.items():
-            if attr not in self._properties_by_key:
+            if attr not in cls._properties_by_key:
                 # JsonObject will raise an exception here anyways, but we need
                 # a user-friendly error message
                 raise BadValueError(f"'{attr}' is not a valid field.")
