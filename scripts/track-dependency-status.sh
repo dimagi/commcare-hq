@@ -1,7 +1,9 @@
 # Get total count of python dependencies and outdated python dependencies
 
-total_python_deps="$(pip list| wc -l)"
-outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/pip-dep-debt.py)"
+# skip 2 header lines (produced by pip list)
+total_python_deps="$(pip list | tail -n +3 | wc -l)"
+# skip 1 header line (produced by pip-dep-debt.py)
+outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/pip-dep-debt.py | tail -n +2)"
 outdated_python_deps=$(echo "${outdated_python_deps_list}" | wc -l)
 major_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^[^0]' | wc -l)
 minor_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^0\.[^0]' | wc -l)
