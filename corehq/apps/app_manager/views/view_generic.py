@@ -60,6 +60,17 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     This is the main view for the app. All other views redirect to here.
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
