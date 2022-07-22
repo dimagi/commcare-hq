@@ -400,7 +400,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type,
+            'doc_type': self.repeater_type,
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
