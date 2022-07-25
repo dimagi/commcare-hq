@@ -13,7 +13,7 @@ TODO:
 
 USAGE:
 
-$ pip list --format json --outdated | ./scripts/pip-dep-debt.py
+$ pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py
 Behind   Package                  Latest       Version
 0.0.1    colorama                 0.4.4        0.4.3
 0.0.1    django-appconf           1.0.5        1.0.4
@@ -23,7 +23,7 @@ Behind   Package                  Latest       Version
 21.0.0   contextlib2              21.6.0       0.6.0.post1
 
 # quiet down, pip!
-$ pip list --format json --outdated 2>/dev/null | ./scripts/pip-dep-debt.py
+$ pip list --format json --outdated 2>/dev/null | ./scripts/outdated-dependency-metrics.py
 ...
 
 Enjoy!
