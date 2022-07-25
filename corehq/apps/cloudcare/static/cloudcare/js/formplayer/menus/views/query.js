@@ -226,6 +226,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     this.errorMessage = null;
                 }
                 this.hasError = hasError;
+                this.render();
             }
             return !this.hasError;
         },
