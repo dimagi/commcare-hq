@@ -44,7 +44,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
-from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.models import SQLRepeater
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 
@@ -469,7 +469,7 @@ def num_case_sharing_groups(domain):
 
 
 def num_repeaters(domain):
-    return len(Repeater.by_domain(domain))
+    return SQLRepeater.objects.filter(domain=domain).count()
 
 
 def _get_domain_exports(domain):
