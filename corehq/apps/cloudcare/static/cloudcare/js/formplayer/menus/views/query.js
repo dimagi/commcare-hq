@@ -195,16 +195,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             searchForBlank: '.search-for-blank',
         },
 
-        modelEvents: {
-            'change': 'render',
-        },
-
         events: {
             'change @ui.queryField': 'changeQueryField',
             'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
+        modelEvents: {
+            'change': 'render',
+        },
 
         _isValid: function () {
             if (this.model.get("error")) {
