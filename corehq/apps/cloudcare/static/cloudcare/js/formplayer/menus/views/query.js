@@ -227,7 +227,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 }
                 this.hasError = hasError;
             }
-            this.render();
             return !this.hasError;
         },
 
@@ -435,6 +434,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
+                    childView.render();
                 }
             });
 
