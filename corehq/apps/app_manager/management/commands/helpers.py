@@ -103,9 +103,13 @@ class AppMigrationCommandBase(BaseCommand):
 
     @staticmethod
     def increment_app_version(app_doc):
-        if not getattr(app_doc, 'copy_of', False) and getattr(app_doc, 'version', False):
-            app_doc['version'] = app_doc['version'] + 1
-        return app_doc
+        try:
+            copy_of = app_doc['copy_of']
+            version = app_doc['version']
+        except KeyError:
+            return
+        if copy_of and version:
+            app_doc['version'] = version + 1
 
     def get_app_ids(self, domain=None):
         return get_all_app_ids(domain=domain, include_builds=self.include_builds)
