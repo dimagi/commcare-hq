@@ -3,7 +3,7 @@
 # skip 2 header lines (produced by pip list)
 total_python_deps="$(pip list | tail -n +3 | wc -l)"
 # skip 1 header line (produced by outdated-dependency-metrics.py)
-outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py | tail -n +2)"
+outdated_python_deps_list="$(pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py pip | tail -n +2)"
 outdated_python_deps=$(echo "${outdated_python_deps_list}" | wc -l)
 multi_major_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^[^01]' | wc -l)
 major_outdated_python_deps=$(echo "${outdated_python_deps_list}" | grep '^1' | wc -l)

@@ -3,9 +3,6 @@
 dependencies.
 
 TODO:
-- use argparse
-    - for usage/epilog/help/etc
-    - accept files other than a STDIN pipe
 - dynamically calculate column widths rather than using hard-coded widths
 - make it more robust (currently will crash if versions aren't SemVer compliant,
   does PyPi allow this?)
@@ -13,7 +10,7 @@ TODO:
 
 USAGE:
 
-$ pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py
+$ pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py pip
 Behind   Package                  Latest       Version
 0.0.1    colorama                 0.4.4        0.4.3
 0.0.1    django-appconf           1.0.5        1.0.4
@@ -23,27 +20,55 @@ Behind   Package                  Latest       Version
 21.0.0   contextlib2              21.6.0       0.6.0.post1
 
 # quiet down, pip!
-$ pip list --format json --outdated 2>/dev/null | ./scripts/outdated-dependency-metrics.py
+$ pip list --format json --outdated 2>/dev/null | ./scripts/outdated-dependency-metrics.py pip
 ...
 
 Enjoy!
 """
+import argparse
 import json
 import sys
 
 
-def main(stream):
-    records = []
-    for pkg in json.load(stream):
-        latest = pkg["latest_version"]
-        current = pkg["version"]
-        records.append((behind(latest, current), pkg["name"], latest, current))
+def main():
+    stream_parsers = {
+        "pip": parse_pip,
+    }
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "format",
+        choices=list(stream_parsers),
+        help="package information format (choices=%(choices)s)",
+    )
+    parser.add_argument(
+        "in_file",
+        metavar="FILE",
+        nargs="?",
+        type=argparse.FileType(mode="r"),
+        default=sys.stdin,
+        help="read package (JSON) information from %(metavar)s, specify a dash "
+             "(-) to read from STDIN (the default).",
+    )
+    opts = parser.parse_args()
+    package_list(opts.in_file, stream_parsers[opts.format])
+
+
+def package_list(stream, stream_parser):
+    records = sorted(stream_parser(stream))
     try:
         print_line("Behind", "Package", "Latest", "Version")
-        for delta, name, current, latest in sorted(records):
+        for delta, name, current, latest in records:
             print_line(".".join(str(v) for v in delta), name, current, latest)
     except IOError:
         pass
+
+
+def parse_pip(stream):
+    for pkg in json.load(stream):
+        latest = pkg["latest_version"]
+        current = pkg["version"]
+        yield behind(latest, current), pkg["name"], latest, current
 
 
 def print_line(delta, name, current, latest):
@@ -65,4 +90,4 @@ def vsplit(version):
 
 
 if __name__ == "__main__":
-    main(sys.stdin)
+    main()
