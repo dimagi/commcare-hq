@@ -40,6 +40,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from functools import wraps
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -123,6 +124,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq.toggles import VIEW_FORM_ATTACHMENT
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
@@ -160,6 +162,20 @@ require_form_view_permission = require_permission(
 )
 
 require_can_view_all_reports = require_permission(HqPermissions.view_reports)
+
+
+def _augmented_form_view_permissions():
+    def decorator(view_func):
+        @wraps(view_func)
+        def _inner(request, domain, *args, **kwargs):
+            if VIEW_FORM_ATTACHMENT.enabled(domain):
+                return view_func(request, domain, *args, **kwargs)
+            return require_form_view_permission(view_func)(request, domain, *args, **kwargs)
+        return _inner
+    return decorator
+
+
+augmented_form_view_permissions = _augmented_form_view_permissions()
 
 
 @login_and_domain_required
