@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""A convenience utility for calculating how far "behind" HQ is on outdated pip
+"""A convenience utility for calculating how far "behind" HQ is on outdated
 dependencies.
 
 TODO:
@@ -13,15 +13,17 @@ USAGE:
 $ pip list --format json --outdated | ./scripts/outdated-dependency-metrics.py pip
 Behind   Package                  Latest       Version
 0.0.1    colorama                 0.4.4        0.4.3
-0.0.1    django-appconf           1.0.5        1.0.4
-...
-0.4.0    Sphinx                   4.5.0        4.1.2
 ...
 21.0.0   contextlib2              21.6.0       0.6.0.post1
 
-# quiet down, pip!
-$ pip list --format json --outdated 2>/dev/null | ./scripts/outdated-dependency-metrics.py pip
+
+$ yarn outdated --json | ./scripts/outdated-dependency-metrics.py yarn
+WARNING: skipping exotic package: knockout-validation
 ...
+Behind   Package                      Latest       Version
+0.0.1    bootstrap-timepicker         0.5.2        0.5.1
+...
+12.0.0   sinon                        14.0.0       2.3.2
 
 Enjoy!
 """
@@ -33,6 +35,7 @@ import sys
 def main():
     stream_parsers = {
         "pip": parse_pip,
+        "yarn": parse_yarn,
     }
 
     parser = argparse.ArgumentParser()
@@ -63,12 +66,20 @@ def main():
 
 
 def package_list(stream, stream_parser, labels=True):
+
+    def print_line(behind, name, current, latest):
+        print(f"{behind:8s} {name:28s} {current:12s} {latest}")
+
     records = sorted(stream_parser(stream))
     try:
         if labels:
             print_line("Behind", "Package", "Latest", "Version")
         for delta, name, current, latest in records:
-            print_line(".".join(str(v) for v in delta), name, current, latest)
+            if delta is None:
+                behind = "n/a"
+            else:
+                behind = ".".join(str(v) for v in delta)
+            print_line(behind, name, current, latest)
     except IOError:
         pass
 
@@ -80,8 +91,34 @@ def parse_pip(stream):
         yield behind(latest, current), pkg["name"], latest, current
 
 
-def print_line(delta, name, current, latest):
-    print(f"{delta:8s} {name:24s} {current:12s} {latest}")
+def parse_yarn(stream):
+    def fail():
+        raise ValueError(f"invalid yarn package data: {lines}")
+    lines = [line for line in stream.readlines() if line.rstrip()]
+    if len(lines) == 1:
+        blob = lines[0]
+    elif len(lines) == 2:
+        for_humans = json.loads(lines[0])
+        if for_humans["type"] != "info":
+            fail()
+        blob = lines[1]
+    else:
+        fail()
+    payload = json.loads(blob)
+    if payload["type"] != "table":
+        fail()
+    head = payload["data"]["head"]
+    body = payload["data"]["body"]
+    for record in body:
+        pkg = dict(zip(head, record))
+        name = pkg["Package"]
+        latest = pkg["Latest"]
+        current = pkg["Current"]
+        if latest == "exotic":
+            delta = None
+        else:
+            delta = behind(latest, current)
+        yield delta, name, latest, current
 
 
 def behind(latest, current):
