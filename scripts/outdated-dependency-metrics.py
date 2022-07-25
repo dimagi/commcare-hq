@@ -50,14 +50,23 @@ def main():
         help="read package (JSON) information from %(metavar)s, specify a dash "
              "(-) to read from STDIN (the default).",
     )
+    parser.add_argument(
+        "--no-labels",
+        dest="labels",
+        default=True,
+        action="store_false",
+        help="do not print data labels in the output",
+    )
+
     opts = parser.parse_args()
-    package_list(opts.in_file, stream_parsers[opts.format])
+    package_list(opts.in_file, stream_parsers[opts.format], opts.labels)
 
 
-def package_list(stream, stream_parser):
+def package_list(stream, stream_parser, labels=True):
     records = sorted(stream_parser(stream))
     try:
-        print_line("Behind", "Package", "Latest", "Version")
+        if labels:
+            print_line("Behind", "Package", "Latest", "Version")
         for delta, name, current, latest in records:
             print_line(".".join(str(v) for v in delta), name, current, latest)
     except IOError:
