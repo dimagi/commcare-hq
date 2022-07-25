@@ -19,13 +19,12 @@ class Command(BaseCommand):
                 for module in app.modules:
                     if hasattr(module, 'search_config'):
                         print(f"Looking at Module: {module.name[app.default_language]}")
-                        try:
-                            title_label = module.search_config.title_label
-                            for lang, string in title_label.items():
-                                if string is None:
-                                    print(f"Fixing translation: {{{lang}: {string}}}")
-                                    module.search_config.title_label[lang] = ""
-                                    app.save()
-                        except:
-                            print("Skipping Module.")
-                            pass
+
+                        title_label = module.search_config.title_label
+                        new_title_label = {}
+                        for lang, string in title_label.items():
+                            if string is None:
+                                print(f"Fixing translation: {{{lang}: {string}}}")
+                                new_title_label[lang] = ""
+                            else:
+                                new_title_label[lang] = string
