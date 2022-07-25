@@ -54,6 +54,12 @@ def main():
              "(-) to read from STDIN (the default).",
     )
     parser.add_argument(
+        "--stats",
+        default=False,
+        action="store_true",
+        help="print package statistics and exit",
+    )
+    parser.add_argument(
         "--no-labels",
         dest="labels",
         default=True,
@@ -62,7 +68,11 @@ def main():
     )
 
     opts = parser.parse_args()
-    package_list(opts.in_file, stream_parsers[opts.format], opts.labels)
+    if opts.stats:
+        func = package_stats
+    else:
+        func = package_list
+    func(opts.in_file, stream_parsers[opts.format], opts.labels)
 
 
 def package_list(stream, stream_parser, labels=True):
@@ -82,6 +92,46 @@ def package_list(stream, stream_parser, labels=True):
             print_line(behind, name, current, latest)
     except IOError:
         pass
+
+
+def package_stats(stream, stream_parser, labels=True):
+
+    def print_stat(label, value):
+        if labels:
+            print(f"{label}: ", end="")
+        print(value)
+
+    stats = {
+        "Outdated": 0,
+        "Multi-Major": 0,
+        "Major": 0,
+        "Minor": 0,
+        "Patch": 0,
+        "Exotic": 0,
+    }
+    for delta, name, current, latest in stream_parser(stream):
+        if delta is None:
+            key = "Exotic"
+        else:
+            major, minor, patch = delta
+            if major:
+                assert not minor and not patch, delta
+                if major == 1:
+                    key = "Major"
+                else:
+                    key = "Multi-Major"
+            elif minor:
+                assert not major and not patch, delta
+                key = "Minor"
+            else:
+                assert patch and not major and not minor, delta
+                key = "Patch"
+        stats[key] += 1
+        stats["Outdated"] += 1
+    # NOTE: subtle detail: we're depending on Python 3's ordered dict to
+    # maintain deterministic ordering here (critical when using --no-labels).
+    for key, value in stats.items():
+        print_stat(key, value)
 
 
 def parse_pip(stream):
