@@ -56,42 +56,12 @@ class AppMigrationCommandBase(BaseCommand):
             default=False,
             help="Perform the migration but don't save any changes",
         )
-        parser.add_argument(
-            '--use-chunks',
-            action='store_true',
-            default=False,
-            help='''To break up this management command across multiple chunks of domains to make it executable
-            over a large number of domains, set this to true and use the 'chunk-number' and 'total-chunks'
-            variables. Assumes that the result of get_domains() is ordered and constant between command
-            executions.''',
-        )
-        parser.add_argument(
-            '--total-chunks',
-            action='store',
-            default=None,
-            help='''Specify the total number of chunks to break the list of domains into. 'use-chunks' must be
-            true.''',
-        )
-        parser.add_argument(
-            '--chunk-number',
-            action='store',
-            default=None,
-            help='''Specify which domain list chunk number you would like to perform this command on.
-            Start at one.''',
-        )
 
     def handle(self, **options):
         start_time = time()
         self.options = options
         if self.options['domain']:
             domains = [self.options['domain']]
-        elif self.use_chunks:
-            num_domains = len(self.get_domains())
-            start_at = int(num_domains * (self.chunk_number - 1) / self.total_chunks)
-            end_at = int(num_domains * self.chunk_number / self.total_chunks)
-            domains = self.get_domains()[start_at:end_at] or [None]
-            logger.info(f'''{num_domains} total domains. Beginning at domain #{start_at},\
-                            ending at domain #{end_at}.''')
         else:
             domains = self.get_domains() or [None]
         for domain in domains:
@@ -113,18 +83,6 @@ class AppMigrationCommandBase(BaseCommand):
     @property
     def log_debug(self):
         return self.options.get("verbosity", 0) > 2
-
-    @property
-    def use_chunks(self):
-        return self.options.get('use_chunks', False)
-
-    @property
-    def total_chunks(self):
-        return int(self.options.get('total_chunks', None))
-
-    @property
-    def chunk_number(self):
-        return int(self.options.get('chunk_number', None))
 
     def _doc_types(self):
         doc_types = ["Application", "Application-Deleted"]
