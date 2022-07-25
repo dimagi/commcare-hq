@@ -434,8 +434,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.children.each(function (childView) {
                 if (!childView.isValid()) {
                     invalidFields.push(childView.model.get('text'));
-                    childView.render();
                 }
+                childView.render();
             });
 
             if (invalidFields.length) {
