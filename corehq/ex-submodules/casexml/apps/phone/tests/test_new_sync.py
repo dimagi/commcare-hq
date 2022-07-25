@@ -84,7 +84,7 @@ class TestNewSyncSpecifics(TestCase):
         factory.create_or_update_cases([
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
-        ], form_extras={'last_sync_token': sync_log._id})
+        ], submission_extras={'last_sync_token': sync_log._id})
 
         # doing it again should fail since they are no longer relevant
 
@@ -93,7 +93,7 @@ class TestNewSyncSpecifics(TestCase):
         #     factory.create_or_update_cases([
         #         CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
         #         CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
-        #     ], form_extras={'last_sync_token': sync_log._id})
+        #     ], submission_extras={'last_sync_token': sync_log._id})
 
         # enabling the toggle should prevent the failure the second time
         # though we also need to hackily set the request object in the threadlocals
@@ -103,4 +103,4 @@ class TestNewSyncSpecifics(TestCase):
         factory.create_or_update_cases([
             CaseStructure(case_id=child_id, attrs={'owner_id': 'different'}),
             CaseStructure(case_id=parent_id, attrs={'owner_id': 'different'}),
-        ], form_extras={'last_sync_token': sync_log._id})
+        ], submission_extras={'last_sync_token': sync_log._id})
