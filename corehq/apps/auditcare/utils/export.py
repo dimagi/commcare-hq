@@ -55,8 +55,10 @@ def get_users_for_domain(domain):
     return users, removed_users, super_users
 
 
-def get_all_log_events(start_date=None, end_date=None):
+def get_all_log_events(start_date=None, end_date=None, domains=None):
     where = get_date_range_where(start_date, end_date)
+    if domains:
+        where['domain__in'] = domains
     return chain(
         AuditWindowQuery(AccessAudit.objects.filter(**where)),
         AuditWindowQuery(NavigationEventAudit.objects.filter(**where)),
@@ -127,7 +129,7 @@ def write_generic_log_event(writer, event):
     ])
 
 
-def write_export_from_all_log_events(file_obj, start, end):
+def write_export_from_all_log_events(file_obj, start, end, domains=None):
     writer = csv.writer(file_obj)
     writer.writerow(['Date', 'Type', 'User', 'Domain', 'IP Address', 'Action', 'Resource', 'Description'])
     for event in get_all_log_events(start, end):

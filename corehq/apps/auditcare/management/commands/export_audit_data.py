@@ -24,6 +24,12 @@ class Command(BaseCommand):
             type=dateutil.parser.parse,
             help="The end date - format YYYY-MM-DD",
         )
+        parser.add_argument(
+            '-d',
+            '--domain',
+            nargs='*',
+            help="Domains",
+        )
 
     def handle(self, filename=None, **options):
         with open(filename, 'w') as csvfile:
