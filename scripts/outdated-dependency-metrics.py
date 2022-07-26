@@ -30,7 +30,6 @@ Enjoy!
 import argparse
 import json
 import sys
-from functools import cmp_to_key
 
 
 def main():
@@ -81,10 +80,7 @@ def package_list(stream, stream_parser, labels=True):
     def print_line(behind, name, current, latest):
         print(f"{behind:8s} {name:28s} {current:12s} {latest}")
 
-    records = sorted(
-        stream_parser(stream),
-        key=cmp_to_key(compare_yarn_versions) if stream_parser == parse_yarn else None
-    )
+    records = sorted(stream_parser(stream))
     try:
         if labels:
             print_line("Behind", "Package", "Latest", "Version")
@@ -143,23 +139,6 @@ def parse_pip(stream):
         latest = pkg["latest_version"]
         current = pkg["version"]
         yield behind(latest, current), pkg["name"], latest, current
-
-
-def compare_yarn_versions(x, y):
-    try:
-        if x < y:
-            return -1
-        elif y > x:
-            return 1
-        else:
-            return 0
-    except TypeError:
-        if isinstance(x[0], list) and y[0] is None:
-            return -1
-        elif isinstance(y[0], list) and x[0] is None:
-            return 1
-        else:
-            return 0
 
 
 def parse_yarn(stream):
