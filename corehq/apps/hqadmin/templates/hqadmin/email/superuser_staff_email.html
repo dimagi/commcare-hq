@@ -1,0 +1,28 @@
+<p>The following users had changes to their superuser and staff statuses (changes in RED):</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Users</td>
+      <td>is Superuser</td>
+      <td>is Staff</td>
+    </tr>
+    {% for user in user_changes %}
+      <tr>
+        <td>{{ user.email }}</td>
+        {% if 'is_staff' in user %}
+          <td style="color:red">{{ user.is_staff }}</td>
+        {% elif 'same_staff' in user %}
+          <td>{{ user.same_staff }}</td>
+        {% endif %}
+        {% if 'is_superuser' in user %}
+          <td style="color:red">{{ user.is_superuser }}</td>
+        {% elif 'same_superuser' in user %}
+          <td>{{ user.same_superuser }}</td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<p>You've been sent this email because you are a Django Admin.</p>
