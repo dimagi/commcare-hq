@@ -373,30 +373,27 @@ class TestXFormPillow(TestCase):
 
 class TestViewFormAttachment(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setUp(self):
+        super().setUp()
 
         Role.get_cache().clear()
-        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.view_form_endpoint = cls._get_view_form_endpoint()
-        cls.username = 'rudolph@qwerty.commcarehq.org'
-        cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, None, None,
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.view_form_endpoint = self._get_view_form_endpoint()
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None,
                                   email='rudoph@example.com', first_name='rudolph', last_name='commcare')
-        cls.user.save()
+        self.user.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete(deleted_by_domain=cls.domain.name, deleted_by=None)
-        cls.domain.delete()
-        super(TestViewFormAttachment, cls).tearDownClass()
+    def tearDown(self):
+        self.user.delete(deleted_by_domain=self.domain.name, deleted_by=None)
+        self.domain.delete()
+        super(TestViewFormAttachment, self).tearDown()
 
-    @classmethod
-    def _get_view_form_endpoint(cls):
+    def _get_view_form_endpoint(self):
         return reverse('api_form_attachment',
                 kwargs=dict(
-                    domain=cls.domain.name,
+                    domain=self.domain.name,
                     instance_id='5321',
                     attachment_id='1234',
                 )
