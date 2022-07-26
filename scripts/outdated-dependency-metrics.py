@@ -85,10 +85,10 @@ def package_list(stream, stream_parser, labels=True):
         if labels:
             print_line("Behind", "Package", "Latest", "Version")
         for delta, name, current, latest in records:
-            if delta is None:
-                behind = "n/a"
-            else:
+            if delta:
                 behind = ".".join(str(v) for v in delta)
+            else:
+                behind = "n/a"
             print_line(behind, name, current, latest)
     except IOError:
         pass
@@ -110,9 +110,7 @@ def package_stats(stream, stream_parser, labels=True):
         "Exotic": 0,
     }
     for delta, name, current, latest in stream_parser(stream):
-        if delta is None:
-            key = "Exotic"
-        else:
+        if delta:
             major, minor, patch = delta
             if major:
                 assert not minor and not patch, delta
@@ -126,6 +124,8 @@ def package_stats(stream, stream_parser, labels=True):
             else:
                 assert patch and not major and not minor, delta
                 key = "Patch"
+        else:
+            key = "Exotic"
         stats[key] += 1
         stats["Outdated"] += 1
     # NOTE: subtle detail: we're depending on Python 3's ordered dict to
@@ -165,7 +165,7 @@ def parse_yarn(stream):
         latest = pkg["Latest"]
         current = pkg["Current"]
         if latest == "exotic":
-            delta = None
+            delta = []
         else:
             delta = behind(latest, current)
         yield delta, name, latest, current
