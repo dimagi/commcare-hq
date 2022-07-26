@@ -427,28 +427,41 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         submitAction: function (e) {
+            var self = this;
             e.preventDefault();
 
 
-            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
             var invalidFields = [];
-            this.children.each(function (childView) {
-                if (!childView.isValid()) {
-                    invalidFields.push(childView.model.get('text'));
+
+            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            var urlObject = Util.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+
+            $.when(fetchingPrompts).done(function (response) {
+                FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
+                for (var i = 0; i < response.models.length; i++) {
+                        self.collection.models[i].set('error', response.models[i].get('error'));
                 }
+                self.children.each(function (childView) {
+                    if (!childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                if (invalidFields.length) {
+                    var errorHTML = "Please check the following fields:";
+                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                    }).join("") + "</ul>";
+                    FormplayerFrontend.trigger('showError', errorHTML, true);
+
+                    return;
+                }
+
+                FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
 
-            if (invalidFields.length) {
-                var errorHTML = "Please check the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                }).join("") + "</ul>";
-                FormplayerFrontend.trigger('showError', errorHTML, true);
-
-                return;
-            }
-
-            FormplayerFrontend.trigger("menu:query", this.getAnswers());
         },
 
         setStickyQueryInputs: function () {
