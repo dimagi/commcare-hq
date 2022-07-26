@@ -14,8 +14,12 @@ class Command(BaseCommand):
             print(f"Looking at domain: {domain}")
             app_ids = get_all_app_ids(domain)  # , include_builds=True)
             for app_id in app_ids:
-                app = Application.get(app_id)
-                print(f"Checking Application Modules: {app_id}")
+                try:
+                    print(f"Checking Application Modules: {app_id}")
+                    app = Application.get(app_id)
+                except Exception as e:
+                    print(f"Skipping Application: {app_id}")
+                    print(e)
                 for module in app.modules:
                     if hasattr(module, 'search_config'):
                         print(f"Looking at Module: {module.name}")
