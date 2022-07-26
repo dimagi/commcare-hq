@@ -532,6 +532,16 @@ class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
         with self.assertRaises(ProtectedError):
             self.sql_repeater.connection_settings.delete()
 
+    def test_connection_settings_used_by(self):
+        self.assertEqual(self.conn.used_by, {'Data Forwarding'})
+
+    def test_conn_with_no_used_by(self):
+        new_conn = ConnectionSettings.objects.create(
+            url='http://blah-url.com',
+            domain='nice-domain'
+        )
+        self.assertEqual(new_conn.used_by, set())
+
 
 def test_attempt_forward_now_kwargs():
     rr = RepeatRecord()
