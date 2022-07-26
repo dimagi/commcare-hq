@@ -18,7 +18,7 @@ class Command(BaseCommand):
                 print(f"Checking Application Modules: {app_id}")
                 for module in app.modules:
                     if hasattr(module, 'search_config'):
-                        print(f"Looking at Module: {module.name[app.default_language]}")
+                        print(f"Looking at Module: {module.name}")
                         title_label = module.search_config.title_label
                         new_title_label = {}
                         for lang, string in title_label.items():
