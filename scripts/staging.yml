@@ -74,6 +74,7 @@ branches:
     - ap/celery-upgrade-patch # Amit June 1
     - mjr/report-logging-verification # Matt July 20
     - jls/stop-the-constant-rendering # Jenny July something
+    - jls/stop-the-constant-rendering+rc/search-input-validation
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
