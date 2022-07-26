@@ -240,6 +240,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
+            self.hasError = false;
+            self.render();
+            FormplayerFrontend.trigger('clearNotifications');
         },
 
         getEncodedValue: function () {
