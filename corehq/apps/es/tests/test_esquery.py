@@ -316,10 +316,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
 
     def test_scroll_with_aggregations_raises(self):
         query = HQESQuery('forms').terms_aggregation('domain.exact', 'domain')
-        with (
-            patch("corehq.apps.es.es_query.scroll_query"),
-            self.assertRaises(InvalidQueryError),
-        ):
+        with self.assertRaises(InvalidQueryError):
             list(query.scroll())
 
     def _scroll_query_mock_assert(self, **raw_query_assertions):
