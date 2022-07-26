@@ -231,15 +231,13 @@ class ConnectionSettings(models.Model):
         this instance. Used for informing users, and determining whether
         the instance can be deleted.
         """
-        from corehq.motech.repeaters.models import Repeater
 
         kinds = set()
         if self.incrementalexport_set.exists():
             kinds.add(_('Incremental Exports'))
         if self.sqldatasetmap_set.exists():
             kinds.add(_('DHIS2 DataSet Maps'))
-        if any(r.connection_settings_id == self.id
-                for r in Repeater.by_domain(self.domain)):
+        if self.repeaters.exists():
             kinds.add(_('Data Forwarding'))
 
         # TODO: Check OpenmrsImporters (when OpenmrsImporters use ConnectionSettings)
