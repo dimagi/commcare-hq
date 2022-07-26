@@ -36,7 +36,7 @@ function main {
     pip list --format json --outdated 2>/dev/null | publish_metrics python pip "$total"
 
     # get total JS dependency count (skip the first and last lines)
-    total=$(yarn list --depth 0 | tail -n+2 | head -n-1 | wc -l)
+    total=$(js_pinned_packages ./package.json)
     # publish javascript metrics
     yarn outdated --json | publish_metrics js yarn "$total"
 }
@@ -81,6 +81,26 @@ function publish_datadog_gauge {
     if $send_to_datadog; then
         send_metric_to_datadog "$metric_path" "$value" gauge
     fi
+}
+
+
+function js_pinned_packages {
+    local json_path="$1"
+    python - "$json_path" <<-END
+import json
+import sys
+
+package_groups = [
+    "dependencies",
+    "devDependencies",
+    # "optionalDependencies",
+    "resolutions",
+]
+
+with open(sys.argv[1], "r") as json_file:
+    package = json.load(json_file)
+print(sum(len(package[grp]) for grp in package_groups))
+END
 }
 
 
