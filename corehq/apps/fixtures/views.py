@@ -48,6 +48,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataItem,
     FixtureDataType,
     FixtureTypeField,
+    LookupTableRow,
 )
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
@@ -64,6 +65,7 @@ from corehq.apps.fixtures.utils import (
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
 from corehq.apps.users.models import HqPermissions
+from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
@@ -198,6 +200,11 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
                 properties=[]
             ))
     data_type.fields = new_fixture_fields
+
+    def update_sql_objects():
+        data_type._migration_do_sync()
+
+    transaction.set_sql_save_action(FixtureDataType, update_sql_objects)
     transaction.save(data_type)
     return data_type
 
@@ -226,6 +233,30 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
+
+    fields_json = "fields"
+    for field_name, patch in fields_patches.items():
+        if "update" in patch:
+            new_field_name = patch["update"]
+            fields_json = JsonSet(
+                JsonDelete(fields_json, field_name),
+                [new_field_name],
+                JsonGet("fields", field_name),
+            )
+        elif "remove" in patch:
+            fields_json = JsonDelete(fields_json, field_name)
+    for field_name, patch in fields_patches.items():
+        if "is_new" in patch:
+            fields_json = JsonSet(fields_json, [field_name], [])
+
+    def update_sql_objects():
+        if fields_json != "fields":
+            LookupTableRow.objects.filter(
+                domain=domain,
+                table_id=data_type_id,
+            ).update(fields=fields_json)
+
+    transaction.set_sql_save_action(FixtureDataItem, update_sql_objects)
     transaction.add_post_commit_action(
         lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
     )
