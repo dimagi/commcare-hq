@@ -11,10 +11,10 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2020
 # Rowena Luk <rluk@dimagi.com>, 2021
-# Ismaïla Diene <idiene@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
 # Aissetou Sawadogo <ais107@hotmail.com>, 2022
 # Tyler Wymer <twymer@dimagi.com>, 2022
+# Ismaïla Diene <idiene@dimagi.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -22,7 +22,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
+"Last-Translator: Ismaïla Diene <idiene@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -3086,6 +3086,12 @@ msgstr "Réattribution de dossier (via HQ)"
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+#, fuzzy
+#| msgid "Case Property"
+msgid "case property name"
+msgstr "Propriété de dossier"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
 "<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
@@ -3144,6 +3150,10 @@ msgstr "Soumettre paiement"
 #: corehq/apps/domain/static/domain/js/billing_statements.js
 msgid "Submit Invoice Request"
 msgstr "Soumettre la demande de Facture"
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -3670,6 +3680,11 @@ msgid "Please specify a password."
 msgstr "Veuillez spécifier un mot de passe."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr "Veuillez spécifier un nom de projet."
 
@@ -3854,10 +3869,8 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
-#, fuzzy
-#| msgid "Time"
 msgid "From Time"
-msgstr "Heure"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
@@ -3921,6 +3934,16 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
+"sauvegarder."
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
@@ -4006,6 +4029,12 @@ msgstr "Échoué "
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
@@ -4182,10 +4211,8 @@ msgid "Unknown error"
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/ucr_expression.js
-#, fuzzy
-#| msgid "Expression"
 msgid "Expression saved"
-msgstr "Expression"
+msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
@@ -4683,6 +4710,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
 msgid "Unable to save case configs"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js

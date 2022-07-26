@@ -2,24 +2,21 @@ import json
 import uuid
 from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
+from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.api.resources import v0_4
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.reportxform import transform_xform_for_report_forms_index
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeFormESView
 
@@ -337,17 +334,15 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         self._test_es_query({'include_archived': 'true'}, expected)
 
 
-class TestReportPillow(TestCase):
+class TestXFormPillow(TestCase):
 
     def test_xformPillowTransform(self):
         """
-        Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
-        mappings
+        Test to make sure xform pillow strips the appVersion dict to match the mappings
         """
-        transform_functions = [transform_xform_for_report_forms_index, transform_xform_for_elasticsearch]
         bad_appVersion = {
             "_id": "foo",
-            "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
+            "domain": 'TestXFormPillow-domain',
             'received_on': "2013-09-20T01:33:12Z",
             "form": {
                 "meta": {
@@ -365,8 +360,7 @@ class TestReportPillow(TestCase):
                 }
             }
         }
-        for fn in transform_functions:
-            cleaned = fn(bad_appVersion)
-            self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
-            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-            self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+        cleaned = transform_xform_for_elasticsearch(bad_appVersion)
+        self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
+        self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
+        self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")

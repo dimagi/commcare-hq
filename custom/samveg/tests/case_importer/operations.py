@@ -11,7 +11,7 @@ class TestAddCustomCaseProperties(SimpleTestCase):
         fields_to_update = {'Call1': '2021-01-01'}
         with patch('custom.samveg.case_importer.operations._get_today_date') as today_patch:
             today_patch.return_value = datetime(2020, 1, 1).date()
-            fields_to_update, errors = AddCustomCaseProperties.run(1, {}, fields_to_update, {})
+            fields_to_update, _ = AddCustomCaseProperties(fields_to_update=fields_to_update).run()
 
         self.assertDictEqual(
             fields_to_update,

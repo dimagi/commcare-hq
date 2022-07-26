@@ -227,7 +227,7 @@ class ApplicationValidator(ApplicationBaseValidator):
         errors = []
         xmlns_count = defaultdict(int)
         for form in self.app.get_forms():
-            errors.extend(form.validate_for_build(validate_module=False))
+            errors.extend(form.validate_for_build())
 
             # make sure that there aren't duplicate xmlns's
             if not isinstance(form, ShadowForm):
@@ -329,7 +329,6 @@ class ModuleBaseValidator(object):
         This is the real validation logic, to be overridden/augmented by subclasses.
         '''
         errors = []
-        app = self.module.get_app()
         needs_case_detail = self.module.requires_case_details()
         needs_case_type = needs_case_detail or any(f.is_registration_form() for f in self.module.get_forms())
         if needs_case_detail or needs_case_type:
@@ -337,30 +336,9 @@ class ModuleBaseValidator(object):
                 needs_case_type=needs_case_type,
                 needs_case_detail=needs_case_detail
             ))
-        if self.module.case_list_form.form_id:
-            try:
-                form = app.get_form(self.module.case_list_form.form_id)
-            except FormNotFoundException:
-                errors.append({
-                    'type': 'case list form missing',
-                    'module': self.get_module_info()
-                })
-            else:
-                if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                    from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
-                    valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
-                    if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
-                        errors.append({
-                            'type': 'invalid case list followup form',
-                            'module': self.get_module_info(),
-                            'form': form,
-                        })
-                elif not form.is_registration_form(self.module.case_type):
-                    errors.append({
-                        'type': 'case list form not registration',
-                        'module': self.get_module_info(),
-                        'form': form,
-                    })
+
+        errors.extend(self.validate_case_list_form())
+
         if self.module.module_filter:
             is_valid, message = validate_xpath(self.module.module_filter)
             if not is_valid:
@@ -370,48 +348,111 @@ class ModuleBaseValidator(object):
                     'module': self.get_module_info(),
                 })
 
-        uses_inline_search = module_uses_inline_search(self.module)
+        errors.extend(self.validate_display_only_forms())
+
+        errors.extend(self.validate_parent_select())
+
+        errors.extend(self.validate_smart_links())
+
+        if self.module.root_module_id:
+            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
+            if root_module and module_uses_inline_search(root_module):
+                errors.append({
+                    'type': 'inline search as parent module',
+                    'module': self.get_module_info(),
+                })
+
+        for form in self.module.get_suite_forms():
+            errors.extend(form.validator.validate_for_module(self.module))
+
+        return errors
+
+    def validate_case_list_form(self):
+        if not self.module.case_list_form.form_id:
+            return []
+
+        errors = []
+        app = self.module.get_app()
+        try:
+            form = app.get_form(self.module.case_list_form.form_id)
+        except FormNotFoundException:
+            errors.append({
+                'type': 'case list form missing',
+                'module': self.get_module_info()
+            })
+        else:
+            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+                from corehq.apps.app_manager.views.modules import get_parent_select_followup_forms
+                valid_forms = [f.unique_id for f in get_parent_select_followup_forms(app, self.module)]
+                if form.unique_id not in valid_forms and not form.is_registration_form(self.module.case_type):
+                    errors.append({
+                        'type': 'invalid case list followup form',
+                        'module': self.get_module_info(),
+                        'form': form,
+                    })
+            elif not form.is_registration_form(self.module.case_type):
+                errors.append({
+                    'type': 'case list form not registration',
+                    'module': self.get_module_info(),
+                    'form': form,
+                })
+
+        return errors
+
+    def validate_display_only_forms(self):
+        errors = []
         if self.module.put_in_root:
             if self.module.session_endpoint_id:
                 errors.append({
                     'type': 'endpoint to display only forms',
                     'module': self.get_module_info(),
                 })
-            if uses_inline_search:
+            if module_uses_inline_search(self.module):
                 errors.append({
                     'type': 'inline search to display only forms',
                     'module': self.get_module_info(),
                 })
+        return errors
 
-        if hasattr(self.module, 'parent_select') and self.module.parent_select.active:
-            if self.module.parent_select.relationship == 'parent':
-                from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
-                valid_modules = get_modules_with_parent_case_type(app, self.module)
-            else:
-                from corehq.apps.app_manager.views.modules import get_all_case_modules
-                valid_modules = get_all_case_modules(app, self.module)
-            valid_module_ids = [info['unique_id'] for info in valid_modules]
-            if self.module.parent_select.module_id not in valid_module_ids:
+    def validate_parent_select(self):
+        if not hasattr(self.module, 'parent_select') or not self.module.parent_select.active:
+            return []
+
+        app = self.module.get_app()
+        errors = []
+
+        if self.module.parent_select.relationship == 'parent':
+            from corehq.apps.app_manager.views.modules import get_modules_with_parent_case_type
+            valid_modules = get_modules_with_parent_case_type(app, self.module)
+        else:
+            from corehq.apps.app_manager.views.modules import get_all_case_modules
+            valid_modules = get_all_case_modules(app, self.module)
+        valid_module_ids = [info['unique_id'] for info in valid_modules]
+        if self.module.parent_select.module_id not in valid_module_ids:
+            errors.append({
+                'type': 'invalid parent select id',
+                'module': self.get_module_info(),
+            })
+        else:
+            module_id = self.module.parent_select.module_id
+            parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
+            if parent_select_module and module_uses_inline_search(parent_select_module):
                 errors.append({
-                    'type': 'invalid parent select id',
+                    'type': 'parent select is inline search module',
                     'module': self.get_module_info(),
                 })
-            else:
-                module_id = self.module.parent_select.module_id
-                parent_select_module = self.module.get_app().get_module_by_unique_id(module_id)
-                if parent_select_module and module_uses_inline_search(parent_select_module):
-                    errors.append({
-                        'type': 'parent select is inline search module',
-                        'module': self.get_module_info(),
-                    })
 
-            if uses_inline_search:
-                if self.module.parent_select.relationship:
-                    errors.append({
-                        'type': 'inline search parent select relationship',
-                        'module': self.get_module_info(),
-                    })
+        if module_uses_inline_search(self.module):
+            if self.module.parent_select.relationship:
+                errors.append({
+                    'type': 'inline search parent select relationship',
+                    'module': self.get_module_info(),
+                })
 
+        return errors
+
+    def validate_smart_links(self):
+        errors = []
         if module_uses_smart_links(self.module):
             if not self.module.session_endpoint_id:
                 errors.append({
@@ -428,7 +469,7 @@ class ModuleBaseValidator(object):
                     'type': 'smart links multi select',
                     'module': self.get_module_info(),
                 })
-            if uses_inline_search:
+            if module_uses_inline_search(self.module):
                 errors.append({
                     'type': 'smart links inline search',
                     'module': self.get_module_info(),
@@ -438,14 +479,6 @@ class ModuleBaseValidator(object):
             if self.module.is_multi_select():
                 errors.append({
                     'type': 'data registry multi select',
-                    'module': self.get_module_info(),
-                })
-
-        if self.module.root_module_id:
-            root_module = self.module.get_app().get_module_by_unique_id(self.module.root_module_id)
-            if root_module and module_uses_inline_search(root_module):
-                errors.append({
-                    'type': 'inline search as parent module',
                     'module': self.get_module_info(),
                 })
 
@@ -797,15 +830,14 @@ class FormBaseValidator(object):
     def __init__(self, form):
         self.form = form
 
-    def validate_for_build(self, validate_module):
-        errors = []
+    def error_meta(self, module=None):
+        if not module:
+            try:
+                module = self.form.get_module()
+            except AttributeError:
+                module = None
 
-        try:
-            module = self.form.get_module()
-        except AttributeError:
-            module = None
-
-        meta = {
+        return {
             'form_type': self.form.form_type,
             'module': module.validator.get_module_info() if module else {},
             'form': {
@@ -815,6 +847,10 @@ class FormBaseValidator(object):
             }
         }
 
+    def validate_for_build(self):
+        errors = []
+
+        meta = self.error_meta()
         xml_valid = False
         if self.form.source == '' and self.form.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
@@ -852,6 +888,40 @@ class FormBaseValidator(object):
                     errors.append(error)
                 except XFormValidationFailed:
                     pass  # ignore this here as it gets picked up in other places
+
+        # this isn't great but two of FormBase's subclasses have form_filter
+        if hasattr(self.form, 'form_filter') and self.form.form_filter:
+            with self.form.timing_context("validate_xpath"):
+                is_valid, message = validate_xpath(self.form.form_filter, allow_case_hashtags=True)
+            if not is_valid:
+                error = {
+                    'type': 'form filter has xpath error',
+                    'xpath_error': message,
+                }
+                error.update(meta)
+                errors.append(error)
+
+        errors.extend(self.extended_build_validation(xml_valid))
+
+        return errors
+
+    def extended_build_validation(self, xml_valid):
+        """
+        Override to perform additional validation during build process.
+        """
+        return []
+
+    def validate_for_module(self, module):
+        """
+        Perform validation that depends on module config.
+        Necessary so that forms can be validated not only against their module, but also
+        against any shadow modules where they appear.
+        """
+        if not self.form.post_form_workflow:
+            return
+
+        errors = []
+        meta = self.error_meta(module)
 
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
@@ -894,27 +964,7 @@ class FormBaseValidator(object):
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
-        # this isn't great but two of FormBase's subclasses have form_filter
-        if hasattr(self.form, 'form_filter') and self.form.form_filter:
-            with self.form.timing_context("validate_xpath"):
-                is_valid, message = validate_xpath(self.form.form_filter, allow_case_hashtags=True)
-            if not is_valid:
-                error = {
-                    'type': 'form filter has xpath error',
-                    'xpath_error': message,
-                }
-                error.update(meta)
-                errors.append(error)
-
-        errors.extend(self.extended_build_validation(meta, xml_valid, validate_module))
-
         return errors
-
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        """
-        Override to perform additional validation during build process.
-        """
-        return []
 
 
 class IndexedFormBaseValidator(FormBaseValidator):
@@ -998,37 +1048,50 @@ class FormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid):
         errors = []
         if xml_valid:
             for error in self.check_actions():
-                error.update(error_meta)
+                error.update(self.error_meta())
                 errors.append(error)
+        return errors
 
-        if validate_module:
-            needs_case_type = False
-            needs_case_detail = False
-            needs_referral_detail = False
+    def validate_for_module(self, module):
+        errors = super().validate_for_module(module)
 
-            if self.form.requires_case():
-                needs_case_detail = True
-                needs_case_type = True
-            if self.form.requires_case_type():
-                needs_case_type = True
-            if self.form.requires_referral():
-                needs_referral_detail = True
+        needs_case_type = False
+        needs_case_detail = False
+        needs_referral_detail = False
+        if self.form.requires_case():
+            needs_case_detail = True
+            needs_case_type = True
+        if self.form.requires_case_type():
+            needs_case_type = True
+        if self.form.requires_referral():
+            needs_referral_detail = True
 
-            errors.extend(self.form.get_module().validator.get_case_errors(
-                needs_case_type=needs_case_type,
-                needs_case_detail=needs_case_detail,
-                needs_referral_detail=needs_referral_detail,
-            ))
+        errors.extend(module.validator.get_case_errors(
+            needs_case_type=needs_case_type,
+            needs_case_detail=needs_case_detail,
+            needs_referral_detail=needs_referral_detail,
+        ))
 
         return errors
 
 
 class AdvancedFormValidator(IndexedFormBaseValidator):
     def check_actions(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         errors = []
 
         from corehq.apps.app_manager.models import AdvancedOpenCaseAction, LoadUpdateAction
@@ -1125,39 +1188,44 @@ class AdvancedFormValidator(IndexedFormBaseValidator):
         return errors
 
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
+    def extended_build_validation(self, xml_valid):
         errors = []
+
         if xml_valid:
             for error in self.check_actions():
-                error.update(error_meta)
+                error.update(self.error_meta())
                 errors.append(error)
 
-        module = self.form.get_module()
-        if validate_module:
-            errors.extend(module.validator.get_case_errors(
-                needs_case_type=False,
-                needs_case_detail=module.requires_case_details(),
-                needs_referral_detail=False,
-            ))
+        return errors
+
+    def validate_for_module(self, module):
+        errors = super().validate_for_module(module)
+
+        errors.extend(module.validator.get_case_errors(
+            needs_case_type=False,
+            needs_case_detail=module.requires_case_details(),
+            needs_referral_detail=False,
+        ))
 
         return errors
 
 
 class ShadowFormValidator(IndexedFormBaseValidator):
     @time_method()
-    def extended_build_validation(self, error_meta, xml_valid, validate_module=True):
-        errors = super(ShadowFormValidator, self).extended_build_validation(error_meta, xml_valid, validate_module)
+    def extended_build_validation(self, xml_valid):
+        errors = super(ShadowFormValidator, self).extended_build_validation(xml_valid)
+        meta = self.error_meta()
         if not self.form.shadow_parent_form_id:
             error = {
                 "type": "missing shadow parent",
             }
-            error.update(error_meta)
+            error.update(meta)
             errors.append(error)
         elif not self.form.shadow_parent_form:
             error = {
                 "type": "shadow parent does not exist",
             }
-            error.update(error_meta)
+            error.update(meta)
             errors.append(error)
         return errors
 

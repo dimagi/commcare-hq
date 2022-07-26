@@ -66,6 +66,8 @@ from .exceptions import (
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -441,8 +443,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    confirmation_link_expiry_time = IntegerProperty(default=168)
-
     ga_opt_out = BooleanProperty(default=False)
 
     restrict_mobile_access = BooleanProperty(default=False)
@@ -687,6 +687,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @classmethod
     def get_all_names(cls):
         return sorted({d['key'] for d in cls.get_all(include_docs=False)})
+
+    @classmethod
+    def get_deleted_domain_names(cls):
+        domains = Domain.view("domain/deleted_domains", include_docs=False, reduce=False).all()
+        return {d['key'] for d in domains}
 
     @classmethod
     def get_all_ids(cls):
@@ -1100,3 +1105,44 @@ class ProjectLimit(models.Model):
     domain = models.CharField(max_length=256, db_index=True)
     limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
     limit_value = models.IntegerField(default=20)
+
+
+class OperatorCallLimitSettings(models.Model):
+    CALL_LIMIT_MINIMUM = 1
+    CALL_LIMIT_MAXIMUM = 1000
+    CALL_LIMIT_DEFAULT = 120
+
+    domain = models.CharField(max_length=256, db_index=True)
+    call_limit = models.IntegerField(
+        default=CALL_LIMIT_DEFAULT,
+        validators=[
+            MinValueValidator(CALL_LIMIT_MINIMUM),
+            MaxValueValidator(CALL_LIMIT_MAXIMUM)
+        ]
+    )
+
+
+class SMSAccountConfirmationSettings(models.Model):
+    PROJECT_NAME_DEFAULT = "CommCare HQ"
+    PROJECT_NAME_MAX_LENGTH = 30
+    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
+    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
+    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
+
+    domain = models.CharField(max_length=256, db_index=True)
+    project_name = models.CharField(
+        default=PROJECT_NAME_DEFAULT,
+        max_length=PROJECT_NAME_MAX_LENGTH,
+    )
+    confirmation_link_expiry_time = models.IntegerField(
+        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
+        validators=[
+            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
+            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
+        ]
+    )
+
+    @staticmethod
+    def get_settings(domain):
+        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
+        return domain_obj

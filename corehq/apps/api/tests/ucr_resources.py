@@ -8,10 +8,10 @@ from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -190,8 +190,8 @@ class TestConfigurableReportDataResource(APIResourceTest):
                 case_id=id,
                 case_type=case_type,
                 update={cls.field_name: val},
-            ).as_xml()
-            post_case_blocks([case_block], {'domain': cls.domain.name})
+            ).as_text()
+            submit_case_blocks(case_block, domain=cls.domain.name)
             cls.cases.append(CommCareCase.objects.get_case(id, cls.domain.name))
 
         cls.report_columns = [

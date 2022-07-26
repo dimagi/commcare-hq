@@ -6,7 +6,7 @@ from nose.tools import nottest, istest
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, WebUser, DomainMembershipError, Permissions
+from corehq.apps.users.models import CommCareUser, WebUser, DomainMembershipError, HqPermissions
 from corehq.apps.users.models_role import UserRole
 
 
@@ -18,7 +18,7 @@ class BaseAuthorizationTest(TestCase):
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
         cls.user = cls._create_user(cls.domain)
-        cls.test_role = UserRole.create(cls.domain, 'test role', permissions=Permissions(
+        cls.test_role = UserRole.create(cls.domain, 'test role', permissions=HqPermissions(
             edit_web_users=True
         ))
 

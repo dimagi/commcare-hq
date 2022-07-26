@@ -9,7 +9,6 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
-    AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseRuleActionResult,
     CaseRuleSubmission,
@@ -20,6 +19,7 @@ from corehq.apps.data_interfaces.models import (
     CustomMatchDefinition,
     DomainCaseRuleRun,
     MatchPropertyDefinition,
+    UCRFilterDefinition,
     UpdateCaseDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
@@ -558,6 +558,30 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime(2022, 4, 15)))
 
+    def test_ucr_filter(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            UCRFilterDefinition,
+            configured_filter={
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "prop",
+                },
+                "operator": "eq",
+                "property_value": "act-on-me",
+            }
+        )
+
+        with _with_case(self.domain, "person", datetime.utcnow(), update={"prop": "dont-act-on-me"}) as case:
+            now = datetime.utcnow()
+            self.assertFalse(rule.criteria_match(case, now))
+
+        with _with_case(self.domain, "person", datetime.utcnow(), update={"prop": "act-on-me"}) as case:
+            now = datetime.utcnow()
+            self.assertTrue(rule.criteria_match(case, now))
+
+
 def set_case_property_directly(case, property_name, value):
     case.case_json[property_name] = value
 
@@ -965,7 +989,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
             # When the last update is an auto case update, we don't run the rule on save
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule_patch:
                 hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'},
-                    xmlns=AUTO_UPDATE_XMLNS)
+                    xmlns=hqcase.utils.AUTO_UPDATE_XMLNS)
                 run_rule_patch.assert_not_called()
 
     def test_do_not_run_on_save_when_flag_is_disabled(self):

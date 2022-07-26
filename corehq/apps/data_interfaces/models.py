@@ -20,6 +20,7 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -36,7 +37,7 @@ from corehq.apps.data_interfaces.deduplication import (
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
@@ -67,7 +68,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
-AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 def _try_date_conversion(date_or_string):
@@ -310,6 +310,7 @@ class AutomaticUpdateRule(models.Model):
             'match_property_definition',
             'custom_match_definition',
             'closed_parent_definition',
+            'ucr_filter_definition',
         ))
 
     @property
@@ -478,6 +479,7 @@ class CaseRuleCriteria(models.Model):
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
     custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE, null=True)
     closed_parent_definition = models.ForeignKey('ClosedParentDefinition', on_delete=models.CASCADE, null=True)
+    ucr_filter_definition = models.ForeignKey('UCRFilterDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -487,6 +489,8 @@ class CaseRuleCriteria(models.Model):
             return self.custom_match_definition
         elif self.closed_parent_definition_id:
             return self.closed_parent_definition
+        elif self.ucr_filter_definition_id:
+            return self.ucr_filter_definition
         else:
             raise ValueError("No available definition found")
 
@@ -502,6 +506,8 @@ class CaseRuleCriteria(models.Model):
             self.custom_match_definition = value
         elif isinstance(value, ClosedParentDefinition):
             self.closed_parent_definition = value
+        elif isinstance(value, UCRFilterDefinition):
+            self.ucr_filter_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -671,6 +677,20 @@ class ClosedParentDefinition(CaseRuleCriteriaDefinition):
                 return True
 
         return False
+
+
+class UCRFilterDefinition(CaseRuleCriteriaDefinition):
+    configured_filter = models.JSONField()
+
+    @memoized
+    def _parsed_filter(self, domain):
+        from corehq.apps.userreports.filters.factory import FilterFactory
+        return FilterFactory.from_spec(self.configured_filter, FactoryContext.empty(domain=domain))
+
+    def matches(self, case, now):
+        case_json = case.to_json()
+        parsed_filter = self._parsed_filter(domain=case.domain)
+        return parsed_filter(case_json, EvaluationContext(case_json))
 
 
 class CaseRuleAction(models.Model):
@@ -890,7 +910,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
             if case_id == case.case_id:
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
-                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15, device_id=rule.id, form_name=rule.name)
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
@@ -903,7 +923,7 @@ class UpdateCaseDefinition(BaseUpdateCaseDefinition):
 
         if close_case or properties:
             result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
-                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15)
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15, device_id=rule.id, form_name=rule.name)
 
             rule.log_submission(result[0].form_id)
 

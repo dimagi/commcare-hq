@@ -9,8 +9,8 @@ from datetime import datetime
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.cases import case_type
-from corehq.apps.data_interfaces.models import CaseRuleActionResult, AUTO_UPDATE_XMLNS
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.data_interfaces.models import CaseRuleActionResult
+from corehq.apps.hqcase.utils import update_case, AUTO_UPDATE_XMLNS
 from corehq.apps.es import filters
 
 
@@ -33,6 +33,7 @@ def set_all_activity_complete_date_to_today(case, rule):
         },
         xmlns=AUTO_UPDATE_XMLNS,
         device_id=__name__ + ".set_all_activity_complete_date_to_today",
+        form_name=rule.name,
     )
     rule.log_submission(submission.form_id)
 
@@ -78,6 +79,7 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
             case_properties=blank_properties,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".close_cases_assigned_to_checkin",
+            form_name=rule.name,
         )
         rule.log_submission(submission.form_id)
 
@@ -87,6 +89,7 @@ def close_cases_assigned_to_checkin(checkin_case, rule):
         close=True,
         xmlns=AUTO_UPDATE_XMLNS,
         device_id=__name__ + ".close_cases_assigned_to_checkin",
+        form_name=rule.name,
     )
     rule.log_submission(close_checkin_submission.form_id)
 

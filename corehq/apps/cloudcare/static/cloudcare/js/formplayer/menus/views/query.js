@@ -14,14 +14,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
-    var encodeValue = function (model, value, searchForBlank) {
+    var encodeValue = function (model, searchForBlank) {
+            var value = model.get('value');
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
-            } else if (model.get('input') === 'select') {
+            } else if (value && model.get('input') === 'select') {
                 value = value.join(selectDelimiter);
             }
 
-            var queryProvided = !(value === '' || (_.isArray(value) && _.isEmpty(value)));
+            var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
                 return selectDelimiter + value;
             } else if (queryProvided) {
@@ -173,15 +174,18 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.model = this.options.model;
             this.hasError = false;
 
-            var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+            var value = this.model.get('value'),
+                allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
-                [searchForBlank, value] = decodeValue(this.model, stickyValue);
-            if (value && !this.model.get('value')) {
-                // Set the value and blank search checkbox from the sticky
-                // values if available and no default is present
-                this.model.set('value', value);
-            }
+                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
+            if (stickyValue && !value) {  // Sticky values don't override default values
+                value = stickyValue;
+            }
+            if (this.model.get('input') === 'select' && _.isString(value)) {
+                value = value.split(selectDelimiter);
+            }
+            this.model.set('value', value);
         },
 
         ui: {
@@ -236,7 +240,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             var queryValue = $(this.ui.queryField).val(),
                 searchForBlank = $(this.ui.searchForBlank).prop('checked');
-            return encodeValue(this.model, queryValue, searchForBlank);
+            return encodeValue(this.model, searchForBlank);
         },
 
         changeQueryField: function (e) {
@@ -244,6 +248,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Skip because dates get handled by changeDateQueryField
                 return;
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+                this.model.set('value', $(e.currentTarget).val());
                 this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
@@ -253,7 +258,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.parentView.setStickyQueryInputs();
         },
         changeDateQueryField: function (e) {
-            this.changeQueryField(e);
+            this.model.set('value', $(e.currentTarget).val());
             this.parentView.setStickyQueryInputs();
         },
 
