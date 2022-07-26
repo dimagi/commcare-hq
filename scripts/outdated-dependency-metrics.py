@@ -18,9 +18,9 @@ Behind   Package                  Latest       Version
 
 
 $ yarn outdated --json | ./scripts/outdated-dependency-metrics.py yarn
-WARNING: skipping exotic package: knockout-validation
-...
 Behind   Package                      Latest       Version
+n/a      At.js                        exotic       1.5.3
+...
 0.0.1    bootstrap-timepicker         0.5.2        0.5.1
 ...
 12.0.0   sinon                        14.0.0       2.3.2
