@@ -523,14 +523,17 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         self.assertTrue(is_migrated)
 
 
-class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
+class TestConnectionSettingsUsedBy(TestCase):
 
-    def test_connection_settings_are_accessible(self):
-        self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
-
-    def test_used_connection_setting_cannot_be_deleted(self):
-        with self.assertRaises(ProtectedError):
-            self.sql_repeater.connection_settings.delete()
+    def setUp(self):
+        super().setUp()
+        url = 'https://www.example.com/api/'
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id
+        )
+        self.repeater.save()
 
     def test_connection_settings_used_by(self):
         self.assertEqual(self.conn.used_by, {'Data Forwarding'})
@@ -541,6 +544,20 @@ class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
             domain='nice-domain'
         )
         self.assertEqual(new_conn.used_by, set())
+
+    def tearDown(self):
+        self.repeater.delete()
+        super().tearDown()
+
+
+class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
+
+    def test_connection_settings_are_accessible(self):
+        self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
+
+    def test_used_connection_setting_cannot_be_deleted(self):
+        with self.assertRaises(ProtectedError):
+            self.sql_repeater.connection_settings.delete()
 
 
 def test_attempt_forward_now_kwargs():
