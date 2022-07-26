@@ -91,6 +91,6 @@
     display: inline-block;
 }
 
-#case-property-table tr td{
+#case-properties-modal table tbody tr td{
     word-break: break-word;
 }
