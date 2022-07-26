@@ -278,7 +278,8 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     options = JSONField(default=dict)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
 
