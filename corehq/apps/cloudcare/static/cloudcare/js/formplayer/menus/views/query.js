@@ -430,8 +430,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-
             var invalidFields = [];
+            var errorHTML = gettext("Please check the following fields:");
+
+            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
 
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
@@ -439,9 +441,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
 
             $.when(fetchingPrompts).done(function (response) {
-                FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
                 for (var i = 0; i < response.models.length; i++) {
-                        self.collection.models[i].set('error', response.models[i].get('error'));
+                    self.collection.models[i].set('error', response.models[i].get('error'));
                 }
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
@@ -450,7 +451,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 });
 
                 if (invalidFields.length) {
-                    var errorHTML = "Please check the following fields:";
                     errorHTML += "<ul>" + _.map(invalidFields, function (f) {
                         return "<li>" + DOMPurify.sanitize(f) + "</li>";
                     }).join("") + "</ul>";
