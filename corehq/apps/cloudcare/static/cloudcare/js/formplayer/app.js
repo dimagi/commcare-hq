@@ -178,7 +178,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         data.formplayerEnabled = true;
         data.displayOptions = $.extend(true, {}, user.displayOptions);
         data.onerror = function (resp) {
-            var message = resp.human_readable_message || resp.exception || "Unexpected Error";
+            var message = resp.human_readable_message || resp.exception || gettext("Unexpected Error");
             if (resp.is_html) {
                 showHTMLError(message, $("#cloudcare-notifications"), resp.reportToHq);
             } else {
