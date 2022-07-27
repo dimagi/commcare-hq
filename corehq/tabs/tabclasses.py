@@ -2294,9 +2294,10 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             self.divider,
-            dropdown_dict(_("Django Admin"), url="/admin"),
-            dropdown_dict(_("View All"), url=self.url),
         ])
+        if self.couch_user.is_staff:
+            submenu_context.append(dropdown_dict(_("Django Admin"), url="/admin"))
+        submenu_context.append(dropdown_dict(_("View All"), url=self.url))
         return submenu_context
 
     @property
