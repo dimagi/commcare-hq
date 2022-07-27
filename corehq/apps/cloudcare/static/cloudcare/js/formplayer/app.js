@@ -133,11 +133,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         $("#cloudcare-notifications").empty();
     });
 
-    FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
         if (isHTML) {
-            showHTMLError(errorMessage, $("#cloudcare-notifications"));
+            showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            showError(errorMessage, $("#cloudcare-notifications"));
+            showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
         }
     });
 
