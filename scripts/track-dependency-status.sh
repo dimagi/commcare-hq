@@ -31,14 +31,18 @@ function main {
     local total=0
 
     # get total Python dependency count (skip 2 header lines)
+    log_msg_with_time INFO "calculating Python package metrics"
     total=$(pip list 2>/dev/null | tail -n +3 | wc -l)
     # publish python metrics
     pip list --format json --outdated 2>/dev/null | publish_metrics python pip "$total"
 
-    # get total JS dependency count (skip the first and last lines)
-    total=$(yarn list --depth 0 | tail -n+2 | head -n-1 | wc -l)
+    # get total JS dependency count (skip the first header line)
+    log_msg_with_time INFO "calculating JS package metrics"
+    total=$(./scripts/yarn-list.py | tail -n +2 | wc -l)
     # publish javascript metrics
-    yarn outdated --json | publish_metrics js yarn "$total"
+    ./scripts/yarn-list.py --outdated --json | publish_metrics js yarn-list "$total"
+
+    log_msg_with_time INFO "done"
 }
 
 
@@ -81,6 +85,14 @@ function publish_datadog_gauge {
     if $send_to_datadog; then
         send_metric_to_datadog "$metric_path" "$value" gauge
     fi
+}
+
+
+function log_msg_with_time {
+    local level_name="$1"; shift
+    local msg="$*"
+    local now=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[${now}] ${level_name}: $msg" >&2
 }
 
 
