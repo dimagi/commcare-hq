@@ -76,7 +76,7 @@ branches:
     - jls/stop-the-constant-rendering # Jenny July something
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
-    - ml/limit-superuser-changes # Minha July 25
+    # - ml/limit-superuser-changes # Minha July 25
     - jm/esquery-scroll-no-aggs  # Joel July 25
     - do/repair-title-label # Dominic July 26
 submodules: { }
