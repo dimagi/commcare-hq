@@ -21,7 +21,9 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             FormplayerFrontend.regions.getRegion('loadingProgress').empty();
             FormplayerFrontend.trigger('showError',
                 getErrorMessage(err) +
-                "Without access to your location, computations that rely on the here() function will show up blank.");
+                "Without access to your location, computations that rely on the here() function will show up blank.",
+                false, false
+            );
         };
 
         var getErrorMessage = function (err) {

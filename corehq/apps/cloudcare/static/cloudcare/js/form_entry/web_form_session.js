@@ -215,6 +215,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             this.onerror({
                 human_readable_message: errorMessage,
                 is_html: isHTML,
+                reportToHq: false,
             });
             this.onLoadingComplete();
         };

@@ -8,7 +8,6 @@ from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -16,7 +15,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.es import CaseSearchES
-from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS
+from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser
@@ -361,7 +360,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             }
         )
 
-        post_case_blocks([case.as_xml()], domain='some-domain')
+        submit_case_blocks([case.as_text()], domain='some-domain')
         # update the date_opened to date type to check for value on restore
         case.date_opened = case.date_opened.date()
         deprecated_check_user_has_case(self, user, case.as_xml())
@@ -476,7 +475,7 @@ class FundamentalCaseTests(FundamentalBaseTests):
             case_name='this is a very long case name that exceeds the 255 char limit' * 5
         )
 
-        xform, cases = post_case_blocks([case.as_xml()], domain=DOMAIN)
+        xform, cases = submit_case_blocks([case.as_text()], domain=DOMAIN)
         self.assertEqual(0, len(cases))
         self.assertTrue(xform.is_error)
         self.assertIn('CaseValueError', xform.problem)
@@ -525,17 +524,17 @@ class CaseSearchTests(FundamentalBaseTests):
 
 def _submit_case_block(create, case_id, xmlns=SYSTEM_FORM_XMLNS, device_id=None, **kwargs):
     domain = kwargs.pop('domain', DOMAIN)
-    return post_case_blocks(
+    return submit_case_blocks(
         [
             CaseBlock(
                 create=create,
                 case_id=case_id,
                 **kwargs
-            ).as_xml()
+            ).as_text()
         ],
         domain=domain,
         device_id=device_id,
-        form_extras={'xmlns': xmlns}
+        xmlns=xmlns,
     )
 
 
