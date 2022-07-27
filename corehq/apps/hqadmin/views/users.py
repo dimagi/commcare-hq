@@ -81,18 +81,22 @@ class SuperuserManagement(UserAdministration):
 
     @property
     def page_context(self):
-        # only staff can toggle is_staff
-        can_toggle_is_staff = self.request.user.is_staff
+        # only django Admins can change superuser and staff status
+        can_toggle_status = any(self.request.user.username in admin for admin in settings.ADMINS)
         # render validation errors if rendered after POST
-        args = [can_toggle_is_staff, self.request.POST] if self.request.POST else [can_toggle_is_staff]
+        args = [can_toggle_status, self.request.POST] if self.request.POST else [can_toggle_status]
         return {
             'form': SuperuserManagementForm(*args),
             'users': augmented_superusers(),
+            'can_toggle_status': can_toggle_status
         }
 
     def post(self, request, *args, **kwargs):
-        can_toggle_is_staff = request.user.is_staff
-        form = SuperuserManagementForm(can_toggle_is_staff, self.request.POST)
+        can_toggle_status = any(self.request.user.username in admin for admin in settings.ADMINS)
+        if not can_toggle_status:
+            messages.error(request, _("You do not have permission to update superuser or staff status"))
+            return self.get(request, *args, **kwargs)
+        form = SuperuserManagementForm(can_toggle_status, self.request.POST)
         if form.is_valid():
             users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
@@ -101,11 +105,11 @@ class SuperuserManagement(UserAdministration):
             for user in users:
                 fields_changed = {}
                 # save user object only if needed and just once
-                if user.is_superuser is not is_superuser:
+                if can_toggle_status and user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
                     fields_changed['is_superuser'] = is_superuser
 
-                if can_toggle_is_staff and user.is_staff is not is_staff:
+                if can_toggle_status and user.is_staff is not is_staff:
                     user.is_staff = is_staff
                     fields_changed['is_staff'] = is_staff
 
