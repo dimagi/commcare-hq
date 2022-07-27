@@ -462,7 +462,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     errorHTML += "<ul>" + _.map(invalidFields, function (f) {
                         return "<li>" + DOMPurify.sanitize(f) + "</li>";
                     }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true);
+                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
 
                     return;
                 }
