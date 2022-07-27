@@ -32,6 +32,7 @@ def sanitize_session_peer_rating(session_case, rule):
             case_properties=case_updates,
             xmlns=AUTO_UPDATE_XMLNS,
             device_id=__name__ + ".sanitize_session_peer_rating",
+            form_name=rule.name,
         )
         num_updates = 1
         rule.log_submission(submission.form_id)

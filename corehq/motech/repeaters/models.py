@@ -63,6 +63,8 @@ class.
 "Data Forwarding Records".
 
 """
+import inspect
+import json
 import traceback
 import warnings
 from collections import OrderedDict
@@ -74,6 +76,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.base import Deferred
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -297,6 +300,55 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
+
+    @cached_property
+    def _optionvalue_fields(self):
+        return [
+            attr_tuple[0]
+            for attr_tuple in inspect.getmembers(self.__class__)
+            if isinstance(attr_tuple[1], OptionValue)
+        ]
+
+    def to_json(self):
+        repeater_dict = self.__dict__.copy()
+        options = repeater_dict.pop('options', None)
+
+        # Populating OptionValue attrs
+        for attr in self._optionvalue_fields:
+            if attr == 'include_app_id_param':
+                continue
+            repeater_dict[attr] = (options.get(attr)
+                if attr in options
+                else getattr(self.__class__, attr).get_default_value())
+
+        # include_app_id_param is a constant in some Repeaters and will not come up in options
+        if hasattr(self, 'include_app_id_param'):
+            repeater_dict['include_app_id_param'] = self.include_app_id_param
+
+        # Remove keys which were not present in couch
+        repeater_dict.pop('_state', None)
+        repeater_dict.pop('id', None)
+        repeater_dict.pop('is_deleted', None)
+        repeater_dict.pop('next_attempt_at', None)
+        repeater_dict.pop('last_attempt_at', None)
+
+        self._convert_to_serializable(repeater_dict)
+        return repeater_dict
+
+    def _convert_to_serializable(self, repeater_dict):
+        for key, val in repeater_dict.items():
+            try:
+                json.dumps(val)
+            except Exception as e:
+                if isinstance(val, datetime):
+                    repeater_dict[key] = json_format_datetime(val)
+                    continue
+                notify_exception(
+                    None,
+                    f"""Unable to serialize {key} for repeater_id {self.repeater_id}.
+                    You may implement to_json for {self.repeater_type}"""
+                )
+                raise e
 
     def get_url(self, record):
         return self.repeater.get_url(record)

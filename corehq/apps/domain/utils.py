@@ -77,7 +77,7 @@ def domain_name_stop_words():
         return {word.strip() for word in f.readlines() if word[0] != '#'}
 
 
-def get_domain_url_slug(hr_name, max_length=25, separator='-'):
+def get_domain_url_slug(hr_name, max_length=25):
     from dimagi.utils.name_to_url import name_to_url
     name = name_to_url(hr_name, "project")
     if len(name) <= max_length:
@@ -91,6 +91,7 @@ def get_domain_url_slug(hr_name, max_length=25, separator='-'):
     except StopIteration:
         return ''
 
+    separator = '-'
     for word in words:
         if len(text + separator + word) <= max_length:
             text += separator + word
