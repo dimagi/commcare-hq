@@ -29,10 +29,7 @@ from corehq.apps.es.cases import closed_range as closed_range_filter
 from corehq.apps.es.forms import completed as completed_filter
 from corehq.apps.es.forms import submitted as submitted_filter
 from corehq.apps.es.forms import xmlns as xmlns_filter
-from corehq.apps.export.const import (
-    CASE_SCROLL_SIZE,
-    MAX_MULTIMEDIA_EXPORT_SIZE,
-)
+from corehq.apps.export.const import MAX_MULTIMEDIA_EXPORT_SIZE
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS_MAP
 from corehq.util.quickcache import quickcache
 
@@ -609,8 +606,7 @@ def scroll_case_names(domain, case_ids):
     query = (CaseES()
             .domain(domain)
             .case_ids(case_ids)
-            .source(['name', '_id'])
-            .size(CASE_SCROLL_SIZE))
+            .source(['name', '_id']))
     return query.scroll()
 
 

@@ -21,6 +21,7 @@ from corehq.apps.domain.calculations import cases_in_last, inactive_cases_in_las
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es import CaseES, UserES
 from corehq.apps.es.aggregations import MISSING_KEY
+from corehq.apps.es.const import SCROLL_SIZE
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import SYSTEM_FORM_XMLNS, get_case_by_identifier
@@ -1215,6 +1216,13 @@ class TestCaseESAccessors(BaseESAccessorsTest):
             len(list(scroll_case_names(self.domain, [case_one.case_id]))),
             1
         )
+
+    def test_scroll_case_names_uses_default_scroll_size(self):
+        def test_scroll(index, raw_query, **kw):
+            self.assertEqual(SCROLL_SIZE, raw_query["size"])
+            return []
+        with patch("corehq.apps.es.es_query.scroll_query", test_scroll):
+            list(scroll_case_names("test", []))
 
     def test_get_active_case_counts(self):
         datespan = DateSpan(datetime(2013, 7, 1), datetime(2013, 7, 30))
