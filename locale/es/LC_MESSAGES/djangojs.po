@@ -4,9 +4,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Michelle B. Sultan <msultan@dimagi.com>, 2021
-# Dimagi Dev <devops@dimagi.com>, 2022
+# Dimagi Dev <devops@dimagi.com>, 2021
 # Gladys Teos <info@enestranslations.com>, 2022
+# Michelle B. Sultan <msultan@dimagi.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Gladys Teos <info@enestranslations.com>, 2022\n"
+"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -3197,10 +3197,8 @@ msgid "Search for users or groups"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
-#, fuzzy
-#| msgid "Case Property"
 msgid "case property name"
-msgstr "Propiedad del Caso"
+msgstr "nombre de propiedad del caso"
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""

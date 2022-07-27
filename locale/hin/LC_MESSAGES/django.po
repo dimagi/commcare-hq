@@ -20317,6 +20317,10 @@ msgstr ""
 msgid "IP Address"
 msgstr ""
 
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
+msgstr ""
+
 #: corehq/apps/hqadmin/reports.py
 msgid "Request Path"
 msgstr ""
@@ -20621,6 +20625,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -39862,10 +39870,6 @@ msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py
