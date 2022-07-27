@@ -180,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         data.onerror = function (resp) {
             var message = resp.human_readable_message || resp.exception || "Unexpected Error";
             if (resp.is_html) {
-                showHTMLError(message, $("#cloudcare-notifications"), resp.reportToHq);
+                showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
             } else {
                 showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
