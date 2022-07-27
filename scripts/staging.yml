@@ -66,7 +66,6 @@ branches:
     - ad/save-only-edited-fields-migration # Addison July 7
     - gh/upgrade-twilio # Graham July 8
     - gh/erm/improve-access # Graham July 8
-    - es/validation-conditions  # Ethan July 11
     - ml/notify-user-changes # Minha July 19
    # - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging+celery-upgrade-patch # Matt July 20
