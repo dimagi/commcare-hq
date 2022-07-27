@@ -8543,6 +8543,19 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Required Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Validation Condition"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr ""
 
@@ -12127,10 +12140,6 @@ msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Regular Expression"
-msgstr ""
-
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
 msgstr ""
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
@@ -20302,6 +20311,10 @@ msgstr ""
 msgid "IP Address"
 msgstr ""
 
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
+msgstr ""
+
 #: corehq/apps/hqadmin/reports.py
 msgid "Request Path"
 msgstr ""
@@ -20606,6 +20619,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -39849,10 +39866,6 @@ msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py
