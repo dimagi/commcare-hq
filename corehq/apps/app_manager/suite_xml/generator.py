@@ -2,9 +2,7 @@ from distutils.version import LooseVersion
 
 from django.urls import reverse
 
-import six.moves.urllib.error
-import six.moves.urllib.parse
-import six.moves.urllib.request
+import urllib.parse
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
@@ -177,5 +175,5 @@ class MediaSuiteGenerator(object):
                 remote=self.app.url_base + reverse(
                     'hqmedia_download',
                     args=[m.media_type, m.multimedia_id]
-                ) + six.moves.urllib.parse.quote(name.encode('utf-8')) if name else name
+                ) + urllib.parse.quote(name) if name else name
             )
