@@ -84,7 +84,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 update = true;
             } else if (response.selections) {
                 urlObject.setSelections(response.selections);
-                sessionStorage.removeItem('selectedValues');
                 update = true;
             }
             return update;
@@ -212,7 +211,8 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.forceLoginAs = options.forceLoginAs;
 
         this.setSelections = function (selections) {
-            this.selections = selections;
+            this.selections = selections || [];
+            sessionStorage.removeItem('selectedValues');
         };
 
         this.addSelection = function (selection) {
@@ -266,8 +266,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.replaceEndpoint = function (selections) {
             delete this.endpointId;
             delete this.endpointArgs;
-            this.selections = selections || [];
-            sessionStorage.removeItem('selectedValues');
+            this.setSelections(selections);
         };
 
         this.clearExceptApp = function () {
