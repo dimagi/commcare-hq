@@ -338,14 +338,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 defaultValue: searchProperty.default_value,
                 hidden: searchProperty.hidden,
                 receiverExpression: searchProperty.receiver_expression,
-                itemsetOptions: {
-                    instance_id: searchProperty.itemset.instance_id,
-                    instance_uri: searchProperty.itemset.instance_uri,
-                    nodeset: searchProperty.itemset.nodeset,
-                    label: searchProperty.itemset.label,
-                    value: searchProperty.itemset.value,
-                    sort: searchProperty.itemset.sort,
-                },
+                itemsetOptions: searchProperty.itemset,
             }, saveButton);
         });
 
