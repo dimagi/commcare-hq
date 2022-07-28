@@ -276,39 +276,17 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         self.serialize = function () {
-            return {
-                auto_launch: self.auto_launch(),
-                default_search: self.default_search(),
-                additional_relevant: self.additional_relevant(),
-                search_button_display_condition: self.search_button_display_condition(),
-                data_registry: self.data_registry(),
-                data_registry_workflow: self.data_registry_workflow(),
-                search_label: self.search_label(),
-                search_label_image:
-                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
-                search_label_image_for_all:
-                    $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_use_default_image_for_all']").val() || null,
-                search_label_audio:
-                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_media_audio']").val() || null,
-                search_label_audio_for_all:
-                    $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_use_default_audio_for_all']").val() || null,
-                search_again_label: self.search_again_label(),
-                search_again_label_image:
-                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_media_image']").val() || null,
-                search_again_label_image_for_all:
-                    $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_use_default_image_for_all']").val() || null,
-                search_again_label_audio:
-                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_media_audio']").val() || null,
-                search_again_label_audio_for_all:
-                    $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
-                search_filter: self.search_filter(),
-                blacklisted_owner_ids_expression: self.blacklisted_owner_ids_expression(),
-                additional_registry_cases: self.data_registry_workflow() === "load_case" ?  self.additional_registry_cases().map((query) => {
-                    return query.caseIdXpath();
-                }) : [],
-                custom_related_case_property: self.custom_related_case_property(),
-                inline_search: self.inline_search(),
-            };
+            var data = ko.mapping.toJS(self);
+            data.additional_registry_cases = data.data_registry_workflow === "load_case" ?  _.pluck(data.additional_registry_cases, 'caseIdXpath') : [];
+            _.each(['search_label', 'search_again_label'], function (label) {
+                _.each(['image', 'audio'], function (media) {
+                    var key = label + "_" + media,
+                        selector = "#case_search-" + label + "_media_media_" + media + " input[type='hidden']";
+                    data[key] = $(selector + "[name='case_search-" + label + "_media_media_" + media + "']").val();
+                    data[key + "_for_all"] = $(selector + "[name='case_search-" + label + "_media_use_default_" + media + "_for_all']").val();
+                });
+            });
+            return data;
         };
 
         return self;
