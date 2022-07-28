@@ -95,10 +95,10 @@ class ReleaseManager:
                 attr[fmt][domain].extend(msgs)
 
     def get_error_domain_count(self):
-        return len(self.errors_by_domain['html'])
+        return sum([1 for errors in self.errors_by_domain['html'].values() if errors != []])
 
     def get_success_domain_count(self):
-        return len(self.successes_by_domain['html'])
+        return sum([1 for successes in self.successes_by_domain['html'].values() if successes != []])
 
     def _get_errors(self, domain, html=True):
         return self.errors_by_domain['html' if html else 'text'][domain]
