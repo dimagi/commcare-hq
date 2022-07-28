@@ -389,16 +389,6 @@ hqDefine("app_manager/js/details/case_claim", function () {
             );
         };
 
-        if (defaultProperties.length > 0) {
-            for (var k = 0; k < defaultProperties.length; k++) {
-                self.defaultProperties.push(defaultPropertyModel({
-                    property: defaultProperties[k].property,
-                    defaultValue: defaultProperties[k].defaultValue,
-                }, saveButton));
-            }
-        } else {
-            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
-        }
         self.addDefaultProperty = function () {
             self.defaultProperties.push(defaultPropertyModel({}, saveButton));
         };
@@ -419,6 +409,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 }
             );
         };
+
+        if (defaultProperties.length > 0) {
+            self.defaultProperties(_.map(defaultProperties, function (p) {
+                return defaultPropertyModel(p, saveButton);
+            }));
+        } else {
+            self.addDefaultProperty();
+        }
 
         self.commonProperties = ko.computed(function () {
             var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
