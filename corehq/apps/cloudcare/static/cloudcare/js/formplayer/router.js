@@ -104,8 +104,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 { parse: true }
             );
             // Need to get URL fragment again since fetch might have updated it
-            urlObject = Util.currentUrlToObject();
-            Util.setUrlToObject(urlObject);
+            Util.setUrlToObject(Util.currentUrlToObject());
 
             menusController.showMenu(menuCollection);
         },
