@@ -224,6 +224,8 @@ def get_module_search_command_rows(langs, module, domain):
         + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
         ('search_again_label', 'list')
         + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
+        ('title_label', 'list')
+        + tuple(module.search_config.title_label.get(lang, '') for lang in langs),
     ]
 
 
