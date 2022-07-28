@@ -81,8 +81,13 @@ class SuperuserManagement(UserAdministration):
 
     @property
     def page_context(self):
-        # only django Admins can change superuser and staff status
-        can_toggle_status = any(self.request.user.username in admin for admin in settings.ADMINS)
+        # only users with can_assign_superuser privilege can change superuser and staff status
+        try:
+            user = WebUser.get_by_username(self.request.user.username)
+        except:
+            raise ResourceNotFound("No user with username {username} found".format(
+                username=self.request.user.username))
+        can_toggle_status = user.can_assign_superuser
         # render validation errors if rendered after POST
         args = [can_toggle_status, self.request.POST] if self.request.POST else [can_toggle_status]
         return {
