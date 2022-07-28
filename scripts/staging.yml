@@ -79,4 +79,5 @@ branches:
     - jm/esquery-scroll-no-aggs  # Joel July 25
     - do/repair-title-label # Dominic July 26
     - smh/multi-select-case-list-multi-screen-ui-fix # Steph July 28
+    - jc/USH-2261 # Jing/Steph July 28
 submodules: { }
