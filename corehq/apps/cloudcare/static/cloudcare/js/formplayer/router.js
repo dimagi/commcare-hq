@@ -84,22 +84,13 @@ hqDefine("cloudcare/js/formplayer/router", function () {
          * be a form response which will route to a new form.
          */
         renderResponse: function (response) {
-            var urlObject,
-                menuCollection;
-
-            urlObject = Util.currentUrlToObject();
-            if (urlObject.appId) {
-                // will be undefined on urlObject when coming from an incomplete form
-                response.appId = urlObject.appId;
-            }
-
              if (response.notification) {
                 FormplayerFrontend.trigger("handleNotification", response.notification);
              }
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
+            let menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
                 response,
                 { parse: true }
             );
