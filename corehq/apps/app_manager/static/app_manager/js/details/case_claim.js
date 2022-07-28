@@ -189,18 +189,18 @@ hqDefine("app_manager/js/details/case_claim", function () {
     };
 
     var searchConfigKeys = [
-        'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
-        'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
-        'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
-        'customRelatedCaseProperty', 'inlineSearch',
+        'auto_launch', 'blacklisted_owner_ids_expression', 'default_search', 'search_again_label',
+        'search_button_display_condition', 'search_label', 'search_filter',
+        'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
+        'custom_related_case_property', 'inline_search',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
-        options.searchLabel = options.searchLabel[lang] || "";
-        options.searchAgainLabel = options.searchAgainLabel[lang] || "";
+        options.search_label = options.search_label[lang] || "";
+        options.search_again_label = options.search_again_label[lang] || "";
         var mapping = {
-            'additionalRegistryCases': {
+            'additional_registry_cases': {
                 create: function(options) {
                     return additionalRegistryCaseModel(options.data, saveButton);
                 },
@@ -209,32 +209,32 @@ hqDefine("app_manager/js/details/case_claim", function () {
         var self = ko.mapping.fromJS(options, mapping);
 
         self.restrictWorkflowForDataRegistry = ko.pureComputed(() => {
-            return self.dataRegistry() && self.dataRegistryWorkflow() === 'load_case';
+            return self.data_registry() && self.data_registry_workflow() === 'load_case';
         });
 
         self.workflow = ko.computed({
             read: function () {
                 if (self.restrictWorkflowForDataRegistry()) {
-                    if (self.autoLaunch()) {
-                        if (self.defaultSearch()) {
+                    if (self.auto_launch()) {
+                        if (self.default_search()) {
                             return "es_only";
                         }
                     }
                     return "auto_launch";
                 }
-                if (self.autoLaunch()) {
-                    if (self.defaultSearch()) {
+                if (self.auto_launch()) {
+                    if (self.default_search()) {
                         return "es_only";
                     }
                     return "auto_launch";
-                } else if (self.defaultSearch()) {
+                } else if (self.default_search()) {
                     return "see_more";
                 }
                 return "classic";
             },
             write: function (value) {
-                self.autoLaunch(_.contains(["es_only", "auto_launch"], value));
-                self.defaultSearch(_.contains(["es_only", "see_more"], value));
+                self.auto_launch(_.contains(["es_only", "auto_launch"], value));
+                self.default_search(_.contains(["es_only", "see_more"], value));
             },
         });
 
@@ -243,7 +243,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
 
         self.inlineSearchActive = ko.computed(() => {
-            return self.inlineSearchVisible() && self.inlineSearch();
+            return self.inlineSearchVisible() && self.inline_search();
         });
 
         // Allow search filter to be copied from another part of the page
@@ -251,10 +251,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             return searchFilterObservable && searchFilterObservable();
         });
         self.setSearchFilterEnabled = ko.computed(function () {
-            return self.setSearchFilterVisible() && searchFilterObservable() !== self.searchFilter();
+            return self.setSearchFilterVisible() && searchFilterObservable() !== self.search_filter();
         });
         self.setSearchFilter = function () {
-            self.searchFilter(searchFilterObservable());
+            self.search_filter(searchFilterObservable());
         };
 
         subscribeToSave(self, searchConfigKeys, saveButton);
@@ -268,22 +268,22 @@ hqDefine("app_manager/js/details/case_claim", function () {
         });
 
         self.addRegistryQuery = function () {
-            self.additionalRegistryCases.push(additionalRegistryCaseModel('', saveButton));
+            self.additional_registry_cases.push(additionalRegistryCaseModel('', saveButton));
         };
 
         self.removeRegistryQuery = function (model) {
-            self.additionalRegistryCases.remove(model);
+            self.additional_registry_cases.remove(model);
         };
 
         self.serialize = function () {
             return {
-                auto_launch: self.autoLaunch(),
-                default_search: self.defaultSearch(),
-                search_additional_relevant: self.searchAdditionalRelevant(),
-                search_button_display_condition: self.searchButtonDisplayCondition(),
-                data_registry: self.dataRegistry(),
-                data_registry_workflow: self.dataRegistryWorkflow(),
-                search_label: self.searchLabel(),
+                auto_launch: self.auto_launch(),
+                default_search: self.default_search(),
+                additional_relevant: self.additional_relevant(),
+                search_button_display_condition: self.search_button_display_condition(),
+                data_registry: self.data_registry(),
+                data_registry_workflow: self.data_registry_workflow(),
+                search_label: self.search_label(),
                 search_label_image:
                     $("#case_search-search_label_media_media_image input[type=hidden][name='case_search-search_label_media_media_image']").val() || null,
                 search_label_image_for_all:
@@ -292,7 +292,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_media_audio']").val() || null,
                 search_label_audio_for_all:
                     $("#case_search-search_label_media_media_audio input[type=hidden][name='case_search-search_label_media_use_default_audio_for_all']").val() || null,
-                search_again_label: self.searchAgainLabel(),
+                search_again_label: self.search_again_label(),
                 search_again_label_image:
                     $("#case_search-search_again_label_media_media_image input[type=hidden][name='case_search-search_again_label_media_media_image']").val() || null,
                 search_again_label_image_for_all:
@@ -301,13 +301,13 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_media_audio']").val() || null,
                 search_again_label_audio_for_all:
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
-                search_filter: self.searchFilter(),
-                blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
-                additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
+                search_filter: self.search_filter(),
+                blacklisted_owner_ids_expression: self.blacklisted_owner_ids_expression(),
+                additional_registry_cases: self.data_registry_workflow() === "load_case" ?  self.additional_registry_cases().map((query) => {
                     return query.caseIdXpath();
                 }) : [],
-                custom_related_case_property: self.customRelatedCaseProperty(),
-                inline_search: self.inlineSearch(),
+                custom_related_case_property: self.custom_related_case_property(),
+                inline_search: self.inline_search(),
             };
         };
 
