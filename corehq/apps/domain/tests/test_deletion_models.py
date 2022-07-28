@@ -55,6 +55,8 @@ IGNORE_MODELS = {
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
     'fixtures.UserLookupTableStatus',
+    'fixtures.LookupTableRow',          # handled by cascading delete
+    'fixtures.LookupTableRowOwner',     # handled by cascading delete
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
