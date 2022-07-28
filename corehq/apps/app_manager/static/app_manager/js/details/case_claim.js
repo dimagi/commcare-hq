@@ -192,13 +192,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
         'autoLaunch', 'blacklistedOwnerIdsExpression', 'defaultSearch', 'searchAgainLabel',
         'searchButtonDisplayCondition', 'searchLabel', 'searchFilter',
         'searchAdditionalRelevant', 'dataRegistry', 'dataRegistryWorkflow', 'additionalRegistryCases',
-        'customRelatedCaseProperty', 'inlineSearch',
+        'customRelatedCaseProperty', 'inlineSearch', 'titleLabel',
     ];
     var searchConfigModel = function (options, lang, searchFilterObservable, saveButton) {
         hqImport("hqwebapp/js/assert_properties").assertRequired(options, searchConfigKeys);
 
         options.searchLabel = options.searchLabel[lang] || "";
         options.searchAgainLabel = options.searchAgainLabel[lang] || "";
+        options.titleLabel = options.titleLabel[lang] || "";
         var mapping = {
             'additionalRegistryCases': {
                 create: function(options) {
@@ -302,6 +303,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                 search_again_label_audio_for_all:
                     $("#case_search-search_again_label_media_media_audio input[type=hidden][name='case_search-search_again_label_media_use_default_audio_for_all']").val() || null,
                 search_filter: self.searchFilter(),
+                title_label: self.titleLabel(),
                 blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
                 additional_registry_cases: self.dataRegistryWorkflow() === "load_case" ?  self.additionalRegistryCases().map((query) => {
                     return query.caseIdXpath();
