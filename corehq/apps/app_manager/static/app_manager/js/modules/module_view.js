@@ -15,7 +15,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             var details = initial_page_data('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")({
+                var detailScreenConfigOptions = {
                     module_id: moduleBrief.id,
                     moduleUniqueId: moduleBrief.unique_id,
                     state: {
@@ -36,22 +36,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
                     multimedia: initial_page_data('multimedia_object_map'),
-                    search_properties: options.search_properties || [],
-                    additional_relevant: options.additional_relevant,
-                    auto_launch: options.auto_launch,
-                    default_search: options.default_search,
-                    default_properties: options.default_properties || [],
-                    search_button_display_condition: options.search_button_display_condition,
-                    search_label: options.search_label,
-                    search_again_label: options.search_again_label,
-                    search_filter: options.search_filter,
-                    blacklisted_owner_ids_expression: options.blacklisted_owner_ids_expression,
-                    data_registry: options.data_registry || "",
-                    data_registry_workflow: options.data_registry_workflow,
-                    additional_registry_cases: options.additional_registry_cases,
-                    custom_related_case_property: options.custom_related_case_property,
-                    inline_search: options.inline_search,
-                });
+                };
+                _.extend(detailScreenConfigOptions, options.search_config);
+                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")(detailScreenConfigOptions);
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);
