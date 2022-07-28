@@ -9102,6 +9102,23 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Send Message"
+msgid "Required Message"
+msgstr "Enviar Mensaje"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Close Condition"
+msgid "Validation Condition"
+msgstr "Cerrar Condición"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr "Mensaje de Validación"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr "URI de Ejemplo"
 
@@ -12815,10 +12832,6 @@ msgstr "Agregar Opción"
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
 msgid "Regular Expression"
 msgstr ""
-
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr "Mensaje de Validación"
 
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
@@ -21185,10 +21198,8 @@ msgstr ""
 "teléfono del caso serán sincronizadas. "
 
 #: corehq/apps/hqadmin/forms.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Email address '{}' is not a dimagi email address"
-msgstr "Por favor ingrese una dirección de correo válida."
+msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
@@ -21254,6 +21265,10 @@ msgstr "Dominio"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -21426,10 +21441,8 @@ msgid "Developer"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "SuperUser?"
 msgid "Superuser"
-msgstr "¿SuperUsuario?"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/reports.py
@@ -21437,10 +21450,8 @@ msgid "Accounting Admin"
 msgstr "Administrador de Contabilidad"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "Two Factor Authentication"
 msgid "Two Factor Enabled"
-msgstr "Autenticación de Dos Factores"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -21559,10 +21570,8 @@ msgid "Get users to offboard"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
-#, fuzzy
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successfully retrieved users to offboard."
-msgstr "Reporte \"{name}\" restaurado exitosamente "
+msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
@@ -21575,6 +21584,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -30841,10 +30854,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
-#, fuzzy
-#| msgid "Shorten Inactivity Timeout"
 msgid "Inactivity Timeout (minutes)"
-msgstr "Acorte el Tiempo de Desconexión por Inactividad"
+msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
@@ -40654,10 +40665,8 @@ msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
 #: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#, fuzzy
-#| msgid "Form Changes"
 msgid "Form config"
-msgstr "Cambios en el Formulario"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
@@ -41469,10 +41478,6 @@ msgstr "Cuerpo de la respuesta"
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py
