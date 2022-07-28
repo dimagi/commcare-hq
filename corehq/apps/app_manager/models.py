@@ -4411,7 +4411,9 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     @property
     def url_base(self):
         custom_base_url = getattr(self, 'custom_base_url', None)
-        return custom_base_url or get_url_base()
+        base_url = custom_base_url or get_url_base()
+        # Other code assumes that the base URL does not end in a "/"
+        return base_url.rstrip('/')
 
     @absolute_url_property
     def post_url(self):

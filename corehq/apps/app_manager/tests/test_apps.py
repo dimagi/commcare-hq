@@ -2,7 +2,8 @@ import json
 import os
 import uuid
 
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
+from django.test.utils import override_settings
 
 from collections import namedtuple
 from memoized import memoized
@@ -367,3 +368,16 @@ class AppManagerTest(TestCase, TestXmlMixin):
         unlinked_doc = linked_app.convert_to_application().to_json()
         self.assertEqual(unlinked_doc['doc_type'], 'Application')
         self.assertFalse(hasattr(unlinked_doc, 'linked_app_attrs'))
+
+
+class TestURLBase(SimpleTestCase):
+
+    def test_custom_base_url(self):
+        app = Application.new_app('test-domain', 'TestApp')
+        app.custom_base_url = 'https://commcare.example.com/'
+        self.assertEqual(app.url_base, 'https://commcare.example.com')
+
+    @override_settings(BASE_ADDRESS='example.com/commcare/')
+    def test_base_address(self):
+        app = Application.new_app('test-domain', 'TestApp')
+        self.assertEqual(app.url_base, 'http://example.com/commcare')
