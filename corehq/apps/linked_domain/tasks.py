@@ -272,6 +272,10 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
 def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
     manager = ReleaseManager(upstream_domain, username)
 
+    # # chord sends a list of results only if there were multiple tasks
+    # if len(downstream_domains) == 1:
+    #     results = [results]
+
     for result in results:
         (successes, errors) = result
         manager.update_successes(successes)
