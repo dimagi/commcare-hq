@@ -317,7 +317,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         var self = {};
 
         self.searchConfig = searchConfigModel(searchConfigOptions, lang, searchFilterObservable, saveButton);
-        self.defaultProperties = ko.observableArray();
+        self.default_properties = ko.observableArray();
 
         // searchProperties is a list of CaseSearchProperty objects
         var wrappedSearchProperties = _.map(searchProperties, function (searchProperty) {
@@ -349,21 +349,21 @@ hqDefine("app_manager/js/details/case_claim", function () {
             }, saveButton);
         });
 
-        self.searchProperties = ko.observableArray(
+        self.search_properties = ko.observableArray(
             wrappedSearchProperties.length > 0 ? wrappedSearchProperties : [searchPropertyModel({}, saveButton)]
         );
 
         self.addProperty = function () {
-            self.searchProperties.push(searchPropertyModel({}, saveButton));
+            self.search_properties.push(searchPropertyModel({}, saveButton));
         };
         self.removeProperty = function (property) {
-            self.searchProperties.remove(property);
+            self.search_properties.remove(property);
         };
         self._getProperties = function () {
-            // i.e. [{'name': p.name, 'label': p.label} for p in self.searchProperties if p.name]
+            // i.e. [{'name': p.name, 'label': p.label} for p in self.search_properties if p.name]
             return _.map(
                 _.filter(
-                    self.searchProperties(),
+                    self.search_properties(),
                     function (p) { return p.name().length > 0; }  // Skip properties where name is blank
                 ),
                 function (p) {
@@ -390,15 +390,15 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         self.addDefaultProperty = function () {
-            self.defaultProperties.push(defaultPropertyModel({}, saveButton));
+            self.default_properties.push(defaultPropertyModel({}, saveButton));
         };
         self.removeDefaultProperty = function (property) {
-            self.defaultProperties.remove(property);
+            self.default_properties.remove(property);
         };
         self._getDefaultProperties = function () {
             return _.map(
                 _.filter(
-                    self.defaultProperties(),
+                    self.default_properties(),
                     function (p) { return p.property().length > 0; }  // Skip properties where property is blank
                 ),
                 ko.mapping.toJS
@@ -406,7 +406,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
         };
 
         if (defaultProperties.length > 0) {
-            self.defaultProperties(_.map(defaultProperties, function (p) {
+            self.default_properties(_.map(defaultProperties, function (p) {
                 return defaultPropertyModel(p, saveButton);
             }));
         } else {
@@ -417,7 +417,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var defaultProperties = _.map(self._getDefaultProperties(), function (p) {
                 return p.property;
             });
-            var commonProperties = self.searchProperties().filter(function (n) {
+            var commonProperties = self.search_properties().filter(function (n) {
                 return n.name().length > 0 && defaultProperties.indexOf(n.name()) !== -1;
             });
             return _.map(
@@ -444,7 +444,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
             }, self.searchConfig.serialize());
         };
 
-        subscribeToSave(self, ['searchProperties', 'defaultProperties'], saveButton);
+        subscribeToSave(self, ['search_properties', 'default_properties'], saveButton);
 
         return self;
     };

@@ -18,7 +18,7 @@
       <div class="panel-body">
         <p>{% trans "Search against the following case properties." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: searchProperties().length > 0">
+          <thead data-bind="visible: search_properties().length > 0">
           <tr>
             <th class="col-sm-1"></th>
             <th class="col-sm-4">{% trans "Case Property" %}</th>
@@ -29,7 +29,7 @@
             <th class="col-sm-1"></th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: searchProperties, sortableList: searchProperties">
+          <tbody data-bind="foreach: search_properties, sortableList: search_properties">
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
@@ -49,14 +49,14 @@
       <div class="panel-body">
         <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: defaultProperties().length > 0">
+          <thead data-bind="visible: default_properties().length > 0">
           <tr>
             <th class="col-sm-5">{% trans "Case Property" %}</th>
             <th class="col-sm-6">{% trans "Value (XPath expression)" %}</th>
             <th class="col-sm-1">&nbsp;</th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: defaultProperties">
+          <tbody data-bind="foreach: default_properties">
           <tr>
             <td class="col-sm-4" data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}">
 
