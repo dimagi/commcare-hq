@@ -64,7 +64,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             }
             if (response.selections) {
                 urlObject.setSelections(response.selections);
-                sessionStorage.removeItem('selectedValues');
                 updateUrl = true;
             }
             if (updateUrl) {
@@ -83,6 +82,9 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree) {
+                if (response.selections) {
+                    sessionStorage.removeItem('selectedValues');
+                }
                 // form entry time, doggy
                 _.extend(this, _.pick(response, this.formProperties));
                 FormplayerFrontend.trigger('startForm', response);
