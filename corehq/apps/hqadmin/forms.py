@@ -141,8 +141,6 @@ def clean_data(cleaned_data, offboarding_list=False):
     if not offboarding_list and len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
         raise forms.ValidationError(
             f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
-            "If you are trying to update permissions for a larger number of users,"
-            " consider doing it via Django Admin"
         )
 
     users = []
