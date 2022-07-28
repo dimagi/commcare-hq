@@ -7,6 +7,7 @@ from corehq.apps.data_interfaces.utils import iter_cases_and_run_rules
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import CaseSearchES, case_property_missing
 from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
 
 DUPLICATE_LIMIT = 1000
 DEDUPE_XMLNS = 'http://commcarehq.org/hq_case_deduplication_rule'
@@ -45,7 +46,12 @@ def _get_es_filtered_case_query(domain, case, case_filter_criteria=None):
                     queries.MUST_NOT,
                 )
         elif isinstance(definition, LocationFilterDefinition):
-            query_ = query_.owner(definition.location_id)
+            # Get all users owning cases at definition.location_id
+            owners_ids = user_ids_at_locations([definition.location_id])
+            # Add the definition.location_id for cases which belong to definition.location_id
+            owners_ids.append(definition.location_id)
+
+            query_ = query_.owner(owners_ids)
 
         return query_
 

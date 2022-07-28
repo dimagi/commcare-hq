@@ -43,6 +43,9 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.data_interfaces.utils import run_rules_for_case
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import CommCareUser
+from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 
 
 @es_test
@@ -861,10 +864,26 @@ class TestDeduplicationRuleRuns(TestCase):
             workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
 
+    def _create_mobile_worker(self, username):
+        return CommCareUser.create(
+            domain=self.domain,
+            username=username,
+            password="*****",
+            created_by=None,
+            created_via=None,
+            metadata=None,
+        )
+
     def _prime_es_index(self, cases):
         for case in cases:
             send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
         self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+    def _send_user_to_es(self, user):
+        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
+            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
+        self.es.indices.refresh(USER_INDEX)
+        return user
 
     def get_case_property_value(self, case, property_value):
         return next((prop['value'] for prop in case['case_properties'] if prop['key'] == property_value))
@@ -907,7 +926,7 @@ class TestDeduplicationRuleRuns(TestCase):
         self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
         self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
 
-    def test_rule_with_criteria(self):
+    def test_rule_with_location_as_owner(self):
         cases = [
             self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
             self.factory.create_case(case_name="Darth Vadar", update={'age': '14'}),
@@ -935,6 +954,90 @@ class TestDeduplicationRuleRuns(TestCase):
         # Only assign location id to first 2 cases, since we want only those two cases to be considered
         cases[0].owner_id = location_id
         cases[1].owner_id = location_id
+
+        real_cases = [
+            cases[0].case_id,
+            cases[1].case_id,
+        ]
+        fake_cases = [
+            cases[2].case_id,
+            cases[3].case_id,
+        ]
+
+        self._prime_es_index(cases)
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        # Create rule criteria
+        definition = LocationFilterDefinition.objects.create(
+            location_id=location.location_id,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        # Create rule actions
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["age"],
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+
+        refreshed_real_cases = [case for case in refreshed_cases if case.case_id in real_cases]
+        refreshed_fake_cases = [case for case in refreshed_cases if case.case_id in fake_cases]
+
+        self.assertEqual(refreshed_real_cases[0].get_case_property('age'), '41')
+        self.assertEqual(refreshed_real_cases[1].get_case_property('age'), '41')
+
+        self.assertEqual(refreshed_fake_cases[0].get_case_property('age'), '14')
+        self.assertEqual(refreshed_fake_cases[1].get_case_property('age'), '14')
+
+    def test_rule_with_user_as_owner(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Darth Vadar", update={'age': '14'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        from corehq.apps.locations.models import make_location
+        from corehq.apps.locations.models import LocationType
+        loc_type = LocationType.objects.create(
+            name='place',
+            domain=self.domain,
+        )
+        location = make_location(
+            domain=self.domain,
+            location_type=loc_type.name,
+            name='Mustafar'
+        )
+        location.save()
+
+        user = self._create_mobile_worker('Location User')
+        user.set_location(location)
+
+        self._send_user_to_es(user)
+
+        cases[0].owner_id = user.user_id
+        cases[1].owner_id = user.user_id
 
         real_cases = [
             cases[0].case_id,
