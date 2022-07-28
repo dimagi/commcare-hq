@@ -230,6 +230,19 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.search = null;
         };
 
+        /**
+         * Drop last selection from the list of selections
+         *
+         * @returns {boolean} True if selections were modified
+         */
+        this.popSelection = function () {
+            if (this.selections) {
+                this.selections.pop();
+                return true;
+            }
+            return false;
+        }
+
         this.setPage = function (page) {
             this.page = page;
         };

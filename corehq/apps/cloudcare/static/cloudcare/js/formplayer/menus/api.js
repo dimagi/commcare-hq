@@ -68,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
                                 Util.doUrlAction(urlObject => {
-                                    urlObject.setSelections(_.initial(urlObject.selections || []));
+                                    return urlObject.popSelection();
                                 }, true);
 
                                 console.log("Redirecting to " + response.smartLinkRedirect);
@@ -105,11 +105,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             );
                         }
                         Util.doUrlAction(urlObject => {
-                            if (urlObject.selections) {
-                                urlObject.selections.pop();
-                                return true;
-                            }
-                            return false;
+                            return urlObject.popSelection();
                         });
                         defer.reject();
                     },
