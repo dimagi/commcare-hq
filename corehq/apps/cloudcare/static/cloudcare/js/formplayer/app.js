@@ -244,9 +244,9 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
-                var urlObject = Util.currentUrlToObject();
-                urlObject.onSubmit();
-                Util.setUrlToObject(urlObject);
+                Util.doUrlAction((urlObject) => {
+                    urlObject.onSubmit();
+                });
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);

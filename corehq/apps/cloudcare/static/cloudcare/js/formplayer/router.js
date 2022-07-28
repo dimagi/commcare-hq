@@ -118,9 +118,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.clearExceptApp();
-        Util.setUrlToObject(urlObject);
+        const urlObject = Util.doUrlAction((urlObject) => {
+            urlObject.clearExceptApp();
+        });
         API.selectApp(urlObject.appId);
     });
 
@@ -146,54 +146,54 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
-        var urlObject = Util.currentUrlToObject();
-        if (index === undefined) {
-            urlObject.setQueryData(null, false, true);
-        } else {
-            urlObject.addSelection(index);
-        }
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            if (index === undefined) {
+                urlObject.setQueryData(null, false, true);
+            } else {
+                urlObject.addSelection(index);
+            }
+        });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:paginate", function (page) {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.setPage(page);
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            urlObject.setPage(page);
+        });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.setCasesPerPage(casesPerPage);
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            urlObject.setCasesPerPage(casesPerPage);
+        });
         Util.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:sort", function (newSortIndex) {
-        var urlObject = Util.currentUrlToObject();
-        var currentSortIndex = urlObject.sortIndex;
-        // If the column index is the same as already loaded, reverse the sort
-        if (newSortIndex === Math.abs(currentSortIndex)) {
-            newSortIndex = -1 * currentSortIndex;
-        }
-        urlObject.setSort(newSortIndex);
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            var currentSortIndex = urlObject.sortIndex;
+            // If the column index is the same as already loaded, reverse the sort
+            if (newSortIndex === Math.abs(currentSortIndex)) {
+                newSortIndex = -1 * currentSortIndex;
+            }
+            urlObject.setSort(newSortIndex);
+        });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:search", function (search) {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.setSearch(search);
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            urlObject.setSearch(search);
+        });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
-        var urlObject = Util.currentUrlToObject();
-        urlObject.setQueryData(queryDict, true);
-        Util.setUrlToObject(urlObject);
+        Util.doUrlAction((urlObject) => {
+            urlObject.setQueryData(queryDict, true);
+        });
         API.listMenus();
     });
 
@@ -227,9 +227,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
-        var urlObject = Util.currentUrlToObject();
-        urlObject.spliceSelections(index);
-        Util.setUrlToObject(urlObject);
+        const urlObject = Util.doUrlAction((urlObject) => {
+            urlObject.spliceSelections(index);
+        });
         var options = {
             'appId': urlObject.appId,
             'selections': urlObject.selections,

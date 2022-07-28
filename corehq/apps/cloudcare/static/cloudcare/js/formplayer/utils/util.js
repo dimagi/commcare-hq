@@ -62,10 +62,22 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         hqImport("cloudcare/js/formplayer/app").navigate(encodedUrl, { replace: replace });
     };
 
-    Util.doUrlAction = function (actionCallback) {
-        var currentObject = Util.CurrentUrlToObject();
-        actionCallback(currentObject);
-        Util.setUrlToObject(currentObject);
+    /**
+     * Helper function to update the URL
+     *
+     * @param actionCallback Function called with the current URL Object as an argument.
+     *                       Return 'false' to prevent updating the URL.
+     * @param replace        Set to 'true' to update the URL without creating an entry in
+     *                       the browser's history
+     * @returns              The updated URL Object
+     */
+    Util.doUrlAction = function (actionCallback, replace) {
+        var currentObject = Util.currentUrlToObject();
+        const update = actionCallback(currentObject);
+        if (update !== false) {
+            Util.setUrlToObject(currentObject, replace);
+        }
+        return currentObject;
     };
 
     Util.setCrossDomainAjaxOptions = function (options) {
