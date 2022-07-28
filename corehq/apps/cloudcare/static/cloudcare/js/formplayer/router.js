@@ -103,7 +103,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
-        const urlObject = Util.doUrlAction((urlObject) => {
+        const urlObject = Util.doUrlAction(urlObject => {
             urlObject.clearExceptApp();
         });
         API.selectApp(urlObject.appId);
@@ -131,7 +131,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             if (index === undefined) {
                 urlObject.setQueryData(null, false, true);
             } else {
@@ -142,14 +142,14 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:paginate", function (page) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             urlObject.setPage(page);
         });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             urlObject.setCasesPerPage(casesPerPage);
         });
         Util.savePerPageLimitCookie('cases', casesPerPage);
@@ -157,7 +157,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:sort", function (newSortIndex) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             var currentSortIndex = urlObject.sortIndex;
             // If the column index is the same as already loaded, reverse the sort
             if (newSortIndex === Math.abs(currentSortIndex)) {
@@ -169,14 +169,14 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:search", function (search) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             urlObject.setSearch(search);
         });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             urlObject.setQueryData(queryDict, true);
         });
         API.listMenus();
@@ -212,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
-        const urlObject = Util.doUrlAction((urlObject) => {
+        const urlObject = Util.doUrlAction(urlObject => {
             urlObject.spliceSelections(index);
         });
         var options = {

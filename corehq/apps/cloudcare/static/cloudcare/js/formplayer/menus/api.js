@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 }
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
-                                Util.doUrlAction((urlObject) => {
+                                Util.doUrlAction(urlObject => {
                                     urlObject.setSelections(_.initial(urlObject.selections || []));
                                 }, true);
 
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        Util.doUrlAction((urlObject) => {
+                        Util.doUrlAction(urlObject => {
                             if (urlObject.selections) {
                                 urlObject.selections.pop();
                                 return true;

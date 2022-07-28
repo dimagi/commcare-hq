@@ -63,7 +63,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     Util.updateUrlFromResponse = function (response) {
-        Util.doUrlAction((urlObject) => {
+        Util.doUrlAction(urlObject => {
             let update = false;
             // If we don't have an appId in the URL (usually due to form preview or incomplete forms)
             // then use the appId from the response.

@@ -244,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
-                const urlObject = Util.doUrlAction((urlObject) => {
+                const urlObject = Util.doUrlAction(urlObject => {
                     urlObject.onSubmit();
                 });
 
