@@ -62,6 +62,35 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         hqImport("cloudcare/js/formplayer/app").navigate(encodedUrl, { replace: replace });
     };
 
+    Util.updateUrlFromResponse = function (response) {
+        Util.doUrlAction((urlObject) => {
+            let update = false;
+            // If we don't have an appId in the URL (usually due to form preview or incomplete forms)
+            // then use the appId from the response.
+            if (!urlObject.appId) {
+                if (!response.appId) {
+                    let formplayer = hqImport("cloudcare/js/formplayer/app");
+                    formplayer.trigger('showError', "Response did not contain appId even though it was" +
+                        "required. If this persists, please report an issue to CommCareHQ");
+                    formplayer.trigger("apps:list");
+                    return false;
+                }
+                urlObject.appId = response.appId;
+                update = true;
+            }
+
+            if (urlObject.endpointId) {
+                urlObject.replaceEndpoint(response.selections);
+                update = true;
+            } else if (response.selections) {
+                urlObject.setSelections(response.selections);
+                sessionStorage.removeItem('selectedValues');
+                update = true;
+            }
+            return update;
+        });
+    }
+
     /**
      * Helper function to update the URL
      *

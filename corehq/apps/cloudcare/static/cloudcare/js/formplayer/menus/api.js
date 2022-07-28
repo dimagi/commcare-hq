@@ -75,28 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 document.location = response.smartLinkRedirect;
                                 return;
                             }
-
-                            Util.doUrlAction((urlObject) => {
-                                let update = false;
-                                // If we don't have an appId in the URL (usually due to form preview)
-                                // then parse the appId from the response.
-                                if (urlObject.appId === undefined || urlObject.appId === null) {
-                                    if (parsedMenus.appId === null || parsedMenus.appId === undefined) {
-                                        FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
-                                            "required. If this persists, please report an issue to CommCareHQ");
-                                        FormplayerFrontend.trigger("apps:list");
-                                        return false;
-                                    }
-                                    urlObject.appId = parsedMenus.appId;
-                                    update = true;
-                                }
-
-                                if (urlObject.endpointId) {
-                                    urlObject.replaceEndpoint(parsedMenus.selections);
-                                    update = true;
-                                }
-                                return update;
-                            });
+                            Util.updateUrlFromResponse(parsedMenus);
 
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
