@@ -256,6 +256,21 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                         nextScreen.appId = urlObject.appId;
                     }
 
+                     Util.doUrlAction((urlObject) => {
+                        let updateUrl = false;
+                        if (!urlObject.appId && nextScreen.appId) {
+                        // will be undefined on urlObject when coming from an incomplete form
+                            urlObject.appId = nextScreen.appId;
+                            updateUrl = true;
+                        }
+                        if (nextScreen.selections) {
+                            urlObject.setSelections(nextScreen.selections);
+                            sessionStorage.removeItem('selectedValues');
+                            updateUrl = true;
+                        }
+                        return updateUrl;
+                    });
+
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
