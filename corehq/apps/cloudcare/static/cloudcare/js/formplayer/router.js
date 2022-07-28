@@ -84,13 +84,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
          * be a form response which will route to a new form.
          */
         renderResponse: function (response) {
-            var currentFragment,
-                urlObject,
-                encodedUrl,
+            var urlObject,
                 menuCollection;
 
-            currentFragment = Backbone.history.getFragment();
-            urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
+            urlObject = Util.currentUrlToObject();
             if (urlObject.appId) {
                 // will be undefined on urlObject when coming from an incomplete form
                 response.appId = urlObject.appId;
@@ -107,10 +104,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 { parse: true }
             );
             // Need to get URL fragment again since fetch might have updated it
-            currentFragment = Backbone.history.getFragment();
-            urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
-            FormplayerFrontend.navigate(encodedUrl);
+            urlObject = Util.currentUrlToObject();
+            Util.setUrlToObject(urlObject);
 
             menusController.showMenu(menuCollection);
         },
