@@ -58,7 +58,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 var urlObject = Util.currentUrlToObject();
                 urlObject.setSelections(response.selections);
                 Util.setUrlToObject(urlObject, true);
-                sessionStorage.removeItem('selectedValues');
             }
 
             if (response.commands) {
@@ -73,6 +72,9 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree) {
+                if (response.selections) {
+                    sessionStorage.removeItem('selectedValues');
+                }
                 // form entry time, doggy
                 _.extend(this, _.pick(response, this.formProperties));
                 FormplayerFrontend.trigger('startForm', response, this.app_id);
