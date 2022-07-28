@@ -48,6 +48,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
+from corehq.util.string import slash_join
 
 
 class SuiteGenerator(object):
@@ -163,6 +164,10 @@ class MediaSuiteGenerator(object):
                     name=name
                 )
 
+            hqmedia_download_url = reverse(
+                'hqmedia_download',
+                args=[m.media_type, m.multimedia_id]
+            ) + urllib.parse.quote(name)
             yield MediaResource(
                 id=id_strings.media_resource(m.unique_id, name),
                 path=install_path,
@@ -172,8 +177,5 @@ class MediaSuiteGenerator(object):
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
-                remote=self.app.url_base + reverse(
-                    'hqmedia_download',
-                    args=[m.media_type, m.multimedia_id]
-                ) + urllib.parse.quote(name) if name else name
+                remote=slash_join(self.app.url_base, hqmedia_download_url)
             )
