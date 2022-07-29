@@ -363,13 +363,16 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
+    def _wrap_schema_attrs(self, couch_object):
+        setattr(couch_object, 'openmrs_config', OpenmrsConfig.wrap(getattr(self, 'openmrs_config')))
+        # setattr(couch_object, 'atom_feed_status', AtomFeedStatus.wrap(getattr(self, 'atom_feed_status')))
+
     @classmethod
     def _migration_get_fields(cls):
         return super()._migration_get_fields() + [
             "location_id",
             "atom_feed_enabled",
             "atom_feed_status",
-            "openmrs_config",
         ]
 
     @classmethod
