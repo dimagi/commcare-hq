@@ -344,30 +344,27 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             );
         }
 
-        const pendingErrors = [];
+        const reconnectTimingWindow = 2000;
+        let trulyOffline;
 
         window.addEventListener(
             'offline',function () {
-                const offlineHandler = () => {
-                    showError(gettext("You are now offline. Web Apps is not optimized " +
-                        "for offline use. Please reconnect to the Internet before " +
-                        "continuing."), $("#cloudcare-notifications"));
-                    $('.submit').prop('disabled', 'disabled');
-                    $('.form-control').prop('disabled', 'disabled');
-                    pendingErrors.pop();
-                };
-                if (pendingErrors.length) {
-                    offlineHandler();
-                } else {
-                    pendingErrors.push(setTimeout(offlineHandler,2000));
-                }
+                trulyOffline = false;
+                _.delay(function () {
+                    if (!this.navigator.onLine) {
+                        trulyOffline = true;
+                        showError(gettext("You are now offline. Web Apps is not optimized " +
+                            "for offline use. Please reconnect to the Internet before " +
+                            "continuing."), $("#cloudcare-notifications"));
+                        $('.submit').prop('disabled', 'disabled');
+                        $('.form-control').prop('disabled', 'disabled');
+                    }
+                },reconnectTimingWindow);
             });
 
         window.addEventListener(
             'online', function () {
-                if (pendingErrors.length) {
-                    clearTimeout(pendingErrors.pop());
-                } else {
+                if (trulyOffline) {
                     showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
                     $('.form-control').prop('disabled', false);
