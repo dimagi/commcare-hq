@@ -382,14 +382,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
-            var $fields = $(".query-field");
-
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
-            var urlObject = Util.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
-                self.validateFields(response.models);
+            self.validateFields().always(function(response) {
+                var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
@@ -431,40 +425,57 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
-            var urlObject = Util.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-
-            $.when(fetchingPrompts).done(function (response) {
-                if (!self.validateFields(response.models)) {
-                    return;
-                }
+            // validateFields will likely already have been called when user blurred the last field,
+            // but call it here just in case they didn't fill anything out
+            self.validateFields().done(function() {
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
-
         },
 
-        validateFields: function (models) {
-            var self = this,
-                invalidFields = [];
-            for (var i = 0; i < models.length; i++) {
-                self.collection.models[i].set('error', models[i].get('error'));
-            }
-            self.children.each(function (childView) {
-                if (!childView.isValid()) {
-                    invalidFields.push(childView.model.get('text'));
+        /*
+         *  Send request to formplayer to validate fields. Displays any errors.
+         *  Returns a promise that contains the formplayer response.
+         */
+        validateFields: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util"),
+                self = this;
+
+            var urlObject = Util.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models with errors from response
+                for (var i = 0; i < response.models.length; i++) {
+                    self.collection.models[i].set('error', response.models[i].get('error'));
+                }
+
+                // Gather error messages
+                var invalidFields = [];
+                self.children.each(function (childView) {
+                    if (!childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                // Display error messages
+                FormplayerFrontend.trigger('clearNotifications');
+                if (invalidFields.length) {
+                    var errorHTML = gettext("Please check the following fields:");
+                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                    }).join("") + "</ul>";
+                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
+                }
+
+                if (invalidFields.length) {
+                    promise.reject(response);
+                } else {
+                    promise.resolve(response);
                 }
             });
 
-            FormplayerFrontend.trigger('clearNotifications');
-            if (invalidFields.length) {
-                var errorHTML = gettext("Please check the following fields:");
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                }).join("") + "</ul>";
-                FormplayerFrontend.trigger('showError', errorHTML, true, false);
-            }
+            return promise;
         },
 
         setStickyQueryInputs: function () {
