@@ -1679,6 +1679,9 @@ class ExportDataSchema(Document):
                 current_schema.last_app_versions,
             )
         app_build_ids.extend(app_ids_for_domain)
+        print("App Build IDs:")
+        print(app_build_ids)
+        print('\n\n')
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')

@@ -37,7 +37,7 @@ class Command(BaseCommand):
             schema, export_instance
         )
         # added in ODataFeedMixin
-        clean_odata_columns(new_instance)
+        # clean_odata_columns(new_instance)
         new_instance.is_odata_config = True
         new_instance.transform_dates = False
         new_instance.name = ("Copy of {}").format(new_instance.name)
