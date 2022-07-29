@@ -434,7 +434,10 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if EntriesHelper.any_usercase_datums(extra_datums):
-                usercase_id = couch_user.get_usercase_id()
+                if couch_user.doc_type == "CommCareUser":
+                    usercase_id = couch_user.get_usercase_id()
+                else:
+                    couch_user.get_usercase_id_by_domain(domain_name)
                 if usercase_id:
                     session_data[USERCASE_ID] = usercase_id
     return session_data
