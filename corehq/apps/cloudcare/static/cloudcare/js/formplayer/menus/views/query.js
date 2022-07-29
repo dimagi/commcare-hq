@@ -260,16 +260,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return;
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
-                this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.parentView.notifyFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
+            this.parentView.notifyFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
 
@@ -378,15 +379,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        changeDropdown: function (e) {
+        notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
             var $fields = $(".query-field");
-
-            // If there aren't at least two dropdowns, there are no dependencies
-            if ($fields.filter("select").length < 2) {
-                return;
-            }
 
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
