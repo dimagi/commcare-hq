@@ -35,6 +35,6 @@ def periodic_task(**options):
     """
     options.setdefault('options', {})
     if options.get('queue'):
-        options['options']['queue'] = options.pop('queue')
+        options['options']['queue'] = options.get('queue')
     from corehq.apps.celery import app
     return app.task(base=PeriodicTask, **options)
