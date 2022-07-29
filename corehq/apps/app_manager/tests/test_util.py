@@ -202,7 +202,7 @@ class TestSplitPath(SimpleTestCase):
     def test_path_filename(self):
         path, name = split_path('foo/bar/baz.txt')
         self.assertEqual(path, 'foo/bar')
-        self.assertEqual(name, 'bar.txt')
+        self.assertEqual(name, 'baz.txt')
 
     def test_no_slash(self):
         path, name = split_path('foo')
