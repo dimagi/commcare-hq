@@ -171,7 +171,7 @@ class RepeaterSyncTestsBase(TestCase):
         return [couch_cls.wrap(r) for r in self.test_data if r['doc_type'] == couch_cls.__name__]
 
     def get_sql_objects(self, sql_cls):
-        return [sql_cls(**r) for r in self.test_data if r['doc_type'] == sql_cls._repeater_type]
+        return [sql_cls(**r) for r in self.test_data if r['doc_type'] == sql_cls()._repeater_type]
 
 
 class TestSQLCaseRepeater(RepeaterSyncTestsBase):
