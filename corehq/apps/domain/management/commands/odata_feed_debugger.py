@@ -31,7 +31,7 @@ class Command(BaseCommand):
             doc = result['doc']
             del doc['_id']
             del doc['_rev']
-            filepath = os.path.join('/home/biyeun/', filename)
+            filepath = os.path.join('/home/cchq/mcn-test/', filename)
             with open(filepath, 'w') as jsonfile:
                 jsonfile.write(json.dumps(doc))
             command = f"AWS_PROFILE=commcare-production:session scp -o " \
