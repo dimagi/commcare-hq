@@ -389,6 +389,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             urlObject.setQueryData(self.getAnswers(), false);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
+                self.validateFields(response.models);
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
@@ -430,38 +431,40 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            var invalidFields = [];
-            var errorHTML = gettext("Please check the following fields:");
-
-            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
-
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
 
             $.when(fetchingPrompts).done(function (response) {
-                for (var i = 0; i < response.models.length; i++) {
-                    self.collection.models[i].set('error', response.models[i].get('error'));
-                }
-                self.children.each(function (childView) {
-                    if (!childView.isValid()) {
-                        invalidFields.push(childView.model.get('text'));
-                    }
-                });
-
-                if (invalidFields.length) {
-                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
-                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
-                    }).join("") + "</ul>";
-                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
-
+                if (!self.validateFields(response.models)) {
                     return;
                 }
-
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
 
+        },
+
+        validateFields: function (models) {
+            var self = this,
+                invalidFields = [];
+            for (var i = 0; i < models.length; i++) {
+                self.collection.models[i].set('error', models[i].get('error'));
+            }
+            self.children.each(function (childView) {
+                if (!childView.isValid()) {
+                    invalidFields.push(childView.model.get('text'));
+                }
+            });
+
+            FormplayerFrontend.trigger('clearNotifications');
+            if (invalidFields.length) {
+                var errorHTML = gettext("Please check the following fields:");
+                errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                    return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                }).join("") + "</ul>";
+                FormplayerFrontend.trigger('showError', errorHTML, true, false);
+            }
         },
 
         setStickyQueryInputs: function () {
