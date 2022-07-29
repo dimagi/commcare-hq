@@ -164,18 +164,22 @@ require_form_view_permission = require_permission(
 require_can_view_all_reports = require_permission(HqPermissions.view_reports)
 
 
-def _augmented_form_view_permissions():
+def _augmented_form_view_permissions(login_decorator=login_and_domain_required):
     def decorator(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
                 return view_func(request, domain, *args, **kwargs)
             return require_form_view_permission(view_func)(request, domain, *args, **kwargs)
-        return _inner
+
+        if login_decorator:
+            return login_decorator(_inner)
+        else:
+            return _inner
     return decorator
 
 
-augmented_form_view_permissions = _augmented_form_view_permissions()
+augmented_form_view_permissions = _augmented_form_view_permissions(login_decorator=None)
 
 
 @login_and_domain_required
