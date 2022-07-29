@@ -2,7 +2,7 @@ from distutils.version import LooseVersion
 
 from django.urls import reverse
 
-import urllib.parse
+from urllib.parse import quote, urljoin
 
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import MediaResourceError
@@ -48,7 +48,6 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
-from corehq.util.string import slash_join
 
 
 class SuiteGenerator(object):
@@ -167,7 +166,7 @@ class MediaSuiteGenerator(object):
             hqmedia_download_url = reverse(
                 'hqmedia_download',
                 args=[m.media_type, m.multimedia_id]
-            ) + urllib.parse.quote(name)
+            ) + quote(name)
             yield MediaResource(
                 id=id_strings.media_resource(m.unique_id, name),
                 path=install_path,
@@ -177,5 +176,5 @@ class MediaSuiteGenerator(object):
                 local=(local_path
                        if self.app.enable_local_resource
                        else None),
-                remote=slash_join(self.app.url_base, hqmedia_download_url)
+                remote=urljoin(self.app.url_base, hqmedia_download_url)
             )

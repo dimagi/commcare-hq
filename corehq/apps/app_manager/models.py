@@ -38,7 +38,6 @@ from jsonpath_ng import jsonpath, parse
 from lxml import etree
 from memoized import memoized
 
-from corehq.util.string import slash_join
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -4130,7 +4129,7 @@ def absolute_url_property(method):
     """
     @wraps(method)
     def _inner(self):
-        return slash_join(self.url_base, method(self))
+        return urljoin(self.url_base, method(self))
     return property(_inner)
 
 
@@ -4513,12 +4512,12 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
             if bitly.BITLY_CONFIGURED:
                 view_url = reverse(view_name, args=[self.domain, self._id])
                 if build_profile_id is not None:
-                    long_url = slash_join(
+                    long_url = urljoin(
                         self.url_base,
                         f'{view_url}?profile={build_profile_id}'
                     )
                 else:
-                    long_url = slash_join(self.url_base, view_url)
+                    long_url = urljoin(self.url_base, view_url)
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None
