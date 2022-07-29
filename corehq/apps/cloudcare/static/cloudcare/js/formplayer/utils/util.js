@@ -88,7 +88,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             return update;
         });
-    }
+    };
 
     /**
      * Helper function to update the URL
@@ -241,7 +241,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 return true;
             }
             return false;
-        }
+        };
 
         this.setPage = function (page) {
             this.page = page;
