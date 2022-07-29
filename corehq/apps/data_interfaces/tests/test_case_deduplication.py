@@ -926,6 +926,49 @@ class TestDeduplicationRuleRuns(TestCase):
         self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
         self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
 
+    def test_rule_with_closed_cases(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14', 'is_evil': '1'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14', 'is_evil': '1'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        cases[0].closed = True
+        cases[0].save()
+
+        self._prime_es_index(cases)
+
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["is_evil"],
+            include_closed=True,
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+
+        self.assertEqual(len(refreshed_cases), 2)
+        self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
+        self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
+
     def test_rule_with_location_as_owner(self):
         cases = [
             self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
