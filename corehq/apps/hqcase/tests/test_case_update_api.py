@@ -522,7 +522,6 @@ class TestCaseAPI(TestCase):
         self.assertEqual(case.dynamic_case_properties().get('champion'), 'true')
 
     def test_update_by_external_id_doesnt_exist(self):
-        case = self._make_case()
         res = self.client.put(
             reverse('case_api', args=(self.domain,)),
             {
