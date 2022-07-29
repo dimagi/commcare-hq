@@ -34,6 +34,7 @@ class JsonIndex(jsonobject.JsonObject):
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
+    case_id = jsonobject.StringProperty()
     case_name = jsonobject.StringProperty()
     case_type = jsonobject.StringProperty()
     external_id = jsonobject.StringProperty()
@@ -51,27 +52,21 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         string_conversions = ()
 
     @classmethod
-    def wrap(cls, obj):
-        for attr, _ in obj.items():
+    def wrap(cls, data):
+        for attr, _ in data.items():
             if attr not in cls._properties_by_key:
                 # JsonObject will raise an exception here anyways, but we need
                 # a user-friendly error message
                 raise BadValueError(f"'{attr}' is not a valid field.")
-        return super().wrap(obj)
+        return super().wrap(data)
 
     def get_caseblock(self, case_db):
-
-        self._case_db = case_db  # code smell - fix this!
-
-        # I don't like mixing between case_id and get_case_id - figure that out
-        if not self._is_case_creation and self.case_id and self.case_id not in case_db.real_case_ids:
-            raise UserError(f"No case found with ID '{self.case_id}'")
 
         def _if_specified(value):
             return value if value is not None else CaseBlock.undefined
 
         return CaseBlock(
-            case_id=self.get_case_id(),
+            case_id=self.get_case_id(case_db),
             user_id=self.user_id,
             case_type=_if_specified(self.case_type),
             case_name=_if_specified(self.case_name),
@@ -109,13 +104,16 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
     _is_case_creation = True
 
-    @memoized
-    def get_case_id(self):
-        return str(uuid.uuid4())
+    @classmethod
+    def wrap(cls, data):
+        data['case_id'] = str(uuid.uuid4())
+        return super().wrap(data)
+
+    def get_case_id(self, case_db):
+        return self.case_id
 
 
 class JsonCaseUpdate(BaseJsonCaseChange):
-    case_id = jsonobject.StringProperty()
     _is_case_creation = False
 
     def validate(self, *args, **kwargs):
@@ -123,8 +121,13 @@ class JsonCaseUpdate(BaseJsonCaseChange):
         if not self.case_id and not self.external_id:
             raise BadValueError("Case updates must provide either a case_id or external_id")
 
-    def get_case_id(self):
-        return self.case_id or self._case_db.lookup_id(self.external_id, 'external_id')
+    def get_case_id(self, case_db):
+        if self.case_id:
+            if self.case_id in case_db.real_case_ids:
+                return self.case_id
+            raise UserError(f"No case found with ID '{self.case_id}'")
+
+        return case_db.lookup_id(self.external_id, 'external_id')
 
 
 def handle_case_update(domain, data, user, device_id, is_creation):
@@ -194,13 +197,13 @@ class CaseIDLookerUpper:
     def ids(self):
         case_ids = {}
         case_ids['temporary_id'] = {
-            update.temporary_id: update.get_case_id()
+            update.temporary_id: update.case_id
             for update in self.updates
-            if getattr(update, 'temporary_id', None) and update._is_case_creation
+            if getattr(update, 'temporary_id', None) and update.case_id
         }
         case_ids['external_id'] = {
-            update.external_id: update.get_case_id()
-            for update in self.updates if update.external_id and update._is_case_creation
+            update.external_id: update.case_id
+            for update in self.updates if update.external_id and update.case_id
         }
 
         external_ids_to_find = {
