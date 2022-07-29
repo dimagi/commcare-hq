@@ -1,13 +1,17 @@
 from django.test import SimpleTestCase
+
 from testil import eq
+
+from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
 
 from corehq.apps.userreports.sql import get_column_name
 from corehq.apps.userreports.util import (
+    LEGACY_UCR_TABLE_PREFIX,
     UCR_TABLE_PREFIX,
+    get_domain_for_ucr_table_name,
     get_table_name,
     truncate_value,
 )
-from dimagi.utils.couch.undo import remove_deleted_doc_type_suffix
 
 
 class UtilitiesTestCase(SimpleTestCase):
@@ -95,3 +99,47 @@ def test_remove_deleted_doc_type_suffix():
         (_check, 'DataSource-Deleted', 'DataSource'),
         (_check, 'DataSource-Deleted-Deleted', 'DataSource'),
     ]
+
+
+class TestGetDomainForUCRTableName(SimpleTestCase):
+
+    def test_modern_prefix(self):
+        domain = 'test'
+        table_name = get_table_name(domain, '1234', prefix=UCR_TABLE_PREFIX)
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, 'test')
+
+    def test_legacy_prefix(self):
+        domain = 'test'
+        table_name = get_table_name(domain, '1234', prefix=LEGACY_UCR_TABLE_PREFIX)
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, 'test')
+
+    def test_domain_name_with_underscore(self):
+        domain = 'test-domain'
+        table_name = get_table_name(domain, '1234')
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, 'test-domain')
+
+    def test_domain_name_with_unicode(self):
+        domain = 'test-u4500'
+        table_name = get_table_name(domain, '1234')
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, 'test-u4500')
+
+    def test_domain_name_with_illegal_name(self):
+        # should not be possible, but ensures unicode roundtrip works
+        domain = 'test\u4500'
+        table_name = get_table_name(domain, '1234')
+
+        result = get_domain_for_ucr_table_name(table_name)
+
+        self.assertEqual(result, domain)

@@ -4,6 +4,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.domain.models import Domain
+from corehq.messaging.pillow import get_case_messaging_sync_pillow
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.apps.sms.api import incoming, send_sms_to_verified_number
 from corehq.apps.sms.messages import MSG_OPTED_IN, MSG_OPTED_OUT, get_message
@@ -13,6 +14,7 @@ from corehq.apps.sms.tests.util import (
     setup_default_sms_test_backend,
 )
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 class OptTestCase(DomainSubscriptionMixin, TestCase):
@@ -40,6 +42,9 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
             prefix='1',
             backend=cls.custom_backend,
         )
+        cls.process_pillow_changes = process_pillow_changes('DefaultChangeFeedPillow')
+        cls.process_pillow_changes.add_pillow(get_case_messaging_sync_pillow())
+
 
     @classmethod
     def tearDownClass(cls):
@@ -61,14 +66,18 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
     def get_last_sms(self, phone_number):
         return SMS.objects.filter(domain=self.domain, phone_number=phone_number).order_by('-date')[0]
 
+    def handle_incoming(self, *args, **kwargs):
+        with self.process_pillow_changes:
+            incoming(*args, **kwargs)
+
     def test_opt_out_and_opt_in(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
-        incoming('99912345678', 'join opt-test', 'GVI')
+        self.handle_incoming('99912345678', 'join opt-test', 'GVI')
         v = PhoneNumber.get_two_way_number('99912345678')
         self.assertIsNotNone(v)
 
-        incoming('99912345678', 'stop', 'GVI')
+        self.handle_incoming('99912345678', 'stop', 'GVI')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertFalse(phone_number.send_sms)
@@ -80,7 +89,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, get_message(MSG_OPTED_OUT, context=('START',)))
 
-        incoming('99912345678', 'start', 'GVI')
+        self.handle_incoming('99912345678', 'start', 'GVI')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertTrue(phone_number.send_sms)
@@ -95,7 +104,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
     def test_sending_to_opted_out_number(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
-        incoming('99912345678', 'join opt-test', 'GVI')
+        self.handle_incoming('99912345678', 'join opt-test', 'GVI')
         v = PhoneNumber.get_two_way_number('99912345678')
         self.assertIsNotNone(v)
 
@@ -104,7 +113,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
 
-        incoming('99912345678', 'stop', 'GVI')
+        self.handle_incoming('99912345678', 'stop', 'GVI')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertFalse(phone_number.send_sms)
@@ -116,7 +125,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertTrue(sms.error)
         self.assertEqual(sms.system_error_message, SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
 
-        incoming('99912345678', 'start', 'GVI')
+        self.handle_incoming('99912345678', 'start', 'GVI')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='99912345678')
         self.assertTrue(phone_number.send_sms)
@@ -131,7 +140,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
     def test_custom_opt_keywords(self):
         self.assertEqual(PhoneBlacklist.objects.count(), 0)
 
-        incoming('19912345678', 'join opt-test', 'TEST')
+        self.handle_incoming('19912345678', 'join opt-test', 'TEST')
         v = PhoneNumber.get_two_way_number('19912345678')
         self.assertIsNotNone(v)
 
@@ -140,7 +149,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertEqual(sms.direction, 'O')
         self.assertEqual(sms.text, 'hello')
 
-        incoming('19912345678', 'restop', 'TEST')
+        self.handle_incoming('19912345678', 'restop', 'TEST')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='19912345678')
         self.assertFalse(phone_number.send_sms)
@@ -152,7 +161,7 @@ class OptTestCase(DomainSubscriptionMixin, TestCase):
         self.assertTrue(sms.error)
         self.assertEqual(sms.system_error_message, SMS.ERROR_PHONE_NUMBER_OPTED_OUT)
 
-        incoming('19912345678', 'restart', 'TEST')
+        self.handle_incoming('19912345678', 'restart', 'TEST')
         self.assertEqual(PhoneBlacklist.objects.count(), 1)
         phone_number = PhoneBlacklist.objects.get(phone_number='19912345678')
         self.assertTrue(phone_number.send_sms)

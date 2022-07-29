@@ -272,6 +272,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     Called to edit any (supported) form attribute, given by attr
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
 
     ajax = json.loads(request.POST.get('ajax', 'true'))
     resp = {}
@@ -654,6 +664,17 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
 
 
 def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     xform_questions = []
     xform = None
     form_errors = []

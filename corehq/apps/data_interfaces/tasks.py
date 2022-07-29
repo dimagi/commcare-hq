@@ -13,6 +13,7 @@ from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
@@ -28,7 +29,6 @@ from corehq.util.decorators import serial_task
 from .deduplication import reset_deduplicate_rule, backfill_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
-    AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseDuplicate,
     CaseRuleSubmission,

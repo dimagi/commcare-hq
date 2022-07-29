@@ -841,6 +841,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
         self.extension_index_tree.delete_index(index.case_id, index.identifier)
 
     def update_phone_lists(self, xform, case_list):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         made_changes = False
         _get_logger().debug('updating sync log for {}'.format(self.user_id))
         _get_logger().debug('case ids before update: {}'.format(', '.join(self.case_ids_on_phone)))

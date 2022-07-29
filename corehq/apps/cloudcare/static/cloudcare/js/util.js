@@ -35,16 +35,17 @@ hqDefine('cloudcare/js/util', [
         return urlRoot + "/" + appId + "/";
     };
 
-    var showError = function (message, $el) {
+    var showError = function (message, $el, reportToHq) {
         if (message === undefined) {
             message = gettext("Sorry, an error occurred while processing that request.");
         }
         _show(message, $el, null, "alert alert-danger");
-        reportFormplayerErrorToHQ({
-            type: 'show_error_notification',
-            message: message,
-        });
-
+        if (reportToHq === undefined || reportToHq) {
+            reportFormplayerErrorToHQ({
+                type: 'show_error_notification',
+                message: message,
+            });
+        }
     };
 
     var showWarning = function (message, $el) {
@@ -54,7 +55,7 @@ hqDefine('cloudcare/js/util', [
         _show(message, $el, null, "alert alert-danger");
     };
 
-    var showHTMLError = function (message, $el, autoHideTime) {
+    var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
         var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
         var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
         try {
@@ -63,11 +64,13 @@ hqDefine('cloudcare/js/util', [
         } catch (e) {
             // leave the message as at came in if there's an issue parsing text from the container
         }
-        reportFormplayerErrorToHQ({
-            type: 'show_error_notification',
-            message: message,
-            htmlMessage: htmlMessage,
-        });
+        if (reportToHq === undefined || reportToHq) {
+            reportFormplayerErrorToHQ({
+                type: 'show_error_notification',
+                message: message,
+                htmlMessage: htmlMessage,
+            });
+        }
     };
 
     var showSuccess = function (message, $el, autoHideTime, isHTML) {
