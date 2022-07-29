@@ -545,10 +545,14 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         """
         return self.__class__.__name__
 
+    def _wrap_schema_attrs(self, couch_object):
+        pass
+
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(couch_object, field_name, value)
+        self._wrap_schema_attrs(couch_object)
         setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
         setattr(couch_object, 'paused', self.is_paused)
         couch_object.save(sync_to_sql=False)
