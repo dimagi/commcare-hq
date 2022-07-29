@@ -1,7 +1,6 @@
-import json
-
 from django.core.management.base import BaseCommand
-from corehq.apps.app_manager.models import Application
+from corehq.apps.export.models import FormExportDataSchema, FormExportInstance
+from corehq.apps.export.views.utils import clean_odata_columns
 
 
 class Command(BaseCommand):
@@ -14,19 +13,35 @@ class Command(BaseCommand):
         parser.add_argument(
             'app_id',
         )
+        parser.add_argument(
+            'export_id',
+        )
 
-    def handle(self, domain, app_id, **options):
-        results = Application.get_db().view(
-            'app_manager/saved_app',
-            startkey=[domain, app_id, {}],
-            endkey=[domain, app_id],
-            descending=True,
-            reduce=False,
-            include_docs=True,
-        ).all()
-        for result in results:
-            build_id = result['id']
-            doc_string = json.dumps(result['doc'])
-            if 'formid' in doc_string:
-                print('found formid')
-                print(build_id)
+    def handle(self, domain, app_id, export_id, **options):
+        # def new_export_instance()
+        export_instance = FormExportInstance.get(export_id)
+        # added in ODataFeedMixin
+        export_instance._id = None
+        export_instance._rev = None
+
+        # from get BaseEditNewCustomExportView
+        schema = FormExportDataSchema.generate_schema_from_builds(
+            domain,
+            app_id,
+            export_instance.identifier,
+            only_process_current_builds=True,
+        )
+
+        # def get_export_instance in BaseEditNewCustomExportView
+        new_instance = FormExportInstance.generate_instance_from_schema(
+            schema, export_instance
+        )
+        # added in ODataFeedMixin
+        clean_odata_columns(new_instance)
+        new_instance.is_odata_config = True
+        new_instance.transform_dates = False
+        new_instance.name = ("Copy of {}").format(new_instance.name)
+
+        for col in new_instance.tables[0].selected_columns:
+            if col.is_deleted:
+                print(col)
