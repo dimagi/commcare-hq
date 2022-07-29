@@ -5,14 +5,14 @@
 {% else %}
     <div class="control-group">
         <label for="{{ field.id_for_label }}" class="control-label">
-            {{ field.label|safe }}
+            {{ field.label }}
         </label>
         <div class="controls" style="padding-top: 5px;">
             <input type="hidden"
                    name="{{ field.html_name }}"
                    id="{{ field.auto_id }}"
                    value="{{ field.value|default_if_none:"" }}" />
-            {{ field_text|safe }}
+            {{ field_text }}
         </div>
     </div>
 {% endif %}
