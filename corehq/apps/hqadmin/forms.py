@@ -168,7 +168,7 @@ def clean_data(cleaned_data, offboarding_list=False):
             validation_errors.insert(0, ValidationError(
                 _("The following users do not exist on this site, please have the user registered first:")))
             if non_dimagi_email:
-                validation_errors.append('')
+                validation_errors.append('+')
         raise ValidationError(validation_errors + non_dimagi_email)
     if offboarding_list and validation_errors:
         cleaned_data['validation_errors'] = validation_errors
