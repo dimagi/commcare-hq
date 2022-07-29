@@ -1029,7 +1029,7 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
         if prop['required_test']:
-            _current_text = current.required.text if current.required else {}
+            _current_text = current.required.text if current and current.required else {}
             ret['required'] = {
                 'test': prop['required_test'],
                 'text': {**_current_text, lang: prop['required_text']}
