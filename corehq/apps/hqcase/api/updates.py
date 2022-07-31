@@ -32,6 +32,15 @@ class JsonIndex(jsonobject.JsonObject):
         if len(list(filter(None, [self.case_id, self.external_id, self.temporary_id]))) != 1:
             raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
 
+    def get_id(self, case_db):
+        if self.case_id:
+            return self.case_id
+        if self.temporary_id:
+            return case_db.lookup_id(self.temporary_id, 'temporary_id')
+        if self.external_id:
+            return case_db.lookup_id(self.external_id, 'external_id')
+        raise Exception("Validation should've caught this situation")
+
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
     case_id = jsonobject.StringProperty()
@@ -78,20 +87,11 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             index={
                 name: IndexAttrs(
                     case_type=index.case_type,
-                    case_id=self._get_index_id(index, case_db),
+                    case_id=index.get_id(case_db),
                     relationship=index.relationship
                 ) for name, index in self.indices.items()
             },
         ).as_text()
-
-    def _get_index_id(self, index, case_db):
-        if index.case_id:
-            return index.case_id
-        if index.temporary_id:
-            return case_db.get_by_temporary_id(index.temporary_id)
-        if index.external_id:
-            return case_db.get_by_external_id(index.external_id)
-        raise Exception("Validation should've caught this situation")
 
 
 class JsonCaseCreation(BaseJsonCaseChange):
