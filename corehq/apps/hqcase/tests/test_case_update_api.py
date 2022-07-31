@@ -330,10 +330,29 @@ class TestCaseAPI(TestCase):
         }).json()
         self.assertEqual(res['error'], "Could not find a case with external_id 'MISSING'")
 
-    def test_cannot_remove_child_case(self):
-        # Documenting that this does not yet work
+    def test_set_parent_missing_field(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'match',
+            'case_name': 'Harmon/Luchenko',
+            'owner_id': 'harmon',
+            'indices': {
+                'parent': {
+                    'external_id': parent_case.external_id,
+                    'case_type': 'player',
+                    # 'relationship' is not specified
+                },
+            },
+        }).json()
+        self.assertEqual(res['error'], "Property relationship is required.")
+
+    def test_delete_index(self):
+        # aka remove child case
         parent_case = self._make_case()
         child_case = self._make_case(parent_id=parent_case.case_id)
+        self.assertEqual([c.case_id for c in parent_case.get_subcases()],
+                         [child_case.case_id])
+
         res = self._update_case(child_case.case_id, {
             'indices': {
                 'parent': {
@@ -342,8 +361,14 @@ class TestCaseAPI(TestCase):
                     'relationship': 'child',
                 },
             },
-        }).json()
-        self.assertEqual(res['error'], "Indices must specify case_id, external_id, or temporary ID, and only one")
+        })
+        self.assertEqual(res.status_code, 200)
+
+        parent_case = CommCareCase.objects.get_case(parent_case.case_id, self.domain)
+        self.assertEqual(parent_case.get_subcases(), [])
+
+        child_case = CommCareCase.objects.get_case(child_case.case_id, self.domain)
+        self.assertEqual(child_case.get_index('parent').referenced_id, '')
 
     def test_bulk_action(self):
         existing_case = self._make_case()

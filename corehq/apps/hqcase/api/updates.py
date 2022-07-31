@@ -24,22 +24,25 @@ class JsonIndex(jsonobject.JsonObject):
     case_id = jsonobject.StringProperty()
     external_id = jsonobject.StringProperty()
     temporary_id = jsonobject.StringProperty()
-    case_type = jsonobject.StringProperty(required=True)
-    relationship = jsonobject.StringProperty(required=True, choices=('child', 'extension'))
+    case_type = jsonobject.StringProperty()
+    relationship = jsonobject.StringProperty(choices=('child', 'extension'))
 
     def validate(self, *args, **kwargs):
-        super().validate(*args, **kwargs)
-        if len(list(filter(None, [self.case_id, self.external_id, self.temporary_id]))) != 1:
+        ids_specified = len(list(filter(None, [self.case_id, self.external_id, self.temporary_id])))
+        if ids_specified > 1:
             raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
+        if ids_specified == 1:
+            self.properties()['case_type'].required = True
+            self.properties()['relationship'].required = True
+        super().validate(*args, **kwargs)
 
     def get_id(self, case_db):
-        if self.case_id:
-            return self.case_id
         if self.temporary_id:
             return case_db.lookup_id(self.temporary_id, 'temporary_id')
         if self.external_id:
             return case_db.lookup_id(self.external_id, 'external_id')
-        raise Exception("Validation should've caught this situation")
+        # case_id may be unspecified, which is fine - that's how deletions work
+        return self.case_id
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
