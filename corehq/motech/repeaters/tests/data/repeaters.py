@@ -8,7 +8,6 @@ repeater_test_data = [
         "base_doc": "Repeater",
         "white_listed_form_xmlns":
         [],
-        "notify_addresses_str": "",
         "started_at": "2021-01-07T09:06:47.177274Z",
         "connection_settings_id": 1
     },
