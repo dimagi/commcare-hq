@@ -19,6 +19,10 @@ from corehq.sql_db.connections import connection_manager
 
 
 class Command(BaseCommand):
+    """
+    Note that this command does not contain logic to drop tables with data sources that no longer exist. It only
+    currently only finds them.
+    """
     help = "Find orphaned UCR tables for data sources that no longer exist"
 
     def add_arguments(self, parser):
@@ -58,7 +62,8 @@ def prune_tables(tables_to_remove_by_engine, drop_empty_tables, drop_deleted_tab
             continue
 
         for tablename in tablenames:
-            should_delete = drop_deleted_tables and get_domain_for_ucr_table_name(tablename) in deleted_domains
+            should_drop_tables_in_deleted_domains = drop_deleted_tables and get_domain_for_ucr_table_name(
+                tablename) in deleted_domains
 
             with engine.begin() as connection:
                 try:
@@ -69,7 +74,8 @@ def prune_tables(tables_to_remove_by_engine, drop_empty_tables, drop_deleted_tab
                     print(f"\tAn error was encountered when attempting to read from {tablename}: {e}")
                 else:
                     row_count, idle_since = result.fetchone()
-                    if should_delete or (drop_empty_tables and row_count == 0):
+                    should_drop_empty_tables = drop_empty_tables and row_count == 0
+                    if should_drop_tables_in_deleted_domains or should_drop_empty_tables:
                         print(f"\t{tablename}: {row_count} rows")
                         connection.execute(f'DROP TABLE "{tablename}"')
                         print(f'\t^-- deleted {tablename}')
