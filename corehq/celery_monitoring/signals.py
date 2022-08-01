@@ -27,9 +27,10 @@ def celery_record_time_to_start(task_id=None, task=None, **kwargs):
     from corehq.util.metrics import metrics_counter, metrics_gauge
     from corehq.util.metrics.const import MPM_MAX
 
+    task_queue = getattr(task, 'queue', 'NA')
     tags = {
         'celery_task_name': task.name,
-        'celery_queue': task.queue,
+        'celery_queue': task_queue,
     }
 
     timer = TimeToStartTimer(task_id)
