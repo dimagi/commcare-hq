@@ -382,7 +382,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
-            self.validateFields().always(function(response) {
+            self.validateFields().always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -427,7 +427,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             // validateFields will likely already have been called when user blurred the last field,
             // but call it here just in case they didn't fill anything out
-            self.validateFields().done(function() {
+            self.validateFields().done(function () {
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
         },
