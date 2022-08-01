@@ -187,15 +187,17 @@ def get_case_history(case):
 
     changes = defaultdict(dict)
     for form in XFormInstance.objects.get_forms(case.xform_ids, case.domain):
+        name = xmlns_to_name(case.domain, form.xmlns, form.app_id, form_name=form.form_data.get('@name'))
+        defaults = {
+            'Form ID': form.form_id,
+            'Form Name': name,
+            'Form Received On': form.received_on,
+            'Form Submitted By': form.metadata.username,
+        }
         case_blocks = extract_case_blocks(form)
         for block in case_blocks:
             if block.get('@case_id') == case.case_id:
-                property_changes = {
-                    'Form ID': form.form_id,
-                    'Form Name': xmlns_to_name(case.domain, form.xmlns, form.app_id),
-                    'Form Received On': form.received_on,
-                    'Form Submitted By': form.metadata.username,
-                }
+                property_changes = defaults.copy()
                 property_changes.update(block.get('create', {}))
                 property_changes.update(block.get('update', {}))
                 changes[form.form_id].update(property_changes)

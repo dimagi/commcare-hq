@@ -133,11 +133,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         $("#cloudcare-notifications").empty();
     });
 
-    FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
         if (isHTML) {
-            showHTMLError(errorMessage, $("#cloudcare-notifications"));
+            showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            showError(errorMessage, $("#cloudcare-notifications"));
+            showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
         }
     });
 
@@ -178,11 +178,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         data.formplayerEnabled = true;
         data.displayOptions = $.extend(true, {}, user.displayOptions);
         data.onerror = function (resp) {
-            var message = resp.human_readable_message || resp.exception || "Unexpected Error";
+            var message = resp.human_readable_message || resp.exception || gettext("Unexpected Error");
             if (resp.is_html) {
-                showHTMLError(message, $("#cloudcare-notifications"));
+                showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
             } else {
-                showError(message, $("#cloudcare-notifications"));
+                showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {

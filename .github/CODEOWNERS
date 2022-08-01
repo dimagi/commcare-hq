@@ -9,7 +9,7 @@
 /.github/ @orangejenny
 
 /corehq/blobs/ @millerdev
-/corehq/elastic.py @proteusvacuum @joxl
+/corehq/elastic.py @joxl
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/form_processor/ @snopoke
 /corehq/messaging/ @orangejenny @mkangia
@@ -31,14 +31,13 @@
 /corehq/apps/analytics/ @biyeun
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @proteusvacuum
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
-/corehq/apps/es/ @esoergel @proteusvacuum @joxl
+/corehq/apps/es/ @esoergel @joxl
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
@@ -46,7 +45,7 @@
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
-/corehq/apps/reports/standard/cases/ @proteusvacuum @esoergel
+/corehq/apps/reports/standard/cases/ @esoergel
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun

@@ -297,7 +297,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             # added by django choicefield in models
             'get_request_method_display',
             'to_json', '_convert_to_serializable',
-            '_optionvalue_fields'
+            '_optionvalue_fields', '_wrap_schema_attrs'
         }
 
 

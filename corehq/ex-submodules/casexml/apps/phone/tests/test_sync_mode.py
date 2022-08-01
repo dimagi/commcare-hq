@@ -118,7 +118,7 @@ class DeprecatedBaseSyncTest(BaseSyncTest):
         super(DeprecatedBaseSyncTest, self).setUp()
         self.sync_log = self.device.last_sync.log
         self.factory = self.device.case_factory
-        self.factory.form_extras = {
+        self.factory.submission_extras = {
             'last_sync_token': self.sync_log._id,
         }
 
@@ -1931,7 +1931,7 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
         submit_case_blocks(
             [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_text()],
             'submission-domain-with-toggle',
-            form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
+            submission_extras={"last_sync_token": 'not-a-valid-synclog-id'},
         )
 
     def test_restore_with_bad_log_toggle_enabled(self):
