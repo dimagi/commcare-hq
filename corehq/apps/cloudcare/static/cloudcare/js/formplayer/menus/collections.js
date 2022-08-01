@@ -65,7 +65,8 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             if (response.selections) {
                 urlObject.setSelections(response.selections);
                 updateUrl = true;
-                var currentSelectedValues = sessionStorage.selectedValues === undefined ? null : sessionStorage.selectedValues;
+                var currentSelectedValues = sessionStorage.selectedValues !== undefined && response.multiSelect ?
+                    sessionStorage.selectedValues : null;
                 sessionStorage.removeItem('selectedValues');
             }
             if (updateUrl) {
