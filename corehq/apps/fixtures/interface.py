@@ -153,7 +153,8 @@ class FixtureEditInterface(FixtureInterface):
     @property
     def report_context(self):
         context = super(FixtureEditInterface, self).report_context
-        context.update(types=self.data_types)
+        is_managed_by_upstream_domain = any(data_type['is_synced'] for data_type in self.data_types)
+        context.update(types=self.data_types, is_managed_by_upstream_domain=is_managed_by_upstream_domain)
         return context
 
     @property

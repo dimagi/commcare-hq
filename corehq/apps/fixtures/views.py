@@ -161,7 +161,7 @@ def table_json(table):
         '_id': table.id.hex,
         'fields': [asdict(f) for f in table.fields],
     }
-    for key in ['description', 'is_global', 'item_attributes', 'tag']:
+    for key in ['description', 'is_global', 'item_attributes', 'tag', 'is_synced']:
         data[key] = getattr(table, key)
     return data
 
