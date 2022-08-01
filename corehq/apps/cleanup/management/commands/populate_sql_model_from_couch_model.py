@@ -203,9 +203,15 @@ class PopulateSQLCommand(BaseCommand):
             default="-" if settings.UNIT_TESTING else None,
             help="File path to write logs to. If not provided a default will be used."
         )
+        parser.add_argument(
+            '--append-log',
+            action="store_true",
+            help="Append to log file if it already exists."
+        )
 
     def handle(self, **options):
         log_path = options.get("log_path")
+        append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
@@ -214,7 +220,7 @@ class PopulateSQLCommand(BaseCommand):
             command_name = self.__class__.__module__.split('.')[-1]
             log_path = f"{command_name}_{date}.log"
 
-        if log_path != "-" and os.path.exists(log_path):
+        if log_path != "-" and os.path.exists(log_path) and not append_log:
             raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
@@ -241,7 +247,7 @@ class PopulateSQLCommand(BaseCommand):
             self.sql_class().__name__,
         ))
 
-        with self._open_log(log_path) as logfile:
+        with self.open_log(log_path, append_log) as logfile:
             for doc in with_progress_bar(docs, length=doc_count, oneline=False):
                 doc_index += 1
                 if not verify_only:
@@ -298,7 +304,9 @@ class PopulateSQLCommand(BaseCommand):
     def _get_couch_doc_count_for_type(self):
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
 
-    def _open_log(self, log_path):
+    @staticmethod
+    def open_log(log_path, append_log):
         if log_path == "-":
             return nullcontext(sys.stdout)
-        return open(log_path, 'w')
+        mode = "a" if append_log else "w"
+        return open(log_path, mode)
