@@ -61,33 +61,30 @@ class AppMigrationCommandBase(BaseCommand):
             help="Perform the migration but don't save any changes",
         )
         parser.add_argument(
-            '--restartable',
+            '--start-from-scratch',
             action='store_true',
             default=False,
-            help="Uses two txt files to track progress of migrated docs, so that the command can be continue where"
-                 "it left off after being interrupted.",
+            help="If existing progress files for this command exist, turn this flag on to ignore them and start"
+                 "from scratch.",
         )
 
     def handle(self, **options):
         start_time = time()
         self.options = options
-        can_continue_progress, domain_list_position, domains = self.try_to_continue_progress_if_restartable()
-        if can_continue_progress:
-            pass
-        elif self.options['domain']:
+        if self.options['domain']:
             domains = [self.options['domain']]
+            domain_list_position = 0
         else:
-            domains = self.get_domains() or [None]
-            if self.restartable:
+            can_continue_progress, domain_list_position, domains = self.try_to_continue_progress()
+            if not can_continue_progress:
+                domains = self.get_domains() or [None]
                 self.store_domain_list(domains)
         for domain in domains:
             app_ids = self.get_app_ids(domain)
             logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
-            if self.restartable:
-                domain_list_position += self.increment_progress(domain_list_position)
-        if self.restartable:
-            self.remove_storage_files()
+            domain_list_position = self.increment_progress(domain_list_position)
+        self.remove_storage_files()
         end_time = time()
         execution_time_seconds = end_time - start_time
         logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
@@ -155,8 +152,8 @@ class AppMigrationCommandBase(BaseCommand):
         with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
             f.writelines(f'{domain}\n' for domain in domains)
 
-    def try_to_continue_progress_if_restartable(self):
-        if self.restartable:
+    def try_to_continue_progress(self):
+        if not self.options['start_from_scratch']:
             try:
                 with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'r') as f:
                     domain_list_position = int(f.readline())
@@ -169,5 +166,8 @@ class AppMigrationCommandBase(BaseCommand):
         return False, 0, None
 
     def remove_storage_files(self):
-        os.remove(self.DOMAIN_LIST_FILENAME)
-        os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
+        try:
+            os.remove(self.DOMAIN_LIST_FILENAME)
+            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
+        except FileNotFoundError:
+            pass
