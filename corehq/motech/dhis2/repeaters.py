@@ -349,7 +349,7 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         return Dhis2Repeater
 
     def _wrap_schema_attrs(self, couch_object):
-        setattr(couch_object, 'dhis2_config', Dhis2Config.wrap(self.dhis2_config))
+        couch_object.dhis2_config = Dhis2Config.wrap(self.dhis2_config)
 
     @classmethod
     def _migration_get_fields(cls):
@@ -420,7 +420,7 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
             raise
 
     def _wrap_schema_attrs(self, couch_object):
-        setattr(couch_object, 'dhis2_entity_config', Dhis2EntityConfig.wrap(self.dhis2_entity_config))
+        couch_object.dhis2_entity_config = Dhis2EntityConfig.wrap(self.dhis2_entity_config)
 
     @classmethod
     def _migration_get_fields(cls):

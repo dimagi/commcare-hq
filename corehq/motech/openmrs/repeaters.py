@@ -364,7 +364,7 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         return response
 
     def _wrap_schema_attrs(self, couch_object):
-        setattr(couch_object, 'openmrs_config', OpenmrsConfig.wrap(self.openmrs_config))
+        couch_object.openmrs_config = OpenmrsConfig.wrap(self.openmrs_config)
 
     @classmethod
     def _migration_get_fields(cls):
