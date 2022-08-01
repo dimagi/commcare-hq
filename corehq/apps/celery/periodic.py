@@ -34,7 +34,8 @@ def periodic_task(**options):
         options (dict): https://docs.celeryq.dev/en/latest/reference/celery.app.task.html#celery.app.task.Task.apply_async # noqa E501
     """
     options.setdefault('options', {})
+    options.setdefault('serializer', 'json')
     if options.get('queue'):
-        options['options']['queue'] = options.pop('queue')
+        options['options']['queue'] = options.get('queue')
     from corehq.apps.celery import app
     return app.task(base=PeriodicTask, **options)
