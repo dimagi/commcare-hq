@@ -353,9 +353,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def get_url(self, record):
         return self.repeater.get_url(record)
 
+    @classmethod
     @property
-    def _repeater_type(self):
-        name = type(self).__name__
+    def _repeater_type(cls):
+        name = cls.__name__
         return name[3:] if name.startswith('SQL') else name
 
     @property
