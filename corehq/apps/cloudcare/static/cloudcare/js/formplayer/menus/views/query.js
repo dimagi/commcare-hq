@@ -260,16 +260,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 return;
             } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
                 this.model.set('value', $(e.currentTarget).val());
-                this.parentView.changeDropdown(e);
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.parentView.notifyFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
+            this.parentView.notifyFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
 
@@ -378,21 +379,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        changeDropdown: function (e) {
+        notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
-            var $fields = $(".query-field");
-
-            // If there aren't at least two dropdowns, there are no dependencies
-            if ($fields.filter("select").length < 2) {
-                return;
-            }
-
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
-            var urlObject = Util.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
+            self.validateFields().always(function(response) {
+                var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
@@ -434,38 +425,57 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            var invalidFields = [];
-            var errorHTML = gettext("Please check the following fields:");
+            // validateFields will likely already have been called when user blurred the last field,
+            // but call it here just in case they didn't fill anything out
+            self.validateFields().done(function() {
+                FormplayerFrontend.trigger("menu:query", self.getAnswers());
+            });
+        },
 
-            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
+        /*
+         *  Send request to formplayer to validate fields. Displays any errors.
+         *  Returns a promise that contains the formplayer response.
+         */
+        validateFields: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util"),
+                self = this;
 
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
-            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
+                // Update models with errors from response
                 for (var i = 0; i < response.models.length; i++) {
                     self.collection.models[i].set('error', response.models[i].get('error'));
                 }
+
+                // Gather error messages
+                var invalidFields = [];
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
                     }
                 });
 
+                // Display error messages
+                FormplayerFrontend.trigger('clearNotifications');
                 if (invalidFields.length) {
+                    var errorHTML = gettext("Please check the following fields:");
                     errorHTML += "<ul>" + _.map(invalidFields, function (f) {
                         return "<li>" + DOMPurify.sanitize(f) + "</li>";
                     }).join("") + "</ul>";
                     FormplayerFrontend.trigger('showError', errorHTML, true, false);
-
-                    return;
                 }
 
-                FormplayerFrontend.trigger("menu:query", self.getAnswers());
+                if (invalidFields.length) {
+                    promise.reject(response);
+                } else {
+                    promise.resolve(response);
+                }
             });
 
+            return promise;
         },
 
         setStickyQueryInputs: function () {
