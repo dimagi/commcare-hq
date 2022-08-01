@@ -87,7 +87,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
                 _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree) {
-                // form entry time, doggy
+                // form entry time
                 _.extend(this, _.pick(response, this.formProperties));
                 FormplayerFrontend.trigger('startForm', response);
             }
