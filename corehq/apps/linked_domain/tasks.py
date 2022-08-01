@@ -22,7 +22,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_UCR_EXPRESSION,
 )
 from corehq.apps.linked_domain.dbaccessors import get_upstream_domain_link
-from corehq.apps.linked_domain.exceptions import DomainLinkError
+from corehq.apps.linked_domain.exceptions import DomainLinkError, UnsupportedActionError
 from corehq.apps.linked_domain.keywords import (
     create_linked_keyword,
     update_keyword,
@@ -219,7 +219,11 @@ The following linked project spaces received content:
         )
 
     def _release_model(self, domain_link, model, user):
-        update_model_type(domain_link, model['type'], model_detail=model['detail'])
+        try:
+            update_model_type(domain_link, model['type'], model_detail=model['detail'])
+        except UnsupportedActionError as e:
+            return self._error_tuple(str(e))
+
         domain_link.update_last_pull(model['type'], user._id, model_detail=model['detail'])
 
     def _error_tuple(self, html, text=None):
@@ -252,7 +256,7 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
             elif model['type'] == MODEL_UCR_EXPRESSION:
                 errors = manager._release_ucr_expression(domain_link, model, manager.user._id)
             else:
-                manager._release_model(domain_link, model, manager.user)
+                errors = manager._release_model(domain_link, model, manager.user)
         except Exception as e:   # intentionally broad
             errors = [str(e), str(e)]
             notify_exception(None, "Exception pushing linked domains: {}".format(e))
