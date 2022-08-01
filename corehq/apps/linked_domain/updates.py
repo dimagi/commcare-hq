@@ -288,14 +288,22 @@ def update_fixture(domain_link, tag):
     try:
         linked_data_type = LookupTable.objects.by_domain_tag(
             domain_link.linked_domain, master_data_type.tag)
+
+        if not linked_data_type.is_synced:
+            # if local data exists, but it was not created through syncing, reject the sync request
+            raise UnsupportedActionError(_("Existing lookup table found for '{}'. "
+                "Please remove this table before trying to sync again").format(
+                    linked_data_type.tag))
         is_existing_table = True
     except LookupTable.DoesNotExist:
         linked_data_type = LookupTable(domain=domain_link.linked_domain)
         is_existing_table = False
+
     for field in LookupTable._meta.fields:
         if field.attname not in ["id", "domain"]:
             value = getattr(master_data_type, field.attname)
             setattr(linked_data_type, field.attname, value)
+    linked_data_type.is_synced = True
     linked_data_type.save()
 
     # Re-create relevant data items
