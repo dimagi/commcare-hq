@@ -79,4 +79,5 @@ branches:
     - jc/USH-2261 # Jing/Steph July 28
     - jls/conditionally-required-case-search-fields # Jenny July 29
     - es/required-2  # Ethan July 29
+    - jls/case-claim-js # Jenny Aug 1
 submodules: { }
