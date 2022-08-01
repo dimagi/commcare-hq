@@ -61,6 +61,7 @@ branches:
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
     - do/case-claim-title # Dominic June 23
+    - jls/case-claim-js # Jenny Aug 1
     - mjr/erm-overwrite # Matt June 24
     - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
     - ad/save-only-edited-fields-migration # Addison July 7
