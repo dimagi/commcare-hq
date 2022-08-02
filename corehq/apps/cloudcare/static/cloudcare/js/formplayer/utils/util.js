@@ -187,7 +187,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             // clear out pagination and search when we navigate
             this.page = null;
             this.search = null;
-            sessionStorage.removeItem('selectedValues');
         };
 
         this.setPage = function (page) {
