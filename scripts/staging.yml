@@ -77,9 +77,10 @@ branches:
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
     - do/repair-title-label # Dominic July 26
-    - smh/multi-select-case-list-multi-screen-ui-fix # Steph July 28
+    #- smh/multi-select-case-list-multi-screen-ui-fix # Steph July 28
     - jc/USH-2261 # Jing/Steph July 28
     - jls/conditionally-required-case-search-fields # Jenny July 29
     - es/required-2  # Ethan July 29
     - ad/embedded-tableau-explorer-access # Addison Aug 1
+    - smh/multi-select-case-list-multi-screen-ui-fix-another-method # Steph Aug 2
 submodules: { }
