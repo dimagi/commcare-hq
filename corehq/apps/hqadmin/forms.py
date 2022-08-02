@@ -65,7 +65,8 @@ class SuperuserManagementForm(forms.Form):
     )
     privileges = forms.MultipleChoiceField(
         choices=[
-            ('is_superuser', 'Mark as superuser'),
+            ('is_staff', 'Mark as developer'),
+            ('is_superuser', 'Mark as superuser')
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
@@ -74,13 +75,8 @@ class SuperuserManagementForm(forms.Form):
     def clean(self):
         return clean_data(self.cleaned_data)
 
-    def __init__(self, can_toggle_is_staff, *args, **kwargs):
+    def __init__(self, can_toggle_status, *args, **kwargs):
         super(SuperuserManagementForm, self).__init__(*args, **kwargs)
-
-        if can_toggle_is_staff:
-            self.fields['privileges'].choices.append(
-                ('is_staff', 'Mark as developer')
-            )
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
