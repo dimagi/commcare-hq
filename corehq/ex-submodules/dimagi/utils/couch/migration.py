@@ -139,7 +139,7 @@ class SyncCouchToSQLMixin(object):
             obj = cls(**{cls._migration_couch_id_name: self._id})
         return obj
 
-    def _migration_sync_to_sql(self, sql_object):
+    def _migration_sync_to_sql(self, sql_object, save=True):
         """Copy data from the Couch model to the SQL model and save it"""
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
@@ -147,7 +147,8 @@ class SyncCouchToSQLMixin(object):
         self._migration_sync_submodels_to_sql(sql_object)
         for custom_func in self._migration_get_custom_couch_to_sql_functions():
             custom_func(self, sql_object)
-        sql_object.save(sync_to_couch=False)
+        if save:
+            sql_object.save(sync_to_couch=False)
 
     def _migration_sync_submodels_to_sql(self, sql_object):
         """Migrate submodels from the Couch model to the SQL model. This is called

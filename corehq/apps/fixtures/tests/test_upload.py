@@ -17,6 +17,7 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureItemField,
     FixtureTypeField,
+    LookupTable,
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
@@ -28,7 +29,7 @@ from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.util.test_utils import generate_cases, make_make_path
+from corehq.util.test_utils import generate_cases, make_make_path, new_db_connection
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -641,6 +642,27 @@ class TestFixtureUpload(TestCase):
         ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
+
+    def test_sql_transaction(self):
+        def checked_tx():
+            tx = CouchTransaction()
+            tx.add_post_commit_action(check)
+            return tx
+
+        def check():
+            with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
+                get_table()
+            did_check.append(True)
+
+        def get_table():
+            return LookupTable.objects.get(domain=self.domain, tag='things')
+
+        CouchTransaction = mod.CouchTransaction
+        did_check = []
+        with patch.object(mod, "CouchTransaction", checked_tx):
+            self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
+        self.assertIsNotNone(get_table())
+        self.assertTrue(did_check)
 
 
 class TestFixtureOwnershipUpload(TestCase):
