@@ -272,7 +272,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse('Could not find user', status=404), None
 
     # successful sync, reset login attempts for mobile user
-    clear_login_attempts(restore_user)
+    clear_login_attempts(as_user_obj or couch_user)
 
     project = Domain.get_by_name(domain)
     async_restore_enabled = (
