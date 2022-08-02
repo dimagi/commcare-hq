@@ -1,4 +1,5 @@
 from celery import Task
+from django.conf import settings
 
 """
 @periodic_task has been removed from celery>=5.0.0.
@@ -35,7 +36,8 @@ def periodic_task(**options):
     """
     options.setdefault('options', {})
     options.setdefault('serializer', 'json')
-    if options.get('queue'):
-        options['options']['queue'] = options.get('queue')
+    if not options.get('queue'):
+        options['queue'] = getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    options['options']['queue'] = options.get('queue')
     from corehq.apps.celery import app
     return app.task(base=PeriodicTask, **options)
