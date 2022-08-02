@@ -35,7 +35,15 @@ A bright spot: test coverage for suite generation is good, and adding new tests 
 
 Sections
 --------
-TODO: list sections (slides 5-7)
+.. automodule:: corehq.apps.app_manager.suite_xml.sections.details
+
+.. automodule:: corehq.apps.app_manager.suite_xml.sections.entries
+
+.. automodule:: corehq.apps.app_manager.suite_xml.sections.fixtures
+
+.. automodule:: corehq.apps.app_manager.suite_xml.sections.menus
+
+.. automodule:: corehq.apps.app_manager.suite_xml.sections.resources
 
 Post Processors
 ---------------
