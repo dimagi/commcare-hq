@@ -1,4 +1,4 @@
-<p>The following users had changes to their superuser and staff statuses:</p>
+<p><b>{{ changed_by_user }}</b> made the following changes to these users' superuser and staff statuses:</p>
 
 <table>
   <tbody>
@@ -7,25 +7,23 @@
       <td><u>is Staff</u></td>
       <td><u>is Superuser</u></td>
     </tr>
-    {% for user in user_changes %}
+    {% for user_change in user_changes %}
       <tr>
-        <td>{{ user.email }}</td>
-        {% if 'is_staff' in user %}
-          <td><s>{{ user.is_staff|yesno:"False,True" }}</s> -> <b>{{ user.is_staff }}</b></td>
-        {% elif 'same_staff' in user %}
-          <td>{{ user.same_staff }}</td>
+        <td>{{ user_change.email }}</td>
+        {% if 'is_staff' in user_change %}
+          <td><s>{{ user_change.is_staff|yesno:"False,True" }}</s> → <b>{{ user_change.is_staff }}</b></td>
+        {% elif 'same_staff' in user_change %}
+          <td>{{ user_change.same_staff }}</td>
         {% endif %}
-        {% if 'is_superuser' in user %}
-          <td><s>{{ user.is_superuser|yesno:"False,True" }}</s> -> <b>{{ user.is_superuser }}</b></td>
-        {% elif 'same_superuser' in user %}
-          <td>{{ user.same_superuser }}</td>
+        {% if 'is_superuser' in user_change %}
+          <td><s>{{ user_change.is_superuser|yesno:"False,True" }}</s> → <b>{{ user_change.is_superuser }}</b></td>
+        {% elif 'same_superuser' in user_change %}
+          <td>{{ user_change.same_superuser }}</td>
         {% endif %}
       </tr>
     {% endfor %}
     </tbody>
 </table>
-
-<p>You've been sent this email because you are a Django Admin.</p>
 
 <style type="text/css">
     td {
