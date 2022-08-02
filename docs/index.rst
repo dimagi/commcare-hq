@@ -42,6 +42,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/multimedia
     apps/settings
     apps/advanced_app_features
+    apps/suite_generation
     apps/builds
     web_apps
     formplayer

@@ -1,7 +1,45 @@
-Advanced App Features
-=====================
+App Navigation Features
+=======================
 
-See ``corehq.apps.app_manager.suite_xml.SuiteGenerator`` and ``corehq.apps.app_manager.xform.XForm`` for code.
+Navigation in CommCare is oriented around form entry. The goal of each CommCare session is to complete a form.
+Menus and case lists are tools for gathering the necessary data required to enter a particular form.
+App manager gives app builders direct control over many parts of their app's UI, but the exact sequence of screens
+a user sees is **indirectly** configured.
+
+Based on app configuration, HQ builds a ``suite.xml`` file that acts as a blueprint for the app. It outlines what
+forms are available to fill out, where they fit, and what data (like cases) they will need to function. CommCare
+interprets this configuration to decide which screens to show to the user and in what order.
+
+Much of the complexity of app manager code, and of building apps, comes from inferences HQ makes while building the
+suite file, especially around determining the set of data required for each form. These features that influence,
+but don't directly control, the suite also influence each other, in ways that may not be obvious. The following
+features are particularly prone to interact unexpectedly and should be tested together when any significant change
+is made to any of them:
+
+1. Display Only Forms
+1. Select Parent First
+1. End of Form Navigation and Form Linking
+1. Child Modules
+1. Shadow Modules
+
+Several of these features are simple from an app builder's perspective, but they require HQ to "translate" UI
+concepts into suite concepts.  Other features force the app builder to understand suite concepts, so they may
+be challenging for app builders to learn but are less prone to interacting poorly with other features:
+
+1. Case search, which maps fairly cleanly to the ``<remote-request>`` element.
+1. Advanced modules
+
+Display Only Forms
+------------------
+TODO
+
+Select Parent First
+-------------------
+TODO
+
+End of Form Navigation and Form Linking
+---------------------------------------
+TODO
 
 Child Modules
 -------------
