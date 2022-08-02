@@ -96,7 +96,7 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma/new-line seperated email addresses",
+        label="Comma or new-line separated email addresses",
         widget=forms.Textarea(),
         required=False
     )
@@ -114,7 +114,7 @@ class OffboardingUserListForm(forms.Form):
             'csv_email_list',
             FormActions(
                 crispy.Submit(
-                    'superuser_management',
+                    'get_offboarding_list',
                     'Get Users Not in List'
                 )
             )
@@ -122,6 +122,7 @@ class OffboardingUserListForm(forms.Form):
 
 
 def clean_data(cleaned_data, offboarding_list=False):
+    #Note to self: organize this better after merging in error text fix branch.
     EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
     all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)

@@ -630,7 +630,7 @@ class AppBuildTimingsView(TemplateView):
 class OffboardingUserList(UserAdministration):
     urlname = 'get_offboarding_list'
     page_title = gettext_lazy("Get users to offboard")
-    template_name = 'hqadmin/superuser_management.html'
+    template_name = 'hqadmin/offboarding_list.html'
 
     def __init__(self):
         self.users = []
@@ -649,7 +649,6 @@ class OffboardingUserList(UserAdministration):
         return {
             'form': OffboardingUserListForm(data=form_data),
             'users': self.users,
-            'offboarding': True,
             'table_title': _('All superusers and staff users') if not self.table_title else self.table_title,
             'validation_errors': self.validation_errors,
         }
