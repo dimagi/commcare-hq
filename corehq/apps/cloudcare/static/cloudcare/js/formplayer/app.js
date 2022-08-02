@@ -343,20 +343,33 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 false
             );
         }
+
+        const reconnectTimingWindow = 2000;
+        // if user's offline time is longer than the reconnect timing window, it's considered as truly offline
+        let trulyOffline;
+
         window.addEventListener(
-            'offline', function () {
-                showError(gettext("You are now offline. Web Apps is not optimized " +
-                    "for offline use. Please reconnect to the Internet before " +
-                    "continuing."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', 'disabled');
-                $('.form-control').prop('disabled', 'disabled');
-            }
-        );
+            'offline',function () {
+                trulyOffline = false;
+                _.delay(function () {
+                    if (!this.navigator.onLine) {
+                        trulyOffline = true;
+                        showError(gettext("You are now offline. Web Apps is not optimized " +
+                            "for offline use. Please reconnect to the Internet before " +
+                            "continuing."), $("#cloudcare-notifications"));
+                        $('.submit').prop('disabled', 'disabled');
+                        $('.form-control').prop('disabled', 'disabled');
+                    }
+                },reconnectTimingWindow);
+            });
+
         window.addEventListener(
             'online', function () {
-                showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', false);
-                $('.form-control').prop('disabled', false);
+                if (trulyOffline) {
+                    showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+                    $('.submit').prop('disabled', false);
+                    $('.form-control').prop('disabled', false);
+                }
             }
         );
     });
