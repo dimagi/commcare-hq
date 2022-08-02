@@ -83,4 +83,5 @@ branches:
     - es/required-2  # Ethan July 29
     - ad/embedded-tableau-explorer-access # Addison Aug 1
     - smh/multi-select-case-list-multi-screen-ui-fix-another-method # Steph Aug 2
+    - jc/USH-2151 # Jing/Steph Aug 2
 submodules: { }
