@@ -1,6 +1,6 @@
 # https://help.github.com/en/articles/about-code-owners
 
-*.html @orangejenny
+*.html @orangejenny @kbo001 @kiran-tripathy
 *.js @orangejenny
 *.less @orangejenny
 
