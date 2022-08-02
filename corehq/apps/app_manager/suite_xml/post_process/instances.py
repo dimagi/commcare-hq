@@ -1,3 +1,16 @@
+"""
+EntryInstances
+--------------
+
+Every instance referenced in an xpath expression needs to be added to the relevant entry,
+so that CommCare knows what data to load when.  This includes case list calculations,
+form display conditions, etc.
+
+HQ knows about a particular set of instances (locations, reports, etc.).
+There's factory-based code dealing with these "known" instances
+When a new feature involves any kind of XPath calculation, it needs to be scanned for instances.
+
+"""
 import html
 import re
 from collections import defaultdict

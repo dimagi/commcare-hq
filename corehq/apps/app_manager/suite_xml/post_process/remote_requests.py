@@ -1,3 +1,23 @@
+"""
+RemoteRequestsHelper
+--------------------
+
+The ``<remote-request>`` descends from the ``<entry>``. Remote requests provide support for CommCare to request data from the server
+and then allow the user to select
+an item from that data and use it as a datum for a form. In practice, remote requests are only used for case
+search and claim workflows.
+
+This case search config UI in app manager is a thin wrapper around the various elements that are part of
+``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
+long.
+
+Like ``EntryInstances``, ``RemoteRequestHelper`` scans its configuration for any referenced instances, which need
+to be included in the ``<remote-request>``.
+
+This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
+endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
+of the smart link need to be claimed so the user can access them.
+"""
 from django.utils.functional import cached_property
 
 from corehq import toggles

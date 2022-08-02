@@ -47,4 +47,15 @@ Sections
 
 Post Processors
 ---------------
-TODO: list post processors (11-17, add autodoc for all of these?)
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.endpoints
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.instances
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.menu
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.remote_requests
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.resources
+
+.. automodule:: corehq.apps.app_manager.suite_xml.post_process.workflow
