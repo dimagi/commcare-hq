@@ -345,6 +345,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
 
         const reconnectTimingWindow = 2000;
+        // if user's offline time is longer than the reconnect timing window, it's considered as truly offline
         let trulyOffline;
 
         window.addEventListener(
