@@ -75,6 +75,7 @@ from .utils import (
     handle_401_response,
     is_permitted_to_restore,
 )
+from ..hqwebapp.signals import clear_login_attempts
 
 PROFILE_PROBABILITY = float(os.getenv('COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv('COMMCARE_PROFILE_RESTORE_LIMIT')
@@ -269,6 +270,9 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     restore_user = get_restore_user(domain, couch_user, as_user_obj)
     if not restore_user:
         return HttpResponse('Could not find user', status=404), None
+
+    # successful sync, reset login attempts for mobile user
+    clear_login_attempts(restore_user)
 
     project = Domain.get_by_name(domain)
     async_restore_enabled = (
