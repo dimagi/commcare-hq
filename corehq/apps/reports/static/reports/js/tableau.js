@@ -18,6 +18,7 @@ hqDefine("reports/js/tableau", function () {
                 if (data.success) {
                     self.initViz(data.ticket);
                 } else {
+                    $('#errorMessage').removeClass("hide");
                     document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
                 }
             },

@@ -104,7 +104,10 @@ def tableau_visualization_ajax(request, domain):
         else:
             return JsonResponse({
                 "success": False,
-                "message": _("Tableau trusted authentication failed"),
+                # FYI this kind of failure will also occur when testing from your local computer (your
+                # IP address is not on the list of 'trusted hosts' - only staging and proudctions' are)
+                "message": _("Tableau trusted authentication failed. Double check that permissions are "
+                             "configured correctly in Tableau."),
             })
     else:
         return JsonResponse({
