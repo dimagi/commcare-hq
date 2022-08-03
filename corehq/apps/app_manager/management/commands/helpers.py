@@ -144,6 +144,7 @@ class AppMigrationCommandBase(BaseCommand):
         raise NotImplementedError()
 
     def increment_progress(self, domain_list_position):
+        logger.info(f"Migrated domain #{domain_list_position}")
         domain_list_position += 1
         with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
             f.write(str(domain_list_position))
@@ -159,7 +160,9 @@ class AppMigrationCommandBase(BaseCommand):
                 with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'r') as f:
                     domain_list_position = int(f.readline())
                 with open(self.DOMAIN_LIST_FILENAME, 'r') as f:
-                    domains = f.readlines()[domain_list_position:]
+                    domains = []
+                    for line in f:
+                        domains.append(line[:-1])
                 logger.info(f"Continuing migration progress at domain number {domain_list_position}...")
                 return True, domain_list_position, domains
             except FileNotFoundError:
