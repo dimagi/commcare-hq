@@ -127,7 +127,7 @@ class SuperuserManagement(UserAdministration):
                         fields_changed['same_staff'] = user.is_staff
                     user_changes.append(fields_changed)
             if user_changes:
-                send_email_notif(user_changes, self.request.couch_user)
+                send_email_notif(user_changes, self.request.couch_user.username)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
@@ -139,7 +139,7 @@ def send_email_notif(user_changes, changed_by_user):
         "",
         html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
             'user_changes': user_changes,
-            'changed_by_user': changed_by_user.username,
+            'changed_by_user': changed_by_user,
             'env': settings.SERVER_ENVIRONMENT
         })
     )

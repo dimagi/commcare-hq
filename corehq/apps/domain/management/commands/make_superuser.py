@@ -73,4 +73,4 @@ class Command(BaseCommand):
             logger.info("✓ User {} can access django admin".format(couch_user.username))
             fields_changed['same_staff'] = couch_user.is_staff
 
-        send_email_notif([fields_changed])
+        send_email_notif([fields_changed], changed_by_user='The make_superuser command')
