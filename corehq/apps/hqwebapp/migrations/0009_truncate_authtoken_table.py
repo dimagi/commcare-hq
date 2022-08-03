@@ -1,7 +1,7 @@
 from django.db import migrations
 
 
-def _truncate_authtoken_table():
+def _truncate_authtoken_table(apps, schema_editor):
     # NOTE: truncating to preserve migration records
     from django.db import connection
     cursor = connection.cursor()
