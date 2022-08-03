@@ -74,7 +74,7 @@ branches:
     - mjr/report-logging-verification # Matt July 20
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
-    - ml/limit-superuser-changes # Minha July 25
+    # - ml/limit-superuser-changes # Minha July 25
     - do/repair-title-label # Dominic July 26
     #- smh/multi-select-case-list-multi-screen-ui-fix # Steph July 28
     - jc/USH-2261 # Jing/Steph July 28
