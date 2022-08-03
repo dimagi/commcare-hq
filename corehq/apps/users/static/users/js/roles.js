@@ -150,6 +150,7 @@ hqDefine('users/js/roles',[
                         });
                     });
                 };
+                self.isEditable = root.allowEdit && !self.upstream_id();
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
