@@ -37,7 +37,7 @@ def periodic_task(**options):
     options.setdefault('options', {})
     options.setdefault('serializer', 'json')
     if not options.get('queue'):
-        options['queue'] = getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+        options['queue'] = getattr(settings, 'CELERY_MAIN_QUEUE', 'celery')
     options['options']['queue'] = options.get('queue')
     from corehq.apps.celery import app
     return app.task(base=PeriodicTask, **options)
