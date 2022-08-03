@@ -5,7 +5,7 @@ def _truncate_authtoken_table(apps, schema_editor):
     # NOTE: truncating to preserve migration records
     from django.db import connection
     cursor = connection.cursor()
-    cursor.execute("TRUNCATE TABLE `authtoken_token`")
+    cursor.execute("TRUNCATE TABLE authtoken_token")
 
 
 class Migration(migrations.Migration):
