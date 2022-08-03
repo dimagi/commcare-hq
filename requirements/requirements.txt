@@ -20,9 +20,9 @@ beaker==1.11.0
     # via oic
 billiard==3.5.0.4
     # via -r base-requirements.in
-boto3==1.17.85
+boto3==1.24.28
     # via -r base-requirements.in
-botocore==1.20.85
+botocore==1.27.28
     # via
     #   boto3
     #   s3transfer
@@ -412,7 +412,7 @@ rjsmin==1.1.0
     # via django-compressor
 rsa==4.8
     # via google-auth
-s3transfer==0.4.2
+s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in

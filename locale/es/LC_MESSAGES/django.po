@@ -9102,6 +9102,23 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Send Message"
+msgid "Required Message"
+msgstr "Enviar Mensaje"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Close Condition"
+msgid "Validation Condition"
+msgstr "Cerrar Condición"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr "Mensaje de Validación"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr "URI de Ejemplo"
 
@@ -12816,10 +12833,6 @@ msgstr "Agregar Opción"
 msgid "Regular Expression"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr "Mensaje de Validación"
-
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
 msgid ""
@@ -13505,8 +13518,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "case property name"
 msgstr "nombre de propiedad del caso"
 
@@ -14368,6 +14379,11 @@ msgstr ""
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
 msgstr "Ha excedido el número de intentos de contraseña"
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
+msgstr ""
 
 #: corehq/apps/domain/extension_points.py
 msgid "Password is not strong enough. Try making your password more complex."
@@ -21182,15 +21198,13 @@ msgstr ""
 "teléfono del caso serán sincronizadas. "
 
 #: corehq/apps/hqadmin/forms.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Email address '{}' is not a dimagi email address"
-msgstr "Por favor ingrese una dirección de correo válida."
+msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"User with email address '{}' does not exist on this site, please have the "
-"user registered first"
+"The following users do not exist on this site, please have the user "
+"registered first."
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -21251,6 +21265,10 @@ msgstr "Dominio"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -21408,6 +21426,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
@@ -21417,10 +21441,8 @@ msgid "Developer"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "SuperUser?"
 msgid "Superuser"
-msgstr "¿SuperUsuario?"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/reports.py
@@ -21428,10 +21450,8 @@ msgid "Accounting Admin"
 msgstr "Administrador de Contabilidad"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "Two Factor Authentication"
 msgid "Two Factor Enabled"
-msgstr "Autenticación de Dos Factores"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -21549,6 +21569,10 @@ msgstr ""
 msgid "Get users to offboard"
 msgstr ""
 
+#: corehq/apps/hqadmin/views/users.py
+msgid "Successfully retrieved users to offboard."
+msgstr ""
+
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
 msgid "Admin"
@@ -21560,6 +21584,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -26514,6 +26542,7 @@ msgstr "Crear una Cuenta"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr "Crear Cuenta"
 
@@ -26595,8 +26624,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr "Confirme Cuenta"
 
@@ -30825,6 +30854,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
+msgid "Inactivity Timeout (minutes)"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
 msgstr "Actualmente no es miembro de ningún proyecto."
 
@@ -34302,6 +34335,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr "el nombre de usuario no puede contener espacios o símbolos"
@@ -36349,10 +36386,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
 msgid "Already have an account?"
 msgstr "¿Ya tiene una cuenta?"
 
@@ -37472,6 +37505,10 @@ msgid ""
 msgstr ""
 "Los números de teléfono solo pueden contener dígitos y no pudimos convertir "
 "los suyos automáticamente."
+
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
+msgstr ""
 
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html
 msgid "Checking Email Address"
@@ -40628,10 +40665,8 @@ msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
 #: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#, fuzzy
-#| msgid "Form Changes"
 msgid "Form config"
-msgstr "Cambios en el Formulario"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
@@ -41443,10 +41478,6 @@ msgstr "Cuerpo de la respuesta"
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py

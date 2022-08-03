@@ -7,7 +7,6 @@ from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.aggregate_ucrs.aggregations import (
     AGGREGATION_UNIT_CHOICE_WEEK,
@@ -25,6 +24,7 @@ from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.app_manager.helpers import (
     get_case_data_source,
@@ -169,7 +169,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
                 'parent': (cls.case_type, parent_id)
             }
         )
-        post_case_blocks([caseblock.as_xml()], domain=cls.domain)
+        submit_case_blocks(caseblock.as_text(), domain=cls.domain)
         return case_id
 
     @classmethod
@@ -183,22 +183,16 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             case_name=cls.case_name,
             close=True,
         )
-        post_case_blocks([caseblock.as_xml()], domain=cls.domain)
+        submit_case_blocks(caseblock.as_text(), domain=cls.domain)
         return case_id
 
     @classmethod
     def _create_parent_case(cls, case_name):
         parent_id = uuid.uuid4().hex
-        post_case_blocks(
-            [
-                CaseBlock(
-                    create=True,
-                    case_id=parent_id,
-                    case_name=case_name,
-                    case_type=cls.parent_case_type,
-                ).as_xml()
-            ], domain=cls.domain
+        case_block = CaseBlock(
+            create=True, case_id=parent_id, case_name=case_name, case_type=cls.parent_case_type
         )
+        submit_case_blocks(case_block.as_text(), domain=cls.domain)
         return parent_id
 
     @classmethod

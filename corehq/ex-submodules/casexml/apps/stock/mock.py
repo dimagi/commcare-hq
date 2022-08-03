@@ -22,6 +22,10 @@ class LedgerXML(XmlObject):
     def as_string(self):
         return self.serialize()
 
+    def as_text(self):
+        """Compatibility with ``CaseBlock``"""
+        return self.serialize().decode('utf8')
+
 
 class Value(LedgerXML):
     ROOT_NAME = 'value'

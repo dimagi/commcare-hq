@@ -733,23 +733,6 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
     )
 
 
-def update_case(domain, case_id, case_properties, user_id=None):
-    from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-
-    kwargs = {
-        'case_id': case_id,
-        'update': case_properties,
-    }
-
-    if user_id:
-        kwargs['user_id'] = user_id
-
-    post_case_blocks(
-        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
-    )
-
-
 def make_make_path(current_directory):
     """
     returns a utility function for generating absolute paths

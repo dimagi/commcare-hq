@@ -1,5 +1,5 @@
 from django.http import Http404
-from django.test.testcases import TestCase
+from django.test.testcases import TestCase, SimpleTestCase
 
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -11,6 +11,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
+from corehq.apps.app_manager.util import split_path
 from corehq.apps.app_manager.views.utils import get_default_followup_form_xml
 from corehq.apps.domain.models import Domain
 
@@ -194,3 +195,21 @@ class TestGlobalAppConfig(TestCase):
         config = GlobalAppConfig.by_app_id(self.domain, app_id)
         config.app_prompt = 'on'
         return config
+
+
+class TestSplitPath(SimpleTestCase):
+
+    def test_path_filename(self):
+        path, name = split_path('foo/bar/baz.txt')
+        self.assertEqual(path, 'foo/bar')
+        self.assertEqual(name, 'baz.txt')
+
+    def test_no_slash(self):
+        path, name = split_path('foo')
+        self.assertEqual(path, '')
+        self.assertEqual(name, 'foo')
+
+    def test_empty_string(self):
+        path, name = split_path('')
+        self.assertEqual(path, '')
+        self.assertEqual(name, '')

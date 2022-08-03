@@ -8,8 +8,8 @@ from flaky import flaky
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.apps.hqcase.utils import submit_case_blocks
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -60,7 +60,7 @@ class CaseClaimEndpointTests(TestCase):
         CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         delete_all_cases()
         self.case_id = uuid4().hex
-        _, [self.case] = post_case_blocks([CaseBlock(
+        _, [self.case] = submit_case_blocks(CaseBlock(
             create=True,
             case_id=self.case_id,
             case_type=CASE_TYPE,
@@ -69,9 +69,9 @@ class CaseClaimEndpointTests(TestCase):
             user_id=OWNER_ID,
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
-        ).as_xml()], {'domain': DOMAIN})
+        ).as_text(), domain=DOMAIN)
         self.additional_case_id = uuid4().hex
-        _, [self.additional_case] = post_case_blocks([CaseBlock.deprecated_init(
+        _, [self.additional_case] = submit_case_blocks(CaseBlock.deprecated_init(
             create=True,
             case_id=self.additional_case_id,
             case_type=CASE_TYPE,
@@ -80,7 +80,7 @@ class CaseClaimEndpointTests(TestCase):
             user_id=OWNER_ID,
             owner_id=OWNER_ID,
             update={'opened_by': OWNER_ID},
-        ).as_xml()], {'domain': DOMAIN})
+        ).as_text(), domain=DOMAIN)
         self.case_ids = set([self.case_id, self.additional_case_id])
         domains_needing_search_index.clear()
         CaseSearchReindexerFactory(domain=DOMAIN).build().reindex()

@@ -74,7 +74,7 @@ def _get_submissions_counts(domain, start, end):
            .domain(domain)
            .submitted(gte=start, lte=end)
            .aggregation(
-               DateHistogram('date_histogram', 'received_on', DateHistogram.Interval.DAY))
+               DateHistogram('date_histogram', 'inserted_at', DateHistogram.Interval.DAY))
            .run().aggregations.date_histogram)
     return {
         date.fromisoformat(bucket['key']): bucket['doc_count']

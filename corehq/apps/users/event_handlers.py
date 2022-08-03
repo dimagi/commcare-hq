@@ -1,4 +1,5 @@
 from corehq.apps.users.models import Invitation, InvitationStatus
+from corehq.util.models import BounceType
 
 
 def handle_email_invite_message(message, invite_id):
@@ -9,7 +10,11 @@ def handle_email_invite_message(message, invite_id):
 
     event_type = message.get('eventType')
     if event_type == 'Bounce':
-        invite.email_status = InvitationStatus.BOUNCED
+        bounce_type = message.get('bounce', {}).get('bounceType')
+        if bounce_type == BounceType.TRANSIENT:  # probably a vacation responder
+            invite.email_status = InvitationStatus.DELIVERED
+        else:
+            invite.email_status = InvitationStatus.BOUNCED
     elif event_type == 'Send':
         invite.email_status = InvitationStatus.SENT
     elif event_type == 'Delivery':

@@ -138,7 +138,7 @@ def superuser_table(request):
 
 def augmented_superusers(users=None, include_accounting_admin=False):
     if not users:
-        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
+        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
     augmented_users = _augment_users_with_two_factor_enabled(users)
     if include_accounting_admin:
         return _augment_users_with_accounting_admin(augmented_users)
