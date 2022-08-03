@@ -154,6 +154,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         }
         Util.setUrlToObject(urlObject);
         API.listMenus();
+        sessionStorage.removeItem('selectedValues');
     });
 
     FormplayerFrontend.on("menu:paginate", function (page) {
