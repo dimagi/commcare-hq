@@ -71,11 +71,18 @@ class SuperuserManagementForm(forms.Form):
         widget=forms.CheckboxSelectMultiple(),
         required=False,
     )
+    can_assign_superuser = forms.MultipleChoiceField(
+        choices=[
+            ('can_assign_superuser', 'Grant permission to change superuser and staff status')
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
 
     def clean(self):
         return clean_data(self.cleaned_data)
 
-    def __init__(self, can_toggle_status, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(SuperuserManagementForm, self).__init__(*args, **kwargs)
 
         self.helper = FormHelper()
@@ -85,6 +92,7 @@ class SuperuserManagementForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'csv_email_list',
             'privileges',
+            'can_assign_superuser',
             FormActions(
                 crispy.Submit(
                     'superuser_management',

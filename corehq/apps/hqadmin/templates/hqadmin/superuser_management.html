@@ -27,6 +27,7 @@
           <th>{% translate "Username" %}</th>
           <th>{% translate "Developer" %}</th>
           <th>{% translate "Superuser" %}</th>
+          <th>{% translate "Can assign Superuser" %}</th>
           <th>{% translate "Two Factor Enabled" %}</th>
         </tr>
         {% for user in users %}
@@ -34,6 +35,7 @@
             <td>{{ user.username }}</td>
             <td>{% if user.is_staff %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.is_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
+            <td>{% if user.can_assign_superuser %}<i class="fa fa-check"></i>{% endif %}</td>
             <td>{% if user.two_factor_enabled %}<i class="fa fa-check"></i>{% endif %}</td>
           </tr>
         {% endfor %}
