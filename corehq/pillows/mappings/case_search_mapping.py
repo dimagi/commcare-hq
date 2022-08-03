@@ -54,7 +54,7 @@ CASE_SEARCH_MAPPING = {
                             "type": "double"
                         },
                         "phonetic": {
-                            "analyzer": "phonetic_analyzer",
+                            "analyzer": "phonetic",
                             "type": "string"
                         }
                     },

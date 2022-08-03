@@ -23,7 +23,7 @@ ANALYZERS = {
         "type": "pattern",
         "pattern": r"\s*,\s*"
     },
-    "phonetic_analyzer": {
+    "phonetic": {
         "filter": ["standard", "lowercase", "soundex_filter"],
         "tokenizer": "standard"
     }
@@ -39,7 +39,7 @@ SMS_HQ_INDEX_NAME = "smslogs"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
 TEST_HQ_INDEX_NAME = "pillowtop_tests"
 
-phonetic_analysis = _get_analysis('phonetic_analyzer')
+phonetic_analysis = _get_analysis('default', 'phonetic')
 phonetic_analysis.update({
     "filter": {
         "soundex_filter": {
@@ -61,7 +61,6 @@ ES_INDEX_SETTINGS = {
     # Apply phonetic analysis to case search index only
     CASE_SEARCH_HQ_INDEX_NAME: {
         "settings": {
-            "number_of_replicas": 0,
             "analysis": phonetic_analysis,
         },
     },
