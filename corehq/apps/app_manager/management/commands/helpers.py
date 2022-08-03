@@ -36,7 +36,7 @@ class AppMigrationCommandBase(BaseCommand):
     chunk_size = 100
     include_builds = False
     include_linked_apps = False
-    # Overwrite these if using the restartable flag to avoid conflicting naming with another managment command.
+    # Overwrite these to avoid conflicting naming with another managment command.
     DOMAIN_LIST_FILENAME = "app_migration_command_domain_list.txt"
     DOMAIN_PROGRESS_NUMBER_FILENAME = "app_migration_command_domain_progress.txt"
 
@@ -131,6 +131,7 @@ class AppMigrationCommandBase(BaseCommand):
             return
         if copy_of and version:
             app_doc['version'] = version + 1
+        return app_doc
 
     def get_app_ids(self, domain=None):
         return get_all_app_ids(domain=domain, include_builds=self.include_builds)
