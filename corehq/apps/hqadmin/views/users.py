@@ -1,5 +1,6 @@
 import csv
 import itertools
+import settings
 import os
 import urllib.parse
 import uuid
@@ -138,7 +139,8 @@ def send_email_notif(user_changes, changed_by_user):
         "",
         html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
             'user_changes': user_changes,
-            'changed_by_user': changed_by_user.username
+            'changed_by_user': changed_by_user.username,
+            'env': settings.SERVER_ENVIRONMENT
         })
     )
     return
