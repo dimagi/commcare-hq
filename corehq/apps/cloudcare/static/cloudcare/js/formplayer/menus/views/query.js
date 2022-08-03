@@ -205,6 +205,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
+        modelEvents: {
+            'change': 'render',
+        },
+
         _isValid: function () {
             if (this.model.get("error")) {
                 return false;
@@ -390,7 +394,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             var Util = hqImport("cloudcare/js/formplayer/utils/util");
             var urlObject = Util.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
+            urlObject.setQueryData(this.getAnswers(), false);
             var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
                 for (var i = 0; i < response.models.length; i++) {
@@ -413,7 +417,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             itemsetChoices: choices,
                             value: value,
                         });
-                        self.children.findByIndex(i).render();      // re-render with new choice values
+                        $field.trigger('change.select2');
                     }
                 }
             });
