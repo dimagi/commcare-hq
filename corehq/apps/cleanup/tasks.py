@@ -11,6 +11,7 @@ from corehq.apps.cleanup.dbaccessors import (
     find_ucr_tables_for_deleted_domains,
 )
 from corehq.apps.cleanup.tests.util import is_monday
+from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import mail_admins_async
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME
@@ -75,3 +76,20 @@ def check_for_ucr_tables_without_existing_domain():
             )
     elif is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
+def check_for_conflicting_domains():
+    """
+    It should be impossible for domains to get into this state, but in the event that it does we want to know
+    Other cleanup tasks depend on the assumption that a domain name only exists once across all Domain and
+    Domain-Deleted doc types
+    """
+    deleted_domains = Domain.get_deleted_domain_names()
+    for domain_name in deleted_domains:
+        # Domain.get_by_name uses the domains view which does not include deleted domains
+        if Domain.get_by_name(domain_name):
+            mail_admins_async.delay(
+                f'Domain conflict for "{domain_name}"',
+                f'"{domain_name}" exists as both a Domain doc and Domain-Deleted doc. This should never happen.'
+            )
