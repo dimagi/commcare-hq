@@ -45,7 +45,7 @@ from corehq.apps.data_interfaces.utils import run_rules_for_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 
 
 @es_test
@@ -85,6 +85,9 @@ class FindingDuplicatesQueryTest(TestCase):
         self.assertEqual(len(retrieved_cases), len(cases))
 
     def test_with_location_filter(self):
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
         cases = [
             self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
                 ("Anakin Skywalker", "1977-03-25"),
@@ -117,6 +120,8 @@ class FindingDuplicatesQueryTest(TestCase):
         self.assertEqual(len(retrieved_cases), 2)
         self.assertTrue(retrieved_cases[0]['owner_id'] == location_id)
         self.assertTrue(retrieved_cases[1]['owner_id'] == location_id)
+
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
 
     def test_with_case_properties_filter_match_equal(self):
         match_type = MatchPropertyDefinition.MATCH_EQUAL
