@@ -7,10 +7,6 @@ element for each form, including the datums required for form entry. The ``Entri
 heavy lifting here, is imported into other places in HQ that need to know what datums a form requires,
 such as the session schema generator for form builder and the UI for form linking.
 
-Each form's required datums are generated separately in ``corehq.apps.app_manager.xform`` so they can be included in the
-form's casexml. The datums in the casexml need to match the datums in the suite ``<entry>`` blocks, or the form
-will error on opening.
-
 When forms work with multiple datums, they need to be named in a way that is predictable for app builders, who
 reference them inside forms. This is most relevant to the "select parent first" feature and to parent/child
 modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in ``add_parent_datums``, plus
