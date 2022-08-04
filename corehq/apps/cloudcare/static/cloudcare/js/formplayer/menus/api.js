@@ -44,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
-                                response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                                response.exception,
                                 response.type === 'html'
                             );
 

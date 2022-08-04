@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/formplayer/sessions/api", function () {
                     if (_.has(response, 'exception')) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                            response.exception,
                             response.type === 'html'
                         );
                         FormplayerFrontend.trigger('navigation:back');
