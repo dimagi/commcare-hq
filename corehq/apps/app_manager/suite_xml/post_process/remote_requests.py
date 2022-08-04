@@ -11,6 +11,13 @@ This case search config UI in app manager is a thin wrapper around the various e
 ``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
 long.
 
+Case search and claim is typically an optional part of a workflow. In this use case, the remote request is accessed
+via an action, and the
+`rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct is used to go back to the main flow.
+However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
+using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
+available after the search, rather than having them destroyed by rewinding.
+
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
 endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
 of the smart link need to be claimed so the user can access them.
