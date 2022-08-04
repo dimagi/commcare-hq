@@ -1,4 +1,7 @@
 from celery import shared_task
+from django.conf import settings
+
+from corehq.apps.celery.periodic import PeriodicTask
 
 
 def task(*args, **kwargs):
@@ -21,10 +24,16 @@ def task(*args, **kwargs):
         All other options defined https://docs.celeryq.dev/en/stable/userguide/tasks.html#list-of-options
     """
 
+    default_queue = getattr(settings, 'CELERY_MAIN_QUEUE', 'celery')
     if len(args) == 1 and callable(args[0]) and not kwargs:
-        return shared_task(serializer='json')(args[0])
+        return shared_task(serializer='json', queue=default_queue)(args[0])
 
     kwargs.setdefault('serializer', 'json')
+    kwargs.setdefault('queue', default_queue)
+    kwargs.setdefault('options', {})
+
+    if kwargs.get('base') == PeriodicTask:
+        kwargs['options']['queue'] = kwargs.get('queue')
 
     def task(fn):
         return shared_task(*args, **kwargs)(fn)
