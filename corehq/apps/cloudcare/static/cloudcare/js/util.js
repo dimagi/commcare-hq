@@ -73,6 +73,11 @@ hqDefine('cloudcare/js/util', [
 
     var getErrorMessage = function (message) {
         message || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR;
+        const originalLen = message.length;
+        message = message.substr(0, 500);
+        if (message.length < originalLen) {
+            message += " ...";
+        }
         return message;
     };
 
