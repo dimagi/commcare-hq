@@ -35,42 +35,6 @@ class TestPruneOldDatasources(TestCase):
 
         self.assertFalse(adapter.table_exists)
 
-    def test_tables_for_deleted_domains_are_not_dropped(self):
-        config = self._create_data_source_config(self.deleted_domain.name)
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources')
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_tables_for_deleted_domains_are_dropped(self):
-        config = self._create_data_source_config(self.deleted_domain.name)
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources', '--drop-deleted-tables')
-
-        self.assertFalse(adapter.table_exists)
-
-    def test_tables_for_active_domains_are_not_dropped(self):
-        config = self._create_data_source_config(self.active_domain.name)
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources', '--drop-deleted-tables')
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_tables_for_missing_domains_are_not_dropped(self):
-        config = self._create_data_source_config('unknown-domain')
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources', '--drop-deleted-tables')
-
-        self.assertTrue(adapter.table_exists)
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
