@@ -433,9 +433,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
      */
     function Group(json, parent) {
         var self = this;
+        self.parent = parent;
         Container.call(self, json);
 
-        self.parent = parent;
         self.groupId = groupNum++;
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
         self.isRepetition = parent instanceof Repeat;
@@ -564,8 +564,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
         self.fromJS(json);
         self.parent = parent;
-        // Grab the parent pubsub so questions can interact with other questions on the same form/group.
-        self.parentPubSub = (parent) ? parent.pubsub : new ko.subscribable();
+        // Grab the parent pubsub so questions can interact with other questions on the same form.
+        let currParent = parent;
+        while (currParent && currParent instanceof Group) {
+            currParent = currParent.parent;
+        }
+        self.formPubSub = (currParent) ? currParent.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
