@@ -265,8 +265,6 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
     @classmethod
     def get_sql_attrs(cls, model_cls):
         sql_attrs = cls._get_user_defined_attrs(model_cls, cls.DummySQLModel)
-        # Dynamically Added by OptionValue class
-        sql_attrs.discard('_all_option_value_fields')
         return sql_attrs
 
     @classmethod
@@ -297,7 +295,9 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
             'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
             # added by django choicefield in models
-            'get_request_method_display'
+            'get_request_method_display',
+            'to_json', '_convert_to_serializable',
+            '_optionvalue_fields', '_wrap_schema_attrs'
         }
 
 

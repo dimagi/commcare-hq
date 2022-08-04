@@ -2726,6 +2726,10 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Unexpected Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2798,6 +2802,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -3046,6 +3054,10 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Search for users or groups"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
@@ -3629,6 +3641,11 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a password."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js

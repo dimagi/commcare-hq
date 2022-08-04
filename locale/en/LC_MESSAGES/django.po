@@ -4918,8 +4918,8 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
-"sync and look for updates from a differnent URL. Main use case is to allow "
-"migrating ICDS to a new cluster."
+"sync, and look for updates from a different URL. The main use case is to "
+"allow migrating project spaces to a new environment.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -8543,6 +8543,19 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Required Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Validation Condition"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr ""
 
@@ -12129,10 +12142,6 @@ msgstr ""
 msgid "Regular Expression"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr ""
-
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
 msgid ""
@@ -12631,6 +12640,15 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr ""
 
+#: corehq/apps/data_interfaces/forms.py
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+msgid "Cases Filter"
+msgstr ""
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr ""
@@ -12804,8 +12822,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "case property name"
 msgstr ""
 
@@ -13241,6 +13257,21 @@ msgid "Date case property (advanced)"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr ""
 
@@ -13314,6 +13345,14 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Include cases from child locations"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -13594,7 +13633,8 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
+#, python-format
+msgid "Deduplication rule not saved due to the following issues: %s"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
@@ -13664,6 +13704,11 @@ msgstr ""
 
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
+msgstr ""
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
 msgstr ""
 
 #: corehq/apps/domain/extension_points.py
@@ -14281,20 +14326,6 @@ msgstr ""
 
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
-msgstr ""
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
 msgstr ""
 
 #: corehq/apps/domain/forms.py
@@ -20235,8 +20266,9 @@ msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"User with email address '{}' does not exist on this site, please have the "
-"user registered first"
+
+"The following users do not exist on this site, please have the user "
+"registered first."
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -20297,6 +20329,10 @@ msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -20449,6 +20485,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
@@ -20582,6 +20624,10 @@ msgstr ""
 msgid "Get users to offboard"
 msgstr ""
 
+#: corehq/apps/hqadmin/views/users.py
+msgid "Successfully retrieved users to offboard."
+msgstr ""
+
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
 msgid "Admin"
@@ -20593,6 +20639,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -25356,6 +25406,7 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr ""
 
@@ -25437,8 +25488,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr ""
 
@@ -29514,6 +29565,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
+msgid "Inactivity Timeout (minutes)"
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
 msgstr ""
 
@@ -32900,6 +32955,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr ""
@@ -34838,10 +34897,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
 msgid "Already have an account?"
 msgstr ""
 
@@ -35934,6 +35989,10 @@ msgstr ""
 msgid ""
 "Phone numbers can only contain digits and we were unable to convert yours "
 "automatically."
+msgstr ""
+
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html
@@ -39827,10 +39886,6 @@ msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py

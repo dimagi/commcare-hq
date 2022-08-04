@@ -1081,6 +1081,17 @@ class FormValidator(IndexedFormBaseValidator):
 
 class AdvancedFormValidator(IndexedFormBaseValidator):
     def check_actions(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         errors = []
 
         from corehq.apps.app_manager.models import AdvancedOpenCaseAction, LoadUpdateAction

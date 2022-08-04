@@ -2586,6 +2586,9 @@ class Invitation(models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
+    def __repr__(self):
+        return f"Invitation(domain='{self.domain}', email='{self.email})"
+
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)

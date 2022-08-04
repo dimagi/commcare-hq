@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
@@ -68,13 +68,13 @@ class TestZapierCaseForwarding(TestCase):
 
         # create case and run checks
         case_id = uuid.uuid4().hex
-        post_case_blocks(
+        submit_case_blocks(
             [
                 CaseBlock(
                     create=True,
                     case_id=case_id,
                     case_type=case_type,
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
         # Enqueued repeat records have next_check set 48 hours in the future.
@@ -85,12 +85,12 @@ class TestZapierCaseForwarding(TestCase):
             self.assertEqual(case_id, record.payload_id)
 
         # update case and run checks
-        post_case_blocks(
+        submit_case_blocks(
             [
                 CaseBlock(
                     create=False,
                     case_id=case_id,
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
         repeat_records = list(RepeatRecord.all(domain=self.domain, due_before=later))

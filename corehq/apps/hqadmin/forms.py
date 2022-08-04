@@ -146,17 +146,15 @@ def clean_data(cleaned_data, offboarding_list=False):
     if not offboarding_list and len(csv_email_list) > MAX_ALLOWED_EMAIL_USERS:
         raise forms.ValidationError(
             f"This command allows superusers to modify up to {MAX_ALLOWED_EMAIL_USERS} users at a time. "
-            "If you are trying to update permissions for a larger number of users,"
-            " consider doing it via Django Admin"
         )
 
     users = []
     validation_errors = []
+    non_dimagi_email = []
     for username in csv_email_list:
         if not offboarding_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-                validation_errors.append(ValidationError(_("Email address '{}' is not a "
-                                                          "dimagi email address".format(username))))
+            if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
+                non_dimagi_email.append(ValidationError(username))
                 continue
         try:
             users.append(User.objects.get(username=username))
@@ -164,11 +162,17 @@ def clean_data(cleaned_data, offboarding_list=False):
             if not offboarding_list:
                 validation_errors.append(ValidationError(username))
             else:
-                validation_errors.append(username)
-    if not offboarding_list and validation_errors:
-        validation_errors.insert(0, ValidationError(_(
-            "The following users do not exist on this site, please have the user registered first.")))
-        raise ValidationError(validation_errors)
+                validation_errors.append(ValidationError(username))
+    if not offboarding_list and (validation_errors or non_dimagi_email):
+        if non_dimagi_email:
+            non_dimagi_email.insert(0, ValidationError(
+                _("The following email addresses are not dimagi email addresses:")))
+        if validation_errors:
+            validation_errors.insert(0, ValidationError(
+                _("The following users do not exist on this site, please have the user registered first:")))
+            if non_dimagi_email:
+                validation_errors.append('+')
+        raise ValidationError(validation_errors + non_dimagi_email)
     if offboarding_list and validation_errors:
         cleaned_data['validation_errors'] = validation_errors
 

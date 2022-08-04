@@ -6,8 +6,9 @@ from django.test import TestCase
 from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases
-from casexml.apps.case.util import post_case_blocks, primary_actions
+from casexml.apps.case.util import primary_actions
 from corehq.apps.change_feed import topics
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase, RebuildWithReason, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from testapps.test_pillowtop.utils import capture_kafka_changes_context
@@ -16,11 +17,8 @@ REBUILD_TEST_DOMAIN = 'rebuild-test'
 
 
 def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
-              case_type=None, form_extras=None, close=False, date_modified=None,
+              case_type=None, submission_extras=None, close=False, date_modified=None,
               **kwargs):
-
-    form_extras = form_extras or {}
-    form_extras['domain'] = REBUILD_TEST_DOMAIN
 
     def uid():
         return uuid.uuid4().hex
@@ -33,8 +31,7 @@ def _post_util(create=False, case_id=None, user_id=None, owner_id=None,
                       date_modified=date_modified,
                       update=kwargs,
                       close=close)
-    block = block.as_xml()
-    post_case_blocks([block], form_extras)
+    submit_case_blocks([block.as_text()], REBUILD_TEST_DOMAIN, submission_extras=submission_extras)
     return case_id
 
 
@@ -100,11 +97,11 @@ class CaseRebuildTest(TestCase):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
         case_id = _post_util(create=True, p1='p1-1', p2='p2-1',
-                            form_extras={'received_on': now})
+                            submission_extras={'received_on': now})
         _post_util(case_id=case_id, p2='p2-2', p3='p3-2', p4='p4-2',
-                  form_extras={'received_on': now + timedelta(seconds=1)})
+                  submission_extras={'received_on': now + timedelta(seconds=1)})
         _post_util(case_id=case_id, p4='p4-3', p5='p5-3', close=True,
-                  form_extras={'received_on': now + timedelta(seconds=2)})
+                  submission_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
         closed_by = case.closed_by
@@ -210,12 +207,12 @@ class CaseRebuildTest(TestCase):
         way_earlier = now - timedelta(days=1)
         # make sure we timestamp everything so they have the right order
         create_block = CaseBlock(case_id, create=True, date_modified=way_earlier)
-        post_case_blocks(
-            [create_block.as_xml()], form_extras={'received_on': way_earlier}
+        submit_case_blocks(
+            [create_block.as_text()], 'test-domain', submission_extras={'received_on': way_earlier}
         )
         update_block = CaseBlock(case_id, update={'foo': 'bar'}, date_modified=earlier)
-        post_case_blocks(
-            [update_block.as_xml()], form_extras={'received_on': earlier}
+        submit_case_blocks(
+            [update_block.as_text()], 'test-domain', submission_extras={'received_on': earlier}
         )
 
         case = CommCareCase.objects.get_case(case_id, 'test-domain')
@@ -229,11 +226,11 @@ class CaseRebuildTest(TestCase):
     def test_archive_against_deleted_case(self):
         now = datetime.utcnow()
         # make sure we timestamp everything so they have the right order
-        case_id = _post_util(create=True, p1='p1', form_extras={'received_on': now})
+        case_id = _post_util(create=True, p1='p1', submission_extras={'received_on': now})
         _post_util(case_id=case_id, p2='p2',
-                  form_extras={'received_on': now + timedelta(seconds=1)})
+                  submission_extras={'received_on': now + timedelta(seconds=1)})
         _post_util(case_id=case_id, p3='p3',
-                  form_extras={'received_on': now + timedelta(seconds=2)})
+                  submission_extras={'received_on': now + timedelta(seconds=2)})
 
         case = CommCareCase.objects.get_case(case_id, REBUILD_TEST_DOMAIN)
         CommCareCase.objects.soft_delete_cases(REBUILD_TEST_DOMAIN, [case_id])
@@ -246,16 +243,16 @@ class CaseRebuildTest(TestCase):
 
     def test_archive_removes_index(self):
         parent_case_id = uuid.uuid4().hex
-        post_case_blocks([
-            CaseBlock(parent_case_id, create=True).as_xml()
-        ])
+        submit_case_blocks([
+            CaseBlock(parent_case_id, create=True).as_text()
+        ], 'test-domain')
         child_case_id = uuid.uuid4().hex
-        post_case_blocks([
-            CaseBlock(child_case_id, create=True).as_xml()
-        ])
-        xform, _ = post_case_blocks([
-            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_xml()
-        ])
+        submit_case_blocks([
+            CaseBlock(child_case_id, create=True).as_text()
+        ], 'test-domain')
+        xform, _ = submit_case_blocks([
+            CaseBlock(child_case_id, index={'mom': ('mother', parent_case_id)}).as_text()
+        ], 'test-domain')
 
         case = CommCareCase.objects.get_case(child_case_id, 'test-domain')
         self.assertEqual(1, len(case.indices))

@@ -1,47 +1,109 @@
-# Get total count of python dependencies and outdated python dependencies
+#!/usr/bin/env bash
 
-total_python_deps="$(pip list| wc -l)"
-outdated_python_deps="$(pip list --outdated| wc -l)"
+set -e
 
-# Get outdated JS dependency count
+# import the datadog utils
+source ./scripts/datadog-utils.sh
 
-function outdated_count {
-    python - <(cat -) <<-END
-import json
-import sys
-with open(sys.argv[1], "r") as json_file:
-    dep_arr = json.load(json_file)
-print(len(dep_arr["data"]["body"]))
-END
+send_to_datadog=true
+
+
+function main {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help)
+                usage
+                return 0
+                ;;
+            -n|--dry-run)
+                echo "[DRY RUN] no metrics will be sent to datadog" >&2
+                # I would rather not use a global for this, but passing it two
+                # function calls deep feels messier in this case.
+                send_to_datadog=false
+                ;;
+            *)
+                usage "invalid args: $*"
+                return 1
+                ;;
+        esac
+        shift
+    done
+    local total=0
+
+    # get total Python dependency count (skip 2 header lines)
+    log_msg_with_time INFO "calculating Python package metrics"
+    total=$(pip list 2>/dev/null | tail -n +3 | wc -l)
+    # publish python metrics
+    pip list --format json --outdated 2>/dev/null | publish_metrics python pip "$total"
+
+    # get total JS dependency count (skip the first header line)
+    log_msg_with_time INFO "calculating JS package metrics"
+    total=$(./scripts/yarn-list.py | tail -n +2 | wc -l)
+    # publish javascript metrics
+    ./scripts/yarn-list.py --outdated --json | publish_metrics js yarn-list "$total"
+
+    log_msg_with_time INFO "done"
 }
 
-outdated_js_deps="$(yarn outdated --json | sed -n 2p | outdated_count)"
 
+function publish_metrics {
+    local metric_id="$1"
+    local data_format="$2"
+    local total="$3"
 
-# Get total JS dependencies from package.json
+    local metric_prefix="commcare.static_analysis.dependency.${metric_id}"
+    local stats=$(cat - | ./scripts/outdated-dependency-metrics.py "$data_format" --stats)
 
-function dependency_count {
-    local json_path="$1"
-    python - "$json_path" <<-END
-import json
-import sys
+    local outdated=$(outdated_stat Outdated "$stats")
+    local multmajor=$(outdated_stat Multi-Major "$stats")
+    local major=$(outdated_stat Major "$stats")
+    local minor=$(outdated_stat Minor "$stats")
+    local patch=$(outdated_stat Patch "$stats")
+    local exotic=$(outdated_stat Exotic "$stats")
 
-with open(sys.argv[1], "r") as json_file:
-    packages = json.load(json_file)
-
-print(sum(len(packages[k]) for k in ["dependencies", "devDependencies"]))
-END
+    publish_datadog_gauge "${metric_prefix}.total" "$total"
+    publish_datadog_gauge "${metric_prefix}.outdated" "$outdated"
+    publish_datadog_gauge "${metric_prefix}.multi_major_outdated" "$multmajor"
+    publish_datadog_gauge "${metric_prefix}.major_outdated" "$major"
+    publish_datadog_gauge "${metric_prefix}.minor_outdated" "$minor"
+    publish_datadog_gauge "${metric_prefix}.patch_outdated" "$patch"
+    publish_datadog_gauge "${metric_prefix}.exotic_outdated" "$exotic"
 }
 
-total_js_deps=$(dependency_count package.json)
 
-# Publish metrics to Datadog
-
-source scripts/datadog-utils.sh
-
-send_metric_to_datadog "commcare.static_analysis.dependency.python.total" $total_python_deps "gauge"
-send_metric_to_datadog "commcare.static_analysis.dependency.python.outdated" $outdated_python_deps "gauge"
+function outdated_stat {
+    local label="$1"
+    local stats="$2"
+    echo "$stats" | grep -E "^${label}: " | awk -F': ' '{print $2}'
+}
 
 
-send_metric_to_datadog "commcare.static_analysis.dependency.js.total" $total_js_deps "gauge"
-send_metric_to_datadog "commcare.static_analysis.dependency.js.outdated" $outdated_js_deps "gauge"
+function publish_datadog_gauge {
+    local metric_path="$1"
+    local value="$2"
+    echo "$metric_path == $value"
+    if $send_to_datadog; then
+        send_metric_to_datadog "$metric_path" "$value" gauge
+    fi
+}
+
+
+function log_msg_with_time {
+    local level_name="$1"; shift
+    local msg="$*"
+    local now=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[${now}] ${level_name}: $msg" >&2
+}
+
+
+function usage {
+    local script=$(basename "$0")
+    local msg="$*"
+    echo "USAGE: $script [-h|--help] [-n|--dry-run]" >&2
+    if [ -n "$msg" ]; then
+        echo "ERROR: $msg" >&2
+    fi
+}
+
+
+main "$@"
