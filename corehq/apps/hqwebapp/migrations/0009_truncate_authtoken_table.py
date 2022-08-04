@@ -8,5 +8,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("TRUNCATE TABLE authtoken_token", reverse_sql=migrations.RunSQL.noop)
+        migrations.RunSQL("""
+            IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'authtoken_token')
+            begin
+                TRUNCATE TABLE authtoken_token;
+            end
+        """, reverse_sql=migrations.RunSQL.noop)
     ]
