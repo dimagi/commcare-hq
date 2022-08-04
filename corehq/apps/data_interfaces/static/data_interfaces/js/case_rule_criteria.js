@@ -318,18 +318,6 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return self;
         };
 
-        var locationDefinition = function (koTemplateId) {
-            // This model matches the Django model with the same name
-            'use strict';
-            var self = {};
-            self.koTemplateId = koTemplateId;
-
-            self.location_id = ko.observable();
-            self.include_child_locations = ko.observable();
-            self.name = ko.observable();
-            return self;
-        };
-
         var ucrFilterDefinition = function (koTemplateId) {
             'use strict';
             var self = {};
