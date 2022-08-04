@@ -28,7 +28,7 @@ class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
     description = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"style": "resize:vertical"}),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     start_date = forms.DateField(
         required=False,
