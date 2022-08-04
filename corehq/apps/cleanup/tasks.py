@@ -85,11 +85,12 @@ def check_for_conflicting_domains():
     Other cleanup tasks depend on the assumption that a domain name only exists once across all Domain and
     Domain-Deleted doc types
     """
+    current_domains = set(Domain.get_all_names())
     deleted_domains = Domain.get_deleted_domain_names()
-    for domain_name in deleted_domains:
-        # Domain.get_by_name uses the domains view which does not include deleted domains
-        if Domain.get_by_name(domain_name):
-            mail_admins_async.delay(
-                f'Domain conflict for "{domain_name}"',
-                f'"{domain_name}" exists as both a Domain doc and Domain-Deleted doc. This should never happen.'
-            )
+    conflicting_domains = current_domains & deleted_domains
+    if conflicting_domains:
+        mail_admins_async.delay(
+            'Conflicting domain names',
+            'The following domains exist as both a Domain doc and Domain-Deleted doc. This should never happen.'
+            f'{conflicting_domains}'
+        )
