@@ -65,7 +65,15 @@ class SuperuserManagementForm(forms.Form):
     )
     privileges = forms.MultipleChoiceField(
         choices=[
-            ('is_superuser', 'Mark as superuser'),
+            ('is_staff', 'Mark as developer'),
+            ('is_superuser', 'Mark as superuser')
+        ],
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
+    can_assign_superuser = forms.MultipleChoiceField(
+        choices=[
+            ('can_assign_superuser', 'Grant permission to change superuser and staff status')
         ],
         widget=forms.CheckboxSelectMultiple(),
         required=False,
@@ -74,13 +82,8 @@ class SuperuserManagementForm(forms.Form):
     def clean(self):
         return clean_data(self.cleaned_data)
 
-    def __init__(self, can_toggle_is_staff, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(SuperuserManagementForm, self).__init__(*args, **kwargs)
-
-        if can_toggle_is_staff:
-            self.fields['privileges'].choices.append(
-                ('is_staff', 'Mark as developer')
-            )
 
         self.helper = FormHelper()
         self.helper.form_class = "form-horizontal"
@@ -89,6 +92,7 @@ class SuperuserManagementForm(forms.Form):
         self.helper.layout = crispy.Layout(
             'csv_email_list',
             'privileges',
+            'can_assign_superuser',
             FormActions(
                 crispy.Submit(
                     'superuser_management',
@@ -100,7 +104,7 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma/new-line seperated email addresses",
+        label="Comma or new-line separated email addresses",
         widget=forms.Textarea(),
         required=False
     )
@@ -118,7 +122,7 @@ class OffboardingUserListForm(forms.Form):
             'csv_email_list',
             FormActions(
                 crispy.Submit(
-                    'superuser_management',
+                    'get_offboarding_list',
                     'Get Users Not in List'
                 )
             )
@@ -126,6 +130,7 @@ class OffboardingUserListForm(forms.Form):
 
 
 def clean_data(cleaned_data, offboarding_list=False):
+    #Note to self: organize this better after merging in error text fix branch.
     EMAIL_INDEX = 1
     csv_email_list = cleaned_data.get('csv_email_list', '')
     all_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)
