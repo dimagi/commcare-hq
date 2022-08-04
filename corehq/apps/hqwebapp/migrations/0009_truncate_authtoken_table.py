@@ -9,9 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL("""
-            IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'authtoken_token')
-            begin
-                TRUNCATE TABLE authtoken_token;
-            end
+            DROP TABLE IF EXISTS authtoken_token;
+            DELETE FROM django_migrations WHERE app='authtoken';
         """, reverse_sql=migrations.RunSQL.noop)
     ]
