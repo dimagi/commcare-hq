@@ -1,5 +1,7 @@
 from django.db import migrations
 
+from corehq.util.django_migrations import add_if_not_exists
+
 
 class Migration(migrations.Migration):
 
@@ -8,8 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL("""
-            DROP TABLE IF EXISTS authtoken_token;
-            DELETE FROM django_migrations WHERE app='authtoken';
-        """, reverse_sql=migrations.RunSQL.noop)
+        migrations.RunSQL(add_if_not_exists("TRUNCATE TABLE authtoken_token"), reverse_sql=migrations.RunSQL.noop)
     ]
