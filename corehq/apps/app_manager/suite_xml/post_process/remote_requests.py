@@ -11,9 +11,6 @@ This case search config UI in app manager is a thin wrapper around the various e
 ``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
 long.
 
-Like ``EntryInstances``, ``RemoteRequestHelper`` scans its configuration for any referenced instances, which need
-to be included in the ``<remote-request>``.
-
 This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
 endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
 of the smart link need to be claimed so the user can access them.
