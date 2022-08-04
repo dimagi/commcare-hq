@@ -160,7 +160,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             curr = curr.parent;
         }
         return curr;
-    }
+    };
 
     return module;
 });
