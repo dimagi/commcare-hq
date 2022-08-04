@@ -345,15 +345,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         }
 
         const reconnectTimingWindow = 2000;
-        // if user's offline time is longer than the reconnect timing window, it's considered as truly offline
-        let trulyOffline;
+        let offlineTime;
 
         window.addEventListener(
             'offline',function () {
-                trulyOffline = false;
+                offlineTime = new Date();
                 _.delay(function () {
-                    if (!this.navigator.onLine) {
-                        trulyOffline = true;
+                    if (!this.navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
                         showError(gettext("You are now offline. Web Apps is not optimized " +
                             "for offline use. Please reconnect to the Internet before " +
                             "continuing."), $("#cloudcare-notifications"));
@@ -365,7 +363,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
         window.addEventListener(
             'online', function () {
-                if (trulyOffline) {
+                if ((new Date() - offlineTime) > reconnectTimingWindow) {
                     showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
                     $('.submit').prop('disabled', false);
                     $('.form-control').prop('disabled', false);
