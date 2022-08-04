@@ -166,7 +166,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 } catch (err) {
                     console.error(err);
                     self.onerror({
-                        human_readable_message: Utils.touchformsError(err),
+                        human_readable_message: Utils.jsError(err)
                     });
                 }
             }
