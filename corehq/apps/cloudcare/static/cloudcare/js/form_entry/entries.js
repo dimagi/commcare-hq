@@ -1165,19 +1165,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility that gets the display options from a parent form of a question.
      * */
     function _getDisplayOptions(question) {
-        var maxIter = 10; // protect against a potential infinite loop
-        var form = question.parent;
-
+        const form = Utils.getRootForm(question);
         if (form === undefined) {
             return {};
         }
-
-        // logic in case the question is in a group or repeat or nested group, etc.
-        while (form.displayOptions === undefined && maxIter > 0) {
-            maxIter--;
-            form = parent.parent;
-        }
-
         return form.displayOptions || {};
     }
 
