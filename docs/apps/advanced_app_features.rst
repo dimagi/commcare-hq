@@ -64,7 +64,7 @@ End of Form Navigation and Form Linking
 These features allow the user to select a destination for the user to be automatically navigated to after filling
 out a particular form. To support this, HQ needs to figure out how to get to the requested destination, both the
 actions taken (user selecting a form or menu) and the data needed (which needs to be pulled from somewhere,
-typically the session, ino order to automatically navigate the user instead of asking them to provide it).
+typically the session, in order to automatically navigate the user instead of asking them to provide it).
 
 End of form navigation ("EOF nav") allows for a couple of specific locations, such as going back to the form's module or its
 parent module. EOF nav also has a "previous screen" option this is particularly fragile, since it requires HQ to
