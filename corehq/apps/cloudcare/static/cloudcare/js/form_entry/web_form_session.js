@@ -506,6 +506,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.serverError = function (q, resp) {
+            if (!q) {
+                // q is no longer visible (display condition has hidden it)
+                return;
+            }
             if (!resp) {
                 q.serverError(null);
             } else if (resp.type === "required") {
