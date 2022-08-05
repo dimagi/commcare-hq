@@ -64,7 +64,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             }
             if (response.selections) {
                 urlObject.setSelections(response.selections);
-                sessionStorage.removeItem('selectedValues');
                 updateUrl = true;
             }
             if (updateUrl) {
