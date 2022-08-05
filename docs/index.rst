@@ -147,7 +147,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :caption: Migrations
     :maxdepth: 1
 
-    migrations-in-practice
+    migrations_in_practice
     migration_command_pattern
     migrations
     couch_to_sql_models
