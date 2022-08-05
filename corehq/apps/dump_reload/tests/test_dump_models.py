@@ -206,8 +206,7 @@ def test_domain_dump_sql_models():
             return model._meta.concrete_model in covered_models
 
         # Used in Couch to SQL migration tests
-        if model.__name__ == 'DummySQLModel':
-            return True
+        return model.__name__ == 'DummySQLModel'
 
     installed_models = {
         model for model in apps.get_models() if not _ignore_model(model)
@@ -216,5 +215,5 @@ def test_domain_dump_sql_models():
     uncovered_models = [
         get_model_label(model) for model in installed_models - covered_models
     ]
-    print('\n'.join(sorted(uncovered_models)))
-    eq(len(uncovered_models), 0, "Not all Django models are covered by domain dump.")
+    assert not uncovered_models, ("Not all Django models are covered by domain dump.\n"
+        + '\n'.join(sorted(uncovered_models)))
