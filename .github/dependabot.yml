@@ -35,7 +35,7 @@ updates:
   schedule:
     interval: daily
     time: "10:00"
-  open-pull-requests-limit: 7
+  open-pull-requests-limit: 4
   labels:
   - product/invisible
   - dependencies/patch
