@@ -71,6 +71,8 @@ IGNORE_MODELS = {
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
     "django_celery_results.TaskResult",
+    "django_celery_results.ChordCounter",
+    "django_celery_results.GroupResult",
     "django_digest.PartialDigest",
     "django_digest.UserNonce",
     "django_prbac.Grant",
