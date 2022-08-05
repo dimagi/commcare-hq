@@ -21,7 +21,7 @@
                data-bind="multiTypeahead: $root.recipients" />
       </div>
       <div class="form-group">
-                <textarea class="bitly form-control" name="message"
+                <textarea class="bitly form-control vertical-resize" name="message"
                           data-bind="text: 'Update to CommCare: ' + {% if is_odk %}sms_odk_url(){% else %}sms_url(){% endif %} + ' (&quot;' + short_name() + '&quot; v. ' + version() + ')'">
                 </textarea>
       </div>

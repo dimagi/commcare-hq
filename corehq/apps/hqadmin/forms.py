@@ -23,8 +23,9 @@ class EmailForm(forms.Form):
     email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
+
 class ReprocessMessagingCaseUpdatesForm(forms.Form):
-    case_ids = forms.CharField(widget=forms.Textarea)
+    case_ids = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}))
 
     def clean_case_ids(self):
         value = self.cleaned_data.get('case_ids', '')
@@ -60,7 +61,7 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma or new-line separated email addresses",
-        widget=forms.Textarea(),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=True
     )
     privileges = forms.MultipleChoiceField(
@@ -104,8 +105,8 @@ class SuperuserManagementForm(forms.Form):
 
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
-        label="Comma or new-line separated email addresses",
-        widget=forms.Textarea(),
+        label="Comma/new-line seperated email addresses",
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
 

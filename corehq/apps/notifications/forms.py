@@ -17,7 +17,7 @@ class NotificationCreationForm(forms.Form):
     content = forms.CharField(
         label=gettext_lazy('Content'),
         max_length=140,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     url = forms.URLField(
         label=gettext_lazy('URL')
@@ -33,7 +33,7 @@ class NotificationCreationForm(forms.Form):
     domains = SimpleArrayField(
         base_field=forms.CharField(),
         label=gettext_lazy("Domains"),
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         help_text=gettext_lazy("Enter a comma separated list of domains for this notification. "
                                "This is only required if you have checked the box above."),
         required=False
