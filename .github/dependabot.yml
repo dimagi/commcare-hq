@@ -8,8 +8,53 @@ updates:
   open-pull-requests-limit: 7
   labels:
   - product/invisible
-  # Focus on major versions only
-  # Todo: remove once we're in steady-state on major versions
+  - dependencies/major
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-minor"
+
+- package-ecosystem: pip
+  directory: "/requirements"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 4
+  labels:
+  - product/invisible
+  - dependencies/minor
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-major"
+
+- package-ecosystem: pip
+  directory: "/requirements"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 7
+  labels:
+  - product/invisible
+  - dependencies/patch
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-major"
+        - "version-update:semver-minor"
+
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 5
+  labels:
+  - product/invisible
+  - dependencies/javascript
+  - dependencies/major
   ignore:
     - dependency-name: "*"
       update-types:
@@ -25,10 +70,25 @@ updates:
   labels:
   - product/invisible
   - dependencies/javascript
-  # Focus on major versions only
-  # Todo: remove once we're in steady-state on major versions
+  - dependencies/minor
   ignore:
     - dependency-name: "*"
       update-types:
         - "version-update:semver-patch"
+        - "version-update:semver-major"
+
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 5
+  labels:
+  - product/invisible
+  - dependencies/javascript
+  - dependencies/patch
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-major"
         - "version-update:semver-minor"
