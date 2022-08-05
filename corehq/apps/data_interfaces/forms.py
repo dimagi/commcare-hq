@@ -707,14 +707,16 @@ class CaseRuleCriteriaForm(forms.Form):
 
             if self.cleaned_data['location_filter_definition']:
                 definition_data = self.cleaned_data['location_filter_definition']
-                definition = LocationFilterDefinition.objects.create(
-                    location_id=definition_data['location_id'],
-                    include_child_locations=definition_data.get('include_child_locations', False),
-                )
 
-                criteria = CaseRuleCriteria(rule=rule)
-                criteria.definition = definition
-                criteria.save()
+                if definition_data and definition_data['location_id']:
+                    definition = LocationFilterDefinition.objects.create(
+                        location_id=definition_data['location_id'],
+                        include_child_locations=definition_data.get('include_child_locations', False),
+                    )
+
+                    criteria = CaseRuleCriteria(rule=rule)
+                    criteria.definition = definition
+                    criteria.save()
 
 
 class CaseRuleActionsForm(forms.Form):
