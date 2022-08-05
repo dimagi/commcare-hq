@@ -172,7 +172,7 @@ class RemoteRequestFactory(object):
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=self.storage_instance,
                 template='case',
-                title=self.build_title(),
+                title=self.build_title() if self.app.enable_case_search_title_translation else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
