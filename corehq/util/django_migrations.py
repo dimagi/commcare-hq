@@ -56,7 +56,7 @@ def add_if_not_exists_raw(string, name):
     ])
 
 
-def add_if_exists_raw(string, name):
+def execute_sql_if_exists_raw(string, name):
     """
     turn a 'TRUNCATE TABLE' template into a 'TRUNCATE TABLE IF EXISTS' template
     """
