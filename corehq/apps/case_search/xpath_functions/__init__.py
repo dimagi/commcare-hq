@@ -4,6 +4,7 @@ from .query_functions import (
     selected_all,
     selected_any,
     within_distance,
+    phonetic_match
 )
 from .subcase_functions import subcase
 from .value_functions import date, date_add, today
@@ -25,4 +26,5 @@ XPATH_QUERY_FUNCTIONS = {
     'selected-all': selected_all,
     'within-distance': within_distance,
     'fuzzy-match': fuzzy_match,
+    'phonetic-match': phonetic_match,
 }
