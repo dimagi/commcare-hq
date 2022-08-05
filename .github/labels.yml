@@ -71,6 +71,15 @@ labels:
 - name: 'dependencies/javascript'
   color: navy
   description: 'Change in javascript dependency.'
+- name: 'dependencies/major'
+  color: red
+  description: 'Dependency upgrade that is at least one major version behind.'
+- name: 'dependencies/minor'
+  color: yellow
+  description: 'Dependency upgrade that is at least one minor version behind.'
+- name: 'dependencies/patch'
+  color: green
+  description: 'Dependency upgrade that is at least one patched version behind.'
 - name: 'awaiting QA'
   color: light_orange
   description: 'QA in progress. Do not merge'
