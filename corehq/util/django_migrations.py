@@ -61,7 +61,7 @@ def add_if_exists_raw(string, name):
     turn a 'TRUNCATE TABLE' template into a 'TRUNCATE TABLE IF EXISTS' template
     """
     return ''.join([
-        "DO $do$ BEGIN IF NOT (SELECT to_regclass('{}') is NULL) THEN".format(name),
+        "DO $do$ BEGIN IF NOT (SELECT to_regclass('{}') is NULL) THEN ".format(name),
         string,
         "; END IF; END $do$"
     ])
