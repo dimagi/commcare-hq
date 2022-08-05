@@ -636,6 +636,7 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+ 0008_add_phonetic_analyzer_to_case_search
 products
  0001_initial
 project_limits

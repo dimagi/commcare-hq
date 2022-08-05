@@ -24,7 +24,7 @@ ANALYZERS = {
         "pattern": r"\s*,\s*"
     },
     "phonetic": {
-        "filter": ["standard", "lowercase", "soundex_filter"],
+        "filter": ["standard", "lowercase", "soundex"],
         "tokenizer": "standard"
     }
 }
@@ -42,7 +42,7 @@ TEST_HQ_INDEX_NAME = "pillowtop_tests"
 phonetic_analysis = _get_analysis('default', 'phonetic')
 phonetic_analysis.update({
     "filter": {
-        "soundex_filter": {
+        "soundex": {
             "replace": "true",
             "type": "phonetic",
             "encoder": "soundex"
