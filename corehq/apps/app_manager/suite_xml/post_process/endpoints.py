@@ -1,3 +1,13 @@
+"""
+EndpointsHelper
+---------------
+
+This is support for session endpoints, which are a flagged feature for mobile that also form the basis of smart
+links in web apps.
+
+Endpoints define specific locations in the application using a stack, so they rely on similar logic to end of form
+navigation. The complexity of generating endpoints is all delegated to ``WorkflowHelper``.
+"""
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
