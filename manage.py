@@ -117,6 +117,27 @@ def run_patches():
     mimetypes.init()
 
     patch_jsonfield()
+    patch_celery_task()
+
+
+def patch_celery_task():
+    from django.utils.functional import cached_property
+
+    class TaskModule:
+        __all__ = ["task", "periodic_task"]
+
+        @cached_property
+        def task(self):
+            from corehq.apps.celery.shared_task import task
+            return task
+
+        @cached_property
+        def periodic_task(self):
+            from corehq.apps.celery.periodic import periodic_task
+            return periodic_task
+
+    sys.modules["celery.task"] = TaskModule()
+    sys.modules["celery.task.base"] = TaskModule()
 
 
 def patch_jsonfield():
