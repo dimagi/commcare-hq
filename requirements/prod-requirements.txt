@@ -196,7 +196,7 @@ executing==0.8.3
     # via stack-data
 faker==5.0.2
     # via -r base-requirements.in
-flower==1.0.0
+flower==1.1.0
     # via -r prod-requirements.in
 future==0.18.2
     # via pyjwkest
