@@ -10,8 +10,7 @@ class TestUpdateTableauServer(BaseLinkedDomainTest):
         server_type='server',
         server_name='server name',
         validate_hostname='host name',
-        target_site='target site',
-        domain_username='username')
+        target_site='target site')
         self.tableau_server_setup.save()
 
     def tearDown(self):
@@ -22,7 +21,6 @@ class TestUpdateTableauServer(BaseLinkedDomainTest):
         server = server_and_visualizations["server"]
         self.assertEqual({'domain': self.linked_domain,
         'server_name': '',
-        'domain_username': '',
         'server_type': 'server',
         'target_site': 'Default',
         'validate_hostname': '', },
