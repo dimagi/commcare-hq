@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.util.django_migrations import add_if_not_exists_raw
+from corehq.util.django_migrations import add_if_exists_raw
 
 
 class Migration(migrations.Migration):
@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            add_if_not_exists_raw("TRUNCATE TABLE authtoken_token", name='authtoken_table'),
+            add_if_exists_raw("TRUNCATE TABLE authtoken_token", name='authtoken_table'),
             reverse_sql=migrations.RunSQL.noop
         )
     ]
