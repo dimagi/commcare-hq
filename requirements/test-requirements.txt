@@ -400,7 +400,7 @@ pytz==2020.1
     #   django
     #   djangorestframework
     #   twilio
-pyyaml==5.4.1
+pyyaml==6.0
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
