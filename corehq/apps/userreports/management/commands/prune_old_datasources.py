@@ -47,8 +47,8 @@ class Command(BaseCommand):
     def handle(self, **options):
         data_sources = list(DataSourceConfiguration.all())
         data_sources.extend(list(StaticDataSourceConfiguration.all()))
-        tables_by_engine_id = get_tables_by_engine_id(data_sources, options.get('engine_id'))
-        tables_to_remove_by_engine = get_tables_to_remove_by_engine(tables_by_engine_id)
+        tables_by_engine_id = get_tables_for_data_sources(data_sources, options.get('engine_id'))
+        tables_to_remove_by_engine = get_tables_without_data_sources(tables_by_engine_id)
         prune_tables(tables_to_remove_by_engine, options['drop_empty_tables'], options['drop_deleted_tables'])
 
 
@@ -83,7 +83,12 @@ def prune_tables(tables_to_remove_by_engine, drop_empty_tables, drop_deleted_tab
                         print(f"\t{tablename}: {row_count} rows, idle since {idle_since}")
 
 
-def get_tables_by_engine_id(data_sources, engine_id):
+def get_tables_for_data_sources(data_sources, engine_id):
+    """
+    :param data_sources:
+    :param engine_id: optional parameter to limit results to one db engine
+    :return: a dictionary in the form of {<engine_id>: [<tables>], ...}
+    """
     tables_by_engine_id = defaultdict(set)
     for data_source in data_sources:
         if engine_id and data_source.engine_id != engine_id:
@@ -95,8 +100,12 @@ def get_tables_by_engine_id(data_sources, engine_id):
     return tables_by_engine_id
 
 
-def get_tables_to_remove_by_engine(tables_by_engine_id):
-    tables_to_remove_by_engine = defaultdict(list)
+def get_tables_without_data_sources(tables_by_engine_id):
+    """
+    :param tables_by_engine_id:
+    :return: a dictionary in the form of {<engine_id>: [<tables], ...}
+    """
+    tables_without_data_sources = defaultdict(list)
     for engine_id, expected_tables in tables_by_engine_id.items():
         engine = connection_manager.get_engine(engine_id)
         with engine.begin() as connection:
@@ -116,5 +125,5 @@ def get_tables_to_remove_by_engine(tables_by_engine_id):
             """).fetchall()
             tables_in_db = {r[0] for r in results}
 
-        tables_to_remove_by_engine[engine_id] = tables_in_db - expected_tables
-    return tables_to_remove_by_engine
+        tables_without_data_sources[engine_id] = tables_in_db - expected_tables
+    return tables_without_data_sources
