@@ -1,6 +1,6 @@
 import datetime
 import math
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -13,7 +13,6 @@ import pytz
 from memoized import memoized
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
