@@ -447,7 +447,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             $.when(fetchingPrompts).done(function (response) {
                 // Update models with errors from response
                 for (var i = 0; i < response.models.length; i++) {
-                    self.collection.models[i].set('error', response.models[i].get('error'));
+                    var requiredError = response.models[i].get('required') ? response.models[i].get('required_msg') : "",
+                        otherError = response.models[i].get('error') || "",
+                        combinedError = requiredError || otherError ? [requiredError, otherError].join(" ") : null;
+                    self.collection.models[i].set('error', combinedError);
                 }
 
                 // Gather error messages
