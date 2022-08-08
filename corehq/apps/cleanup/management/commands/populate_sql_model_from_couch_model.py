@@ -155,18 +155,18 @@ class PopulateSQLCommand(BaseCommand):
 
         if not migrated:
             print(f"""
-                A migration must be performed before this environment can be upgraded to the latest version
-                of CommCareHQ. This migration is run using the management command {command_name}.
+A migration must be performed before this environment can be upgraded to the latest version
+of CommCareHQ. This migration is run using the management command {command_name}.
             """)
             if cls.commit_adding_migration():
                 print(f"""
-                Run the following commands to run the migration and get up to date:
+Run the following commands to run the migration and get up to date:
 
-                    commcare-cloud <env> fab setup_limited_release --set code_branch={cls.commit_adding_migration()}
+    commcare-cloud <env> fab setup_limited_release --set code_branch={cls.commit_adding_migration()}
 
-                    commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
+    commcare-cloud <env> django-manage --release <release created by previous command> {command_name}
 
-                    commcare-cloud <env> deploy commcare
+    commcare-cloud <env> deploy commcare
                 """)
             sys.exit(1)
 
