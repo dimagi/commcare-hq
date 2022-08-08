@@ -357,7 +357,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_advanced_module_remote_request(self, *args):
-        factory = AppFactory(domain='domain')
+        factory = AppFactory(domain='domain', build_version='2.53.0')
         factory.app._id = "123"
         m0, f0 = factory.new_advanced_module("search", "patient")
         factory.form_requires_case(f0)
