@@ -135,6 +135,7 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
+from corehq.apps.domain.utils import domain_restricts_superusers
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -169,6 +170,19 @@ def _augmented_form_view_permissions(login_decorator=login_and_domain_required):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
+                user = request.couch_user
+                user_allowed = False
+
+                domain_membership = user.get_domain_membership(domain, allow_enterprise=True)
+
+                if user.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                    user_allowed = True
+                elif domain_membership:
+                    user_allowed = True
+
+                if not user_allowed:
+                    raise Http403()
+
                 return view_func(request, domain, *args, **kwargs)
             return require_form_view_permission(view_func)(request, domain, *args, **kwargs)
 
