@@ -13,6 +13,7 @@ from corehq.apps.userreports.adapter import IndicatorAdapterLoadTracker
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, TEMP_REPORT_PREFIX
 from corehq.apps.userreports.exceptions import BadSpecError, ReportConfigurationNotFoundError, \
     DataSourceConfigurationNotFoundError
+from corehq.sql_db.connections import connection_manager
 from corehq.toggles import ENABLE_UCR_MIRRORS
 from corehq.util import reverse
 from corehq.util.couch import DocumentNotFound
@@ -355,3 +356,50 @@ def get_domain_for_ucr_table_name(table_name):
         # double-unescape because corehq.apps.userreports.util.get_table_name escapes twice
         return unescape(unescape(match.group(1)))
     raise ValueError(f"Expected {table_name} to start with {UCR_TABLE_PREFIX} or {LEGACY_UCR_TABLE_PREFIX}")
+
+
+def get_tables_for_data_sources(data_sources, engine_id):
+    """
+    :param data_sources:
+    :param engine_id: optional parameter to limit results to one db engine
+    :return: a dictionary in the form of {<engine_id>: [<tables>], ...}
+    """
+    tables_by_engine_id = collections.defaultdict(set)
+    for data_source in data_sources:
+        if engine_id and data_source.engine_id != engine_id:
+            continue
+
+        table_name = get_table_name(data_source.domain, data_source.table_id)
+        tables_by_engine_id[data_source.engine_id].add(table_name)
+
+    return tables_by_engine_id
+
+
+def get_tables_without_data_sources(tables_by_engine_id):
+    """
+
+    :param tables_by_engine_id:
+    :return: a dictionary in the form of {<engine_id>: [<tables], ...}
+    """
+    tables_without_data_sources = collections.defaultdict(list)
+    for engine_id, expected_tables in tables_by_engine_id.items():
+        engine = connection_manager.get_engine(engine_id)
+        with engine.begin() as connection:
+            # Using string formatting rather than execute with %s syntax
+            # is acceptable here because the strings we're inserting are static
+            # and only templated for DRYness
+            results = connection.execute(f"""
+            SELECT table_name
+              FROM information_schema.tables
+            WHERE table_schema='public'
+              AND table_type='BASE TABLE'
+              AND (
+                table_name LIKE '{UCR_TABLE_PREFIX}%%'
+                OR
+                table_name LIKE '{LEGACY_UCR_TABLE_PREFIX}%%'
+            );
+            """).fetchall()
+            tables_in_db = {r[0] for r in results}
+
+        tables_without_data_sources[engine_id] = tables_in_db - expected_tables
+    return tables_without_data_sources
