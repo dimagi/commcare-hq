@@ -452,8 +452,6 @@ pygments==2.11.2
     # via
     #   ipython
     #   sphinx
-pygooglechart==0.4.0
-    # via -r base-requirements.in
 pyjwkest==1.4.2
     # via oic
 pyjwt==2.4.0

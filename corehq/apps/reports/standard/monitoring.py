@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 import pytz
 from memoized import memoized
-from pygooglechart import ScatterChart
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.safe_index import safe_index
