@@ -56,6 +56,17 @@ def add_if_not_exists_raw(string, name):
     ])
 
 
+def execute_sql_if_exists_raw(string, name):
+    """
+    turn a 'TRUNCATE TABLE' template into a 'TRUNCATE TABLE IF EXISTS' template
+    """
+    return ''.join([
+        "DO $do$ BEGIN IF NOT (SELECT to_regclass('{}') is NULL) THEN ".format(name),
+        string,
+        "; END IF; END $do$"
+    ])
+
+
 class DatabaseSchemaEditorIfNotExists(DatabaseSchemaEditor):
     sql_create_index = add_if_not_exists(DatabaseSchemaEditor.sql_create_index)
     sql_create_unique = add_if_not_exists(DatabaseSchemaEditor.sql_create_unique)
