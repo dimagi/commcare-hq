@@ -175,9 +175,9 @@ def _augmented_form_view_permissions(login_decorator=login_and_domain_required):
 
                 domain_membership = user.get_domain_membership(domain, allow_enterprise=True)
 
-                if user.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                if domain_membership:
                     user_allowed = True
-                elif domain_membership:
+                elif user.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
                     user_allowed = True
 
                 if not user_allowed:
