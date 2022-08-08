@@ -1,3 +1,14 @@
+"""
+Resource Contributors
+---------------------
+
+These contributors let the suite know where to find external resources,.
+These external resources are text files that are also part of the application's CCZ.
+
+* ``FormResourceContributor`` handles XForms
+* ``LocaleResourceContributor`` handles the text files containing translations
+* ``PracticeUserRestoreContributor`` handles a dummy restore used for Practice Mode
+"""
 from distutils.version import LooseVersion
 
 from corehq.apps.app_manager import id_strings
