@@ -4985,8 +4985,8 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
-"sync and look for updates from a differnent URL. Main use case is to allow "
-"migrating ICDS to a new cluster."
+"sync, and look for updates from a different URL. The main use case is to "
+"allow migrating project spaces to a new environment.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -8613,6 +8613,19 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Required Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Validation Condition"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr ""
 
@@ -12222,10 +12235,6 @@ msgstr ""
 msgid "Regular Expression"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr ""
-
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
 msgid ""
@@ -12729,6 +12738,17 @@ msgstr ""
 #: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "Date Filter"
+msgid "Cases Filter"
+msgstr "Filtro de Data"
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
@@ -13346,6 +13366,21 @@ msgid "Date case property (advanced)"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Localização"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr ""
 
@@ -13419,6 +13454,14 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Include cases from child locations"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -13699,7 +13742,8 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
+#, python-format
+msgid "Deduplication rule not saved due to the following issues: %s"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
@@ -14392,20 +14436,6 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr ""
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Localização"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -20467,6 +20497,10 @@ msgstr ""
 msgid "IP Address"
 msgstr ""
 
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
+msgstr ""
+
 #: corehq/apps/hqadmin/reports.py
 msgid "Request Path"
 msgstr ""
@@ -20771,6 +20805,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -40112,10 +40150,6 @@ msgstr ""
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py

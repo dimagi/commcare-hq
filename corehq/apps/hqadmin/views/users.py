@@ -1,5 +1,6 @@
 import csv
 import itertools
+import settings
 import os
 import urllib.parse
 import uuid
@@ -97,8 +98,9 @@ class SuperuserManagement(UserAdministration):
             users = form.cleaned_data['csv_email_list']
             is_superuser = 'is_superuser' in form.cleaned_data['privileges']
             is_staff = 'is_staff' in form.cleaned_data['privileges']
-            fields_changed = {}
+            user_changes = []
             for user in users:
+                fields_changed = {}
                 # save user object only if needed and just once
                 if user.is_superuser is not is_superuser:
                     user.is_superuser = is_superuser
@@ -116,9 +118,32 @@ class SuperuserManagement(UserAdministration):
                                     changed_via=USER_CHANGE_VIA_WEB, fields_changed=fields_changed,
                                     by_domain_required_for_log=False,
                                     for_domain_required_for_log=False)
+
+                    #formatting for user_changes list
+                    fields_changed['email'] = user.username
+                    if 'is_superuser' not in fields_changed:
+                        fields_changed['same_superuser'] = user.is_superuser
+                    if 'is_staff' not in fields_changed:
+                        fields_changed['same_staff'] = user.is_staff
+                    user_changes.append(fields_changed)
+            if user_changes:
+                send_email_notif(user_changes, self.request.couch_user.username)
             messages.success(request, _("Successfully updated superuser permissions"))
 
         return self.get(request, *args, **kwargs)
+
+
+def send_email_notif(user_changes, changed_by_user):
+    mail_admins(
+        "Superuser privilege / Staff status was changed",
+        "",
+        html_message=render_to_string('hqadmin/email/superuser_staff_email.html', context={
+            'user_changes': user_changes,
+            'changed_by_user': changed_by_user,
+            'env': settings.SERVER_ENVIRONMENT
+        })
+    )
+    return
 
 
 @require_superuser
@@ -138,7 +163,7 @@ def superuser_table(request):
 
 def augmented_superusers(users=None, include_accounting_admin=False):
     if not users:
-        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
+        users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True)).order_by("username")
     augmented_users = _augment_users_with_two_factor_enabled(users)
     if include_accounting_admin:
         return _augment_users_with_accounting_admin(augmented_users)

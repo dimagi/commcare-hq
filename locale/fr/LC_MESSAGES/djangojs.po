@@ -2727,6 +2727,10 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Unexpected Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2799,6 +2803,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js

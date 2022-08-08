@@ -36,6 +36,7 @@ def main():
     stream_parsers = {
         "pip": parse_pip,
         "yarn": parse_yarn,
+        "yarn-list": parse_yarn_list,
     }
 
     parser = argparse.ArgumentParser()
@@ -135,6 +136,7 @@ def package_stats(stream, stream_parser, labels=True):
 
 
 def parse_pip(stream):
+    """Parse the output of command: pip list --outdated --format json"""
     for pkg in json.load(stream):
         latest = pkg["latest_version"]
         current = pkg["version"]
@@ -142,6 +144,7 @@ def parse_pip(stream):
 
 
 def parse_yarn(stream):
+    """Parse the output of command: yarn outdated --json"""
     def fail():
         raise ValueError(f"invalid yarn package data: {lines}")
     lines = [line for line in stream.readlines() if line.rstrip()]
@@ -169,6 +172,19 @@ def parse_yarn(stream):
         else:
             delta = behind(latest, current)
         yield delta, name, latest, current
+
+
+def parse_yarn_list(stream):
+    """Parse the output of command: ./yarn-list.py --outdated --json"""
+    for pkg in json.load(stream):
+        # use partition because npm versions can contain a dash e.g: 0.0.1-alpha
+        latest = pkg["latest_version"].partition("-")[0]
+        current = pkg["version"].partition("-")[0]
+        if latest == "exotic":
+            delta = []
+        else:
+            delta = behind(latest, current)
+        yield delta, pkg["name"], latest, current
 
 
 def behind(latest, current):

@@ -5337,13 +5337,9 @@ msgstr "Utilice configuración de nivel de proyecto"
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
-"sync and look for updates from a differnent URL. Main use case is to allow "
-"migrating ICDS to a new cluster."
+"sync, and look for updates from a different URL. The main use case is to "
+"allow migrating project spaces to a new environment.\n"
 msgstr ""
-"Utilice una base URL diferente para todas las aplicaciones URL. Esto hace "
-"que el teléfono envíe formularios, sincronice y busque actualizaciones desde "
-"un URL diferente. El uso principal de caso es para permitir la migración de "
-"ICDS a un nuevo grupo."
 
 #: corehq/apps/app_manager/static_strings.py
 msgid "User Login Mode"
@@ -9102,6 +9098,19 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Required Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Validation Condition"
+msgstr "Condición de Validación"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr "Mensaje de Validación"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr "URI de Ejemplo"
 
@@ -12816,10 +12825,6 @@ msgstr "Agregar Opción"
 msgid "Regular Expression"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr "Mensaje de Validación"
-
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
 msgid ""
@@ -13323,6 +13328,23 @@ msgstr ""
 #: corehq/apps/data_interfaces/forms.py
 msgid "Please specify at least one action."
 msgstr "Por favor especifique por lo menos una acción."
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid ""
+#| "The Actions will be performed for all open cases that match all filter "
+#| "criteria below."
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+"Las Acciones se realizarán para todos los casos abiertos que coinciden con "
+"todos los criterios de filtros que se especifican abajo."
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "Case Filters"
+msgid "Cases Filter"
+msgstr "Filtros de Caso"
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
@@ -13940,6 +13962,21 @@ msgid "Date case property (advanced)"
 msgstr "Fecha propiedad de caso (avanzado)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Ubicación"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr "Caso padre ha sido cerrado"
 
@@ -14014,6 +14051,18 @@ msgstr "El caso padre ha sido cerrado"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "ID filtro Personalizada"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "Case Self-Registration"
+msgid "Case belongs to location"
+msgstr "Autorregistro del Caso"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "(including child locations)"
+msgid "Include cases from child locations"
+msgstr "(incluyendo ubicaciones hijo)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14295,8 +14344,10 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
-msgstr ""
+#, fuzzy, python-format
+#| msgid "Couldn't send to the following number(s): "
+msgid "Deduplication rule not saved due to the following issues: %s"
+msgstr "No se pudo enviar a los siguientes número(s):"
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Successfully created deduplication rule: {}"
@@ -15052,20 +15103,6 @@ msgstr "Seleccione un tipo de suscripción..."
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr "Tipo de Suscripción"
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Ubicación"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -21185,10 +21222,8 @@ msgstr ""
 "teléfono del caso serán sincronizadas. "
 
 #: corehq/apps/hqadmin/forms.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
 msgid "Email address '{}' is not a dimagi email address"
-msgstr "Por favor ingrese una dirección de correo válida."
+msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
@@ -21254,6 +21289,10 @@ msgstr "Dominio"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -21426,10 +21465,8 @@ msgid "Developer"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "SuperUser?"
 msgid "Superuser"
-msgstr "¿SuperUsuario?"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/reports.py
@@ -21437,10 +21474,8 @@ msgid "Accounting Admin"
 msgstr "Administrador de Contabilidad"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "Two Factor Authentication"
 msgid "Two Factor Enabled"
-msgstr "Autenticación de Dos Factores"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -21559,10 +21594,8 @@ msgid "Get users to offboard"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
-#, fuzzy
-#| msgid "Successfully restored report \"{name}\""
 msgid "Successfully retrieved users to offboard."
-msgstr "Reporte \"{name}\" restaurado exitosamente "
+msgstr ""
 
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
@@ -21575,6 +21608,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -30841,10 +30878,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
-#, fuzzy
-#| msgid "Shorten Inactivity Timeout"
 msgid "Inactivity Timeout (minutes)"
-msgstr "Acorte el Tiempo de Desconexión por Inactividad"
+msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
 msgid "You are currently not a member of any projects."
@@ -40654,10 +40689,8 @@ msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
 #: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#, fuzzy
-#| msgid "Form Changes"
 msgid "Form config"
-msgstr "Cambios en el Formulario"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
@@ -41469,10 +41502,6 @@ msgstr "Cuerpo de la respuesta"
 
 #: corehq/motech/templates/motech/logs.html
 msgid "No API requests have been logged."
-msgstr ""
-
-#: corehq/motech/views.py
-msgid "Request Method"
 msgstr ""
 
 #: corehq/motech/views.py
@@ -42834,3 +42863,26 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
+
+#, fuzzy
+#~| msgid "Specify Workers at this Location"
+#~ msgid "Specify Users At This Location"
+#~ msgstr "Especificar Trabajadores en esta Ubicación"
+
+#~ msgid "No Data"
+#~ msgstr "No hay Datos"
+
+#~ msgid "Read Only (No Reports)"
+#~ msgstr "Solo Lectura (No Reportes)"
+
+#~ msgid "App Editor"
+#~ msgstr "Editor de App"
+
+#~ msgid "Read Only"
+#~ msgstr "Solo Lectura"
+
+#~ msgid "Field Implementer"
+#~ msgstr "Implementador de Campo"
+
+#~ msgid "Billing Admin"
+#~ msgstr "Administrador de Facturación"

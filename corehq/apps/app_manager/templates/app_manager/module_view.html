@@ -167,7 +167,7 @@
           <i class="fa fa-plus"></i> {% trans "Add filter" %}
         </button>
         <input type="text" class="form-control" data-bind="value: nodesetFilter, visible: showFilter" placeholder="{% trans_html_attr "referral = 'y'" %}" />
-        <textarea class="form-control" data-bind="value: nodeset, visible: showXpath" /></textarea>
+        <textarea class="form-control vertical-resize" data-bind="value: nodeset, visible: showXpath" /></textarea>
         {% if request|toggle_enabled:"SYNC_SEARCH_CASE_CLAIM" %}
           <p data-bind="visible: showXpath() && nodeset()" class="help-block">{% trans "This data will not be shown for case search results." %}</p>
         {% endif %}
