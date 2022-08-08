@@ -1,7 +1,13 @@
+from contextlib import contextmanager
+from unittest.mock import patch
 from uuid import UUID
+from pathlib import Path
 
 from django.core.management import call_command
+from django.db import connection, transaction
 from django.test import SimpleTestCase, TestCase
+
+from testil import tempdir
 
 from ..management.commands.populate_lookuptables import Command as LookupTableCommand
 from ..management.commands.populate_lookuptablerows import Command as LookupTableRowCommand
@@ -468,12 +474,34 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
             [],
         )
 
+    def test_migration_with_deleted_table(self):
+        doc, obj = self.create_row()
+        self.temporarily_delete_table()
+        doc_id = self.db.save_doc(doc.to_json())["id"]
+        with tempdir() as tmp:
+            log_path = Path(tmp) / "log.txt"
+            with patch.object(transaction, "atomic", atomic_check):
+                call_command('populate_lookuptablerows', log_path=log_path)
+            with log_path.open() as log:
+                self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", list(log))
+
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)
         doc.data_type_id = self.type_doc._id
         obj.table = self.table_obj
         assert obj.table_id == self.table_obj.id, (obj.table_id, self.table_obj.id)
         return doc, obj
+
+    def temporarily_delete_table(self):
+        def recreate_type():
+            data = self.db.save_doc(type_data)
+            self.type_doc._rev = data["rev"]
+            self.table_obj.id = table_id
+        table_id = self.table_obj.id
+        type_data = self.type_doc.to_json()
+        type_data.pop("_rev")
+        self.table_obj.delete()
+        self.addCleanup(recreate_type)
 
     def diff(self, doc, obj):
         return do_diff(LookupTableRowCommand, doc, obj)
@@ -549,12 +577,33 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
             [],
         )
 
+    def test_migration_with_deleted_row(self):
+        doc, obj = self.create_owner()
+        self.temporarily_delete_row()
+        doc_id = self.db.save_doc(doc.to_json())["id"]
+        with tempdir() as tmp:
+            log_path = Path(tmp) / "log.txt"
+            with patch.object(transaction, "atomic", atomic_check):
+                call_command('populate_lookuptablerowowners', log_path=log_path)
+            with log_path.open() as log:
+                self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", list(log))
+
     def create_owner(self):
         doc, obj = create_lookup_table_row_owner(unwrap_doc=False)
         obj.row = row = self.row
         doc.data_item_id = row._migration_couch_id
         assert obj.row_id == row.id, (obj.row_id, row.id)
         return doc, obj
+
+    def temporarily_delete_row(self):
+        def recreate_row():
+            self.db.save_doc(row_data)
+            self.row.id = row_id
+        row_id = self.row.id
+        row_data = FixtureDataItem.get(row_id.hex).to_json()
+        row_data.pop("_rev")
+        self.row.delete()
+        self.addCleanup(recreate_row)
 
     def diff(self, doc, obj):
         return do_diff(LookupTableRowOwnerCommand, doc, obj)
@@ -665,3 +714,13 @@ def jsonattrify(model_type, data):
             value = field.builder.attrify(value)
         setattr(obj, name, value)
     return obj
+
+
+@contextmanager
+def atomic_check(using=None):
+    with _atomic(using=using):
+        yield
+        connection.check_constraints()
+
+
+_atomic = transaction.atomic

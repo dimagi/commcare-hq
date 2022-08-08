@@ -48,7 +48,8 @@ class PopulateSQLCommand(BaseCommand):
         """
         This should find and update the sql object that corresponds to the given doc,
         or create it if it doesn't yet exist. This method is responsible for saving
-        the sql object.
+        the sql object. May return ``(None, False)`` to cause the document to be
+        ignored by the migration.
         """
         raise NotImplementedError()
 
@@ -277,7 +278,7 @@ class PopulateSQLCommand(BaseCommand):
     def _migrate_doc(self, doc, logfile):
         with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
-            action = "Creating" if created else "Updated"
+            action = "Ignored" if model is None else ("Creating" if created else "Updated")
             logfile.write(f"{action} model for {self.couch_doc_type()} with id {doc['_id']}\n")
 
     def _get_couch_doc_count_for_domains(self, domains):
