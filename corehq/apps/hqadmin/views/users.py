@@ -158,24 +158,22 @@ class AdminRestoreView(TemplateView):
         return True
 
     def get(self, request, *args, **kwargs):
-        self.is_web_user = request.GET.get('webuser', False)
+        self.domain = request.GET.get('domain')
         full_username = request.GET.get('as', '')
-        if not self.is_web_user:
-            if not full_username or '@' not in full_username:
-                return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
 
+        if not full_username or '@' not in full_username:
+            msg = 'Please specify a user using ?as=user@domain\nOr specify a web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
+
+        self.user = CouchUser.get_by_username(full_username)
+        if self.user.is_web_user and not self.domain:
+            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
+
+        if not self.user.is_web_user or not self.user:
             username, self.domain = full_username.split('@')
             if not self.domain.endswith(settings.HQ_ACCOUNT_ROOT):
                 full_username = format_username(username, self.domain)
-        else:
-            self.domain = request.GET.get('domain')
-
-        if not full_username and self.is_web_user:
-            return HttpResponseBadRequest('Please specify a web user using ?as=email&webuser=True&domain=domain')
-
-        if not self.domain and self.is_web_user:
-            return HttpResponseBadRequest(
-                'Please specify a domain for a web user using ?as=email&webuser=True&domain=domain')
 
         self.user = CouchUser.get_by_username(full_username)
         if not self.user:
