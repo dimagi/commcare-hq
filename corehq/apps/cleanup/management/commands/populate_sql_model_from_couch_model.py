@@ -255,6 +255,8 @@ Run the following commands to run the migration and get up to date:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
         self.diff_count = 0
+        self.ignored_count = 0
+        self.missing_in_sql_count = 0
         doc_index = 0
 
         domains = options["domains"]
@@ -302,8 +304,14 @@ Run the following commands to run the migration and get up to date:
                     print(f"Diff count: {self.diff_count}")
 
         print(f"Processed {doc_index} documents")
+        if self.ignored_count:
+            print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+        if self.missing_in_sql_count > self.ignored_count:
+            missing = self.missing_in_sql_count - self.ignored_count
+            not_ignored = " (and not ignored)" if self.ignored_count else ""
+            print(f"Unexpected: {missing} Couch documents were not found in SQL{not_ignored}")
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
         def update_log(action, doc_ids):
@@ -349,6 +357,7 @@ Run the following commands to run the migration and get up to date:
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
         update_log("Ignored", [doc["_id"] for doc in ignored])
+        self.ignored_count += len(ignored)
 
     def _verify_docs(self, docs, logfile, exit=True):
         sql_class = self.sql_class()
@@ -356,6 +365,7 @@ Run the following commands to run the migration and get up to date:
         couch_ids = [doc["_id"] for doc in docs]
         objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
+        self.missing_in_sql_count += len(couch_ids) - len(objs_by_couch_id)
         for doc in docs:
             obj = objs_by_couch_id.get(doc["_id"])
             if obj is not None:
@@ -375,10 +385,11 @@ Run the following commands to run the migration and get up to date:
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
             self._do_diff(doc, obj, logfile, exit)
         except self.sql_class().DoesNotExist:
-            pass    # ignore, the difference in total object count has already been displayed
+            self.missing_in_sql_count += 1
 
     def _migrate_doc(self, doc, logfile):
         if self.should_ignore(doc):
+            self.ignored_count += 1
             logfile.write(f"Ignored model for {self.couch_doc_type()} with id {doc['_id']}\n")
             return
         with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
