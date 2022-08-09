@@ -106,6 +106,8 @@ class JsonCaseCreation(BaseJsonCaseChange):
 
     @classmethod
     def wrap(cls, data):
+        if 'case_id' in data:
+            raise UserError(f"You cannot specify 'case_id' when creating a new case")
         data['case_id'] = str(uuid.uuid4())
         return super().wrap(data)
 

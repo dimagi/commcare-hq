@@ -389,6 +389,18 @@ class TestCaseAPI(TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json(), {'error': "A 'create' flag is required for each update."})
 
+    def test_attempt_create_with_case_id(self):
+        res = self._bulk_update_cases([{
+            'create': True,
+            'case_type': 'player',
+            'case_name': 'Jolene',
+            'owner_id': 'methuen_home',
+            'case_id': 'somethingmalicious',
+        }])
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("You cannot specify 'case_id' when creating a new case",
+                      res.json()['error'])
+
     def test_bulk_update_too_big(self):
         res = self._bulk_update_cases([
             {'create': True, 'case_name': f'case {i}', 'case_type': 'player'}
