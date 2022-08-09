@@ -165,7 +165,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
-                hasError: this.hasError,
                 errorMessage: this.errorMessage,
             };
         },
@@ -173,7 +172,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialize: function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
-            this.hasError = false;
             this.errorMessage = null;
 
             var value = this.model.get('value'),
@@ -205,30 +203,32 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        _isValid: function () {
+        /**
+         * Determines if model has either a server error or is required and missing.
+         * Returns error message, or null if model is valid.
+         */
+        checkValid: function () {
             if (this.model.get("error")) {
-                return false;
+                return this.model.get("error");
             }
             if (!this.model.get('required')) {
-                return true;
+                return null;
             }
             var answer = this.getEncodedValue();
-            return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
+            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
+                return null;
+            } else {
+                return this.model.get("required_msg");
+            }
         },
 
         isValid: function () {
-            var hasError = !this._isValid();
-            if (hasError !== this.hasError) {
-                if (hasError) {
-                    this.errorMessage = this.model.get("error");
-                } else {
-                    this.model.set("error", null);
-                    this.errorMessage = null;
-                }
-                this.hasError = hasError;
+            var newError = this.checkValid();
+            if (newError !== this.errorMessage) {
+                this.errorMessage = newError;
                 this.render();
             }
-            return !this.hasError;
+            return !this.errorMessage;
         },
 
         clear: function () {
@@ -240,7 +240,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
-            self.hasError = false;
             self.render();
             FormplayerFrontend.trigger('clearNotifications');
         },
@@ -445,13 +444,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
             $.when(fetchingPrompts).done(function (response) {
-                // Update models with errors from response
-                for (var i = 0; i < response.models.length; i++) {
-                    var requiredError = response.models[i].get('required') ? response.models[i].get('required_msg') : "",
-                        otherError = response.models[i].get('error') || "",
-                        combinedError = requiredError || otherError ? [requiredError, otherError].join(" ") : null;
-                    self.collection.models[i].set('error', combinedError);
-                }
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
 
                 // Gather error messages
                 var invalidFields = [];
