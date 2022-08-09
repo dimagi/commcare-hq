@@ -10,8 +10,7 @@ class TestUpdateTableauVisualization(BaseLinkedDomainTest):
         server_type='server',
         server_name='server name',
         validate_hostname='host name',
-        target_site='target site',
-        domain_username='username')
+        target_site='target site')
         self.server.save()
         self.tableau_visualization_setup_1 = TableauVisualization(domain=self.domain,
         title="title", server=self.server, view_url='url_1')
