@@ -17,57 +17,63 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 @es_test
 class TestPruneOldDatasources(TestCase):
 
-    def test_empty_tables_are_not_dropped(self):
+    def test_non_orphaned_tables_are_not_dropped(self):
         config = self._create_data_source_config(self.active_domain.name)
+        config.save()
+        self.addCleanup(config.delete)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
-        call_command('prune_old_datasources')
+        call_command('prune_old_datasources', engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
 
-    def test_empty_tables_are_dropped(self):
+    def test_orphaned_table_of_active_domain_is_not_dropped(self):
         config = self._create_data_source_config(self.active_domain.name)
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        config.delete()
 
-        call_command('prune_old_datasources', '--drop-empty-tables')
+        call_command('prune_old_datasources', engine_id='ucr')
+
+        self.assertTrue(adapter.table_exists)
+
+    def test_orphaned_table_of_active_domain_is_dropped_with_force_delete(self):
+        config = self._create_data_source_config(self.active_domain.name)
+        config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        config.delete()
+
+        call_command('prune_old_datasources', engine_id='ucr', force_delete=True)
 
         self.assertFalse(adapter.table_exists)
 
-    def test_tables_for_deleted_domains_are_not_dropped(self):
+    def test_orphaned_table_of_deleted_domain_is_dropped(self):
         config = self._create_data_source_config(self.deleted_domain.name)
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        config.delete()
 
-        call_command('prune_old_datasources')
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_tables_for_deleted_domains_are_dropped(self):
-        config = self._create_data_source_config(self.deleted_domain.name)
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources', '--drop-deleted-tables')
+        call_command('prune_old_datasources', engine_id='ucr')
 
         self.assertFalse(adapter.table_exists)
 
-    def test_tables_for_active_domains_are_not_dropped(self):
+    def test_no_changes_if_dry_run_enabled(self):
         config = self._create_data_source_config(self.active_domain.name)
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        config.delete()
 
-        call_command('prune_old_datasources', '--drop-deleted-tables')
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_tables_for_missing_domains_are_not_dropped(self):
-        config = self._create_data_source_config('unknown-domain')
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-
-        call_command('prune_old_datasources', '--drop-deleted-tables')
+        call_command('prune_old_datasources', engine_id='ucr', dry_run=True)
 
         self.assertTrue(adapter.table_exists)
 
