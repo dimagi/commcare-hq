@@ -32,8 +32,9 @@ class JsonIndex(jsonobject.JsonObject):
         if ids_specified > 1:
             raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
         if ids_specified == 1:
-            self.properties()['case_type'].required = True
-            self.properties()['relationship'].required = True
+            for prop in ['case_type', 'relationship']:
+                if not self[prop]:
+                    raise BadValueError(f"Property '{prop}' is required when creating or updating case indices")
         super().validate(*args, **kwargs)
 
     def get_id(self, case_db):

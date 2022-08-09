@@ -344,7 +344,7 @@ class TestCaseAPI(TestCase):
                 },
             },
         }).json()
-        self.assertEqual(res['error'], "Property relationship is required.")
+        self.assertEqual(res['error'], "Property relationship is required when creating or updating case indices")
 
     def test_delete_index(self):
         # aka remove child case
