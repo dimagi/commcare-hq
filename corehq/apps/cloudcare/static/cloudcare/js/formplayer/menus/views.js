@@ -465,6 +465,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         continueAction: function () {
+            var self = this;
+            // clear session storage at the selectedValuesKey when leaving the screen
+            var selectedValuesForScreen = JSON.parse(sessionStorage.selectedValues);
+            selectedValuesForScreen[self.selectedValuesKey] = undefined;
+            sessionStorage.selectedValues = JSON.stringify(selectedValuesForScreen);
+
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         },
 
