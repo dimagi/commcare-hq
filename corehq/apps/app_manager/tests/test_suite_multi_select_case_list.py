@@ -44,7 +44,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite', 'multi_select_case_list')
 
     def setUp(self):
-        self.factory = AppFactory(domain="multiple-referrals")
+        self.factory = AppFactory(domain="multiple-referrals", build_version='2.53.0')
         self.app_id = uuid4().hex
         self.factory.app._id = self.app_id
         self.module, self.form = self.factory.new_basic_module('basic', 'person')
