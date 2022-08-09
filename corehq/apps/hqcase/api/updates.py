@@ -88,9 +88,9 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
         if index.case_id:
             return index.case_id
         if index.temporary_id:
-            return case_db.lookup_id(index.temporary_id, 'temporary_id')
+            return case_db.get_by_temporary_id(index.temporary_id)
         if index.external_id:
-            return case_db.lookup_id(index.external_id, 'external_id')
+            return case_db.get_by_external_id(index.external_id)
         raise Exception("Validation should've caught this situation")
 
 
@@ -129,7 +129,7 @@ class JsonCaseUpdate(BaseJsonCaseChange):
                 return self.case_id
             raise UserError(f"No case found with ID '{self.case_id}'")
 
-        return case_db.lookup_id(self.external_id, 'external_id')
+        return case_db.get_by_external_id(self.external_id)
 
 
 def handle_case_update(domain, data, user, device_id, is_creation):
@@ -193,27 +193,43 @@ class CaseIDLookerUpper:
         case_ids = filter(None, (getattr(update, 'case_id', None) for update in self.updates))
         return set(CommCareCase.objects.get_case_ids_that_exist(self.domain, case_ids))
 
+    def get_by_temporary_id(self, key):
+        try:
+            return self._by_temporary_id[key]
+        except KeyError:
+            raise UserError(f"Could not find a case with temporary_id '{key}'")
+
     @cached_property
-    def ids(self):
-        case_ids = {}
-        case_ids['temporary_id'] = {
+    def _by_temporary_id(self):
+        return {
             update.temporary_id: update.case_id
             for update in self.updates
             if getattr(update, 'temporary_id', None) and update.case_id
         }
-        case_ids['external_id'] = {
+
+    def get_by_external_id(self, key):
+        try:
+            return self._by_external_id[key]
+        except KeyError:
+            raise UserError(f"Could not find a case with external_id '{key}'")
+
+    @cached_property
+    def _by_external_id(self):
+        ids_in_request = {
             update.external_id: update.case_id
             for update in self.updates if update.external_id and update.case_id
         }
 
-        external_ids_to_find = {
-            update.external_id for update in self.updates if not update._is_case_creation and not update.case_id
+        ids_to_find = {
+            update.external_id for update in self.updates
+            if not update._is_case_creation and not update.case_id
         } | {
             index.external_id for update in self.updates for index in update.indices.values()
         }
-        external_ids_to_find -= set(case_ids['external_id'])
-        case_ids['external_id'].update(self._get_case_ids_by_external_id(external_ids_to_find))
-        return case_ids
+        ids_to_find -= set(ids_in_request)
+        ids_looked_up = self._get_case_ids_by_external_id(ids_to_find)
+
+        return {**ids_in_request, **ids_looked_up}
 
     def _get_case_ids_by_external_id(self, external_ids):
         external_ids = list(filter(None, external_ids))
@@ -229,12 +245,6 @@ class CaseIDLookerUpper:
                 case_ids_by_external_id[external_id] = case_id
 
         return case_ids_by_external_id
-
-    def lookup_id(self, key, id_prop):
-        try:
-            return self.ids[id_prop][key]
-        except KeyError:
-            raise UserError(f"Could not find a case with {id_prop} '{key}'")
 
 
 def _submit_case_blocks(case_blocks, domain, user, device_id):
