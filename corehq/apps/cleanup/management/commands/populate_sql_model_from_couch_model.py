@@ -200,6 +200,12 @@ Run the following commands to run the migration and get up to date:
             help="Only migrate documents in the specified domains",
         )
         parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=100,
+            help="Number of docs to fetch at once (default: 100).",
+        )
+        parser.add_argument(
             '--log-path',
             default="-" if settings.UNIT_TESTING else None,
             help="File path to write logs to. If not provided a default will be used."
@@ -210,7 +216,7 @@ Run the following commands to run the migration and get up to date:
             help="Append to log file if it already exists."
         )
 
-    def handle(self, **options):
+    def handle(self, chunk_size=100, **options):
         log_path = options.get("log_path")
         append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
@@ -234,11 +240,11 @@ Run the following commands to run the migration and get up to date:
         if domains:
             doc_count = self._get_couch_doc_count_for_domains(domains)
             sql_doc_count = self._get_sql_doc_count_for_domains(domains)
-            docs = self._iter_couch_docs_for_domains(domains)
+            docs = self._iter_couch_docs_for_domains(domains, chunk_size)
         else:
             doc_count = self._get_couch_doc_count_for_type()
             sql_doc_count = self.sql_class().objects.count()
-            docs = self._get_all_couch_docs_for_model()
+            docs = self._get_all_couch_docs_for_model(chunk_size)
 
         print(f"\n\nDetailed log output file: {log_path}")
         print("Found {} {} docs and {} {} models".format(
@@ -290,17 +296,18 @@ Run the following commands to run the migration and get up to date:
     def _get_sql_doc_count_for_domains(self, domains):
         return self.sql_class().objects.filter(domain__in=domains).count()
 
-    def _iter_couch_docs_for_domains(self, domains):
+    def _iter_couch_docs_for_domains(self, domains, chunk_size):
         for domain in domains:
             print(f"Processing data for domain: {domain}")
             doc_id_iter = iterate_doc_ids_in_domain_by_type(
                 domain, self.couch_doc_type(), database=self.couch_db()
             )
-            for doc in iter_docs(self.couch_db(), doc_id_iter):
+            for doc in iter_docs(self.couch_db(), doc_id_iter, chunk_size):
                 yield doc
 
-    def _get_all_couch_docs_for_model(self):
-        return get_all_docs_with_doc_types(self.couch_db(), [self.couch_doc_type()])
+    def _get_all_couch_docs_for_model(self, chunk_size):
+        return get_all_docs_with_doc_types(
+            self.couch_db(), [self.couch_doc_type()], chunk_size)
 
     def _get_couch_doc_count_for_type(self):
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())

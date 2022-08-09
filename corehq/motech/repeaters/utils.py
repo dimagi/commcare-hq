@@ -125,7 +125,8 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
         return sanitized_docs
 
     @memoized
-    def _get_all_couch_docs_for_model(self):
+    def _get_all_couch_docs_for_model(self, chunk_size=None):
+        # NOTE chunk_size is ignored
         repeater_docs = [
             repeater for repeater in get_all_repeater_docs()
             if repeater['doc_type'] == self.couch_doc_type()
