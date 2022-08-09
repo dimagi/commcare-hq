@@ -11,7 +11,6 @@ hqDefine("reports/js/tableau", function () {
                 validate_hostname: initialPageData.get("validate_hostname"),
                 server_name: initialPageData.get("server_address"),
                 target_site: initialPageData.get("target_site"),
-                domain_username: initialPageData.get("domain_username"),
             },
             dataType: 'json',
             success: function (data) {
@@ -19,6 +18,7 @@ hqDefine("reports/js/tableau", function () {
                 if (data.success) {
                     self.initViz(data.ticket);
                 } else {
+                    $('#errorMessage').removeClass("hide");
                     document.getElementById('errorMessage').innerHTML = '<b>' + data.message + '</b>';
                 }
             },
