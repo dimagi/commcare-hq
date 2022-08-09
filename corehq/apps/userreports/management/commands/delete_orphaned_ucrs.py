@@ -21,7 +21,7 @@ from corehq.sql_db.connections import connection_manager
 class Command(BaseCommand):
     """
     An orphaned UCR table is one where the related datasource no longer exists
-    This command is designed to cleanup orphaned tables
+    This command is designed to delete orphaned tables
     """
     help = "Delete orphaned UCR tables"
 

@@ -15,7 +15,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 @es_test
-class TestPruneOldDatasources(TestCase):
+class DeleteOrphanedUCRsTests(TestCase):
 
     def test_non_orphaned_tables_are_not_dropped(self):
         config = self._create_data_source_config(self.active_domain.name)
@@ -25,7 +25,7 @@ class TestPruneOldDatasources(TestCase):
         adapter.build_table()
         self.addCleanup(adapter.drop_table)
 
-        call_command('prune_old_datasources', engine_id='ucr')
+        call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
 
@@ -37,7 +37,7 @@ class TestPruneOldDatasources(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('prune_old_datasources', engine_id='ucr')
+        call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
 
@@ -49,7 +49,7 @@ class TestPruneOldDatasources(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('prune_old_datasources', engine_id='ucr', force_delete=True)
+        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True)
 
         self.assertFalse(adapter.table_exists)
 
@@ -61,7 +61,7 @@ class TestPruneOldDatasources(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('prune_old_datasources', engine_id='ucr')
+        call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertFalse(adapter.table_exists)
 
@@ -73,7 +73,7 @@ class TestPruneOldDatasources(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('prune_old_datasources', engine_id='ucr', dry_run=True)
+        call_command('delete_orphaned_ucrs', engine_id='ucr', dry_run=True)
 
         self.assertTrue(adapter.table_exists)
 
