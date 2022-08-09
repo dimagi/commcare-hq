@@ -162,7 +162,7 @@ class AdminRestoreView(TemplateView):
         full_username = request.GET.get('as', '')
 
         if not full_username or '@' not in full_username:
-            msg = 'Please specify a user using ?as=user@domain\nOr specify a web-user using ?as=email&domain=domain'
+            msg = 'Please specify a user using ?as=user@domain\nOr a web-user using ?as=email&domain=domain'
             return HttpResponseBadRequest(msg)
 
         self.user = CouchUser.get_by_username(full_username)
