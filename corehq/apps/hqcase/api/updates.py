@@ -170,11 +170,9 @@ def _get_bulk_updates(domain, all_data, user):
     errors = []
     for i, data in enumerate(all_data, start=1):
         try:
-            is_creation = data.pop('create')
-        except KeyError:
-            raise UserError("A 'create' flag is required for each update.")
-
-        try:
+            is_creation = data.pop('create', None)
+            if is_creation is None:
+                raise UserError("A 'create' flag is required for each update.")
             updates.append(_get_individual_update(domain, data, user, is_creation))
         except UserError as e:
             errors.append(f'Error in row {i}: {e}')

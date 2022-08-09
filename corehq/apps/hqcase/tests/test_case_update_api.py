@@ -387,7 +387,8 @@ class TestCaseAPI(TestCase):
             'owner_id': 'methuen_home',
         }])
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "A 'create' flag is required for each update."})
+        self.assertIn("A 'create' flag is required for each update.",
+                      res.json()['error'])
 
     def test_attempt_create_with_case_id(self):
         res = self._bulk_update_cases([{
