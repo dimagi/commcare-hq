@@ -78,7 +78,6 @@ branches:
     # - jc/USH-2151  # Jing/Steph Aug 2
     # - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
-    - gh/truncate-authtoken_token-table # Graham Aug 5
     - do/web-user-restore # Dominic Aug 8
 #     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
 submodules: { }
