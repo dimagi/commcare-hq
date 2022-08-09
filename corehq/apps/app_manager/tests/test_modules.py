@@ -19,6 +19,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     ReportModule,
 )
+from corehq.apps.app_manager.views.modules import _update_search_properties
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
@@ -31,6 +32,19 @@ class ModuleTests(SimpleTestCase):
         self.module = self.app.add_module(Module.new_module('Untitled Module', None))
         self.module.case_type = 'another_case_type'
         self.form = self.module.new_form("Untitled Form", None)
+
+    def test_update_search_properties(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+            CaseSearchProperty(name='age', label={'fr': 'Âge'}),
+        ]
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name'},
+            {'name': 'dob', 'label': 'Date of birth'}
+        ], "en"))
+        self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
+        self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
 
 
 class AdvancedModuleTests(SimpleTestCase):

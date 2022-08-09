@@ -1020,21 +1020,21 @@ def _update_search_properties(module, search_properties, lang='en'):
             'label': {**_current_label, lang: prop['label']},
             'hint': {**_current_hint, lang: prop['hint']},
         }
-        if prop['default_value']:
+        if prop.get('default_value'):
             ret['default_value'] = prop['default_value']
-        if prop['hidden']:
+        if prop.get('hidden'):
             ret['hidden'] = prop['hidden']
-        if prop['allow_blank_value']:
+        if prop.get('allow_blank_value'):
             ret['allow_blank_value'] = prop['allow_blank_value']
-        if prop['exclude']:
+        if prop.get('exclude'):
             ret['exclude'] = prop['exclude']
-        if prop['required_test']:
+        if prop.get('required_test'):
             _current_text = current.required.text if current and current.required else {}
             ret['required'] = {
                 'test': prop['required_test'],
                 'text': {**_current_text, lang: prop['required_text']}
             }
-        if prop['validation_test']:
+        if prop.get('validation_test'):
             _current_text = current.validations[0].text if current and current.validations else {}
             ret['validations'] = [{
                 'test': prop['validation_test'],
