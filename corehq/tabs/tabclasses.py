@@ -579,6 +579,17 @@ class ProjectDataTab(UITab):
 
     @property
     def sidebar_items(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         items = []
 
         export_data_views = []
@@ -2283,9 +2294,10 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             self.divider,
-            dropdown_dict(_("Django Admin"), url="/admin"),
-            dropdown_dict(_("View All"), url=self.url),
         ])
+        if self.couch_user.is_staff:
+            submenu_context.append(dropdown_dict(_("Django Admin"), url="/admin"))
+        submenu_context.append(dropdown_dict(_("View All"), url=self.url))
         return submenu_context
 
     @property
@@ -2337,6 +2349,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Get users for offboarding'),
+                 'url': reverse('get_offboarding_list'),
+                 'icon': 'fa fa-sign-out'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},

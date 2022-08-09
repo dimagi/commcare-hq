@@ -841,7 +841,7 @@ class ChangeSubscriptionForm(forms.Form):
     subscription_change_note = forms.CharField(
         label=gettext_lazy("Note"),
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     new_plan_edition = forms.ChoiceField(
         label=gettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
@@ -925,7 +925,7 @@ class BulkUpgradeToLatestVersionForm(forms.Form):
     upgrade_note = forms.CharField(
         label="Note",
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
 
     def __init__(self, old_plan_version, web_user, *args, **kwargs):
@@ -1322,7 +1322,7 @@ class SoftwarePlanVersionForm(forms.Form):
     new_role_description = forms.CharField(
         required=False,
         label="New Role Description",
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     upgrade_subscriptions = forms.BooleanField(
         label="Automatically upgrade all subscriptions on the "
@@ -1880,7 +1880,7 @@ class EnterprisePlanContactForm(forms.Form):
     message = forms.CharField(
         required=False,
         label=gettext_noop("Message"),
-        widget=forms.Textarea
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     def __init__(self, domain, web_user, data=None, *args, **kwargs):
@@ -1944,7 +1944,7 @@ class AnnualPlanContactForm(forms.Form):
     message = forms.CharField(
         required=False,
         label=gettext_noop("Message"),
-        widget=forms.Textarea
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     def __init__(self, domain, web_user, on_annual_plan, data=None, *args, **kwargs):
@@ -2347,7 +2347,7 @@ class AdjustBalanceForm(forms.Form):
 
     note = forms.CharField(
         required=True,
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
 
     invoice_id = forms.CharField(

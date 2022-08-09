@@ -313,7 +313,7 @@
   <span class="help-block type sr-only" data-bind="
         text: helpText()
     "></span>
-  <textarea class="textfield form-control" data-bind="
+  <textarea class="textfield form-control vertical-resize" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
@@ -332,8 +332,10 @@
   <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
-        id: entryId,
-        attr: {'aria-required': $parent.required() ? 'true' : 'false'},
+        attr: {
+          id: entryId,
+          'aria-required': $parent.required() ? 'true' : 'false',
+        },
     "/>
   <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>

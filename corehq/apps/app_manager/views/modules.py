@@ -223,8 +223,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'exclude_from_search_enabled': app.enable_exclude_from_search,
-            'required_search_fields_enabled': app.enable_required_search_fields,
+            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
@@ -427,7 +426,7 @@ def get_all_case_modules(app, module):
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.get_modules() if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
@@ -1010,30 +1009,37 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
-    current = {p.name: p.label for p in module.search_config.properties}
+    props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
-        if prop['name'] in current:
-            label = current[prop['name']].copy()
-            label.update({lang: prop['label']})
-        else:
-            label = {lang: prop['label']}
-        hint = {lang: prop['hint']}
+        current = props_by_name.get(prop['name'])
+
+        _current_label = current.label if current else {}
+        _current_hint = current.hint if current else {}
         ret = {
             'name': prop['name'],
-            'label': label,
+            'label': {**_current_label, lang: prop['label']},
+            'hint': {**_current_hint, lang: prop['hint']},
         }
         if prop['default_value']:
             ret['default_value'] = prop['default_value']
-        if prop['hint']:
-            ret['hint'] = hint
         if prop['hidden']:
             ret['hidden'] = prop['hidden']
         if prop['allow_blank_value']:
             ret['allow_blank_value'] = prop['allow_blank_value']
         if prop['exclude']:
             ret['exclude'] = prop['exclude']
-        if prop['required']:
-            ret['required'] = prop['required']
+        if prop['required_test']:
+            _current_text = current.required.text if current and current.required else {}
+            ret['required'] = {
+                'test': prop['required_test'],
+                'text': {**_current_text, lang: prop['required_text']}
+            }
+        if prop['validation_test']:
+            _current_text = current.validations[0].text if current and current.validations else {}
+            ret['validations'] = [{
+                'test': prop['validation_test'],
+                'text': {**_current_text, lang: prop['validation_text']},
+            }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1074,6 +1080,17 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
@@ -1118,6 +1135,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
+        detail.short.multi_select = multi_select
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -1144,8 +1162,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
-    if multi_select is not None:
-        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:

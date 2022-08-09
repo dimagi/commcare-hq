@@ -7,12 +7,12 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
     'hqwebapp/js/components.ko',    // select toggle widget
 ], function ($, _, ko, initialPageData, baseAce) {
 
-    var caseRuleCriteria = function (initial, constants) {
+    var CaseRuleCriteria = function (initial, constants, caseTypeObservable) {
         'use strict';
         var self = {};
 
         self.constants = constants;
-        self.caseType = ko.observable(initial.case_type);
+        self.caseType = caseTypeObservable || ko.observable(initial.case_type);
         self.criteriaOperator = ko.observable(initial.criteria_operator);
         self.criteria = ko.observableArray();
 
@@ -105,6 +105,19 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             return result;
         });
 
+        self.locationFilterDefinition = ko.computed(function () {
+            var result = [];
+            $.each(self.criteria(), function (index, value) {
+                if (value.koTemplateId === 'locations-filter') {
+                    result.push({
+                        location_id: value.location_id() || '',
+                        include_child_locations: value.include_child_locations() || '',
+                    });
+                }
+            });
+            return JSON.stringify(result);
+        });
+
         self.getKoTemplateId = function (obj) {
             return obj.koTemplateId;
         };
@@ -147,6 +160,10 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             } else if (caseFilterId === 'parent-closed-filter') {
                 if (!self.filterAlreadyAdded(caseFilterId)) {
                     self.criteria.push(closedParentDefinition(caseFilterId));
+                }
+            } else if (caseFilterId === 'locations-filter') {
+                if (!self.filterAlreadyAdded('locations-filter')) {
+                    self.criteria.push(locationDefinition(caseFilterId));
                 }
             } else if (caseFilterId === 'custom-filter') {
                 self.criteria.push(customMatchDefinition(caseFilterId));
@@ -205,6 +222,14 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
                 self.criteria.push(obj);
             });
 
+            if (initial.location_filter_definition) {
+                obj = locationDefinition('locations-filter');
+                obj.name(initial.location_filter_definition.name);
+                obj.location_id(initial.location_filter_definition.location_id);
+                obj.include_child_locations(initial.location_filter_definition.include_child_locations);
+                self.criteria.push(obj);
+            }
+
             $.each(initial.ucr_filter_definitions, function (index, value) {
                 obj = ucrFilterDefinition('ucr-filter');
                 obj.configured_filter(value.configured_filter);
@@ -231,83 +256,81 @@ hqDefine("data_interfaces/js/case_rule_criteria", [
             $("#schedule-nav").removeClass("hidden");
             $('#schedule-nav').find('a').trigger('click');
         };
+
+        var notModifiedSinceDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model does not match a Django model; the `days` are stored as the `server_modified_boundary` on the rule
+            self.days = ko.observable();
+            return self;
+        };
+
+        var matchPropertyDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+            self.plus_minus = ko.observable();
+
+            // This model matches the Django model with the same name
+            self.property_name = ko.observable();
+            self.property_value = ko.observable();
+            self.match_type = ko.observable();
+
+            self.showPropertyValueInput = ko.computed(function () {
+                return (
+                    self.match_type() !== constants.MATCH_HAS_VALUE &&
+                    self.match_type() !== constants.MATCH_HAS_NO_VALUE
+                );
+            });
+            return self;
+        };
+
+        var customMatchDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            self.name = ko.observable();
+            return self;
+        };
+
+        var closedParentDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            return self;
+        };
+
+        var locationDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+
+            // This model matches the Django model with the same name
+            self.location_id = ko.observable();
+            self.include_child_locations = ko.observable();
+            self.name = ko.observable();
+            return self;
+        };
+
+        var ucrFilterDefinition = function (koTemplateId) {
+            'use strict';
+            var self = {};
+            self.koTemplateId = koTemplateId;
+            self.configured_filter = ko.observable();
+            // This model matches the Django model with the same name
+            return self;
+        };
+
+        self.loadInitial();
+        self.setScheduleTabVisibility();
         return self;
     };
 
-    var notModifiedSinceDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model does not match a Django model; the `days` are stored as the `server_modified_boundary` on the rule
-        self.days = ko.observable();
-        return self;
-    };
-
-    var matchPropertyDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-        self.plus_minus = ko.observable();
-
-        // This model matches the Django model with the same name
-        self.property_name = ko.observable();
-        self.property_value = ko.observable();
-        self.match_type = ko.observable();
-
-        self.showPropertyValueInput = ko.computed(function () {
-            return (
-                self.match_type() !== criteriaModel.constants.MATCH_HAS_VALUE &&
-                self.match_type() !== criteriaModel.constants.MATCH_HAS_NO_VALUE
-            );
-        });
-        return self;
-    };
-
-    var customMatchDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model matches the Django model with the same name
-        self.name = ko.observable();
-        return self;
-    };
-
-    var closedParentDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        // This model matches the Django model with the same name
-        return self;
-    };
-
-    var ucrFilterDefinition = function (koTemplateId) {
-        'use strict';
-        var self = {};
-        self.koTemplateId = koTemplateId;
-
-        self.configured_filter = ko.observable();
-        // This model matches the Django model with the same name
-        return self;
-    };
-
-    var criteriaModel = null;
-
-    $(function () {
-        criteriaModel = caseRuleCriteria(
-            initialPageData.get('criteria_initial'),
-            initialPageData.get('criteria_constants')
-        );
-        // setup tab
-        criteriaModel.setScheduleTabVisibility();
-        $('#rule-criteria-panel').koApplyBindings(criteriaModel);
-        criteriaModel.loadInitial();
-    });
-
-    return {
-        get_criteria_model: function () {return criteriaModel;},
-    };
-
+    return CaseRuleCriteria;
 });

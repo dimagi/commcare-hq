@@ -73,7 +73,7 @@ def create_tombstone(request):
 class TombstoneManagementForm(forms.Form):
     csv_domain_list = forms.CharField(
         label="Comma separated domains",
-        widget=forms.Textarea()
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     @staticmethod

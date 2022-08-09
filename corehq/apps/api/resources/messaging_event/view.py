@@ -6,7 +6,7 @@ from tastypie.exceptions import BadRequest
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.api.decorators import allow_cors
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.api.resources.messaging_event.filters import filter_query
 from corehq.apps.api.resources.messaging_event.pagination import get_paged_data
 from corehq.apps.api.resources.messaging_event.serializers import serialize_event
@@ -21,6 +21,7 @@ from corehq.apps.sms.models import MessagingSubEvent, SMS, Email
 @api_auth
 @require_can_edit_data
 @requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
 def messaging_events(request, domain, event_id=None):
     """Despite it's name this API is backed by the MessagingSubEvent model
     which has a more direct relationship with who the messages are being sent to.

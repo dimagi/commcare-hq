@@ -791,6 +791,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         feature_flag = request.GET.get("feature_flag")
         if feature_flag and feature_flag not in toggles.all_toggle_slugs():
             raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
+        can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
         username = request.user.username
         results = []
@@ -799,6 +800,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
                 continue
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
+            if can_view_reports and not couch_user.can_view_reports(domain):
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,

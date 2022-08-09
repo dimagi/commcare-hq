@@ -1,3 +1,23 @@
+"""
+MenuContributor
+---------------
+
+Menus *approximately* correspond to HQ modules.
+
+Menus *almost* correspond to command lists, the screens in CommCare that ask the user to select a form or sub-menu.
+However, if the suite contains multiple ``<menu>`` elements with the same ``id``, they will be concatenated and
+displayed as a single screen.
+
+Menu ids will typically map to the module's position in the application: the first menu is ``m0``, second is
+``m1``, etc.
+
+Highlights of menu configuration:
+
+* Display conditions, which become ``relevant`` attributes
+* Display-only forms, which becomes the ``put_in_root`` attribute
+* Grid style, to determine whether the  command list should be displayed as a flat list or as a grid that
+  emphasizes the menu icons
+"""
 from memoized import memoized
 
 from corehq.apps.app_manager import id_strings
@@ -62,9 +82,11 @@ class MenuContributor(SuiteContributorByModule):
                 if len(menu.commands):
                     menus.append(menu)
 
-        if self.app.grid_display_for_all_modules() or \
-                self.app.grid_display_for_some_modules() and module.grid_display_style():
+        if self.app.grid_display_for_all_modules():
             self._give_non_root_menus_grid_style(menus)
+        elif self.app.grid_display_for_some_modules():
+            if hasattr(module, 'grid_display_style') and module.grid_display_style():
+                self._give_non_root_menus_grid_style(menus)
         if self.app.use_grid_menus:
             self._give_root_menu_grid_style(menus)
 
