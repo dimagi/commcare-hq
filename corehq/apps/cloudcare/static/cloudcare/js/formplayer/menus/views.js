@@ -338,8 +338,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 this.selectedCaseIds = []
             };
-            this.reconcileSelectedValues();
             this.isMultiSelect = options.isMultiSelect;
+            if (this.isMultiSelect) {
+                this.reconcileSelectedValues();
+            }
         },
 
         ui: {
