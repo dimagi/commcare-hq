@@ -46,6 +46,16 @@ class ModuleTests(SimpleTestCase):
         self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
         self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
 
+    def test_update_search_properties_blank(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "fr"))
+        self.assertEqual(props[0]['label'], {})
+
 
 class AdvancedModuleTests(SimpleTestCase):
 

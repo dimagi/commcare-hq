@@ -1009,16 +1009,27 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
+
+    # Replace translation for current language in a translations dict
+    def _update_translation(old_obj, new_data, attr):
+        values = getattr(old_obj, attr) if old_obj else {}
+        try:
+            values.pop(lang)
+        except KeyError:
+            pass
+        new_value = new_data.get(attr)
+        if new_value:
+            values[lang] = new_value
+        return values
+
     props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
         current = props_by_name.get(prop['name'])
 
-        _current_label = current.label if current else {}
-        _current_hint = current.hint if current else {}
         ret = {
             'name': prop['name'],
-            'label': {**_current_label, lang: prop['label']},
-            'hint': {**_current_hint, lang: prop['hint']},
+            'label': _update_translation(current, prop, 'label'),
+            'hint': _update_translation(current, prop, 'hint'),
         }
         if prop.get('default_value'):
             ret['default_value'] = prop['default_value']
