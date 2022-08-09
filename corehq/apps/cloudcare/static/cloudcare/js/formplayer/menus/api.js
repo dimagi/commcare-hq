@@ -152,7 +152,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
         if (sessionStorage.selectedValues !== undefined) {
             const currentSelectedValues = JSON.parse(sessionStorage.selectedValues)['current'];
-            options.selectedValues = currentSelectedValues !== undefined ? currentSelectedValues.split(',') : undefined;
+            options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
