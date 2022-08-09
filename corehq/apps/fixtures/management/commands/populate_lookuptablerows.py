@@ -60,27 +60,14 @@ class Command(PopulateSQLCommand):
         ]
         return diffs
 
-    def update_or_create_sql_object(self, doc):
-        if not self.data_type_exists(doc["data_type_id"]):
-            return None, False
-        return self.sql_class().objects.update_or_create(
-            id=UUID(doc['_id']),
-            defaults={
-                "domain": doc["domain"],
-                "table_id": UUID(doc["data_type_id"]),
-                "fields": couch_to_sql_fields(doc["fields"]),
-                "item_attributes": doc.get("item_attributes") or {},
-                "sort_key": doc.get("sort_key") or 0,
-            },
-        )
-
-    def data_type_exists(self, data_type_id):
+    def should_ignore(self, doc):
+        data_type_id = doc["data_type_id"]
         try:
-            return self.data_type_existence[data_type_id]
+            exists = self.data_type_existence[data_type_id]
         except KeyError:
             exists = self.couch_db().doc_exist(data_type_id)
             self.data_type_existence[data_type_id] = exists
-            return exists
+        return not exists
 
 
 def couch_to_sql_fields(data):

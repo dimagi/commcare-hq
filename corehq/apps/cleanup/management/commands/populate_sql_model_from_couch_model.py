@@ -3,6 +3,7 @@ import os
 import sys
 import traceback
 from contextlib import nullcontext
+from functools import partial
 
 from django.conf import settings
 from django.core.management import call_command
@@ -18,6 +19,7 @@ from corehq.dbaccessors.couchapps.all_docs import (
 from corehq.util.couchdb_management import couch_config
 from corehq.util.django_migrations import skip_on_fresh_install
 from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.migration import disable_sync_to_couch
 
@@ -44,14 +46,26 @@ class PopulateSQLCommand(BaseCommand):
     def sql_class(self):
         raise NotImplementedError()
 
+    '''DEPRECATED the presence of this method will revert to migrating
+    documents one at a time rather than in bulk. NOTE this method is
+    required if the Couch model's `_migration_sync_to_sql` method does
+    not accept a `save=False` keyword argument.
+
     def update_or_create_sql_object(self, doc):
         """
         This should find and update the sql object that corresponds to the given doc,
         or create it if it doesn't yet exist. This method is responsible for saving
-        the sql object. May return ``(None, False)`` to cause the document to be
-        ignored by the migration.
+        the sql object.
         """
         raise NotImplementedError()
+    '''
+
+    def _should_migrate_in_bulk(self):
+        return not hasattr(self, "update_or_create_sql_object")
+
+    def should_ignore(self, doc):
+        """Return true if the document should not be synced to SQL"""
+        return False
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
@@ -195,6 +209,13 @@ Run the following commands to run the migration and get up to date:
             """,
         )
         parser.add_argument(
+            '--fixup-diffs',
+            action='store_true',
+            dest='fixup_diffs',
+            default=False,
+            help="Update rows in SQL that do not match their corresponding Couch doc.",
+        )
+        parser.add_argument(
             '--domains',
             nargs='+',
             help="Only migrate documents in the specified domains",
@@ -216,7 +237,7 @@ Run the following commands to run the migration and get up to date:
             help="Append to log file if it already exists."
         )
 
-    def handle(self, chunk_size=100, **options):
+    def handle(self, chunk_size=100, fixup_diffs=False, **options):
         log_path = options.get("log_path")
         append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
@@ -254,13 +275,29 @@ Run the following commands to run the migration and get up to date:
             self.sql_class().__name__,
         ))
 
+        if self._should_migrate_in_bulk():
+            iter_chunks = partial(chunked, n=chunk_size, collection=list)
+            migrate = partial(self._migrate_docs, fixup_diffs=fixup_diffs)
+            verify = self._verify_docs
+        else:
+            def iter_chunks(docs):
+                return docs  # not chunked, iterate one doc at a time
+            migrate = self._migrate_doc
+            verify = self._verify_doc
+            if fixup_diffs:
+                print(
+                    "WARNING --fixup-diffs has no effect on legacy "
+                    "migrations that implement update_or_create_sql_object. "
+                    "Differences are always overwritten by legacy migrations."
+                )
+
         with self.open_log(log_path, append_log) as logfile:
-            for doc in with_progress_bar(docs, length=doc_count, oneline=False):
+            for docs in iter_chunks(with_progress_bar(docs, length=doc_count, oneline=False)):
                 doc_index += 1
                 if not verify_only:
-                    self._migrate_doc(doc, logfile)
+                    migrate(docs, logfile)
                 if not skip_verify:
-                    self._verify_doc(doc, logfile, exit=not verify_only)
+                    verify(docs, logfile, exit=not verify_only)
                 if doc_index % 1000 == 0:
                     print(f"Diff count: {self.diff_count}")
 
@@ -268,23 +305,85 @@ Run the following commands to run the migration and get up to date:
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
 
+    def _migrate_docs(self, docs, logfile, fixup_diffs):
+        def update_log(action, doc_ids):
+            for doc_id in doc_ids:
+                logfile.write(f"{action} model for {couch_doc_type} with id {doc_id}\n")
+        couch_doc_type = self.couch_doc_type()
+        sql_class = self.sql_class()
+        couch_class = sql_class._migration_get_couch_model_class()
+        couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
+        couch_ids = [doc["_id"] for doc in docs]
+        objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+        if fixup_diffs:
+            objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
+        else:
+            objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
+        creates = []
+        updates = []
+        ignored = []
+        for doc in docs:
+            if self.should_ignore(doc):
+                ignored.append(doc)
+                continue
+            if doc["_id"] in objs_by_couch_id:
+                if fixup_diffs:
+                    obj = objs_by_couch_id[doc["_id"]]
+                    if self.get_filtered_diffs(doc, obj):
+                        updates.append(obj)
+                    else:
+                        continue  # already migrated
+                else:
+                    continue  # already migrated
+            else:
+                obj = sql_class()
+                obj._migration_couch_id = doc["_id"]
+                creates.append(obj)
+            couch_class.wrap(doc)._migration_sync_to_sql(obj, save=False)
+        if creates or updates:
+            with transaction.atomic(), disable_sync_to_couch(sql_class):
+                sql_class.objects.bulk_create(creates)
+                if updates:
+                    for obj in updates:
+                        obj.save()
+        update_log("Created", [obj._migration_couch_id for obj in creates])
+        update_log("Updated", [obj._migration_couch_id for obj in updates])
+        update_log("Ignored", [doc["_id"] for doc in ignored])
+
+    def _verify_docs(self, docs, logfile, exit=True):
+        sql_class = self.sql_class()
+        couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
+        couch_ids = [doc["_id"] for doc in docs]
+        objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
+        objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
+        for doc in docs:
+            obj = objs_by_couch_id.get(doc["_id"])
+            if obj is not None:
+                self._do_diff(doc, obj, logfile, exit)
+
+    def _do_diff(self, doc, obj, logfile, exit):
+        diff = self.get_diff_as_string(doc, obj)
+        if diff:
+            logfile.write(f"Doc {doc['_id']!r} has differences:\n{diff}\n")
+            self.diff_count += 1
+            if exit:
+                raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
+
     def _verify_doc(self, doc, logfile, exit=True):
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            diff = self.get_diff_as_string(doc, obj)
-            if diff:
-                logfile.write(f"Doc {getattr(obj, couch_id_name)} has differences:\n{diff}\n")
-                self.diff_count += 1
-                if exit:
-                    raise CommandError(f"Doc verification failed for '{getattr(obj, couch_id_name)}'. Exiting.")
+            self._do_diff(doc, obj, logfile, exit)
         except self.sql_class().DoesNotExist:
             pass    # ignore, the difference in total object count has already been displayed
 
     def _migrate_doc(self, doc, logfile):
+        if self.should_ignore(doc):
+            logfile.write(f"Ignored model for {self.couch_doc_type()} with id {doc['_id']}\n")
+            return
         with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
-            action = "Ignored" if model is None else ("Creating" if created else "Updated")
+            action = "Creating" if created else "Updated"
             logfile.write(f"{action} model for {self.couch_doc_type()} with id {doc['_id']}\n")
 
     def _get_couch_doc_count_for_domains(self, domains):

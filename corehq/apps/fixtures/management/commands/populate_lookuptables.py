@@ -46,19 +46,6 @@ class Command(PopulateSQLCommand):
         if couch.get(field) or getattr(sql, field):
             return cls.diff_value(field, couch.get(field), getattr(sql, field))
 
-    def update_or_create_sql_object(self, doc):
-        return self.sql_class().objects.update_or_create(
-            id=doc['_id'],
-            defaults={
-                "domain": doc["domain"],
-                "is_global": doc.get("is_global", False),
-                "tag": doc["tag"],
-                "fields": [transform_field(f) for f in doc.get("fields", [])],
-                "item_attributes": doc.get("item_attributes", []),
-                "description": doc.get("description") or ""
-            },
-        )
-
 
 def transform_field(data):
     if isinstance(data, str):
