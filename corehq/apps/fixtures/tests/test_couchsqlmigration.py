@@ -6,6 +6,7 @@ from pathlib import Path
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.test import SimpleTestCase, TestCase
+from django.utils.functional import cached_property
 
 from testil import tempdir
 
@@ -478,12 +479,9 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         doc, obj = self.create_row()
         self.temporarily_delete_table()
         doc_id = self.db.save_doc(doc.to_json())["id"]
-        with tempdir() as tmp:
-            log_path = Path(tmp) / "log.txt"
-            with patch.object(transaction, "atomic", atomic_check):
-                call_command('populate_lookuptablerows', log_path=log_path)
-            with log_path.open() as log:
-                self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", list(log))
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_lookuptablerows', log_path=log.path)
+            self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", log.content)
 
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)
@@ -581,12 +579,9 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
         doc, obj = self.create_owner()
         self.temporarily_delete_row()
         doc_id = self.db.save_doc(doc.to_json())["id"]
-        with tempdir() as tmp:
-            log_path = Path(tmp) / "log.txt"
-            with patch.object(transaction, "atomic", atomic_check):
-                call_command('populate_lookuptablerowowners', log_path=log_path)
-            with log_path.open() as log:
-                self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", list(log))
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_lookuptablerowowners', log_path=log.path)
+            self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", log.content)
 
     def create_owner(self):
         doc, obj = create_lookup_table_row_owner(unwrap_doc=False)
@@ -724,3 +719,19 @@ def atomic_check(using=None):
 
 
 _atomic = transaction.atomic
+
+
+@contextmanager
+def templog():
+    with tempdir() as tmp:
+        yield Log(tmp)
+
+
+class Log:
+    def __init__(self, tmp):
+        self.path = Path(tmp) / "log.txt"
+
+    @cached_property
+    def content(self):
+        with self.path.open() as lines:
+            return "".join(lines)
