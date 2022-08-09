@@ -1011,13 +1011,14 @@ def _update_search_properties(module, search_properties, lang='en'):
     """
 
     # Replace translation for current language in a translations dict
-    def _update_translation(old_obj, new_data, attr):
-        values = getattr(old_obj, attr) if old_obj else {}
+    def _update_translation(old_obj, new_data, old_attr, new_attr=None):
+        new_attr = new_attr or old_attr
+        values = getattr(old_obj, old_attr) if old_obj else {}
         try:
             values.pop(lang)
         except KeyError:
             pass
-        new_value = new_data.get(attr)
+        new_value = new_data.get(new_attr)
         if new_value:
             values[lang] = new_value
         return values
@@ -1040,16 +1041,15 @@ def _update_search_properties(module, search_properties, lang='en'):
         if prop.get('exclude'):
             ret['exclude'] = prop['exclude']
         if prop.get('required_test'):
-            _current_text = current.required.text if current and current.required else {}
             ret['required'] = {
                 'test': prop['required_test'],
-                'text': {**_current_text, lang: prop['required_text']}
+                'text': _update_translation(current.required if current else None, prop, "text", "required_text"),
             }
         if prop.get('validation_test'):
-            _current_text = current.validations[0].text if current and current.validations else {}
             ret['validations'] = [{
                 'test': prop['validation_test'],
-                'text': {**_current_text, lang: prop['validation_text']},
+                'text': _update_translation(current.validations[0] if current and current.validations else None,
+                                            prop, "text", "validation_text"),
             }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):

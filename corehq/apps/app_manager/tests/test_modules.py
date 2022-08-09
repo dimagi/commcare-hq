@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
+    Assertion,
     AutoSelectCase,
     CaseIndex,
     CaseSearch,
@@ -55,6 +56,34 @@ class ModuleTests(SimpleTestCase):
             {'name': 'name', 'label': ''},
         ], "fr"))
         self.assertEqual(props[0]['label'], {})
+
+    def test_update_search_properties_required(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               required=Assertion(test="true()", text={"en": "answer me"})),
+        ]
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name', 'required_test': 'true()', 'required_text': 'answer me please'},
+        ], "en"))
+        self.assertEqual(props[0]['required'], {
+            "test": "true()",
+            "text": {"en": "answer me please"},
+        })
+
+    def test_update_search_properties_validation(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               validations=[Assertion(test="true()", text={"en": "go ahead"})]),
+        ]
+        props = list(_update_search_properties(module, [{
+            'name': 'name', 'label': 'Name', 'validation_test': 'false()', 'validation_text': 'you shall not pass',
+        }], "en"))
+        self.assertEqual(props[0]['validations'], [{
+            "test": "false()",
+            "text": {"en": "you shall not pass"},
+        }])
 
 
 class AdvancedModuleTests(SimpleTestCase):
