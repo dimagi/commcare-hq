@@ -227,28 +227,32 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
             'item_lists': item_lists,
             'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
             'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
-            'search_properties': module.search_config.properties if module_offers_search(module) else [],
-            'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
-            'default_search': module.search_config.default_search if module_offers_search(module) else False,
-            'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
-            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
-            'search_button_display_condition':
-                module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_additional_relevant':
-                module.search_config.additional_relevant if module_offers_search(module) else "",
-            'blacklisted_owner_ids_expression': (
-                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            # populate these even if module_offers_search is false because search_config might just not exist yet
-            'search_label':
-                module.search_config.search_label.label if hasattr(module, 'search_config') else "",
-            'search_again_label':
-                module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
-            'data_registry': module.search_config.data_registry,
-            'data_registry_workflow': module.search_config.data_registry_workflow,
-            'additional_registry_cases': module.search_config.additional_registry_cases,
-            'custom_related_case_property': module.search_config.custom_related_case_property,
-            'inline_search': module.search_config.inline_search,
+            'search_config': {
+                'search_properties':
+                    module.search_config.properties if module_offers_search(module) else [],
+                'default_properties':
+                    module.search_config.default_properties if module_offers_search(module) else [],
+                'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
+                'default_search': module.search_config.default_search if module_offers_search(module) else False,
+                'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
+                'search_button_display_condition':
+                    module.search_config.search_button_display_condition if module_offers_search(module) else "",
+                'additional_relevant':
+                    module.search_config.additional_relevant if module_offers_search(module) else "",
+                'blacklisted_owner_ids_expression': (
+                    module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+                # populate labels even if module_offers_search is false - search_config might just not exist yet
+                'search_label':
+                    module.search_config.search_label.label if hasattr(module, 'search_config') else "",
+                'search_again_label':
+                    module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+                'data_registry': module.search_config.data_registry if module.search_config.data_registry else "",
+                'data_registry_workflow': module.search_config.data_registry_workflow,
+                'additional_registry_cases': module.search_config.additional_registry_cases,
+                'custom_related_case_property': module.search_config.custom_related_case_property,
+                'inline_search': module.search_config.inline_search,
+            },
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -1246,7 +1250,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 return HttpResponseBadRequest(e)
             xpath_props = [
                 "search_filter", "blacklisted_owner_ids_expression",
-                "search_button_display_condition", "search_additional_relevant"
+                "search_button_display_condition", "additional_relevant"
             ]
 
             def _check_xpath(xpath, location):
@@ -1287,7 +1291,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_again_label=search_again_label,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
-                additional_relevant=search_properties.get('search_additional_relevant', ''),
+                additional_relevant=search_properties.get('additional_relevant', ''),
                 auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
