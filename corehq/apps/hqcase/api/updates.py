@@ -24,13 +24,26 @@ class JsonIndex(jsonobject.JsonObject):
     case_id = jsonobject.StringProperty()
     external_id = jsonobject.StringProperty()
     temporary_id = jsonobject.StringProperty()
-    case_type = jsonobject.StringProperty(required=True)
-    relationship = jsonobject.StringProperty(required=True, choices=('child', 'extension'))
+    case_type = jsonobject.StringProperty()
+    relationship = jsonobject.StringProperty(choices=('child', 'extension'))
 
     def validate(self, *args, **kwargs):
-        super().validate(*args, **kwargs)
-        if len(list(filter(None, [self.case_id, self.external_id, self.temporary_id]))) != 1:
+        ids_specified = len(list(filter(None, [self.case_id, self.external_id, self.temporary_id])))
+        if ids_specified > 1:
             raise BadValueError("Indices must specify case_id, external_id, or temporary ID, and only one")
+        if ids_specified == 1:
+            for prop in ['case_type', 'relationship']:
+                if not self[prop]:
+                    raise BadValueError(f"Property '{prop}' is required when creating or updating case indices")
+        super().validate(*args, **kwargs)
+
+    def get_id(self, case_db):
+        if self.temporary_id:
+            return case_db.lookup_id(self.temporary_id, 'temporary_id')
+        if self.external_id:
+            return case_db.lookup_id(self.external_id, 'external_id')
+        # case_id may be unspecified, which is fine - that's how deletions work
+        return self.case_id
 
 
 class BaseJsonCaseChange(jsonobject.JsonObject):
@@ -78,20 +91,11 @@ class BaseJsonCaseChange(jsonobject.JsonObject):
             index={
                 name: IndexAttrs(
                     case_type=index.case_type,
-                    case_id=self._get_index_id(index, case_db),
+                    case_id=index.get_id(case_db),
                     relationship=index.relationship
                 ) for name, index in self.indices.items()
             },
         ).as_text()
-
-    def _get_index_id(self, index, case_db):
-        if index.case_id:
-            return index.case_id
-        if index.temporary_id:
-            return case_db.get_by_temporary_id(index.temporary_id)
-        if index.external_id:
-            return case_db.get_by_external_id(index.external_id)
-        raise Exception("Validation should've caught this situation")
 
 
 class JsonCaseCreation(BaseJsonCaseChange):
