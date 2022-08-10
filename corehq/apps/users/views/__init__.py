@@ -946,6 +946,7 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     user_count = get_role_user_count(domain, role_data["_id"])
+    Invitation.objects.filter(role="user-role:" + role_data["_id"]).delete()
     if user_count:
         return JsonResponse({
             "message": ngettext(
