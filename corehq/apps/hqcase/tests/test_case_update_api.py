@@ -424,7 +424,7 @@ class TestCaseAPI(TestCase):
             'case_id': 'somethingmalicious',
         }])
         self.assertEqual(res.status_code, 400)
-        self.assertIn("You cannot specify 'case_id' when creating a new case",
+        self.assertIn("You cannot specify case_id when creating a new case",
                       res.json()['error'])
 
     def test_bulk_update_too_big(self):
