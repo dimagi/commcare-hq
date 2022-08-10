@@ -76,7 +76,9 @@ class AppMigrationCommandBase(BaseCommand):
             domain_list_position = 0
         else:
             can_continue_progress, domain_list_position, domains = self.try_to_continue_progress()
-            if not can_continue_progress:
+            if can_continue_progress:
+                domains = domains[domain_list_position:]
+            else:
                 domains = self.get_domains() or [None]
                 self.store_domain_list(domains)
         for domain in domains:
