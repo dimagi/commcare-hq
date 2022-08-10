@@ -1979,7 +1979,7 @@ class IndexSyncTest(BaseSyncTest):
         self.assertIn(wave_index, sync.cases[child_id].index)
 
 
-class DeleteExtensionIndexTest(BaseSyncTest):
+class TestUpdatesToSynclog(BaseSyncTest):
     def _create_cases(self):
         """
         host <--ext-- claim (owned) >> host, client, claim
@@ -2013,20 +2013,19 @@ class DeleteExtensionIndexTest(BaseSyncTest):
         self.device.sync()
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
-    def test_break_index(self):
+    def test_remove_index(self):
         self._create_cases()
 
         synclog = self.device.last_sync.log
         self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
 
-        # remove the index on 'client' & close 'host'
-        # this should result in all cases being purged since host is now closed
-        # and client is not owned and no longer an extension case of host
+        # remove the index on 'client'
+        # this should result in the 'client' case being purged since it is not owned
+        # and is no longer an extension case of host
         self.device.change_cases([
             CaseBlock(case_id='client', index={
                 'idx': ('case_type', '')
             }),
-            CaseBlock(case_id='host', close=True)
         ])
 
         self.device.post_changes()
@@ -2034,8 +2033,30 @@ class DeleteExtensionIndexTest(BaseSyncTest):
         synclog = self.device.last_sync.get_log()  # avoid cache
 
         # clean restore to validate assumption that there should be no cases on the phone
-        case_ids_on_phone = self.device.restore().cases.keys()
-        self.assertEqual(case_ids_on_phone, set())
+        fresh_sync_case_ids = self.device.restore().cases.keys()
+        self.assertEqual(fresh_sync_case_ids, {"host", "claim"})
+
+        # check that synclog from last submission was updated correctly
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim"})
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_close_host(self):
+        self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+
+        self.device.change_cases([
+            CaseBlock(case_id='host', close=True),
+        ])
+
+        self.device.post_changes()
+
+        synclog = self.device.last_sync.get_log()  # avoid cache
+
+        # clean restore to validate assumption that there should be no cases on the phone
+        fresh_sync_case_ids = self.device.restore().cases.keys()
+        self.assertEqual(fresh_sync_case_ids, set())
 
         # check that synclog from last submission was updated correctly
         self.assertEqual(synclog.case_ids_on_phone, set())
