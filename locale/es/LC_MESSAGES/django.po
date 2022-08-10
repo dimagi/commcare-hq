@@ -13527,10 +13527,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-msgid "case property name"
-msgstr "nombre de propiedad del caso"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 msgid "Set case property"
 msgstr "Establecer propiedad del caso"
@@ -21222,13 +21218,19 @@ msgstr ""
 "teléfono del caso serán sincronizadas. "
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Email address '{}' is not a dimagi email address"
+#, fuzzy
+#| msgid ""
+#| "The following e-mail addresses contain invalid characters, or are missing "
+#| "required characters: "
+msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
+"Las siguientes direcciones de correo electrónico incluyen caracteres "
+"inválidos, o no tienen los caracteres requeridos:"
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
 "The following users do not exist on this site, please have the user "
-"registered first."
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -28771,53 +28773,6 @@ msgstr "ingresado antes de ser completado [strange]"
 #: corehq/apps/reports/standard/monitoring.py
 msgid "same"
 msgstr "el mismo"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr "Tiempos de Actividad del Trabajador"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-"Representación gráfica de cuándo los formularios son completados o "
-"ingresados."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr "Nota: Ningún ingreso coincidió con sus filtros."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr "Lun"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr "Mar"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr "Mié"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr "Jue"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr "Vie"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr "Sáb"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr "Dom"
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
-msgstr "Hora ({timezone})"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
@@ -42864,25 +42819,40 @@ msgstr ""
 msgid "Enter valid JSON"
 msgstr ""
 
-#, fuzzy
-#~| msgid "Specify Workers at this Location"
-#~ msgid "Specify Users At This Location"
-#~ msgstr "Especificar Trabajadores en esta Ubicación"
+#~ msgid "case property name"
+#~ msgstr "nombre de propiedad del caso"
 
-#~ msgid "No Data"
-#~ msgstr "No hay Datos"
+#~ msgid "Worker Activity Times"
+#~ msgstr "Tiempos de Actividad del Trabajador"
 
-#~ msgid "Read Only (No Reports)"
-#~ msgstr "Solo Lectura (No Reportes)"
+#~ msgid "Graphical representation of when forms are completed or submitted."
+#~ msgstr ""
+#~ "Representación gráfica de cuándo los formularios son completados o "
+#~ "ingresados."
 
-#~ msgid "App Editor"
-#~ msgstr "Editor de App"
+#~ msgid "Note: No submissions matched your filters."
+#~ msgstr "Nota: Ningún ingreso coincidió con sus filtros."
 
-#~ msgid "Read Only"
-#~ msgstr "Solo Lectura"
+#~ msgid "Mon"
+#~ msgstr "Lun"
 
-#~ msgid "Field Implementer"
-#~ msgstr "Implementador de Campo"
+#~ msgid "Tue"
+#~ msgstr "Mar"
 
-#~ msgid "Billing Admin"
-#~ msgstr "Administrador de Facturación"
+#~ msgid "Wed"
+#~ msgstr "Mié"
+
+#~ msgid "Thu"
+#~ msgstr "Jue"
+
+#~ msgid "Fri"
+#~ msgstr "Vie"
+
+#~ msgid "Sat"
+#~ msgstr "Sáb"
+
+#~ msgid "Sun"
+#~ msgstr "Dom"
+
+#~ msgid "Time ({timezone})"
+#~ msgstr "Hora ({timezone})"

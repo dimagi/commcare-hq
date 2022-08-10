@@ -2666,6 +2666,12 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
+"An unknown error occurred. If you have problems filling in the rest of your "
+"form please submit an issue. Technical Details: "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
 "CommCareHQ has detected a possible network connectivity problem. Please make "
 "sure you are connected to the Internet in order to submit your form."
 msgstr ""
