@@ -34,14 +34,14 @@ class JsonIndex(jsonobject.JsonObject):
         if ids_specified == 1:
             for prop in ['case_type', 'relationship']:
                 if not self[prop]:
-                    raise BadValueError(f"Property '{prop}' is required when creating or updating case indices")
+                    raise BadValueError(f"Property {prop} is required when creating or updating case indices")
         super().validate(*args, **kwargs)
 
     def get_id(self, case_db):
         if self.temporary_id:
-            return case_db.lookup_id(self.temporary_id, 'temporary_id')
+            return case_db.get_by_temporary_id(self.temporary_id)
         if self.external_id:
-            return case_db.lookup_id(self.external_id, 'external_id')
+            return case_db.get_by_external_id(self.external_id)
         # case_id may be unspecified, which is fine - that's how deletions work
         return self.case_id
 
