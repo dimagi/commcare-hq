@@ -1980,6 +1980,14 @@ class IndexSyncTest(BaseSyncTest):
 
 
 class TestUpdatesToSynclog(BaseSyncTest):
+    @classmethod
+    def setUpClass(cls):
+        super(TestUpdatesToSynclog, cls).setUpClass()
+        cls.other_user = create_restore_user(
+            cls.project.name,
+            username=OTHER_USERNAME,
+        )
+
     def _create_cases(self):
         """
         host <--ext-- claim (owned) >> host, client, claim
@@ -2030,14 +2038,13 @@ class TestUpdatesToSynclog(BaseSyncTest):
 
         self.device.post_changes()
 
-        synclog = self.device.last_sync.get_log()  # avoid cache
+        # changes to the case should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases(CaseBlock(case_id="client", update={"name": "edit"}))
+        ferrel.post_changes()
 
-        # clean restore to validate assumption that there should be no cases on the phone
-        fresh_sync_case_ids = self.device.restore().cases.keys()
-        self.assertEqual(fresh_sync_case_ids, {"host", "claim"})
-
-        # check that synclog from last submission was updated correctly
-        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim"})
+        result = self.device.sync()
+        self.assertNotIn("client", result.cases)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_close_host(self):
@@ -2046,17 +2053,21 @@ class TestUpdatesToSynclog(BaseSyncTest):
         synclog = self.device.last_sync.log
         self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
 
+        # closing the host case should remove the host and claim case from the phone
         self.device.change_cases([
             CaseBlock(case_id='host', close=True),
         ])
 
         self.device.post_changes()
 
-        synclog = self.device.last_sync.get_log()  # avoid cache
+        # changes to the cases should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases([
+            CaseBlock(case_id="host", update={"name": "edit"}),
+            CaseBlock(case_id="claim", update={"name": "edit"}),
+        ])
+        ferrel.post_changes()
 
-        # clean restore to validate assumption that there should be no cases on the phone
-        fresh_sync_case_ids = self.device.restore().cases.keys()
-        self.assertEqual(fresh_sync_case_ids, set())
-
-        # check that synclog from last submission was updated correctly
-        self.assertEqual(synclog.case_ids_on_phone, set())
+        result = self.device.sync()
+        self.assertNotIn("host", result.cases)
+        self.assertNotIn("claim", result.cases)
