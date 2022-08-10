@@ -40,10 +40,13 @@ class ModuleTests(SimpleTestCase):
             CaseSearchProperty(name='name', label={'fr': 'Nom'}),
             CaseSearchProperty(name='age', label={'fr': 'Âge'}),
         ]
+
+        # Update name, add dob, and remove age
         props = list(_update_search_properties(module, [
             {'name': 'name', 'label': 'Name'},
             {'name': 'dob', 'label': 'Date of birth'}
         ], "en"))
+
         self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
         self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
 
