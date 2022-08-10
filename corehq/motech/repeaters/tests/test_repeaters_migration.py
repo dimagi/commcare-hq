@@ -123,7 +123,9 @@ class TestMigrationCommand(TestCase):
         for obj in openmrs_objects:
             sql_obj = SQLOpenmrsRepeater.objects.get(repeater_id=obj._id)
             self.assertEqual(sql_obj.openmrs_config, obj.openmrs_config.to_json())
-            self.assertEqual(sql_obj.atom_feed_status, obj.atom_feed_status)
+            self.assertEqual(sql_obj.atom_feed_status.keys(), obj.atom_feed_status.keys())
+            for feed_name, feed in obj.atom_feed_status.items():
+                self.assertEqual(sql_obj.atom_feed_status[feed_name], feed.to_json())
 
         for obj in caseexpression_objects:
             sql_obj = SQLCaseExpressionRepeater.objects.get(repeater_id=obj._id)
