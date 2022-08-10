@@ -1977,3 +1977,69 @@ class IndexSyncTest(BaseSyncTest):
         self.assertEqual(set(sync.cases), {child_id, parent_id, other_parent_id})
         self.assertIn(branch_index, sync.cases[child_id].index)
         self.assertIn(wave_index, sync.cases[child_id].index)
+
+
+class DeleteExtensionIndexTest(BaseSyncTest):
+    def _create_cases(self):
+        """
+        host <--ext-- claim (owned) >> host, client, claim
+             <--ext-- client
+        """
+
+        host = CaseStructure(case_id='host',
+                             attrs={'create': True, 'owner_id': 'other_user'})
+        claim = CaseStructure(
+            case_id='claim',
+            attrs={'create': True, 'owner_id': self.device.user_id},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+        )
+        client = CaseStructure(
+            case_id='client',
+            attrs={'create': True, 'owner_id': 'other_user'},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+            walk_related=False
+        )
+        self.device.change_cases([claim, client])
+        self.device.sync()
+        return host, claim, client
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_break_index(self):
+        host, claim, client = self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+        client = CommCareCase.objects.partitioned_get('client')
+        print(self.device.user_id)
+        print(client.owner_id)
+
+        # remove the index on 'client' & close 'host'
+        # this should result in all cases being purged since host is now closed
+        # and client is not owned and no longer an extension case of host
+        self.device.change_cases([
+            CaseBlock(case_id='client', index={
+                'idx': ('case_type', '')
+            }),
+            CaseBlock(case_id='host', close=True)
+        ])
+
+        self.device.post_changes()
+
+        synclog = self.device.last_sync.get_log()  # avoid cache
+
+        # clean restore to validate assumption that there should be no cases on the phone
+        case_ids_on_phone = self.device.restore().cases.keys()
+        self.assertEqual(case_ids_on_phone, set())
+
+        # check that synclog from last submission was updated correctly
+        self.assertEqual(synclog.case_ids_on_phone, set())
