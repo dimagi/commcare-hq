@@ -2046,6 +2046,15 @@ class TestUpdatesToSynclog(BaseSyncTest):
         result = self.device.sync()
         self.assertNotIn("client", result.cases)
 
+        # claiming the case again should result in it being synced to the device
+        ferrel.change_cases(CaseBlock(case_id="claim2", owner_id=self.user_id, create=True, index={
+            "host": ("client", "client")
+        }))
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertIn("client", result.cases)
+
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_close_host(self):
         self._create_cases()
