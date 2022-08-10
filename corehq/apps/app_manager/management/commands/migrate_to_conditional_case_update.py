@@ -1,3 +1,5 @@
+from datetime import datetime
+import traceback
 from corehq.apps.app_manager.dbaccessors import wrap_app
 from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
 from corehq.apps.domain.models import Domain
@@ -18,10 +20,11 @@ class Command(AppMigrationCommandBase):
     """
 
     include_linked_apps = True
-    include_builds = True
+    include_builds = False
     chunk_size = 5
     DOMAIN_LIST_FILENAME = "migrate_to_cond_case_update_cmd_domain_list.txt"
     DOMAIN_PROGRESS_NUMBER_FILENAME = "migrate_to_cond_case_update_cmd_domain_progress.txt"
+    APP_WRAPPING_ERRORS_LOG = "migrate_to_cond_case_update_wrapping_errors.txt"
 
     def add_arguments(self, parser):
         super().add_arguments(parser)
@@ -65,10 +68,17 @@ class Command(AppMigrationCommandBase):
         return False
 
     def migrate_app(self, app_doc):
+        self.log_error(app_doc)
         if self._has_been_migrated(app_doc):
             return None
         else:
-            return wrap_app(app_doc)
+            try:
+                wrapped_app = wrap_app(app_doc)
+                return wrapped_app
+            except Exception as e:
+                print(e)
+                self.log_error(app_doc)
+                return None
 
     @property
     def num_domains_test(self):
@@ -82,3 +92,9 @@ class Command(AppMigrationCommandBase):
             return all_domain_names[:int(self.num_domains_test)]
         else:
             return Domain.get_all_names()
+
+    def log_error(self, app_doc):
+        with open(self.APP_WRAPPING_ERRORS_LOG, 'a') as f:
+            error_string = (f"{datetime.now()}\nOn domain: {app_doc['domain']}, "
+                            f"App ID: {app_doc['_id']}\n{traceback.format_exc().strip()}\n")
+            f.write(error_string)
