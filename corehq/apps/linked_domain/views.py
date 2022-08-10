@@ -48,17 +48,12 @@ from corehq.apps.linked_domain.dbaccessors import (
     get_linked_domains,
     get_upstream_domain_link,
 )
-from corehq.apps.linked_domain.decorators import (
-    require_access_to_linked_domains,
-    require_linked_domain,
-)
+from corehq.apps.linked_domain.decorators import require_access_to_linked_domains
 from corehq.apps.linked_domain.exceptions import (
-    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
-    DomainLinkNotFound,
-    NoDownstreamDomainsProvided,
+    InvalidPushException,
     UnsupportedActionError,
     UserDoesNotHavePermission,
 )
@@ -108,74 +103,74 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.sms.models import Keyword
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions, WebUser
+from corehq.apps.users.models import HqPermissions, WebUser
 from corehq.util.jqueryrmi import JSONResponseMixin, allow_remote_invocation
 from corehq.util.timezones.utils import get_timezone_for_request
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def tableau_server_and_visualizations(request, domain):
     return JsonResponse(get_tableau_server_and_visualizations(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def toggles_and_previews(request, domain):
     return JsonResponse(get_enabled_toggles_and_previews(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def auto_update_rules(request, domain):
-    return JsonResponse(get_auto_update_rules(domain))
+    return JsonResponse({'rules': get_auto_update_rules(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def custom_data_models(request, domain):
     limit_types = request.GET.getlist('type')
     return JsonResponse(get_custom_data_models(domain, limit_types))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def fixture(request, domain, tag):
     return JsonResponse(get_fixture(domain, tag))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def user_roles(request, domain):
     return JsonResponse({'user_roles': get_user_roles(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def brief_apps(request, domain):
     return JsonResponse({'brief_apps': get_brief_app_docs_in_domain(domain, include_remote=False)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def app_by_version(request, domain, app_id, version):
     return JsonResponse({'app': get_build_doc_by_version(domain, app_id, version)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def released_app_versions(request, domain):
     return JsonResponse({'versions': get_latest_released_app_versions_by_app_id(domain)})
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def case_search_config(request, domain):
     try:
         config = CaseSearchConfig.objects.get(domain=domain).to_json()
@@ -186,15 +181,15 @@ def case_search_config(request, domain):
 
 
 @login_or_api_key
-@require_linked_domain
-@require_permission(Permissions.view_reports)
+@require_access_to_linked_domains
+@require_permission(HqPermissions.view_reports)
 def linkable_ucr(request, domain):
     """Returns a list of reports to be used by the downstream
     domain on a remote server to create linked reports by calling the
     `ucr_config` view below
 
     """
-    reports = get_report_configs_for_domain(domain)
+    reports = get_report_and_registry_report_configs_for_domain(domain)
     return JsonResponse({
         "reports": [
             {"id": report._id, "title": report.title} for report in reports]
@@ -202,7 +197,7 @@ def linkable_ucr(request, domain):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def ucr_config(request, domain, config_id):
     report_config = ReportConfiguration.get(config_id)
     if report_config.domain != domain:
@@ -217,7 +212,7 @@ def ucr_config(request, domain, config_id):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def get_latest_released_app_source(request, domain, app_id):
     master_app = get_app(None, app_id)
     if master_app.domain != domain:
@@ -231,25 +226,25 @@ def get_latest_released_app_source(request, domain, app_id):
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def data_dictionary(request, domain):
     return JsonResponse(get_data_dictionary(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def dialer_settings(request, domain):
     return JsonResponse(get_dialer_settings(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def otp_settings(request, domain):
     return JsonResponse(get_otp_settings(domain))
 
 
 @login_or_api_key
-@require_linked_domain
+@require_access_to_linked_domains
 def hmac_callout_settings(request, domain):
     return JsonResponse(get_hmac_callout_settings(domain))
 
@@ -408,31 +403,13 @@ class DomainLinkRMIView(JSONResponseMixin, View, DomainViewMixin):
 
     @allow_remote_invocation
     def create_release(self, in_data):
-        error_message = ''
         try:
             validate_push(self.request.couch_user, self.domain, in_data['linked_domains'])
-        except NoDownstreamDomainsProvided:
-            error_message = gettext("No downstream project spaces were selected. Please contact support.")
-        except DomainLinkNotFound:
-            error_message = gettext(
-                "Links between one or more project spaces do not exist. Please contact support."
-            )
-        except AttemptedPushViolatesConstraints:
-            formatted_domains = ', '.join(in_data['linked_domains'])
-            error_message = gettext('''
-                The attempted push from {} to {} is disallowed. Please contact support.
-            '''.format(self.domain, formatted_domains))
-            notify_exception(self.request, "Triggered AttemptedPushViolatesConstraints exception")
-        except UserDoesNotHavePermission:
-            error_message = gettext(
-                "You do not have permission to push to all specified downstream project spaces."
-            )
-        finally:
-            if error_message:
-                return {
-                    'success': False,
-                    'message': error_message,
-                }
+        except InvalidPushException as e:
+            return {
+                'success': False,
+                'message': e.message,
+            }
 
         push_models.delay(self.domain, in_data['models'], in_data['linked_domains'],
                           in_data['build_apps'], self.request.couch_user.username)
@@ -503,17 +480,25 @@ def link_domains(couch_user, upstream_domain, downstream_domain):
 
 def validate_push(user, domain, downstream_domains):
     if not downstream_domains:
-        raise NoDownstreamDomainsProvided
+        raise InvalidPushException(
+            message=gettext("No downstream project spaces were selected. Please contact support.")
+        )
 
-    try:
-        domain_links = [
-            DomainLink.objects.get(master_domain=domain, linked_domain=dd) for dd in downstream_domains
-        ]
-    except DomainLink.DoesNotExist:
-        raise DomainLinkNotFound
+    domain_links = []
+    for dd in downstream_domains:
+        try:
+            domain_links.append(DomainLink.objects.get(master_domain=domain, linked_domain=dd))
+        except DomainLink.DoesNotExist:
+            raise InvalidPushException(
+                message=gettext(
+                    "The project space link between {} and {} does not exist. Ensure the link was not recently "
+                    "deleted.").format(domain, dd)
+            )
 
     if not user_has_access_in_all_domains(user, downstream_domains):
-        raise UserDoesNotHavePermission
+        raise InvalidPushException(
+            message=gettext("You do not have permission to push to all specified downstream project spaces.")
+        )
 
     check_if_push_violates_constraints(user, domain_links)
 
@@ -535,7 +520,11 @@ def check_if_push_violates_constraints(user, domain_links):
         # all links are full access
         return
 
-    raise AttemptedPushViolatesConstraints
+    limited_domains = [d.linked_domain for d in limited_access_links]
+    error_message = gettext(
+        "The attempted push is disallowed because it includes the following domains that can only be pushed to "
+        "one at a time: {}".format(', '.join(limited_domains)))
+    raise InvalidPushException(message=error_message)
 
 
 def validate_pull(user, domain_link):

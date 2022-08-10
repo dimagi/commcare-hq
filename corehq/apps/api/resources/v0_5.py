@@ -80,8 +80,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
-    Permissions,
-    UserRole,
+    HqPermissions,
     WebUser,
 )
 from corehq.apps.users.util import raw_username, generate_mobile_username
@@ -99,7 +98,7 @@ from . import (
     v0_4,
 )
 from .pagination import DoesNothingPaginator, NoCountingPaginator
-from ..exceptions import InvalidFormatException, InvalidFieldException, UpdateConflictException
+from ..exceptions import UpdateUserException
 from ..user_updates import update
 
 MOCK_BULK_USER_ES = None
@@ -114,16 +113,6 @@ def user_es_call(domain, q, fields, size, start_at):
     if q is not None:
         query.set_query({"query_string": {"query": q}})
     return query.run().hits
-
-
-def _set_role_for_bundle(kwargs, bundle):
-    # check for roles associated with the domain
-    domain_roles = UserRole.objects.by_domain_and_name(kwargs['domain'], bundle.data.get('role'))
-    if domain_roles:
-        qualified_role_id = domain_roles[0].get_qualified_id()  # roles may not be unique by name
-        bundle.obj.set_role(kwargs['domain'], qualified_role_id)
-    else:
-        raise BadRequest(f"Invalid User Role '{bundle.data.get('role')}'")
 
 
 class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
@@ -149,7 +138,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         return namedtuple('user', list(user))(**user)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = object
@@ -277,11 +266,7 @@ class CommCareUserResource(v0_1.CommCareUserResource):
         for key, value in bundle.data.items():
             try:
                 update(bundle.obj, key, value, user_change_logger)
-            except InvalidFieldException as e:
-                errors.append(_("Attempted to update unknown or non-editable field '{}'").format(e.field))
-            except InvalidFormatException as e:
-                errors.append(_('{} must be a {}').format(e.field, e.expected_type))
-            except (UpdateConflictException, ValidationError) as e:
+            except UpdateUserException as e:
                 errors.append(e.message)
 
         return errors
@@ -477,7 +462,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'device-log'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         authorization = DomainAuthorization()
         paginator_class = NoCountingPaginator
         filtering = {
@@ -637,7 +622,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
@@ -769,7 +754,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
         paginator_class = DoesNothingPaginator
-        authentication = RequirePermissionAuthentication(Permissions.edit_ucrs)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_ucrs)
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
@@ -806,6 +791,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         feature_flag = request.GET.get("feature_flag")
         if feature_flag and feature_flag not in toggles.all_toggle_slugs():
             raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
+        can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
         username = request.user.username
         results = []
@@ -814,6 +800,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
                 continue
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
+            if can_view_reports and not couch_user.can_view_reports(domain):
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
@@ -855,7 +843,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -896,7 +884,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -923,7 +911,7 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']

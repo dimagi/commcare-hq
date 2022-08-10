@@ -63,6 +63,8 @@ class.
 "Data Forwarding Records".
 
 """
+import inspect
+import json
 import traceback
 import warnings
 from collections import OrderedDict
@@ -74,6 +76,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.base import Deferred
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -100,7 +103,7 @@ from dimagi.utils.couch.migration import (
     SyncSQLToCouchMixin,
 )
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from dimagi.utils.logging import notify_exception
+from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
@@ -218,7 +221,13 @@ class RepeaterSuperProxy(models.Model):
             else:
                 repeater_class = REPEATER_CLASS_MAP.get(proxy_class_name)
                 if repeater_class is None:
-                    raise UnknownRepeater(proxy_class_name)
+                    details = {
+                        'args': args,
+                        'kwargs': kwargs
+                    }
+                    notify_error(UnknownRepeater(proxy_class_name), details=details)
+                    # Fallback to creating SQLRepeater if repeater class is not found
+                    repeater_class = cls
 
         return super().__new__(repeater_class)
 
@@ -281,17 +290,73 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
 
     _migration_couch_id_name = 'repeater_id'
 
+    payload_generator_classes = ()
+
+    friendly_name = _("Data")
+
+    _has_config = False
+
     @property
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
 
+    @cached_property
+    def _optionvalue_fields(self):
+        return [
+            attr_tuple[0]
+            for attr_tuple in inspect.getmembers(self.__class__)
+            if isinstance(attr_tuple[1], OptionValue)
+        ]
+
+    def to_json(self):
+        repeater_dict = self.__dict__.copy()
+        options = repeater_dict.pop('options', None)
+
+        # Populating OptionValue attrs
+        for attr in self._optionvalue_fields:
+            if attr == 'include_app_id_param':
+                continue
+            repeater_dict[attr] = (options.get(attr)
+                if attr in options
+                else getattr(self.__class__, attr).get_default_value())
+
+        # include_app_id_param is a constant in some Repeaters and will not come up in options
+        if hasattr(self, 'include_app_id_param'):
+            repeater_dict['include_app_id_param'] = self.include_app_id_param
+
+        # Remove keys which were not present in couch
+        repeater_dict.pop('_state', None)
+        repeater_dict.pop('id', None)
+        repeater_dict.pop('is_deleted', None)
+        repeater_dict.pop('next_attempt_at', None)
+        repeater_dict.pop('last_attempt_at', None)
+
+        self._convert_to_serializable(repeater_dict)
+        return repeater_dict
+
+    def _convert_to_serializable(self, repeater_dict):
+        for key, val in repeater_dict.items():
+            try:
+                json.dumps(val)
+            except Exception as e:
+                if isinstance(val, datetime):
+                    repeater_dict[key] = json_format_datetime(val)
+                    continue
+                notify_exception(
+                    None,
+                    f"""Unable to serialize {key} for repeater_id {self.repeater_id}.
+                    You may implement to_json for {self.repeater_type}"""
+                )
+                raise e
+
     def get_url(self, record):
         return self.repeater.get_url(record)
 
+    @classmethod
     @property
-    def _repeater_type(self):
-        name = type(self).__name__
+    def _repeater_type(cls):
+        name = cls.__name__
         return name[3:] if name.startswith('SQL') else name
 
     @property
@@ -370,10 +435,125 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         if sync_to_couch:
             self.repeater.retire(sync_to_sql=False)
 
+    def get_pending_record_count(self):
+        return get_pending_repeat_record_count(self.domain, self.repeater_id)
+
+    def get_failure_record_count(self):
+        return get_failure_repeat_record_count(self.domain, self.repeater_id)
+
+    def get_success_record_count(self):
+        return get_success_repeat_record_count(self.domain, self.repeater_id)
+
+    def get_cancelled_record_count(self):
+        return get_cancelled_repeat_record_count(self.domain, self.repeater_id)
+
+    def fire_for_record(self, repeat_record):
+        payload = self.get_payload(repeat_record)
+        try:
+            response = self.send_request(repeat_record, payload)
+        except (Timeout, ConnectionError) as error:
+            log_repeater_timeout_in_datadog(self.domain)
+            return self.handle_response(RequestConnectionError(error), repeat_record)
+        except RequestException as err:
+            return self.handle_response(err, repeat_record)
+        except (PossibleSSRFAttempt, CannotResolveHost):
+            return self.handle_response(Exception("Invalid URL"), repeat_record)
+        except Exception:
+            # This shouldn't ever happen in normal operation and would mean code broke
+            # we want to notify ourselves of the error detail and tell the user something vague
+            notify_exception(None, "Unexpected error sending repeat record request")
+            return self.handle_response(Exception("Internal Server Error"), repeat_record)
+        else:
+            return self.handle_response(response, repeat_record)
+
+    @memoized
+    def get_payload(self, repeat_record):
+        return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
+
+    def send_request(self, repeat_record, payload):
+        url = self.get_url(repeat_record)
+        return simple_request(
+            self.domain, url, payload,
+            headers=self.get_headers(repeat_record),
+            auth_manager=self.connection_settings.get_auth_manager(),
+            verify=self.verify,
+            notify_addresses=self.connection_settings.notify_addresses,
+            payload_id=repeat_record.payload_id,
+            method=self.request_method,
+        )
+
+    def handle_response(self, result, repeat_record):
+        """
+        route the result to the success, failure, or exception handlers
+
+        result may be either a response object or an exception
+        """
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+        elif is_response(result) and 200 <= result.status_code < 300 or result is True:
+            attempt = repeat_record.handle_success(result)
+        else:
+            attempt = repeat_record.handle_failure(result)
+        return attempt
+
+    def get_headers(self, repeat_record):
+        # to be overridden
+        return self.generator.get_headers()
+
+    @property
+    @memoized
+    def generator(self):
+        return self._get_payload_generator(self._format_or_default_format())
+
+    def _get_payload_generator(self, payload_format):
+        from corehq.motech.repeaters.repeater_generators import (
+            RegisterGenerator,
+        )
+        gen = RegisterGenerator.generator_class_by_repeater_format(
+            self.__class__,
+            payload_format
+        )
+        return gen(self)
+
+    def _format_or_default_format(self):
+        from corehq.motech.repeaters.repeater_generators import (
+            RegisterGenerator,
+        )
+        return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
+
+    def payload_doc(self, repeat_record):
+        raise NotImplementedError
+
+    def allow_retries(self, response):
+        """Whether to requeue the repeater when it fails
+        """
+        # respect the `retry` field of RepeaterResponse
+        return getattr(response, 'retry', True)
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        """Returns whether this repeater can be used by a particular domain
+        """
+        return True
+
+    @property
+    def form_class_name(self):
+        """
+        Return the name of the class whose edit form this class uses.
+
+        (Most classes that extend CaseRepeater, and all classes that
+        extend FormRepeater, use the same form.)
+        """
+        return self.__class__.__name__
+
+    def _wrap_schema_attrs(self, couch_object):
+        pass
+
     def _migration_sync_to_couch(self, couch_object):
         for field_name in self._migration_get_fields():
             value = getattr(self, field_name)
             setattr(couch_object, field_name, value)
+        self._wrap_schema_attrs(couch_object)
         setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
         setattr(couch_object, 'paused', self.is_paused)
         couch_object.save(sync_to_sql=False)
@@ -398,6 +578,7 @@ class SQLFormRepeater(SQLRepeater):
 
     include_app_id_param = OptionValue(default=True)
     white_listed_form_xmlns = OptionValue(default=list)
+    user_blocklist = OptionValue(default=list)
 
     class Meta:
         proxy = True
@@ -454,7 +635,11 @@ class SQLFormRepeater(SQLRepeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["include_app_id_param", "white_listed_form_xmlns"]
+        return super()._migration_get_fields() + [
+            "include_app_id_param",
+            "white_listed_form_xmlns",
+            "user_blocklist"
+        ]
 
 
 class SQLCaseRepeater(SQLRepeater):
@@ -1155,7 +1340,11 @@ class FormRepeater(Repeater):
 
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["include_app_id_param", "white_listed_form_xmlns"]
+        return super()._migration_get_fields() + [
+            "include_app_id_param",
+            "white_listed_form_xmlns",
+            "user_blocklist"
+        ]
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -1174,7 +1363,6 @@ class CaseRepeater(Repeater):
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
     black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
     friendly_name = _("Forward Cases")
-    _migration_couch_id_name = 'repeater_id'
 
     def allowed_to_forward(self, payload):
         return self._allowed_case_type(payload) and self._allowed_user(payload)

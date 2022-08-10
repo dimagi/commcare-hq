@@ -119,9 +119,9 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
             )
         }
     ).as_xml()
-    form_extras = {}
+    submission_extras = {}
     if restore_user.request_user:
-        form_extras["auth_context"] = AuthContext(
+        submission_extras["auth_context"] = AuthContext(
             domain=domain,
             user_id=restore_user.request_user_id,
             authenticated=True
@@ -129,7 +129,7 @@ def claim_case(domain, restore_user, host_id, host_type=None, host_name=None, de
     submit_case_blocks(
         [ElementTree.tostring(claim_case_block, encoding='utf-8').decode('utf-8')],
         domain=domain,
-        form_extras=form_extras,
+        submission_extras=submission_extras,
         username=restore_user.full_username,
         user_id=restore_user.user_id,
         device_id=device_id,

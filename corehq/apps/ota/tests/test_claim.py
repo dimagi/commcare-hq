@@ -5,10 +5,10 @@ from django.test import TestCase
 from casexml.apps.case.cleanup import claim_case, get_first_claims
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.case_search.models import CLAIM_CASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import CaseNotFound
@@ -49,8 +49,8 @@ class CaseClaimTests(TestCase):
             case_name=self.host_case_name,
             case_type=self.host_case_type,
             owner_id="not the user",
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
 
     def assert_claim(self, claim=None, claim_id=None):
         if claim is None:
@@ -125,8 +125,8 @@ class CaseClaimTests(TestCase):
                     relationship=CASE_INDEX_EXTENSION,
                 )
             }
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
         first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
         self.assertEqual(first_claim, {self.host_case_id})
 
@@ -142,8 +142,8 @@ class CaseClaimTests(TestCase):
             create=False,
             case_id=claim_id,
             index={"host": (self.host_case_type, "")}
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)
 
         first_claim = get_first_claims(DOMAIN, self.user.user_id, [self.host_case_id])
         self.assertEqual(len(first_claim), 0)
@@ -162,5 +162,5 @@ class CaseClaimTests(TestCase):
             create=False,
             case_id=case_id,
             close=True
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': DOMAIN})
+        ).as_text()
+        submit_case_blocks(case_block, domain=DOMAIN)

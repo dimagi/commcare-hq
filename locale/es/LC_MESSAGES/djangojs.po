@@ -4,9 +4,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Michelle B. Sultan <msultan@dimagi.com>, 2021
+# Dimagi Dev <devops@dimagi.com>, 2021
 # Gladys Teos <info@enestranslations.com>, 2022
-# Dimagi Dev <devops@dimagi.com>, 2022
+# Michelle B. Sultan <msultan@dimagi.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>, 2022\n"
+"Last-Translator: Michelle B. Sultan <msultan@dimagi.com>, 2022\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -1354,6 +1354,7 @@ msgid "Date and Time"
 msgstr "Fecha y Hora"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr "Hora"
 
@@ -2864,6 +2865,10 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Unexpected Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2941,6 +2946,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -3195,6 +3204,10 @@ msgstr "Reasignación de Caso (vía HQ)"
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
+msgstr "nombre de propiedad del caso"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
 "<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
@@ -3253,6 +3266,10 @@ msgstr "Ingrese Pago"
 #: corehq/apps/domain/static/domain/js/billing_statements.js
 msgid "Submit Invoice Request"
 msgstr "Ingrese Solicitud de Factura"
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -3784,6 +3801,11 @@ msgid "Please specify a password."
 msgstr "Por favor especifique una contraseña."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr "Por favor especifique un nombre de proyecto."
 
@@ -3974,6 +3996,10 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+msgid "From Time"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
@@ -4036,6 +4062,16 @@ msgstr "No hay datos disponibles en la tabla"
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr "Mostrando_INICIO_a_FIN_del_TOTAL_de entradas"
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Hacen falta algunos campos obligatorios. Por favor complete antes de "
+"guardar. "
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Please check your Internet connection!"
@@ -4134,6 +4170,12 @@ msgstr "Falló"
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
 msgstr "Reproceso fallido"
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
+msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
 msgid "Save Filters"
@@ -4323,6 +4365,10 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+msgid "Expression saved"
+msgstr ""
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4384,6 +4430,14 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
 msgstr "Por favor ingrese una dirección de correo válida."
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
+msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Checking availability..."
@@ -4813,6 +4867,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
 msgid "Unable to save case configs"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js

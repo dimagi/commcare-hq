@@ -1,6 +1,7 @@
 import io
 import json
 import re
+import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
@@ -19,7 +20,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_noop, override
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
@@ -42,6 +43,9 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.sms.api import send_sms
+from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -58,10 +62,12 @@ from corehq.apps.locations.permissions import (
     user_can_access_location_id,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
-from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.apps.registration.forms import (
+    MobileWorkerAccountConfirmationBySMSForm, MobileWorkerAccountConfirmationForm
+)
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
-    send_account_confirmation_if_necessary,
+    send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -116,6 +122,7 @@ from corehq.const import (
     USER_DATE_FORMAT,
 )
 from corehq import toggles
+from corehq.motech.utils import b64_aes_decrypt
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.util import get_document_or_404
 from corehq.util.dates import iso_string_to_datetime
@@ -672,6 +679,12 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         )
 
     @property
+    def two_stage_user_confirmation(self):
+        return toggles.TWO_STAGE_USER_PROVISIONING.enabled(
+            self.domain
+        ) or toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain)
+
+    @property
     def page_context(self):
         bulk_download_url = reverse(FilteredCommCareUserDownload.urlname, args=[self.domain])
 
@@ -692,6 +705,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
             'bulk_download_url': bulk_download_url,
             'show_deactivate_after_date': self.new_mobile_worker_form.show_deactivate_after_date,
+            'two_stage_user_confirmation': self.two_stage_user_confirmation,
         }
 
     @property
@@ -725,7 +739,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             }
 
         self.request.POST = form_data
-
         is_valid = lambda: self.new_mobile_worker_form.is_valid() and self.custom_data.is_valid()
         if not is_valid():
             all_errors = [e for errors in self.new_mobile_worker_form.errors.values() for e in errors]
@@ -733,10 +746,13 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             return {'error': _("Forms did not validate: {errors}").format(
                 errors=', '.join(all_errors)
             )}
-
         couch_user = self._build_commcare_user()
         if self.new_mobile_worker_form.cleaned_data['send_account_confirmation_email']:
             send_account_confirmation_if_necessary(couch_user)
+        if self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms']:
+            phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
+            couch_user.set_default_phone_number(phone_number)
+            send_account_confirmation_sms_if_necessary(couch_user)
         return {
             'success': True,
             'user_id': couch_user.userID,
@@ -749,7 +765,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         email = self.new_mobile_worker_form.cleaned_data['email']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
         location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-        is_account_confirmed = not self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+        is_account_confirmed = not (
+            self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
+            or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
         commcare_user = CommCareUser.create(
             self.domain,
@@ -796,6 +814,8 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 'email': user_data.get('email'),
                 'force_account_confirmation': user_data.get('force_account_confirmation'),
                 'send_account_confirmation_email': user_data.get('send_account_confirmation_email'),
+                'force_account_confirmation_by_sms': user_data.get('force_account_confirmation_by_sms'),
+                'phone_number': user_data.get('phone_number'),
                 'deactivate_after_date': user_data.get('deactivate_after_date'),
                 'domain': self.domain,
             }
@@ -848,6 +868,14 @@ def _modify_user_status(request, domain, user_id, is_active):
 def send_confirmation_email(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
     send_account_confirmation_if_necessary(user)
+    return JsonResponse(data={'success': True})
+
+
+@require_POST
+@location_safe
+def send_confirmation_sms(request, domain, user_id):
+    user = CommCareUser.get_by_user_id(user_id, domain)
+    send_account_confirmation_sms_if_necessary(user)
     return JsonResponse(data={'success': True})
 
 
@@ -1394,11 +1422,14 @@ def download_users(request, domain, user_type):
 
 
 @location_safe
-@method_decorator(toggles.TWO_STAGE_USER_PROVISIONING.required_decorator(), name='dispatch')
 class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
     template_name = "users/commcare_user_confirm_account.html"
     urlname = "commcare_user_confirm_account"
     strict_domain_fetching = True
+
+    @toggles.any_toggle_enabled(toggles.TWO_STAGE_USER_PROVISIONING_BY_SMS, toggles.TWO_STAGE_USER_PROVISIONING)
+    def dispatch(self, request, *args, **kwargs):
+        return super(CommCareUserConfirmAccountView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
@@ -1428,6 +1459,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             'domain_name': self.domain_object.display_name(),
             'user': self.user,
             'form': self.form,
+            'button_label': _('Confirm Account')
         })
         return context
 
@@ -1444,6 +1476,8 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                 f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
+            if hasattr(self, 'send_success_sms'):
+                self.send_success_sms()
             return HttpResponseRedirect('{}?username={}'.format(
                 reverse('domain_login', args=[self.domain]),
                 user.raw_username,
@@ -1451,3 +1485,62 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 
         # todo: process form data and activate the account
         return self.get(request, *args, **kwargs)
+
+
+@location_safe
+class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
+    urlname = "commcare_user_confirm_account_sms"
+    one_day_in_seconds = 60 * 60 * 24
+
+    @property
+    @memoized
+    def user_invite_hash(self):
+        return json.loads(b64_aes_decrypt(self.kwargs.get('user_invite_hash')))
+
+    @property
+    @memoized
+    def user_id(self):
+        return self.user_invite_hash.get('user_id')
+
+    @property
+    @memoized
+    def form(self):
+        if self.request.method == 'POST':
+            return MobileWorkerAccountConfirmationBySMSForm(self.request.POST)
+        else:
+            return MobileWorkerAccountConfirmationBySMSForm(initial={
+                'username': self.user.raw_username,
+                'full_name': self.user.full_name,
+                'email': "",
+            })
+
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountBySMSView, self).get_context_data(**kwargs)
+        context.update({
+            'invite_expired': self.is_invite_valid() is False,
+        })
+        return context
+
+    def send_success_sms(self):
+        settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        template_params = {
+            'name': self.user.full_name,
+            'domain': self.user.domain,
+            'username': self.user.raw_username,
+            'hq_name': settings.project_name
+        }
+        lang = guess_domain_language_for_sms(self.user.domain)
+        with override(lang):
+            text_content = render_to_string(
+                "registration/mobile/mobile_worker_account_confirmation_success_sms.txt", template_params
+            )
+        send_sms(
+            domain=self.user.domain, contact=None, phone_number=self.user.default_phone_number, text=text_content
+        )
+
+    def is_invite_valid(self):
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
+        settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
+            return True
+        return False

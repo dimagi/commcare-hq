@@ -130,7 +130,10 @@ class UcrTableManager(ABC):
         """Returns True if the manager needs to be bootstrapped"""
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+            or (
+                datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
+                and self.run_migrations
+            )
         )
 
     def bootstrap_if_needed(self):
@@ -219,18 +222,21 @@ class ConfigurableReportTableManager(UcrTableManager):
         ]
 
     def get_filtered_configs(self, configs=None):
-        configs = configs or self.get_all_configs()
 
-        if self.exclude_ucrs:
-            configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
+        if configs is None:
+            configs = self.get_all_configs()
 
-        if self.include_ucrs:
-            configs = [config for config in configs if config.table_id in self.include_ucrs]
-        elif self.ucr_division:
-            configs = _filter_by_hash(configs, self.ucr_division)
+        if configs:
+            if self.exclude_ucrs:
+                configs = [config for config in configs if config.table_id not in self.exclude_ucrs]
 
-        configs = _filter_domains_to_skip(configs)
-        configs = _filter_invalid_config(configs)
+            if self.include_ucrs:
+                configs = [config for config in configs if config.table_id in self.include_ucrs]
+            elif self.ucr_division:
+                configs = _filter_by_hash(configs, self.ucr_division)
+
+            configs = _filter_domains_to_skip(configs)
+            configs = _filter_invalid_config(configs)
 
         return configs
 
@@ -273,9 +279,11 @@ class ConfigurableReportTableManager(UcrTableManager):
             for provider in self.data_source_providers
             for source in provider.get_data_sources_modified_since(timestamp)
         ]
-        self._add_data_sources_to_table_adapters(new_data_sources)
+        filtered_data_sources = self.get_filtered_configs(new_data_sources)
+        invalid_data_sources = {ds._id for ds in new_data_sources} - {ds._id for ds in filtered_data_sources}
+        self._add_data_sources_to_table_adapters(filtered_data_sources, invalid_data_sources)
 
-    def _add_data_sources_to_table_adapters(self, new_data_sources):
+    def _add_data_sources_to_table_adapters(self, new_data_sources, invalid_data_sources):
         for new_data_source in new_data_sources:
             pillow_logging.info(f'updating modified data source: {new_data_source.domain}: {new_data_source._id}')
             domain_adapters = self.table_adapters_by_domain[new_data_source.domain]
@@ -287,6 +295,12 @@ class ConfigurableReportTableManager(UcrTableManager):
             domain_adapters.append(_get_indicator_adapter_for_pillow(new_data_source))
             # update dictionary
             self.table_adapters_by_domain[new_data_source.domain] = domain_adapters
+        for data_source in invalid_data_sources:
+            new_adapters = [
+                adapter for adapter in self.table_adapters_by_domain[data_source.domain]
+                if adapter._id != data_source._id
+            ]
+            self.table_adapters_by_domain[data_source.domain] = new_adapters
 
 
 class RegistryDataSourceTableManager(UcrTableManager):
@@ -304,7 +318,8 @@ class RegistryDataSourceTableManager(UcrTableManager):
         return self.data_source_provider.get_data_sources()
 
     def get_filtered_configs(self, configs=None):
-        configs = configs or self.get_all_configs()
+        if configs is None:
+            configs = self.get_all_configs()
         configs = _filter_invalid_config(configs)
         return configs
 
@@ -573,7 +588,6 @@ class ConfigurableReportPillowProcessor(BulkPillowProcessor):
 
     def bootstrap_if_needed(self):
         self.table_manager.bootstrap_if_needed()
-
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):

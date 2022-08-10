@@ -11,6 +11,7 @@ from corehq.apps.es.aggregations import (
     NestedAggregation,
     TermsAggregation,
 )
+from corehq.util.argparse_types import date_type
 
 
 class Command(BaseCommand):
@@ -20,22 +21,21 @@ class Command(BaseCommand):
             'domains', nargs="*",
             help='Domains to check, will include enterprise-controlled child domains.'
         )
-        parser.add_argument('--num-days', type=int, default=30, help='Number of days (UTC) to inspect')
+        parser.add_argument('start', type=date_type, help='Start date (inclusive)')
+        parser.add_argument('end', type=date_type, help='End date (inclusive)')
 
-    def handle(self, domains, **options):
+    def handle(self, domains, start, end, **options):
         filename = "form_case_counts_{}".format(datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S"))
         case_types = sorted(_get_case_types(domains))
         with open(filename, 'w', encoding='utf-8') as csv_file:
             field_names = ['domain', 'date', 'form_submissions'] + case_types
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()
-            for row in self.get_rows(domains, case_types, options['num_days']):
+            for row in self.get_rows(domains, case_types, start, end):
                 csv_writer.writerow(row)
         print(f"Result saved to {filename}")
 
-    def get_rows(self, domains, case_types, num_days):
-        end = date.today()
-        start = end - timedelta(days=num_days)
+    def get_rows(self, domains, case_types, start, end):
         for domain in _expand_domains(domains):
             submissions_counts = _get_submissions_counts(domain, start, end)
             case_update_counts = _get_case_update_counts(domain, start, end)
@@ -61,13 +61,6 @@ def _expand_domains(domains):
     )))
 
 
-def _get_datetime_range(num_days):
-    now = datetime.utcnow()
-    end = datetime(now.year, now.month, now.day)  # 00:00:00 this morning UTC
-    start = end - timedelta(days=num_days)
-    return start, end
-
-
 def _get_case_types(domains):
     return (CaseES()
             .domain(domains)
@@ -77,10 +70,11 @@ def _get_case_types(domains):
 
 def _get_submissions_counts(domain, start, end):
     res = (FormES()
+           .remove_default_filters()
            .domain(domain)
            .submitted(gte=start, lte=end)
            .aggregation(
-               DateHistogram('date_histogram', 'received_on', DateHistogram.Interval.DAY))
+               DateHistogram('date_histogram', 'inserted_at', DateHistogram.Interval.DAY))
            .run().aggregations.date_histogram)
     return {
         date.fromisoformat(bucket['key']): bucket['doc_count']

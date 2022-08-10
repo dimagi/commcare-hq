@@ -10,7 +10,7 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, Permissions, CommCareUser, UserHistory
+from corehq.apps.users.models import CouchUser, WebUser, HqPermissions, CommCareUser, UserHistory
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views import _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
@@ -100,7 +100,7 @@ class TestUpdateRoleFromView(TestCase):
         'is_non_admin_editable': False,
         'is_archived': False,
         'upstream_id': None,
-        'permissions': Permissions(edit_web_users=True).to_json(),
+        'permissions': HqPermissions(edit_web_users=True).to_json(),
         'assignable_by': []
     }
 
@@ -148,7 +148,7 @@ class TestUpdateRoleFromView(TestCase):
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
-        role_data["permissions"] = Permissions(edit_reports=True, view_report_list=["report1"]).to_json()
+        role_data["permissions"] = HqPermissions(edit_reports=True, view_report_list=["report1"]).to_json()
         updated_role = _update_role_from_view(self.domain, role_data)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)

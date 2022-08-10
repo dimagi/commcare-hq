@@ -1325,6 +1325,7 @@ msgid "Date and Time"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 msgid "Time"
 msgstr ""
 
@@ -2729,6 +2730,10 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Unexpected Error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2801,6 +2806,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -3051,6 +3060,10 @@ msgstr ""
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
+msgstr ""
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
 "<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
@@ -3108,6 +3121,10 @@ msgstr ""
 
 #: corehq/apps/domain/static/domain/js/billing_statements.js
 msgid "Submit Invoice Request"
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/case_search.js
+msgid "You have unchanged settings"
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
@@ -3631,6 +3648,11 @@ msgid "Please specify a password."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr ""
 
@@ -3810,6 +3832,10 @@ msgid "Select a value"
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
+msgid "From Time"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Select a language..."
 msgstr ""
@@ -3871,6 +3897,14 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/js/reports.async.js
@@ -3954,6 +3988,12 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
@@ -4127,6 +4167,10 @@ msgstr ""
 msgid "Unknown error"
 msgstr ""
 
+#: corehq/apps/userreports/static/userreports/js/ucr_expression.js
+msgid "Expression saved"
+msgstr ""
+
 #: corehq/apps/users/static/users/js/edit_commcare_user.js
 msgid "Password changed successfully."
 msgstr ""
@@ -4185,6 +4229,14 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
 msgid "Please enter a valid email address."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number is required when users confirm their own accounts by sms."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Phone number should contain only digits 0-9."
 msgstr ""
 
 #: corehq/apps/users/static/users/js/mobile_workers.js
@@ -4613,6 +4665,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
 msgid "Unable to save case configs"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js

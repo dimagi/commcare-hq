@@ -1,3 +1,27 @@
+"""
+RemoteRequestsHelper
+--------------------
+
+The ``<remote-request>`` descends from the ``<entry>``. Remote requests provide support for CommCare to request data from the server
+and then allow the user to select
+an item from that data and use it as a datum for a form. In practice, remote requests are only used for case
+search and claim workflows.
+
+This case search config UI in app manager is a thin wrapper around the various elements that are part of
+``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
+long.
+
+Case search and claim is typically an optional part of a workflow. In this use case, the remote request is accessed
+via an action, and the
+`rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct is used to go back to the main flow.
+However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
+using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
+available after the search, rather than having them destroyed by rewinding.
+
+This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
+endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
+of the smart link need to be claimed so the user can access them.
+"""
 from django.utils.functional import cached_property
 
 from corehq import toggles
@@ -27,11 +51,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestPost,
     RemoteRequestQuery,
     RemoteRequestSession,
+    Required,
     SessionDatum,
     Stack,
     StackJump,
     Text,
     TextXPath,
+    Validation,
     XPathVariable,
 )
 from corehq.apps.app_manager.util import (
@@ -133,7 +159,13 @@ class RemoteRequestFactory(object):
         return CaseIDXPath(XPath("current()").slash(".")).case().count().eq(1)
 
     def get_post_relevant(self):
-        return self.module.search_config.get_relevant(self.case_session_var, self.module.is_multi_select())
+        case_not_claimed = self.module.search_config.get_relevant(
+            self.case_session_var, self.module.is_multi_select())
+        if module_uses_smart_links(self.module):
+            case_in_project = self._get_smart_link_rewind_xpath()
+            return XPath.and_(case_not_claimed, case_in_project)
+        else:
+            return case_not_claimed
 
     def build_command(self):
         return Command(
@@ -266,8 +298,22 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
-            if prop.required:
-                kwargs['required'] = interpolate_xpath(prop.required)
+            if prop.required.test:
+                kwargs['required_attr'] = interpolate_xpath(prop.required.test)
+                # kwargs['required'] = Required(
+                #     test=interpolate_xpath(prop.required.test),
+                #     text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
+                # )
+            if prop.validations:
+                kwargs['validations'] = [
+                    Validation(
+                        test=interpolate_xpath(validation.test),
+                        text=[Text(
+                            locale_id=id_strings.search_property_validation_text(self.module, prop.name, i)
+                        )] if validation.has_text else [],
+                    )
+                    for i, validation in enumerate(prop.validations)
+                ]
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 
@@ -275,9 +321,7 @@ class RemoteRequestFactory(object):
         stack = Stack()
         rewind_if = None
         if module_uses_smart_links(self.module):
-            user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
-            # For case in same domain, do a regular case claim rewind
-            rewind_if = self._get_case_domain_xpath().eq(user_domain_xpath)
+            rewind_if = self._get_smart_link_rewind_xpath()
             # For case in another domain, jump to that other domain
             frame = PushFrame(if_clause=XPath.not_(rewind_if))
             frame.add_datum(StackJump(
@@ -293,6 +337,11 @@ class RemoteRequestFactory(object):
         frame.add_rewind(QuerySessionXPath(self.case_session_var).instance())
         stack.add_frame(frame)
         return stack
+
+    def _get_smart_link_rewind_xpath(self):
+        user_domain_xpath = session_var(COMMCARE_PROJECT, path="user/data")
+        # For case in same domain, do a regular case claim rewind
+        return self._get_case_domain_xpath().eq(user_domain_xpath)
 
     def get_smart_link_function(self):
         # Returns XPath that will evaluate to a URL.

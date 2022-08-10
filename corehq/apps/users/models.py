@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -93,7 +94,7 @@ from corehq.util.view_utils import absolute_reverse
 from .models_role import (  # noqa
     RoleAssignableBy,
     RolePermission,
-    SQLPermission,
+    Permission,
     StaticRole,
     UserRole,
 )
@@ -151,7 +152,7 @@ PARAMETERIZED_PERMISSIONS = {
 }
 
 
-class Permissions(DocumentSchema):
+class HqPermissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     view_web_users = BooleanProperty(default=False)
 
@@ -208,7 +209,7 @@ class Permissions(DocumentSchema):
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
-        permissions = Permissions.min()
+        permissions = HqPermissions.min()
         for perm in permission_list:
             setattr(permissions, perm.name, perm.allow_all)
             if perm.name in PARAMETERIZED_PERMISSIONS:
@@ -252,7 +253,7 @@ class Permissions(DocumentSchema):
     def permission_names(cls):
         """Returns a list of permission names"""
         return {
-            name for name, value in Permissions.properties().items()
+            name for name, value in HqPermissions.properties().items()
             if isinstance(value, BooleanProperty)
         }
 
@@ -261,7 +262,7 @@ class Permissions(DocumentSchema):
         return list(self._yield_enabled())
 
     def _yield_enabled(self):
-        for name in Permissions.permission_names():
+        for name in HqPermissions.permission_names():
             value = getattr(self, name)
             list_value = None
             if name in PARAMETERIZED_PERMISSIONS:
@@ -274,6 +275,8 @@ class Permissions(DocumentSchema):
         return self.view_reports or report in self.view_report_list
 
     def view_tableau_viz(self, viz_id):
+        if not self.access_all_locations:
+            return False
         return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
@@ -296,16 +299,16 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions._all(True)
+        return HqPermissions._all(True)
 
     @classmethod
     def min(cls):
-        return Permissions._all(False)
+        return HqPermissions._all(False)
 
     @classmethod
     def _all(cls, value: bool):
-        perms = Permissions()
-        for name in Permissions.permission_names():
+        perms = HqPermissions()
+        for name in HqPermissions.permission_names():
             setattr(perms, name, value)
         return perms
 
@@ -340,7 +343,7 @@ class DomainMembership(Membership):
         if self.role:
             return self.role.permissions
         else:
-            return Permissions()
+            return HqPermissions()
 
     @classmethod
     def wrap(cls, data):
@@ -1462,6 +1465,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         ])
 
     def can_view_some_tableau_viz(self, domain):
+        if not self.can_access_all_locations(domain):
+            return False
+
         from corehq.apps.reports.models import TableauVisualization
         return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
 
@@ -1889,10 +1895,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         desired = set(group_ids)
         current = set(self.get_group_ids())
         touched = []
+        faulty_groups = []
         for to_add in desired - current:
             group = Group.get(to_add)
+            if group.domain != self.domain:
+                faulty_groups.append(to_add)
+                continue
             group.add_user(self._id, save=False)
             touched.append(group)
+        if faulty_groups:
+            raise ValidationError("Unable to save groups. The following group_ids are not in the current domain: "
+                                  + ', '.join(faulty_groups))
         for to_remove in current - desired:
             group = Group.get(to_remove)
             group.remove_user(self._id)
@@ -2570,6 +2583,9 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+
+    def __repr__(self):
+        return f"Invitation(domain='{self.domain}', email='{self.email})"
 
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):

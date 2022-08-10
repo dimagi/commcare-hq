@@ -43,12 +43,19 @@ persisted by their base class, ``SQLRepeater.options``, defined as
 ``JSONField(default=dict)``.
 
 """
-from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
+from dimagi.utils.parsing import ISO_DATETIME_FORMAT, json_format_datetime, string_to_utc_datetime
+from datetime import datetime
 
 
 class DateTimeCoder:
 
     def to_json(value):
+        if type(value) == str:
+            try:
+                datetime.strptime(value, ISO_DATETIME_FORMAT)
+                return value
+            except ValueError:
+                raise ValueError(f"{value} should be a valid datetime of Format {ISO_DATETIME_FORMAT}")
         return json_format_datetime(value) if value is not None else None
 
     def from_json(value):
@@ -86,9 +93,7 @@ class OptionValue(property):
             if self.coder:
                 return self.coder.from_json(obj.options[self.name])
             return obj.options[self.name]
-        if self.default is self.NOT_SET:
-            raise AttributeError(self.name)
-        value = self.default() if callable(self.default) else self.default
+        value = self.get_default_value()
         obj.options[self.name] = value
         return value
 
@@ -105,6 +110,11 @@ class OptionValue(property):
         if self.coder:
             value = self.coder.to_json(value)
         obj.options[self.name] = value
+
+    def get_default_value(self):
+        if self.default is self.NOT_SET:
+            raise AttributeError(self.name)
+        return self.default() if callable(self.default) else self.default
 
 
 def _assert_options(obj):

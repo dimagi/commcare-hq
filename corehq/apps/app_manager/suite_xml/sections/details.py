@@ -1,3 +1,28 @@
+"""
+DetailContributor
+-----------------
+
+Details represent the configuration for case lists and case details. The reuse of the word "Detail" here is
+unfortunate. Details **can** be used for other purposes, such as the ``referral_detail``, but 99% of the time
+they're used for case list/detail.
+
+The case list is the "short" detail and the case detail is the "long" detail. A handful of configurations are only
+supported for one of these, e.g., actions only get added to the short detail.
+
+The detail element can be nested. HQ never nests short details, but it nests long details to produce tabbed case
+details. Each tab has its own ``<detail>`` element.
+
+The bulk of detail configuration is in the display properties, called "fields" and sometimes "columns" in the code. Each
+field has a good deal of configuration, and the code transforms them into named tuples while processing them.
+Each field has a format, one of about a dozen options. Formats are typically either UI-based, such as formatting a
+phone number to display as a link, or calculation-based, such as configuring a property to display differently when
+it's "late", i.e., is too far past some reference date.
+
+Most fields map to a particular case property, with the exception of calculated properties. These calculated
+properties are identified only by number. A typical field might be called ``case_dob_1`` in the suite, indicating
+both its position and its case property, but a calculation would be called ``case_calculated_property_1``.
+
+"""
 import os
 from collections import defaultdict, namedtuple
 from xml.sax.saxutils import escape
@@ -49,7 +74,12 @@ from corehq.apps.app_manager.util import (
 from corehq.apps.app_manager.xpath import CaseXPath, CaseTypeXpath, XPath, interpolate_xpath, session_var
 from corehq.util.timer import time_method
 
-AUTO_LAUNCH_EXPRESSION = "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0"
+AUTO_LAUNCH_EXPRESSIONS = {
+    "single-select": "$next_input = '' or count(instance('casedb')/casedb/case[@case_id=$next_input]) = 0",
+    "multi-select": ("count(instance('next_input')/results/value) = 0"
+                     " or count(instance('next_input')/results/value"
+                     "[count(instance('casedb')/casedb/case[@case_id = current()/.]) = 0]) > 0")
+}
 
 
 class DetailContributor(SectionContributor):
@@ -395,10 +425,9 @@ class DetailContributor(SectionContributor):
         auto_launch_expression = "false()"
         if allow_auto_launch and module.search_config.auto_launch:
             if module.is_multi_select():
-                # AUTO_LAUNCH_EXPRESSION is incompatible with multi select case lists - See USH-1870
-                auto_launch_expression = "true()"
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['multi-select'])
             else:
-                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSION)
+                auto_launch_expression = XPath(AUTO_LAUNCH_EXPRESSIONS['single-select'])
         return auto_launch_expression
 
     def _get_custom_xml_detail(self, module, detail, detail_type):

@@ -92,10 +92,14 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
                                        SimpleFilter('caserulecriteria__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.MatchPropertyDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.LocationFilterDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.CustomActionDefinition',
                                        SimpleFilter('caseruleaction__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.UpdateCaseDefinition',
                                        SimpleFilter('caseruleaction__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.UCRFilterDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CreateScheduleInstanceActionDefinition',
                                  SimpleFilter('caseruleaction__rule__domain')),
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleAction', SimpleFilter('rule__domain')),
@@ -155,9 +159,15 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
+    UniqueFilteredModelIteratorBuilder(
+        'translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.OperatorCallLimitSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.SMSAccountConfirmationSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTable', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
 ]]
 
 
@@ -166,7 +176,13 @@ class SqlDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        objects = get_objects_to_dump(self.domain, self.excludes, self.includes, stats_counter=stats, stdout=self.stdout)
+        objects = get_objects_to_dump(
+            self.domain,
+            self.excludes,
+            self.includes,
+            stats_counter=stats,
+            stdout=self.stdout,
+        )
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,

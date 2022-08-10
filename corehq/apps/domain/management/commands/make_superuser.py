@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from email_validator import EmailSyntaxError, validate_email
 
+from corehq.apps.hqadmin.views.users import send_email_notif
 from corehq.util.signals import signalcommand
 
 logger = logging.getLogger(__name__)
@@ -56,12 +57,20 @@ class Command(BaseCommand):
         if is_superuser_changed or is_staff_changed:
             couch_user.save()
 
+        fields_changed = {'email': couch_user.username}
+
         if is_superuser_changed:
             logger.info("→ User {} is now a superuser".format(couch_user.username))
+            fields_changed['is_superuser'] = couch_user.is_superuser
         else:
             logger.info("✓ User {} is a superuser".format(couch_user.username))
+            fields_changed['same_superuser'] = couch_user.is_superuser
 
         if is_staff_changed:
             logger.info("→ User {} can now access django admin".format(couch_user.username))
+            fields_changed['is_staff'] = couch_user.is_staff
         else:
             logger.info("✓ User {} can access django admin".format(couch_user.username))
+            fields_changed['same_staff'] = couch_user.is_staff
+
+        send_email_notif([fields_changed], changed_by_user='The make_superuser command')

@@ -24,13 +24,13 @@ class StaticRole:
 
     @classmethod
     def domain_admin(cls, domain):
-        from corehq.apps.users.models import Permissions
-        return StaticRole(domain, "Admin", Permissions.max())
+        from corehq.apps.users.models import HqPermissions
+        return StaticRole(domain, "Admin", HqPermissions.max())
 
     @classmethod
     def domain_default(cls, domain):
-        from corehq.apps.users.models import Permissions
-        return StaticRole(domain, None, Permissions())
+        from corehq.apps.users.models import HqPermissions
+        return StaticRole(domain, None, HqPermissions())
 
     def get_qualified_id(self):
         return self.name.lower() if self.name else None
@@ -101,12 +101,12 @@ class UserRole(models.Model):
 
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
-        from corehq.apps.users.models import Permissions
+        from corehq.apps.users.models import HqPermissions
         with transaction.atomic():
             role = UserRole.objects.create(domain=domain, name=name, **kwargs)
             if permissions is None:
                 # match couch functionality and set default permissions
-                permissions = Permissions()
+                permissions = HqPermissions()
             role.set_permissions(permissions.to_list())
             if assignable_by:
                 if not isinstance(assignable_by, list):
@@ -168,8 +168,8 @@ class UserRole(models.Model):
 
     @property
     def permissions(self):
-        from corehq.apps.users.models import Permissions
-        return Permissions.from_permission_list(self.get_permission_infos())
+        from corehq.apps.users.models import HqPermissions
+        return HqPermissions.from_permission_list(self.get_permission_infos())
 
     def set_assignable_by_couch(self, couch_role_ids):
         sql_ids = []
@@ -229,7 +229,7 @@ class UserRole(models.Model):
 @foreign_value_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
-    permission_fk = models.ForeignKey("SQLPermission", on_delete=models.CASCADE)
+    permission_fk = models.ForeignKey("Permission", on_delete=models.CASCADE)
     permission = ForeignValue(permission_fk)
 
     # if True allow access to all items
@@ -262,8 +262,8 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
-@audit_fields("value", class_path="corehq.apps.users.models_role.Permission")
-class SQLPermission(models.Model):
+@audit_fields("value")
+class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
     class Meta:
@@ -271,9 +271,9 @@ class SQLPermission(models.Model):
 
     @classmethod
     def create_all(cls):
-        from corehq.apps.users.models import Permissions
-        for name in Permissions.permission_names():
-            SQLPermission.objects.get_or_create(value=name)
+        from corehq.apps.users.models import HqPermissions
+        for name in HqPermissions.permission_names():
+            Permission.objects.get_or_create(value=name)
 
 
 @audit_fields("role", "assignable_by_role")

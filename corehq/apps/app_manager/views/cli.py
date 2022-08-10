@@ -7,6 +7,7 @@ from couchdbkit.exceptions import DocTypeError, ResourceNotFound
 from dimagi.ext.couchdbkit import Document
 from soil import FileDownload
 
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.views.utils import get_langs, report_build_time
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.models import Domain
@@ -25,6 +26,7 @@ from ..dbaccessors import (
 
 @json_error
 @api_auth
+@api_throttle
 def list_apps(request, domain):
     def app_to_json(app):
         return {

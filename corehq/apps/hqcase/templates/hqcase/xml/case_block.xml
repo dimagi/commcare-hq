@@ -1,5 +1,5 @@
 <?xml version='1.0' ?>
-<system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms">
+<system version="1" uiVersion="1" xmlns="{{ xmlns }}" xmlns:orx="http://openrosa.org/jr/xforms"{% if name %} name="{{ name }}"{% endif %}>
     {% if form_data %}
     {% for name, value in form_data.items %}
     <{{ name }}>{{ value }}</{{ name }}>

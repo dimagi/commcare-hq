@@ -1,6 +1,6 @@
 import datetime
 import math
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -11,10 +11,8 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 import pytz
 from memoized import memoized
-from pygooglechart import ScatterChart
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
@@ -1252,127 +1250,6 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
 class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     flush_layout = True
     report_template_path = "reports/async/basic.html"
-
-
-@location_safe
-class WorkerActivityTimes(WorkerMonitoringChartBase,
-        MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
-    name = gettext_noop("Worker Activity Times")
-    slug = "worker_activity_times"
-    is_cacheable = True
-
-    description = gettext_noop("Graphical representation of when forms are "
-                               "completed or submitted.")
-
-    fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter']
-
-    report_partial_path = "reports/partials/punchcard.html"
-
-    @property
-    @memoized
-    def activity_times(self):
-        users = _get_selected_users(self.domain, self.request)
-        user_ids = [user.user_id for user in users]
-        xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
-        app_ids = [form['app_id'] for form in self.all_relevant_forms.values()]
-
-        paged_result = get_forms(
-            self.domain,
-            self.datespan.startdate_utc,
-            self.datespan.enddate_utc,
-            user_ids=user_ids,
-            app_ids=app_ids,
-            xmlnss=xmlnss,
-            by_submission_time=self.by_submission_time,
-        )
-        if paged_result.total > 5000:
-            raise TooMuchDataError()
-
-        all_times = []
-
-        for form in paged_result.hits:
-            if self.by_submission_time:
-                all_times.append(
-                    ServerTime(string_to_utc_datetime(form['received_on'])).user_time(self.timezone).done()
-                )
-            else:
-                all_times.append(
-                    PhoneTime(
-                        string_to_utc_datetime(safe_index(form, ['form', 'meta', 'timeEnd'])),
-                        self.timezone,
-                    )
-                    .user_time(self.timezone)
-                    .done()
-                )
-
-        aggregated_times = defaultdict(int)
-        for t in all_times:
-            aggregated_times[(t.weekday(), t.hour)] += 1
-        return aggregated_times
-
-    @property
-    def report_context(self):
-        error = None
-        try:
-            activity_times = self.activity_times
-            if len(activity_times) == 0:
-                error = _("Note: No submissions matched your filters.")
-        except TooMuchDataError:
-            activity_times = defaultdict(int)
-            error = _(TOO_MUCH_DATA)
-
-        return dict(
-            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
-            error=error,
-            timezone=self.timezone,
-        )
-
-    @classmethod
-    def generate_chart(cls, data, width=950, height=300, timezone="UTC"):
-        """
-            Gets a github style punchcard chart.
-            Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
-        """
-        no_data = not data
-        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
-        #   since a new version is not yet released
-        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
-        chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
-
-        chart.add_data([(h % 24) for h in range(24 * 8)])
-
-        d = []
-        for i in range(8):
-            d.extend([i] * 24)
-        chart.add_data(d)
-
-        # mapping between numbers 0..6 and its day of the week label
-        day_names = [_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun")]
-        # the order, bottom-to-top, in which the days should appear
-        # i.e. Sun, Sat, Fri, Thu, etc
-        days = (6, 5, 4, 3, 2, 1, 0)
-
-        sizes = []
-        for d in days:
-            sizes.extend([data[(d, h)] for h in range(24)])
-        sizes.extend([0] * 24)
-        if no_data:
-            # fill in a line out of view so that chart.get_url() doesn't crash
-            sizes.extend([1] * 24)
-        chart.add_data(sizes)
-
-        chart.set_axis_labels('x', [''] + [(str(h) + ':00') for h in range(24)] + [''])
-        chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
-        # our google charts library doesn't support unicode
-        # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
-
-        chart.add_marker(1, 1.0, 'o', '333333', 25)
-        return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):

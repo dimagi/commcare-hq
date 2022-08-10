@@ -141,23 +141,18 @@ The following linked project spaces received content:
 
         app_id = model['detail']['app_id']
         found = False
-        error_prefix = ""
-        try:
-            for linked_app in get_apps_in_domain(domain_link.linked_domain, include_remote=False):
-                if is_linked_app(linked_app) and linked_app.family_id == app_id:
-                    found = True
-                    app = update_linked_app(linked_app, app_id, user.user_id)
+        for linked_app in get_apps_in_domain(domain_link.linked_domain, include_remote=False):
+            if is_linked_app(linked_app) and linked_app.family_id == app_id:
+                found = True
+                app = update_linked_app(linked_app, app_id, user.user_id)
 
-            if not found:
-                return self._error_tuple(_("Could not find app"))
+        if not found:
+            return self._error_tuple(_("Could not find app"))
 
-            if build_and_release:
-                error_prefix = _("Updated app but did not build or release: ")
-                build = app.make_build()
-                build.is_released = True
-                build.save(increment_version=False)
-        except Exception as e:  # intentionally broad
-            return self._error_tuple(error_prefix + str(e))
+        if build_and_release:
+            build = app.make_build()
+            build.is_released = True
+            build.save(increment_version=False)
 
     def _release_report(self, domain_link, model, user_id):
         report_id = model['detail']['report_id']
@@ -271,10 +266,6 @@ def release_domain(upstream_domain, downstream_domain, username, models, build_a
 @task(queue='linked_domain_queue')
 def send_linked_domain_release_email(results, upstream_domain, username, models, downstream_domains):
     manager = ReleaseManager(upstream_domain, username)
-
-    # chord sends a list of results only if there were multiple tasks
-    if len(downstream_domains) == 1:
-        results = [results]
 
     for result in results:
         (successes, errors) = result

@@ -203,6 +203,10 @@ LATEST_APK_VALUE = 'latest'
 LATEST_APP_VALUE = 0
 
 
+class LabelProperty(DictProperty):
+    """Stores a {lang_code: translated_string} dict"""
+
+
 def jsonpath_update(datum_context, value):
     field = datum_context.path.fields[0]
     parent = jsonpath.Parent().find(datum_context)[0]
@@ -399,6 +403,7 @@ class OpenCaseAction(FormAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(OpenCaseAction, cls).wrap(data)
 
 
@@ -428,6 +433,7 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('case_name', None)
         if 'case_properties' in data:
             data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
         return super(OpenSubCaseAction, cls).wrap(data)
@@ -679,6 +685,7 @@ class AdvancedOpenCaseAction(AdvancedAction):
             data['name_update'] = {
                 'question_path': path
             }
+            data.pop('name_path', None)
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
@@ -897,13 +904,27 @@ class FormSchedule(DocumentSchema):
     termination_condition = SchemaProperty(FormActionCondition)
 
 
-class CustomAssertion(DocumentSchema):
+# It's a shame to have both Assertion and CustomAssertion, as they're
+# essentially the same, but some usages of Assertion are optional
+# SchemaPropertys, and marking `test` as required precludes that. Setting the
+# SchemaProperty itself as optional doesn't work
+# https://github.com/dimagi/commcare-hq/pull/31885#discussion_r918391347
+class Assertion(DocumentSchema):
+    """Parallel of the Assertion xml entity in the suite file"""
+    test = StringProperty()
+    text = DictProperty(StringProperty)
+
+    @property
+    def has_text(self):
+        return any(self.text.values())
+
+
+class CustomAssertion(Assertion):
     """Custom assertions to add to the assertions block
     test: The actual assertion to run
     locale_id: The id of the localizable string
     """
     test = StringProperty(required=True)
-    text = DictProperty(StringProperty)
 
 
 class CustomInstance(DocumentSchema):
@@ -1209,8 +1230,8 @@ class FormBase(DocumentSchema):
     def timing_context(self):
         return self.get_app().timing_context
 
-    def validate_for_build(self, validate_module=True):
-        return self.validator.validate_for_build(validate_module)
+    def validate_for_build(self):
+        return self.validator.validate_for_build()
 
     def get_unique_id(self):
         """
@@ -2142,7 +2163,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
 
-    label = DictProperty()
+    label = LabelProperty()
     show = BooleanProperty(default=False)
 
     def rename_lang(self, old_lang, new_lang):
@@ -2168,19 +2189,35 @@ class CaseSearchProperty(DocumentSchema):
     Case properties available to search on.
     """
     name = StringProperty()
-    label = DictProperty()
+    label = LabelProperty()
     appearance = StringProperty(exclude_if_none=True)
     input_ = StringProperty(exclude_if_none=True)
     default_value = StringProperty(exclude_if_none=True)
-    hint = DictProperty()
+    hint = LabelProperty()
     hidden = BooleanProperty(default=False)
     allow_blank_value = BooleanProperty(default=False)
     exclude = BooleanProperty(default=False)
-    required = StringProperty(exclude_if_none=True)
+    required = SchemaProperty(Assertion)
+    validations = SchemaListProperty(Assertion)
 
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
+
+    @classmethod
+    def wrap(cls, data):
+        required = data.get('required')
+        if required and isinstance(required, str):
+            data['required'] = {'test': required}
+
+        old_validations = data.pop('validation', None)  # it was changed to plural
+        if old_validations:
+            data['validations'] = [{
+                'test': old['xpath'],
+                'text': old['message'],
+            } for old in old_validations if old.get('xpath')]
+
+        return super().wrap(data)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2195,19 +2232,19 @@ class BaseCaseSearchLabel(NavMenuItemMediaMixin):
 
 
 class CaseSearchLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search All Cases'})
+    label = LabelProperty(default={'en': 'Search All Cases'})
 
 
 class CaseSearchAgainLabel(BaseCaseSearchLabel):
-    label = DictProperty(default={'en': 'Search Again'})
+    label = LabelProperty(default={'en': 'Search Again'})
 
 
 class CaseSearch(DocumentSchema):
     """
     Properties and search command label
     """
-    command_label = DictProperty(default={'en': 'Search All Cases'})
-    again_label = DictProperty(default={'en': 'Search Again'})
+    command_label = LabelProperty(default={'en': 'Search All Cases'})
+    again_label = LabelProperty(default={'en': 'Search Again'})
     search_label = SchemaProperty(CaseSearchLabel)
     search_again_label = SchemaProperty(CaseSearchAgainLabel)
     properties = SchemaListProperty(CaseSearchProperty)
@@ -2222,7 +2259,7 @@ class CaseSearch(DocumentSchema):
     data_registry = StringProperty(exclude_if_none=True)
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
-    title_label = DictProperty(default={})
+    title_label = LabelProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -4092,7 +4129,7 @@ def absolute_url_property(method):
     """
     @wraps(method)
     def _inner(self):
-        return "%s%s" % (self.url_base, method(self))
+        return urljoin(self.url_base, method(self))
     return property(_inner)
 
 
@@ -4473,12 +4510,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if bitly.BITLY_CONFIGURED:
+                view_url = reverse(view_name, args=[self.domain, self._id])
                 if build_profile_id is not None:
-                    long_url = "{}{}?profile={}".format(
-                        self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
+                    long_url = urljoin(
+                        self.url_base,
+                        f'{view_url}?profile={build_profile_id}'
                     )
                 else:
-                    long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
+                    long_url = urljoin(self.url_base, view_url)
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None

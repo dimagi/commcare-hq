@@ -50,6 +50,7 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     update_hubspot_properties,
 )
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
@@ -95,7 +96,10 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     TEMP_REPORT_PREFIX,
 )
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_and_registry_report_configs_for_domain
+)
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -107,10 +111,7 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
-from corehq.apps.userreports.forms import (
-    UCRExpressionForm,
-    UCRExpressionUpdateForm,
-)
+from corehq.apps.userreports.forms import UCRExpressionForm
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
@@ -163,12 +164,13 @@ from corehq.apps.userreports.util import (
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
+    wrap_report_config_by_type,
 )
 from corehq.apps.users.decorators import (
     get_permission_name,
     require_permission,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -243,7 +245,7 @@ class BaseUserConfigReportsView(BaseDomainView):
         allow_access_to_ucrs = (
             hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
-                get_permission_name(Permissions.edit_ucrs)
+                get_permission_name(HqPermissions.edit_ucrs)
             )
         )
         if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
@@ -334,7 +336,7 @@ class CreateConfigReportView(BaseEditConfigReportView):
 
 class ReportBuilderView(BaseDomainView):
 
-    @method_decorator(require_permission(Permissions.edit_reports))
+    @method_decorator(require_permission(HqPermissions.edit_reports))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables
@@ -827,7 +829,7 @@ def _assert_report_delete_privileges(request):
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id,
@@ -871,12 +873,12 @@ def delete_report(request, domain, report_id):
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
     redirect = request.GET.get("redirect", None)
     if not redirect:
-        redirect = reverse('configurable_reports_home', args=[domain])
+        redirect = reverse('saved_reports', args=[domain])
     return HttpResponseRedirect(redirect)
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
@@ -912,7 +914,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
             if '_id' in json_spec:
                 del json_spec['_id']
             json_spec['domain'] = self.domain
-            report = ReportConfiguration.wrap(json_spec)
+            report = wrap_report_config_by_type(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
@@ -1012,8 +1014,7 @@ def _get_parsed_expression(domain, factory_context, expression_text, expression_
     try:
         expression_json = json.loads(expression_text)
         return ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
+            expression_json, factory_context
         )
     except BadSpecError as e:
         raise HttpException(400, _("Problem with expression: {}").format(e))
@@ -1206,7 +1207,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
-        reports += ReportConfiguration.by_domain(self.domain)
+        reports += get_report_and_registry_report_configs_for_domain(self.domain)
         ret = []
         for report in reports:
             try:
@@ -1480,8 +1481,9 @@ def process_url_params(params, columns):
 
 
 @api_auth_with_scope(['reports:view'])
-@require_permission(Permissions.view_reports)
+@require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
+@api_throttle
 def export_data_source(request, domain, config_id):
     """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)
@@ -1614,16 +1616,16 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         }
 
     def indicator_summary(self):
-        context = self.config.get_factory_context()
+        factory_context = self.config.get_factory_context()
         wrapped_specs = [
-            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            IndicatorFactory.from_spec(spec, factory_context).wrapped_spec
             for spec in self.config.configured_indicators
         ]
         return [
             {
                 "column_id": wrapped.column_id,
                 "comment": wrapped.comment,
-                "readable_output": wrapped.readable_output(context)
+                "readable_output": wrapped.readable_output(factory_context)
             }
             for wrapped in wrapped_specs if wrapped
         ]
@@ -1650,8 +1652,8 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
 
     def configured_filter_summary(self):
         if self.config.configured_filter:
-            return str(FilterFactory.from_spec(self.config.configured_filter,
-                                            context=self.config.get_factory_context()))
+            return str(FilterFactory.from_spec(
+                self.config.configured_filter, self.config.get_factory_context()))
         return _("No filter defined")
 
     def _add_links_to_output(self, items):
@@ -1715,9 +1717,10 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             'name': expression.name,
             'type': expression.expression_type,
             'description': expression.description,
-            'definition': self._truncate_value(json.dumps(expression.definition)),
+            'definition': json.dumps(expression.definition, indent=2),
+            'definition_preview': self._truncate_value(json.dumps(expression.definition)),
             'upstream_id': expression.upstream_id,
-            'updateForm': self.get_update_form_response(self.get_update_form(instance=expression)),
+            'edit_url': reverse(UCRExpressionEditView.urlname, args=[self.domain, expression.id]),
         }
 
     def _truncate_value(self, value):
@@ -1743,18 +1746,55 @@ class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
             "template": "base-ucr-statement-template",
         }
 
-    def get_update_form(self, instance=None):
-        if instance is None:
-            instance = UCRExpression.objects.get(
-                id=self.request.POST.get("id"), domain=self.domain
-            )
-        if self.request.method == "POST" and self.action == "update":
-            return UCRExpressionUpdateForm(self.request, self.request.POST, instance=instance)
-        return UCRExpressionUpdateForm(self.request, instance=instance)
 
-    def get_updated_item_data(self, update_form):
-        updated_expression = update_form.save()
-        return {
-            "itemData": self._item_data(updated_expression),
-            "template": "base-ucr-statement-template",
-        }
+@method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
+class UCRExpressionEditView(BaseProjectDataView):
+    page_title = _("Edit UCR Expression")
+    urlname = "edit_ucr_expression"
+    template_name = "userreports/ucr_expression.html"
+
+    @property
+    def expression_id(self):
+        return self.kwargs['expression_id']
+
+    @property
+    @memoized
+    def expression(self):
+        try:
+            return UCRExpression.objects.get(id=self.expression_id)
+        except UCRExpression.DoesNotExist:
+            raise Http404
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.expression_id,))
+
+    @property
+    def main_context(self):
+        main_context = super(UCRExpressionEditView, self).main_context
+
+        main_context.update({
+            "expression": {
+                "id": self.expression.id,
+                "domain": self.expression.domain,
+                "name": self.expression.name,
+                "description": self.expression.description,
+                "expression_type": self.expression.expression_type,
+                "definition_raw": self.expression.definition,
+            },
+        })
+        return main_context
+
+    def post(self, request, domain, **kwargs):
+        form = UCRExpressionForm(self.request, self.request.POST, instance=self.expression)
+        if form.is_valid():
+            form.save()
+            try:
+                self.expression.wrapped_definition(EvaluationContext({}))
+            except BadSpecError as e:
+                return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
+            return JsonResponse({})
+
+        return JsonResponse({"errors": [
+            f"{field} {error}" for field, error in form.errors.items()
+        ]}, status=400)

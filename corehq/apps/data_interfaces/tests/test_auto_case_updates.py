@@ -9,7 +9,6 @@ from casexml.apps.case.mock import CaseFactory
 
 from corehq.apps import hqcase
 from corehq.apps.data_interfaces.models import (
-    AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseRuleActionResult,
     CaseRuleSubmission,
@@ -20,7 +19,9 @@ from corehq.apps.data_interfaces.models import (
     CustomMatchDefinition,
     DomainCaseRuleRun,
     MatchPropertyDefinition,
+    UCRFilterDefinition,
     UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
@@ -49,11 +50,14 @@ def _save_case(domain, case):
     case.save(with_tracked_models=True)
 
 
-def _update_case(domain, case_id, server_modified_on, last_visit_date=None):
+def _update_case(domain, case_id, server_modified_on, last_visit_date=None, owner_id=None):
     case = CommCareCase.objects.get_case(case_id, domain)
     case.server_modified_on = server_modified_on
     if last_visit_date:
         set_case_property_directly(case, 'last_visit_date', last_visit_date.strftime('%Y-%m-%d'))
+    if owner_id:
+        case.owner_id = owner_id
+
     _save_case(domain, case)
 
 
@@ -558,6 +562,87 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertFalse(rule.criteria_match(case, datetime(2022, 4, 15)))
 
+    def test_location_filter_criteria_does_not_include_child_locations(self):
+        location_id = 'diagon_alley_id'
+        # Create location and child; assign case to child
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            LocationFilterDefinition,
+            location_id=location_id,
+            include_child_locations=False,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
+
+            _update_case(self.domain, case.case_id, case.server_modified_on, owner_id=location_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
+
+    def test_location_filter_criteria_does_include_child_locations(self):
+        from corehq.apps.locations.models import SQLLocation, LocationType
+        from corehq.apps.domain.shortcuts import create_domain
+
+        create_domain(self.domain)
+
+        location_type_provice = LocationType(domain=self.domain, name='Province')
+        location_type_provice.save()
+
+        location_type_city = LocationType(domain=self.domain, name='City', parent_type=location_type_provice)
+        location_type_city.save()
+
+        western_cape = SQLLocation.objects.create(
+            domain=self.domain,
+            name='Western Cape',
+            location_type=location_type_provice,
+        )
+
+        cape_town = SQLLocation.objects.create(
+            domain=self.domain,
+            name='Cape Town',
+            location_type=location_type_city,
+            parent=western_cape,
+        )
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            LocationFilterDefinition,
+            location_id=western_cape.location_id,
+            include_child_locations=True,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
+
+            _update_case(self.domain, case.case_id, case.server_modified_on, owner_id=cape_town.location_id)
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
+            self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
+
+    def test_ucr_filter(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            UCRFilterDefinition,
+            configured_filter={
+                "type": "boolean_expression",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "prop",
+                },
+                "operator": "eq",
+                "property_value": "act-on-me",
+            }
+        )
+
+        with _with_case(self.domain, "person", datetime.utcnow(), update={"prop": "dont-act-on-me"}) as case:
+            now = datetime.utcnow()
+            self.assertFalse(rule.criteria_match(case, now))
+
+        with _with_case(self.domain, "person", datetime.utcnow(), update={"prop": "act-on-me"}) as case:
+            now = datetime.utcnow()
+            self.assertTrue(rule.criteria_match(case, now))
+
+
 def set_case_property_directly(case, property_name, value):
     case.case_json[property_name] = value
 
@@ -965,7 +1050,7 @@ class CaseRuleOnSaveTests(BaseCaseRuleTest):
             # When the last update is an auto case update, we don't run the rule on save
             with patch('corehq.apps.data_interfaces.models.AutomaticUpdateRule.run_rule') as run_rule_patch:
                 hqcase.utils.update_case(self.domain, case.case_id, case_properties={'do_update': 'Y'},
-                    xmlns=AUTO_UPDATE_XMLNS)
+                    xmlns=hqcase.utils.AUTO_UPDATE_XMLNS)
                 run_rule_patch.assert_not_called()
 
     def test_do_not_run_on_save_when_flag_is_disabled(self):

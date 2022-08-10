@@ -8,6 +8,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.jsError = function (message) {
+        return hqImport("cloudcare/js/form_entry/errors").JS_ERROR + message;
+    };
+
     module.isWebApps = function () {
         var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             environment = FormplayerFrontend.getChannel().request('currentUser').environment;
@@ -96,7 +100,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     /**
-     * Composes a boardcast object from mapbox result to be used by receivers
+     * Composes a broadcast object from mapbox result to be used by receivers
      * @param {Object} mapboxResult - Mapbox query result object
      */
     module.getBroadcastObject = function (mapboxResult) {
@@ -106,8 +110,12 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         };
         mapboxResult.context.forEach(function (contextValue) {
             try {
-                if (contextValue.id.startsWith('postcode')) {
+                if (contextValue.id.startsWith('district')) {
+                    broadcastObj.county = contextValue.text;
+                    broadcastObj.district = contextValue.text;
+                } else if (contextValue.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextValue.text;
+                    broadcastObj.postcode = contextValue.text;
                 } else if (contextValue.id.startsWith('place')) {
                     broadcastObj.city = contextValue.text;
                 } else if (contextValue.id.startsWith('country')) {
