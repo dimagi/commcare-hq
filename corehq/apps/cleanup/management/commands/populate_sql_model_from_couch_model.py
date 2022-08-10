@@ -277,7 +277,8 @@ Run the following commands to run the migration and get up to date:
             self.sql_class().__name__,
         ))
 
-        if self._should_migrate_in_bulk():
+        is_bulk = self._should_migrate_in_bulk()
+        if is_bulk:
             # migrate docs in batches
             iter_items = partial(chunked, n=chunk_size, collection=list)
             migrate = partial(self._migrate_docs, fixup_diffs=fixup_diffs)
@@ -297,15 +298,17 @@ Run the following commands to run the migration and get up to date:
 
         with self.open_log(log_path, append_log) as logfile:
             for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
-                doc_index += 1
                 if not verify_only:
                     migrate(item, logfile)
                 if not skip_verify:
                     verify(item, logfile, exit=not verify_only)
-                if doc_index % 1000 == 0:
-                    print(f"Diff count: {self.diff_count}")
+                if not is_bulk:
+                    doc_index += 1
+                    if doc_index % 1000 == 0:
+                        print(f"Diff count: {self.diff_count}")
 
-        print(f"Processed {doc_index} documents")
+        if not is_bulk:
+            print(f"Processed {doc_index} documents")
         if self.ignored_count:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
@@ -368,10 +371,13 @@ Run the following commands to run the migration and get up to date:
         objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         self.missing_in_sql_count += len(couch_ids) - len(objs_by_couch_id)
+        diff_count = self.diff_count
         for doc in docs:
             obj = objs_by_couch_id.get(doc["_id"])
             if obj is not None:
                 self._do_diff(doc, obj, logfile, exit)
+        if diff_count != self.diff_count:
+            print(f"Diff count: {self.diff_count}")
 
     def _do_diff(self, doc, obj, logfile, exit):
         diff = self.get_diff_as_string(doc, obj)
