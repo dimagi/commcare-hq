@@ -4,7 +4,6 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -781,7 +780,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 
@@ -1416,7 +1415,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1455,7 +1454,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]
