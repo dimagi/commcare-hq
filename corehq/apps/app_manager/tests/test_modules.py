@@ -50,15 +50,29 @@ class ModuleTests(SimpleTestCase):
         self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
         self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
 
-    def test_update_search_properties_blank(self):
+    def test_update_search_properties_blank_same_lang(self):
         module = Module()
         module.search_config.properties = [
             CaseSearchProperty(name='name', label={'fr': 'Nom'}),
         ]
+
+        # Blanking out a translation removes it from dict
         props = list(_update_search_properties(module, [
             {'name': 'name', 'label': ''},
         ], "fr"))
         self.assertEqual(props[0]['label'], {})
+
+    def test_update_search_properties_blank_other_lang(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+
+        # Blank translations don't get added to dict
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "en"))
+        self.assertEqual(props[0]['label'], {'fr': 'Nom'})
 
     def test_update_search_properties_required(self):
         module = Module()
