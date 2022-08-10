@@ -1013,36 +1013,44 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
+
+    # Replace translation for current language in a translations dict
+    def _update_translation(old_obj, new_data, old_attr, new_attr=None):
+        new_attr = new_attr or old_attr
+        values = getattr(old_obj, old_attr) if old_obj else {}
+        values.pop(lang, None)
+        new_value = new_data.get(new_attr)
+        if new_value:
+            values[lang] = new_value
+        return values
+
     props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
         current = props_by_name.get(prop['name'])
 
-        _current_label = current.label if current else {}
-        _current_hint = current.hint if current else {}
         ret = {
             'name': prop['name'],
-            'label': {**_current_label, lang: prop['label']},
-            'hint': {**_current_hint, lang: prop['hint']},
+            'label': _update_translation(current, prop, 'label'),
+            'hint': _update_translation(current, prop, 'hint'),
         }
-        if prop['default_value']:
+        if prop.get('default_value'):
             ret['default_value'] = prop['default_value']
-        if prop['hidden']:
+        if prop.get('hidden'):
             ret['hidden'] = prop['hidden']
-        if prop['allow_blank_value']:
+        if prop.get('allow_blank_value'):
             ret['allow_blank_value'] = prop['allow_blank_value']
-        if prop['exclude']:
+        if prop.get('exclude'):
             ret['exclude'] = prop['exclude']
-        if prop['required_test']:
-            _current_text = current.required.text if current and current.required else {}
+        if prop.get('required_test'):
             ret['required'] = {
                 'test': prop['required_test'],
-                'text': {**_current_text, lang: prop['required_text']}
+                'text': _update_translation(current.required if current else None, prop, "text", "required_text"),
             }
-        if prop['validation_test']:
-            _current_text = current.validations[0].text if current and current.validations else {}
+        if prop.get('validation_test'):
             ret['validations'] = [{
                 'test': prop['validation_test'],
-                'text': {**_current_text, lang: prop['validation_text']},
+                'text': _update_translation(current.validations[0] if current and current.validations else None,
+                                            prop, "text", "validation_text"),
             }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
