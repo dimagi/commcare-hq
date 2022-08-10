@@ -1014,10 +1014,7 @@ def _update_search_properties(module, search_properties, lang='en'):
     def _update_translation(old_obj, new_data, old_attr, new_attr=None):
         new_attr = new_attr or old_attr
         values = getattr(old_obj, old_attr) if old_obj else {}
-        try:
-            values.pop(lang)
-        except KeyError:
-            pass
+        values.pop(lang, None)
         new_value = new_data.get(new_attr)
         if new_value:
             values[lang] = new_value
