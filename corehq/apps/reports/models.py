@@ -216,7 +216,6 @@ class TableauServer(models.Model):
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
-    domain_username = models.CharField(max_length=64)
 
     def __str__(self):
         return '{server} {server_type} {site}'.format(server=self.server_name,
