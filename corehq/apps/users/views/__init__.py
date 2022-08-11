@@ -523,7 +523,11 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
             try:
                 user_count = get_role_user_count(role.domain, role.couch_id)
-                role_data["hasUsersAssigned"] = bool(user_count)
+                invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"])
+                if user_count or invitations:
+                    role_data["hasUsersAssigned"] = True
+                else:
+                    role_data["hasUsersAssigned"] = False
             except TypeError:
                 # when query_result['hits'] returns None due to an ES issue
                 show_es_issue = True
@@ -946,16 +950,19 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     user_count = get_role_user_count(domain, role_data["_id"])
-    Invitation.objects.filter(role="user-role:" + role_data["_id"]).delete()
-    if user_count:
+    invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"])
+    if user_count or invitations:
         return JsonResponse({
             "message": ngettext(
-                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has one user and {invite_count} invitations still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has {user_count} users and {invite_count} invitations still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                user_count
-            ).format(role=role_data["name"], user_count=user_count)
+                user_count,
+                invitations.count(),
+            ).format(role=role_data["name"], user_count=user_count, invite_count=invitations.count())
         }, status=400)
     try:
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
