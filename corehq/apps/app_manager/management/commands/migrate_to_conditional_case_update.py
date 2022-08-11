@@ -68,7 +68,6 @@ class Command(AppMigrationCommandBase):
         return False
 
     def migrate_app(self, app_doc):
-        self.log_error(app_doc)
         if self._has_been_migrated(app_doc):
             return None
         else:
