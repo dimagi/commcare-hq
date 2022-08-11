@@ -232,7 +232,7 @@ class OpenmrsRepeater(CaseRepeater):
                 value = value.to_json()
             if field_name == 'atom_feed_status':
                 value = {
-                    feed_name: feed.to_json
+                    feed_name: feed.to_json()
                     for feed_name, feed in self.atom_feed_status.items()
                 }
             setattr(sql_object, field_name, value)
