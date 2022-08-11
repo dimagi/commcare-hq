@@ -13,3 +13,4 @@ flaky
 freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
 coverage
+uWSGI
