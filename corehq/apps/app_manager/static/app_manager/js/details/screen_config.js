@@ -108,8 +108,8 @@ hqDefine('app_manager/js/details/screen_config', function () {
             // Set up case search
             var caseClaimModels = hqImport("app_manager/js/details/case_claim");
             self.search = caseClaimModels.searchViewModel(
-                spec.search_properties || [],
-                spec.default_properties,
+                spec.searchProperties || [],
+                spec.defaultProperties,
                 _.pick(spec, caseClaimModels.searchConfigKeys),
                 spec.lang,
                 self.shortScreen.saveButton,
