@@ -3,12 +3,12 @@ from field_audit.models import AuditEvent
 from nose.tools import nottest
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 from ..models_role import (
+    Permission,
     RoleAssignableBy,
     RolePermission,
-    SQLPermission,
     UserRole,
 )
 
@@ -25,9 +25,9 @@ class CaseWithDomainAndUser(TestCase):
         cls.role = UserRole.create(
             cls.domain_name,
             "test-class-role",
-            permissions=Permissions.min(),  # init with no permissions
+            permissions=HqPermissions.min(),  # init with no permissions
         )
-        cls.permission = SQLPermission.objects.create(value="do_bupkis")
+        cls.permission = Permission.objects.create(value="do_bupkis")
         cls.class_audit_event_ids = {e.id for e in AuditEvent.objects.all()}
 
     @classmethod
@@ -152,7 +152,7 @@ class TestRolePermission(CaseWithDomainAndUser):
 class TestPermission(CaseWithDomainAndUser):
 
     def setUp(self):
-        self.test_permission = SQLPermission.objects.create(value="edit_bupkis")
+        self.test_permission = Permission.objects.create(value="edit_bupkis")
 
     def test_audit_fields_for_permission_create(self):
         setup_event, = self.get_test_audit_events()
@@ -204,7 +204,7 @@ class TestUserRole(CaseWithDomainAndUser):
         self.test_role = UserRole.create(
             self.domain_name,
             "test-role",
-            permissions=Permissions.min(),  # init with no permissions
+            permissions=HqPermissions.min(),  # init with no permissions
         )
         self.audit_fields = {
             "name",
