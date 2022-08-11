@@ -9,6 +9,7 @@ from corehq.apps.custom_data_fields.models import (
     PROFILE_SLUG,
 )
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.role_utils import UserRolePresets
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
@@ -322,10 +323,19 @@ class TestCommCareUserRoles(TestCase):
 
         cls.role1 = UserRole.create(domain=cls.domain, name="role1")
         cls.role2 = UserRole.create(domain=cls.domain, name="role2")
+        cls.mobile_worker_default_role = UserRole.create(
+            cls.domain,
+            UserRolePresets.MOBILE_WORKER,
+            is_commcare_user_default=True,
+        )
+
+    def setUp(self):
+        # clear cache
+        UserRole.commcare_user_default.clear(UserRole.__class__, self.domain)
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
-        self.assertIsNone(user.get_role(self.domain))
+        self.check_role(user, self.mobile_worker_default_role)
 
     def test_create_user_with_role(self):
         user = self._create_user('vienna game', role_id=self.role1.get_id)

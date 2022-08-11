@@ -368,7 +368,7 @@ class DomainMembership(Membership):
                 })
                 return None
         else:
-            return None
+            return UserRole.commcare_user_default(self.domain)
 
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
