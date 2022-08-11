@@ -1,9 +1,12 @@
 import datetime
+import json
 import os
 import sys
 import traceback
 from contextlib import nullcontext
 from functools import partial
+
+from attrs import define, field
 
 from django.conf import settings
 from django.core.management import call_command
@@ -210,10 +213,13 @@ Run the following commands to run the migration and get up to date:
         )
         parser.add_argument(
             '--fixup-diffs',
-            action='store_true',
             dest='fixup_diffs',
-            default=False,
-            help="Update rows in SQL that do not match their corresponding Couch doc.",
+            help="""
+                Update rows in SQL that do not match their corresponding Couch
+                doc. The value of this parameter should be a log file generated
+                by a previous run of this command. Diffs recorded in the log
+                will be re-checked and re-synced if they still exist.
+            """,
         )
         parser.add_argument(
             '--domains',
@@ -237,7 +243,7 @@ Run the following commands to run the migration and get up to date:
             help="Append to log file if it already exists."
         )
 
-    def handle(self, chunk_size=100, fixup_diffs=False, **options):
+    def handle(self, chunk_size, fixup_diffs, **options):
         log_path = options.get("log_path")
         append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
@@ -259,8 +265,17 @@ Run the following commands to run the migration and get up to date:
         self.missing_in_sql_count = 0
         doc_index = 0
 
-        domains = options["domains"]
-        if domains:
+        if fixup_diffs:
+            if not os.path.exists(fixup_diffs):
+                raise CommandError(
+                    "The value of --fixup-diffs should be the path of a "
+                    "log file written by a previous run of this command. "
+                    f"File not found: {fixup_diffs}"
+                )
+            docs = DiffDocs(fixup_diffs, self.couch_db(), chunk_size)
+            doc_count = sql_doc_count = len(docs)
+        elif options["domains"]:
+            domains = options["domains"]
             doc_count = self._get_couch_doc_count_for_domains(domains)
             sql_doc_count = self._get_sql_doc_count_for_domains(domains)
             docs = self._iter_couch_docs_for_domains(domains, chunk_size)
@@ -277,7 +292,7 @@ Run the following commands to run the migration and get up to date:
             self.sql_class().__name__,
         ))
 
-        is_bulk = self._should_migrate_in_bulk()
+        is_bulk = self._should_migrate_in_bulk() or fixup_diffs
         if is_bulk:
             # migrate docs in batches
             iter_items = partial(chunked, n=chunk_size, collection=list)
@@ -289,12 +304,6 @@ Run the following commands to run the migration and get up to date:
                 return docs
             migrate = self._migrate_doc
             verify = self._verify_doc
-            if fixup_diffs:
-                print(
-                    "WARNING --fixup-diffs has no effect on legacy "
-                    "migrations that implement update_or_create_sql_object. "
-                    "Differences are always overwritten by legacy migrations."
-                )
 
         with self.open_log(log_path, append_log) as logfile:
             for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
@@ -375,14 +384,16 @@ Run the following commands to run the migration and get up to date:
         for doc in docs:
             obj = objs_by_couch_id.get(doc["_id"])
             if obj is not None:
-                self._do_diff(doc, obj, logfile, exit)
+                self._do_diff(doc, obj, logfile, exit=False)
         if diff_count != self.diff_count:
             print(f"Diff count: {self.diff_count}")
 
     def _do_diff(self, doc, obj, logfile, exit):
         diff = self.get_diff_as_string(doc, obj)
         if diff:
-            logfile.write(f"Doc {doc['_id']!r} has differences:\n{diff}\n")
+            logfile.write(DIFF_HEADER.format(json.dumps(doc['_id'])))
+            logfile.write(diff)
+            logfile.write("\n")
             self.diff_count += 1
             if exit:
                 raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
@@ -436,3 +447,32 @@ Run the following commands to run the migration and get up to date:
             return nullcontext(sys.stdout)
         mode = "a" if append_log else "w"
         return open(log_path, mode)
+
+
+DIFF_HEADER = "Doc {} has differences:\n"
+
+
+@define
+class DiffDocs:
+    path = field()
+    couch_db = field()
+    chunk_size = field()
+
+    def __iter__(self):
+        doc_ids = self._iter_doc_ids()
+        yield from iter_docs(self.couch_db, doc_ids, self.chunk_size)
+
+    def __len__(self):
+        return sum(1 for x in self._iter_doc_ids(quiet=True))
+
+    def _iter_doc_ids(self, quiet=False):
+        prefix, suffix = DIFF_HEADER.split("{}")
+        with open(self.path) as log:
+            for line in log:
+                if line.startswith(prefix) and line.endswith(suffix):
+                    doc_id = line[len(prefix):-len(suffix)]
+                    try:
+                        yield json.loads(doc_id)
+                    except Exception:
+                        if not quiet:
+                            print("WARNING ignored diff, bad doc id format:", doc_id)

@@ -3,7 +3,7 @@ from unittest.mock import patch
 from uuid import UUID
 from pathlib import Path
 
-from django.core.management import CommandError, call_command
+from django.core.management import call_command
 from django.db import connection, transaction
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
@@ -339,27 +339,26 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             [],
         )
 
-        doc = FixtureDataType.get(doc._id)
+    def test_migration_fixup_diffs(self):
+        doc, obj = create_lookup_table(unwrap_doc=False)
+        doc.save()
         doc.tag = 'cost'
         doc.fields[0].field_name = 'value'
         doc.item_attributes = ['name', 'age']
         doc.save(sync_to_sql=False)
 
-        # Diffs should be reported without --fixup-diffs
         with templog() as log:
-            with self.assertRaises(CommandError):
-                call_command('populate_lookuptables', log_path=log.path)
-            self.assertIn(f"Doc {doc._id!r} has differences:\n", log.content)
+            call_command('populate_lookuptables', log_path=log.path)
+            self.assertIn(f'Doc "{doc._id}" has differences:\n', log.content)
             self.assertIn("tag: couch value 'cost' != sql value 'price'", log.content)
             self.assertIn("fields: couch value [", log.content)
             self.assertIn("item_attributes: couch value [", log.content)
 
-        # Additional call with --fixup-diffs should apply any updates
-        call_command('populate_lookuptables', fixup_diffs=True)
-        self.assertEqual(
-            self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id)),
-            [],
-        )
+            call_command('populate_lookuptables', fixup_diffs=log.path)
+            self.assertEqual(
+                self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id)),
+                [],
+            )
 
     def test_migration_with_old_doc_format(self):
         doc, obj = create_lookup_table()
@@ -372,12 +371,13 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             [],
         )
 
-        # Additional call with --fixup-diffs should apply any updates
         doc['tag'] = 'cost'
         doc['fields'] = ['value', 'qty']
         assert 'item_attributes' not in doc, doc
         self.db.save_doc(doc)
-        call_command('populate_lookuptables', fixup_diffs=True)
+        with templog() as log:
+            call_command('populate_lookuptables', log_path=log.path)
+            call_command('populate_lookuptables', fixup_diffs=log.path)
         self.assertEqual(
             self.diff(doc, LookupTable.objects.get(id=doc['_id'])),
             [],
@@ -447,36 +447,26 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
             [],
         )
 
-        doc = FixtureDataItem.get(doc._id)
+    def test_migration_fixup_diffs(self):
+        doc, obj = self.create_row()
+        doc.save()
         doc.fields['amount']['field_list'][0]['field_value'] = '1000'
         doc.item_attributes = {'name': 'Andy', 'age': '4'}
         doc.sort_key = None
         doc.save(sync_to_sql=False)
 
-        # Diffs should be reported without --fixup-diffs
         with templog() as log:
-            with self.assertRaises(CommandError):
-                call_command('populate_lookuptablerows', log_path=log.path)
-            self.assertIn(f"Doc {doc._id!r} has differences:\n", log.content)
+            call_command('populate_lookuptablerows', log_path=log.path)
+            self.assertIn(f'Doc "{doc._id}" has differences:\n', log.content)
             self.assertIn("fields: couch value {", log.content)
             self.assertIn("item_attributes: couch value {", log.content)
             self.assertIn("sort_key: couch value 0 != sql value 2\n", log.content)
 
-        # Additional call with --fixup-diffs should apply any updates
-        call_command('populate_lookuptablerows', fixup_diffs=True)
-        self.assertEqual(
-            self.diff(doc.to_json(), LookupTableRow.objects.get(id=UUID(doc._id))),
-            [],
-        )
-
-        doc = FixtureDataItem.get(doc._id)
-        doc.item_attributes = {'name': 'Andy', 'age': '7'}
-        doc.save(sync_to_sql=False)
-        call_command('populate_lookuptablerows', fixup_diffs=True)
-        self.assertEqual(
-            self.diff(doc.to_json(), LookupTableRow.objects.get(id=UUID(doc._id))),
-            [],
-        )
+            call_command('populate_lookuptablerows', fixup_diffs=log.path)
+            self.assertEqual(
+                self.diff(doc.to_json(), LookupTableRow.objects.get(id=UUID(doc._id))),
+                [],
+            )
 
     def test_migration_with_old_doc_format(self):
         doc, obj = self.create_row()
@@ -593,25 +583,24 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
             [],
         )
 
-        doc = FixtureOwnership.get(doc._id)
+    def test_migration_fixup_diffs(self):
+        doc, obj = self.create_owner()
+        doc.save()
         doc.owner_type = 'group'
         doc.owner_id = 'snoil'
         doc.save(sync_to_sql=False)
 
-        # Diffs should be reported without --fixup-diffs
         with templog() as log:
-            with self.assertRaises(CommandError):
-                call_command('populate_lookuptablerowowners', log_path=log.path)
-            self.assertIn(f"Doc {doc._id!r} has differences:\n", log.content)
+            call_command('populate_lookuptablerowowners', log_path=log.path)
+            self.assertIn(f'Doc "{doc._id}" has differences:\n', log.content)
             self.assertIn("owner_type: couch value <OwnerType.Group: 1> != sql value 0\n", log.content)
             self.assertIn("owner_id: couch value 'snoil' != sql value 'modnar'\n", log.content)
 
-        # Additional call with --fixup-diffs should apply any updates
-        call_command('populate_lookuptablerowowners', fixup_diffs=True)
-        self.assertEqual(
-            self.diff(doc.to_json(), LookupTableRowOwner.objects.get(couch_id=doc._id)),
-            [],
-        )
+            call_command('populate_lookuptablerowowners', fixup_diffs=log.path)
+            self.assertEqual(
+                self.diff(doc.to_json(), LookupTableRowOwner.objects.get(couch_id=doc._id)),
+                [],
+            )
 
     def test_migration_with_deleted_row(self):
         doc, obj = self.create_owner()
