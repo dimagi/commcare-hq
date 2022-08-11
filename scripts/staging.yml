@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - jls/case-claim-js+do/case-claim-title
     - do/case-claim-title # Dominic June 23
     - mjr/erm-overwrite # Matt June 24
     - ad/save-only-edited-fields-migration # Addison July 7
