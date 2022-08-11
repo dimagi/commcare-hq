@@ -523,7 +523,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
 
             try:
                 user_count = get_role_user_count(role.domain, role.couch_id)
-                invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"])
+                invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"], is_accepted=False)
                 if user_count or invitations:
                     role_data["hasUsersAssigned"] = True
                 else:
@@ -950,7 +950,7 @@ def delete_user_role(request, domain):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
     user_count = get_role_user_count(domain, role_data["_id"])
-    invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"])
+    invitations = Invitation.objects.filter(role="user-role:" + role_data["_id"], is_accepted=False)
     if user_count or invitations:
         return JsonResponse({
             "message": ngettext(
