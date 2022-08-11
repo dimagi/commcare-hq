@@ -127,15 +127,7 @@ class CouchTransaction(object):
                             "set_sql_save_action() to update objects in bulk.")
                     cls.bulk_save(chunk)
                     start_sql_transaction()
-                    sql_class = cls._migration_get_sql_model_class()
-                    id_name = sql_class._migration_couch_id_name
-                    new_sql_docs = []
-                    for doc in chunk:
-                        assert doc._id, doc
-                        obj = sql_class(**{id_name: doc._id})
-                        doc._migration_sync_to_sql(obj, save=False)
-                        new_sql_docs.append(obj)
-                    sql_class.objects.bulk_create(new_sql_docs)
+                    cls._migration_bulk_sync_to_sql(chunk)
             else:
                 save = cls.bulk_save
             for chunk in chunked(docs, 1000, list):
