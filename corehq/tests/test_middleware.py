@@ -222,10 +222,10 @@ class TestSecureCookiesMiddleware(SimpleTestCase):
             response = self.client.get('/secure_cookie')
         self.assertTrue(response.cookies['test-cookie']['secure'])
 
-    def test_already_secure_cookie_overridden_if_SECURE_COOKIES_is_false(self):
+    def test_already_secure_cookie_remains_secure_if_SECURE_COOKIES_is_false(self):
         with override_settings(SECURE_COOKIES=False):
             response = self.client.get('/secure_cookie')
-        self.assertFalse(response.cookies['test-cookie']['secure'])
+        self.assertTrue(response.cookies['test-cookie']['secure'])
 
     def test_ignores_if_no_cookies_set(self):
         response = self.client.get('/no_cookie')

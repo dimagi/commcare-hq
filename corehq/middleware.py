@@ -343,5 +343,5 @@ class SecureCookiesMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         if hasattr(response, 'cookies') and response.cookies:
             for cookie in response.cookies:
-                response.cookies[cookie]['secure'] = settings.SECURE_COOKIES
+                response.cookies[cookie]['secure'] = settings.SECURE_COOKIES or response.cookies[cookie]['secure']
         return response
