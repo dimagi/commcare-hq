@@ -327,6 +327,7 @@ class DomainMembership(Membership):
     """
     Each user can have multiple accounts on individual domains
     """
+    _get_default_role = None
 
     domain = StringProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -368,7 +369,16 @@ class DomainMembership(Membership):
                 })
                 return None
         else:
-            return UserRole.commcare_user_default(self.domain)
+            return self.get_default_role()
+
+    def get_default_role(self):
+        """Delegates to the ``_get_default_role`` attribute which is set
+        just in time by 'user.get_domain_membership' and varies based on the
+        type of user (Web / Mobile).
+        """
+        if self._get_default_role:
+            return self._get_default_role(self.domain)
+        return None
 
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
@@ -422,6 +432,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         Use either SingleMembershipMixin or MultiMembershipMixin instead of this
     """
 
+    # see ``DomainMembership.get_default_role``
+    _get_default_role = None
+
     def get_domain_membership(self, domain, allow_enterprise=True):
         domain_membership = None
         try:
@@ -440,6 +453,9 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
+
+        if domain_membership:
+            domain_membership._get_default_role = self._get_default_role
         return domain_membership
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
@@ -1544,6 +1560,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
+    _get_default_role = UserRole.commcare_user_default
 
     domain = StringProperty()
     registering_device_id = StringProperty()

@@ -335,6 +335,8 @@ class TestCommCareUserRoles(TestCase):
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
+
+        # expect that a CommCareUser without a role will get the default role
         self.check_role(user, self.mobile_worker_default_role)
 
     def test_create_user_with_role(self):
@@ -404,6 +406,12 @@ class TestWebUserRoles(TestCommCareUserRoles):
         cls.domain2 = 'test-user-role2'
         cls.domain_obj2 = create_domain(cls.domain2)
         cls.addClassCleanup(cls.domain_obj2.get_db().delete_doc, cls.domain_obj2)
+
+    def test_create_user_without_role(self):
+        user = self._create_user('scotch game')
+
+        # web users don't have default roles
+        self.assertIsNone(user.get_role(self.domain))
 
     def test_roles_multiple_domains(self):
         user = self._create_user("alekhine's defense")
