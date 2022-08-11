@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
@@ -559,7 +560,6 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_rows(), ['orange'])
 
     def test_upload_progress_and_result(self):
-        from datetime import timedelta
         task = FakeTask()
         with patch.object(mod, "timedelta", lambda **k: timedelta()):
             result = self.upload([
@@ -577,6 +577,14 @@ class TestFixtureUpload(TestCase):
         ])
         self.assertEqual(result.number_of_fixtures, 1)
         self.assertTrue(result.success)
+
+    def test_upload_progress_with_zero_tables(self):
+        workbook = self.get_workbook_from_data(self.headers, [])
+        task = FakeTask()
+        with patch.object(mod, "timedelta", lambda **k: timedelta()):
+            result = self.upload(workbook, task=task)
+        self.assertEqual(result.errors, [])
+        self.assertIsNone(self.get_table())
 
     def test_table_uid_conflict(self):
         result = self.upload_table_with_uid_conflict()
