@@ -394,7 +394,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     self.default_properties(),
                     function (p) { return p.property().length > 0; }  // Skip properties where property is blank
                 ),
-                ko.mapping.toJS
+                function (prop) { return ko.mapping.toJS(prop); }
             );
         };
 
