@@ -4,7 +4,7 @@ from field_audit.auditors import BaseAuditor
 class HQAuditor(BaseAuditor):
     """Auditor class for getting HQ information from authenticated requests."""
 
-    def changed_by(self, request):
+    def change_context(self, request):
         if not request:
             # this auditor only knows how to work with requests
             return None
