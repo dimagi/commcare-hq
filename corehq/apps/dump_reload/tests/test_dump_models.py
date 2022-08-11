@@ -95,6 +95,7 @@ IGNORE_MODELS = {
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",
     "fhir.ResourceTypeRelationship",
+    "field_audit.AuditEvent",
     "fixtures.UserLookupTableStatus",
     "form_processor.DeprecatedXFormAttachmentSQL",
     "hqadmin.HistoricalPillowCheckpoint",
