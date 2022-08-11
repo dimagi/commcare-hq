@@ -182,6 +182,8 @@ def setup_progress(task, workbook):
     class progress:
         tables = set()
         next_update = datetime.now()
+        row = 0
+        total_rows = 1
 
     return total_tables, update_progress
 
