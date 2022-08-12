@@ -78,83 +78,93 @@ class TestCaseAPIBulkGet(TestCase):
 
     def test_bulk_get(self):
         case_ids = self.case_ids[0:2]
-        self._call_get_api_check_results(case_ids)
-
-    def test_bulk_get_duplicate(self):
-        """Duplicate case IDs in the request results in duplicates in the response"""
-        case_ids = [self.case_ids[0], self.case_ids[0]]
-        self._call_get_api_check_results(case_ids)
+        self._call_get_api_check_results(case_ids, matching=2, missing=0)
 
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
-        result = self._call_get_api_check_results(case_ids)
-        self.assertEqual(result['matching_records'], 2)
-        self.assertEqual(result['missing_records'], 1)
+        result = self._call_get_api_check_results(case_ids, matching=2, missing=1)
         self.assertEqual(result['cases'][2]['error'], 'not found')
 
     def test_bulk_get_not_found(self):
-        case_ids = ['missing'] + self.case_ids[0:2]
-        result = self._call_get_api_check_results(case_ids)
-        self.assertEqual(result['matching_records'], 2)
-        self.assertEqual(result['missing_records'], 1)
+        case_ids = ['missing1', self.case_ids[1], 'missing2']
+        result = self._call_get_api_check_results(case_ids, matching=1, missing=2)
         self.assertEqual(result['cases'][0]['error'], 'not found')
+        self.assertEqual(result['cases'][2]['error'], 'not found')
+
+    def test_bulk_get_duplicate(self):
+        """Duplicate case IDs in the request results in duplicates in the response"""
+        case_ids = [self.case_ids[0], 'missing', self.case_ids[2], 'missing', self.case_ids[1], self.case_ids[2]]
+        self._call_get_api_check_results(case_ids, matching=4, missing=2)
 
     def test_bulk_post(self):
         case_ids = self.case_ids[0:2]
-        self._call_post_api_check_results(case_ids)
+        self._call_post_api_check_results(case_ids, matching=2, missing=0)
 
     def test_bulk_post_missing(self):
-        self._call_post_api_check_results(external_ids=['missing1', self.case_ids[1], 'missing2'])
+        self._call_post_api_check_results(
+            case_ids=['missing1', self.case_ids[1], 'missing2'],
+            matching=1, missing=2
+        )
 
     def test_bulk_post_duplicates(self):
         """Duplicate case IDs in the request results in duplicates in the response"""
         case_ids = [self.case_ids[0], 'missing', self.case_ids[0], 'missing']
-        self._call_post_api_check_results(case_ids)
+        self._call_post_api_check_results(case_ids, matching=2, missing=2)
 
     def test_bulk_post_over_limit(self):
         with patch('corehq.apps.hqcase.api.get_bulk.MAX_PAGE_SIZE', 3):
             self._call_post(['1', '2', '3', '4'], expected_status=400)
 
     def test_bulk_post_external_ids(self):
-        self._call_post_api_check_results(external_ids=['vera', 'nona'])
+        self._call_post_api_check_results(external_ids=['vera', 'nona'], matching=2, missing=0)
 
     def test_bulk_post_external_ids_missing(self):
-        self._call_post_api_check_results(external_ids=['missing', 'vera', 'nona'])
+        self._call_post_api_check_results(external_ids=['missing', 'vera', 'nona'], matching=2, missing=1)
 
     def test_bulk_post_external_ids_duplicates(self):
         """Duplicate case IDs in the request results in duplicates in the response"""
-        self._call_post_api_check_results(external_ids=['vera', 'missing', 'nona', 'vera', 'missing'])
+        ids = ['vera', 'missing', 'nona', 'vera', 'missing']
+        self._call_post_api_check_results(external_ids=ids, matching=3, missing=2)
 
     def test_bulk_post_case_ids_and_external_ids(self):
         self._call_post_api_check_results(
             case_ids=self.case_ids[0:2],
-            external_ids=['vera', 'nona']
+            external_ids=['vera', 'nona'],
+            matching=4, missing=0
         )
 
     def test_bulk_post_case_ids_and_external_ids_duplicates(self):
         self._call_post_api_check_results(
             case_ids=[self.case_ids[0], self.case_ids[0]],
-            external_ids=['vera', 'vera']
+            external_ids=['vera', 'vera'],
+            matching=4, missing=0
         )
 
     def test_bulk_post_case_ids_and_external_ids_missing(self):
         self._call_post_api_check_results(
             case_ids=['missing_case_id'] + self.case_ids[0:2],
-            external_ids=['vera', 'missing_external_id', 'nona']
+            external_ids=['vera', 'missing_external_id', 'nona'],
+            matching=4, missing=2
         )
 
-    def _call_get_api_check_results(self, case_ids):
+    def _call_get_api_check_results(self, case_ids, matching=None, missing=None):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
         self.assertEqual(res.status_code, 200)
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]
         self.assertEqual(result_case_ids, case_ids)
+        self._check_matching_missing(result, matching, missing)
         return result
 
-    def _call_post_api_check_results(self, case_ids=None, external_ids=None):
+    def _call_post_api_check_results(self, case_ids=None, external_ids=None, matching=None, missing=None):
         res = self._call_post(case_ids, external_ids)
         result = res.json()
         cases = result['cases']
+
+        self._check_matching_missing(result, matching, missing)
+
+        total_expected = len(case_ids or []) + len(external_ids or [])
+        self.assertEqual(len(cases), total_expected)
 
         # check for results as well as result order
         if case_ids:
@@ -170,8 +180,6 @@ class TestCaseAPIBulkGet(TestCase):
             ]))
             self.assertEqual(external_ids, result_external_ids[:len(external_ids)])
 
-        total_expected = len(case_ids or []) + len(external_ids or [])
-        self.assertEqual(len(cases), total_expected)
         return result
 
     def _call_post(self, case_ids=None, external_ids=None, expected_status=200):
@@ -184,3 +192,10 @@ class TestCaseAPIBulkGet(TestCase):
         res = self.client.post(url, data=data, content_type="application/json")
         self.assertEqual(res.status_code, expected_status, res.json())
         return res
+
+    def _check_matching_missing(self, result, matching=None, missing=None):
+        if matching is not None:
+            self.assertEqual(result['matching_records'], matching)
+
+        if missing is not None:
+            self.assertEqual(result['missing_records'], missing)

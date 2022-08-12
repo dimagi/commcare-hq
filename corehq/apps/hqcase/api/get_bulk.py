@@ -1,4 +1,5 @@
 import dataclasses
+from collections import Counter
 from dataclasses import dataclass, field
 
 from corehq.apps.es.case_search import ElasticCaseSearch, CaseSearchES
@@ -27,7 +28,7 @@ def get_bulk(domain, case_ids=None, external_ids=None):
     If both case IDs and external IDs are passed then results will include
     cases loaded by ID first followed by cases loaded by external ID.
 
-    If the case is not found or belongs to a different domain then
+    If a case is not found or belongs to a different domain then
     an error stub is included in the result set.
     """
     case_ids = case_ids or []
@@ -89,9 +90,11 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     ordered_results = [
         results_by_id[doc_id] for doc_id in doc_ids
     ]
+    duplicate_ids = {id_ for id_, count in Counter(doc_ids).items() if count > 1}
+    duplicates_missing = duplicate_ids - found_ids
 
     total = len(doc_ids)
-    not_found = len(error_ids) + len(missing_ids)
+    not_found = len(error_ids) + len(missing_ids) + len(duplicates_missing)
     return BulkFetchResults(ordered_results, total - not_found, not_found)
 
 
