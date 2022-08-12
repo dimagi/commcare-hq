@@ -896,7 +896,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
     /**
-     * Represents blah blah blah
+     * TODO: Represents blah blah blah
+     * TODO: Add other entries, which will have different help text and different accept values
      */
     function FileEntry(question, options) {
         var self = this;
@@ -907,7 +908,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return { file: self.file() };
         };
 
-        self.accept = "image/*,.pdf";
+        self.accept = "image/*,.pdf,.doc,.docx";
         self.file = ko.observable();
 
         self.helpText = function () {
