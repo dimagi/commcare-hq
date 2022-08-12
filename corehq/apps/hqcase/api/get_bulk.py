@@ -69,39 +69,19 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     def _get_error_doc(id_value):
         return {serialized_id_field: id_value, 'error': 'not found'}
 
-    def _serialize_doc(doc):
-        found_ids.add(doc[es_id_field])
-
-        if doc['domain'] == domain:
+    def _get_doc(doc_id):
+        doc = results_by_id.get(doc_id)
+        if doc:
             return serialize_es_case(doc)
 
-        error_ids.add(doc[es_id_field])
-        return _get_error_doc(doc[es_id_field])
+        missing_ids.append(doc_id)
+        return _get_error_doc(doc_id)
 
-    error_ids = set()
-    found_ids = set()
+    missing_ids = []
+    results_by_id = {res[es_id_field]: res for res in es_results if res['domain'] == domain}
 
-    serialized_results = [_serialize_doc(doc) for doc in es_results]
-
-    missing_ids = set(doc_ids) - found_ids
-    serialized_results.extend([
-        _get_error_doc(missing_id) for missing_id in missing_ids
-    ])
-
-    # This orders the results in the same order as the input IDs. It also has the effect
-    # of including duplicate results for duplicate IDs
-    results_by_id = {res[serialized_id_field]: res for res in serialized_results}
-    ordered_results = [
-        results_by_id[doc_id] for doc_id in doc_ids
-    ]
-
-    # if there are duplicate IDs that were not found our doc counts are going to be off
-    missing_duplicate_count = sum(
-        count - 1  # we already have 1 in the 'missing_ids' so decrease the count by 1
-        for id_, count in Counter(doc_ids).items()
-        if count > 1 and id_ not in found_ids
-    )
+    final_results = [_get_doc(doc_id) for doc_id in doc_ids]
 
     total = len(doc_ids)
-    not_found = len(error_ids) + len(missing_ids) + missing_duplicate_count
-    return BulkFetchResults(ordered_results, total - not_found, not_found)
+    not_found = len(missing_ids)
+    return BulkFetchResults(final_results, total - not_found, not_found)
