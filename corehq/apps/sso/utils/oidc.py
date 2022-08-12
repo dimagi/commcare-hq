@@ -29,6 +29,30 @@ def get_client_for_identity_provider(identity_provider):
     return client
 
 
+def get_client_for_azure_api(identity_provider, step):
+    client = Client(
+        client_authn_method=CLIENT_AUTHN_METHOD,
+        client_id=identity_provider.client_id,
+    )
+    if step == "1":
+        return client
+    client.redirect_uris = [
+        get_oidc_auth_url(identity_provider),
+    ]
+    if step == "2":
+        return client
+    client.provider_config(identity_provider.entity_id)
+    if step == "3":
+        return client
+    security_info = {
+        "client_id": identity_provider.client_id,
+        "client_secret": identity_provider.client_secret,
+    }
+    client_reg = RegistrationResponse(**security_info)
+    client.store_registration_info(client_reg)
+    return client
+
+
 def initialize_oidc_session(request):
     request.session["oidc_state"] = rndstr()
     request.session["oidc_nonce"] = rndstr()
