@@ -77,9 +77,12 @@ def sso_oidc_logout(request, idp_slug):
 @identity_provider_required
 def sso_oidc_api_auth(request, idp_slug):
     step = request.GET.get('s')
-    client = get_client_for_azure_api(request.idp, step)
+    # client = get_client_for_azure_api(request.idp, step)
     initialize_oidc_session(request)
-    authorization_url = get_openid_provider_login_url(client, request)
+    # authorization_url = get_openid_provider_login_url(client, request)
+    nonce = request.session["oidc_nonce"]
+    authorization_url = f"{request.idp.issuer_id}?client_id={request.idp.client_id}&" \
+                        f"response_type=code&scope=openid+profile&nonce={nonce}"
     return JsonResponse({
         "success": True,
         "authorization_url": authorization_url,
