@@ -75,7 +75,7 @@ def sso_oidc_logout(request, idp_slug):
 
 
 def _get_authorization_url(request):
-    redirect_url = get_oidc_auth_url(request.idp)
+    redirect_url = "https://staging.commcarehq.org"
     initialize_oidc_session(request)
     nonce = request.session["oidc_nonce"]
     authorization_url = f"https://login.microsoftonline.com/{request.idp.entity_id}/oauth2/authorize?" \
