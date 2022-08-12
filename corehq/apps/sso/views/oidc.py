@@ -15,7 +15,7 @@ from corehq.apps.sso.utils.oidc import (
     get_client_for_identity_provider,
     initialize_oidc_session,
     get_openid_provider_login_url,
-    get_user_information_or_throw_error,
+    get_user_information_or_throw_error, get_client_for_azure_api,
 )
 from corehq.apps.sso.utils.url_helpers import add_username_hint_to_login_url
 from corehq.apps.sso.utils.view_helpers import render_sso_error, render_sso_user_login_failed
@@ -76,7 +76,8 @@ def sso_oidc_logout(request, idp_slug):
 
 @identity_provider_required
 def sso_oidc_api_auth(request, idp_slug):
-    client = get_client_for_identity_provider(request.idp)
+    step = request.GET.get('s')
+    client = get_client_for_azure_api(request.id, step)
     initialize_oidc_session(request)
     authorization_url = get_openid_provider_login_url(client, request)
     return JsonResponse({
