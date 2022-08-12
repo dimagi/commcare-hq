@@ -70,8 +70,8 @@
               {% endif %}
             </div>
             <div class="well sign-up-bubble form-bubble-purple">
-              <h2 class="text-center">
-                {% blocktrans with formatted_username|safe as username %}
+              <h2 class="text-center break-all-words">
+                {% blocktrans with formatted_username as username %}
                   Not {{ username }}?
                 {% endblocktrans %}
               </h2>
