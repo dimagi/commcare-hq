@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -97,6 +98,10 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = self.case_ids[0:2]
         self._call_post_api_check_results(case_ids)
 
+    def test_bulk_post_over_limit(self):
+        with patch('corehq.apps.hqcase.api.get_bulk.MAX_PAGE_SIZE', 3):
+            self._call_post(['1', '2', '3', '4'], expected_status=400)
+
     def _call_get_api_check_results(self, case_ids):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
         self.assertEqual(res.status_code, 200)
@@ -106,11 +111,15 @@ class TestCaseAPIBulkGet(TestCase):
         return result
 
     def _call_post_api_check_results(self, case_ids):
-        res = self.client.post(reverse('case_api_bulk_fetch', args=(self.domain,)), data={
-            'case_ids': case_ids
-        }, content_type="application/json")
-        self.assertEqual(res.status_code, 200)
+        res = self._call_post(case_ids)
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]
         self.assertEqual(result_case_ids, case_ids)
         return result
+
+    def _call_post(self, case_ids, expected_status=200):
+        res = self.client.post(reverse('case_api_bulk_fetch', args=(self.domain,)), data={
+            'case_ids': case_ids
+        }, content_type="application/json")
+        self.assertEqual(res.status_code, expected_status)
+        return res

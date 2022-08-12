@@ -1,7 +1,8 @@
 from operator import itemgetter
 
 from corehq.apps.es.case_search import ElasticCaseSearch
-from corehq.apps.hqcase.api.core import serialize_es_case
+from corehq.apps.hqcase.api.core import serialize_es_case, UserError
+from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
 from corehq.form_processor.models.util import sort_with_id_list
 
 
@@ -14,6 +15,9 @@ def get_bulk(domain, case_ids):
     If the case is not found or belongs to a different domain then
     an error stub is included in the result set.
     """
+    if len(case_ids) > MAX_PAGE_SIZE:
+        raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
+
     results = ElasticCaseSearch().get_docs(case_ids)
 
     def _serialize_doc(doc):
