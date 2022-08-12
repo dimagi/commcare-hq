@@ -44,7 +44,7 @@ class TestCaseAPIBulkGet(TestCase):
         case_blocks = [
             cls._make_case_block('Vera Menchik', external_id='vera'),
             cls._make_case_block('Nona Gaprindashvili', external_id='nona'),
-            cls._make_case_block('Maia Chiburdanidze', external_id='mia'),
+            cls._make_case_block('Maia Chiburdanidze', external_id='maia'),
         ]
         case_search_es_setup(cls.domain, case_blocks)
         cls.case_ids = [b.case_id for b in case_blocks]
