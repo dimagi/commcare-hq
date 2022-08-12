@@ -77,24 +77,38 @@ class TestCaseAPIBulkGet(TestCase):
 
     def test_bulk_get(self):
         case_ids = self.case_ids[0:2]
-        self._call_api_check_results(case_ids)
+        self._call_get_api_check_results(case_ids)
 
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
-        result = self._call_api_check_results(case_ids)
+        result = self._call_get_api_check_results(case_ids)
         self.assertEqual(result['matching_records'], 2)
         self.assertEqual(result['missing_records'], 1)
         self.assertEqual(result['cases'][2]['error'], 'not found')
 
     def test_bulk_get_not_found(self):
         case_ids = ['missing'] + self.case_ids[0:2]
-        result = self._call_api_check_results(case_ids)
+        result = self._call_get_api_check_results(case_ids)
         self.assertEqual(result['matching_records'], 2)
         self.assertEqual(result['missing_records'], 1)
         self.assertEqual(result['cases'][0]['error'], 'not found')
 
-    def _call_api_check_results(self, case_ids):
+    def test_bulk_post(self):
+        case_ids = self.case_ids[0:2]
+        self._call_post_api_check_results(case_ids)
+
+    def _call_get_api_check_results(self, case_ids):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
+        self.assertEqual(res.status_code, 200)
+        result = res.json()
+        result_case_ids = [case['case_id'] for case in result['cases']]
+        self.assertEqual(result_case_ids, case_ids)
+        return result
+
+    def _call_post_api_check_results(self, case_ids):
+        res = self.client.post(reverse('case_api_bulk_fetch', args=(self.domain,)), data={
+            'case_ids': case_ids
+        }, content_type="application/json")
         self.assertEqual(res.status_code, 200)
         result = res.json()
         result_case_ids = [case['case_id'] for case in result['cases']]

@@ -100,6 +100,19 @@ def case_api(request, domain, case_id=None):
     return JsonResponse({'error': "Request method not allowed"}, status=405)
 
 
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST'])
+@api_auth
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
+@CASE_API_V0_6.required_decorator()
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def case_api_bulk_fetch(request, domain):
+    return JsonResponse({})
+
+
 def _handle_get(request, case_id):
     if ',' in case_id:
         return _get_bulk_cases(request, case_id.split(','))
