@@ -41,7 +41,12 @@ def get_client_for_azure_api(identity_provider, step):
     ]
     if step == "2":
         return client
-    client.provider_config(identity_provider.entity_id)
+    client.provider_config(
+        identity_provider.entity_id,
+        True,
+        True,
+        "%s"
+    )
     if step == "3":
         return client
     security_info = {
