@@ -1,11 +1,9 @@
 import dataclasses
 from dataclasses import dataclass, field
-from operator import itemgetter
 
 from corehq.apps.es.case_search import ElasticCaseSearch, CaseSearchES
 from corehq.apps.hqcase.api.core import serialize_es_case, UserError
 from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
-from corehq.form_processor.models.util import sort_with_id_list
 
 
 @dataclass
@@ -85,11 +83,16 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
         _get_error_doc(missing_id, serialized_id_field) for missing_id in missing_ids
     ])
 
-    sort_with_id_list(final_results, doc_ids, serialized_id_field, operator=itemgetter)
+    # This orders the results in the same order as the input IDs. It also has the effect
+    # of including duplicate results for duplicate IDs
+    results_by_id = {res[serialized_id_field]: res for res in final_results}
+    ordered_results = [
+        results_by_id[doc_id] for doc_id in doc_ids
+    ]
 
     total = len(doc_ids)
     not_found = len(error_ids) + len(missing_ids)
-    return BulkFetchResults(final_results, total - not_found, not_found)
+    return BulkFetchResults(ordered_results, total - not_found, not_found)
 
 
 def _get_error_doc(id_value, id_field):

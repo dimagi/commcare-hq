@@ -80,6 +80,11 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = self.case_ids[0:2]
         self._call_get_api_check_results(case_ids)
 
+    def test_bulk_get_duplicate(self):
+        """Duplicate case IDs in the request results in duplicates in the response"""
+        case_ids = [self.case_ids[0], self.case_ids[0]]
+        self._call_get_api_check_results(case_ids)
+
     def test_bulk_get_domain_filter(self):
         case_ids = self.case_ids[0:2] + [self.other_domain_case_id]
         result = self._call_get_api_check_results(case_ids)
@@ -98,6 +103,14 @@ class TestCaseAPIBulkGet(TestCase):
         case_ids = self.case_ids[0:2]
         self._call_post_api_check_results(case_ids)
 
+    def test_bulk_post_missing(self):
+        self._call_post_api_check_results(external_ids=['missing1', self.case_ids[1], 'missing2'])
+
+    def test_bulk_post_duplicates(self):
+        """Duplicate case IDs in the request results in duplicates in the response"""
+        case_ids = [self.case_ids[0], 'missing', self.case_ids[0], 'missing']
+        self._call_post_api_check_results(case_ids)
+
     def test_bulk_post_over_limit(self):
         with patch('corehq.apps.hqcase.api.get_bulk.MAX_PAGE_SIZE', 3):
             self._call_post(['1', '2', '3', '4'], expected_status=400)
@@ -108,10 +121,20 @@ class TestCaseAPIBulkGet(TestCase):
     def test_bulk_post_external_ids_missing(self):
         self._call_post_api_check_results(external_ids=['missing', 'vera', 'nona'])
 
+    def test_bulk_post_external_ids_duplicates(self):
+        """Duplicate case IDs in the request results in duplicates in the response"""
+        self._call_post_api_check_results(external_ids=['vera', 'missing', 'nona', 'vera', 'missing'])
+
     def test_bulk_post_case_ids_and_external_ids(self):
         self._call_post_api_check_results(
             case_ids=self.case_ids[0:2],
             external_ids=['vera', 'nona']
+        )
+
+    def test_bulk_post_case_ids_and_external_ids_duplicates(self):
+        self._call_post_api_check_results(
+            case_ids=[self.case_ids[0], self.case_ids[0]],
+            external_ids=['vera', 'vera']
         )
 
     def test_bulk_post_case_ids_and_external_ids_missing(self):
