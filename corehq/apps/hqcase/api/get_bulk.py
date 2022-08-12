@@ -81,16 +81,16 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     error_ids = set()
     found_ids = set()
 
-    final_results = [_serialize_doc(doc) for doc in es_results]
+    serialized_results = [_serialize_doc(doc) for doc in es_results]
 
     missing_ids = set(doc_ids) - found_ids
-    final_results.extend([
+    serialized_results.extend([
         _get_error_doc(missing_id) for missing_id in missing_ids
     ])
 
     # This orders the results in the same order as the input IDs. It also has the effect
     # of including duplicate results for duplicate IDs
-    results_by_id = {res[serialized_id_field]: res for res in final_results}
+    results_by_id = {res[serialized_id_field]: res for res in serialized_results}
     ordered_results = [
         results_by_id[doc_id] for doc_id in doc_ids
     ]
