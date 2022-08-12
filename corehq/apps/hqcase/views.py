@@ -27,6 +27,7 @@ from corehq.util.view_utils import reverse
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
+from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
@@ -100,6 +101,21 @@ def case_api(request, domain, case_id=None):
 
 
 def _handle_individual_get(request, case_id):
+    if ',' in case_id:
+        return _get_bulk_cases(request, case_id.split(','))
+    return _get_single_case(request, case_id)
+
+
+def _get_bulk_cases(request, case_ids):
+    try:
+        res = get_bulk(request.domain, case_ids)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse(res)
+
+
+def _get_single_case(request, case_id):
     try:
         case = CommCareCase.objects.get_case(case_id, request.domain)
         if case.domain != request.domain:
