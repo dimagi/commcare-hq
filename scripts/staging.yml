@@ -73,7 +73,7 @@ branches:
     - es/required-2  # Ethan July 29
     - ad/embedded-tableau-explorer-access # Addison Aug 1
     - jc/USH-2151  # Jing/Steph Aug 2
-    # - rc/es-phonetic-analyzer # Robert Aug 4
+    - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
