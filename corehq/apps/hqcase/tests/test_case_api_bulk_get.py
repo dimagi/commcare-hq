@@ -87,11 +87,11 @@ class TestCaseAPIBulkGet(TestCase):
         self.assertEqual(result['cases'][2]['error'], 'not found')
 
     def test_bulk_get_not_found(self):
-        case_ids = self.case_ids[0:2] + ['missing']
+        case_ids = ['missing'] + self.case_ids[0:2]
         result = self._call_api_check_results(case_ids)
         self.assertEqual(result['matching_records'], 2)
         self.assertEqual(result['missing_records'], 1)
-        self.assertEqual(result['cases'][2]['error'], 'not found')
+        self.assertEqual(result['cases'][0]['error'], 'not found')
 
     def _call_api_check_results(self, case_ids):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))

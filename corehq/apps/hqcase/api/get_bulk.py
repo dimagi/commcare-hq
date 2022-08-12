@@ -1,5 +1,8 @@
+from operator import itemgetter
+
 from corehq.apps.es.case_search import ElasticCaseSearch
 from corehq.apps.hqcase.api.core import serialize_es_case
+from corehq.form_processor.models.util import sort_with_id_list
 
 
 def get_bulk(domain, case_ids):
@@ -19,6 +22,8 @@ def get_bulk(domain, case_ids):
     missing_count += len(missing_ids)
     for missing_id in missing_ids:
         final_results.append(_get_error_doc(missing_id))
+
+    sort_with_id_list(final_results, case_ids, 'case_id', operator=itemgetter)
 
     return {
         'matching_records': len(final_results) - missing_count,
