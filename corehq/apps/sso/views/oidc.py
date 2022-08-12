@@ -81,7 +81,7 @@ def sso_oidc_api_auth(request, idp_slug):
     initialize_oidc_session(request)
     # authorization_url = get_openid_provider_login_url(client, request)
     nonce = request.session["oidc_nonce"]
-    authorization_url = f"{request.idp.issuer_id}?client_id={request.idp.client_id}&" \
+    authorization_url = f"{request.idp.entity_id}?client_id={request.idp.client_id}&" \
                         f"response_type=code&scope=openid+profile&nonce={nonce}"
     return JsonResponse({
         "success": True,
