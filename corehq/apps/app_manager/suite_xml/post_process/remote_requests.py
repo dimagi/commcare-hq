@@ -299,11 +299,10 @@ class RemoteRequestFactory(object):
             if prop.exclude:
                 kwargs['exclude'] = "true()"
             if prop.required.test:
-                kwargs['required_attr'] = interpolate_xpath(prop.required.test)
-                # kwargs['required'] = Required(
-                #     test=interpolate_xpath(prop.required.test),
-                #     text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
-                # )
+                kwargs['required'] = Required(
+                    test=interpolate_xpath(prop.required.test),
+                    text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
+                )
             if prop.validations:
                 kwargs['validations'] = [
                     Validation(
