@@ -323,7 +323,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
                 if (_.every(parts, function (part) { return part.isValid(); }))  {
                     if (parts.length === 1) { // condition where only one valid date is typed in rather than a range
-                        $input.val(oldValue + separator + oldValue).trigger('change');
+                        newValue = oldValue + separator + oldValue;
                     } else if (parts.length === 2) {
                         newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
                     }

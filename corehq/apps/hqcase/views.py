@@ -93,9 +93,9 @@ def case_api(request, domain, case_id=None):
     if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
-        return _handle_case_update(request)
-    if request.method == 'PUT' and case_id:
-        return _handle_case_update(request, case_id)
+        return _handle_case_update(request, is_creation=True)
+    if request.method == 'PUT':
+        return _handle_case_update(request, is_creation=False, case_id=case_id)
     return JsonResponse({'error': "Request method not allowed"}, status=405)
 
 
@@ -120,11 +120,14 @@ def _handle_list_view(request):
     return JsonResponse(res)
 
 
-def _handle_case_update(request, case_id=None):
+def _handle_case_update(request, is_creation, case_id=None):
     try:
         data = json.loads(request.body.decode('utf-8'))
     except (UnicodeDecodeError, json.JSONDecodeError):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+
+    if not is_creation and case_id and 'case_id' not in data:
+        data['case_id'] = case_id
 
     try:
         xform, case_or_cases = handle_case_update(
@@ -132,7 +135,7 @@ def _handle_case_update(request, case_id=None):
             data=data,
             user=request.couch_user,
             device_id=request.META.get('HTTP_USER_AGENT'),
-            case_id=case_id,
+            is_creation=is_creation,
         )
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)

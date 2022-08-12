@@ -18,7 +18,7 @@
       <div class="panel-body">
         <p>{% trans "Search against the following case properties." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: searchProperties().length > 0">
+          <thead data-bind="visible: search_properties().length > 0">
           <tr>
             <th class="col-sm-1"></th>
             <th class="col-sm-4">{% trans "Case Property" %}</th>
@@ -29,7 +29,7 @@
             <th class="col-sm-1"></th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: searchProperties, sortableList: searchProperties">
+          <tbody data-bind="foreach: search_properties, sortableList: search_properties">
             {% include "app_manager/partials/modules/case_search_property.html" %}
           </tbody>
         </table>
@@ -49,14 +49,14 @@
       <div class="panel-body">
         <p>{% trans "Filter based on a specific value of any case property. These are applied to every search and are hidden from the user." %}</p>
         <table class="table table-condensed">
-          <thead data-bind="visible: defaultProperties().length > 0">
+          <thead data-bind="visible: default_properties().length > 0">
           <tr>
             <th class="col-sm-5">{% trans "Case Property" %}</th>
             <th class="col-sm-6">{% trans "Value (XPath expression)" %}</th>
             <th class="col-sm-1">&nbsp;</th>
           </tr>
           </thead>
-          <tbody data-bind="foreach: defaultProperties">
+          <tbody data-bind="foreach: default_properties">
           <tr>
             <td class="col-sm-4" data-bind="css: {'has-error': $parent.isCommon(ko.unwrap(property()))}">
 
@@ -131,8 +131,8 @@
             </label>
             <div class="{% css_field_class %} checkbox">
               <label>
-                <input type="checkbox" data-bind="checked: inlineSearch" />
-                <input type="hidden" name="search-input" data-bind="value: inlineSearch"/>
+                <input type="checkbox" data-bind="checked: inline_search" />
+                <input type="hidden" name="search-input" data-bind="value: inline_search"/>
               </label>
             </div>
           </div>
@@ -145,7 +145,7 @@
                     data-content="{% trans_html_attr "This text is for the button to enter case search. It is also the header on the search results screen." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: searchLabel" %}
+              {% input_trans module.search_config.search_label.label langs input_name='search_label' input_id='search_label' data_bind="value: search_label" %}
             </div>
           </div>
           <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
@@ -162,7 +162,7 @@
                     data-content="{% trans_html_attr "This text is for the search button displayed at the bottom of search results, so users can search again." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: searchAgainLabel" %}
+              {% input_trans module.search_config.search_again_label.label langs input_name='search_again_label' input_id='search_again_label' data_bind="value: search_again_label" %}
             </div>
           </div>
           <div class="case-search-multimedia-input" data-bind="hidden: inlineSearchActive">
@@ -173,7 +173,7 @@
             <!-- /ko -->
           </div>
           {% endif %}
-          <div class="form-group" data-bind="slideVisible: !autoLaunch()">
+          <div class="form-group" data-bind="slideVisible: !auto_launch()">
             <label for="search-display-condition" class="control-label {% css_label_class %}">
               {% trans "Display Condition" %}
               <span class="hq-help-template" data-title="{% trans "Display Condition" %}"
@@ -184,7 +184,10 @@
               <textarea class="form-control vertical-resize"
                        id="search-display-condition"
                        spellcheck="false"
-                       data-bind="value: searchButtonDisplayCondition, xpathValidator: {text: searchButtonDisplayCondition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+                       data-bind="
+                         value: search_button_display_condition,
+                         xpathValidator: {text: search_button_display_condition, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+                       "
               ></textarea>
             </div>
           </div>
@@ -196,7 +199,7 @@
                     data-content="{% trans_html_attr "An XPath expression to filter the search results." %}">
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchFilter, xpathValidator: {text: searchFilter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="value: search_filter, xpathValidator: {text: search_filter, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="search-filter"
                         spellcheck="false"
@@ -219,7 +222,7 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: searchAdditionalRelevant, xpathValidator: {text: searchAdditionalRelevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="value: additional_relevant, xpathValidator: {text: additional_relevant, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
                         class="form-control vertical-resize"
                         id="claim-relevant-condition"
                         spellcheck="false"
@@ -234,7 +237,10 @@
               </span>
             </label>
             <div class="{% css_field_class %}">
-              <textarea data-bind="value: blacklistedOwnerIdsExpression, xpathValidator: {text: blacklistedOwnerIdsExpression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}"
+              <textarea data-bind="
+                value: blacklisted_owner_ids_expression,
+                xpathValidator: {text: blacklisted_owner_ids_expression, allowCaseHashtags: true, errorHtml: $('#searchFilterXpathErrorHtml').html()}
+              "
                         class="form-control vertical-resize"
                         id="blacklisted-user-ids"
                         spellcheck="false"
@@ -254,7 +260,7 @@
                         data-content="{% trans_html_attr "Select a Data Registry to use for searching.  Users with access will see results from the registry when performing this search." %}">
               </label>
               <div class="{% css_field_class %}">
-                  <select class="form-control" id="data-registry" data-bind="value: dataRegistry">
+                  <select class="form-control" id="data-registry" data-bind="value: data_registry">
                       <option value/>
                       {% for registry in data_registries %}
                           <option value="{{ registry.slug }}">{{ registry.name }}</option>
@@ -262,19 +268,19 @@
                   </select>
               </div>
           </div>
-          <div class="form-group" data-bind="slideVisible: dataRegistry()">
+          <div class="form-group" data-bind="slideVisible: data_registry()">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Data Registry Workflow" %}
               </label>
               <div class="{% css_field_class %}">
-                  <select class="form-control" data-bind="value: dataRegistryWorkflow">
+                  <select class="form-control" data-bind="value: data_registry_workflow">
                     {% for slug, name in data_registry_workflow_choices %}
                       <option value="{{ slug }}">{{ name }}</option>
                     {% endfor %}
                   </select>
               </div>
           </div>
-          <div class="form-group" data-bind="visible: dataRegistryWorkflow() == 'load_case'">
+          <div class="form-group" data-bind="visible: data_registry_workflow() == 'load_case'">
               <label for="data-registry" class="{% css_label_class %} control-label">
                   {% trans "Load Additional Data Registry Cases" %}
                   <span class="hq-help-template" data-title="{% trans "Data Registry" %}"
@@ -287,13 +293,13 @@
               </label>
               <div class="{% css_field_class %}">
                   <table class="table table-condensed">
-                    <thead data-bind="visible: additionalRegistryCases().length > 0">
+                    <thead data-bind="visible: additional_registry_cases().length > 0">
                     <tr>
                       <th class="col-sm-12">{% trans "Case ID XPath" %}</th>
                       <th class="col-sm-1"></th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: additionalRegistryCases, sortableList: additionalRegistryCases">
+                    <tbody data-bind="foreach: additional_registry_cases, sortableList: additional_registry_cases">
                       <tr>
                         <td>
                           <textarea data-bind="
@@ -335,7 +341,7 @@
                   <input id="custom-related-case-property"
                          type="text"
                          class="form-control"
-                         data-bind="value: customRelatedCaseProperty"/>
+                         data-bind="value: custom_related_case_property"/>
               </div>
           </div>
           {% endif %}

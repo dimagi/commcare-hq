@@ -15,7 +15,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase
 
 
-def close_cases(case_ids, domain, user, device_id, case_db=None):
+def close_cases(case_ids, domain, user, device_id, case_db=None, synctoken_id=None):
     """
     Close cases by submitting a close forms.
 
@@ -39,6 +39,11 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         close=True,
     ).as_xml(), encoding='utf-8').decode('utf-8') for case_id in case_ids]
 
+    submission_extras = {}
+    if synctoken_id:
+        submission_extras = {
+            "last_sync_token": synctoken_id
+        }
     return submit_case_blocks(
         case_blocks,
         domain,
@@ -46,6 +51,7 @@ def close_cases(case_ids, domain, user, device_id, case_db=None):
         user_id,
         device_id=device_id,
         case_db=case_db,
+        submission_extras=submission_extras
     )[0].form_id
 
 

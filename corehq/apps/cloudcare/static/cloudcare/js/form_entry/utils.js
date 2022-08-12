@@ -8,6 +8,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.jsError = function (message) {
+        return hqImport("cloudcare/js/form_entry/errors").JS_ERROR + message;
+    };
+
     module.isWebApps = function () {
         var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             environment = FormplayerFrontend.getChannel().request('currentUser').environment;

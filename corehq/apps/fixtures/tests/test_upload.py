@@ -1,3 +1,4 @@
+from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
@@ -17,6 +18,7 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureItemField,
     FixtureTypeField,
+    LookupTable,
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
@@ -28,7 +30,7 @@ from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.util.test_utils import generate_cases, make_make_path
+from corehq.util.test_utils import generate_cases, make_make_path, new_db_connection
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -558,7 +560,6 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_rows(), ['orange'])
 
     def test_upload_progress_and_result(self):
-        from datetime import timedelta
         task = FakeTask()
         with patch.object(mod, "timedelta", lambda **k: timedelta()):
             result = self.upload([
@@ -576,6 +577,14 @@ class TestFixtureUpload(TestCase):
         ])
         self.assertEqual(result.number_of_fixtures, 1)
         self.assertTrue(result.success)
+
+    def test_upload_progress_with_zero_tables(self):
+        workbook = self.get_workbook_from_data(self.headers, [])
+        task = FakeTask()
+        with patch.object(mod, "timedelta", lambda **k: timedelta()):
+            result = self.upload(workbook, task=task)
+        self.assertEqual(result.errors, [])
+        self.assertIsNone(self.get_table())
 
     def test_table_uid_conflict(self):
         result = self.upload_table_with_uid_conflict()
@@ -641,6 +650,27 @@ class TestFixtureUpload(TestCase):
         ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
+
+    def test_sql_transaction(self):
+        def checked_tx():
+            tx = CouchTransaction()
+            tx.add_post_commit_action(check)
+            return tx
+
+        def check():
+            with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
+                get_table()
+            did_check.append(True)
+
+        def get_table():
+            return LookupTable.objects.get(domain=self.domain, tag='things')
+
+        CouchTransaction = mod.CouchTransaction
+        did_check = []
+        with patch.object(mod, "CouchTransaction", checked_tx):
+            self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
+        self.assertIsNotNone(get_table())
+        self.assertTrue(did_check)
 
 
 class TestFixtureOwnershipUpload(TestCase):

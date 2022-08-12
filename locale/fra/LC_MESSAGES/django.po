@@ -3,6 +3,8 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Aathithya Sidtharthan B, 2022
+# Aathithya Sidtharthan B, 2022
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2014-2015
 # Aissetou Sawadogo <ais107@hotmail.com>, 2016-2017
 # Alexandra Guibal <guibal.alexandra@gmail.com>, 2015
@@ -1215,6 +1217,10 @@ msgid ""
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
+"\n"
+"Merci,\n"
+"- l'équipe CommCareHQ Team\n"
+"www.commcarehq.org"
 
 #: corehq/apps/accounting/templates/accounting/email/30_days.txt
 #, python-format
@@ -5257,8 +5263,8 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
-"sync and look for updates from a differnent URL. Main use case is to allow "
-"migrating ICDS to a new cluster."
+"sync, and look for updates from a different URL. The main use case is to "
+"allow migrating project spaces to a new environment.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -8982,16 +8988,12 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#, fuzzy
-#| msgid "Send Message"
 msgid "Required Message"
-msgstr "Envoyer message"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
-#, fuzzy
-#| msgid "Validation"
 msgid "Validation Condition"
-msgstr "Validation"
+msgstr "Condition de validation"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
@@ -13207,6 +13209,23 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr "Veuillez spécifier au moins une action."
 
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid ""
+#| "The Actions will be performed for all open cases that match all filter "
+#| "criteria below."
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+"Les actions seront effectuées pour tous les cas ouverts qui correspondent à "
+"tous les critères de filtrage ci-dessous."
+
+#: corehq/apps/data_interfaces/forms.py
+#, fuzzy
+#| msgid "Case Filters"
+msgid "Cases Filter"
+msgstr "Filtres de dossiers"
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr "Transférer les dossiers"
@@ -13387,10 +13406,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 msgid "Add Update Case Property"
 msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-msgid "case property name"
-msgstr "Nom de la propriété de dossier"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
@@ -13824,6 +13839,21 @@ msgid "Date case property (advanced)"
 msgstr "Date de la propriété de dossier (avancé)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Site"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr "Le dossier parent est fermé"
 
@@ -13898,6 +13928,18 @@ msgstr "Le dossier parent est fermé"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "Identifiant du filtre personnalisé"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "Case Self-Registration"
+msgid "Case belongs to location"
+msgstr "Auto-enregistrement de dossier"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#, fuzzy
+#| msgid "(including child locations)"
+msgid "Include cases from child locations"
+msgstr "(y compris les sites enfants)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14179,8 +14221,10 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
-msgstr ""
+#, fuzzy, python-format
+#| msgid "Couldn't send to the following number(s): "
+msgid "Deduplication rule not saved due to the following issues: %s"
+msgstr "Impossible d'envoyer le(s) numéro(s) suivant(s) : "
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Successfully created deduplication rule: {}"
@@ -14937,20 +14981,6 @@ msgstr "Sélectionnez un type de suscription..."
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr "Type d'abonnement "
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Site"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -16086,6 +16116,8 @@ msgid ""
 "    Hello,\n"
 "  "
 msgstr ""
+"\n"
+"Bonjour"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
@@ -17572,6 +17604,9 @@ msgid ""
 "    CommCareHQ Team\n"
 "  "
 msgstr ""
+"\n"
+"Merci,\n"
+"l'équipe CommCareHQ Team"
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.txt
 #, python-format
@@ -21079,13 +21114,19 @@ msgstr ""
 "numéros de téléphone du dossier seront synchronisés."
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Email address '{}' is not a dimagi email address"
+#, fuzzy
+#| msgid ""
+#| "The following e-mail addresses contain invalid characters, or are missing "
+#| "required characters: "
+msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
+"Les adresses mail suivantes contiennent des caractères invalides ou manque "
+"des caractères exigés:"
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
 "The following users do not exist on this site, please have the user "
-"registered first."
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -26063,6 +26104,8 @@ msgid ""
 "    You have been added to the %(domain)s project on %(hq_name)s.\n"
 "  "
 msgstr ""
+"\n"
+"Vous avez été ajouté au %(domain)s projet sur %(hq_name)s."
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.html
 #, python-format
@@ -26088,6 +26131,11 @@ msgid ""
 "    Your username to login is <strong>%(username)s</strong>\n"
 "  "
 msgstr ""
+"\n"
+"Une fois que vous avez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le %(domain)s projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter c'est <strong>%(username)s</"
+"strong>."
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.html
 #, python-format
@@ -26130,6 +26178,10 @@ msgid ""
 "\n"
 "Your username to login is %(username)s\n"
 msgstr ""
+"\n"
+"Une fois que vous avez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le %(domain)s projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter c'est %(username)s.\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
@@ -26201,6 +26253,16 @@ msgid ""
 "Thanks,\n"
 "-The %(hq_name)s team\n"
 msgstr ""
+"\n"
+"Bonjour %(name)s,\n"
+"\n"
+"Votre compte avec le nom d'utilisateur %(username)s est confirmé avec "
+"succès.\n"
+"Vous pouvez maintenant vous connecter et soumettre des données dans le "
+"\"%(domain)s\" projet sur %(hq_name)s.\n"
+"\n"
+"Merci,\n"
+"-L'équipe %(hq_name)s\n"
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
@@ -28645,52 +28707,6 @@ msgstr "soumis avant d'avoir été terminé [curieux]"
 #: corehq/apps/reports/standard/monitoring.py
 msgid "same"
 msgstr "pareil"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr "Temps d'activité d'utilisateur"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-"Représentation graphique des dates des formulaires complétés ou soumis."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr "Remarque : Aucune soumission ne correspond à vos filtres."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr "Lun"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr "Mar"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr "Mer"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr "Jeu"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr "Ven"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr "Sam"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr "Dim"
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
-msgstr "Heure ({timezone})"
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
@@ -42773,3 +42789,40 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "case property name"
+#~ msgstr "Nom de la propriété de dossier"
+
+#~ msgid "Worker Activity Times"
+#~ msgstr "Temps d'activité d'utilisateur"
+
+#~ msgid "Graphical representation of when forms are completed or submitted."
+#~ msgstr ""
+#~ "Représentation graphique des dates des formulaires complétés ou soumis."
+
+#~ msgid "Note: No submissions matched your filters."
+#~ msgstr "Remarque : Aucune soumission ne correspond à vos filtres."
+
+#~ msgid "Mon"
+#~ msgstr "Lun"
+
+#~ msgid "Tue"
+#~ msgstr "Mar"
+
+#~ msgid "Wed"
+#~ msgstr "Mer"
+
+#~ msgid "Thu"
+#~ msgstr "Jeu"
+
+#~ msgid "Fri"
+#~ msgstr "Ven"
+
+#~ msgid "Sat"
+#~ msgstr "Sam"
+
+#~ msgid "Sun"
+#~ msgstr "Dim"
+
+#~ msgid "Time ({timezone})"
+#~ msgstr "Heure ({timezone})"
