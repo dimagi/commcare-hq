@@ -520,7 +520,6 @@ class QueryPrompt(DisplayNode):
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
-    required_attr = StringField('@required', required=False)  # Temporary addition
     required = NodeField('required', Required, required=False)
     validations = NodeListField('validation', Validation)
 
