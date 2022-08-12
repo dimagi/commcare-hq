@@ -105,6 +105,21 @@ class TestCaseAPIBulkGet(TestCase):
     def test_bulk_post_external_ids(self):
         self._call_post_api_check_results(external_ids=['vera', 'nona'])
 
+    def test_bulk_post_external_ids_missing(self):
+        self._call_post_api_check_results(external_ids=['missing', 'vera', 'nona'])
+
+    def test_bulk_post_case_ids_and_external_ids(self):
+        self._call_post_api_check_results(
+            case_ids=self.case_ids[0:2],
+            external_ids=['vera', 'nona']
+        )
+
+    def test_bulk_post_case_ids_and_external_ids_missing(self):
+        self._call_post_api_check_results(
+            case_ids=['missing_case_id'] + self.case_ids[0:2],
+            external_ids=['vera', 'missing_external_id', 'nona']
+        )
+
     def _call_get_api_check_results(self, case_ids):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
         self.assertEqual(res.status_code, 200)
@@ -116,14 +131,24 @@ class TestCaseAPIBulkGet(TestCase):
     def _call_post_api_check_results(self, case_ids=None, external_ids=None):
         res = self._call_post(case_ids, external_ids)
         result = res.json()
+        cases = result['cases']
+
+        # check for results as well as result order
         if case_ids:
-            result_case_ids = {case['case_id'] for case in result['cases']}
-            self.assertTrue(set(case_ids).issubset(result_case_ids))
+            # case_id results are always at the front
+            result_case_ids = [case.get('case_id') for case in cases]
+            self.assertEqual(case_ids, result_case_ids[:len(case_ids)])
+
         if external_ids:
-            result_external_ids = {case['external_id'] for case in result['cases']}
-            self.assertTrue(set(external_ids).issubset(result_external_ids))
+            # external_id results are always at the end so reverse the lists and compare
+            external_ids = list(reversed(external_ids))
+            result_external_ids = list(reversed([
+                case.get('external_id') for case in cases
+            ]))
+            self.assertEqual(external_ids, result_external_ids[:len(external_ids)])
+
         total_expected = len(case_ids or []) + len(external_ids or [])
-        self.assertEqual(len(result['cases']), total_expected)
+        self.assertEqual(len(cases), total_expected)
         return result
 
     def _call_post(self, case_ids=None, external_ids=None, expected_status=200):
