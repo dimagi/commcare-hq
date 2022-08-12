@@ -11,7 +11,6 @@
 {% initial_page_data "validate_hostname" validate_hostname %}
 {% initial_page_data "server_address" server_address %}
 {% initial_page_data "target_site" target_site %}
-{% initial_page_data "domain_username" domain_username %}
 {% initial_page_data "view_url" view_url %}
 {% registerurl 'tableau_visualization_ajax' request.domain %}
 
@@ -23,7 +22,7 @@
         <i class="fa fa-spin fa-spinner"></i>
     </div>
     <div id="vizContainer"></div>
-    <div id="errorMessage" class="alert alert-danger hide">{{ failure_message }}</div>
+    <div id="errorMessage" class="alert alert-danger hide"></div>
 </body>
 
 {% endblock %}
