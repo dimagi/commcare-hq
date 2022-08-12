@@ -15,6 +15,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.answer = question.answer;
         self.datatype = question.datatype();
         self.entryId = _.uniqueId(this.datatype);
+        self.xformAction = Const.ANSWER;
+        self.xformParams = function () { return {}; };
 
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
@@ -900,6 +902,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         EntrySingleAnswer.call(this, question, options);
         self.templateType = 'file';
+        self.xformAction = Const.ANSWER_MEDIA;
+        self.xformParams = function () {
+            return { file: self.file() };
+        };
 
         self.accept = "image/*,.pdf";
         self.file = ko.observable();

@@ -305,17 +305,14 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             // We revalidate any errored labels while answering any of the questions
             var erroredLabels = form.erroredLabels();
 
-            // get files from entry
-            var file = ko.utils.unwrapObservable(q.entry.file);
-
             this.serverRequest(
-                {
-                    'action': Const.ANSWER,
+                _.extend({
+                    'action': q.entry.xformAction,
                     'ix': ix,
                     'answer': answer,
                     'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
-                },
+                }, q.entry.xformParams()),
                 function (resp) {
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
