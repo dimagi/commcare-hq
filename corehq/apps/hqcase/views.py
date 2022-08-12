@@ -90,7 +90,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @api_throttle
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
-        return _handle_individual_get(request, case_id)
+        return _handle_get(request, case_id)
     if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
@@ -100,7 +100,7 @@ def case_api(request, domain, case_id=None):
     return JsonResponse({'error': "Request method not allowed"}, status=405)
 
 
-def _handle_individual_get(request, case_id):
+def _handle_get(request, case_id):
     if ',' in case_id:
         return _get_bulk_cases(request, case_id.split(','))
     return _get_single_case(request, case_id)
