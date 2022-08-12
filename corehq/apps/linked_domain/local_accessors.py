@@ -33,7 +33,6 @@ def get_tableau_server_and_visualizations(domain):
             'server_name': server.server_name,
             'validate_hostname': server.validate_hostname,
             'target_site': server.target_site,
-            'domain_username': server.domain_username,
         },
         'visualizations': vis_list,
     }

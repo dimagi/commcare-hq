@@ -60,7 +60,6 @@ class TableauView(BaseDomainView):
             "server_address": self.visualization.server.server_name,
             "validate_hostname": hostname,
             "target_site": self.visualization.server.target_site,
-            "domain_username": self.visualization.server.domain_username,
             "view_url": self.visualization.view_url,
         }
 
@@ -78,10 +77,11 @@ def tableau_visualization_ajax(request, domain):
     server_name = visualiation_data.pop('server_name')
     validate_hostname = visualiation_data.pop('validate_hostname')
     target_site = visualiation_data.pop('target_site')
-    domain_username = visualiation_data.pop('domain_username')
 
+    # An equivalent Tableau user with the username "HQ/{role name}" and proper permissions must exist.
+    tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
     tabserver_url = 'https://{}/trusted/'.format(server_name)
-    post_arguments = {'username': domain_username}
+    post_arguments = {'username': tableau_username}
 
     if target_site != 'Default':
         post_arguments.update({'target_site': target_site})
@@ -104,7 +104,10 @@ def tableau_visualization_ajax(request, domain):
         else:
             return JsonResponse({
                 "success": False,
-                "message": _("Tableau trusted authentication failed"),
+                # FYI this kind of failure will also occur when testing from your local computer (your
+                # IP address is not on the list of 'trusted hosts' - only staging and proudctions' are)
+                "message": _("Tableau trusted authentication failed. Double check that permissions are "
+                             "configured correctly in Tableau."),
             })
     else:
         return JsonResponse({
