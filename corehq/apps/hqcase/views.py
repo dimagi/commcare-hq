@@ -115,13 +115,13 @@ def case_api_bulk_fetch(request, domain):
 
 def _handle_get(request, case_id):
     if ',' in case_id:
-        return _get_bulk_cases(request, case_id.split(','))
+        return _get_bulk_cases(request, case_ids=case_id.split(','))
     return _get_single_case(request, case_id)
 
 
-def _get_bulk_cases(request, case_ids):
+def _get_bulk_cases(request, case_ids=None, external_ids=None):
     try:
-        res = get_bulk(request.domain, case_ids)
+        res = get_bulk(request.domain, case_ids, external_ids)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
@@ -145,10 +145,11 @@ def _handle_bulk_fetch(request):
         return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
 
     case_ids = data.get('case_ids')
-    if not case_ids:
-        return JsonResponse({'error': "Payload must include a 'case_ids' field"}, status=400)
+    external_ids = data.get('external_ids')
+    if not case_ids and not external_ids:
+        return JsonResponse({'error': "Payload must include 'case_ids' or 'external_ids' fields"}, status=400)
 
-    return _get_bulk_cases(request, case_ids)
+    return _get_bulk_cases(request, case_ids=case_ids, external_ids=external_ids)
 
 
 def _handle_list_view(request):

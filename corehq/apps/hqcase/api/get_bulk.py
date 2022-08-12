@@ -1,3 +1,5 @@
+import dataclasses
+from dataclasses import dataclass, field
 from operator import itemgetter
 
 from corehq.apps.es.case_search import ElasticCaseSearch
@@ -6,7 +8,19 @@ from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
 from corehq.form_processor.models.util import sort_with_id_list
 
 
-def get_bulk(domain, case_ids):
+@dataclass
+class BulkFetchResults:
+    cases: list = field(default_factory=list)
+    matching_records: int = 0
+    missing_records: int = 0
+
+    def merge(self, results):
+        self.cases.extend(results.cases)
+        self.matching_records += results.matching_records
+        self.missing_records += results.missing_records
+
+
+def get_bulk(domain, case_ids=None, external_ids=None):
     """Get cases in bulk.
 
     This must return a result for each case ID passed in and the results must
@@ -15,9 +29,22 @@ def get_bulk(domain, case_ids):
     If the case is not found or belongs to a different domain then
     an error stub is included in the result set.
     """
-    if len(case_ids) > MAX_PAGE_SIZE:
+    case_ids = case_ids or []
+    external_ids = external_ids or []
+    if len(case_ids) + len(external_ids) > MAX_PAGE_SIZE:
         raise UserError(f"You cannot request more than {MAX_PAGE_SIZE} cases per request.")
 
+    results = BulkFetchResults()
+    if case_ids:
+        results.merge(_get_cases_by_id(domain, case_ids))
+
+    if external_ids:
+        results.merge(_get_cases_by_external_id(domain, external_ids))
+
+    return dataclasses.asdict(results)
+
+
+def _get_cases_by_id(domain, case_ids):
     results = ElasticCaseSearch().get_docs(case_ids)
 
     def _serialize_doc(doc):
@@ -43,11 +70,11 @@ def get_bulk(domain, case_ids):
 
     total = len(case_ids)
     not_found = len(error_ids) + len(missing_ids)
-    return {
-        'matching_records': total - not_found,
-        'missing_records': not_found,
-        'cases': final_results
-    }
+    return BulkFetchResults(final_results, total - not_found, not_found)
+
+
+def _get_cases_by_external_id(domain, external_ids):
+    return BulkFetchResults()
 
 
 def _get_error_doc(case_id):

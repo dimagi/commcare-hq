@@ -102,6 +102,9 @@ class TestCaseAPIBulkGet(TestCase):
         with patch('corehq.apps.hqcase.api.get_bulk.MAX_PAGE_SIZE', 3):
             self._call_post(['1', '2', '3', '4'], expected_status=400)
 
+    def test_bulk_post_external_ids(self):
+        self._call_post_api_check_results(external_ids=['vera', 'nona'])
+
     def _call_get_api_check_results(self, case_ids):
         res = self.client.get(reverse('case_api', args=(self.domain, ','.join(case_ids))))
         self.assertEqual(res.status_code, 200)
@@ -110,16 +113,26 @@ class TestCaseAPIBulkGet(TestCase):
         self.assertEqual(result_case_ids, case_ids)
         return result
 
-    def _call_post_api_check_results(self, case_ids):
-        res = self._call_post(case_ids)
+    def _call_post_api_check_results(self, case_ids=None, external_ids=None):
+        res = self._call_post(case_ids, external_ids)
         result = res.json()
-        result_case_ids = [case['case_id'] for case in result['cases']]
-        self.assertEqual(result_case_ids, case_ids)
+        if case_ids:
+            result_case_ids = {case['case_id'] for case in result['cases']}
+            self.assertTrue(set(case_ids).issubset(result_case_ids))
+        if external_ids:
+            result_external_ids = {case['external_id'] for case in result['cases']}
+            self.assertTrue(set(external_ids).issubset(result_external_ids))
+        total_expected = len(case_ids or []) + len(external_ids or [])
+        self.assertEqual(len(result['cases']), total_expected)
         return result
 
-    def _call_post(self, case_ids, expected_status=200):
-        res = self.client.post(reverse('case_api_bulk_fetch', args=(self.domain,)), data={
-            'case_ids': case_ids
-        }, content_type="application/json")
-        self.assertEqual(res.status_code, expected_status)
+    def _call_post(self, case_ids=None, external_ids=None, expected_status=200):
+        data = {}
+        if case_ids is not None:
+            data['case_ids'] = case_ids
+        if external_ids is not None:
+            data['external_ids'] = external_ids
+        url = reverse('case_api_bulk_fetch', args=(self.domain,))
+        res = self.client.post(url, data=data, content_type="application/json")
+        self.assertEqual(res.status_code, expected_status, res.json())
         return res
