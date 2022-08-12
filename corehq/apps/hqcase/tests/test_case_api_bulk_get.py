@@ -108,8 +108,8 @@ class TestCaseAPIBulkGet(TestCase):
 
     def test_bulk_post_duplicates(self):
         """Duplicate case IDs in the request results in duplicates in the response"""
-        case_ids = [self.case_ids[0], 'missing', self.case_ids[0], 'missing']
-        self._call_post_api_check_results(case_ids, matching=2, missing=2)
+        case_ids = [self.case_ids[0], 'missing', self.case_ids[0], 'missing', 'missing']
+        self._call_post_api_check_results(case_ids, matching=2, missing=3)
 
     def test_bulk_post_over_limit(self):
         with patch('corehq.apps.hqcase.api.get_bulk.MAX_PAGE_SIZE', 3):

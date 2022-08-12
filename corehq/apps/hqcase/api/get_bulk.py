@@ -94,9 +94,14 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     ordered_results = [
         results_by_id[doc_id] for doc_id in doc_ids
     ]
-    duplicate_ids = {id_ for id_, count in Counter(doc_ids).items() if count > 1}
-    duplicates_missing = duplicate_ids - found_ids
+
+    # if there are duplicate IDs that were not found our doc counts are going to be off
+    missing_duplicate_count = sum(
+        count - 1  # we already have 1 in the 'missing_ids' so decrease the count by 1
+        for id_, count in Counter(doc_ids).items()
+        if count > 1 and id_ not in found_ids
+    )
 
     total = len(doc_ids)
-    not_found = len(error_ids) + len(missing_ids) + len(duplicates_missing)
+    not_found = len(error_ids) + len(missing_ids) + missing_duplicate_count
     return BulkFetchResults(ordered_results, total - not_found, not_found)
