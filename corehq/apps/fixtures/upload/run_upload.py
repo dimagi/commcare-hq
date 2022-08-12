@@ -103,20 +103,22 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
-    tables.process(
-        workbook,
-        old_tables,
-        workbook.iter_tables(domain),
-        table_key,
-        process_table,
-        delete_missing=False,
-        deleted_key=attrgetter("tag"),
-    )
+    try:
+        tables.process(
+            workbook,
+            old_tables,
+            workbook.iter_tables(domain),
+            table_key,
+            process_table,
+            delete_missing=False,
+            deleted_key=attrgetter("tag"),
+        )
 
-    update_progress(None)
-    flush(tables, rows, owners)
-    clear_fixture_quickcache(domain, old_tables)
-    clear_fixture_cache(domain)
+        update_progress(None)
+        flush(tables, rows, owners)
+    finally:
+        clear_fixture_quickcache(domain, old_tables)
+        clear_fixture_cache(domain)
     return result
 
 
