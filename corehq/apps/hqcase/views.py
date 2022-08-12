@@ -110,7 +110,7 @@ def case_api(request, domain, case_id=None):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api_bulk_fetch(request, domain):
-    return JsonResponse({})
+    return _handle_bulk_fetch(request)
 
 
 def _handle_get(request, case_id):
@@ -136,6 +136,19 @@ def _get_single_case(request, case_id):
     except CaseNotFound:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     return JsonResponse(serialize_case(case))
+
+
+def _handle_bulk_fetch(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+
+    case_ids = data.get('case_ids')
+    if not case_ids:
+        return JsonResponse({'error': "Payload must include a 'case_ids' field"}, status=400)
+
+    return _get_bulk_cases(request, case_ids)
 
 
 def _handle_list_view(request):
