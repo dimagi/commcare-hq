@@ -1,9 +1,8 @@
 import dataclasses
-from collections import Counter
 from dataclasses import dataclass, field
 
-from corehq.apps.es.case_search import ElasticCaseSearch, CaseSearchES
-from corehq.apps.hqcase.api.core import serialize_es_case, UserError
+from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
+from corehq.apps.hqcase.api.core import UserError, serialize_es_case
 from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
 
 
