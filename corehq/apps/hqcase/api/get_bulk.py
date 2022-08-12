@@ -65,6 +65,10 @@ def _get_cases_by_external_id(domain, external_ids):
 
 
 def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_field):
+
+    def _get_error_doc(id_value):
+        return {serialized_id_field: id_value, 'error': 'not found'}
+
     def _serialize_doc(doc):
         found_ids.add(doc[es_id_field])
 
@@ -72,7 +76,7 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
             return serialize_es_case(doc)
 
         error_ids.add(doc[es_id_field])
-        return _get_error_doc(doc[es_id_field], serialized_id_field)
+        return _get_error_doc(doc[es_id_field])
 
     error_ids = set()
     found_ids = set()
@@ -81,7 +85,7 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
 
     missing_ids = set(doc_ids) - found_ids
     final_results.extend([
-        _get_error_doc(missing_id, serialized_id_field) for missing_id in missing_ids
+        _get_error_doc(missing_id) for missing_id in missing_ids
     ])
 
     # This orders the results in the same order as the input IDs. It also has the effect
@@ -96,7 +100,3 @@ def _prepare_result(domain, es_results, doc_ids, es_id_field, serialized_id_fiel
     total = len(doc_ids)
     not_found = len(error_ids) + len(missing_ids) + len(duplicates_missing)
     return BulkFetchResults(ordered_results, total - not_found, not_found)
-
-
-def _get_error_doc(id_value, id_field):
-    return {id_field: id_value, 'error': 'not found'}
