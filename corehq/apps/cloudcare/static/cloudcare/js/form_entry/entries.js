@@ -896,8 +896,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
     /**
-     * TODO: Represents blah blah blah
-     * TODO: Add other entries, which will have different help text and different accept values
+     * Base class for entry types that involve uploading a file: multimedia and signatures.
      */
     function FileEntry(question, options) {
         var self = this;
@@ -908,12 +907,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             return { file: self.file() };
         };
 
-        self.accept = "image/*,.pdf,.doc,.docx";
         self.file = ko.observable();
-
-        self.helpText = function () {
-            return "";      // file input is already pretty helpful
-        };
 
     }
     FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -930,6 +924,70 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         }
         this.question.onchange();
     };
+
+    /**
+     * Represents an image upload.
+     */
+    function ImageEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*";
+
+        self.helpText = function () {
+            return gettext("Upload image");
+        };
+
+    }
+    ImageEntry.prototype = Object.create(FileEntry.prototype);
+    ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an audio upload.
+     */
+    function AudioEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "audio/*";
+
+        self.helpText = function () {
+            return gettext("Upload audio file");
+        };
+
+    }
+    AudioEntry.prototype = Object.create(FileEntry.prototype);
+    AudioEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a video upload.
+     */
+    function VideoEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "video/*";
+
+        self.helpText = function () {
+            return gettext("Upload video file");
+        };
+
+    }
+    VideoEntry.prototype = Object.create(FileEntry.prototype);
+    VideoEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a signature, which requires the user to upload a signature file.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*,.pdf,.doc,.docx";
+
+        self.helpText = function () {
+            return gettext( "Upload signature file");
+        };
+
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1184,12 +1242,31 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
-            case Const.BINARY:
-                if (style === Const.SIGNATURE) {
-                    entry = new FileEntry(question, {});
+            case Const.BINARY:      // needs to be last case so that anything unrecognized display as unsupported
+                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
+                    // do nothing, fall through to unsupported
+                } else if (style === Const.SIGNATURE) {
+                    entry = new SignatureEntry(question, {});
                     break;
+                } else {
+                    var missing = false;
+                    switch (question.control()) {
+                        case Const.CONTROL_IMAGE_CHOOSE:
+                            entry = new ImageEntry(question, {});
+                            break;
+                        case Const.CONTROL_AUDIO_CAPTURE:
+                            entry = new AudioEntry(question, {});
+                            break;
+                        case Const.CONTROL_VIDEO_CAPTURE:
+                            entry = new VideoEntry(question, {});
+                            break;
+                        default:
+                            missing = true;
+                    }
+                    if (!missing) {
+                        break;
+                    }   // otherwise, fall through to unsupported
                 }
-                // otherwise, deliberately fall through to default (unsupported)
             default:
                 window.console.warn('No active entry for: ' + question.datatype());
                 entry = new UnsupportedEntry(question, options);
