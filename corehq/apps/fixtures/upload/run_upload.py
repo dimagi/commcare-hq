@@ -15,7 +15,6 @@ from dimagi.utils.couch.database import retry_on_couch_error as retry
 from soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
-    FixtureDataItem,
     FixtureOwnership,
     LookupTable,
     LookupTableRow,
@@ -52,21 +51,17 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             update_progress(table)
             if skip_orm:
                 return  # fast upload does not do ownership
-            if row is not new_row and row._id not in sql_row_ids:
-                rows.to_sync.append(row)
             owners.process(
                 workbook,
-                old_owners.get(row._id, []),
-                workbook.iter_ownerships(new_row, row._id, owner_ids, result.errors),
+                old_owners.get(row._migration_couch_id, []),
+                workbook.iter_ownerships(new_row, row.id.hex, owner_ids, result.errors),
                 owner_key,
+                deleted_key=attrgetter("_id"),
             )
 
-        old_rows = retry(FixtureDataItem.get_item_list)(domain, table.tag, bypass_cache=True)
-        sort_keys = {r._id: r.sort_key for r in old_rows}
+        old_rows = list(LookupTableRow.objects.iter_rows(domain, tag=table.tag))
+        sort_keys = {r.id.hex: r.sort_key for r in old_rows}
         if not skip_orm:
-            sql_row_ids = {id.hex for id in LookupTableRow.objects
-                .filter(id__in=list(sort_keys))
-                .values_list("id", flat=True)}
             old_owners = defaultdict(list)
             for owner in retry(FixtureOwnership.for_all_item_ids)(list(sort_keys), domain):
                 old_owners[owner.data_item_id].append(owner)
@@ -119,7 +114,6 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
 class Mutation:
     to_delete = field(factory=list)
     to_create = field(factory=list)
-    to_sync = field(factory=list)
 
     def process(
         self,
@@ -129,7 +123,7 @@ class Mutation:
         key,
         process_item=lambda item, new_item: None,
         delete_missing=True,
-        deleted_key=attrgetter("_id"),
+        deleted_key=lambda obj: obj.id.hex,
     ):
         old_map = {key(old): old for old in old_items}
         get_deleted_item = {deleted_key(x): x for x in old_items}.get
@@ -159,12 +153,6 @@ class Mutation:
 
 
 def flush(tables, rows, owners):
-    def sync_docs_to_sql():
-        assert not tables.to_sync, tables.to_sync
-        if rows.to_sync:
-            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync, ignore_conflicts=True)
-        assert not owners.to_sync, owners.to_sync
-
     with CouchTransaction() as couch:
         # keep Couch in sync with recursive_delete
         from dimagi.utils.couch.database import iter_docs
@@ -174,12 +162,11 @@ def flush(tables, rows, owners):
         for table in couch_deletes:
             table.recursive_delete(couch)
 
-        deleted_ids = {d._id for dx in couch.docs_to_delete.values() for d in dx}
+        deleted_ids = {d._migration_couch_id for dx in couch.docs_to_delete.values() for d in dx}
         to_delete = chain(rows.to_delete, owners.to_delete)
-        couch.delete_all(d for d in to_delete if d._id not in deleted_ids)
+        couch.delete_all(d for d in to_delete if d._migration_couch_id not in deleted_ids)
         for doc in chain(tables.to_create, rows.to_create, owners.to_create):
             couch.save(doc)
-        couch.add_post_commit_action(sync_docs_to_sql)
     tables.clear()
     rows.clear()
     owners.clear()
@@ -232,7 +219,7 @@ def table_key(table):
 
 def row_key(row):
     return (
-        tuple(sorted(row.fields.items())),
+        tuple(sorted((k, tuple(v)) for k, v in row.fields.items())),
         tuple(sorted(row.item_attributes.items())),
         row.sort_key,
     )

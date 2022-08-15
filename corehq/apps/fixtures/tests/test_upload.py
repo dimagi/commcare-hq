@@ -13,11 +13,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
+    Field,
     FixtureOwnership,
-    FixtureItemField,
     LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
     TypeField,
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
@@ -361,7 +362,7 @@ class TestFixtureWorkbook(SimpleTestCase):
 
 
 def row_name(item):
-    return item.fields.get('name').field_list[0].field_value
+    return item.fields['name'][0].value
 
 
 class TestFixtureUpload(TestCase):
@@ -433,9 +434,9 @@ class TestFixtureUpload(TestCase):
         def sort_key(item):
             return item.sort_key, transform(item)
 
-        items = FixtureDataItem.get_item_list(domain or self.domain, 'things')
+        items = LookupTableRow.objects.iter_rows(domain or self.domain, tag='things')
         if transform is None:
-            return items
+            return list(items)
         return [transform(item) for item in sorted(items, key=sort_key)]
 
     def test_row_addition(self):
@@ -444,7 +445,7 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_rows(), ['apple'])
 
         # reupload with additional row
-        apple_id = self.get_rows(None)[0]._id
+        apple_id = self.get_rows(None)[0].id.hex
         self.upload([(apple_id, 'N', 'apple'), (None, 'N', 'orange')])
         self.assertEqual(self.get_rows(), ['apple', 'orange'])
 
@@ -459,11 +460,11 @@ class TestFixtureUpload(TestCase):
         rows = self.get_rows(None)
         self.assertEqual(len(rows), 1, rows)
         table_id = self.get_table().id
-        apple_id = rows[0]._id
+        apple_id = rows[0].id
 
         self.upload([(apple_id, 'N', 'apple')])
         self.assertEqual(self.get_table().id, table_id)
-        self.assertEqual(self.get_rows(None)[0]._id, apple_id)
+        self.assertEqual(self.get_rows(None)[0].id, apple_id)
 
     def test_replace_duplicate_rows(self):
         self.upload([
@@ -484,7 +485,7 @@ class TestFixtureUpload(TestCase):
         ])
         self.assertEqual(self.get_rows(), ['apple', 'banana', 'coconut'])
 
-        ids = {row_name(r): r._id for r in self.get_rows(None)}
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
         self.upload([
             (ids['banana'], 'N', 'banana'),
             (ids['coconut'], 'N', 'coconut'),
@@ -500,7 +501,7 @@ class TestFixtureUpload(TestCase):
 
     def test_delete_table(self):
         self.upload([(None, 'N', 'apple')])
-        row_ids = {r._id for r in self.get_rows(None)}
+        row_ids = {r.id for r in self.get_rows(None)}
 
         data = [
             ('types', [('Y', 'things', 'yes', 'name', 'yes')]),
@@ -509,8 +510,8 @@ class TestFixtureUpload(TestCase):
         self.upload(self.get_workbook_from_data(self.headers, data))
 
         self.assertIsNone(self.get_table())
-        item_ids = {x["_id"] for x in iter_docs(FixtureDataItem.get_db(), row_ids)}
-        self.assertFalse(item_ids.intersection(row_ids))
+        overlap = LookupTableRow.objects.filter(id__in=list(row_ids)).count()
+        self.assertFalse(overlap)
 
     def test_delete_missing_table(self):
         data = [
@@ -523,10 +524,10 @@ class TestFixtureUpload(TestCase):
 
     def test_update_table(self):
         def part(item):
-            return item.fields.get('part').field_list[0].field_value
+            return item.fields['part'][0].value
 
         self.upload([(None, 'N', 'apple')])
-        apple_id = {row_name(r): r._id for r in self.get_rows(None)}["apple"]
+        apple_id = {row_name(r): r.id.hex for r in self.get_rows(None)}["apple"]
 
         headers = (
             self.headers[0],
@@ -556,7 +557,7 @@ class TestFixtureUpload(TestCase):
 
     def test_delete_row(self):
         self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
-        ids = {row_name(r): r._id for r in self.get_rows(None)}
+        ids = {row_name(r): r.id.hex for r in self.get_rows(None)}
 
         self.upload([
             (ids['apple'], 'Y', 'apple'),
@@ -618,10 +619,10 @@ class TestFixtureUpload(TestCase):
     def upload_row_with_uid_conflict(self):
         domain2 = self.domain + "2"
         self.upload([(None, 'N', 'apple')], domain=domain2)
-        bad_uid, = [r._id for r in self.get_rows(None, domain=domain2)]
+        bad_uid, = [r.id.hex for r in self.get_rows(None, domain=domain2)]
 
         result = self.upload([(bad_uid, 'N', 'apple')])
-        new_uid, = [r._id for r in self.get_rows(None)]
+        new_uid, = [r.id.hex for r in self.get_rows(None)]
         self.assertNotEqual(new_uid, bad_uid)
         return result
 
@@ -650,7 +651,7 @@ class TestFixtureUpload(TestCase):
         ]
         workbook = self.get_workbook_from_data(headers, data)
         result = self.upload(workbook, skip_orm=True)
-        apple_id, = [r._id for r in self.get_rows(None)]
+        apple_id, = [r._migration_couch_id for r in self.get_rows(None)]
 
         ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
         self.assertFalse(ownerships)
@@ -677,19 +678,6 @@ class TestFixtureUpload(TestCase):
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
 
-    def test_upload_should_not_be_impacted_by_stale_row_cache(self):
-        self.upload([(None, 'N', 'apple')])
-
-        # populate caches
-        couch_rows = self.get_rows(None)
-        with mod.CouchTransaction() as tx:
-            # transaction does not clear caches -> stale caches
-            for row in couch_rows:
-                tx.save(row)
-            tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
-
-        self.upload([(None, 'N', 'peach')], replace=True)
-
     def test_upload_should_clear_cache_on_error(self):
         def error_tx():
             def error():
@@ -700,13 +688,13 @@ class TestFixtureUpload(TestCase):
         CouchTransaction = mod.CouchTransaction
 
         self.upload([(None, 'N', 'apple')])  # create lookup table
-        apple_id = self.get_rows(None)[0]._id
+        apple_id = self.get_rows(None)[0].id.hex
 
         upload_error = patch.object(mod, "CouchTransaction", error_tx)
         with upload_error, self.assertRaises(Exception):
             # failed upload, previously resulted in stale cache
             self.upload([(apple_id, 'N', 'orange')])
-        orange_id = self.get_rows(None)[0]._id
+        orange_id = self.get_rows(None)[0].id.hex
 
         # previously failed with BulkSaveError due to stale cache
         self.upload([(orange_id, 'N', 'banana')])
@@ -766,21 +754,21 @@ class TestFixtureOwnershipUpload(TestCase):
 
     def test_replace_row_ownership(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
-        apple_id, = [r._id for r in self.get_rows(None)]
+        apple_id, = [r.id.hex for r in self.get_rows(None)]
 
         self.upload([(apple_id, 'N', 'apple', 'user2', 'g2', 'loc2')])
         self.assertEqual(self.get_rows(), [('apple', {'user2'}, {'g2'}, {'loc2'})])
 
     def test_delete_ownership(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
-        apple_id, = [r._id for r in self.get_rows(None)]
+        apple_id, = [r.id.hex for r in self.get_rows(None)]
 
         self.upload([(apple_id, 'N', 'apple', None, None, None)])
         self.assertEqual(self.get_rows(), [('apple', set(), set(), set())])
 
     def test_ownerships_deleted_with_table(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
-        apple_id, = [r._id for r in self.get_rows(None)]
+        apple_id, = [r.id.hex for r in self.get_rows(None)]
 
         data = [
             ('types', [('Y', 'things', 'no', 'name')]),
@@ -851,15 +839,34 @@ class TestFixtureOwnershipUpload(TestCase):
         def sort_key(item):
             return item.sort_key, transform(item)
 
-        items = FixtureDataItem.get_item_list(self.domain, 'things')
+        def get_owner_ids(row, owner_type):
+            return [o.owner_id for o in LookupTableRowOwner.objects.filter(
+                row_id=row.id,
+                owner_type=owner_type,
+            )]
+
+        def get_users(row):
+            doc_ids = get_owner_ids(row, OwnerType.User)
+            users = iter_docs(CommCareUser.get_db(), doc_ids)
+            return [CommCareUser.wrap(d) for d in users]
+
+        def get_groups(row):
+            doc_ids = get_owner_ids(row, OwnerType.Group)
+            return [Group.wrap(d) for d in iter_docs(Group.get_db(), doc_ids)]
+
+        def get_locations(row):
+            loc_ids = get_owner_ids(row, OwnerType.Location)
+            return SQLLocation.active_objects.filter(location_id__in=loc_ids)
+
+        items = LookupTableRow.objects.iter_rows(self.domain, tag='things')
         if transform is None:
-            return items
+            return list(items)
         return [
             (
                 transform(item),
-                {u.raw_username for u in item.users},
-                {g.name for g in item.groups},
-                {x.name for x in item.locations},
+                {u.raw_username for u in get_users(item)},
+                {g.name for g in get_groups(item)},
+                {x.name for x in get_locations(item)},
             )
             for item in sorted(items, key=sort_key)
         ]
@@ -996,58 +1003,52 @@ class TestTableKey(SimpleTestCase):
 class TestRowKey(SimpleTestCase):
 
     def test_fields(self):
-        t1 = FixtureDataItem(fields={"state": FieldList(
-            field_list=[FixtureItemField(
-                field_name="name",
-                properties={"color": "blue"},
-            )]
-        )})
-        t2 = FixtureDataItem(fields={"state": FieldList(
-            field_list=[FixtureItemField(
-                field_name="name",
-                properties={"color": "blue"},
-            )]
-        )})
+        t1 = LookupTableRow(fields={"state": [Field(
+            value="name",
+            properties={"color": "blue"},
+        )]})
+        t2 = LookupTableRow(fields={"state": [Field(
+            value="name",
+            properties={"color": "blue"},
+        )]})
         self.assertEqual(mod.row_key(t1), mod.row_key(t2))
 
-        t3 = FixtureDataItem(fields={"state": FieldList(
-            field_list=[FixtureItemField(
-                field_name="name",
-                properties={"color": "red"},
-            )]
-        )})
+        t3 = LookupTableRow(fields={"state": [Field(
+            value="name",
+            properties={"color": "red"},
+        )]})
         self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
 
     def test_fields_order(self):
-        t1 = FixtureDataItem(fields={
-            "state": FieldList(field_list=[FixtureItemField(field_name="name", properties={})]),
-            "temp": FieldList(field_list=[FixtureItemField(field_name="value", properties={})]),
+        t1 = LookupTableRow(fields={
+            "state": [Field(value="name")],
+            "temp": [Field(value="value")],
         })
-        t2 = FixtureDataItem(fields={
-            "temp": FieldList(field_list=[FixtureItemField(field_name="value", properties={})]),
-            "state": FieldList(field_list=[FixtureItemField(field_name="name", properties={})]),
+        t2 = LookupTableRow(fields={
+            "temp": [Field(value="value")],
+            "state": [Field(value="name")],
         })
         self.assertEqual(mod.row_key(t1), mod.row_key(t2))
 
     def test_item_attributes(self):
-        t1 = FixtureDataItem(item_attributes={"color": "blue"})
-        t2 = FixtureDataItem(item_attributes={"color": "blue"})
+        t1 = LookupTableRow(item_attributes={"color": "blue"})
+        t2 = LookupTableRow(item_attributes={"color": "blue"})
         self.assertEqual(mod.row_key(t1), mod.row_key(t2))
 
-        t3 = FixtureDataItem(item_attributes={"color": "red"})
+        t3 = LookupTableRow(item_attributes={"color": "red"})
         self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
 
     def test_item_attributes_order(self):
-        t1 = FixtureDataItem(item_attributes={"color": "blue", "shape": "square"})
-        t2 = FixtureDataItem(item_attributes={"shape": "square", "color": "blue"})
+        t1 = LookupTableRow(item_attributes={"color": "blue", "shape": "square"})
+        t2 = LookupTableRow(item_attributes={"shape": "square", "color": "blue"})
         self.assertEqual(mod.row_key(t1), mod.row_key(t2))
 
     def test_sort_key(self):
-        t1 = FixtureDataItem(sort_key=1)
-        t2 = FixtureDataItem(sort_key=1)
+        t1 = LookupTableRow(sort_key=1)
+        t2 = LookupTableRow(sort_key=1)
         self.assertEqual(mod.row_key(t1), mod.row_key(t2))
 
-        t3 = FixtureDataItem(sort_key=2)
+        t3 = LookupTableRow(sort_key=2)
         self.assertNotEqual(mod.row_key(t1), mod.row_key(t3))
 
 

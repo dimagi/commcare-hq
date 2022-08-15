@@ -527,6 +527,10 @@ class FixtureOwnership(SyncCouchToSQLMixin, Document):
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group', 'location'])
 
+    @property
+    def _migration_couch_id(self):
+        return self._id
+
     @classmethod
     def _migration_get_fields(cls):
         return [

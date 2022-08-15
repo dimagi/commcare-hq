@@ -38,7 +38,7 @@ class TestFixtureWorkbook(SimpleTestCase):
         rows = workbook.iter_rows(table, {})
         for row, expected in zip_longest(rows, expected_owners):
             errors = []
-            ownerships = list(workbook.iter_ownerships(row, row._id, OWNER_IDS, errors))
+            ownerships = list(workbook.iter_ownerships(row, row.id.hex, OWNER_IDS, errors))
             actual = map_ownerships(ownerships)
             self.assertEqual(actual, expected)
             self.assertFalse(errors)

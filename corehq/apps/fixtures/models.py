@@ -225,6 +225,20 @@ class Field:
     value = field()
     properties = field(factory=dict)
 
+    def __eq__(self, other):
+        values = (self.value, self.properties)
+        try:
+            other_values = (other.value, other.properties)
+        except AttributeError:
+            return NotImplemented
+        return values == other_values
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((self.value, tuple(sorted(self.properties.items()))))
+
 
 # on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
 # constraints are configured in a migration. Note that Django signals

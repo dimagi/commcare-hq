@@ -1,4 +1,3 @@
-from uuid import uuid4
 from weakref import WeakKeyDictionary
 
 from django.utils.translation import gettext as _, gettext_lazy
@@ -14,11 +13,10 @@ from corehq.util.workbook_json.excel import (
 from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
 
 from ..models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureItemField,
+    Field,
     FixtureOwnership,
     LookupTable,
+    LookupTableRow,
     TypeField,
 )
 
@@ -137,12 +135,11 @@ class _FixtureWorkbook(object):
                     yield Deleted(uid)
                 continue
             sort_key = max(sort_keys.get(uid, i), sort_key + 1)
-            item = FixtureDataItem(
-                _id=uuid4().hex,
+            item = LookupTableRow(
                 domain=data_type.domain,
-                data_type_id=data_type._migration_couch_id,
+                table_id=data_type.id,
                 fields={
-                    field.field_name: _process_item_field(field, di)
+                    field.name: _process_item_field(field, di)
                     for field in type_fields
                 },
                 item_attributes=di.get('property', {}),
@@ -296,22 +293,20 @@ def _process_item_field(field, data_item):
     Returns FieldList
     """
     if not field.properties:
-        return FieldList(
-            field_list=[FixtureItemField(
-                # str to cast ints and multi-language strings
-                field_value=str(data_item['field'][field.field_name]),
-                properties={}
-            )]
-        )
+        return [Field(
+            # str to cast ints and multi-language strings
+            value=str(data_item['field'][field.name]),
+            properties={}
+        )]
 
     field_list = []
-    field_prop_combos = data_item['field'][field.field_name]
+    field_prop_combos = data_item['field'][field.name]
     prop_combo_len = len(field_prop_combos)
-    prop_dict = data_item[field.field_name]
+    prop_dict = data_item[field.name]
     for x in range(0, prop_combo_len):
-        fix_item_field = FixtureItemField(
-            field_value=str(field_prop_combos[x]),
+        fix_item_field = Field(
+            value=str(field_prop_combos[x]),
             properties={prop: str(prop_dict[prop][x]) for prop in prop_dict}
         )
         field_list.append(fix_item_field)
-    return FieldList(field_list=field_list)
+    return field_list

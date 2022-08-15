@@ -116,6 +116,7 @@ class CouchTransaction(object):
             self._commit(start_sql_transaction)
 
     def _commit(self, start_sql_transaction):
+        from dimagi.utils.couch.database import iter_bulk_delete
         for cls, docs in self.docs_to_delete.items():
             if issubclass(cls, SyncCouchToSQLMixin):
                 def delete(chunk):
@@ -126,7 +127,15 @@ class CouchTransaction(object):
                 sql_class = cls._migration_get_sql_model_class()
                 id_name = sql_class._migration_couch_id_name
             elif issubclass(cls, SyncSQLToCouchMixin):
-                raise NotImplementedError(cls)
+                def delete(chunk):
+                    assert not any(obj._state.adding for obj in chunk), \
+                        [obj for obj in chunk if obj._state.adding]
+                    couch_ids = [obj._migration_couch_id for obj in chunk]
+                    iter_bulk_delete(couch_class.get_db(), couch_ids)
+                    pks = [obj.pk for obj in chunk]
+                    start_sql_transaction()
+                    cls.objects.filter(pk__in=pks).delete()
+                couch_class = cls._migration_get_couch_model_class()
             else:
                 delete = partial(_bulk_delete, cls)
             for chunk in chunked(docs, 1000):
