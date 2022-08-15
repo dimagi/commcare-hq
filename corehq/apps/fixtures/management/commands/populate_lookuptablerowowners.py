@@ -1,5 +1,7 @@
 from uuid import UUID
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 from ...models import OwnerType
 
@@ -57,6 +59,11 @@ class Command(PopulateSQLCommand):
         try:
             exists = self.data_item_existence[data_item_id]
         except KeyError:
-            exists = self.couch_db().doc_exist(data_item_id)
+            try:
+                data_type_id = self.couch_db().get(data_item_id)["data_type_id"]
+            except ResourceNotFound:
+                exists = False
+            else:
+                exists = self.couch_db().doc_exist(data_type_id)
             self.data_item_existence[data_item_id] = exists
         return not exists
