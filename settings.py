@@ -168,6 +168,7 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    # middleware that adds cookies must come before SecureCookiesMiddleware
     'corehq.middleware.SecureCookiesMiddleware',
 ]
 
