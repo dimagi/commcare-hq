@@ -51,13 +51,14 @@ from corehq.motech.openmrs.openmrs_config import (
     get_property_map,
 )
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater, SQLOpenmrsRepeater
 from corehq.motech.value_source import (
     ValueSource,
     as_value_source,
     deserialize,
     get_import_value,
 )
+from dimagi.utils.parsing import json_format_datetime
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -210,7 +211,7 @@ def get_feed_updates(repeater, feed_name):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
 
     assert feed_name in ATOM_FEED_NAMES
-    atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus())
+    atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus().to_json())
     last_polled_at = atom_feed_status['last_polled_at']
     page = atom_feed_status['last_page']
     get_uuid = get_patient_uuid if feed_name == ATOM_FEED_NAME_PATIENT else get_encounter_uuid
@@ -249,17 +250,18 @@ def get_feed_updates(repeater, feed_name):
     except OpenmrsFeedRuntimeException:
         # Reset feed status so that polling will start at the beginning
         # of the feed.
-        repeater.atom_feed_status[feed_name] = AtomFeedStatus()
+        repeater.atom_feed_status[feed_name] = AtomFeedStatus().to_json()
         repeater.save()
     except (OpenmrsException, RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline, or XML cannot be
         # parsed.
         return
     else:
-        repeater.atom_feed_status[feed_name] = AtomFeedStatus(
-            last_polled_at=datetime.utcnow(),
-            last_page=page,
-        )
+        repeater.atom_feed_status[feed_name] = {
+            'last_polled_at': json_format_datetime(datetime.utcnow()),
+            'last_page': page,
+            'doc_type': 'AtomFeedStatus',  # Needed for syncing to Couch
+        }
         repeater.save()
 
 
@@ -267,7 +269,7 @@ def get_addpatient_caseblock(
     case_type: str,
     default_owner: Optional[CommCareUser],
     patient: dict,
-    repeater: OpenmrsRepeater,
+    repeater: SQLOpenmrsRepeater,
 ) -> CaseBlock:
 
     case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater)
@@ -298,7 +300,7 @@ def get_updatepatient_caseblock(case, patient, repeater):
 
 
 def get_case_block_kwargs_from_patient(patient, repeater, case=None):
-    property_map = get_property_map(repeater.openmrs_config.case_config)
+    property_map = get_property_map(repeater.openmrs_config['case_config'])
     case_block_kwargs = {
         "case_name": patient['person']['display'],
         "update": {}
@@ -357,7 +359,7 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
-        if not repeater.openmrs_config.case_config.import_creates_cases:
+        if not repeater.openmrs_config['case_config']['import_creates_cases']:
             # We can't create cases via the Atom feed, just update them.
             # Nothing to do here.
             return
@@ -497,7 +499,7 @@ def get_case_id_owner_id_case_block(
     case = get_case(repeater, patient_uuid)
     if case:
         return case.case_id, case.owner_id, None
-    if not repeater.openmrs_config.case_config.import_creates_cases:
+    if not repeater.openmrs_config['case_config']['import_creates_cases']:
         # We cannot create new cases for patients in the Atom feed.
         return None, None, None
     case_block = create_case(repeater, patient_uuid)
