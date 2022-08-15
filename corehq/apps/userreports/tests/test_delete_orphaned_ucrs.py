@@ -1,5 +1,6 @@
-from django.test import TestCase
+from unittest.mock import patch
 
+from django.test import TestCase
 from django.core.management import call_command
 
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -26,7 +27,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
 
         with self.assertRaises(SystemExit):
-            call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
+            call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
 
@@ -39,7 +40,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         config.delete()
 
         with self.assertRaises(SystemExit):
-            call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
+            call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
 
@@ -51,7 +52,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True, no_input=True)
+        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True)
 
         self.assertFalse(adapter.table_exists)
 
@@ -63,7 +64,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
+        call_command('delete_orphaned_ucrs', engine_id='ucr')
 
         self.assertFalse(adapter.table_exists)
 
@@ -75,6 +76,11 @@ class DeleteOrphanedUCRsTests(TestCase):
         cls.deleted_domain.delete(leave_tombstone=True)
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
+
+        input_patcher = patch('corehq.apps.userreports.management.commands.delete_orphaned_ucrs.get_input')
+        mock_input = input_patcher.start()
+        mock_input.return_value = 'y'
+        cls.addClassCleanup(input_patcher.stop)
 
     def setUp(self):
         super().setUp()

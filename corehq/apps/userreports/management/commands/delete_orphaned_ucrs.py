@@ -37,24 +37,18 @@ class Command(BaseCommand):
             default=False,
             help='Drop orphaned tables on active domains'
         )
-        parser.add_argument(
-            '--no-input',
-            action='store_true',
-            default=False,
-            help='Do not ask operator for confirmation before deleting',
-        )
 
     def handle(self, **options):
         orphaned_tables_by_engine_id = get_orphaned_tables_by_engine_id(options.get('engine_id'))
         ucrs_to_delete = get_deletable_ucrs(orphaned_tables_by_engine_id, force_delete=options['force_delete'])
-        tablenames_to_drop = confirm_deletion_with_user(ucrs_to_delete, options.get('no_input'))
+        tablenames_to_drop = confirm_deletion_with_user(ucrs_to_delete)
         if not tablenames_to_drop:
             exit(0)
 
         drop_tables(tablenames_to_drop)
 
 
-def confirm_deletion_with_user(ucrs_to_delete, no_input=False):
+def confirm_deletion_with_user(ucrs_to_delete):
     if not ucrs_to_delete:
         print("There aren't any UCRs to delete.")
 
@@ -66,7 +60,7 @@ def confirm_deletion_with_user(ucrs_to_delete, no_input=False):
             print(f"\t\t{ucr_info['tablename']} with {ucr_info['row_count']} rows.")
             tablenames_to_drop[engine_id].append(ucr_info['tablename'])
 
-    if no_input or input("Are you sure you want to run the delete operation? (y/n)") == 'y':
+    if get_input("Are you sure you want to run the delete operation? (y/n)") == 'y':
         return tablenames_to_drop
 
     return []
@@ -193,3 +187,7 @@ def get_tables_without_data_sources(tables_by_engine_id):
             tables_in_db = {r[0] for r in results}
         tables_without_data_sources[engine_id] = tables_in_db - expected_tables
     return tables_without_data_sources
+
+
+def get_input(message):
+    return input(message)
