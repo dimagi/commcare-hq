@@ -20,7 +20,7 @@ class Command(AppMigrationCommandBase):
     """
 
     include_linked_apps = True
-    include_builds = False
+    include_builds = True
     chunk_size = 5
     DOMAIN_LIST_FILENAME = "migrate_to_cond_case_update_cmd_domain_list.txt"
     DOMAIN_PROGRESS_NUMBER_FILENAME = "migrate_to_cond_case_update_cmd_domain_progress.txt"
