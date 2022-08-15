@@ -278,12 +278,14 @@ Run the following commands to run the migration and get up to date:
         ))
 
         if self._should_migrate_in_bulk():
-            iter_chunks = partial(chunked, n=chunk_size, collection=list)
+            # migrate docs in batches
+            iter_items = partial(chunked, n=chunk_size, collection=list)
             migrate = partial(self._migrate_docs, fixup_diffs=fixup_diffs)
             verify = self._verify_docs
         else:
-            def iter_chunks(docs):
-                return docs  # not chunked, iterate one doc at a time
+            # migrate one doc at a time (legacy mode)
+            def iter_items(docs):
+                return docs
             migrate = self._migrate_doc
             verify = self._verify_doc
             if fixup_diffs:
@@ -294,12 +296,12 @@ Run the following commands to run the migration and get up to date:
                 )
 
         with self.open_log(log_path, append_log) as logfile:
-            for docs in iter_chunks(with_progress_bar(docs, length=doc_count, oneline=False)):
+            for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
                 doc_index += 1
                 if not verify_only:
-                    migrate(docs, logfile)
+                    migrate(item, logfile)
                 if not skip_verify:
-                    verify(docs, logfile, exit=not verify_only)
+                    verify(item, logfile, exit=not verify_only)
                 if doc_index % 1000 == 0:
                     print(f"Diff count: {self.diff_count}")
 
