@@ -49,7 +49,11 @@ class Command(BaseCommand):
         data_sources.extend(list(StaticDataSourceConfiguration.all()))
         tables_by_engine_id = get_tables_for_data_sources(data_sources, options.get('engine_id'))
         orphaned_tables_by_engine_id = get_tables_without_data_sources(tables_by_engine_id)
-        drop_tables(orphaned_tables_by_engine_id, force_delete=options['force_delete'], dry_run=options['dry_run'])
+        drop_tables(orphaned_tables_by_engine_id, force_delete=options['force_delete'], dry_run=True)
+        if not options['dry_run'] and input("Are you sure you want to run the delete operation? (y/n)") == 'y':
+            drop_tables(orphaned_tables_by_engine_id, force_delete=options['force_delete'])
+        else:
+            exit(0)
 
 
 def drop_tables(tables_to_remove_by_engine, force_delete=False, dry_run=False):
@@ -58,20 +62,20 @@ def drop_tables(tables_to_remove_by_engine, force_delete=False, dry_run=False):
     :param force_delete: if True, delete orphaned tables for active domains
     :param dry_run: if True, do not make changes to the DB
     """
-    dry_run_tag = '[DRY_RUN]' if dry_run else ''
-
+    if dry_run:
+        print("\n---- DRY RUN ----\n")
     for engine_id, tablenames in tables_to_remove_by_engine.items():
-        print(f"Looking at engine {engine_id}")
+        print(f"Looking at database {engine_id}")
         engine = connection_manager.get_engine(engine_id)
         if not tablenames:
-            print("\tNo tables to drop")
+            print("\tNo tables to delete")
             continue
 
         for tablename in tablenames:
             domain = get_domain_for_ucr_table_name(tablename)
             if not force_delete and not is_domain_deleted(domain):
                 print(
-                    f"{dry_run_tag}The domain {domain} is not deleted or has an active conflict. If you are sure "
+                    f"The domain {domain} is not deleted or has an active conflict. If you are sure "
                     f"you want to delete {tablename}, re-run with the '--force-delete' option. Skipping for now."
                 )
                 continue
@@ -80,15 +84,17 @@ def drop_tables(tables_to_remove_by_engine, force_delete=False, dry_run=False):
                 try:
                     result = connection.execute(f'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"')
                 except ProgrammingError:
-                    print(f"\t{dry_run_tag}{tablename}: no inserted_at column, probably not UCR")
+                    print(f"\t{tablename}: no inserted_at column, probably not UCR")
                 except Exception as e:
-                    print(f"\t{dry_run_tag}An error was encountered when attempting to read from {tablename}: {e}")
+                    print(f"\tAn error was encountered when attempting to read from {tablename}: {e}")
                 else:
                     row_count, idle_since = result.fetchone()
-                    print(f"\t{dry_run_tag}{tablename}: {row_count} rows")
+                    print(f"\t{tablename}: {row_count} rows")
                     if not dry_run:
                         connection.execute(f'DROP TABLE "{tablename}"')
-                    print(f'\t{dry_run_tag}^-- deleted {tablename}')
+                    print(f'\t^-- deleted {tablename}')
+    if dry_run:
+        print("\n---- DRY RUN COMPLETE ----")
 
 
 def is_domain_deleted(domain):
