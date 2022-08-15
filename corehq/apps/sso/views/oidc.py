@@ -79,9 +79,9 @@ def _get_authorization_url(request):
     initialize_oidc_session(request)
     nonce = request.session["oidc_nonce"]
     authorization_url = f"https://login.microsoftonline.com/{request.idp.entity_id}/oauth2/authorize?" \
-                        f"client_id={request.idp.client_id}&scope=profile,openid,User.Read,email" \
+                        f"client_id={request.idp.client_id}&client_secret={request.idp.client_secret}&scope=profile,openid,User.Read,email" \
                         f"&response_type=code&" \
-                        f"redirect_uri={redirect_url}&nonce={nonce}&resource=https://graph.windows.net&prompt=login"
+                        f"redirect_uri={redirect_url}&nonce={nonce}&resource=https://graph.windows.net&prompt=consent"
     return authorization_url
 
 
@@ -90,7 +90,7 @@ def sso_oidc_api_auth(request, idp_slug):
     authorization_url = _get_authorization_url(request)
     return JsonResponse({
         "success": True,
-        "authorization_url": authorization_url,
+        # "authorization_url": authorization_url,
     })
 
 
