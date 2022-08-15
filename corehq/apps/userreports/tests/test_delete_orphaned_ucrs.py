@@ -25,7 +25,8 @@ class DeleteOrphanedUCRsTests(TestCase):
         adapter.build_table()
         self.addCleanup(adapter.drop_table)
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr')
+        with self.assertRaises(SystemExit):
+            call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
 
         self.assertTrue(adapter.table_exists)
 
@@ -37,7 +38,8 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr')
+        with self.assertRaises(SystemExit):
+            call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
 
         self.assertTrue(adapter.table_exists)
 
@@ -49,7 +51,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True)
+        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True, no_input=True)
 
         self.assertFalse(adapter.table_exists)
 
@@ -61,21 +63,9 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
         config.delete()
 
-        call_command('delete_orphaned_ucrs', engine_id='ucr')
+        call_command('delete_orphaned_ucrs', engine_id='ucr', no_input=True)
 
         self.assertFalse(adapter.table_exists)
-
-    def test_no_changes_if_dry_run_enabled(self):
-        config = self._create_data_source_config(self.active_domain.name)
-        config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-        self.addCleanup(adapter.drop_table)
-        config.delete()
-
-        call_command('delete_orphaned_ucrs', engine_id='ucr', dry_run=True)
-
-        self.assertTrue(adapter.table_exists)
 
     @classmethod
     def setUpClass(cls):

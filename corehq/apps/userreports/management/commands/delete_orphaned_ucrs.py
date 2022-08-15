@@ -38,37 +38,67 @@ class Command(BaseCommand):
             help='Drop orphaned tables on active domains'
         )
         parser.add_argument(
-            '--dry-run',
+            '--no-input',
             action='store_true',
             default=False,
-            help='Do not modify the DB if set to true',
+            help='Do not ask operator for confirmation before deleting',
         )
 
     def handle(self, **options):
-        data_sources = list(DataSourceConfiguration.all())
-        data_sources.extend(list(StaticDataSourceConfiguration.all()))
-        tables_by_engine_id = get_tables_for_data_sources(data_sources, options.get('engine_id'))
-        orphaned_tables_by_engine_id = get_tables_without_data_sources(tables_by_engine_id)
-        drop_tables(orphaned_tables_by_engine_id, force_delete=options['force_delete'], dry_run=True)
-        if not options['dry_run'] and input("Are you sure you want to run the delete operation? (y/n)") == 'y':
-            drop_tables(orphaned_tables_by_engine_id, force_delete=options['force_delete'])
-        else:
+        orphaned_tables_by_engine_id = get_orphaned_tables_by_engine_id(options.get('engine_id'))
+        ucrs_to_delete = get_deletable_ucrs(orphaned_tables_by_engine_id, force_delete=options['force_delete'])
+        tablenames_to_drop = confirm_deletion_with_user(ucrs_to_delete, options.get('no_input'))
+        if not tablenames_to_drop:
             exit(0)
 
+        drop_tables(tablenames_to_drop)
 
-def drop_tables(tables_to_remove_by_engine, force_delete=False, dry_run=False):
+
+def confirm_deletion_with_user(ucrs_to_delete, no_input=False):
+    if not ucrs_to_delete:
+        print("There aren't any UCRs to delete.")
+
+    tablenames_to_drop = defaultdict(list)
+    print("The following UCRs will be deleted:\n")
+    for engine_id, ucr_infos in ucrs_to_delete.items():
+        print(f"\tFrom the {engine_id} database:")
+        for ucr_info in ucr_infos:
+            print(f"\t\t{ucr_info['tablename']} with {ucr_info['row_count']} rows.")
+            tablenames_to_drop[engine_id].append(ucr_info['tablename'])
+
+    if no_input or input("Are you sure you want to run the delete operation? (y/n)") == 'y':
+        return tablenames_to_drop
+
+    return []
+
+
+def get_orphaned_tables_by_engine_id(engine_id=None):
     """
-    :param tables_to_remove_by_engine: {'<engine_id>': [<tablename>, ...]}
-    :param force_delete: if True, delete orphaned tables for active domains
-    :param dry_run: if True, do not make changes to the DB
+    :param engine_id: optional parameter to only search within a specific database
+    :return: {<engine_id>: [<tablename>, ...]}
     """
-    if dry_run:
-        print("\n---- DRY RUN ----\n")
-    for engine_id, tablenames in tables_to_remove_by_engine.items():
-        print(f"Looking at database {engine_id}")
+    data_sources = get_all_data_sources()
+    tables_by_engine_id = get_tables_for_data_sources(data_sources, engine_id)
+    return get_tables_without_data_sources(tables_by_engine_id)
+
+
+def get_all_data_sources():
+    data_sources = list(DataSourceConfiguration.all())
+    data_sources.extend(list(StaticDataSourceConfiguration.all()))
+    return data_sources
+
+
+def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
+    """
+    Ensures tables are UCRs via inserted_at column
+    :param orphaned_tables_by_id: {<engine_id>: [<tablename>, ...]}
+    :param force_delete: if True, orphaned tables associated with active domains are marked as deletable
+    :return:
+    """
+    ucrs_to_delete = defaultdict(list)
+    for engine_id, tablenames in orphaned_tables_by_id.items():
         engine = connection_manager.get_engine(engine_id)
         if not tablenames:
-            print("\tNo tables to delete")
             continue
 
         for tablename in tablenames:
@@ -89,12 +119,24 @@ def drop_tables(tables_to_remove_by_engine, force_delete=False, dry_run=False):
                     print(f"\tAn error was encountered when attempting to read from {tablename}: {e}")
                 else:
                     row_count, idle_since = result.fetchone()
-                    print(f"\t{tablename}: {row_count} rows")
-                    if not dry_run:
-                        connection.execute(f'DROP TABLE "{tablename}"')
-                    print(f'\t^-- deleted {tablename}')
-    if dry_run:
-        print("\n---- DRY RUN COMPLETE ----")
+                    ucrs_to_delete[engine_id].append({'tablename': tablename, 'row_count': row_count})
+
+    return ucrs_to_delete
+
+
+def drop_tables(ucrs_to_delete):
+    """
+    :param ucrs_to_delete: {'<engine_id>': [<tablename>, ...]}
+    """
+    for engine_id, tablenames in ucrs_to_delete.items():
+        engine = connection_manager.get_engine(engine_id)
+        if not tablenames:
+            continue
+
+        for tablename in tablenames:
+            with engine.begin() as connection:
+                connection.execute(f'DROP TABLE "{tablename}"')
+                print(f'\t^-- deleted {tablename}')
 
 
 def is_domain_deleted(domain):
