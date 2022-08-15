@@ -331,8 +331,17 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
+            this.selectedValuesKey = options.collection.queryKey;
+            if (sessionStorage.selectedValues !== undefined) {
+                ssSelectedValues = JSON.parse(sessionStorage.selectedValues);
+                this.selectedCaseIds = ssSelectedValues[this.selectedValuesKey] !== undefined ? ssSelectedValues[this.selectedValuesKey].split(',') : [];
+            } else {
+                this.selectedCaseIds = []
+            };
             this.isMultiSelect = options.isMultiSelect;
+            if (this.isMultiSelect) {
+                this.reconcileSelectedValues();
+            }
         },
 
         ui: {
@@ -374,7 +383,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-                sessionStorage.selectedValues = self.selectedCaseIds.join(",");
+                self.reconcileSelectedValues();
                 self.reconcileMultiSelectUI();
             });
             this.reconcileMultiSelectUI();
@@ -458,7 +467,25 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         continueAction: function () {
+            var self = this;
+            // clear session storage at the selectedValuesKey when leaving the screen
+            var selectedValuesForScreen = JSON.parse(sessionStorage.selectedValues);
+            selectedValuesForScreen[self.selectedValuesKey] = undefined;
+            sessionStorage.selectedValues = JSON.stringify(selectedValuesForScreen);
+
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
+        },
+
+        reconcileSelectedValues: function () {
+            var self = this;
+            if (sessionStorage.selectedValues !== undefined) {
+                var selectedValues = JSON.parse(sessionStorage.selectedValues)
+            } else {
+                var selectedValues = {};
+            }
+            selectedValues[self.selectedValuesKey] = self.selectedCaseIds.join(',');
+            selectedValues['current'] = self.selectedCaseIds.join(',');
+            sessionStorage.selectedValues = JSON.stringify(selectedValues);
         },
 
         reconcileMultiSelectUI: function () {
@@ -503,6 +530,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: this.isMultiSelect,
                 selectedCaseIds: this.selectedCaseIds,
+                selectedValuesKey: this.options.queryKey,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
