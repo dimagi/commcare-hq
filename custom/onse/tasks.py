@@ -74,7 +74,11 @@ def update_facility_cases_from_dhis2_data_elements():
 
 
 @task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
-def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
+def _update_facility_cases_from_dhis2_data_elements(
+    self,
+    period=None,
+    print_notifications=False,
+):
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
