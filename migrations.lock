@@ -124,6 +124,7 @@ app_manager
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
  0021_migrate_case_search_itemset_ids
+ 0022_migrate_to_conditional_case_update
 auditcare
  0001_sqlmodels
  0002_uniques
