@@ -199,6 +199,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         events: {
             'change @ui.queryField': 'changeQueryField',
+            'change @ui.searchForBlank': 'notifyParentOfFieldChange',
             'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
@@ -264,13 +265,18 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
-            this.parentView.notifyFieldChange(e);
+            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
+
         changeDateQueryField: function (e) {
             this.model.set('value', $(e.currentTarget).val());
-            this.parentView.notifyFieldChange(e);
+            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+        },
+
+        notifyParentOfFieldChange: function (e) {
+            this.parentView.notifyFieldChange(e);
         },
 
         toggleBlankSearch: function (e) {
