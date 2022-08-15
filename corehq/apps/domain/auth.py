@@ -300,11 +300,5 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
 
         """
         username = self.extract_credentials(request)[0]
-        if API_THROTTLE_WHITELIST.enabled(username):
-            return username
-
-        try:
-            api_key = self.extract_credentials(request)[1]
-        except ValueError:
-            api_key = ''
-        return f"{getattr(request, 'domain', '')}_{api_key}"
+        domain = getattr(request, 'domain', '')
+        return ApiIdentifier(username=username, domain=domain)
