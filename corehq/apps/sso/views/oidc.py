@@ -79,7 +79,8 @@ def _get_authorization_url(request):
     initialize_oidc_session(request)
     nonce = request.session["oidc_nonce"]
     authorization_url = f"https://login.microsoftonline.com/{request.idp.entity_id}/oauth2/authorize?" \
-                        f"client_id={request.idp.client_id}&response_type=code&" \
+                        f"client_id={request.idp.client_id}&scope=openid" \
+                        f"&response_type=access_as_user&" \
                         f"redirect_uri={redirect_url}&nonce={nonce}&resource=https://graph.windows.net&prompt=consent"
     return authorization_url
 
