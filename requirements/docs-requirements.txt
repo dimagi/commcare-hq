@@ -528,7 +528,7 @@ sqlalchemy==1.3.19
     #   sqlagg
 sqlparse==0.3.1
     # via django
-stripe==2.54.0
+stripe==4.0.2
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -583,7 +583,7 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
-zipp==3.7.0
+zipp==3.8.1
     # via importlib-metadata
 zope-event==4.5.0
     # via gevent
