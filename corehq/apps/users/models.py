@@ -99,6 +99,9 @@ from .models_role import (  # noqa
     UserRole,
 )
 
+WEB_USER = 'web'
+COMMCARE_USER = 'commcare'
+
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
 
@@ -327,6 +330,7 @@ class DomainMembership(Membership):
     """
     Each user can have multiple accounts on individual domains
     """
+    _user_type = None
 
     domain = StringProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -368,7 +372,12 @@ class DomainMembership(Membership):
                 })
                 return None
         else:
-            return None
+            return self.get_default_role()
+
+    def get_default_role(self):
+        if self._user_type == COMMCARE_USER:
+            return UserRole.commcare_user_default(self.domain)
+        return None
 
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
@@ -440,6 +449,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
+
+        if domain_membership:
+            # set user type on membership to support default roles for 'commcare' users
+            domain_membership._user_type = self._get_user_type()
         return domain_membership
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
@@ -977,16 +990,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.email
 
     def is_commcare_user(self):
-        return self._get_user_type() == 'commcare'
+        return self._get_user_type() == COMMCARE_USER
 
     def is_web_user(self):
-        return self._get_user_type() == 'web'
+        return self._get_user_type() == WEB_USER
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
-            return 'web'
+            return WEB_USER
         elif self.doc_type == 'CommCareUser':
-            return 'commcare'
+            return COMMCARE_USER
         else:
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
@@ -1544,7 +1557,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
-
     domain = StringProperty()
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
