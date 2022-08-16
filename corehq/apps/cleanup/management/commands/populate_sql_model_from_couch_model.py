@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 import sys
 import traceback
 from contextlib import nullcontext
@@ -11,7 +12,7 @@ from attrs import define, field
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -363,15 +364,41 @@ Run the following commands to run the migration and get up to date:
                 creates.append(obj)
             couch_class.wrap(doc)._migration_sync_to_sql(obj, save=False)
         if creates or updates:
-            with transaction.atomic(), disable_sync_to_couch(sql_class):
-                sql_class.objects.bulk_create(creates)
-                if updates:
-                    for obj in updates:
-                        obj.save()
+            self._save(sql_class, creates, updates)
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
         update_log("Ignored", [doc["_id"] for doc in ignored])
         self.ignored_count += len(ignored)
+
+    def _save(self, sql_class, creates, updates):
+        def attempt_save():
+            with transaction.atomic(), disable_sync_to_couch(sql_class):
+                sql_class.objects.bulk_create(creates)
+                for obj in updates:
+                    obj.save()
+
+        def remove_concurrently_created_items(err):
+            match = DUPLICATE_KEY.search(str(err))
+            if match and match.group("table") == sql_class._meta.db_table:
+                exclude_pks = set(
+                    sql_class.objects.filter(pk__in=[x.pk for x in creates])
+                    .values_list("pk", flat=True)
+                )
+                if exclude_pks:
+                    creates[:] = [x for x in creates if x.pk not in exclude_pks]
+                    print("Concurrently created:", exclude_pks)
+                    return True
+            return False
+
+        max_attempts = 10
+        for i in range(max_attempts + 1):
+            try:
+                attempt_save()
+            except IntegrityError as err:
+                if i < max_attempts and remove_concurrently_created_items(err):
+                    continue  # try again
+                raise
+            break
 
     def _verify_docs(self, docs, logfile, exit=True):
         sql_class = self.sql_class()
@@ -449,6 +476,7 @@ Run the following commands to run the migration and get up to date:
         return open(log_path, mode)
 
 
+DUPLICATE_KEY = re.compile(r'duplicate key value violates unique constraint "(?P<table>.+)_pkey"')
 DIFF_HEADER = "Doc {} has differences:\n"
 
 
