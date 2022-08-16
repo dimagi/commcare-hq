@@ -3,7 +3,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -15,6 +16,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.answer = question.answer;
         self.datatype = question.datatype();
         self.entryId = _.uniqueId(this.datatype);
+        self.xformAction = Const.ANSWER;
+        self.xformParams = function () { return {}; };
 
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
@@ -893,6 +896,100 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
+    /**
+     * Base class for entry types that involve uploading a file: multimedia and signatures.
+     */
+    function FileEntry(question, options) {
+        var self = this;
+        EntrySingleAnswer.call(this, question, options);
+        self.templateType = 'file';
+        self.xformAction = Const.ANSWER_MEDIA;
+        self.xformParams = function () {
+            return { file: self.file() };
+        };
+
+        self.file = ko.observable();
+
+    }
+    FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        if (newValue !== Const.NO_ANSWER) {
+            var $input = $('#' + self.entryId);
+            self.answer(newValue.replace(Const.FILE_PREFIX, ""));
+            self.file($input[0].files[0]);
+        } else {
+            self.answer(newValue);
+            self.file(null);
+        }
+        this.question.onchange();
+    };
+
+    /**
+     * Represents an image upload.
+     */
+    function ImageEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*";
+
+        self.helpText = function () {
+            return gettext("Upload image");
+        };
+
+    }
+    ImageEntry.prototype = Object.create(FileEntry.prototype);
+    ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an audio upload.
+     */
+    function AudioEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "audio/*";
+
+        self.helpText = function () {
+            return gettext("Upload audio file");
+        };
+
+    }
+    AudioEntry.prototype = Object.create(FileEntry.prototype);
+    AudioEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a video upload.
+     */
+    function VideoEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "video/*";
+
+        self.helpText = function () {
+            return gettext("Upload video file");
+        };
+
+    }
+    VideoEntry.prototype = Object.create(FileEntry.prototype);
+    VideoEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a signature, which requires the user to upload a signature file.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*,.pdf,.doc,.docx";
+
+        self.helpText = function () {
+            return gettext( "Upload signature file");
+        };
+
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
+
     function GeoPointEntry(question, options) {
         var self = this;
         EntryArrayAnswer.call(self, question, options);
@@ -1146,6 +1243,31 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
+            case Const.BINARY:      // needs to be last case so that anything unrecognized display as unsupported
+                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
+                    // do nothing, fall through to unsupported
+                } else if (style === Const.SIGNATURE) {
+                    entry = new SignatureEntry(question, {});
+                    break;
+                } else {
+                    var missing = false;
+                    switch (question.control()) {
+                        case Const.CONTROL_IMAGE_CHOOSE:
+                            entry = new ImageEntry(question, {});
+                            break;
+                        case Const.CONTROL_AUDIO_CAPTURE:
+                            entry = new AudioEntry(question, {});
+                            break;
+                        case Const.CONTROL_VIDEO_CAPTURE:
+                            entry = new VideoEntry(question, {});
+                            break;
+                        default:
+                            missing = true;
+                    }
+                    if (!missing) {
+                        break;
+                    }   // otherwise, fall through to unsupported
+                }
             default:
                 window.console.warn('No active entry for: ' + question.datatype());
                 entry = new UnsupportedEntry(question, options);

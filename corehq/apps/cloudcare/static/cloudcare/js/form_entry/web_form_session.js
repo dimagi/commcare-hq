@@ -121,11 +121,16 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
             requestParams['tz_from_browser'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+            var newData = new FormData();
+            _.each(requestParams, function (value, key) {
+                newData.append(key, value);
+            });
             return $.ajax({
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
-                data: JSON.stringify(requestParams),
-                contentType: "application/json",
+                data: newData,
+                contentType: false,     // or "multipart"? right now formplayer is 403ing either way, it wants json
+                processData: false,
                 dataType: "json",
                 crossDomain: {
                     crossDomain: true,
@@ -306,13 +311,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var erroredLabels = form.erroredLabels();
 
             this.serverRequest(
-                {
-                    'action': Const.ANSWER,
+                _.extend({
+                    'action': q.entry.xformAction,
                     'ix': ix,
                     'answer': answer,
                     'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
-                },
+                }, q.entry.xformParams()),
                 function (resp) {
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
