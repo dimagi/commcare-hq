@@ -6,6 +6,8 @@ API_ACCESS = 'api_access'
 CLOUDCARE = 'cloudcare'
 GEOCODER = 'geocoder'
 
+GLOBAL_SMS_GATEWAY = 'global_sms_gateway'
+
 ACTIVE_DATA_MANAGEMENT = 'active_data_management'
 CUSTOM_BRANDING = 'custom_branding'
 
@@ -134,6 +136,7 @@ MAX_PRIVILEGES = [
     RELEASE_MANAGEMENT,
     LITE_RELEASE_MANAGEMENT,
     LOADTEST_USERS,
+    GLOBAL_SMS_GATEWAY,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -193,4 +196,5 @@ class Titles(object):
             RELEASE_MANAGEMENT: _("Enterprise Release Management"),
             LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
             LOADTEST_USERS: _('Loadtest Users'),
+            GLOBAL_SMS_GATEWAY: _('Global SMS Gateway Settings'),
         }.get(privilege, privilege)
