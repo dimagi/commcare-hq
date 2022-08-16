@@ -184,7 +184,11 @@ location_fixture_content = """
 lookup_table_fixture_content = """
 <partial>
     <ns0:fixture xmlns:ns0="http://openrosa.org/http/response" id="item-list:{table_tag}" user_id="{user_id}">
-        <ns0:atable_list/>
+        <ns0:atable_list>
+            <ns0:atable>
+                <ns0:wing says="quack">duck</ns0:wing>
+            </ns0:atable>
+        </ns0:atable_list>
     </ns0:fixture>
 </partial>
 """
