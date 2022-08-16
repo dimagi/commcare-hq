@@ -177,7 +177,7 @@
                             <input type="checkbox" data-bind="checked: exclude"/>
                           </div>
                         </div>
-                        <div data-bind="hidden: hidden">
+                        <div data-bind="ifnot: hidden() || appearanceFinal() === 'address'">
                           <div class="form-group">
                             <label class="control-label col-xs-12 col-sm-3">
                               {% trans "Required" %}
