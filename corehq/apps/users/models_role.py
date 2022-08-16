@@ -67,7 +67,7 @@ class UserRoleManager(models.Manager):
         return query.get(couch_id=couch_id)
 
     def get_commcare_user_default(self, domain):
-        return self.filter(domain=domain, is_commcare_user_default=True).first()
+        return self.get(domain=domain, is_commcare_user_default=True)
 
 
 def _uuid_str():
