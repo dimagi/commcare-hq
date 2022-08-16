@@ -51,4 +51,5 @@ def _add_limited_fixtures(domain, case_id, content):
     nodes = serializer.get_xml_nodes(domain, 'locations', case_id, locations)
     content.extend(nodes)
     lookuptable = get_global_items_by_domain(domain, case_id)
-    content.extend(lookuptable)
+    if lookuptable:
+        content.extend(lookuptable)
