@@ -276,6 +276,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         notifyParentOfFieldChange: function (e) {
+            if (this.model.get('input') === 'address') {
+                // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
+                return;
+            }
             this.parentView.notifyFieldChange(e);
         },
 
