@@ -194,24 +194,29 @@ class AdminRestoreView(TemplateView):
         return True
 
     def get(self, request, *args, **kwargs):
-        self.domain = request.GET.get('domain')
         full_username = request.GET.get('as', '')
 
         if not full_username or '@' not in full_username:
             msg = 'Please specify a user using ?as=user@domain\nOr a web-user using ?as=email&domain=domain'
             return HttpResponseBadRequest(msg)
 
-        self.user = CouchUser.get_by_username(full_username)
+        username, possible_domain = full_username.split("@")
+        if "." in possible_domain:
+            if possible_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+                self.domain = possible_domain.split(".")[0]
+                self.user = CommCareUser.get_by_username(full_username)
+            else:
+                self.domain = request.GET.get('domain', '')
+                self.user = CouchUser.get_by_username(full_username)
+        else:
+            self.domain = possible_domain
+            full_username = format_username(username, self.domain)
+            self.user = CommCareUser.get_by_username(full_username)
+
         if self.user.is_web_user and not self.domain:
             msg = 'Please specify domain for web-user using ?as=email&domain=domain'
             return HttpResponseBadRequest(msg)
 
-        if not self.user.is_web_user or not self.user:
-            username, self.domain = full_username.split('@')
-            if not self.domain.endswith(settings.HQ_ACCOUNT_ROOT):
-                full_username = format_username(username, self.domain)
-
-        self.user = CouchUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
@@ -230,6 +235,8 @@ class AdminRestoreView(TemplateView):
             response, _ = self._get_restore_response()
             response['Content-Disposition'] = "attachment; filename={}-restore.xml".format(username)
             return response
+
+        print(request)
 
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
