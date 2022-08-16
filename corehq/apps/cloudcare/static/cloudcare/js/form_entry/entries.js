@@ -983,7 +983,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.accept = "image/*,.pdf,.doc,.docx";
 
         self.helpText = function () {
-            return gettext( "Upload signature file");
+            return gettext("Upload signature file");
         };
 
     }
