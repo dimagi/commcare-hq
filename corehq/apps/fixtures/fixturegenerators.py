@@ -199,12 +199,13 @@ class ItemListsProvider(FixtureProvider):
         for attribute in item['_data_type'].item_attributes:
             try:
                 xData.attrib[attribute] = serialize(item['item_attributes'][attribute])
-            except KeyError as e:
+            except KeyError:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
                 raise FixtureTypeCheckError(
-                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
-                    % (item['_data_type'].tag, item['_id'])
+                    f"Table with tag {item['_data_type'].tag} has an item with "
+                    f"id {item['_id']} that doesn't have an attribute as "
+                    "defined in its types definition"
                 )
         for field in item['_data_type'].fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)

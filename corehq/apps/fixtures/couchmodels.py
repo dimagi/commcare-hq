@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
 from memoized import memoized
 
@@ -13,6 +15,7 @@ from dimagi.ext.couchdbkit import (
 )
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
+from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
@@ -59,8 +62,24 @@ class FixtureTypeField(DocumentSchema):
             self.is_indexed,
         ))
 
+    @classmethod
+    def from_sql(cls, type_field):
+        return cls(
+            field_name=type_field.name,
+            properties=type_field.properties,
+            is_indexed=type_field.is_indexed,
+        )
 
-class FixtureDataType(QuickCachedDocumentMixin, Document):
+    def to_sql(self):
+        from .models import TypeField
+        return TypeField(
+            name=self.field_name,
+            properties=self.properties,
+            is_indexed=self.is_indexed,
+        )
+
+
+class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
@@ -82,6 +101,32 @@ class FixtureDataType(QuickCachedDocumentMixin, Document):
             obj['item_attributes'] = []
 
         return super(FixtureDataType, cls).wrap(obj)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "is_global",
+            "tag",
+            "item_attributes",
+        ]
+
+    def _migration_sync_to_sql(self, sql_object, save=True):
+        fields = self._sql_fields
+        if sql_object.fields != fields:
+            sql_object.fields = fields
+        if sql_object.description != (self.description or ""):
+            sql_object.description = self.description or ""
+        super()._migration_sync_to_sql(sql_object, save=save)
+
+    @property
+    def _sql_fields(self):
+        return [f.to_sql() for f in self.fields]
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from .models import LookupTable
+        return LookupTable
 
     # support for old fields
     @property
@@ -190,7 +235,7 @@ class FieldList(DocumentSchema):
         return hash(tuple(self.field_list))
 
 
-class FixtureDataItem(Document):
+class FixtureDataItem(SyncCouchToSQLMixin, Document):
     """
     Example old Item:
         domain = "hq-domain"
@@ -260,6 +305,35 @@ class FixtureDataItem(Document):
             obj['item_attributes'] = {}
 
         return super(FixtureDataItem, cls).wrap(obj)
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return ["domain", "item_attributes"]
+
+    def _migration_sync_to_sql(self, sql_object, save=True):
+        if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
+            sql_object.table_id = UUID(self.data_type_id)
+        fields = self._sql_fields
+        if sql_object.fields != fields:
+            sql_object.fields = fields
+        sql_object.sort_key = self.sort_key or 0
+        super()._migration_sync_to_sql(sql_object, save=save)
+
+    @property
+    def _sql_fields(self):
+        from .models import Field
+        return {
+            name: [
+                Field(val.field_value, val.properties)
+                for val in values.field_list
+            ]
+            for name, values in self.fields.items()
+        }
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from .models import LookupTableRow
+        return LookupTableRow
 
     @property
     def fields_without_attributes(self):
@@ -516,11 +590,31 @@ def _id_from_doc(doc_or_doc_id):
     return doc_id
 
 
-class FixtureOwnership(Document):
+class FixtureOwnership(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group', 'location'])
+
+    @classmethod
+    def _migration_get_fields(cls):
+        return [
+            "domain",
+            "owner_id",
+        ]
+
+    def _migration_sync_to_sql(self, sql_object, save=True):
+        from .models import OwnerType
+        if sql_object.row_id is None or sql_object.row_id != UUID(self.data_item_id):
+            sql_object.row_id = UUID(self.data_item_id)
+        if OwnerType.from_string(self.owner_type) != sql_object.owner_type:
+            sql_object.owner_type = OwnerType.from_string(self.owner_type)
+        super()._migration_sync_to_sql(sql_object, save=save)
+
+    @classmethod
+    def _migration_get_sql_model_class(cls):
+        from .models import LookupTableRowOwner
+        return LookupTableRowOwner
 
     @classmethod
     def by_item_id(cls, item_id, domain):

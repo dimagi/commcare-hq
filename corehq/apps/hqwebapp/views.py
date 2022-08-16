@@ -412,7 +412,7 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
-            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language, secure=settings.SECURE_COOKIES)
             activate(couch_user.language)
 
     return response

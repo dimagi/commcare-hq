@@ -7,6 +7,8 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.quickcache import quickcache
+from dimagi.utils.logging import notify_error
 
 
 @attr.s(frozen=True)
@@ -65,6 +67,9 @@ class UserRoleManager(models.Manager):
             query = UserRole.objects
         return query.get(couch_id=couch_id)
 
+    def get_commcare_user_default(self, domain):
+        return self.get(domain=domain, is_commcare_user_default=True)
+
 
 def _uuid_str():
     return uuid.uuid4().hex
@@ -110,6 +115,17 @@ class UserRole(models.Model):
                 role.set_assignable_by(assignable_by)
 
         return role
+
+    @classmethod
+    @quickcache(['domain'])
+    def commcare_user_default(cls, domain):
+        try:
+            return UserRole.objects.get_commcare_user_default(domain)
+        except UserRole.DoesNotExist:
+            notify_error("Domain is missing default commcare user role", {
+                "domain": domain
+            })
+        return None
 
     @property
     def get_id(self):

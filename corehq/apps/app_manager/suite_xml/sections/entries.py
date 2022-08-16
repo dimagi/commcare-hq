@@ -1,3 +1,19 @@
+"""
+EntriesContributor
+------------------
+
+This is the largest and most complex of the suite sections, responsible for generating an ``<entry>``
+element for each form, including the datums required for form entry. The ``EntriesHelper``, which does all of the
+heavy lifting here, is imported into other places in HQ that need to know what datums a form requires,
+such as the session schema generator for form builder and the UI for form linking.
+
+When forms work with multiple datums, they need to be named in a way that is predictable for app builders, who
+reference them inside forms. This is most relevant to the "select parent first" feature and to parent/child
+modules.  See ``update_refs`` and ``rename_other_id``, both inner functions in ``add_parent_datums``, plus
+`this comment <https://github.com/dimagi/commcare-hq/blob/c9fa01d1ccbb73d8f07fefbe56a0bbe1dbe231f8/corehq/apps/app_manager/suite_xml/sections/entries.py#L966-L971>`_
+on matching parent and child datums.
+
+"""
 from collections import defaultdict
 from itertools import zip_longest
 

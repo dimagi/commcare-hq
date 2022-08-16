@@ -252,7 +252,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             self.settings_form.update_user()
 
             res = redirect(reverse(MyAccountSettingsView.urlname))
-            res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language)
+            res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language,
+                           secure=settings.SECURE_COOKIE)
             return res
 
         return self.get(request, *args, **kwargs)

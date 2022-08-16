@@ -12823,10 +12823,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-msgid "case property name"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 msgid "Set case property"
 msgstr ""
@@ -20262,13 +20258,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Email address '{}' is not a dimagi email address"
+msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
 "The following users do not exist on this site, please have the user "
-"registered first."
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -27538,51 +27534,6 @@ msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
 msgid "same"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
