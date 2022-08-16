@@ -35,6 +35,7 @@ class IdentityProviderProtocol:
             ),
             cls.OIDC: (
                 (IdentityProviderType.ONE_LOGIN, "One Login"),
+                (IdentityProviderType.AZURE_AD, "Azure B2C"),
             )
         }
 
