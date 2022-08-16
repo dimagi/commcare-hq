@@ -674,6 +674,7 @@ class ListRolesView(BaseRoleAccessView):
 
     @property
     def page_context(self):
+        from corehq.apps.linked_domain.dbaccessors import is_active_downstream_domain
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
                         for role in self.non_admin_roles)):
@@ -692,6 +693,7 @@ class ListRolesView(BaseRoleAccessView):
             } for viz in TableauVisualization.objects.filter(domain=self.domain)]
 
         return {
+            'is_managed_by_upstream_domain': is_active_downstream_domain(self.domain),
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
@@ -916,6 +918,9 @@ def _update_role_from_view(domain, role_data):
         else:
             if role.domain != domain:
                 raise Http404()
+
+            if role.upstream_id:
+                raise Http404()  # Do not allow updates to parent-controlled roles here
     else:
         role = UserRole()
 
@@ -960,6 +965,11 @@ def delete_user_role(request, domain):
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except UserRole.DoesNotExist:
         return JsonResponse({})
+
+    if role.upstream_id:
+        # Do not delete user roles that are controlled by an upstream domain
+        return JsonResponse({})
+
     copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
