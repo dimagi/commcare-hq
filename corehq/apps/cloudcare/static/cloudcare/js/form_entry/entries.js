@@ -1333,18 +1333,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
+        AudioEntry: AudioEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
+        ImageEntry: ImageEntry,
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
+        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
+        UnsupportedEntry: UnsupportedEntry,
+        VideoEntry: VideoEntry,
     };
 });
