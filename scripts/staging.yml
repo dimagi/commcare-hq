@@ -78,5 +78,5 @@ branches:
     - do/web-user-restore # Dominic Aug 8
     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
-    - jls/web-apps-upload # Jenny Aug 15
+    #- jls/web-apps-upload # Jenny Aug 15
 submodules: { }
