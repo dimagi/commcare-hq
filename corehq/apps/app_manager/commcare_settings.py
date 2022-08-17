@@ -38,16 +38,17 @@ def _load_custom_commcare_settings():
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
-
     with open(os.path.join(path, 'commcare-app-settings.yml'), encoding='utf-8') as f:
         for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
             settings.append(setting)
+
     for setting in settings:
         if not setting.get('widget'):
             setting['widget'] = 'select'
-
+        if 'values' in setting and 'value_names' not in setting:
+            setting['value_names'] = [titleslug(v) for v in setting['values']]
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
                 setting[prop] = _translate_setting(setting, prop)
@@ -173,3 +174,22 @@ def circular_dependencies(settings, yaml_lookup):
         if check_setting_for_circular_dependency(s, yaml_lookup):
             return True
     return False
+
+
+def titleslug(slug):
+    """
+    Returns ``slug`` as title case. Non-strings are returned unchanged.
+
+    >>> titleslug('foo-bar')
+    'Foo Bar'
+    >>> titleslug(5)
+    5
+
+    """
+    if isinstance(slug, str):
+        table = {
+            ord('-'): ord(' '),
+            ord('_'): ord(' '),
+        }
+        return slug.translate(table).title()
+    return slug

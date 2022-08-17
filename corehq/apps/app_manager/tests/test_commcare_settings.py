@@ -1,3 +1,4 @@
+import doctest
 import os
 from collections import defaultdict
 
@@ -134,3 +135,10 @@ class CommCareSettingsTest(SimpleTestCase):
                                 static_strings,
                                 'You need to add "{}" to static_strings.py'.format(value)
                             )
+
+
+def test_doctests():
+    import corehq.apps.app_manager.commcare_settings
+
+    results = doctest.testmod(corehq.apps.app_manager.commcare_settings)
+    assert results.failed == 0
