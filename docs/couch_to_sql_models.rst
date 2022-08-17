@@ -81,9 +81,14 @@ This should contain:
     - `test_have_same_attrs` will test the equality of the attributes. The default implementation should work if you have populated `couch_only_attrs` and `sql_only_attrs` but you can modify it's implementation as needed.
   - Add the generated migration command. Notes on this code:
 
-    - The generated migration does not handle submodels. Edit ``update_or_create_sql_object`` to add support.
+    - The generated migration does not handle submodels. Support for submodels with non-legacy bulk migrations might just work, but has not been tested. Legacy migrations that implement ``update_or_create_sql_object`` should handle submodels in that method.
 
-    - This command's ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`_ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_.
+    - Legacy mode: each document is saved individually rather than in bulk when ``update_or_create_sql_object`` is implemented. ``update_or_create_sql_object`` populates the sql models based on json alone, not the wrapped document (to avoid introducing another dependency on the couch model). You may need to convert data types that the default ``wrap`` implementation would handle. The generated migration will use ``force_to_datetime`` to cast datetimes but will not perform any other wrapping. Similarly, if the couch class has a ``wrap`` method, the migration needs to manage that logic. As an example, ``CommtrackActionConfig.wrap`` was defined `here <https://github.com/dimagi/commcare-hq/commit/03f1d18fac311e71a19747a035155f9121b7a869>`_ and handled in `this migration <https://github.com/dimagi/commcare-hq/pull/27597/files#diff-10eba0437b0d32b2a455e5836dc4bd93f4297c9c9d89078334f31d9eacda2258R113>`_. **WARNING**: migrations that use ``update_or_create_sql_object`` have a race condition.
+
+      - A normal HQ operation loads a Couch document.
+      - A ``PopulateSQLCommand`` migration loads the same document in a batch of 100.
+      - The HQ operation modifies and saves the Couch document, which also syncs changes to SQL (the migration's copy of the document is now stale).
+      - The migration calls ``update_or_create_sql_object`` which overwrites above changes, reverting SQL to the state of its stale Couch document.
 
     - The command will include a ``commit_adding_migration`` method to let third parties know which commit to deploy if they need to run the migration manually. This needs to be updated **after** this PR is merged, to add the hash of the commit that merged this PR into master.
 
@@ -106,6 +111,8 @@ Automated tests are also a good idea. Automated tests are definitely necessary i
 sync mixins. `Example of tests for sync and migration code <https://github.com/dimagi/commcare-hq/pull/28042/files#diff-a1ef9cf2695fb1e0498e49c9f2643c3a>`_.
 
 The migration command has a ``--verify`` option that will find any differences in the couch data vs the sql data.
+
+The ``--fixup-diffs=/path/to/migration-log.txt`` option can be used to resolve differences between Couch and SQL state. Most differences reported by the migration command should be transient; that is, they will eventually be resolved by normal HQ operations, usually within a few milliseconds. **The ``--fixup-diffs`` option should only be used to fix persistent differences caused by a bug in the Couch to SQL sync logic after the bug has been fixed.** If a bug is discovered and most rows have diffs and (important!) PR 2 has not yet been merged, it may be more efficient to fix the bug, delete all SQL rows (since Couch is still the source of truth), and redo the migration.
 
 Once this PR is deployed - later, after the whole shebang has been QAed - you'll run the migration command in any environments where it's likely to take more than a trivial amount of time.
 If the model is tied to domains you should initially migrate a few selected domains using ``--domains X Y Z`` and manually
