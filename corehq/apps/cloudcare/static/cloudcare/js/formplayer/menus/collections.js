@@ -64,7 +64,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             }
             if (response.selections) {
                 urlObject.setSelections(response.selections);
-                sessionStorage.removeItem('selectedValues');
+                // remove current selected items from sessionStorage.selectedValues
+                if (sessionStorage.selectedValues !== undefined) {
+                    var selectedValues = JSON.parse(sessionStorage.selectedValues);
+                    selectedValues['current'] = undefined;
+                    sessionStorage.selectedValues = JSON.stringify(selectedValues);
+                }
                 updateUrl = true;
             }
             if (updateUrl) {
