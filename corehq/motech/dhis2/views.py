@@ -33,7 +33,7 @@ from .forms import (
     Dhis2EntityConfigForm,
 )
 from .models import SQLDataSetMap, SQLDataValueMap
-from .repeaters import Dhis2EntityRepeater, SQLDhis2Repeater
+from .repeaters import SQLDhis2EntityRepeater, SQLDhis2Repeater
 from .tasks import send_dataset
 
 
@@ -399,7 +399,7 @@ def config_dhis2_repeater(request, domain, repeater_id):
 @login_and_domain_required
 @require_http_methods(["GET", "POST"])
 def config_dhis2_entity_repeater(request, domain, repeater_id):
-    repeater = Dhis2EntityRepeater.get(repeater_id)
+    repeater = SQLDhis2EntityRepeater.objects.get(repeater_id=repeater_id)
     assert repeater.domain == domain
     if request.method == 'POST':
         errors = []
@@ -421,15 +421,12 @@ def config_dhis2_entity_repeater(request, domain, repeater_id):
         else:
             repeater.dhis2_entity_config = Dhis2EntityConfig.wrap({
                 "case_configs": case_configs
-            })
+            }).to_json()
             repeater.save()
             return JsonResponse({'success': _('DHIS2 Tracked Entity configuration saved')})
 
     else:
-        case_configs = [
-            case_config.to_json()
-            for case_config in repeater.dhis2_entity_config.case_configs
-        ]
+        case_configs = repeater.dhis2_entity_config['case_configs']
     return render(request, 'dhis2/dhis2_entity_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
