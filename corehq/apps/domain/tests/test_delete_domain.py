@@ -690,7 +690,6 @@ class TestDeleteDomain(TestCase):
                 server_type='server',
                 server_name='my_server',
                 target_site='my_site',
-                domain_username='my_username',
             )
             TableauVisualization.objects.create(
                 domain=domain_name,

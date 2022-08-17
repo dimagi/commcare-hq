@@ -279,10 +279,6 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
-    domain_username = forms.CharField(
-        label=_('Domain Username'),
-    )
-
     class Meta:
         model = TableauServer
         fields = [
@@ -290,7 +286,6 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
-            'domain_username',
         ]
 
     def __init__(self, data, *args, **kwargs):
@@ -313,9 +308,6 @@ class TableauServerForm(forms.Form):
             crispy.Div(
                 crispy.Field('target_site'),
             ),
-            crispy.Div(
-                crispy.Field('domain_username'),
-            ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
             )
@@ -336,7 +328,6 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
-            'domain_username': self._existing_config.domain_username,
         }
 
     def save(self):
@@ -344,7 +335,6 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
         self._existing_config.target_site = self.cleaned_data['target_site']
-        self._existing_config.domain_username = self.cleaned_data['domain_username']
         self._existing_config.save()
 
 
