@@ -12,7 +12,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled
@@ -76,7 +75,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         case_id = self.dad.case_id
 
         domain_obj = create_domain(self.domain)
-        user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
 
         self.addCleanup(delete_all_users)
         self.addCleanup(domain_obj.delete)
@@ -90,7 +88,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         SQLLocation.objects.create(domain="random-domain", name="Top Location",
                                    location_type=another_location_type)
 
-        response = self._generate_restore(case_id, user)
+        response = self._generate_restore(case_id)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
@@ -109,7 +107,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         case_id = self.dad.case_id
 
         domain_obj = create_domain(self.domain)
-        user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
 
         self.addCleanup(delete_all_users)
         self.addCleanup(domain_obj.delete)
@@ -132,7 +129,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         )
         row.save()
 
-        response = self._generate_restore(case_id, user)
+        response = self._generate_restore(case_id)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
@@ -141,8 +138,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         xpath = '{h}fixture[@id="item-list:{tag}"]'.format(h='{http://openrosa.org/http/response}', tag=table_tag)
         self.assertXmlPartialEqual(lookup_table_content, response_content, xpath)
 
-    def _generate_restore(self, case_id, user):
-        self.client.login(username=user.username, password=user.password)
+    def _generate_restore(self, case_id):
         url = reverse("case_restore", args=[self.domain, case_id])
         hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
         return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
