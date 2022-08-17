@@ -274,18 +274,6 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
         [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
 
 
-  - For production environments
-
-    ```sh
-    pip install -r requirements/prod-requirements.txt
-    ```
-
-  - Minimum required packages
-
-    ```sh
-    pip install -r requirements/requirements.txt
-    ```
-
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
 have found it helpful to automate these tasks. For pulling code, instead of `git pull`,
