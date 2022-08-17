@@ -331,13 +331,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedValuesKey = options.collection.queryKey;
             if (sessionStorage.selectedValues !== undefined) {
-                ssSelectedValues = JSON.parse(sessionStorage.selectedValues);
-                this.selectedCaseIds = ssSelectedValues[this.selectedValuesKey] !== undefined ? ssSelectedValues[this.selectedValuesKey].split(',') : [];
+                let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues);
+                this.selectedCaseIds = parsedSelectedValues[sessionStorage.queryKey] !== undefined ? parsedSelectedValues[sessionStorage.queryKey].split(',') : [];
             } else {
-                this.selectedCaseIds = []
-            };
+                this.selectedCaseIds = [];
+            }
             this.isMultiSelect = options.isMultiSelect;
             if (this.isMultiSelect) {
                 this.reconcileSelectedValues();
@@ -468,11 +467,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         continueAction: function () {
             var self = this;
-            // clear session storage at the selectedValuesKey when leaving the screen
-            var selectedValuesForScreen = JSON.parse(sessionStorage.selectedValues);
-            selectedValuesForScreen[self.selectedValuesKey] = undefined;
-            sessionStorage.selectedValues = JSON.stringify(selectedValuesForScreen);
-
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
         },
 
@@ -483,8 +477,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 var selectedValues = {};
             }
-            selectedValues[self.selectedValuesKey] = self.selectedCaseIds.join(',');
-            selectedValues['current'] = self.selectedCaseIds.join(',');
+            selectedValues[sessionStorage.queryKey] = self.selectedCaseIds.join(',');
             sessionStorage.selectedValues = JSON.stringify(selectedValues);
         },
 
@@ -530,7 +523,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 isMultiSelect: this.isMultiSelect,
                 selectedCaseIds: this.selectedCaseIds,
-                selectedValuesKey: this.options.queryKey,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },

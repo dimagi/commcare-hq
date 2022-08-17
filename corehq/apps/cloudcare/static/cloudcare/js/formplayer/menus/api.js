@@ -151,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
         if (sessionStorage.selectedValues !== undefined) {
-            const currentSelectedValues = JSON.parse(sessionStorage.selectedValues)['current'];
+            const currentSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
             options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
