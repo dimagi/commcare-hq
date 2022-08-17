@@ -525,7 +525,7 @@ sqlalchemy-postgres-copy==0.5.0
     # via -r test-requirements.in
 sqlparse==0.3.1
     # via django
-stripe==2.54.0
+stripe==4.0.2
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
