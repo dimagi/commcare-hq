@@ -72,6 +72,33 @@ def get_or_cache_global_fixture(restore_state, cache_bucket_prefix, fixture_name
     return [data.replace(global_id, b_user_id)] if data else []
 
 
+def get_or_cache_global_fixture_for_case(domain, case_id, cache_bucket_prefix, fixture_name, data_fn):
+
+    data = None
+    key = '{}/{}'.format(cache_bucket_prefix, domain)
+
+    data = get_cached_fixture_items(domain, cache_bucket_prefix)
+    _record_datadog_metric('cache_miss' if data is None else 'cache_hit', key)
+
+    if data is None:
+        with CriticalSection([key]):
+            # re-check cache to avoid re-computing it
+            data = get_cached_fixture_items(domain, cache_bucket_prefix)
+            if data is not None:
+                return [data]
+
+            _record_datadog_metric('generate', key)
+            items = data_fn()
+            io_data = write_fixture_items_to_io(items)
+            data = io_data.read()
+            io_data.seek(0)
+            cache_fixture_items_data(io_data, domain, fixture_name, cache_bucket_prefix)
+
+    global_id = GLOBAL_USER_ID.encode('utf-8')
+    b_user_id = case_id.encode('utf-8')
+    return [data.replace(global_id, b_user_id)] if data else []
+
+
 def write_fixture_items_to_io(items):
     io = BytesIO()
     io.write(ITEMS_COMMENT_PREFIX)
