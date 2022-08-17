@@ -49,6 +49,10 @@ def _load_custom_commcare_settings():
             setting['widget'] = 'select'
         if 'values' in setting and 'value_names' not in setting:
             setting['value_names'] = [titleslug(v) for v in setting['values']]
+        if 'value_pairs' in setting:
+            value_pairs = setting.pop('value_pairs')
+            setting['values'] = [v[0] for v in value_pairs]
+            setting['value_names'] = [v[1] for v in value_pairs]
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
                 setting[prop] = _translate_setting(setting, prop)
