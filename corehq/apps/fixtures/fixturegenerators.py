@@ -7,6 +7,7 @@ from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
     get_or_cache_global_fixture,
+    get_or_cache_global_fixture_for_case
 )
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
@@ -91,6 +92,16 @@ def item_lists_by_app(app, module):
             legacy_item['name'] = f"{item['name']} (legacy)"
             ret.append(legacy_item)
     return lookup_lists + ret
+
+
+def get_global_items_by_domain(domain, case_id):
+    global_types = {}
+    for data_type in FixtureDataType.by_domain(domain):
+        if data_type.is_global:
+            global_types[data_type._id] = data_type
+    if global_types:
+        data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
+        return get_or_cache_global_fixture_for_case(domain, case_id, FIXTURE_BUCKET, '', data_fn)
 
 
 class ItemListsProvider(FixtureProvider):
