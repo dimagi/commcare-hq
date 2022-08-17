@@ -22,7 +22,6 @@ CASE_ID = 'case_id'
 USERCASE_TYPE = 'commcare-user'
 USERCASE_ID = 'usercase_id'
 USERCASE_PREFIX = 'user/'
-WEBUSER_USERCASE_TYPE = 'web-user'
 
 AUTO_SELECT_USER = 'user'
 AUTO_SELECT_FIXTURE = 'fixture'

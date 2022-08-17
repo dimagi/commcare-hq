@@ -55,7 +55,7 @@ from dimagi.utils.logging import log_signal_errors, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import get_static_url_prefix
 
-from corehq.apps.app_manager.const import USERCASE_TYPE, WEBUSER_USERCASE_TYPE
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.domain.shortcuts import create_user
@@ -2490,7 +2490,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return self.get_sql_location(domain)
 
     def get_usercase_by_domain(self, domain):
-        return CommCareCase.objects.get_case_by_external_id(domain, self._id, WEBUSER_USERCASE_TYPE)
+        return CommCareCase.objects.get_case_by_external_id(domain, self._id, 'web-user')
 
     def get_usercase_id_by_domain(self, domain):
         domains = self.get_domains()
