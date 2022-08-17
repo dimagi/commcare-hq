@@ -687,6 +687,7 @@ reports
  0006_remove_tableauserver_allow_domain_username_override
  0007_tableauvisualization_upstream_id
  0008_tableauvisualization_title
+ 0009_remove_tableauserver_domain_username
 saved_reports
  0001_initial
  0002_scheduledreportlog
