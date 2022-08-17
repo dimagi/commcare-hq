@@ -7,7 +7,6 @@ from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.utils import (
     GLOBAL_USER_ID,
     get_or_cache_global_fixture,
-    get_or_cache_global_fixture_for_case
 )
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
@@ -101,7 +100,7 @@ def get_global_items_by_domain(domain, case_id):
             global_types[data_type._id] = data_type
     if global_types:
         data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
-        return get_or_cache_global_fixture_for_case(domain, case_id, FIXTURE_BUCKET, '', data_fn)
+        return get_or_cache_global_fixture(domain, case_id, FIXTURE_BUCKET, '', data_fn)
 
 
 class ItemListsProvider(FixtureProvider):
@@ -140,7 +139,12 @@ class ItemListsProvider(FixtureProvider):
     def get_global_items(self, global_types, restore_state):
         domain = restore_state.restore_user.domain
         data_fn = partial(self._get_global_items, global_types, domain)
-        return get_or_cache_global_fixture(restore_state, FIXTURE_BUCKET, '', data_fn)
+        return get_or_cache_global_fixture(restore_state.restore_user.domain,
+                                           restore_state.restore_user.user_id,
+                                           FIXTURE_BUCKET,
+                                           '',
+                                           data_fn,
+                                           restore_state.overwrite_cache)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
