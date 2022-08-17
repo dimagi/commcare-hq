@@ -46,7 +46,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     ```sh
     sudo apt install git
     ```
-    
+
 - [Python 3.9](https://www.python.org/downloads/)
 
   - **Linux**:
@@ -131,7 +131,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     xcode-select --install
     export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
     ```
-    
+
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
 ##### A note on `xmlsec`
@@ -244,15 +244,15 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
       cp requirements/local.in.sample requirements/local.in
       ```
       and follow the instructions in `local.in` to keep requirements in sync.
-    
+
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
-    
+
     - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
         ```sh
         CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
         ```
         [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
-        
+
 
   - For production environments
 
@@ -823,7 +823,7 @@ If you are on arm64 architecture using a non-Dimagi Docker Postgres image:
 USE_PARTITIONED_DATABASE = False
 ```
 
-        
+
 
 ### REUSE DB
 
