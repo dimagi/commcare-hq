@@ -64,33 +64,22 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     brew install python@3.9
     ```
 
-- A Python virtual environment manager like `pyenv` or `virtualenvwrapper`. We recommend `pyenv` ([see installation guide](https://github.com/pyenv/pyenv#installation))
-
-    To install python 3.9 with `pyenv`:
-
-    ```sh
-    pyenv install 3.9.11
-    ```
-
-    To set Python 3.9 as the global `python`, run:
-    ```sh
-    pyenv global 3.9.11
-    ```
-    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
-
 
 - Requirements of Python libraries, if they aren't already installed.
 
   - **Linux**:
 
     ```sh
-    sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config gettext
+    sudo apt-get update; sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev \
+    libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config gettext make build-essential \
+    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
     ```
 
   - **macOS**:
 
     ```sh
-    brew install libmagic libxmlsec1 libxml2 libxslt
+    brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
 - Java (JDK 8)
@@ -148,7 +137,38 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 #### Option A: With `pyenv` and `pyenv-virtualenv`
 
-1. Create the virtualenv `hq` with Python 3.9.11:
+1. Install `pyenv`
+
+  Full installation instructions are [here](https://github.com/pyenv/pyenv#installation)
+  and [here](https://github.com/pyenv/pyenv-installer#installation--update--uninstallation).
+  Check [here](https://github.com/pyenv/pyenv/wiki#troubleshooting--faq)
+  and [here](https://github.com/pyenv/pyenv/wiki/Common-build-problems) to troubleshoot.
+
+  - **Linux**:
+
+    ```sh
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+    exec $SHELL
+    ```
+
+  - **macOS**:
+
+    [see installation guide linked above](https://github.com/pyenv/pyenv#installation)
+
+  - Install python 3.9 with `pyenv`:
+
+    ```sh
+    pyenv install 3.9.11
+    ```
+
+    To set Python 3.9 as the global `python`, run:
+    ```sh
+    pyenv global 3.9.11
+    ```
+    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
+
+
+2. Create the virtualenv `hq` with Python 3.9.11:
    ```sh
    pyenv virtualenv 3.9.11 hq
    ```
@@ -223,7 +243,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     cd commcare-hq
     git submodule update --init --recursive
     git-hooks/install.sh
-    setvirtualenvproject  # optional - sets this directory as the project root
+    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
     ```
 
 2. Next, install the appropriate requirements (**only one is necessary**).
