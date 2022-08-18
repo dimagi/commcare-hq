@@ -950,10 +950,10 @@ def delete_user_role(request, domain):
         return JsonResponse({
             "message": ngettext(
                 "Unable to delete role '{role}'. "
-                "It has one user and pending invitations still assigned to it. "
+                "It has one user and/or invitation still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
                 "Unable to delete role '{role}'. "
-                "It has {user_count} users and pending invitations still assigned to it. "
+                "It has {user_count} users and/or invitations still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
                 user_count,
             ).format(role=role_data["name"], user_count=user_count)
