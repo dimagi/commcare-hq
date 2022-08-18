@@ -69,7 +69,7 @@ branches:
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
-    #- jls/conditionally-required-case-search-fields # Jenny July 29
+    - jls/conditionally-required-case-search-fields # Jenny July 29
     - es/required-2  # Ethan July 29
     - ad/embedded-tableau-explorer-access # Addison Aug 1
     - jc/USH-2151  # Jing/Steph Aug 2
