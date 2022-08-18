@@ -3,7 +3,7 @@
   description: ""
   value_pairs:
     # [values, value_names]
-    - ['1.0', '2.0']
+    - ['1.0', '1.x']
     - ['2.0', '2.x']
   default: "2.0"
   disabled: true
