@@ -1,8 +1,9 @@
 - name: "Auto Update Frequency"
   description: "How often CommCare mobile should attempt to check for a new, released application version."
   id: "cc-autoup-freq"
-  value_pairs:
-    # [values, value_names]
+  values:
+    # A list of value-value_name pairs, or just a list of values. Value
+    # names default to their values in title case.
     - ['freq-never', 'Never']
     - ['freq-daily', 'Daily']
     - ['freq-weekly', 'Weekly']
@@ -15,7 +16,7 @@
   description: "Make OTA app updates skip download for video files at app update time."
   id: "lazy-load-video-files"
   toggle: LAZY_LOAD_MULTIMEDIA
-  value_pairs:
+  values:
     - ['true', 'Yes']
     - ['false', 'No']
   default: "false"
@@ -26,7 +27,7 @@
   name: "Purge Frequency"
   description: "How often the phone should attempt to purge any cached storage which may have expired"
   id: "purge-freq"
-  value_pairs:
+  values:
     - ['0', 'Whenever Possible']
     - ['1', 'Daily']
     - ['7', 'Once a Week']
@@ -39,7 +40,7 @@
 - name: "Days for Review"
   description: "Amount of time previously submitted forms remain accessible in the CommCare app."
   id: "cc-days-form-retain"
-  value_pairs:
+  values:
     - ['1', 'Just One Day']
     - ['7', 'One Week']
     - ['31', 'One Month']
@@ -67,7 +68,7 @@
   requires: "{properties.logenabled}='Enabled'"
   commcare_default: "log_never"
   default: "log_short"
-  value_pairs:
+  values:
     - ['log_never', 'Never']
     - ['log_short', 'Short']
     - ['log_full', 'Full']
@@ -80,7 +81,7 @@
   requires_txt: "Logging to be Enabled"
   default: "log_never"
   requires: "{properties.logenabled}='Enabled'"
-  value_pairs:
+  values:
     - ['log_never', 'Never']
     - ['log_short', 'Short']
     - ['log_full', 'Full']
@@ -91,7 +92,7 @@
   description: "Whether or not the phone collects, saves, and sends data."
   id: "cc-send-procedure"
   default: "cc-send-http"
-  value_pairs:
+  values:
     - ['cc-send-http', 'Yes']
     - ['cc-send-none', 'No (NOT RECOMMENDED)']
   "//values": ["cc-send-file"]
@@ -101,7 +102,7 @@
 - name: "Password Format"
   description: "Determines whether phone keys will type letters or numbers by default when typing in the password field."
   id: "password_format"
-  value_pairs:
+  values:
     - ['a', 'Alphanumeric']
     - ['n', 'Numeric']
   default: "a"
@@ -151,7 +152,7 @@
 - name: "Sync Mode"
   description: "Determines if the server automatically attempts to send data to the phone (Two-Way), or only attempt to send data on demand (Push Only); projects using Case Sharing should choose Two-Way. If set to Push Only, the Auto-Sync Frequency and Unsynced Time Limit settings will have no effect."
   id: "server-tether"
-  value_pairs:
+  values:
     - ['push-only', 'Push Only']
     - ['sync', 'Two-Way Sync']
   default: "push-only"
@@ -162,7 +163,7 @@
 - name: "Auto-Sync Frequency"
   description: "Automatically trigger a two-way sync on a regular schedule"
   id: "cc-autosync-freq"
-  value_pairs:
+  values:
     - ['freq-never', disabled]
     - ['freq-daily', 'Daily']
     - ['freq-weekly', 'Weekly']
@@ -182,7 +183,7 @@
 - name: "Form Entry Style"
   description: "What user interface style should be used during form entry."
   id: "ViewStyle"
-  value_pairs:
+  values:
     - ['v_chatterbox', 'Multiple Questions per Screen']
     - ['v_singlequestionscreen', 'One Question per Screen']
   values_txt: "Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features"
@@ -194,7 +195,7 @@
   type: "features"
   name: "No Users Mode"
   description: "Whether to show the user login screen"
-  value_pairs:
+  values:
     - ['true', 'Off']
     - ['false', 'On']
   default: "true"
@@ -206,7 +207,7 @@
   type: "features"
   name: "CommCare Sense"
   description: "Configure for low-literate users, J2ME only"
-  value_pairs:
+  values:
     - ['true', 'Yes']
     - ['false', 'No']
   default: "false"
@@ -216,7 +217,7 @@
 
 - id: "cc-user-mode"
   name: "User Login Mode"
-  value_pairs:
+  values:
     - ['cc-u-normal', 'Normal']
     - ['cc-u-auto', 'Auto-login']
   default: "cc-u-normal"
@@ -231,7 +232,7 @@
   description: "Whether form entry is optimized for speed, or for new users."
   id: "cc-entry-mode"
   requires: "{features.sense}='false'"
-  value_pairs:
+  values:
     - ['cc-entry-quick', 'Normal Scrolling']
     - ['cc-entry-review', 'Numeric Selection']
   values_txt: "Numeric Selection mode will display information about questions for longer and require more input from the user. Normal Scrolling will proceed to the next question whenever enough information is provided."
@@ -244,7 +245,7 @@
   description: "How Send All Unsent functionality is presented to the user"
   id: "cc-send-unsent"
   requires: "{features.sense}='false'"
-  value_pairs:
+  values:
     - ['cc-su-auto', 'Automatic']
     - ['cc-su-man', 'Manual']
   values_txt: "If automatic is enabled, forms will attempt to send on their own without intervention from the user. If manual is enabled, the user must manually decide when to attempt to send forms."
@@ -258,7 +259,7 @@
   description: "What the 'Extra Key' (# on Nokia Phones) does when pressed"
   id: "extra_key_action"
   requires: "{features.sense}='false'"
-  value_pairs:
+  values:
     - ['cycle', 'Languages']
     - ['audio', 'Audio']
   values_txt: "Language cycles through any available translations. Audio plays the question's audio if available. NOTE: If audio is selected, a question's audio will not be played by default when the question is displayed."
@@ -282,7 +283,7 @@
 - name: "Multimedia Validation"
   description: "Whether CommCare should validate that all external multimedia is installed before letting the user run the app."
   id: "cc-content-valid"
-  value_pairs:
+  values:
     - ['yes', 'No Validation']
     - ['no', 'Validate Multimedia']
   default: "yes"
@@ -302,7 +303,7 @@
 - name: "Unsynced Time Limit"
   description: "Days allowed without syncing before triggering a warning"
   id: "unsent-time-limit"
-  value_pairs:
+  values:
     - ['-1', 'Never']
     - ['1', '1 Day']
     - ['5', '5 Days']
@@ -317,7 +318,7 @@
 - name: "Login Buttons"
   description: "Choose to label the login buttons with Icons or Text"
   id: "cc-login-images"
-  value_pairs:
+  values:
     - ['Yes', 'Icons']
     - ['No', 'Text']
   default: "No"
@@ -329,7 +330,7 @@
 - name: "Saved Forms"
   description: "Choose whether or not mobile workers can view previously submitted forms."
   id: "cc-show-saved"
-  value_pairs:
+  values:
     - ['yes', 'Enable']
     - ['no', 'Disable']
   default: "no"
@@ -342,7 +343,7 @@
 - name: "Incomplete Forms"
   description: "Choose whether or not to display the 'Incomplete' button on the ODK home screen"
   id: "cc-show-incomplete"
-  value_pairs:
+  values:
     - ['yes', 'Enable']
     - ['no', 'Disable']
   default: "no"
@@ -357,7 +358,7 @@
   <a href='https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'>
   the instructions here</a> to determine which value to use."
   id: "cc-resize-images"
-  value_pairs:
+  values:
     - ['full', 'Full Resize']
     - ['half', 'Half Resize']
     - ['width', 'Horizontal Resize']
@@ -388,7 +389,7 @@
 - name: "Login Duration"
   description: "Length of time after which you will be logged out automatically"
   id: "cc-login-duration-seconds"
-  value_pairs:
+  values:
     - ['86400', '24 hours']
     - ['43200', '12 hours']
     - ['28800', '8 hours']
@@ -407,7 +408,7 @@
   <a href='https://confluence.dimagi.com/display/commcarepublic/Image+Sizing+with+Multiple+Android+Device+Models'>
   the instructions here</a> to determine which value to use."
   id: "cc-inflation-target-density"
-  value_pairs:
+  values:
     - ['120', 'Low Density']
     - ['160', 'Medium Density']
     - ['240', 'High Density']

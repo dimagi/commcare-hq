@@ -1,8 +1,9 @@
 - id: application_version
   name: "App Version"
   description: ""
-  value_pairs:
-    # [values, value_names]
+  values:
+    # A list of value-value_name pairs, or just a list of values. Value
+    # names default to their values in title case.
     - ['1.0', '1.x']
     - ['2.0', '2.x']
   default: "2.0"
@@ -28,7 +29,7 @@
 - id: platform
   name: "Java Phone Platform"
   description: "The kind of Java phone you want to run the application on"
-  value_pairs:
+  values:
     - ['nokia/s40', 'Nokia S40 (default)']
     - ['nokia/s60', 'Nokia S60']
     - ['winmo', 'WinMo']
@@ -39,7 +40,7 @@
   name: "Text Input"
   description: "What characters to allow users to input"
   widget: text_input
-  value_pairs:
+  values:
     - ['roman', 'Roman']
     - ['native', 'Native (International)']
     - ['custom-keys', 'Custom Keys']
@@ -136,7 +137,7 @@
 
 - id: translation_strategy
   name: 'Translations Strategy'
-  value_pairs:
+  values:
     - ['dump-known', 'Version 1 translations (old)']
     - ['select-known', 'Version 2 translations (recommended)']
     - ['simple', 'Simple (FOR TESTING ONLY: crashes with any unrecognized user-defined translations)']
@@ -157,7 +158,7 @@
 - id: use_grid_menus
   name: Modules Menu Display
   description: Display root menu as a list or grid. Read more on the <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Grid+View+for+Form+and+Module+Screens">Help Site</a>.
-  value_pairs:
+  values:
     - ['false', 'List']
     - ['true', 'Grid']
   default: false
@@ -166,7 +167,7 @@
 - id: grid_form_menus
   name: Forms Menu Display
   description: Configure form menus display. For per-module option turn on grid view for the form's menu in a module under module's settings page. Read more on the <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Grid+View+for+Form+and+Module+Screens">Help Site</a>.
-  value_pairs:
+  values:
     - ['none', 'List']
     - ['all', 'Grid']
     - ['some', 'Enable Menu Display Setting Per-Module']
@@ -177,7 +178,7 @@
   name: Target CommCare Flavor
   description: "Restrict this app to the selected CommCare flavor"
   toggles: TARGET_COMMCARE_FLAVOR
-  value_pairs:
+  values:
     - ['none', 'None']
     - ['commcare', 'CommCare']
     - ['commcare_lts', 'CommCare LTS']
@@ -196,7 +197,7 @@
   name: App Aware Location Fixture Format
   description: Location Fixture format that is provided in the restore for this app
   toggle: HIERARCHICAL_LOCATION_FIXTURE
-  value_pairs:
+  values:
     - ['project_default', 'Project Default']
     - ['both_fixtures', 'Both Hierarchical and Flat Fixture']
     - ['only_flat_fixture', 'Only Flat Fixture']
