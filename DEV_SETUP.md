@@ -517,7 +517,7 @@ manage `js` repositories.
 In order to download the required JavaScript packages, you'll need to install
 `yarn` and run `yarn install`. Follow these steps to install:
 
-1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable)
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install)
    to install Yarn.
 
 2. Install dependencies with:
@@ -600,7 +600,18 @@ Preferences > Network** and check the following:
 - [x] Disable cache (while DevTools is open)
 
 
-### Step 10: Running CommCare HQ
+### Step 10: Create a superuser
+
+To be able to use CommCare, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+
+### Step 11: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -610,7 +621,8 @@ Elasticsearch).
 ```
 
 Some of the services listed there aren't necessary for very basic operation, but
-it can give you a good idea of what's broken.
+it can give you a good idea of what's broken. If you're not running formplayer
+in docker, it will of course fail. Don't worry about celery for now.
 
 Then run the django server with the following command:
 
@@ -630,17 +642,6 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
-
-### Step 11: Create a superuser
-
-Once your application is online, you'll want to create a superuser, which you can do by running:
-
-```sh
-./manage.py make_superuser <email>
-```
-
-This can also be used to promote a user created by signing up to a superuser.
-
 
 ## Running Formplayer and submitting data with Web Apps
 
