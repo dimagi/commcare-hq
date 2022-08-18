@@ -364,10 +364,9 @@ Run the following commands to run the migration and get up to date:
             couch_class.wrap(doc)._migration_sync_to_sql(obj, save=False)
         if creates or updates:
             with transaction.atomic(), disable_sync_to_couch(sql_class):
-                sql_class.objects.bulk_create(creates)
-                if updates:
-                    for obj in updates:
-                        obj.save()
+                sql_class.objects.bulk_create(creates, ignore_conflicts=True)
+                for obj in updates:
+                    obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
         update_log("Ignored", [doc["_id"] for doc in ignored])

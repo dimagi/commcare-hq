@@ -390,6 +390,57 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             [],
         )
 
+    def test_migration_race(self):
+        def migration_runner():
+            # use the same connection as main test thread
+            connections[DEFAULT_DB_ALIAS] = test_connection
+            call_command('populate_lookuptables')
+
+        def migration_blocker(self, doc):
+            concurrent_save.set()
+            if not allow_migration.wait(timeout=10):
+                raise RuntimeError("allow_migration timeout")
+            return False
+
+        def diff(doc):
+            return self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id))
+
+        from threading import Thread, Event
+        from django.db import DEFAULT_DB_ALIAS, connections
+        test_connection = connections[DEFAULT_DB_ALIAS]
+        test_connection.inc_thread_sharing()
+        try:
+            concurrent_save = Event()
+            allow_migration = Event()
+
+            # save documents to Couch only (not SQL)
+            price, obj = create_lookup_table(unwrap_doc=False)
+            color, obj = create_lookup_table(unwrap_doc=False, tag="color")
+            shape, obj = create_lookup_table(unwrap_doc=False, tag="shape")
+            price.save(sync_to_sql=False)
+            color.save(sync_to_sql=False)
+            shape.save(sync_to_sql=False)
+
+            with patch.object(LookupTableCommand, "should_ignore", migration_blocker):
+                migration = Thread(target=migration_runner)
+                migration.start()  # loads Couch docs, blocks on should_ignore
+
+                if not concurrent_save.wait(timeout=10):
+                    raise RuntimeError("concurrent_save timeout")
+                # Save some SQL records before migration has a chance.
+                # Should not cause migration to fail with IntegrityError.
+                price.save()
+                color.save()
+
+                allow_migration.set()
+                migration.join()
+
+                self.assertEqual(diff(price), [])
+                self.assertEqual(diff(color), [])
+                self.assertEqual(diff(shape), [])
+        finally:
+            test_connection.dec_thread_sharing()
+
     def diff(self, doc, obj):
         return do_diff(LookupTableCommand, doc, obj)
 
@@ -638,7 +689,7 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
         return do_diff(LookupTableRowOwnerCommand, doc, obj)
 
 
-def create_lookup_table(unwrap_doc=True):
+def create_lookup_table(unwrap_doc=True, **extra):
     def fields_data(name="name"):
         return [
             {
@@ -661,10 +712,11 @@ def create_lookup_table(unwrap_doc=True):
             'item_attributes': ['name'],
             **extra,
         }
-    obj = jsonattrify(LookupTable, data())
+    obj = jsonattrify(LookupTable, data(**extra))
     doc = FixtureDataType.wrap(data(
         doc_type="FixtureDataType",
         fields=fields_data("field_name"),
+        **extra
     ))
     if unwrap_doc:
         doc = doc.to_json()
