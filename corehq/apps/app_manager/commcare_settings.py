@@ -38,16 +38,19 @@ def _load_custom_commcare_settings():
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
-
     with open(os.path.join(path, 'commcare-app-settings.yml'), encoding='utf-8') as f:
         for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
             settings.append(setting)
+
     for setting in settings:
         if not setting.get('widget'):
             setting['widget'] = 'select'
-
+        if 'values' in setting:
+            values = setting.pop('values')
+            setting['values'] = [v[0] for v in values]
+            setting['value_names'] = [v[1] for v in values]
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
                 setting[prop] = _translate_setting(setting, prop)
