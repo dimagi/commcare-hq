@@ -204,6 +204,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
+        _render: function () {
+            _.delay(this.render);
+        },
+
         /**
          * Determines if model has either a server error or is required and missing.
          * Returns error message, or null if model is valid.
@@ -227,7 +231,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var newError = this.checkValid();
             if (newError !== this.errorMessage) {
                 this.errorMessage = newError;
-                this.render();
+                this._render();
             }
             return !this.errorMessage;
         },
@@ -241,7 +245,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (self.ui.date.length) {
                 self.ui.date.data("DateTimePicker").clear();
             }
-            self.render();
+            self._render();
             FormplayerFrontend.trigger('clearNotifications');
         },
 
@@ -413,7 +417,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             itemsetChoices: choices,
                             value: value,
                         });
-                        self.children.findByIndex(i).render();      // re-render with new choice values
+                        self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
             });
