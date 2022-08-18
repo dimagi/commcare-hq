@@ -48,9 +48,9 @@ def _load_custom_commcare_settings():
         if not setting.get('widget'):
             setting['widget'] = 'select'
         if 'values' in setting:
-            values, value_names = unpack_value_names(setting['values'])
-            setting['values'] = values
-            setting['value_names'] = value_names
+            values = setting.pop('values')
+            setting['values'] = [v[0] for v in values]
+            setting['value_names'] = [v[1] for v in values]
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
                 setting[prop] = _translate_setting(setting, prop)
@@ -176,53 +176,3 @@ def circular_dependencies(settings, yaml_lookup):
         if check_setting_for_circular_dependency(s, yaml_lookup):
             return True
     return False
-
-
-def unpack_value_names(value_list):
-    """
-    Returns a list of values and a list of value names.
-
-    If ``value_list`` is a list of value-value_name pairs, they are
-    unpacked. If ``value_list`` is just a list of values, value names
-    are their values in title case.
-
-    >>> unpack_value_names([
-    ...     ['foo-bar', 'Foozle'],
-    ...     ['baz', 'Bazinga'],
-    ... ])
-    (['foo-bar', 'baz'], ['Foozle', 'Bazinga'])
-
-    >>> unpack_value_names(['foo-bar', 'baz'])
-    (['foo-bar', 'baz'], ['Foo Bar', 'Baz'])
-
-    """
-    values = []
-    value_names = []
-    for item in value_list:
-        if isinstance(item, list) and len(item) == 2:
-            value, value_name = item
-        else:
-            value = item
-            value_name = titleslug(item)
-        values.append(value)
-        value_names.append(value_name)
-    return values, value_names
-
-
-def titleslug(slug):
-    """
-    Returns ``slug`` as title case. Non-strings are returned unchanged.
-
-    >>> titleslug('foo-bar')
-    'Foo Bar'
-    >>> titleslug(5)
-    5
-
-    """
-    if isinstance(slug, str):
-        table = {
-            ord('-'): ord(' '),
-            ord('_'): ord(' '),
-        }
-        return slug.translate(table).title()
-    return slug
