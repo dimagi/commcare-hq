@@ -262,7 +262,6 @@ Run the following commands to run the migration and get up to date:
 
         self.diff_count = 0
         self.ignored_count = 0
-        self.missing_in_sql_count = 0
         doc_index = 0
 
         if fixup_diffs:
@@ -322,10 +321,6 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
-        if self.missing_in_sql_count > self.ignored_count:
-            missing = self.missing_in_sql_count - self.ignored_count
-            not_ignored = " (and not ignored)" if self.ignored_count else ""
-            print(f"Unexpected: {missing} Couch documents were not found in SQL{not_ignored}")
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
         def update_log(action, doc_ids):
@@ -378,20 +373,20 @@ Run the following commands to run the migration and get up to date:
         couch_ids = [doc["_id"] for doc in docs]
         objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
-        self.missing_in_sql_count += len(couch_ids) - len(objs_by_couch_id)
         diff_count = self.diff_count
         for doc in docs:
             if verify_only and self.should_ignore(doc):
                 self.ignored_count += 1
                 continue
-            obj = objs_by_couch_id.get(doc["_id"])
-            if obj is not None:
-                self._do_diff(doc, obj, logfile)
+            self._do_diff(doc, objs_by_couch_id.get(doc["_id"]), logfile)
         if diff_count != self.diff_count:
             print(f"Diff count: {self.diff_count}")
 
     def _do_diff(self, doc, obj, logfile, exit=False):
-        diff = self.get_diff_as_string(doc, obj)
+        if obj is None:
+            diff = "Missing in SQL - unique constraint violation?"
+        else:
+            diff = self.get_diff_as_string(doc, obj)
         if diff:
             logfile.write(DIFF_HEADER.format(json.dumps(doc['_id'])))
             logfile.write(diff)
@@ -407,9 +402,9 @@ Run the following commands to run the migration and get up to date:
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            self._do_diff(doc, obj, logfile, exit=not verify_only)
         except self.sql_class().DoesNotExist:
-            self.missing_in_sql_count += 1
+            obj = None
+        self._do_diff(doc, obj, logfile, exit=not verify_only)
 
     def _migrate_doc(self, doc, logfile):
         if self.should_ignore(doc):
