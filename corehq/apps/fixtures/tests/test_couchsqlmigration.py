@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from decimal import Decimal
 from unittest.mock import patch
 from uuid import UUID
 from pathlib import Path
@@ -172,6 +173,12 @@ class TestLookupTableRowCouchToSQLDiff(SimpleTestCase):
             self.diff(doc, obj),
             ["item_attributes: couch value {'name': 'Andy'} != sql value {'age': '4'}"],
         )
+
+    def test_diff_decimal_item_attribute(self):
+        doc, obj = create_lookup_table_row()
+        doc["item_attributes"] = {"height": Decimal("3.2")}
+        obj.item_attributes = {"height": "3.2"}
+        self.assertEqual(self.diff(doc, obj), [])
 
     def test_diff_doc_without_item_attributes(self):
         doc, obj = create_lookup_table_row()
@@ -430,11 +437,11 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         )
 
         doc.fields['amount']['field_list'][0]['field_value'] = '1000'
-        doc.item_attributes = {'name': 'Andy', 'age': '4'}
+        doc.item_attributes = {'name': 'Andy', 'age': '4', 'height': Decimal('3.2')}
         doc.sort_key = None
         doc.save()
         obj = LookupTableRow.objects.get(id=UUID(doc._id))
-        self.assertEqual(obj.item_attributes, {'name': 'Andy', 'age': '4'})
+        self.assertEqual(obj.item_attributes, {'name': 'Andy', 'age': '4', 'height': '3.2'})
         self.assertEqual(obj.fields['amount'], [Field('1000', {})])
         self.assertEqual(obj.sort_key, 0)
 
