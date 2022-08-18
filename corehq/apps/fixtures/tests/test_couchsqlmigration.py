@@ -50,6 +50,17 @@ class TestLookupTableCouchToSQLDiff(SimpleTestCase):
             ["is_global: couch value True != sql value False"],
         )
 
+    def test_diff_null_is_global(self):
+        doc, obj = create_lookup_table(is_global=None)
+        obj.is_global = False
+        self.assertEqual(self.diff(doc, obj), [])
+
+    def test_diff_missing_is_global(self):
+        doc, obj = create_lookup_table()
+        obj.is_global = False
+        del doc["is_global"]
+        self.assertEqual(self.diff(doc, obj), [])
+
     def test_diff_tag(self):
         doc, obj = create_lookup_table()
         obj.tag = 'cost'
@@ -116,8 +127,8 @@ class TestLookupTableCouchToSQLDiff(SimpleTestCase):
         self.assertEqual(
             self.diff(doc, obj),
             [
-                "is_global: couch value True != sql value False",
                 "tag: couch value 'cost' != sql value 'price'",
+                "is_global: couch value True != sql value False",
             ],
         )
 
