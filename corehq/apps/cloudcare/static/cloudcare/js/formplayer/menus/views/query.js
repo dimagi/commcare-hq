@@ -205,7 +205,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         _render: function () {
-            _.delay(this.render);
+            var self = this;
+            _.delay(function () {
+                self.render();
+            });
         },
 
         /**
