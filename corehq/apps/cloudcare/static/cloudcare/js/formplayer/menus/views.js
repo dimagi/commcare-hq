@@ -332,8 +332,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
-                let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues);
-                this.selectedCaseIds = parsedSelectedValues[sessionStorage.queryKey] !== undefined ? parsedSelectedValues[sessionStorage.queryKey].split(',') : [];
+                let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
+                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
             } else {
                 this.selectedCaseIds = [];
             }
