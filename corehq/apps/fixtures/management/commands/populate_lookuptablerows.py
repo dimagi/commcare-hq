@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
@@ -49,7 +50,7 @@ class Command(PopulateSQLCommand):
             ),
             cls.diff_value(
                 "item_attributes",
-                couch.get("item_attributes") or {},
+                transform_item_attributes(couch.get("item_attributes") or {}),
                 sql.item_attributes,
             ),
             cls.diff_value(
@@ -84,3 +85,11 @@ def couch_to_sql_fields(data):
         ]
         for name, field in data.items()
     }
+
+
+def transform_item_attributes(data):
+    def convert(value):
+        if isinstance(value, Decimal):
+            return str(value)
+        return value
+    return {name: convert(value) for name, value in data.items()}

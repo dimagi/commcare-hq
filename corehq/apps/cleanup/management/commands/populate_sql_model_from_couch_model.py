@@ -311,7 +311,7 @@ Run the following commands to run the migration and get up to date:
                 if not verify_only:
                     migrate(item, logfile)
                 if not skip_verify:
-                    verify(item, logfile, exit=not verify_only)
+                    verify(item, logfile, verify_only)
                 if not is_bulk:
                     doc_index += 1
                     if doc_index % 1000 == 0:
@@ -400,7 +400,7 @@ Run the following commands to run the migration and get up to date:
                 raise
             break
 
-    def _verify_docs(self, docs, logfile, exit=True):
+    def _verify_docs(self, docs, logfile, verify_only):
         sql_class = self.sql_class()
         couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
         couch_ids = [doc["_id"] for doc in docs]
@@ -409,13 +409,16 @@ Run the following commands to run the migration and get up to date:
         self.missing_in_sql_count += len(couch_ids) - len(objs_by_couch_id)
         diff_count = self.diff_count
         for doc in docs:
+            if verify_only and self.should_ignore(doc):
+                self.ignored_count += 1
+                continue
             obj = objs_by_couch_id.get(doc["_id"])
             if obj is not None:
-                self._do_diff(doc, obj, logfile, exit=False)
+                self._do_diff(doc, obj, logfile)
         if diff_count != self.diff_count:
             print(f"Diff count: {self.diff_count}")
 
-    def _do_diff(self, doc, obj, logfile, exit):
+    def _do_diff(self, doc, obj, logfile, exit=False):
         diff = self.get_diff_as_string(doc, obj)
         if diff:
             logfile.write(DIFF_HEADER.format(json.dumps(doc['_id'])))
@@ -425,11 +428,14 @@ Run the following commands to run the migration and get up to date:
             if exit:
                 raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
 
-    def _verify_doc(self, doc, logfile, exit=True):
+    def _verify_doc(self, doc, logfile, verify_only):
+        if verify_only and self.should_ignore(doc):
+            self.ignored_count += 1
+            return
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
             obj = self.sql_class().objects.get(**{couch_id_name: doc["_id"]})
-            self._do_diff(doc, obj, logfile, exit)
+            self._do_diff(doc, obj, logfile, exit=not verify_only)
         except self.sql_class().DoesNotExist:
             self.missing_in_sql_count += 1
 

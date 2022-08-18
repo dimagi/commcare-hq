@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -308,7 +309,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "item_attributes"]
+        return ["domain"]
 
     def _migration_sync_to_sql(self, sql_object, save=True):
         if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
@@ -316,6 +317,9 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         fields = self._sql_fields
         if sql_object.fields != fields:
             sql_object.fields = fields
+        attributes = self._sql_item_attributes
+        if sql_object.item_attributes != attributes:
+            sql_object.item_attributes = attributes
         sql_object.sort_key = self.sort_key or 0
         super()._migration_sync_to_sql(sql_object, save=save)
 
@@ -329,6 +333,14 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             ]
             for name, values in self.fields.items()
         }
+
+    @property
+    def _sql_item_attributes(self):
+        def convert(value):
+            if isinstance(value, Decimal):
+                return str(value)
+            return value
+        return {name: convert(value) for name, value in self.item_attributes.items()}
 
     @classmethod
     def _migration_get_sql_model_class(cls):

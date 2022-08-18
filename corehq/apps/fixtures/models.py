@@ -169,11 +169,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
 
     @classmethod
     def _migration_get_fields(cls):
-        return [
-            "domain",
-            "item_attributes",
-            "sort_key",
-        ]
+        return ["domain", "sort_key"]
 
     def _migration_sync_to_couch(self, couch_object):
         if couch_object.data_type_id is None or UUID(couch_object.data_type_id) != self.table_id:
@@ -187,6 +183,8 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
                     ) for val in values
                 ]) for name, values in self.fields.items()
             }
+        if self.item_attributes != couch_object._sql_item_attributes:
+            couch_object.item_attributes = self.item_attributes
         super()._migration_sync_to_couch(couch_object)
 
     @classmethod
