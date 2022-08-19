@@ -17,15 +17,15 @@ from corehq.apps.domain.decorators import (
     require_superuser_or_contractor,
 )
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.es.case_search import ElasticCaseSearch
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_API_V0_6
+from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 
-from .api.core import SubmissionError, UserError, serialize_case
+from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
 from .api.get_list import get_list
 from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
@@ -130,12 +130,12 @@ def _get_bulk_cases(request, case_ids=None, external_ids=None):
 
 def _get_single_case(request, case_id):
     try:
-        case = CommCareCase.objects.get_case(case_id, request.domain)
-        if case.domain != request.domain:
-            raise CaseNotFound()
-    except CaseNotFound:
+        case = ElasticCaseSearch().get(case_id)
+        if case['domain'] != request.domain:
+            raise NotFoundError()
+    except NotFoundError:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
-    return JsonResponse(serialize_case(case))
+    return JsonResponse(serialize_es_case(case))
 
 
 def _handle_bulk_fetch(request):

@@ -91,35 +91,11 @@ class TestCaseAPI(TestCase):
         # for the time being, the implementation is the same
         return self._create_case(body)
 
-    def test_simple_get(self):
-        case_id = self._make_case().case_id
-        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['case_id'], case_id)
-
     def test_basic_get_list(self):
         with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
             res = self.client.get(reverse('case_api', args=(self.domain,)))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json(), {'example': 'result'})
-
-    def test_case_not_found(self):
-        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
-
-    def test_case_on_other_domain(self):
-        case_id = str(uuid.uuid4())
-        submit_case_blocks([CaseBlock(
-            case_id=case_id,
-            case_type='player',
-            case_name='Judit Polgár',
-            create=True,
-            update={}
-        ).as_text()], domain='other_domain')
-        res = self.client.get(reverse('case_api', args=(self.domain, case_id)))
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(res.json()['error'], f"Case '{case_id}' not found")
 
     def test_create_case(self):
         res = self._create_case({
