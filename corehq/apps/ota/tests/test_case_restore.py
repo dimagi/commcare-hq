@@ -135,7 +135,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         response_content = next(response.streaming_content)
 
         lookup_table_content = lookup_table_fixture_content.format(table_tag=table_tag, user_id=case_id)
-        xpath = '{h}fixture[@id="item-list:{tag}"]'.format(h='{http://openrosa.org/http/response}', tag=table_tag)
+        xpath = f'{{http://openrosa.org/http/response}}fixture[@id="item-list:{table_tag}"]'
         self.assertXmlPartialEqual(lookup_table_content, response_content, xpath)
 
     def _generate_restore(self, case_id):
