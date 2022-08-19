@@ -421,15 +421,15 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         return True
 
     def pause(self):
-        self.paused = True
+        self.is_paused = True
         self.save()
 
     def resume(self):
-        self.paused = False
+        self.is_paused = False
         self.save()
 
     def retire(self, sync_to_couch=True):
-        self.paused = False
+        self.is_paused = False
         self.is_deleted = True
         self.save(sync_to_couch=False)
         if sync_to_couch:
