@@ -2490,7 +2490,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         return self.get_sql_location(domain)
 
     def get_usercase_by_domain(self, domain):
-        return CommCareCase.objects.get_case_by_external_id(domain, self._id, 'web-user')
+        return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
     def get_usercase_id_by_domain(self, domain):
         domains = self.get_domains()
