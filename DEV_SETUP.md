@@ -159,12 +159,12 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
   - Install python 3.9 with `pyenv`:
 
     ```sh
-    pyenv install 3.9.11
+    pyenv install 3.9:latest
     ```
 
     To set Python 3.9 as the global `python`, run:
     ```sh
-    pyenv global 3.9.11
+    pyenv global 3.9.13  # or whatever version was just installed - it should tab complete
     ```
     Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
 
