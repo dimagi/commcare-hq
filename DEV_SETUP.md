@@ -65,7 +65,8 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     ```
 
 
-- Requirements of Python libraries, if they aren't already installed.
+- Requirements of Python libraries, if they aren't already installed.  Some of this comes from
+  [pyenv's recommendations](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
 
   - **Linux**:
 
