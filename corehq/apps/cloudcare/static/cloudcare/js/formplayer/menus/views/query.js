@@ -206,7 +206,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         _render: function () {
             var self = this;
-            _.delay(function () {
+            _.defer(function () {
                 self.render();
             });
         },
