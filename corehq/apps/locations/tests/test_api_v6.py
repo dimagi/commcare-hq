@@ -1,4 +1,3 @@
-import json
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.resources.v0_6 import LocationResource
@@ -25,7 +24,6 @@ class LocationV6Test(APIResourceTest):
 
         self.location1 = SQLLocation.objects.create(
             domain=self.domain.name,
-            id="1234",
             location_id="1",
             name="Colorado",
             site_code="colorado",
@@ -34,7 +32,6 @@ class LocationV6Test(APIResourceTest):
 
         self.location2 = SQLLocation.objects.create(
             domain=self.domain.name,
-            id="1235",
             location_id="2",
             name="Denver",
             site_code="denver",
@@ -45,22 +42,19 @@ class LocationV6Test(APIResourceTest):
             metadata={"population": "715,522"}
         )
 
-    def single_endpoint(self, id):
-        return absolute_reverse('api_dispatch_detail', kwargs=dict(domain=self.domain.name,
-                                                          api_name=self.api_name,
-                                                          resource_name=self.resource._meta.resource_name,
-                                                          location_id=id))
-
-    # Disregards order of fields in output.
-    def _validate_obj_output(self, desired_output, actual_output):
-        for key in desired_output.keys():
-            self.assertEqual(desired_output[key], actual_output[key])
+    def single_endpoint(self, location_id):
+        return absolute_reverse('api_dispatch_detail', kwargs={
+            'resource_name': self.resource._meta.resource_name,
+            'domain': self.domain.name,
+            'api_name': self.api_name,
+            'location_id': location_id
+        })
 
     def test_list(self):
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
-        self._validate_obj_output({
+        self.assertDictEqual({
             "domain": self.domain.name,
             "last_modified": self.location1.last_modified.isoformat(),
             "latitude": None,
@@ -72,9 +66,9 @@ class LocationV6Test(APIResourceTest):
             "name": "Colorado",
             "parent_location_id": "",
             "site_code": "colorado"
-        }, json.loads(response.content.decode('utf-8'))['objects'][0])
+        }, response.json()['objects'][0])
 
-        self._validate_obj_output({
+        self.assertDictEqual({
             "domain": self.domain.name,
             "last_modified": self.location2.last_modified.isoformat(),
             "latitude": "11.1234567891",
@@ -88,13 +82,13 @@ class LocationV6Test(APIResourceTest):
             "name": "Denver",
             "parent_location_id": "1",
             "site_code": "denver"
-        }, json.loads(response.content.decode('utf-8'))['objects'][1])
+        }, response.json()['objects'][1])
 
     def test_detail(self):
         response = self._assert_auth_get_resource(self.single_endpoint(self.location2.location_id))
         self.assertEqual(response.status_code, 200)
 
-        self._validate_obj_output({
+        self.assertDictEqual({
             "domain": self.domain.name,
             "last_modified": self.location2.last_modified.isoformat(),
             "latitude": "11.1234567891",
@@ -108,4 +102,4 @@ class LocationV6Test(APIResourceTest):
             "name": "Denver",
             "parent_location_id": "1",
             "site_code": "denver"
-        }, json.loads(response.content.decode('utf-8')))
+        }, response.json())

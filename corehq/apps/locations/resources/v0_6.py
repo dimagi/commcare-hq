@@ -13,6 +13,7 @@ class LocationResource(v0_5.LocationResource):
         detail_uri_name = 'location_id'
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         allowed_methods = ['get']
+        include_resource_uri = False
         fields = {
             'domain',
             'location_id',
@@ -28,7 +29,6 @@ class LocationResource(v0_5.LocationResource):
         }
 
     def dehydrate(self, bundle):
-        del bundle.data['resource_uri']
         if bundle.obj.parent:
             bundle.data['parent_location_id'] = bundle.obj.parent.location_id
         else:
