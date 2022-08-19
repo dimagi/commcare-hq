@@ -20,19 +20,19 @@ class TestRepeaterViews(BaseViewTest):
         )
         conn.save()
         cls.connection_setting = conn
-        cls.repeater = SQLFormRepeater.objects.create(
-            domain=cls.domain.name,
-            connection_settings=conn,
-        )
-        cls.url_kwargs = {
-            'domain': cls.domain.name,
-            'repeater_id': cls.repeater.repeater_id
-        }
 
     @privilege_enabled(privileges.DATA_FORWARDING)
     def test_drop_repeater(self):
-        response = self.client.post(reverse('drop_repeater', kwargs=self.url_kwargs))
+        repeater = SQLFormRepeater.objects.create(
+            domain=self.domain.name,
+            connection_settings=self.connection_setting,
+        )
+        url_kwargs = {
+            'domain': self.domain.name,
+            'repeater_id': repeater.repeater_id
+        }
+        response = self.client.post(reverse('drop_repeater', kwargs=url_kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
         with assert_raises(SQLFormRepeater.DoesNotExist):
-            SQLFormRepeater.objects.get(id=self.repeater.id)
+            SQLFormRepeater.objects.get(id=repeater.id)
