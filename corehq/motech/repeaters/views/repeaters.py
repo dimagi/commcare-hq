@@ -25,6 +25,7 @@ from ..forms import CaseRepeaterForm, FormRepeaterForm, GenericRepeaterForm
 from ..models import (
     Repeater,
     RepeatRecord,
+    SQLRepeater,
     are_repeat_records_migrated,
     get_all_repeater_types,
 )
@@ -294,7 +295,7 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
 def drop_repeater(request, domain, repeater_id):
-    rep = Repeater.get(repeater_id)
+    rep = SQLRepeater.objects.get(repeater_id=repeater_id)
     rep.retire()
     messages.success(request, "Forwarding stopped!")
     return HttpResponseRedirect(
