@@ -51,3 +51,19 @@ class TestRepeaterViews(BaseViewTest):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
         self.assertEqual(SQLFormRepeater.objects.get(id=repeater.id).is_paused, True)
+
+    @privilege_enabled(privileges.DATA_FORWARDING)
+    def test_resume_repeater(self):
+        repeater = SQLFormRepeater.objects.create(
+            domain=self.domain.name,
+            connection_settings=self.connection_setting,
+            is_paused=True
+        )
+        url_kwargs = {
+            'domain': self.domain.name,
+            'repeater_id': repeater.repeater_id
+        }
+        response = self.client.post(reverse('resume_repeater', kwargs=url_kwargs))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
+        self.assertEqual(SQLFormRepeater.objects.get(id=repeater.id).is_paused, False)
