@@ -1,10 +1,4 @@
-from functools import partial
-
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.utils import (
-    GLOBAL_USER_ID,
-    get_or_cache_global_fixture,
-)
 
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 from corehq.apps.programs.models import Program
@@ -38,7 +32,11 @@ class ProgramFixturesProvider(FixtureProvider):
         # disable caching temporarily
         # https://dimagi-dev.atlassian.net/browse/IIO-332
         # data_fn = partial(self._get_fixture_items, restore_state)
-        # return get_or_cache_global_fixture(restore_state, PROGRAM_FIXTURE_BUCKET, self.id, data_fn)
+        # domain = restore_state.restore_user.domain
+        # user_id = restore_state.restore_user.user_id
+        # overwrite_cache = restore_state.overwrite_cache
+        # return:
+        # get_or_cache_global_fixture(domain, user_id, cache_bucket_prefix, self.id, data_fn, overwrite_cache)
         return self._get_fixture_items(restore_state)
 
     def _get_fixture_items(self, restore_state):
