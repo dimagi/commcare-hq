@@ -83,6 +83,9 @@ API_LIST = (
         LookupTableResource,
         LookupTableItemResource,
     )),
+    ((0, 6), (
+        locations.v0_6.LocationResource,
+    ))
 )
 
 
