@@ -76,7 +76,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
 
         domain_obj = create_domain(self.domain)
 
-        self.addCleanup(delete_all_users)
         self.addCleanup(domain_obj.delete)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
