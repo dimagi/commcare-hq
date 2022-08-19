@@ -107,7 +107,6 @@ class TestRelatedCases(TestCase, TestXmlMixin):
 
         domain_obj = create_domain(self.domain)
 
-        self.addCleanup(delete_all_users)
         self.addCleanup(domain_obj.delete)
 
         table_tag = "atable"
