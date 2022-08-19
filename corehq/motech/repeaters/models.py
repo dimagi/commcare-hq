@@ -476,7 +476,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
-            verify=self.verify,
+            verify=not self.connection_settings.skip_cert_verify,
             notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
             method=self.request_method,
