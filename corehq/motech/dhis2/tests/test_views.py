@@ -4,7 +4,6 @@ from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater, SQLDhis2Repeater
