@@ -9,6 +9,7 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.models import SQLDataSetMap, SQLDataValueMap
 from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater, SQLDhis2Repeater
 from corehq.motech.models import ConnectionSettings
+from ...repeaters.dbaccessors import delete_all_repeaters
 from corehq.util.test_utils import flag_enabled
 from corehq.motech.dhis2.tests.data.repeater import dhis2_repeater_data, dhis2_entity_repeater_data
 
@@ -23,7 +24,6 @@ class BaseViewTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        delete_all_users()
         cls.domain = create_domain(DOMAIN)
         cls.user = WebUser.create(DOMAIN, USERNAME, PASSWORD,
                                   created_by=None, created_via=None)
@@ -77,6 +77,7 @@ class BaseViewTest(TestCase):
         cls.user.delete(cls.domain.name, deleted_by=None)
         cls.domain.delete()
         cls.connection_setting.delete()
+        delete_all_repeaters()
         super().tearDownClass()
 
 
