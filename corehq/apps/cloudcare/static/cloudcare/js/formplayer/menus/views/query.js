@@ -208,6 +208,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             _.defer(function () {
                 self.render();
+                if (self.model.get('input') === 'address') {
+                    initMapboxWidget(self.model);
+                }
             });
         },
 
@@ -430,9 +433,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             this.children.each(function (childView) {
                 childView.clear();
-                if (childView.model.get('input') === 'address') {
-                    initMapboxWidget(childView.model);
-                }
             });
             self.setStickyQueryInputs();
         },
