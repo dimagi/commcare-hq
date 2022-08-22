@@ -1243,14 +1243,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
-            case Const.BINARY:      // needs to be last case so that anything unrecognized display as unsupported
+            case Const.BINARY:
                 if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
                     // do nothing, fall through to unsupported
                 } else if (style === Const.SIGNATURE) {
                     entry = new SignatureEntry(question, {});
                     break;
                 } else {
-                    var missing = false;
                     switch (question.control()) {
                         case Const.CONTROL_IMAGE_CHOOSE:
                             entry = new ImageEntry(question, {});
@@ -1261,16 +1260,13 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         case Const.CONTROL_VIDEO_CAPTURE:
                             entry = new VideoEntry(question, {});
                             break;
-                        default:
-                            missing = true;
+                        // any other control types are unsupported
                     }
-                    if (!missing) {
-                        break;
-                    }   // otherwise, fall through to unsupported
                 }
-            default:
-                window.console.warn('No active entry for: ' + question.datatype());
-                entry = new UnsupportedEntry(question, options);
+        }
+        if (!entry) {
+            window.console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
         }
         return entry;
     }
