@@ -81,4 +81,6 @@ branches:
     #- jls/web-apps-upload # Jenny Aug 15
     - jc/USH-1371  # Jing/Joel Aug 16
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
+    - bmb/upgrade-django-compressor-4.1  # Biyeun Aug 22 (impacts all static files / css)
+    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
 submodules: { }
