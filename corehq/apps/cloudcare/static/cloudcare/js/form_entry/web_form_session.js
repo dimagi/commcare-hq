@@ -121,15 +121,24 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
             requestParams['tz_from_browser'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            var newData = new FormData();
-            _.each(requestParams, function (value, key) {
-                newData.append(key, value);
-            });
-            return $.ajax({
+            var contentParams = {};
+            if (requestParams.action === Const.ANSWER_MEDIA) {
+                var newData = new FormData();
+                newData.append("file", requestParams.file);
+                newData.append("answer", JSON.stringify(_.omit(requestParams, "file")));
+                contentParams = {
+                    contentType: "multipart/form-data",
+                    data: newData,
+                };
+            } else {
+                contentParams = {
+                    contentType: "application/json",
+                    data: JSON.stringify(requestParams),
+                };
+            }
+            return $.ajax(_.extend({
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
-                data: newData,
-                contentType: false,     // or "multipart"? right now formplayer is 403ing either way, it wants json
                 processData: false,
                 dataType: "json",
                 crossDomain: {
@@ -144,7 +153,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 error: function (resp, textStatus) {
                     self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
                 },
-            });
+            }, contentParams));
         };
 
         /*
