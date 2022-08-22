@@ -37,10 +37,17 @@ class Command(BaseCommand):
             default=False,
             help='Drop orphaned tables on active domains'
         )
+        parser.add_argument(
+            '--domain',
+            action='store_true',
+            default=False,
+            help='Drop orphaned tables for a specific domain'
+        )
 
     def handle(self, **options):
         orphaned_tables_by_engine_id = get_orphaned_tables_by_engine_id(options.get('engine_id'))
-        ucrs_to_delete = get_deletable_ucrs(orphaned_tables_by_engine_id, force_delete=options['force_delete'])
+        ucrs_to_delete = get_deletable_ucrs(orphaned_tables_by_engine_id, force_delete=options['force_delete'],
+                                            domain=options['domain'])
         tablenames_to_drop = confirm_deletion_with_user(ucrs_to_delete)
         if not tablenames_to_drop:
             exit(0)
@@ -82,11 +89,12 @@ def get_all_data_sources():
     return data_sources
 
 
-def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
+def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False, domain=None):
     """
     Ensures tables are UCRs via inserted_at column
     :param orphaned_tables_by_id: {<engine_id>: [<tablename>, ...]}
     :param force_delete: if True, orphaned tables associated with active domains are marked as deletable
+    :param domain: optional, but if specified will only gather ucrs from the specified domain
     :return:
     """
     ucrs_to_delete = defaultdict(list)
@@ -97,9 +105,13 @@ def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
             continue
 
         for tablename in tablenames:
-            domain = get_domain_for_ucr_table_name(tablename)
-            if not force_delete and not is_domain_deleted(domain):
-                active_domains_with_orphaned_ucrs.append(domain)
+            domain_for_table = get_domain_for_ucr_table_name(tablename)
+
+            if domain and domain != domain_for_table:
+                continue
+
+            if not force_delete and not is_domain_deleted(domain_for_table):
+                active_domains_with_orphaned_ucrs.append(domain_for_table)
                 continue
 
             with engine.begin() as connection:
@@ -116,6 +128,7 @@ def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
     if not force_delete:
         print(
             f"{len(active_domains_with_orphaned_ucrs)} active domain(s) have orphaned ucrs."
+            "Use the '--domain' option to further inspect a specific domain."
             "Use the '--force-delete' option if you are sure you want to delete all orphaned ucrs."
             "Here are the domains:\n"
             f"{active_domains_with_orphaned_ucrs}"
