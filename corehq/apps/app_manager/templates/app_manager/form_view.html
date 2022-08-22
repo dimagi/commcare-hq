@@ -320,14 +320,3 @@
   {% include "app_manager/partials/forms/form_view_modals.html" %}
   {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
-
-{% block breadcrumbs %}
-  {{ block.super }}
-  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
-  <li>
-    <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-       data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
-      <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    </a>
-  </li>
-{% endblock %}
