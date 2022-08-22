@@ -9,7 +9,7 @@ class LocationResource(v0_5.LocationResource):
     resource_name = 'location'
 
     class Meta:
-        queryset = SQLLocation.objects.filter(is_archived=False).all()
+        queryset = SQLLocation.active_objects.all()
         detail_uri_name = 'location_id'
         authentication = RequirePermissionAuthentication(HqPermissions.edit_locations)
         allowed_methods = ['get']
