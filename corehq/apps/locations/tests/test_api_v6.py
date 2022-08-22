@@ -54,7 +54,7 @@ class LocationV6Test(APIResourceTest):
         response = self._assert_auth_get_resource(self.list_endpoint)
         self.assertEqual(response.status_code, 200)
 
-        self.assertDictEqual({
+        location_1_dict = {
             "domain": self.domain.name,
             "last_modified": self.location1.last_modified.isoformat(),
             "latitude": None,
@@ -66,9 +66,9 @@ class LocationV6Test(APIResourceTest):
             "name": "Colorado",
             "parent_location_id": "",
             "site_code": "colorado"
-        }, response.json()['objects'][0])
+        }
 
-        self.assertDictEqual({
+        location_2_dict = {
             "domain": self.domain.name,
             "last_modified": self.location2.last_modified.isoformat(),
             "latitude": "11.1234567891",
@@ -82,7 +82,15 @@ class LocationV6Test(APIResourceTest):
             "name": "Denver",
             "parent_location_id": "1",
             "site_code": "denver"
-        }, response.json()['objects'][1])
+        }
+
+        try:
+            self.assertDictEqual(location_1_dict, response.json()['objects'][0])
+            self.assertDictEqual(location_2_dict, response.json()['objects'][1])
+        # Order of results doesn't matter, and order varies between envs.
+        except AssertionError:
+            self.assertDictEqual(location_1_dict, response.json()['objects'][1])
+            self.assertDictEqual(location_2_dict, response.json()['objects'][0])
 
     def test_detail(self):
         response = self._assert_auth_get_resource(self.single_endpoint(self.location2.location_id))
