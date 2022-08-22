@@ -351,7 +351,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                 raise e
 
     def get_url(self, record):
-        return self.repeater.get_url(record)
+        return self.connection_settings.url
 
     @classmethod
     @property
@@ -401,7 +401,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type,
+            'doc_type': self.repeater_type,
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
@@ -623,7 +623,7 @@ class SQLFormRepeater(SQLRepeater):
             return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
         headers.update({
             "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
