@@ -90,6 +90,7 @@ def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
     :return:
     """
     ucrs_to_delete = defaultdict(list)
+    active_domains_with_orphaned_ucrs = []
     for engine_id, tablenames in orphaned_tables_by_id.items():
         engine = connection_manager.get_engine(engine_id)
         if not tablenames:
@@ -98,10 +99,7 @@ def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
         for tablename in tablenames:
             domain = get_domain_for_ucr_table_name(tablename)
             if not force_delete and not is_domain_deleted(domain):
-                print(
-                    f"The domain {domain} is not deleted or has an active conflict. If you are sure "
-                    f"you want to delete {tablename}, re-run with the '--force-delete' option. Skipping for now."
-                )
+                active_domains_with_orphaned_ucrs.append(domain)
                 continue
 
             with engine.begin() as connection:
@@ -114,6 +112,14 @@ def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False):
                 else:
                     row_count, idle_since = result.fetchone()
                     ucrs_to_delete[engine_id].append({'tablename': tablename, 'row_count': row_count})
+
+    if not force_delete:
+        print(
+            f"{len(active_domains_with_orphaned_ucrs)} active domain(s) have orphaned ucrs."
+            "Use the '--force-delete' option if you are sure you want to delete all orphaned ucrs."
+            "Here are the domains:\n"
+            f"{active_domains_with_orphaned_ucrs}"
+        )
 
     return ucrs_to_delete
 
@@ -130,7 +136,7 @@ def drop_tables(ucrs_to_delete):
         for tablename in tablenames:
             with engine.begin() as connection:
                 connection.execute(f'DROP TABLE "{tablename}"')
-                print(f'\t^-- deleted {tablename}')
+                print(f'\tDeleted {tablename}')
 
 
 def is_domain_deleted(domain):
