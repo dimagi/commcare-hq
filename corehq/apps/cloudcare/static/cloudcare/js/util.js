@@ -282,8 +282,9 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
-    var dateTimePickerOptions = function () {
-        return {
+    var initDateTimePicker = function (el, extraOptions) {
+        extraOptions ||= {};
+        el.datetimepicker(_.extend({
             useCurrent: false,
             showClear: true,
             showClose: true,
@@ -320,11 +321,18 @@ hqDefine('cloudcare/js/util', [
                 togglePeriod: gettext('Toggle Period'),
                 selectTime: gettext('Select Time'),
             },
-        };
+        }, extraOptions));
+
+        el.on("focusout", function (e) {
+            var picker = el.data("DateTimePicker");
+            if (picker) {
+                picker.hide();
+            }
+        });
     };
 
     return {
-        dateTimePickerOptions: dateTimePickerOptions,
+        initDateTimePicker: initDateTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,
