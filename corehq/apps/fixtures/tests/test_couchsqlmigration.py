@@ -452,6 +452,53 @@ class TestLookupTableCouchToSQLMigration(TestCase):
         finally:
             test_connection.dec_thread_sharing()
 
+    def test_migration_race_to_orphaned_sql_doc(self):
+        # Race condition:
+        # - Couch & SQL objects both exist, in sync
+        # - migration reads Couch object
+        # - Couch object deleted by another process -> SQL object also deleted
+        # - migration reads SQL to get list of objects to be created.
+        #   SQL object is missing because it has been deleted.
+        # - migration (re)creates SQL object with old/wrong Couch doc id
+        # - other process attempts to create new lookup table with same
+        #   (domain, tag), creates object in Couch, fails on save to SQL
+
+        # setup: couch doc has different ID from sql doc with same domain, tag pair
+        doc, obj = create_lookup_table(unwrap_doc=False)
+        doc.save(sync_to_sql=False)
+        assert obj._migration_couch_id != doc._id
+        obj.save(sync_to_couch=False)
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptables', log_path=log.path)
+            call_command('populate_lookuptables', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed orphaned LookupTable row: {obj.id}", log2.content)
+            self.assertIn(f"Recreated model for FixtureDataType with id {doc._id}", log2.content)
+
+    def test_migration_deletes_duplicate_couch_docs(self):
+        # Not sure how this scenario occurs, but --fixup-diffs should fix it
+
+        # setup: multiple couch docs with same (domain, tag) pair
+        dup_ids = set()
+        for i in range(3):
+            doc, obj = create_lookup_table(unwrap_doc=False)
+            doc.save(sync_to_sql=False)
+            dup_ids.add(doc._id)
+        assert len(dup_ids) == 3, dup_ids
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptables', log_path=log.path)
+            diffs = 0
+            for dup_id in dup_ids:
+                if f'Doc "{dup_id}" has differences:\n' in log.content:
+                    diffs += 1
+            self.assertEqual(diffs, 2, log.content)
+
+            call_command('populate_lookuptables', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed duplicate FixtureDataTypes: {sorted(dup_ids)[1:]}", log2.content)
+            for dup_id in dup_ids:
+                self.assertNotIn(f'Doc "{dup_id}" has differences:', log2.content)
+
     def diff(self, doc, obj):
         return do_diff(LookupTableCommand, doc, obj)
 
