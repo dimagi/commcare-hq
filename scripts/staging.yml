@@ -69,18 +69,16 @@ branches:
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
-    - jls/conditionally-required-case-search-fields # Jenny July 29
     - es/required-2  # Ethan July 29
-    - jc/USH-2151  # Jing/Steph Aug 2
     # - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
-    #- jls/web-apps-upload # Jenny Aug 15
     - jc/USH-1371  # Jing/Joel Aug 16
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
     - bmb/upgrade-django-compressor-4.1  # Biyeun Aug 22 (impacts all static files / css)
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     - ad/remove-entered-wrap-functions # Addison Aug 22
+    - jls/datetimepicker-fixes  # Jenny Aug 23
 submodules: { }
