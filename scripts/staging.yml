@@ -81,4 +81,5 @@ branches:
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     - ad/remove-entered-wrap-functions # Addison Aug 22
     - jls/datetimepicker-fixes  # Jenny Aug 23
+    - ce/api-rate-limits # Cal Aug 23
 submodules: { }
