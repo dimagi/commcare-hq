@@ -155,43 +155,14 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 if audio:
                     yield id_strings.case_list_audio_locale(module), audio
 
-        if module_offers_search(module):
-            from corehq.apps.app_manager.models import CaseSearch
-            if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
-                yield id_strings.case_search_locale(module), clean_trans(module.search_config.search_label.label, langs)
-                search_label_icon = module.search_config.search_label.icon_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                search_label_audio = module.search_config.search_label.audio_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                if search_label_icon:
-                    yield id_strings.case_search_icon_locale(module), search_label_icon
-                if search_label_audio:
-                    yield id_strings.case_search_audio_locale(module), search_label_audio
-
-                yield (id_strings.case_search_again_locale(module),
-                       clean_trans(module.search_config.search_again_label.label, langs))
-                search_again_label_icon = module.search_config.search_again_label.icon_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                search_again_label_audio = module.search_config.search_again_label.audio_app_string(
-                    lang, for_default=for_default, build_profile_id=build_profile_id)
-                if search_again_label_icon:
-                    yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
-                if search_again_label_audio:
-                    yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
-            else:
-                yield id_strings.case_search_locale(module), clean_trans(CaseSearch.search_label.default().label, langs)
-                yield (id_strings.case_search_again_locale(module),
-                       clean_trans(CaseSearch.search_again_label.default().label, langs))
-
-            for prop in module.search_config.properties:
-                yield id_strings.search_property_locale(module, prop.name), clean_trans(prop.label, langs)
-                yield id_strings.search_property_hint_locale(module, prop.name), clean_trans(prop.hint, langs)
-                if prop.required.test:
-                    yield id_strings.search_property_required_text(module, prop.name), clean_trans(prop.required.text, langs)
-                for i, validation in enumerate(prop.validations):
-                    if validation.has_text:
-                        yield (id_strings.search_property_validation_text(module, prop.name, i),
-                               clean_trans(validation.text, langs))
+        yield from _create_search_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
 
         yield from _create_referral_list_app_strings(module, langs)
 
@@ -212,6 +183,53 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_search_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if module_offers_search(module):
+        from corehq.apps.app_manager.models import CaseSearch
+        if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
+            yield id_strings.case_search_locale(module), clean_trans(module.search_config.search_label.label, langs)
+            search_label_icon = module.search_config.search_label.icon_app_string(
+                lang, for_default=for_default, build_profile_id=build_profile_id)
+            search_label_audio = module.search_config.search_label.audio_app_string(
+                lang, for_default=for_default, build_profile_id=build_profile_id)
+            if search_label_icon:
+                yield id_strings.case_search_icon_locale(module), search_label_icon
+            if search_label_audio:
+                yield id_strings.case_search_audio_locale(module), search_label_audio
+
+            yield (id_strings.case_search_again_locale(module),
+                   clean_trans(module.search_config.search_again_label.label, langs))
+            search_again_label_icon = module.search_config.search_again_label.icon_app_string(
+                lang, for_default=for_default, build_profile_id=build_profile_id)
+            search_again_label_audio = module.search_config.search_again_label.audio_app_string(
+                lang, for_default=for_default, build_profile_id=build_profile_id)
+            if search_again_label_icon:
+                yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
+            if search_again_label_audio:
+                yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
+        else:
+            yield id_strings.case_search_locale(module), clean_trans(CaseSearch.search_label.default().label, langs)
+            yield (id_strings.case_search_again_locale(module),
+                   clean_trans(CaseSearch.search_again_label.default().label, langs))
+
+        for prop in module.search_config.properties:
+            yield id_strings.search_property_locale(module, prop.name), clean_trans(prop.label, langs)
+            yield id_strings.search_property_hint_locale(module, prop.name), clean_trans(prop.hint, langs)
+            if prop.required.test:
+                yield id_strings.search_property_required_text(module, prop.name), clean_trans(prop.required.text, langs)
+            for i, validation in enumerate(prop.validations):
+                if validation.has_text:
+                    yield (id_strings.search_property_validation_text(module, prop.name, i),
+                           clean_trans(validation.text, langs))
 
 
 def _create_referral_list_app_strings(module, langs):
