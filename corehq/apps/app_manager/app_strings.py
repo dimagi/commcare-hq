@@ -57,13 +57,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     def trans(d):
         return clean_trans(d, langs)
 
-    def maybe_add_index(text):
-        if app.build_version and app.build_version >= LooseVersion('2.8'):
-            numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
-            if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
-                text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
-        return text
-
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
 
@@ -120,7 +113,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             if getattr(detail, 'lookup_display_results'):
                 yield id_strings.callout_header_locale(module), trans(detail.lookup_field_header)
 
-        yield id_strings.module_locale(module), maybe_add_index(trans(module.name))
+        yield id_strings.module_locale(module), _maybe_add_index(trans(module.name), app)
 
         icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
         audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
@@ -208,7 +201,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.referral_list_locale(module), trans(module.referral_list.label)
         for form in module.get_forms():
             form_name = trans(form.name) + ('${0}' if form.show_count else '')
-            yield id_strings.form_locale(form), maybe_add_index(form_name)
+            yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
 
             icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
             audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
@@ -241,6 +234,14 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                 yield id_strings.case_list_form_icon_locale(module), icon
             if audio:
                 yield id_strings.case_list_form_audio_locale(module), audio
+
+
+def _maybe_add_index(text, app):
+    if app.build_version and app.build_version >= LooseVersion('2.8'):
+        numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
+        if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
+            text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
+    return text
 
 
 class AppStringsBase(object):
