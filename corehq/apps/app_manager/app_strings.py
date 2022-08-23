@@ -122,26 +122,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
         if custom_icon_form and custom_icon_text:
             yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
 
-        if hasattr(module, 'report_configs'):
-            for config in module.report_configs:
-                yield id_strings.report_command(config.uuid), clean_trans(config.header, langs)
-                yield id_strings.report_name(config.uuid), clean_trans(config.header, langs)
-                yield id_strings.report_description(config.uuid), clean_trans(config.localized_description, langs)
-                for column in config.report(app.domain).report_columns:
-                    yield (
-                        id_strings.report_column_header(config.uuid, column.column_id),
-                        column.get_header(lang)
-                    )
-                for chart_id, graph_config in config.complete_graph_configs.items():
-                    for index, item in enumerate(graph_config.annotations):
-                        yield id_strings.mobile_ucr_annotation(module, config.uuid, index), clean_trans(item.values, langs)
-                    for property, values in graph_config.locale_specific_config.items():
-                        yield id_strings.mobile_ucr_configuration(module, config.uuid, property), clean_trans(values, langs)
-                    for index, item in enumerate(graph_config.series):
-                        for property, values in item.locale_specific_config.items():
-                            yield id_strings.mobile_ucr_series_configuration(
-                                module, config.uuid, index, property
-                            ), clean_trans(values, langs)
+        yield from _create_report_configs_app_strings(app, module, lang, langs)
 
         yield from _create_case_list_app_strings(
             module,
@@ -179,6 +160,29 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_report_configs_app_strings(app, module, lang, langs):
+    if hasattr(module, 'report_configs'):
+        for config in module.report_configs:
+            yield id_strings.report_command(config.uuid), clean_trans(config.header, langs)
+            yield id_strings.report_name(config.uuid), clean_trans(config.header, langs)
+            yield id_strings.report_description(config.uuid), clean_trans(config.localized_description, langs)
+            for column in config.report(app.domain).report_columns:
+                yield (
+                    id_strings.report_column_header(config.uuid, column.column_id),
+                    column.get_header(lang)
+                )
+            for chart_id, graph_config in config.complete_graph_configs.items():
+                for index, item in enumerate(graph_config.annotations):
+                    yield id_strings.mobile_ucr_annotation(module, config.uuid, index), clean_trans(item.values, langs)
+                for property, values in graph_config.locale_specific_config.items():
+                    yield id_strings.mobile_ucr_configuration(module, config.uuid, property), clean_trans(values, langs)
+                for index, item in enumerate(graph_config.series):
+                    for property, values in item.locale_specific_config.items():
+                        yield id_strings.mobile_ucr_series_configuration(
+                            module, config.uuid, index, property
+                        ), clean_trans(values, langs)
 
 
 def _create_case_list_app_strings(
