@@ -308,7 +308,7 @@ hqDefine('cloudcare/js/util', [
     };
 
     var initDateTimePicker = function (el, extraOptions) {
-        extraOptions ||= {};
+        extraOptions = extraOptions || {};
         el.datetimepicker(_.extend({
             useCurrent: false,
             showClear: true,
