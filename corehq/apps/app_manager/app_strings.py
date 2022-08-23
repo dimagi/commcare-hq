@@ -290,7 +290,10 @@ def _create_forms_app_strings(
     build_profile_id,
 ):
     for form in module.get_forms():
-        form_name = clean_trans(form.name, langs) + ('${0}' if form.show_count else '')
+        if form.show_count:
+            form_name = clean_trans(form.name, langs) + '${0}'
+        else:
+            form_name = clean_trans(form.name, langs)
         yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
 
         icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
