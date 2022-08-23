@@ -58,6 +58,7 @@ from corehq.motech.value_source import (
     deserialize,
     get_import_value,
 )
+from corehq.util.dates import iso_string_to_datetime
 from dimagi.utils.parsing import json_format_datetime
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
@@ -221,6 +222,7 @@ def get_feed_updates(repeater, feed_name):
     # set to a UTC timestamp (datetime.utcnow()), but the timezone gets
     # dropped because it is stored as a jsonobject DateTimeProperty.
     # This sets it as a UTC timestamp again:
+    last_polled_at = iso_string_to_datetime(last_polled_at) if type(last_polled_at) is str else last_polled_at
     last_polled_at = pytz.utc.localize(last_polled_at) if last_polled_at else None
     try:
         while True:

@@ -338,7 +338,7 @@ def import_patients():
 def poll_openmrs_atom_feeds(domain_name):
     for repeater in SQLOpenmrsRepeater.objects.by_domain(domain_name):
         errors = []
-        if repeater.atom_feed_enabled and not repeater.paused:
+        if repeater.atom_feed_enabled and not repeater.is_paused:
             patient_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
             encounter_uuids = get_feed_updates(repeater, ATOM_FEED_NAME_ENCOUNTER)
             for patient_uuid in patient_uuids:
