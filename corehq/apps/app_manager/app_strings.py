@@ -337,10 +337,11 @@ def _create_case_list_form_app_strings(
 
 def _maybe_add_index(text, app):
     if app.build_version and app.build_version >= LooseVersion('2.8'):
+        sense_on = app.profile.get('features', {}).get('sense') == 'true'
         numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
-        if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
-            if not (text and text[0].isdigit()):
-                text = f"${{0}} {text}"
+        starts_with_digit = text and text[0].isdigit()
+        if (sense_on or numeric_nav_on) and not starts_with_digit:
+            text = f"${{0}} {text}"
     return text
 
 
