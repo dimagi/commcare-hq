@@ -22,19 +22,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, usernames, **options):
-        dev_support_role = Role.objects.get_or_create(
-            name="Dimagi Dev and Support Team",
-            slug=privileges.DEV_SUPPORT_TEAM,
-        )[0]
+
         global_sms_gateway_access = Role.objects.get_or_create(
             name="Accounting Admin",
             slug=privileges.GLOBAL_SMS_GATEWAY,
         )[0]
-        if not dev_support_role.has_privilege(global_sms_gateway_access):
-            Grant.objects.create(
-                from_role=dev_support_role,
-                to_role=global_sms_gateway_access,
-            )
+
         remove_user = options['remove_user']
 
         for username in usernames:
@@ -44,8 +37,8 @@ class Command(BaseCommand):
                     user_role = UserRole.objects.get(user=user)
                 except UserRole.DoesNotExist:
                     user_privs = Role.objects.get_or_create(
-                        name="Privileges for %s" % user.username,
-                        slug="%s_privileges" % user.username,
+                        name=f"Privileges for {user.username}",
+                        slug=f"{user.username}_privileges",
                     )[0]
                     user_role = UserRole.objects.create(
                         user=user,
@@ -57,22 +50,20 @@ class Command(BaseCommand):
                         # remove grant object
                         grant = Grant.objects.get(
                             from_role=user_role.role,
-                            to_role=dev_support_role
+                            to_role=global_sms_gateway_access
                         )
                         grant.delete()
-                        print("Removed %s from the operations team"
-                              % user.username)
+                        print(f"Removed Global SMS Gateway Edit Access Privilege for {user.username}")
                     except Grant.DoesNotExist:
-                        print("The user %s was never part of the operations "
-                              "team. Leaving alone." % user.username)
-                elif not user_role.has_privilege(dev_support_role):
+                        print(f"The user {user.username} did not have the Privilege. Doing nothing here.")
+                elif not user_role.has_privilege(global_sms_gateway_access):
                     Grant.objects.create(
                         from_role=user_role.role,
-                        to_role=dev_support_role,
+                        to_role=global_sms_gateway_access,
                     )
-                    print("Added %s to the Dev and Support team" % user.username)
+                    print("Enabled privilege to Edit Global SMS Gateways for the user {user.username}")
                 else:
-                    print("User %s is already part of the Dev and Support team"
+                    print("User %s already have the requested privilege"
                           % user.username)
 
             except User.DoesNotExist:

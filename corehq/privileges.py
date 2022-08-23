@@ -6,7 +6,6 @@ API_ACCESS = 'api_access'
 CLOUDCARE = 'cloudcare'
 GEOCODER = 'geocoder'
 
-DEV_SUPPORT_TEAM = 'dev_support'
 GLOBAL_SMS_GATEWAY = 'global_sms_gateway'
 
 ACTIVE_DATA_MANAGEMENT = 'active_data_management'
