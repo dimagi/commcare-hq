@@ -339,7 +339,8 @@ def _maybe_add_index(text, app):
     if app.build_version and app.build_version >= LooseVersion('2.8'):
         numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
         if app.profile.get('features', {}).get('sense') == 'true' or numeric_nav_on:
-            text = "${0} %s" % (text,) if not (text and text[0].isdigit()) else text
+            if not (text and text[0].isdigit()):
+                text = f"${{0}} {text}"
     return text
 
 
