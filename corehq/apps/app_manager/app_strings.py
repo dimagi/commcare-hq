@@ -196,22 +196,15 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:
                 yield id_strings.referral_list_locale(module), clean_trans(module.referral_list.label, langs)
-        for form in module.get_forms():
-            form_name = clean_trans(form.name, langs) + ('${0}' if form.show_count else '')
-            yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
 
-            icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-            audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-            custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
-            if icon:
-                yield id_strings.form_icon_locale(form), icon
-            if audio:
-                yield id_strings.form_audio_locale(form), audio
-            if custom_icon_form and custom_icon_text:
-                yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
-
-            for id, custom_assertion in enumerate(form.custom_assertions):
-                yield id_strings.custom_assertion_locale(module, form, id), clean_trans(custom_assertion.text, langs)
+        yield from _create_forms_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
 
         yield from _create_case_list_form_app_strings(
             app,
@@ -221,6 +214,32 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_forms_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    for form in module.get_forms():
+        form_name = clean_trans(form.name, langs) + ('${0}' if form.show_count else '')
+        yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
+
+        icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+        audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+        custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
+        if icon:
+            yield id_strings.form_icon_locale(form), icon
+        if audio:
+            yield id_strings.form_audio_locale(form), audio
+        if custom_icon_form and custom_icon_text:
+            yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
+
+        for id, custom_assertion in enumerate(form.custom_assertions):
+            yield id_strings.custom_assertion_locale(module, form, id), clean_trans(custom_assertion.text, langs)
 
 
 def _create_case_list_form_app_strings(
