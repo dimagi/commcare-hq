@@ -617,6 +617,7 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_lookuptablerows', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", log.content)
+            self.assertNotIn(f'Doc "{doc_id}" has diff', log.content)
 
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)

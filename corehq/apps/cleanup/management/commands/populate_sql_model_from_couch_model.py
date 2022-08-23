@@ -304,12 +304,13 @@ Run the following commands to run the migration and get up to date:
             migrate = self._migrate_doc
             verify = self._verify_doc
 
+        ignored = None
         with self.open_log(log_path, append_log) as logfile:
             for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
                 if not verify_only:
-                    migrate(item, logfile)
+                    ignored = migrate(item, logfile)
                 if not skip_verify:
-                    verify(item, logfile, verify_only)
+                    verify(item, logfile, verify_only, ignored)
                 if not is_bulk:
                     doc_index += 1
                     if doc_index % 1000 == 0:
@@ -338,10 +339,10 @@ Run the following commands to run the migration and get up to date:
             objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
         creates = []
         updates = []
-        ignored = []
+        ignored_ids = []
         for doc in docs:
             if self.should_ignore(doc):
-                ignored.append(doc)
+                ignored_ids.append(doc["_id"])
                 continue
             if doc["_id"] in objs_by_couch_id:
                 if fixup_diffs:
@@ -364,10 +365,11 @@ Run the following commands to run the migration and get up to date:
                     obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
-        update_log("Ignored", [doc["_id"] for doc in ignored])
-        self.ignored_count += len(ignored)
+        update_log("Ignored", ignored_ids)
+        self.ignored_count += len(ignored_ids)
+        return set(ignored_ids)
 
-    def _verify_docs(self, docs, logfile, verify_only):
+    def _verify_docs(self, docs, logfile, verify_only, ignored_ids):
         sql_class = self.sql_class()
         couch_id_name = getattr(sql_class, '_migration_couch_id_name', 'couch_id')
         couch_ids = [doc["_id"] for doc in docs]
@@ -375,8 +377,11 @@ Run the following commands to run the migration and get up to date:
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         diff_count = self.diff_count
         for doc in docs:
-            if verify_only and self.should_ignore(doc):
-                self.ignored_count += 1
+            if verify_only:
+                if self.should_ignore(doc):
+                    self.ignored_count += 1
+                    continue
+            elif doc["_id"] in ignored_ids:
                 continue
             self._do_diff(doc, objs_by_couch_id.get(doc["_id"]), logfile)
         if diff_count != self.diff_count:
@@ -398,9 +403,12 @@ Run the following commands to run the migration and get up to date:
             if exit:
                 raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
 
-    def _verify_doc(self, doc, logfile, verify_only):
-        if verify_only and self.should_ignore(doc):
-            self.ignored_count += 1
+    def _verify_doc(self, doc, logfile, verify_only, ignored_id):
+        if verify_only:
+            if self.should_ignore(doc):
+                self.ignored_count += 1
+                return
+        elif doc["_id"] == ignored_id and doc["_id"] is not None:
             return
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
@@ -413,7 +421,7 @@ Run the following commands to run the migration and get up to date:
         if self.should_ignore(doc):
             self.ignored_count += 1
             logfile.write(f"Ignored model for {self.couch_doc_type()} with id {doc['_id']}\n")
-            return
+            return doc["_id"]
         with transaction.atomic(), disable_sync_to_couch(self.sql_class()):
             model, created = self.update_or_create_sql_object(doc)
             action = "Creating" if created else "Updated"

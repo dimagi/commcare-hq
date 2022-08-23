@@ -53,9 +53,10 @@ class Command(PopulateSQLCommand):
             return cls.diff_value(field, couch.get(field), getattr(sql, field))
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
-        super()._migrate_docs(docs, logfile, fixup_diffs)
+        ignored = super()._migrate_docs(docs, logfile, fixup_diffs)
         if fixup_diffs:
             self.find_and_fix_duplicates(docs, logfile)
+        return ignored
 
     def find_and_fix_duplicates(self, docs, logfile):
         sql_class = self.sql_class()
