@@ -15,7 +15,6 @@ from tastypie.authentication import ApiKeyAuthentication
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
-from corehq.apps.api.resources.auth import ApiIdentifier
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
 from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
@@ -300,6 +299,9 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         are domain specific.
 
         """
+        # inline to avoid circular import
+        from corehq.apps.api.resources.auth import ApiIdentifier
+
         username = self.extract_credentials(request)[0]
         domain = getattr(request, 'domain', '')
         return ApiIdentifier(username=username, domain=domain)
