@@ -9,6 +9,7 @@ import commcare_translations
 import langcodes
 from corehq import toggles
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.commcare_settings import get_custom_commcare_settings
 from corehq.apps.app_manager.templatetags.xforms_extras import clean_trans
 from corehq.apps.app_manager.util import (
     create_temp_sort_column,
@@ -116,6 +117,8 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+    yield from _create_dependencies_app_strings(app)
 
 
 def _create_module_details_app_strings(module, langs):
@@ -475,6 +478,20 @@ def _create_case_list_form_app_strings(
         )
         if audio:
             yield id_strings.case_list_form_audio_locale(module), audio
+
+
+def _create_dependencies_app_strings(app):
+    dependencies = app.profile.get('features', {}).get('dependencies')
+    if toggles.APP_DEPENDENCIES.enabled(app.domain) and dependencies:
+        settings = next(s for s in get_custom_commcare_settings()
+                        if s['id'] == 'dependencies')
+        app_id_to_name = {k: v for k, v in zip(
+            settings["values"],
+            settings["value_names"]
+        )}
+        for app_id in dependencies:
+            app_name = app_id_to_name[app_id]
+            yield id_strings.android_package_name(app_id), app_name
 
 
 def _maybe_add_index(text, app):
