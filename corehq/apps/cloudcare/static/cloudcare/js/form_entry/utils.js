@@ -149,22 +149,5 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return broadcastObj;
     };
 
-    /**
-     * Gets the root form of a question.
-     * @param {Object} question - The Question Object
-    **/
-    module.getRootForm = (question) => {
-        if (question.parent === undefined) {
-            return undefined;
-        }
-
-        // logic in case the question is in a group or repeat or nested group, etc.
-        let curr = question.parent;
-        while (curr.parent) {
-            curr = curr.parent;
-        }
-        return curr;
-    };
-
     return module;
 });
