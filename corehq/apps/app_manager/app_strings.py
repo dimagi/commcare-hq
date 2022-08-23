@@ -193,9 +193,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                         yield (id_strings.search_property_validation_text(module, prop.name, i),
                                clean_trans(validation.text, langs))
 
-        if hasattr(module, 'referral_list'):
-            if module.referral_list.show:
-                yield id_strings.referral_list_locale(module), clean_trans(module.referral_list.label, langs)
+        yield from _create_referral_list_app_strings(module, langs)
 
         yield from _create_forms_app_strings(
             app,
@@ -214,6 +212,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_referral_list_app_strings(module, langs):
+    if hasattr(module, 'referral_list'):
+        if module.referral_list.show:
+            yield id_strings.referral_list_locale(module), clean_trans(module.referral_list.label, langs)
 
 
 def _create_forms_app_strings(
