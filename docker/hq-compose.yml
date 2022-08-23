@@ -83,7 +83,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/usr/src/couchdb/dev/lib/node1/data
 
   redis:
-    image: redis:7.0
+    image: redis:6.2
     expose:
       - "6379"
     volumes:
