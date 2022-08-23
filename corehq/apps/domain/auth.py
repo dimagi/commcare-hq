@@ -15,6 +15,7 @@ from tastypie.authentication import ApiKeyAuthentication
 from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.web import get_ip
 
+from corehq.apps.api.resources.auth import ApiIdentifier
 from corehq.apps.receiverwrapper.util import DEMO_SUBMIT_MODE
 from corehq.apps.users.models import CouchUser, HQApiKey
 from corehq.toggles import API_THROTTLE_WHITELIST, TWO_STAGE_USER_PROVISIONING
