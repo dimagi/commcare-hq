@@ -384,6 +384,9 @@ Run the following commands to run the migration and get up to date:
 
     def _do_diff(self, doc, obj, logfile, exit=False):
         if obj is None:
+            couch_class = self.sql_class()._migration_get_couch_model_class()
+            if not couch_class.get_db().doc_exist(doc["_id"]):
+                return  # ignore if also missing in Couch (deleted)
             diff = "Missing in SQL - unique constraint violation?"
         else:
             diff = self.get_diff_as_string(doc, obj)
