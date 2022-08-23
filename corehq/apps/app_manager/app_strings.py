@@ -77,7 +77,10 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     for module in app.get_modules():
         yield from _create_module_details_app_strings(module, langs)
 
-        yield id_strings.module_locale(module), _maybe_add_index(clean_trans(module.name, langs), app)
+        yield (
+            id_strings.module_locale(module),
+            _maybe_add_index(clean_trans(module.name, langs), app)
+        )
 
         yield from _create_icon_audio_app_strings(
             module,
@@ -129,41 +132,87 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 def _create_module_details_app_strings(module, langs):
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
-            yield id_strings.detail_column_header_locale(module, detail_type, column), clean_trans(column.header,
-                                                                                                   langs)
+            yield (
+                id_strings.detail_column_header_locale(module, detail_type, column),
+                clean_trans(column.header, langs)
+            )
 
             if column.format in ('enum', 'enum-image', 'conditional-enum'):
                 for item in column.enum:
-                    yield id_strings.detail_column_enum_variable(
-                        module, detail_type, column, item.key_as_variable
-                    ), clean_trans(item.value, langs)
+                    yield (
+                        id_strings.detail_column_enum_variable(
+                            module,
+                            detail_type,
+                            column,
+                            item.key_as_variable,
+                        ),
+                        clean_trans(item.value, langs)
+                    )
             elif column.format == "graph":
                 for index, item in enumerate(column.graph_configuration.annotations):
-                    yield id_strings.graph_annotation(module, detail_type, column, index), clean_trans(item.values,
-                                                                                                       langs)
-                for property, values in column.graph_configuration.locale_specific_config.items():
-                    yield id_strings.graph_configuration(module, detail_type, column, property), clean_trans(
-                        values, langs)
+                    yield (
+                        id_strings.graph_annotation(
+                            module,
+                            detail_type,
+                            column,
+                            index,
+                        ),
+                        clean_trans(item.values, langs)
+                    )
+
+                items = column.graph_configuration.locale_specific_config.items()
+                for property, values in items:
+                    yield (
+                        id_strings.graph_configuration(
+                            module,
+                            detail_type,
+                            column,
+                            property,
+                        ),
+                        clean_trans(values, langs)
+                    )
                 for index, item in enumerate(column.graph_configuration.series):
                     for property, values in item.locale_specific_config.items():
-                        yield id_strings.graph_series_configuration(
-                            module, detail_type, column, index, property
-                        ), clean_trans(values, langs)
+                        yield (
+                            id_strings.graph_series_configuration(
+                                module,
+                                detail_type,
+                                column,
+                                index,
+                                property,
+                            ),
+                            clean_trans(values, langs)
+                        )
 
         # To list app strings for properties used as sorting properties only
         if detail.sort_elements:
-            sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
+            sort_only, sort_columns = get_sort_and_sort_only_columns(
+                detail.get_columns(),
+                detail.sort_elements,
+            )
             for field, sort_element, order in sort_only:
                 if sort_element.has_display_values():
                     column = create_temp_sort_column(sort_element, order)
-                    yield id_strings.detail_column_header_locale(module, detail_type, column), \
-                          clean_trans(column.header, langs)
+                    yield (
+                        id_strings.detail_column_header_locale(
+                            module,
+                            detail_type,
+                            column,
+                        ),
+                        clean_trans(column.header, langs)
+                    )
 
         for tab in detail.get_tabs():
-            yield id_strings.detail_tab_title_locale(module, detail_type, tab), clean_trans(tab.header, langs)
+            yield (
+                id_strings.detail_tab_title_locale(module, detail_type, tab),
+                clean_trans(tab.header, langs)
+            )
 
         if getattr(detail, 'lookup_display_results'):
-            yield id_strings.callout_header_locale(module), clean_trans(detail.lookup_field_header, langs)
+            yield (
+                id_strings.callout_header_locale(module),
+                clean_trans(detail.lookup_field_header, langs)
+            )
 
 
 def _create_icon_audio_app_strings(
@@ -172,25 +221,38 @@ def _create_icon_audio_app_strings(
     for_default,
     build_profile_id,
 ):
-    icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+    icon = module.icon_app_string(lang, for_default, build_profile_id)
     if icon:
         yield id_strings.module_icon_locale(module), icon
 
-    audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+    audio = module.audio_app_string(lang, for_default, build_profile_id)
     if audio:
         yield id_strings.module_audio_locale(module), audio
 
-    custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
-    if custom_icon_form and custom_icon_text:
-        yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
+    icon_form, icon_text = module.custom_icon_form_and_text_by_language(lang)
+    if icon_form and icon_text:
+        yield _get_custom_icon_app_locale_and_value(
+            icon_form,
+            icon_text,
+            module=module,
+        )
 
 
 def _create_report_configs_app_strings(app, module, lang, langs):
     if hasattr(module, 'report_configs'):
         for config in module.report_configs:
-            yield id_strings.report_command(config.uuid), clean_trans(config.header, langs)
-            yield id_strings.report_name(config.uuid), clean_trans(config.header, langs)
-            yield id_strings.report_description(config.uuid), clean_trans(config.localized_description, langs)
+            yield (
+                id_strings.report_command(config.uuid),
+                clean_trans(config.header, langs)
+            )
+            yield (
+                id_strings.report_name(config.uuid),
+                clean_trans(config.header, langs)
+            )
+            yield (
+                id_strings.report_description(config.uuid),
+                clean_trans(config.localized_description, langs)
+            )
             for column in config.report(app.domain).report_columns:
                 yield (
                     id_strings.report_column_header(config.uuid, column.column_id),
@@ -198,14 +260,30 @@ def _create_report_configs_app_strings(app, module, lang, langs):
                 )
             for chart_id, graph_config in config.complete_graph_configs.items():
                 for index, item in enumerate(graph_config.annotations):
-                    yield id_strings.mobile_ucr_annotation(module, config.uuid, index), clean_trans(item.values, langs)
+                    yield (
+                        id_strings.mobile_ucr_annotation(module, config.uuid, index),
+                        clean_trans(item.values, langs)
+                    )
                 for property, values in graph_config.locale_specific_config.items():
-                    yield id_strings.mobile_ucr_configuration(module, config.uuid, property), clean_trans(values, langs)
+                    yield (
+                        id_strings.mobile_ucr_configuration(
+                            module,
+                            config.uuid,
+                            property,
+                        ),
+                        clean_trans(values, langs)
+                    )
                 for index, item in enumerate(graph_config.series):
                     for property, values in item.locale_specific_config.items():
-                        yield id_strings.mobile_ucr_series_configuration(
-                            module, config.uuid, index, property
-                        ), clean_trans(values, langs)
+                        yield (
+                            id_strings.mobile_ucr_series_configuration(
+                                module,
+                                config.uuid,
+                                index,
+                                property,
+                            ),
+                            clean_trans(values, langs)
+                        )
 
 
 def _create_case_list_app_strings(
@@ -217,13 +295,24 @@ def _create_case_list_app_strings(
 ):
     if hasattr(module, 'case_list'):
         if module.case_list.show:
-            yield id_strings.case_list_locale(module), clean_trans(module.case_list.label, langs) or "Case List"
-            icon = module.case_list.icon_app_string(lang, for_default=for_default,
-                                                    build_profile_id=build_profile_id)
-            audio = module.case_list.audio_app_string(lang, for_default=for_default,
-                                                      build_profile_id=build_profile_id)
+            yield (
+                id_strings.case_list_locale(module),
+                clean_trans(module.case_list.label, langs) or "Case List"
+            )
+
+            icon = module.case_list.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
             if icon:
                 yield id_strings.case_list_icon_locale(module), icon
+
+            audio = module.case_list.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
             if audio:
                 yield id_strings.case_list_audio_locale(module), audio
 
@@ -238,47 +327,90 @@ def _create_search_app_strings(
 ):
     if module_offers_search(module):
         from corehq.apps.app_manager.models import CaseSearch
-        if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
-            yield id_strings.case_search_locale(module), clean_trans(module.search_config.search_label.label, langs)
-            search_label_icon = module.search_config.search_label.icon_app_string(
-                lang, for_default=for_default, build_profile_id=build_profile_id)
-            search_label_audio = module.search_config.search_label.audio_app_string(
-                lang, for_default=for_default, build_profile_id=build_profile_id)
-            if search_label_icon:
-                yield id_strings.case_search_icon_locale(module), search_label_icon
-            if search_label_audio:
-                yield id_strings.case_search_audio_locale(module), search_label_audio
 
-            yield (id_strings.case_search_again_locale(module),
-                   clean_trans(module.search_config.search_again_label.label, langs))
-            search_again_label_icon = module.search_config.search_again_label.icon_app_string(
-                lang, for_default=for_default, build_profile_id=build_profile_id)
-            search_again_label_audio = module.search_config.search_again_label.audio_app_string(
-                lang, for_default=for_default, build_profile_id=build_profile_id)
-            if search_again_label_icon:
-                yield id_strings.case_search_again_icon_locale(module), search_again_label_icon
-            if search_again_label_audio:
-                yield id_strings.case_search_again_audio_locale(module), search_again_label_audio
+        if toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain):
+            # search label
+            yield (
+                id_strings.case_search_locale(module),
+                clean_trans(module.search_config.search_label.label, langs)
+            )
+            icon = module.search_config.search_label.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if icon:
+                yield id_strings.case_search_icon_locale(module), icon
+            audio = module.search_config.search_label.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if audio:
+                yield id_strings.case_search_audio_locale(module), audio
+
+            # search again label
+            yield (
+                id_strings.case_search_again_locale(module),
+                clean_trans(module.search_config.search_again_label.label, langs)
+            )
+            icon = module.search_config.search_again_label.icon_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if icon:
+                yield id_strings.case_search_again_icon_locale(module), icon
+            audio = module.search_config.search_again_label.audio_app_string(
+                lang,
+                for_default,
+                build_profile_id,
+            )
+            if audio:
+                yield id_strings.case_search_again_audio_locale(module), audio
         else:
-            yield id_strings.case_search_locale(module), clean_trans(CaseSearch.search_label.default().label, langs)
-            yield (id_strings.case_search_again_locale(module),
-                   clean_trans(CaseSearch.search_again_label.default().label, langs))
+            yield (
+                id_strings.case_search_locale(module),
+                clean_trans(CaseSearch.search_label.default().label, langs)
+            )
+            yield (
+                id_strings.case_search_again_locale(module),
+                clean_trans(CaseSearch.search_again_label.default().label, langs)
+            )
 
         for prop in module.search_config.properties:
-            yield id_strings.search_property_locale(module, prop.name), clean_trans(prop.label, langs)
-            yield id_strings.search_property_hint_locale(module, prop.name), clean_trans(prop.hint, langs)
+            yield (
+                id_strings.search_property_locale(module, prop.name),
+                clean_trans(prop.label, langs)
+            )
+            yield (
+                id_strings.search_property_hint_locale(module, prop.name),
+                clean_trans(prop.hint, langs)
+            )
             if prop.required.test:
-                yield id_strings.search_property_required_text(module, prop.name), clean_trans(prop.required.text, langs)
+                yield (
+                    id_strings.search_property_required_text(module, prop.name),
+                    clean_trans(prop.required.text, langs)
+                )
             for i, validation in enumerate(prop.validations):
                 if validation.has_text:
-                    yield (id_strings.search_property_validation_text(module, prop.name, i),
-                           clean_trans(validation.text, langs))
+                    yield (
+                        id_strings.search_property_validation_text(
+                            module,
+                            prop.name,
+                            i,
+                        ),
+                        clean_trans(validation.text, langs)
+                    )
 
 
 def _create_referral_list_app_strings(module, langs):
     if hasattr(module, 'referral_list'):
         if module.referral_list.show:
-            yield id_strings.referral_list_locale(module), clean_trans(module.referral_list.label, langs)
+            yield (
+                id_strings.referral_list_locale(module),
+                clean_trans(module.referral_list.label, langs)
+            )
 
 
 def _create_forms_app_strings(
@@ -296,18 +428,27 @@ def _create_forms_app_strings(
             form_name = clean_trans(form.name, langs)
         yield id_strings.form_locale(form), _maybe_add_index(form_name, app)
 
-        icon = form.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        audio = form.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        custom_icon_form, custom_icon_text = form.custom_icon_form_and_text_by_language(lang)
+        icon = form.icon_app_string(lang, for_default, build_profile_id)
         if icon:
             yield id_strings.form_icon_locale(form), icon
+
+        audio = form.audio_app_string(lang, for_default, build_profile_id)
         if audio:
             yield id_strings.form_audio_locale(form), audio
-        if custom_icon_form and custom_icon_text:
-            yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, form=form)
+
+        icon_form, icon_text = form.custom_icon_form_and_text_by_language(lang)
+        if icon_form and icon_text:
+            yield _get_custom_icon_app_locale_and_value(
+                icon_form,
+                icon_text,
+                form=form,
+            )
 
         for id, custom_assertion in enumerate(form.custom_assertions):
-            yield id_strings.custom_assertion_locale(module, form, id), clean_trans(custom_assertion.text, langs)
+            yield (
+                id_strings.custom_assertion_locale(module, form, id),
+                clean_trans(custom_assertion.text, langs)
+            )
 
 
 def _create_case_list_form_app_strings(
@@ -320,20 +461,29 @@ def _create_case_list_form_app_strings(
 ):
     if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
         if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            form_name = app.get_form(module.case_list_form.form_id).name
             fallback_name = gettext("Continue To {form_name}").format(
-                form_name=clean_trans(app.get_form(module.case_list_form.form_id).name, langs))
+                form_name=clean_trans(form_name, langs))
         else:
             fallback_name = gettext("Create a new Case")
         yield (
             id_strings.case_list_form_locale(module),
             clean_trans(module.case_list_form.label, langs) or fallback_name
         )
-        icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
-                                                     build_profile_id=build_profile_id)
-        audio = module.case_list_form.audio_app_string(lang, for_default=for_default,
-                                                       build_profile_id=build_profile_id)
+
+        icon = module.case_list_form.icon_app_string(
+            lang,
+            for_default,
+            build_profile_id,
+        )
         if icon:
             yield id_strings.case_list_form_icon_locale(module), icon
+
+        audio = module.case_list_form.audio_app_string(
+            lang,
+            for_default,
+            build_profile_id,
+        )
         if audio:
             yield id_strings.case_list_form_audio_locale(module), audio
 
@@ -341,7 +491,8 @@ def _create_case_list_form_app_strings(
 def _maybe_add_index(text, app):
     if app.build_version and app.build_version >= LooseVersion('2.8'):
         sense_on = app.profile.get('features', {}).get('sense') == 'true'
-        numeric_nav_on = app.profile.get('properties', {}).get('cc-entry-mode') == 'cc-entry-review'
+        entry_mode = app.profile.get('properties', {}).get('cc-entry-mode')
+        numeric_nav_on = entry_mode == 'cc-entry-review'
         starts_with_digit = text and text[0].isdigit()
         if (sense_on or numeric_nav_on) and not starts_with_digit:
             text = f"${{0}} {text}"
