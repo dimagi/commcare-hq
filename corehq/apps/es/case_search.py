@@ -139,7 +139,7 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-08-23")
+    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
     type = ElasticCase.type
 
     @property
@@ -218,13 +218,6 @@ def case_property_text_query(case_property_name, value, operator=None):
     return _base_property_query(
         case_property_name,
         queries.match(value, PROPERTY_VALUE, operator=operator)
-    )
-
-
-def sounds_like_text_query(case_property_name, value):
-    return _base_property_query(
-        case_property_name,
-        queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
     )
 
 
