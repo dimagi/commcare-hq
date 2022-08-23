@@ -54,11 +54,21 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
+            var urlObject = Util.currentUrlToObject(),
+                updateUrl = false;
+            if (!urlObject.appId && response.appId) {
+                // will be undefined on urlObject when coming from an incomplete form
+                urlObject.appId = response.appId;
+                this.appId = urlObject.appId;
+                updateUrl = true;
+            }
             if (response.selections) {
-                var urlObject = Util.currentUrlToObject();
                 urlObject.setSelections(response.selections);
-                Util.setUrlToObject(urlObject, true);
                 sessionStorage.removeItem('selectedValues');
+                updateUrl = true;
+            }
+            if (updateUrl) {
+                Util.setUrlToObject(urlObject, true);
             }
 
             if (response.commands) {
@@ -75,7 +85,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             } else if (response.tree) {
                 // form entry time, doggy
                 _.extend(this, _.pick(response, this.formProperties));
-                FormplayerFrontend.trigger('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response);
             }
         },
 

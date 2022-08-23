@@ -65,6 +65,12 @@ from corehq.apps.data_interfaces.models import (
 from corehq.apps.domain.deletion import DOMAIN_DELETE_OPERATIONS
 from corehq.apps.domain.models import Domain, TransferDomainRequest
 from corehq.apps.export.models.new import DataFile, EmailExportWhenDoneRequest
+from corehq.apps.fixtures.models import (
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
+)
 from corehq.apps.ivr.models import Call
 from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
@@ -104,7 +110,7 @@ from corehq.apps.users.models import (
     DomainRequest,
     Invitation,
     PermissionInfo,
-    Permissions,
+    HqPermissions,
     RoleAssignableBy,
     RolePermission,
     UserRole,
@@ -684,7 +690,6 @@ class TestDeleteDomain(TestCase):
                 server_type='server',
                 server_name='my_server',
                 target_site='my_site',
-                domain_username='my_username',
             )
             TableauVisualization.objects.create(
                 domain=domain_name,
@@ -895,7 +900,7 @@ class TestDeleteDomain(TestCase):
                 name="role2"
             )
             role.set_permissions([
-                PermissionInfo(Permissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
+                PermissionInfo(HqPermissions.view_reports.name, allow=PermissionInfo.ALLOW_ALL)
             ])
             role.set_assignable_by([role1.id])
             self._assert_role_counts(domain_name, 2, 1, 1)
@@ -1003,6 +1008,35 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
         self.assertIsNone(CommtrackConfig.for_domain(self.domain.name))
 
+    def test_lookup_tables(self):
+        def count_lookup_tables(domain):
+            return LookupTable.objects.filter(domain=domain).count()
+
+        def count_lookup_table_rows(domain):
+            return LookupTableRow.objects.filter(domain=domain).count()
+
+        def count_lookup_table_row_owners(domain):
+            return LookupTableRowOwner.objects.filter(domain=domain).count()
+
+        for domain_name in [self.domain.name, self.domain2.name]:
+            table = LookupTable.objects.create(domain=domain_name, tag="domain-deletion")
+            row = LookupTableRow.objects.create(domain=domain_name, table_id=table.id, sort_key=0)
+            LookupTableRowOwner.objects.create(
+                domain=domain_name,
+                row_id=row.id,
+                owner_type=OwnerType.User,
+                owner_id="abc",
+            )
+
+        self.domain.delete()
+
+        self.assertEqual(count_lookup_tables(self.domain.name), 0)
+        self.assertEqual(count_lookup_table_rows(self.domain.name), 0)
+        self.assertEqual(count_lookup_table_row_owners(self.domain.name), 0)
+        self.assertEqual(count_lookup_tables(self.domain2.name), 1)
+        self.assertEqual(count_lookup_table_rows(self.domain2.name), 1)
+        self.assertEqual(count_lookup_table_row_owners(self.domain2.name), 1)
+
 
 class TestHardDeleteSQLFormsAndCases(TestCase):
 
@@ -1020,29 +1054,7 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
         super(TestHardDeleteSQLFormsAndCases, self).tearDown()
 
-    def test_hard_delete_forms(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            create_form_for_test(domain_name)
-            create_form_for_test(domain_name, state=XFormInstance.ARCHIVED)
-            self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(domain_name)), 1)
-
-        self.domain.delete()
-
-        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
-
-        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 2)
-        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
-
-        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
-
-        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
-
-        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
-
-    def test_hard_delete_forms_in_domain(self):
+    def test_forms_are_hard_deleted(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             create_form_for_test(domain_name)
             create_form_for_test(domain_name, state=XFormInstance.ARCHIVED)
@@ -1056,31 +1068,30 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 0)
 
-    def test_delete_domain_with_cases(self):
+    def test_soft_deleted_forms_are_hard_deleted(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            create_form_for_test(domain_name)
+            create_form_for_test(domain_name, state=XFormInstance.DELETED)
+            self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(domain_name)), 1)
+
+        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
+
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 1)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 1)
+
+        call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
+
+        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_form_ids_in_domain(self.domain2.name)), 1)
+
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain.name)), 0)
+        self.assertEqual(len(XFormInstance.objects.get_deleted_form_ids_in_domain(self.domain2.name)), 1)
+
+    def test_cases_are_hard_deleted(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
             self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
-
-        call_command('delete_domain', self.domain.name, noinput=True)
-
-        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
-
-        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
-
-    def test_hard_delete_cases(self):
-        for domain_name in [self.domain.name, self.domain2.name]:
-            CaseFactory(domain_name).create_case()
-            self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
-
-        self.domain.delete()
-
-        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain.name)), 0)
-        self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(self.domain2.name)), 1)
-
-        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain.name)), 1)
-        self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 
@@ -1090,10 +1101,13 @@ class TestHardDeleteSQLFormsAndCases(TestCase):
         self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain.name)), 0)
         self.assertEqual(len(CommCareCase.objects.get_deleted_case_ids_in_domain(self.domain2.name)), 0)
 
-    def test_hard_delete_cases_in_domain(self):
+    def test_soft_deleted_cases_are_hard_deleted(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             CaseFactory(domain_name).create_case()
             self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
+
+        case_ids_to_soft_delete = CommCareCase.objects.get_case_ids_in_domain(self.domain.name)
+        CommCareCase.objects.soft_delete_cases(self.domain.name, case_ids_to_soft_delete)
 
         call_command('hard_delete_forms_and_cases_in_domain', self.domain.name, noinput=True)
 

@@ -6,7 +6,7 @@ from django.shortcuts import render
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq import toggles
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain
 )
@@ -35,7 +35,7 @@ def require_cloudcare_access_ex():
                 return render(request, "cloudcare/web_apps_disabled.html", context)
             if hasattr(request, "couch_user"):
                 if request.couch_user.is_web_user():
-                    return require_permission(Permissions.access_web_apps)(view_func)(request, domain, *args, **kwargs)
+                    return require_permission(HqPermissions.access_web_apps)(view_func)(request, domain, *args, **kwargs)
                 else:
                     assert request.couch_user.is_commcare_user(), \
                         "user was neither a web user or a commcare user!"

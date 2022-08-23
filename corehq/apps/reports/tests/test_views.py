@@ -8,7 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase, RequestFactory
 from unittest.mock import patch
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.blobs import get_blob_db
 from corehq.apps.reports.views import (
@@ -100,7 +100,7 @@ class TestEmailReport(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[REPORT_NAME_LOOKUP['worker_activity']]
         ))
 
@@ -135,7 +135,7 @@ class TestEmailReport(TestCase):
         return request
 
     def _set_user_report_access(self, *report_names):
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
 
 class TestDeleteConfig(TestCase):
@@ -423,7 +423,7 @@ class TestExportReport(TestCase):
         super().setUp()
 
         # Create a basic role for the user
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[]
         ))
 
@@ -453,7 +453,7 @@ class TestExportReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
     def _generate_report(self, export_id=None, report_name='test_report', domain=None, content=b'Some File'):
         export_id = export_id or self.export_id
@@ -534,7 +534,7 @@ class TestViewScheduledReport(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=Permissions(
+        self.reports_role = UserRole.create(self.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[]
         ))
         self.user = WebUser.create(self.domain,
@@ -583,7 +583,7 @@ class TestViewScheduledReport(TestCase):
     def _set_user_report_access(self, *report_names):
         # NOTE: user permissions get cached, so if these permissions
         # were changed between checks, the cache would need to be cleared
-        self.reports_role.set_permissions(Permissions(view_report_list=list(report_names)).to_list())
+        self.reports_role.set_permissions(HqPermissions(view_report_list=list(report_names)).to_list())
 
 
 class TestDomainSharedConfigs(TestCase):

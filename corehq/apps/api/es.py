@@ -25,7 +25,6 @@ from corehq.elastic import (
     report_and_fail_on_shard_failures,
 )
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS, CASE_ES_TYPE
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS, REPORT_CASE_ES_TYPE
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS, XFORM_ES_TYPE
 from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 from corehq.util.es.interface import ElasticsearchInterface
@@ -196,13 +195,6 @@ class CaseESView(ESView):
     """
     es_alias = CASE_ES_ALIAS
     es_type = CASE_ES_TYPE
-    doc_type = "CommCareCase"
-    model = ESCase
-
-
-class ReportCaseESView(ESView):
-    es_alias = REPORT_CASE_ES_ALIAS
-    es_type = REPORT_CASE_ES_TYPE
     doc_type = "CommCareCase"
     model = ESCase
 

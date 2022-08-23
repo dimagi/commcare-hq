@@ -121,11 +121,25 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             requestParams['tz_offset_millis'] = (new Date()).getTimezoneOffset() * 60 * 1000 * -1;
             requestParams['tz_from_browser'] = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            return $.ajax({
+            var contentParams = {};
+            if (requestParams.action === Const.ANSWER_MEDIA) {
+                var newData = new FormData();
+                newData.append("file", requestParams.file);
+                newData.append("answer", JSON.stringify(_.omit(requestParams, "file")));
+                contentParams = {
+                    contentType: "multipart/form-data",
+                    data: newData,
+                };
+            } else {
+                contentParams = {
+                    contentType: "application/json",
+                    data: JSON.stringify(requestParams),
+                };
+            }
+            return $.ajax(_.extend({
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
-                data: JSON.stringify(requestParams),
-                contentType: "application/json",
+                processData: false,
                 dataType: "json",
                 crossDomain: {
                     crossDomain: true,
@@ -139,7 +153,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 error: function (resp, textStatus) {
                     self.handleFailure(resp, requestParams.action, textStatus, failureCallback);
                 },
-            });
+            }, contentParams));
         };
 
         /*
@@ -166,7 +180,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 } catch (err) {
                     console.error(err);
                     self.onerror({
-                        message: Utils.touchformsError(err),
+                        human_readable_message: Utils.jsError(err)
                     });
                 }
             }
@@ -215,6 +229,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             this.onerror({
                 human_readable_message: errorMessage,
                 is_html: isHTML,
+                reportToHq: false,
             });
             this.onLoadingComplete();
         };
@@ -305,13 +320,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             var erroredLabels = form.erroredLabels();
 
             this.serverRequest(
-                {
-                    'action': Const.ANSWER,
+                _.extend({
+                    'action': q.entry.xformAction,
                     'ix': ix,
                     'answer': answer,
                     'answersToValidate': erroredLabels,
                     'oneQuestionPerScreen': oneQuestionPerScreen,
-                },
+                }, q.entry.xformParams()),
                 function (resp) {
                     $.publish('session.reconcile', [resp, q]);
                     if (self.answerCallback !== undefined) {
@@ -505,6 +520,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         };
 
         self.serverError = function (q, resp) {
+            if (!q) {
+                // q is no longer visible (display condition has hidden it)
+                return;
+            }
             if (!resp) {
                 q.serverError(null);
             } else if (resp.type === "required") {

@@ -91,7 +91,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            response.appId = urlObject.appId;
+            if (urlObject.appId) {
+                // will be undefined on urlObject when coming from an incomplete form
+                response.appId = urlObject.appId;
+            }
 
              if (response.notification) {
                 FormplayerFrontend.trigger("handleNotification", response.notification);

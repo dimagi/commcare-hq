@@ -24,6 +24,7 @@ def main():
         GeventCommand('ptop_preindex'),
         GeventCommand('sync_prepare_couchdb_multi'),
         GeventCommand('sync_couch_views'),
+        GeventCommand('delete_old_couch_views_from_disk'),
         GeventCommand('populate_form_date_modified'),
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
@@ -117,6 +118,27 @@ def run_patches():
     mimetypes.init()
 
     patch_jsonfield()
+    patch_celery_task()
+
+
+def patch_celery_task():
+    from django.utils.functional import cached_property
+
+    class TaskModule:
+        __all__ = ["task", "periodic_task"]
+
+        @cached_property
+        def task(self):
+            from corehq.apps.celery.shared_task import task
+            return task
+
+        @cached_property
+        def periodic_task(self):
+            from corehq.apps.celery.periodic import periodic_task
+            return periodic_task
+
+    sys.modules["celery.task"] = TaskModule()
+    sys.modules["celery.task.base"] = TaskModule()
 
 
 def patch_jsonfield():

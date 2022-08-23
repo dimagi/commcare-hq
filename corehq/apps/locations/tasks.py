@@ -22,6 +22,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import LOCATIONS_IN_UCR
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
+from corehq.apps.data_interfaces.models import LocationFilterDefinition
 
 
 @serial_task("{location_type.domain}-{location_type.pk}",
@@ -99,7 +100,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     Update location fixtures for users given locations
     """
     from corehq.apps.users.models import CouchUser, update_fixture_status_for_users
-    from corehq.apps.locations.dbaccessors import mobile_user_ids_at_locations
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
     from corehq.apps.fixtures.models import UserLookupTableType
     from dimagi.utils.couch.database import iter_docs
 
@@ -108,7 +109,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
         close_supply_point_case(domain, supply_point_id)
 
     # unassign users from locations
-    unassign_user_ids = mobile_user_ids_at_locations(location_ids)
+    unassign_user_ids = user_ids_at_locations(location_ids)
     for doc in iter_docs(CouchUser.get_db(), unassign_user_ids):
         user = CouchUser.wrap_correctly(doc)
         for location_id in location_ids:
@@ -120,8 +121,19 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
                 user.unset_location_by_id(location_id, fall_back_to_next=True)
 
     # update fixtures for users at ancestor locations
-    user_ids = mobile_user_ids_at_locations(ancestor_ids)
+    user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserLookupTableType.LOCATION)
+
+
+@task
+def delete_locations_related_rules(location_ids):
+    for location_definition in LocationFilterDefinition.objects.filter(location_id__in=location_ids):
+        for criteria in location_definition.caserulecriteria_set.all():
+            rule = criteria.rule
+            rule.delete_criteria()
+            rule.delete_actions()
+            rule.delete()
+        location_definition.delete()
 
 
 def deactivate_users_at_location(location_id):

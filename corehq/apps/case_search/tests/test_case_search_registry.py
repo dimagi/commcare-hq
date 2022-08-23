@@ -33,7 +33,7 @@ from corehq.apps.registry.tests.utils import (
     Invitation,
     create_registry_for_test,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 def case(name, type_, properties):
@@ -326,11 +326,11 @@ class TestCaseSearchRegistryPermissions(TestCase):
         ).slug
 
     def test_user_without_permission_cannot_access_all_domains(self):
-        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=False))
+        domains = self._get_registry_visible_domains(HqPermissions(view_data_registry_contents=False))
         self.assertEqual(domains, {self.domain})
 
     def test_user_with_permission_can_access_all_domains(self):
-        domains = self._get_registry_visible_domains(Permissions(view_data_registry_contents=True))
+        domains = self._get_registry_visible_domains(HqPermissions(view_data_registry_contents=True))
         self.assertEqual(domains, {self.domain, "A", "B"})
 
     def _get_registry_visible_domains(self, permissions):

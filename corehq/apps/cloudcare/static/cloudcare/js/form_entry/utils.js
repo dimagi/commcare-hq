@@ -8,6 +8,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.jsError = function (message) {
+        return hqImport("cloudcare/js/form_entry/errors").JS_ERROR + message;
+    };
+
     module.isWebApps = function () {
         var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             environment = FormplayerFrontend.getChannel().request('currentUser').environment;
@@ -143,6 +147,23 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             broadcastObj.street = mapboxResult.address || mapboxResult.text;
         }
         return broadcastObj;
+    };
+
+    /**
+     * Gets the root form of a question.
+     * @param {Object} question - The Question Object
+    **/
+    module.getRootForm = (question) => {
+        if (question.parent === undefined) {
+            return undefined;
+        }
+
+        // logic in case the question is in a group or repeat or nested group, etc.
+        let curr = question.parent;
+        while (curr.parent) {
+            curr = curr.parent;
+        }
+        return curr;
     };
 
     return module;

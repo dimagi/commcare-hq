@@ -11,10 +11,10 @@
 # Claire_Cravero <ccravero@dimagi.com>, 2018
 # Sarah Sagan <ssagan@dimagi.com>, 2020
 # Rowena Luk <rluk@dimagi.com>, 2021
-# Ismaïla Diene <idiene@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
-# Aissetou Sawadogo <ais107@hotmail.com>, 2022
 # Tyler Wymer <twymer@dimagi.com>, 2022
+# Ismaïla Diene <idiene@dimagi.com>, 2022
+# Aissetou Sawadogo <ais107@hotmail.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -22,7 +22,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -2703,6 +2703,12 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
+"An unknown error occurred. If you have problems filling in the rest of your "
+"form please submit an issue. Technical Details: "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
 "CommCareHQ has detected a possible network connectivity problem. Please make "
 "sure you are connected to the Internet in order to submit your form."
 msgstr ""
@@ -2761,6 +2767,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "Form submission failed with error"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
+msgid "Unexpected Error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
@@ -2836,6 +2846,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -3086,6 +3100,10 @@ msgstr "Réattribution de dossier (via HQ)"
 msgid "Search for users or groups"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
+msgstr "Nom de la propriété de dossier"
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid ""
 "<a href='<%- link %>' target='_blank'>View <i class='fa fa-external-link'></"
@@ -3146,10 +3164,8 @@ msgid "Submit Invoice Request"
 msgstr "Soumettre la demande de Facture"
 
 #: corehq/apps/domain/static/domain/js/case_search.js
-#, fuzzy
-#| msgid "You have unchanged case settings"
 msgid "You have unchanged settings"
-msgstr "Vous avez des paramètres de dossier non sauvegardées"
+msgstr ""
 
 #: corehq/apps/domain/static/domain/js/current_subscription.js
 msgid "Buy Credits"
@@ -3676,6 +3692,11 @@ msgid "Please specify a password."
 msgstr "Veuillez spécifier un mot de passe."
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a project name."
 msgstr "Veuillez spécifier un nom de projet."
 
@@ -3927,6 +3948,16 @@ msgstr ""
 msgid "Showing _START_ to _END_ of _TOTAL_ entries"
 msgstr ""
 
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Some required fields are missing. Please complete them before saving."
+msgstr ""
+"Certains champs obligatoires sont manquant. Veuillez les compléter avant de "
+"sauvegarder."
+
+#: corehq/apps/reports/static/reports/js/report_config_models.js
+msgid "Start date cannot be after end date."
+msgstr ""
+
 #: corehq/apps/reports/static/reports/js/reports.async.js
 msgid "Please check your Internet connection!"
 msgstr ""
@@ -4010,6 +4041,12 @@ msgstr "Échoué "
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports/static/reports/js/tableau.js
+msgid ""
+"An error occured with the tableau server request, please ensure the server "
+"configuration is correct and try again."
 msgstr ""
 
 #: corehq/apps/reports/static/reports/v2/js/datagrid.js
@@ -4685,6 +4722,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_entity_config.js
 msgid "Unable to save case configs"
+msgstr ""
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
+msgid "Unable to save form configs"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js

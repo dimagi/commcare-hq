@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from corehq.apps.users.models import Permissions, UserRole
+from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.apps.users.role_utils import (
     UserRolePresets,
     archive_custom_roles_for_domain,
@@ -16,7 +16,7 @@ class RoleUtilsTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.role1_permissions = Permissions(edit_web_users=True)
+        cls.role1_permissions = HqPermissions(edit_web_users=True)
         cls.role1 = UserRole.create(cls.domain, 'role1', permissions=cls.role1_permissions)
 
     @classmethod

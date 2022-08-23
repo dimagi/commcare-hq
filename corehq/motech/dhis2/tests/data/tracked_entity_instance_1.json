@@ -107,7 +107,28 @@
             ]
         }
     ],
-    "relationships": [],
+    "relationships": [
+        {
+            "bidirectional": false,
+            "created": "2022-07-13T03:26:06.680",
+            "from": {
+                "trackedEntityInstance": {
+                    "programOwners": [],
+                    "trackedEntityInstance": "oDfdLQ0bOzY"
+                }
+            },
+            "lastUpdated": "2022-07-13T03:26:06.680",
+            "relationship": "K0UypYSV9rP",
+            "relationshipName": "Mother -> Child",
+            "relationshipType": "pmEdu7DAEQL",
+            "to": {
+                "trackedEntityInstance": {
+                    "programOwners": [],
+                    "trackedEntityInstance": "T6PdaIWODvO"
+                }
+            }
+        }
+    ],
     "attributes": [
         {
             "attribute": "RFSPyNDnRzV",

@@ -53,7 +53,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.apps.users.util import format_username
 from corehq.motech.repeaters.models import CommCareCase, Repeater, get_all_repeater_types
 from corehq.util.view_utils import absolute_reverse
@@ -165,7 +165,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         }
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         object_class = ESXFormInstance
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -308,7 +308,7 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return GroupQuerySetAdapter(domain)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         object_class = Group
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

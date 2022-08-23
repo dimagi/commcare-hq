@@ -9,7 +9,8 @@ from django.db import transaction
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition,
-    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition,
+    LocationFilterDefinition,
 )
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
@@ -106,7 +107,7 @@ from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
@@ -274,7 +275,7 @@ def update_user_roles(domain_link):
         role.is_non_admin_editable = role_def["is_non_admin_editable"]
         role.save()
 
-        permissions = Permissions.wrap(role_def["permissions"])
+        permissions = HqPermissions.wrap(role_def["permissions"])
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
@@ -344,7 +345,6 @@ def update_tableau_server_and_visualizations(domain_link):
     server_model.server_name = master_results["server"]['server_name']
     server_model.validate_hostname = master_results["server"]['validate_hostname']
     server_model.target_site = master_results["server"]['target_site']
-    server_model.domain_username = master_results["server"]['domain_username']
     server_model.save()
 
     master_results_visualizations = master_results['visualizations']
@@ -479,6 +479,11 @@ def update_auto_update_rules(domain_link):
                     )
                 elif criteria['closed_parent_definition']:
                     definition = ClosedParentDefinition.objects.create()
+                elif criteria['location_filter_definition']:
+                    definition = LocationFilterDefinition.objects.create(
+                        location_id=criteria['location_filter_definition']['location_id'],
+                        include_child_locations=criteria['location_filter_definition']['include_child_locations'],
+                    )
 
                 new_criteria = CaseRuleCriteria(rule=downstream_rule)
                 new_criteria.definition = definition

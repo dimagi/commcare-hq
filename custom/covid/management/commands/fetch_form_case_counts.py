@@ -18,17 +18,17 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'domains', nargs="*",
+            '--domains', nargs="*",
             help='Domains to check, will include enterprise-controlled child domains.'
         )
-        parser.add_argument('start', type=date_type, help='Start date (inclusive)')
-        parser.add_argument('end', type=date_type, help='End date (inclusive)')
+        parser.add_argument('--start', type=date_type, help='Start date (inclusive)')
+        parser.add_argument('--end', type=date_type, help='End date (inclusive)')
 
     def handle(self, domains, start, end, **options):
-        filename = "form_case_counts_{}".format(datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S"))
+        filename = "form_case_counts_{}.csv".format(datetime.utcnow().strftime("%Y-%m-%d_%H.%M.%S"))
         case_types = sorted(_get_case_types(domains))
         with open(filename, 'w', encoding='utf-8') as csv_file:
-            field_names = ['domain', 'date', 'form_submissions'] + case_types
+            field_names = ['domain', 'date', 'form_submissions'] + case_types + ['cases_opened']
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()
             for row in self.get_rows(domains, case_types, start, end):
@@ -39,6 +39,7 @@ class Command(BaseCommand):
         for domain in _expand_domains(domains):
             submissions_counts = _get_submissions_counts(domain, start, end)
             case_update_counts = _get_case_update_counts(domain, start, end)
+            case_opened_counts = _get_case_opened_counts(domain, start, end)
 
             day = start
             while day <= end:
@@ -49,7 +50,8 @@ class Command(BaseCommand):
                     **{
                         case_type: case_update_counts.get((case_type, day), 0)
                         for case_type in case_types
-                    }
+                    },
+                    'cases_opened': case_opened_counts.get(day, 0)
                 }
                 day += timedelta(days=1)
 
@@ -74,7 +76,7 @@ def _get_submissions_counts(domain, start, end):
            .domain(domain)
            .submitted(gte=start, lte=end)
            .aggregation(
-               DateHistogram('date_histogram', 'received_on', DateHistogram.Interval.DAY))
+               DateHistogram('date_histogram', 'inserted_at', DateHistogram.Interval.DAY))
            .run().aggregations.date_histogram)
     return {
         date.fromisoformat(bucket['key']): bucket['doc_count']
@@ -102,3 +104,17 @@ def _get_case_update_counts(domain, start, end):
             day = date.fromisoformat(case_count['key'])
             ret[(case_type.key, day)] = case_count['doc_count']
     return ret
+
+
+def _get_case_opened_counts(domain, start, end):
+    res = (CaseES()
+           .domain(domain)
+           .active_in_range(gte=start, lte=end)
+           .aggregation(
+               DateHistogram('date_histogram', 'opened_on', DateHistogram.Interval.DAY))
+           .run().aggregations.date_histogram)
+
+    return {
+        date.fromisoformat(bucket['key']): bucket['doc_count']
+        for bucket in res.normalized_buckets
+    }

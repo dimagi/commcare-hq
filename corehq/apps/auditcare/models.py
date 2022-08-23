@@ -140,6 +140,11 @@ class NavigationEventAudit(AuditEvent):
     def request_path(self):
         return f"{self.path}?{self.params}"
 
+    @property
+    def request_method(self):
+        headers = self.headers or {}
+        return headers.get("REQUEST_METHOD", "")
+
     @classmethod
     def audit_view(cls, request, user, view_func, view_kwargs):
         audit = cls.create_audit(request, user)

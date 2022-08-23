@@ -26,6 +26,7 @@ from dimagi.utils.parsing import json_format_date
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
 )
@@ -798,6 +799,10 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     def page_context(self):
         context = super().page_context
         context.update({
+            'all_case_properties': {
+                t: sorted(names) for t, names in
+                get_data_dict_props_by_case_type(self.domain).items()
+            },
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'help_text': self.help_text,

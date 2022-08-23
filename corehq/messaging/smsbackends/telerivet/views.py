@@ -8,7 +8,7 @@ from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMappin
 from corehq.apps.sms.util import clean_phone_number
 from corehq.apps.sms.views import BaseMessagingSectionView, DomainSmsGatewayListView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.messaging.smsbackends.telerivet.tasks import process_incoming_message, process_message_status
 from corehq.messaging.smsbackends.telerivet.forms import (TelerivetOutgoingSMSForm,
     TelerivetPhoneNumberForm, FinalizeGatewaySetupForm, TelerivetBackendForm)
@@ -160,7 +160,7 @@ class TelerivetSetupView(BaseMessagingSectionView):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_GET
 def get_last_inbound_sms(request, domain):
@@ -186,7 +186,7 @@ def get_last_inbound_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def send_sample_sms(request, domain):
@@ -236,7 +236,7 @@ def send_sample_sms(request, domain):
 
 
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @login_and_domain_required
 @require_POST
 def create_backend(request, domain):

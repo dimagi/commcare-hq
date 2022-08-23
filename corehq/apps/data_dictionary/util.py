@@ -111,6 +111,10 @@ def _create_properties_for_case_types(domain, case_type_to_prop):
 
     CaseProperty.objects.bulk_create(new_case_properties)
 
+    for case_type, props in case_type_to_prop.items():
+        if case_type:
+            CaseProperty.clear_caches(domain, case_type)
+
 
 def get_case_property_description_dict(domain):
     """

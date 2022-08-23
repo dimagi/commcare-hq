@@ -6,7 +6,6 @@ from django.test import TestCase, TransactionTestCase
 from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
-from casexml.apps.case.util import post_case_blocks
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -54,7 +53,7 @@ class ReprocessXFormErrorsTest(TestCase):
             index={'parent': ('parent_type', parent_case_id)}
         )
 
-        post_case_blocks([case.as_xml()], domain=self.domain)
+        submit_case_blocks([case.as_text()], domain=self.domain)
 
         get_forms_by_type = XFormInstance.objects.get_forms_by_type
         error_forms = get_forms_by_type(self.domain, 'XFormError', 10)
@@ -74,7 +73,7 @@ class ReprocessXFormErrorsTest(TestCase):
             case_name='parent',
         )
 
-        post_case_blocks([case.as_xml()], domain=self.domain)
+        submit_case_blocks([case.as_text()], domain=self.domain)
 
         reprocess_xform_error(XFormInstance.objects.get_form(form.form_id))
 

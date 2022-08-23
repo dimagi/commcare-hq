@@ -1,5 +1,5 @@
 {% load i18n %}
-{% blocktrans %}Hey there,{% endblocktrans %}
+{% blocktrans %}Hello {{ name }},{% endblocktrans %}
 
 {% blocktrans %}
 You have been added to the "{{ domain }}" project on {{ hq_name }}.

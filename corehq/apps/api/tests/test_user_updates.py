@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 
 from corehq.apps.api.exceptions import UpdateUserException
 from corehq.apps.api.user_updates import update
@@ -16,7 +17,7 @@ from corehq.apps.users.audit.change_messages import (
     PASSWORD_FIELD,
     ROLE_FIELD,
 )
-from corehq.apps.users.models import CommCareUser, Permissions
+from corehq.apps.users.models import CommCareUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
@@ -117,11 +118,18 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(cm.exception.message, 'metadata properties conflict with profile: conflicting_field')
 
     def test_update_groups_succeeds(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id])
         self.assertEqual(self.user.get_group_ids()[0], group._id)
+
+    def test_update_groups_fails(self):
+        group = Group({"name": "test", "domain": "not-same-domain"})
+        group.save()
+        self.addCleanup(group.delete)
+        with self.assertRaises(ValidationError):
+            update(self.user, 'groups', [group._id])
 
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UpdateUserException) as cm:
@@ -131,7 +139,7 @@ class TestUpdateUserMethods(TestCase):
 
     def test_update_user_role_succeeds(self):
         new_role = UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         update(self.user, 'role', 'edit-data')
         self.assertEqual(self.user.get_role(self.domain).get_qualified_id(), new_role.get_qualified_id())
@@ -144,10 +152,10 @@ class TestUpdateUserMethods(TestCase):
 
     def test_update_user_role_raises_exception_if_ambiguous(self):
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
 
         with self.assertRaises(UpdateUserException) as cm:
@@ -290,14 +298,14 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertNotIn('user_data', self.user_change_logger.fields_changed.keys())
 
     def test_update_groups_logs_change(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id], user_change_logger=self.user_change_logger)
         self.assertIn(GROUPS_FIELD, self.user_change_logger.change_messages.keys())
 
     def test_update_groups_does_not_log_no_change(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.user.set_groups([group._id])
         self.addCleanup(group.delete)
@@ -306,14 +314,14 @@ class TestUpdateUserMethodsLogChanges(TestCase):
 
     def test_update_user_role_logs_change(self):
         UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         update(self.user, 'role', 'edit-data', user_change_logger=self.user_change_logger)
         self.assertIn(ROLE_FIELD, self.user_change_logger.change_messages.keys())
 
     def test_update_user_role_does_not_logs_change(self):
         role = UserRole.create(
-            self.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            self.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
         )
         self.user.set_role(self.domain, role.get_qualified_id())
 

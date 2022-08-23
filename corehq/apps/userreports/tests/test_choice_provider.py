@@ -31,7 +31,7 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, Permissions
+from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, HqPermissions
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new
@@ -529,7 +529,7 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         role = UserRole.create(
             domain=domain,
             name='Registry Access',
-            permissions=Permissions(view_data_registry_contents=has_registry_access),
+            permissions=HqPermissions(view_data_registry_contents=has_registry_access),
         )
         web_user.set_role(domain.name, role.get_qualified_id())
         web_user.save()

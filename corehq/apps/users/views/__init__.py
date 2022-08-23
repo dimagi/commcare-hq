@@ -107,7 +107,7 @@ from corehq.apps.users.models import (
     Invitation,
     StaticRole,
     WebUser,
-    Permissions,
+    HqPermissions,
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
@@ -930,7 +930,7 @@ def _update_role_from_view(domain, role_data):
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
 
-    permissions = Permissions.wrap(role_data["permissions"])
+    permissions = HqPermissions.wrap(role_data["permissions"])
     permissions.normalize()
     role.set_permissions(permissions.to_list())
 
@@ -949,11 +949,13 @@ def delete_user_role(request, domain):
     if user_count:
         return JsonResponse({
             "message": ngettext(
-                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has one user and/or invitation still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has {user_count} users and/or invitations still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                user_count
+                user_count,
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:

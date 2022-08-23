@@ -32,8 +32,6 @@ DOMAIN_HQ_INDEX_NAME = "hqdomains"
 APP_HQ_INDEX_NAME = "hqapps"
 GROUP_HQ_INDEX_NAME = "hqgroups"
 SMS_HQ_INDEX_NAME = "smslogs"
-REPORT_CASE_HQ_INDEX_NAME = "report_cases"
-REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
 TEST_HQ_INDEX_NAME = "pillowtop_tests"
 

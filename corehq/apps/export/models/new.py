@@ -241,7 +241,7 @@ class ExportItem(DocumentSchema, ReadablePathMixin):
     def merge(cls, one, two):
         item = one
         item.label = two.label  # always take the newest label
-        item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences, max)
+        item.last_occurrences = _merge_dicts(one.last_occurrences, two.last_occurrences)
         item.inferred = one.inferred or two.inferred
         item.inferred_from |= two.inferred_from
         return item
@@ -1414,7 +1414,9 @@ class LabelItem(ExportItem):
 
 class CaseIndexItem(ExportItem):
     """
-    An item that refers to a case index
+    An item that refers to a case index.
+
+    See CaseIndexExportColumn
     """
 
     @property
@@ -1424,19 +1426,25 @@ class CaseIndexItem(ExportItem):
 
 class GeopointItem(ExportItem):
     """
-    A GPS coordinate question
+    A GPS coordinate question.
+
+    See SplitGPSExportColumn
     """
 
 
 class MultiMediaItem(ExportItem):
     """
-    An item that references multimedia
+    An item that references multimedia.
+
+    See MultiMediaExportColumn
     """
 
 
 class StockItem(ExportItem):
     """
     An item that references a stock question (balance, transfer, dispense, receive)
+
+    See StockFormExportColumn
     """
 
     @classmethod
@@ -1467,6 +1475,8 @@ class MultipleChoiceItem(ExportItem):
     A multiple choice question or case property
     Choices is the union of choices for the question in each of the builds with
     this question.
+
+    See SplitExportColumn
     """
     options = SchemaListProperty(Option)
 
@@ -1489,7 +1499,7 @@ class MultipleChoiceItem(ExportItem):
             resolvefn=lambda option1, option2:
                 Option(
                     value=option1.value,
-                    last_occurrences=_merge_dicts(option1.last_occurrences, option2.last_occurrences, max)
+                    last_occurrences=_merge_dicts(option1.last_occurrences, option2.last_occurrences)
                 ),
         )
 
@@ -1781,8 +1791,7 @@ class ExportDataSchema(Document):
 
             group_schema1.last_occurrences = _merge_dicts(
                 group_schema1.last_occurrences,
-                group_schema2.last_occurrences,
-                max
+                group_schema2.last_occurrences
             )
             group_schema1.inferred = group_schema1.inferred or group_schema2.inferred
             items = _merge_lists(
@@ -1806,8 +1815,7 @@ class ExportDataSchema(Document):
             previous_group_schemas = group_schemas
             last_app_versions = _merge_dicts(
                 last_app_versions,
-                current_schema.last_app_versions,
-                max,
+                current_schema.last_app_versions
             )
 
         schema.group_schemas = group_schemas
@@ -2232,7 +2240,8 @@ class CaseExportDataSchema(ExportDataSchema):
     def _generate_schema_from_case_property_mapping(cls, case_property_mapping, parent_types, app_id, app_version):
         """
         Generates the schema for the main Case tab on the export page
-        Includes system export properties for the case.
+        Includes system export properties for the case as well as properties for exporting parent case IDs
+        if applicable.
         """
         assert len(list(case_property_mapping)) == 1
         schema = cls()
@@ -2264,6 +2273,10 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _generate_schema_for_parent_case(cls, app_id, app_version):
+        """This is just a placeholder to indicate that the case has 'parents'.
+        The actual schema is static so not stored in the DB.
+        See ``corehq.apps.export.system_properties.PARENT_CASE_TABLE_PROPERTIES``
+        """
         schema = cls()
         schema.group_schemas.append(ExportGroupSchema(
             path=PARENT_CASE_TABLE,
@@ -2273,7 +2286,11 @@ class CaseExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _generate_schema_for_case_history(cls, case_property_mapping, app_id, app_version):
-        """Generates the schema for the Case History tab on the export page"""
+        """Generates the schema for the Case History tab on the export page.
+
+        See ``corehq.apps.export.system_properties.CASE_HISTORY_PROPERTIES`` for
+        additional 'static' schema items.
+        """
         assert len(list(case_property_mapping)) == 1
         schema = cls()
 
@@ -2399,14 +2416,12 @@ def _merge_lists(one, two, keyfn, resolvefn):
     return merged
 
 
-def _merge_dicts(one, two, resolvefn):
+def _merge_dicts(one, two):
     """Merges two dicts. The algorithm is to first create a dictionary of all the keys that exist in one and
-    two but not in both. Then iterate over each key that belongs in both while calling the resovlefn function
-    to ensure the propery value gets set.
+    two but not in both. Then iterate over each key that belongs in both, selecting the one with the higher value.
 
     :param one: The first dictionary
     :param two: The second dictionary
-    :param resolvefn: A function that takes two values and resolves to one
     :returns: The merged dictionary
     """
     # keys either in one or two, but not both
@@ -2414,6 +2429,15 @@ def _merge_dicts(one, two, resolvefn):
         key: one.get(key, two.get(key))
         for key in one.keys() ^ two.keys()
     }
+
+    def resolvefn(a, b):
+        if a is None:
+            return b
+
+        if b is None:
+            return a
+
+        return max(a, b)
 
     # merge keys that exist in both
     merged.update({

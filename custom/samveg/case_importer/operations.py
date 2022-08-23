@@ -8,31 +8,36 @@ class BaseRowOperation(object):
     Perform an operation on each row of case upload.
     """
 
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
+    def __init__(self, **kwargs):
         """
+        Possible values in kwargs
         :param row_num: 1-based row number. Headers are in row zero.
         :param raw_row: Row dict.
         :param fields_to_update: Current set of fields to update
         :param import_context: import context available during import for extensions
-
-        :return: fields to update, list of errors
+        :param domain_name: name of the domain for which upload operation is done
         """
+        self.fields_to_update = kwargs.get("fields_to_update")
+        self.error_messages = []
+
+    def run(self):
         raise NotImplementedError
 
 
 class AddCustomCaseProperties(BaseRowOperation):
-    @classmethod
-    def run(cls, row_num, raw_row, fields_to_update, import_context):
-        fields_to_update['last_upload_change'] = str(_get_today_date())
-        fields_to_update['visit_type'] = cls._get_visit_type(fields_to_update)
-        return fields_to_update, []
 
-    @classmethod
-    def _get_visit_type(cls, fields_to_update):
+    def run(self):
+        """
+        :return: fields to update, list of errors
+        """
+        self.fields_to_update['last_upload_change'] = str(_get_today_date())
+        self.fields_to_update['visit_type'] = self._get_visit_type()
+        return self.fields_to_update, self.error_messages
+
+    def _get_visit_type(self):
         from custom.samveg.case_importer.validators import _get_latest_call_value_and_number
 
-        latest_call_value, latest_call_number = _get_latest_call_value_and_number(fields_to_update)
+        _, latest_call_number = _get_latest_call_value_and_number(self.fields_to_update)
         return {
             'Call1': 'anc',
             'Call2': 'hrp',

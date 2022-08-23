@@ -4,12 +4,10 @@ from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.linked_domain.exceptions import (
-    AttemptedPushViolatesConstraints,
     DomainLinkAlreadyExists,
     DomainLinkError,
     DomainLinkNotAllowed,
-    DomainLinkNotFound,
-    NoDownstreamDomainsProvided,
+    InvalidPushException,
     UserDoesNotHavePermission,
 )
 from corehq.apps.linked_domain.models import DomainLink
@@ -92,25 +90,33 @@ class ValidatePushTests(TestCase):
         cls.addClassCleanup(permissions_check_patcher.stop)
 
     def test_raises_exception_if_no_downstream_domains_selected(self):
-        with self.assertRaises(NoDownstreamDomainsProvided):
+        with self.assertRaises(InvalidPushException) as cm:
             validate_push(self.user, 'upstream', [])
+        self.assertEqual(cm.exception.message,
+                         'No downstream project spaces were selected. Please contact support.')
 
     def test_raises_exception_if_link_not_found(self):
-        with self.assertRaises(DomainLinkNotFound):
+        with self.assertRaises(InvalidPushException) as cm:
             validate_push(self.user, 'upstream', ['downstream'])
+        self.assertEqual(cm.exception.message,
+                         "The project space link between upstream and downstream does not exist. Ensure the "
+                         "link was not recently deleted.")
 
     def test_raises_exception_if_user_does_not_have_permission(self):
         DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
         self.mock_permissions_check.return_value = False
-        with self.assertRaises(UserDoesNotHavePermission):
+        with self.assertRaises(InvalidPushException) as cm:
             validate_push(self.user, 'upstream', ['downstream'])
+        self.assertEqual(cm.exception.message,
+                         "You do not have permission to push to all specified downstream project spaces.")
 
     def test_raises_exception_if_user_attempts_invalid_push(self):
+        """See CheckIfPushViolatesConstraintTests for more related tests"""
         DomainLink.objects.create(master_domain='upstream', linked_domain='downstream')
         self.mock_permissions_check.return_value = True
-        self.mock_violates_constraints.side_effect = AttemptedPushViolatesConstraints
+        self.mock_violates_constraints.side_effect = InvalidPushException(message='mocked exception')
 
-        with self.assertRaises(AttemptedPushViolatesConstraints):
+        with self.assertRaises(InvalidPushException):
             validate_push(self.user, 'upstream', ['downstream'])
 
     def test_successful_validation(self):
@@ -150,10 +156,8 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        try:
-            check_if_push_violates_constraints(self.superuser, [full_access_link1, full_access_link2])
-        except Exception as e:
-            self.fail(f"Unexpected exception raised {e}")
+        # should not raise exception
+        check_if_push_violates_constraints(self.superuser, [full_access_link1, full_access_link2])
 
     def test_non_superuser_can_push_to_multiple_full_access_links(self):
         full_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='full1')
@@ -167,10 +171,8 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        try:
-            check_if_push_violates_constraints(self.non_superuser, [full_access_link1, full_access_link2])
-        except Exception as e:
-            self.fail(f"Unexpected exception raised {e}")
+        # should not raise exception
+        check_if_push_violates_constraints(self.non_superuser, [full_access_link1, full_access_link2])
 
     def test_superuser_can_push_multiple_mixed_access_links(self):
         full_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='full')
@@ -184,10 +186,8 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        try:
-            check_if_push_violates_constraints(self.superuser, [full_access_link, limited_access_link])
-        except Exception as e:
-            self.fail(f"Unexpected exception raised {e}")
+        # should not raise exception
+        check_if_push_violates_constraints(self.superuser, [full_access_link, limited_access_link])
 
     def test_raises_exception_if_non_superuser_pushes_to_multiple_mixed_access_links(self):
         full_access_link = DomainLink.objects.create(master_domain='upstream', linked_domain='full')
@@ -201,8 +201,11 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        with self.assertRaises(AttemptedPushViolatesConstraints):
+        with self.assertRaises(InvalidPushException) as cm:
             check_if_push_violates_constraints(self.non_superuser, [full_access_link, limited_access_link])
+        self.assertEqual(cm.exception.message,
+                         "The attempted push is disallowed because it includes the following domains that can "
+                         "only be pushed to one at a time: limited")
 
     def test_superuser_can_push_multiple_limited_access_links(self):
         limited_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited1')
@@ -216,10 +219,8 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        try:
-            check_if_push_violates_constraints(self.superuser, [limited_access_link1, limited_access_link2])
-        except Exception as e:
-            self.fail(f"Unexpected exception raised {e}")
+        # should not raise exception
+        check_if_push_violates_constraints(self.superuser, [limited_access_link1, limited_access_link2])
 
     def test_raises_exception_if_non_superuser_pushes_to_multiple_limited_access_links(self):
         limited_access_link1 = DomainLink.objects.create(master_domain='upstream', linked_domain='limited1')
@@ -233,8 +234,11 @@ class CheckIfPushViolatesConstraintTests(TestCase):
         link2_patcher.start()
         self.addCleanup(link2_patcher.stop)
 
-        with self.assertRaises(AttemptedPushViolatesConstraints):
+        with self.assertRaises(InvalidPushException) as cm:
             check_if_push_violates_constraints(self.non_superuser, [limited_access_link1, limited_access_link2])
+        self.assertEqual(cm.exception.message,
+                         "The attempted push is disallowed because it includes the following domains that can "
+                         "only be pushed to one at a time: limited1, limited2")
 
 
 class ValidatePullTests(TestCase):

@@ -1432,7 +1432,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
         return format_html('<a target="_blank" href="{}">{}</a>', href, text)
 
     def get_case_display(self, case):
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
 
         return self.get_link_display(
             reverse(CaseDataView.urlname, args=[self.domain, case.case_id]),

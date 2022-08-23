@@ -7,6 +7,8 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.quickcache import quickcache
+from dimagi.utils.logging import notify_error
 
 
 @attr.s(frozen=True)
@@ -23,13 +25,13 @@ class StaticRole:
 
     @classmethod
     def domain_admin(cls, domain):
-        from corehq.apps.users.models import Permissions
-        return StaticRole(domain, "Admin", Permissions.max())
+        from corehq.apps.users.models import HqPermissions
+        return StaticRole(domain, "Admin", HqPermissions.max())
 
     @classmethod
     def domain_default(cls, domain):
-        from corehq.apps.users.models import Permissions
-        return StaticRole(domain, None, Permissions())
+        from corehq.apps.users.models import HqPermissions
+        return StaticRole(domain, None, HqPermissions())
 
     def get_qualified_id(self):
         return self.name.lower() if self.name else None
@@ -65,6 +67,9 @@ class UserRoleManager(models.Manager):
             query = UserRole.objects
         return query.get(couch_id=couch_id)
 
+    def get_commcare_user_default(self, domain):
+        return self.get(domain=domain, is_commcare_user_default=True)
+
 
 def _uuid_str():
     return uuid.uuid4().hex
@@ -97,12 +102,12 @@ class UserRole(models.Model):
 
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
-        from corehq.apps.users.models import Permissions
+        from corehq.apps.users.models import HqPermissions
         with transaction.atomic():
             role = UserRole.objects.create(domain=domain, name=name, **kwargs)
             if permissions is None:
                 # match couch functionality and set default permissions
-                permissions = Permissions()
+                permissions = HqPermissions()
             role.set_permissions(permissions.to_list())
             if assignable_by:
                 if not isinstance(assignable_by, list):
@@ -110,6 +115,17 @@ class UserRole(models.Model):
                 role.set_assignable_by(assignable_by)
 
         return role
+
+    @classmethod
+    @quickcache(['domain'])
+    def commcare_user_default(cls, domain):
+        try:
+            return UserRole.objects.get_commcare_user_default(domain)
+        except UserRole.DoesNotExist:
+            notify_error("Domain is missing default commcare user role", {
+                "domain": domain
+            })
+        return None
 
     @property
     def get_id(self):
@@ -164,8 +180,8 @@ class UserRole(models.Model):
 
     @property
     def permissions(self):
-        from corehq.apps.users.models import Permissions
-        return Permissions.from_permission_list(self.get_permission_infos())
+        from corehq.apps.users.models import HqPermissions
+        return HqPermissions.from_permission_list(self.get_permission_infos())
 
     def set_assignable_by_couch(self, couch_role_ids):
         sql_ids = []
@@ -224,7 +240,7 @@ class UserRole(models.Model):
 @foreign_value_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
-    permission_fk = models.ForeignKey("SQLPermission", on_delete=models.CASCADE)
+    permission_fk = models.ForeignKey("Permission", on_delete=models.CASCADE)
     permission = ForeignValue(permission_fk)
 
     # if True allow access to all items
@@ -257,7 +273,7 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
-class SQLPermission(models.Model):
+class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
     class Meta:
@@ -265,9 +281,9 @@ class SQLPermission(models.Model):
 
     @classmethod
     def create_all(cls):
-        from corehq.apps.users.models import Permissions
-        for name in Permissions.permission_names():
-            SQLPermission.objects.get_or_create(value=name)
+        from corehq.apps.users.models import HqPermissions
+        for name in HqPermissions.permission_names():
+            Permission.objects.get_or_create(value=name)
 
 
 class RoleAssignableBy(models.Model):

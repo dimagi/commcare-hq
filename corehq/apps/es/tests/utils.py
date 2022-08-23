@@ -70,7 +70,7 @@ class ElasticTestMixin(object):
             index=TEST_INDEX_INFO.index,
             params={'explain': 'true'},
         )
-        self.assertTrue(validation['valid'])
+        self.assertTrue(validation['valid'], validation)
 
     def checkQuery(self, query, expected_json, is_raw_query=False, validate_query=True):
         self.maxDiff = None
@@ -252,6 +252,10 @@ def case_search_es_setup(domain, case_blocks):
     # send cases to ES in the same order they were passed in so `indexed_on`
     # order is predictable for TestCaseListAPI.test_pagination and others
     cases = sorted(cases, key=lambda case: order[case.case_id])
+    populate_case_search_index(cases)
+
+
+def populate_case_search_index(cases):
     populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
 
 

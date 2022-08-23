@@ -30,6 +30,7 @@ from corehq.apps.es.case_search import (
     case_property_query,
     case_property_range_query,
     wrap_case_search_hit,
+    reverse_index_case_query,
 )
 from corehq.apps.registry.exceptions import (
     RegistryAccessException,
@@ -216,6 +217,8 @@ class CaseSearchQueryBuilder:
         if criteria.is_ancestor_query:
             query = f'{criteria.key} = "{value}"'
             return build_filter_from_xpath(self.query_domains, query, fuzzy=fuzzy)
+        elif criteria.is_index_query:
+            return reverse_index_case_query(value, criteria.index_query_identifier)
         else:
             return case_property_query(criteria.key, value, fuzzy=fuzzy)
 

@@ -80,7 +80,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
-    Permissions,
+    HqPermissions,
     WebUser,
 )
 from corehq.apps.users.util import raw_username, generate_mobile_username
@@ -138,7 +138,7 @@ class BulkUserResource(HqBaseResource, DomainSpecificResourceMixin):
         return namedtuple('user', list(user))(**user)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         object_class = object
@@ -462,7 +462,7 @@ class DeviceReportResource(HqBaseResource, ModelResource):
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         resource_name = 'device-log'
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         authorization = DomainAuthorization()
         paginator_class = NoCountingPaginator
         filtering = {
@@ -622,7 +622,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         return uri
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.view_reports, allow_session_auth=True)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_reports, allow_session_auth=True)
         list_allowed_methods = []
         detail_allowed_methods = ["get"]
 
@@ -754,7 +754,7 @@ class DataSourceConfigurationResource(CouchResourceMixin, HqBaseResource, Domain
         detail_allowed_methods = ['get', 'put']
         always_return_data = True
         paginator_class = DoesNothingPaginator
-        authentication = RequirePermissionAuthentication(Permissions.edit_ucrs)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_ucrs)
 
 
 UserDomain = namedtuple('UserDomain', 'domain_name project_name')
@@ -791,6 +791,7 @@ class UserDomainsResource(CorsResourceMixin, Resource):
         feature_flag = request.GET.get("feature_flag")
         if feature_flag and feature_flag not in toggles.all_toggle_slugs():
             raise BadRequest(f"{feature_flag!r} is not a valid feature flag")
+        can_view_reports = request.GET.get("can_view_reports")
         couch_user = CouchUser.from_django_user(request.user)
         username = request.user.username
         results = []
@@ -799,6 +800,8 @@ class UserDomainsResource(CorsResourceMixin, Resource):
                 continue
             domain_object = Domain.get_by_name(domain)
             if feature_flag and feature_flag not in toggles.toggles_dict(username=username, domain=domain):
+                continue
+            if can_view_reports and not couch_user.can_view_reports(domain):
                 continue
             results.append(UserDomain(
                 domain_name=domain_object.name,
@@ -840,7 +843,7 @@ class DomainForms(Resource):
 
     class Meta(object):
         resource_name = 'domain_forms'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = Form
         include_resource_uri = False
         allowed_methods = ['get']
@@ -881,7 +884,7 @@ class DomainCases(Resource):
 
     class Meta(object):
         resource_name = 'domain_cases'
-        authentication = RequirePermissionAuthentication(Permissions.access_api)
+        authentication = RequirePermissionAuthentication(HqPermissions.access_api)
         object_class = CaseType
         include_resource_uri = False
         allowed_methods = ['get']
@@ -908,7 +911,7 @@ class DomainUsernames(Resource):
 
     class Meta(object):
         resource_name = 'domain_usernames'
-        authentication = RequirePermissionAuthentication(Permissions.view_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.view_commcare_users)
         object_class = User
         include_resource_uri = False
         allowed_methods = ['get']

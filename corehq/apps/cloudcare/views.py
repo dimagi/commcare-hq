@@ -122,7 +122,7 @@ class FormplayerMain(View):
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
         apps = [_format_app_doc(app) for app in apps]
-        apps = sorted(apps, key=lambda app: app['name'])
+        apps = sorted(apps, key=lambda app: app['name'].lower())
         return apps
 
     @staticmethod
@@ -160,7 +160,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
+                    response.set_cookie(cookie_name, user.raw_username)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])

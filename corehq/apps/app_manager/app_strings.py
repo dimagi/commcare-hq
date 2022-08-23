@@ -41,6 +41,17 @@ def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, fo
 
 
 def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=None):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     # build_profile_id is relevant only if for_default is true
 
     def trans(d):
@@ -185,6 +196,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for prop in module.search_config.properties:
                 yield id_strings.search_property_locale(module, prop.name), trans(prop.label)
                 yield id_strings.search_property_hint_locale(module, prop.name), trans(prop.hint)
+                if prop.required.test:
+                    yield id_strings.search_property_required_text(module, prop.name), trans(prop.required.text)
+                for i, validation in enumerate(prop.validations):
+                    if validation.has_text:
+                        yield (id_strings.search_property_validation_text(module, prop.name, i),
+                               trans(validation.text))
 
         if hasattr(module, 'referral_list'):
             if module.referral_list.show:

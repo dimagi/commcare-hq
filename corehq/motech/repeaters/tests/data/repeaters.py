@@ -8,7 +8,6 @@ repeater_test_data = [
         "base_doc": "Repeater",
         "white_listed_form_xmlns":
         [],
-        "notify_addresses_str": "",
         "started_at": "2021-01-07T09:06:47.177274Z",
         "connection_settings_id": 1
     },
@@ -27,7 +26,6 @@ repeater_test_data = [
         "doc_type": "AppStructureRepeater",
         "domain": "rtest",
         "base_doc": "Repeater",
-        "type": "AppStructureRepeater",
         "connection_settings_id": 1,
         "paused": False,
         "format": "app_structure_xml"
@@ -37,7 +35,6 @@ repeater_test_data = [
         "doc_type": "AppStructureRepeater",
         "domain": "rtest_a",
         "base_doc": "Repeater",
-        "type": "AppStructureRepeater",
         "connection_settings_id": 1,
         "paused": False,
         "format": "app_structure_xml",
@@ -73,7 +70,6 @@ repeater_test_data = [
         "domain": "rtest",
         "version": '1.0',
         "base_doc": "Repeater",
-        "type": "ShortFormRepeater",
         "connection_settings_id": 1,
         "paused": False,
         "started_at": "2021-01-07T09:06:47.280047Z",
@@ -83,7 +79,6 @@ repeater_test_data = [
         "domain": "rtest_a",
         "version": '1.0',
         "base_doc": "Repeater",
-        "type": "ShortFormRepeater",
         "connection_settings_id": 1,
         "paused": False,
         "started_at": "2021-01-07T09:06:47.280047Z",
@@ -1826,8 +1821,13 @@ repeater_test_data = [
             "doc_type": "OpenmrsConfig"
         },
         "atom_feed_enabled": False,
-        "atom_feed_status":
-        {},
+        "atom_feed_status": {
+            'patient': {
+                'last_polled_at': '2022-06-01T00:00:00.000000Z',
+                'last_page': None,
+                'doc_type': 'AtomFeedStatus'
+            }
+        },
         "doc_type": "OpenmrsRepeater",
         "version": "2.0",
         "white_listed_case_types":

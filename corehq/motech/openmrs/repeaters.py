@@ -225,6 +225,19 @@ class OpenmrsRepeater(CaseRepeater):
             "openmrs_config",
         ]
 
+    def _migration_sync_to_sql(self, sql_object):
+        for field_name in self._migration_get_fields():
+            value = getattr(self, field_name)
+            if hasattr(value, 'to_json'):
+                value = value.to_json()
+            if field_name == 'atom_feed_status':
+                value = {
+                    feed_name: feed.to_json()
+                    for feed_name, feed in self.atom_feed_status.items()
+                }
+            setattr(sql_object, field_name, value)
+        sql_object.save(sync_to_couch=False)
+
     @classmethod
     def _migration_get_sql_model_class(cls):
         return SQLOpenmrsRepeater
@@ -363,13 +376,16 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
+    def _wrap_schema_attrs(self, couch_object):
+        couch_object.openmrs_config = OpenmrsConfig.wrap(self.openmrs_config)
+        for feed in self.atom_feed_status.keys():
+            couch_object.atom_feed_status[feed] = AtomFeedStatus.wrap(self.atom_feed_status[feed])
+
     @classmethod
     def _migration_get_fields(cls):
         return super()._migration_get_fields() + [
             "location_id",
             "atom_feed_enabled",
-            "atom_feed_status",
-            "openmrs_config",
         ]
 
     @classmethod

@@ -11,8 +11,6 @@ from pillowtop.es_utils import (
     APP_HQ_INDEX_NAME,
     GROUP_HQ_INDEX_NAME,
     SMS_HQ_INDEX_NAME,
-    REPORT_CASE_HQ_INDEX_NAME,
-    REPORT_XFORM_HQ_INDEX_NAME,
     CASE_SEARCH_HQ_INDEX_NAME,
 )
 
@@ -40,8 +38,6 @@ class ProdIndexManagementTest(SimpleTestCase):
         DOMAIN_HQ_INDEX_NAME: {},
         GROUP_HQ_INDEX_NAME: {},
         USER_HQ_INDEX_NAME: {},
-        REPORT_CASE_HQ_INDEX_NAME: {},
-        REPORT_XFORM_HQ_INDEX_NAME: {},
         SMS_HQ_INDEX_NAME: {},
         XFORM_HQ_INDEX_NAME: {},
     })
@@ -201,52 +197,6 @@ EXPECTED_PROD_INDICES = [
                             "tokenizer": "whitespace",
                             "filter": ["lowercase"]
                         },
-                    }
-                }
-            }
-        }
-    },
-    {
-        "alias": "test_report_cases",
-        "hq_index_name": "report_cases",
-        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
-        "type": "report_case",
-        "meta": {
-            "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
-                "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    {
-        "alias": "test_report_xforms",
-        "hq_index_name": "report_xforms",
-        "index": "test_report_xforms_20160824_1708",
-        "type": "report_xform",
-        "meta": {
-            "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
-                "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
-                        }
                     }
                 }
             }

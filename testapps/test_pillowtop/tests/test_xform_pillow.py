@@ -97,6 +97,22 @@ class XFormPillowTest(TestCase):
         results = FormES().run()
         self.assertEqual(0, results.total)
 
+    def test_form_hard_deletion(self):
+        form, metadata = self._create_form_and_sync_to_es()
+
+        # verify there
+        results = FormES().run()
+        self.assertEqual(1, results.total)
+
+        # soft delete the form
+        with self.process_form_changes:
+            XFormInstance.objects.hard_delete_forms(self.domain, [form.form_id])
+        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+
+        # ensure not there anymore
+        results = FormES().run()
+        self.assertEqual(0, results.total)
+
     @override_settings(USER_REPORTING_METADATA_BATCH_ENABLED=False)
     def test_app_metadata_tracker_non_batch(self):
         form, metadata = self._create_form_and_sync_to_es()

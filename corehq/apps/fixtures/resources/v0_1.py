@@ -16,7 +16,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureTypeField,
 )
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 def convert_fdt(fdi):
@@ -67,7 +67,7 @@ class FixtureResource(CouchResourceMixin, HqBaseResource):
         return [convert_fdt(fdi) for fdi in fdis] or []
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_apps)
         object_class = FixtureDataItem
         resource_name = 'fixture'
         limit = 0
@@ -80,7 +80,7 @@ class InternalFixtureResource(FixtureResource):
         return Resource.dispatch(self, request_type, request, **kwargs)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps, allow_session_auth=True)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_apps, allow_session_auth=True)
         object_class = FixtureDataItem
         resource_name = 'fixture_internal'
         limit = 0

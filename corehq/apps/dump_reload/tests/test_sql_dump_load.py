@@ -362,7 +362,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         self._dump_and_load(expected_object_counts)
 
     def test_dump_roles(self):
-        from corehq.apps.users.models import UserRole, Permissions, RoleAssignableBy, RolePermission
+        from corehq.apps.users.models import UserRole, HqPermissions, RoleAssignableBy, RolePermission
 
         expected_object_counts = Counter({
             UserRole: 2,
@@ -373,7 +373,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         role1 = UserRole.create(self.domain_name, 'role1')
         role2 = UserRole.create(
             self.domain_name, 'role1',
-            permissions=Permissions(edit_web_users=True),
+            permissions=HqPermissions(edit_web_users=True),
             assignable_by=[role1.id]
         )
         self.addCleanup(role1.delete)
@@ -384,9 +384,9 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         role1_loaded = UserRole.objects.get(id=role1.id)
         role2_loaded = UserRole.objects.get(id=role2.id)
 
-        self.assertEqual(role1_loaded.permissions.to_list(), Permissions().to_list())
+        self.assertEqual(role1_loaded.permissions.to_list(), HqPermissions().to_list())
         self.assertEqual(role1_loaded.assignable_by, [])
-        self.assertEqual(role2_loaded.permissions.to_list(), Permissions(edit_web_users=True).to_list())
+        self.assertEqual(role2_loaded.permissions.to_list(), HqPermissions(edit_web_users=True).to_list())
         self.assertEqual(role2_loaded.assignable_by, [role1_loaded.get_id])
 
     def test_device_logs(self):
@@ -734,6 +734,18 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
         self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
+
+    def test_lookup_table(self):
+        from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
+        table = LookupTable.objects.create(domain=self.domain_name, tag="dump-load")
+        row = LookupTableRow.objects.create(domain=self.domain_name, table_id=table.id, sort_key=0)
+        LookupTableRowOwner.objects.create(
+            domain=self.domain_name,
+            row_id=row.id,
+            owner_type=OwnerType.User,
+            owner_id="abc",
+        )
+        self._dump_and_load(Counter({LookupTable: 1, LookupTableRow: 1, LookupTableRowOwner: 1}))
 
 
 @mock.patch("corehq.apps.dump_reload.sql.load.ENQUEUE_TIMEOUT", 1)

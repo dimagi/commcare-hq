@@ -58,33 +58,28 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    #- nh/loadtest_demo_users+akj/mw-signup+ml/dhis2-error-handling # Akash May 25
-    #- akj/mw-signup+ml/dhis2-error-handling # Akash May 25
-    - cs/SC-1945-ability-to-add-filter-to-rules # Charl April 26
-    - cs/SC-1789_webusers_domain_memberships_assigned_location_ids # Charl May 9
     - mjr/all_safe_fixes  # Matt May 11
-#    - mjr/odata_enterprise_report # Matt May 23
-    #- akj/mw-signup # Akash May 25
-    # - gh/upgrade-twilio # Graham May 31
-    - cs/SC-1821-script_for_sizing_model_params # June 2
-    - ap/celery-upgrade-patch+dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
-    - ap/celery-upgrade-patch # Amit June 1
-    - dependabot/pip/requirements/prometheus-client-0.14.1 # Graham June 7
-    - ml/dhis2-better-errors # Minha June 9
-    - ad/tableau-request-client-IP # Addison June 14
-    - rc/case-id-download-from-mult-domains # Robert June 15
     - bmb/sso/api/test-001  # Biyeun June 15
-    - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth+cs/SC-1945-ability-to-add-filter-to-rules # Jenny June 21
-    - ml/all-in-one-offboarding+sk/rename-permission-classes+es/mobile-auth
-    - ml/all-in-one-offboarding+sk/rename-permission-classes
-    - es/mobile-auth+sk/rename-permission-classes
-    - es/mobile-auth  # Simon Nov 23
-    - ml/all-in-one-offboarding  # Minha April 13
-    - sk/rename-permission-classes
-    - cs/fix-case-owner-location-parent # Charl Jun 20
-    - dm/lookup-table-uploader # Daniel Jun 20
-    - jls/domain-setting-sync-case-search-es-on-submit # Jenny June 21
-    - akj/call-limit-settings # Akash June 22
-    - ad/multi-select-auto-launch # Addison/Jenny June 22
-    #- smh/tableau-loading-ui # Steph June 22
+    - mjr/erm-overwrite # Matt June 24
+    - ad/save-only-edited-fields-migration # Addison July 7
+    - gh/upgrade-twilio # Graham July 8
+   # - rp/fix-case-properties-modal-styling # Rynhard 20 July
+    - mjr/report-logging+celery-upgrade-patch # Matt July 20
+    - mjr/report-logging-verification # Matt July 20
+    - dm/sql-lookup-tables-pr1  # Daniel July 21
+    - cs/SC-2079-form-view-ff # Charl July 25
+    - ml/limit-superuser-changes # Minha July 25
+    - es/required-2  # Ethan July 29
+    # - rc/es-phonetic-analyzer # Robert Aug 4
+    - cs/missing-location-filter-definition # Charl Aug 5
+    - do/web-user-restore # Dominic Aug 8
+    - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
+    - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
+    - jc/USH-1371  # Jing/Joel Aug 16
+    - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
+    - bmb/upgrade-django-compressor-4.1  # Biyeun Aug 22 (impacts all static files / css)
+    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
+    - ad/remove-entered-wrap-functions # Addison Aug 22
+    - jls/datetimepicker-fixes  # Jenny Aug 23
+    - ce/api-rate-limits # Cal Aug 23
 submodules: { }

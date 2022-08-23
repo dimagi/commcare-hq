@@ -55,8 +55,9 @@ from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISION
 
 from .audit.change_messages import UserChangeMessage
 from .dbaccessors import user_exists
-from .models import DeactivateMobileWorkerTrigger, UserRole
+from .models import DeactivateMobileWorkerTrigger, UserRole, CouchUser
 from .util import cc_user_domain, format_username, log_user_change
+from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -583,6 +584,12 @@ class SetUserPasswordForm(SetPasswordForm):
             return clean_password(password1)
         return password1
 
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        couch_user = CouchUser.from_django_user(self.user)
+        clear_login_attempts(couch_user)
+        return user
+
 
 class CommCareAccountForm(forms.Form):
     """
@@ -733,13 +740,19 @@ class NewMobileWorkerForm(forms.Form):
     phone_number = forms.CharField(
         required=False,
         label=gettext_noop("Phone Number"),
-        help_text="""
-            <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
-                <i class="fa fa-exclamation-triangle"
-                   data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
-                <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
-            </span>
-        """
+        help_text=gettext_noop(
+            """
+            <div data-bind="visible: $root.phoneStatusMessage().length === 0">
+                    Please enter number including country code, without (+) and in digits only.
+            </div>
+            <div id="phone-error">
+                <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
+                    <i class="fa fa-exclamation-triangle"
+                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
+                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
+                </span>
+            </div>
+        """)
     )
 
     def __init__(self, project, request_user, *args, **kwargs):
@@ -904,7 +917,12 @@ class NewMobileWorkerForm(forms.Form):
                                         {almost}
                                     <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {weak}
+                                        <!-- ko ifnot: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {short}
+                                        <!-- /ko -->
+                                        <!-- ko if: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {weak}
+                                        <!-- /ko -->
                                     <!-- /ko -->
                                 <!-- /ko -->
 
@@ -934,6 +952,8 @@ class NewMobileWorkerForm(forms.Form):
                             disabled_phone=_("Setting a password is disabled. "
                                             "The user will set their own password on confirming "
                                             "their account phone number."),
+                            short=_("Password must have at least {password_length} characters."
+                                    ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),

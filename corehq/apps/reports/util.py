@@ -174,7 +174,8 @@ class SimplifiedUserInfo(
         ))):
 
     ES_FIELDS = [
-        '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
+        '_id', 'domain', 'username', 'first_name', 'last_name',
+        'doc_type', 'is_active', 'location_id', '__group_ids'
     ]
 
     @property

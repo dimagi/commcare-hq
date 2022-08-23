@@ -283,6 +283,8 @@ data_interfaces
  0025_domaincaserulerun_num_errors
  0026_automaticupdaterule_criteria_operator
  0027_auto_20220511_2017
+ 0028_auto_20220420_1301
+ 0029_locationfilterdefinition_include_child_locations
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -300,6 +302,14 @@ django_celery_results
  0001_initial
  0002_add_task_name_args_kwargs
  0003_auto_20181106_1101
+ 0004_auto_20190516_0412
+ 0005_taskresult_worker
+ 0006_taskresult_date_created
+ 0007_remove_taskresult_hidden
+ 0008_chordcounter
+ 0009_groupresult
+ 0010_remove_duplicate_indices
+ 0011_taskresult_periodic_task_name
 django_digest
  0001_initial
 django_prbac
@@ -316,6 +326,8 @@ domain
  0009_restrict_mob_access_from_FF
  0010_projectlimit
  0011_alloweducrexpressionsettings
+ 0012_operatorcalllimitsettings
+ 0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
@@ -357,6 +369,7 @@ fixtures
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
  0004_userlookuptablestatus
+ 0005_lookuptablemodels
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -486,6 +499,7 @@ hqwebapp
  0006_create_user_access_log
  0007_user_access_agent
  0008_hqoauthapplication
+ 0009_truncate_authtoken_table
 integration
  0001_initial
  0002_dialersettings
@@ -634,6 +648,7 @@ pillowtop
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
+ 0007_copy_xforms_checkpoint
 products
  0001_initial
 project_limits
@@ -672,6 +687,7 @@ reports
  0006_remove_tableauserver_allow_domain_username_override
  0007_tableauvisualization_upstream_id
  0008_tableauvisualization_title
+ 0009_remove_tableauserver_domain_username
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1029,6 +1045,7 @@ users
  0044_userrole_is_commcare_user_default
  0045_add_view_tableau_permission
  0046_add_default_mobile_worker_role
+ 0047_rename_sqlpermission_permission
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail

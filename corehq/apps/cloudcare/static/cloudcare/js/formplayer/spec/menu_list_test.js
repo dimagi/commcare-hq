@@ -68,6 +68,8 @@ describe('Render a case list', function () {
         beforeEach(function () {
             window.gettext = sinon.spy();
 
+            sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
+
             FormplayerFrontend.regions = {
                 getRegion: function (name) {
                     return {
@@ -100,6 +102,7 @@ describe('Render a case list', function () {
         afterEach(function () {
             server.restore();
             clock.restore();
+            Backbone.history.getFragment.restore();
         });
 
         it('Should execute an async restore using sync db', function () {

@@ -18,7 +18,7 @@ from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.repeaters.forms import GenericRepeaterForm
 from corehq.motech.repeaters.views import AddRepeaterView, EditRepeaterView
 from corehq.util.json import CommCareJSONEncoder
@@ -37,7 +37,7 @@ from .repeaters import Dhis2EntityRepeater, Dhis2Repeater
 from .tasks import send_dataset
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     urlname = 'dataset_map_list_view'
@@ -114,7 +114,7 @@ class DataSetMapListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         return self.paginate_crud_response
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonCreateView(BaseProjectSettingsView):
     urlname = 'dataset_map_json_create_view'
@@ -132,7 +132,7 @@ class DataSetMapJsonCreateView(BaseProjectSettingsView):
         return JsonResponse({'success': _('DataSet map updated successfully.')})
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator(), name='dispatch')
 class DataSetMapJsonEditView(BaseProjectSettingsView):
     urlname = 'dataset_map_json_edit_view'
@@ -199,7 +199,7 @@ class DataSetMapCreateView(BaseCreateView, BaseProjectSettingsView):
     model = SQLDataSetMap
     form_class = DataSetMapForm
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
@@ -232,7 +232,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
     empty_notification = _('This DataSet Map has no DataValue Maps')
     loading_message = _('Loading DataValue Maps')
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.DHIS2_INTEGRATION.required_decorator())
     @use_jquery_ui  # for datepicker
     def dispatch(self, request, *args, **kwargs):
@@ -360,7 +360,7 @@ class DataSetMapUpdateView(BaseUpdateView, BaseProjectSettingsView,
 
 
 @require_POST
-@require_permission(Permissions.edit_motech)
+@require_permission(HqPermissions.edit_motech)
 def send_dataset_now(request, domain, pk):
     dataset_map = SQLDataSetMap.objects.get(domain=domain, pk=pk)
     send_date = datetime.utcnow().date()
@@ -380,20 +380,18 @@ def config_dhis2_repeater(request, domain, repeater_id):
             data = form.cleaned_data
             repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
             repeater.save()
-
+            return JsonResponse({'success': _('DHIS2 Anonymous Events configuration saved')})
+        else:
+            errors = [err for errlist in form.errors.values() for err in errlist]
+            return JsonResponse({'errors': errors}, status=400)
     else:
         form_configs = json.dumps([
             form_config.to_json() for form_config in repeater.dhis2_config.form_configs
         ])
-        form = Dhis2ConfigForm(
-            data={
-                'form_configs': form_configs,
-            }
-        )
-    return render(request, 'dhis2/edit_config.html', {
+    return render(request, 'dhis2/dhis2_events_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
-        'form': form
+        'form_configs': form_configs
     })
 
 

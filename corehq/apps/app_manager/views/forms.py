@@ -120,7 +120,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
 
 
@@ -266,12 +266,22 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 
 @no_conflict_require_POST
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
 
     ajax = json.loads(request.POST.get('ajax', 'true'))
     resp = {}
@@ -536,7 +546,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
@@ -654,6 +664,17 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
 
 
 def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     xform_questions = []
     xform = None
     form_errors = []

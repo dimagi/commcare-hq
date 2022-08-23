@@ -2,7 +2,7 @@
 from django.db import migrations
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.role_utils import UserRolePresets
 from corehq.util.django_migrations import skip_on_fresh_install
@@ -17,7 +17,7 @@ def _add_default_mobile_worker_role(apps, schema_editor):
             UserRole.create(
                 domain,
                 UserRolePresets.MOBILE_WORKER,
-                permissions=Permissions(),
+                permissions=HqPermissions(),
                 is_commcare_user_default=True,
             )
 

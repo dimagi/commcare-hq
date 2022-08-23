@@ -5,7 +5,6 @@ from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from unittest.mock import patch
 
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.exceptions import RestoreException
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex, CaseFactory
@@ -14,6 +13,7 @@ from casexml.apps.phone.utils import get_restore_config, MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
@@ -118,7 +118,7 @@ class DeprecatedBaseSyncTest(BaseSyncTest):
         super(DeprecatedBaseSyncTest, self).setUp()
         self.sync_log = self.device.last_sync.log
         self.factory = self.device.case_factory
-        self.factory.form_extras = {
+        self.factory.submission_extras = {
             'last_sync_token': self.sync_log._id,
         }
 
@@ -671,7 +671,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self.device.post_changes(create=True, case_id=parent_id)
         case_id = uuid.uuid4().hex
         case_xml = self.device.case_factory.get_case_block(
-            case_id, create=True, close=True)
+            case_id, create=True, close=True).as_xml()
         # hackily insert an <index> block after the close
         index_wrapper = ElementTree.Element('index')
         index_elem = ElementTree.Element('parent')
@@ -680,7 +680,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
         index_elem.text = parent_id
         index_wrapper.append(index_elem)
         case_xml.append(index_wrapper)
-        self.device.case_blocks.append(case_xml)
+
+        class FakeBlock:
+            def as_text(self):
+                return ElementTree.tostring(case_xml, encoding='unicode')
+
+        self.device.case_blocks.append(FakeBlock())
         self.device.post_changes()
         sync_log = self.device.last_sync.get_log()
         # before this test was written, the case stayed on the sync log even though it was closed
@@ -1184,13 +1189,13 @@ class SyncTokenCachingTest(BaseSyncTest):
         # posting a case associated with this sync token should invalidate the cache
         # submitting a case not with the token will not touch the cache for that token
         case_id = "cache_noninvalidation"
-        post_case_blocks([CaseBlock(
+        submit_case_blocks([CaseBlock(
             create=True,
             case_id=case_id,
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             case_type=PARENT_TYPE,
-        ).as_xml()])
+        ).as_text()], TEST_DOMAIN_NAME)
         self.device.last_sync = sync0
         sync2 = self.device.sync(version=V2)
         self.assertEqual(sync1.payload, sync2.payload)
@@ -1923,10 +1928,10 @@ class LooseSyncTokenValidationTest(BaseSyncTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
         # this is just asserting that an exception is not raised when there's no synclog
-        post_case_blocks(
-            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_xml()],
-            form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
-            domain='submission-domain-with-toggle',
+        submit_case_blocks(
+            [CaseBlock(create=True, case_id='bad-log-toggle-enabled').as_text()],
+            'submission-domain-with-toggle',
+            submission_extras={"last_sync_token": 'not-a-valid-synclog-id'},
         )
 
     def test_restore_with_bad_log_toggle_enabled(self):
@@ -1972,3 +1977,106 @@ class IndexSyncTest(BaseSyncTest):
         self.assertEqual(set(sync.cases), {child_id, parent_id, other_parent_id})
         self.assertIn(branch_index, sync.cases[child_id].index)
         self.assertIn(wave_index, sync.cases[child_id].index)
+
+
+class TestUpdatesToSynclog(BaseSyncTest):
+    @classmethod
+    def setUpClass(cls):
+        super(TestUpdatesToSynclog, cls).setUpClass()
+        cls.other_user = create_restore_user(
+            cls.project.name,
+            username=OTHER_USERNAME,
+        )
+
+    def _create_cases(self):
+        """
+        host <--ext-- claim (owned) >> host, client, claim
+             <--ext-- client
+        """
+
+        host = CaseStructure(case_id='host',
+                             attrs={'create': True, 'owner_id': 'other_user'})
+        claim = CaseStructure(
+            case_id='claim',
+            attrs={'create': True, 'owner_id': self.device.user_id},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+        )
+        client = CaseStructure(
+            case_id='client',
+            attrs={'create': True, 'owner_id': 'other_user'},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+            walk_related=False
+        )
+        self.device.change_cases([claim, client])
+        self.device.sync()
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_remove_index(self):
+        self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+
+        # remove the index on 'client'
+        # this should result in the 'client' case being purged since it is not owned
+        # and is no longer an extension case of host
+        self.device.change_cases([
+            CaseBlock(case_id='client', index={
+                'idx': ('case_type', '')
+            }),
+        ])
+
+        self.device.post_changes()
+
+        # changes to the case should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases(CaseBlock(case_id="client", update={"name": "edit"}))
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertNotIn("client", result.cases)
+
+        # claiming the case again should result in it being synced to the device
+        ferrel.change_cases(CaseBlock(case_id="claim2", owner_id=self.user_id, create=True, index={
+            "host": ("client", "client")
+        }))
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertIn("client", result.cases)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_close_host(self):
+        self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+
+        # closing the host case should remove the host and claim case from the phone
+        self.device.change_cases([
+            CaseBlock(case_id='host', close=True),
+        ])
+
+        self.device.post_changes()
+
+        # changes to the cases should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases([
+            CaseBlock(case_id="host", update={"name": "edit"}),
+            CaseBlock(case_id="claim", update={"name": "edit"}),
+        ])
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertNotIn("host", result.cases)
+        self.assertNotIn("claim", result.cases)
