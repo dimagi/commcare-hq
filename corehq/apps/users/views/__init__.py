@@ -512,7 +512,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return list(sorted(
             [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
             key=lambda role: role.name if role.name else '\uFFFF'
-        ))
+        )) + [UserRole.commcare_user_default(self.domain)]
 
     def get_roles_for_display(self):
         show_es_issue = False
@@ -521,12 +521,15 @@ class BaseRoleAccessView(BaseUserSettingsView):
             role_data = role.to_json()
             role_view_data.append(role_data)
 
-            try:
-                user_count = get_role_user_count(role.domain, role.couch_id)
-                role_data["hasUsersAssigned"] = bool(user_count)
-            except TypeError:
-                # when query_result['hits'] returns None due to an ES issue
-                show_es_issue = True
+            if role.is_commcare_user_default:
+                role_data["preventRoleDelete"] = True
+            else:
+                try:
+                    user_count = get_role_user_count(role.domain, role.couch_id)
+                    role_data["preventRoleDelete"] = bool(user_count)
+                except TypeError:
+                    # when query_result['hits'] returns None due to an ES issue
+                    show_es_issue = True
 
             role_data["has_unpermitted_location_restriction"] = (
                 not self.can_restrict_access_by_location
@@ -892,7 +895,7 @@ def post_user_role(request, domain):
 
     response_data = role.to_json()
     user_count = get_role_user_count(domain, role.couch_id)
-    response_data['hasUsersAssigned'] = user_count > 0
+    response_data['preventRoleDelete'] = user_count > 0
     return JsonResponse(response_data)
 
 
