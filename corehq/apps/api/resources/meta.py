@@ -9,30 +9,24 @@ from corehq.project_limits.rate_limiter import (
     PerUserRateDefinition,
     RateDefinition,
     RateLimiter,
-    get_dynamic_rate_definition,
 )
 from corehq.project_limits.shortcuts import get_standard_ratio_rate_definition
 from corehq.toggles import API_THROTTLE_WHITELIST
 
 
-
 api_rate_limiter = RateLimiter(
     feature_key='api',
-    get_rate_limits=lambda domain: _get_per_user_api_rate_definition(domain)
-)
-
-
-def _get_per_user_api_rate_definition(domain):
-    return PerUserRateDefinition(
+    get_rate_limits=PerUserRateDefinition(
         per_user_rate_definition=get_standard_ratio_rate_definition(events_per_day=1000),
         constant_rate_definition=RateDefinition(
-                per_week=100,
-                per_day=50,
-                per_hour=30,
-                per_minute=10,
-                per_second=1,
-            ),
-    ).get_rate_limits(domain)
+            per_week=100,
+            per_day=50,
+            per_hour=30,
+            per_minute=10,
+            per_second=1,
+        ),
+    ).get_rate_limits
+)
 
 
 def get_hq_throttle():
