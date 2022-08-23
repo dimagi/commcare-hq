@@ -320,8 +320,8 @@ def _create_case_list_form_app_strings(
 ):
     if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
         if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-            fallback_name = gettext("Continue To {form_name}".format(
-                form_name=clean_trans(app.get_form(module.case_list_form.form_id).name, langs)))
+            fallback_name = gettext("Continue To {form_name}").format(
+                form_name=clean_trans(app.get_form(module.case_list_form.form_id).name, langs))
         else:
             fallback_name = gettext("Create a new Case")
         yield (
