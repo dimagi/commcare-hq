@@ -4,6 +4,7 @@ describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Controls = hqImport("cloudcare/js/form_entry/entries"),
         UI = hqImport("cloudcare/js/form_entry/form_ui"),
+        Util = hqImport("cloudcare/js/util"),
         questionJSON,
         spy;
 
@@ -34,7 +35,7 @@ describe('Entries', function () {
         };
         spy = sinon.spy();
         $.subscribe('formplayer.' + Const.ANSWER, spy);
-        this.clock = sinon.useFakeTimers();
+        this.clock = sinon.useFakeTimers(new Date("2020-03-15 15:41").getTime());
     });
 
     afterEach(function () {
@@ -323,6 +324,13 @@ describe('Entries', function () {
         entry.answer('1987-11-19');
         this.clock.tick(1000);
         assert.isTrue(spy.calledOnce);
+    });
+
+    it('Should convert two-digit dates to four-digit dates', function () {
+        assert.equal(Util.convertTwoDigitYear("03-04-50"), "03-04-1950");
+        assert.equal(Util.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(Util.convertTwoDigitYear("3/4/1928"), "3/4/1928");
+        assert.equal(Util.convertTwoDigitYear("not-a-date"), "not-a-date");
     });
 
     it('Should return TimeEntry', function () {
