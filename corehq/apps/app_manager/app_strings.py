@@ -112,15 +112,12 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
         yield id_strings.module_locale(module), _maybe_add_index(clean_trans(module.name, langs), app)
 
-        icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
-        custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
-        if icon:
-            yield id_strings.module_icon_locale(module), icon
-        if audio:
-            yield id_strings.module_audio_locale(module), audio
-        if custom_icon_form and custom_icon_text:
-            yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
+        yield from _create_icon_audio_app_strings(
+            module,
+            lang,
+            for_default,
+            build_profile_id,
+        )
 
         yield from _create_report_configs_app_strings(app, module, lang, langs)
 
@@ -160,6 +157,25 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_icon_audio_app_strings(
+    module,
+    lang,
+    for_default,
+    build_profile_id,
+):
+    icon = module.icon_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+    if icon:
+        yield id_strings.module_icon_locale(module), icon
+
+    audio = module.audio_app_string(lang, for_default=for_default, build_profile_id=build_profile_id)
+    if audio:
+        yield id_strings.module_audio_locale(module), audio
+
+    custom_icon_form, custom_icon_text = module.custom_icon_form_and_text_by_language(lang)
+    if custom_icon_form and custom_icon_text:
+        yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
 
 
 def _create_report_configs_app_strings(app, module, lang, langs):
