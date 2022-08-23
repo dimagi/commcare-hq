@@ -1388,7 +1388,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        if not has_privilege(request, privileges.DEV_SUPPORT_TEAM):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
             return HttpResponseRedirect(
                 reverse(
                     SMSAdminInterfaceDispatcher.name(),
@@ -1542,7 +1542,7 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        if not has_privilege(request, privileges.DEV_SUPPORT_TEAM):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
             return HttpResponseRedirect(reverse("no_permissions"))
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
