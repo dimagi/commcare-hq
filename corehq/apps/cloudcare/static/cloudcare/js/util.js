@@ -1,4 +1,4 @@
-/* global NProgress */
+/* global moment, NProgress */
 hqDefine('cloudcare/js/util', [
     'jquery',
     'hqwebapp/js/initial_page_data',
@@ -357,10 +357,8 @@ hqDefine('cloudcare/js/util', [
             return superParseInputDate(inputDate);
         });
 
-        el.on("focusout", function (e) {
-            if (picker) {
-                picker.hide();
-            }
+        el.on("focusout", function () {
+            picker.hide();
         });
     };
 
