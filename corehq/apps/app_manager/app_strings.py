@@ -75,40 +75,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     yield id_strings.current_language(), lang
 
     for module in app.get_modules():
-        for detail_type, detail, _ in module.get_details():
-            for column in detail.get_columns():
-                yield id_strings.detail_column_header_locale(module, detail_type, column), clean_trans(column.header, langs)
-
-                if column.format in ('enum', 'enum-image', 'conditional-enum'):
-                    for item in column.enum:
-                        yield id_strings.detail_column_enum_variable(
-                            module, detail_type, column, item.key_as_variable
-                        ), clean_trans(item.value, langs)
-                elif column.format == "graph":
-                    for index, item in enumerate(column.graph_configuration.annotations):
-                        yield id_strings.graph_annotation(module, detail_type, column, index), clean_trans(item.values, langs)
-                    for property, values in column.graph_configuration.locale_specific_config.items():
-                        yield id_strings.graph_configuration(module, detail_type, column, property), clean_trans(values, langs)
-                    for index, item in enumerate(column.graph_configuration.series):
-                        for property, values in item.locale_specific_config.items():
-                            yield id_strings.graph_series_configuration(
-                                module, detail_type, column, index, property
-                            ), clean_trans(values, langs)
-
-            # To list app strings for properties used as sorting properties only
-            if detail.sort_elements:
-                sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
-                for field, sort_element, order in sort_only:
-                    if sort_element.has_display_values():
-                        column = create_temp_sort_column(sort_element, order)
-                        yield id_strings.detail_column_header_locale(module, detail_type, column), \
-                            clean_trans(column.header, langs)
-
-            for tab in detail.get_tabs():
-                yield id_strings.detail_tab_title_locale(module, detail_type, tab), clean_trans(tab.header, langs)
-
-            if getattr(detail, 'lookup_display_results'):
-                yield id_strings.callout_header_locale(module), clean_trans(detail.lookup_field_header, langs)
+        yield from _create_module_details_app_strings(module, langs)
 
         yield id_strings.module_locale(module), _maybe_add_index(clean_trans(module.name, langs), app)
 
@@ -157,6 +124,46 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_module_details_app_strings(module, langs):
+    for detail_type, detail, _ in module.get_details():
+        for column in detail.get_columns():
+            yield id_strings.detail_column_header_locale(module, detail_type, column), clean_trans(column.header,
+                                                                                                   langs)
+
+            if column.format in ('enum', 'enum-image', 'conditional-enum'):
+                for item in column.enum:
+                    yield id_strings.detail_column_enum_variable(
+                        module, detail_type, column, item.key_as_variable
+                    ), clean_trans(item.value, langs)
+            elif column.format == "graph":
+                for index, item in enumerate(column.graph_configuration.annotations):
+                    yield id_strings.graph_annotation(module, detail_type, column, index), clean_trans(item.values,
+                                                                                                       langs)
+                for property, values in column.graph_configuration.locale_specific_config.items():
+                    yield id_strings.graph_configuration(module, detail_type, column, property), clean_trans(
+                        values, langs)
+                for index, item in enumerate(column.graph_configuration.series):
+                    for property, values in item.locale_specific_config.items():
+                        yield id_strings.graph_series_configuration(
+                            module, detail_type, column, index, property
+                        ), clean_trans(values, langs)
+
+        # To list app strings for properties used as sorting properties only
+        if detail.sort_elements:
+            sort_only, sort_columns = get_sort_and_sort_only_columns(detail.get_columns(), detail.sort_elements)
+            for field, sort_element, order in sort_only:
+                if sort_element.has_display_values():
+                    column = create_temp_sort_column(sort_element, order)
+                    yield id_strings.detail_column_header_locale(module, detail_type, column), \
+                          clean_trans(column.header, langs)
+
+        for tab in detail.get_tabs():
+            yield id_strings.detail_tab_title_locale(module, detail_type, tab), clean_trans(tab.header, langs)
+
+        if getattr(detail, 'lookup_display_results'):
+            yield id_strings.callout_header_locale(module), clean_trans(detail.lookup_field_header, langs)
 
 
 def _create_icon_audio_app_strings(
