@@ -143,17 +143,13 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
                                 module, config.uuid, index, property
                             ), clean_trans(values, langs)
 
-        if hasattr(module, 'case_list'):
-            if module.case_list.show:
-                yield id_strings.case_list_locale(module), clean_trans(module.case_list.label, langs) or "Case List"
-                icon = module.case_list.icon_app_string(lang, for_default=for_default,
-                                                        build_profile_id=build_profile_id)
-                audio = module.case_list.audio_app_string(lang, for_default=for_default,
-                                                          build_profile_id=build_profile_id)
-                if icon:
-                    yield id_strings.case_list_icon_locale(module), icon
-                if audio:
-                    yield id_strings.case_list_audio_locale(module), audio
+        yield from _create_case_list_app_strings(
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
 
         yield from _create_search_app_strings(
             app,
@@ -183,6 +179,26 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for_default,
             build_profile_id,
         )
+
+
+def _create_case_list_app_strings(
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if hasattr(module, 'case_list'):
+        if module.case_list.show:
+            yield id_strings.case_list_locale(module), clean_trans(module.case_list.label, langs) or "Case List"
+            icon = module.case_list.icon_app_string(lang, for_default=for_default,
+                                                    build_profile_id=build_profile_id)
+            audio = module.case_list.audio_app_string(lang, for_default=for_default,
+                                                      build_profile_id=build_profile_id)
+            if icon:
+                yield id_strings.case_list_icon_locale(module), icon
+            if audio:
+                yield id_strings.case_list_audio_locale(module), audio
 
 
 def _create_search_app_strings(
