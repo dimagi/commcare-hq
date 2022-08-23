@@ -213,24 +213,42 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             for id, custom_assertion in enumerate(form.custom_assertions):
                 yield id_strings.custom_assertion_locale(module, form, id), clean_trans(custom_assertion.text, langs)
 
-        if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
-            if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
-                fallback_name = gettext("Continue To {form_name}".format(
-                    form_name=clean_trans(app.get_form(module.case_list_form.form_id).name, langs)))
-            else:
-                fallback_name = gettext("Create a new Case")
-            yield (
-                id_strings.case_list_form_locale(module),
-                clean_trans(module.case_list_form.label, langs) or fallback_name
-            )
-            icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
-                                                         build_profile_id=build_profile_id)
-            audio = module.case_list_form.audio_app_string(lang, for_default=for_default,
-                                                           build_profile_id=build_profile_id)
-            if icon:
-                yield id_strings.case_list_form_icon_locale(module), icon
-            if audio:
-                yield id_strings.case_list_form_audio_locale(module), audio
+        yield from _create_case_list_form_app_strings(
+            app,
+            module,
+            lang,
+            langs,
+            for_default,
+            build_profile_id,
+        )
+
+
+def _create_case_list_form_app_strings(
+    app,
+    module,
+    lang,
+    langs,
+    for_default,
+    build_profile_id,
+):
+    if hasattr(module, 'case_list_form') and module.case_list_form.form_id:
+        if toggles.FOLLOWUP_FORMS_AS_CASE_LIST_FORM.enabled(app.domain):
+            fallback_name = gettext("Continue To {form_name}".format(
+                form_name=clean_trans(app.get_form(module.case_list_form.form_id).name, langs)))
+        else:
+            fallback_name = gettext("Create a new Case")
+        yield (
+            id_strings.case_list_form_locale(module),
+            clean_trans(module.case_list_form.label, langs) or fallback_name
+        )
+        icon = module.case_list_form.icon_app_string(lang, for_default=for_default,
+                                                     build_profile_id=build_profile_id)
+        audio = module.case_list_form.audio_app_string(lang, for_default=for_default,
+                                                       build_profile_id=build_profile_id)
+        if icon:
+            yield id_strings.case_list_form_icon_locale(module), icon
+        if audio:
+            yield id_strings.case_list_form_audio_locale(module), audio
 
 
 def _maybe_add_index(text, app):
