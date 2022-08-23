@@ -70,7 +70,7 @@ branches:
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
     - es/required-2  # Ethan July 29
-    # - rc/es-phonetic-analyzer # Robert Aug 4
+    - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
