@@ -95,6 +95,7 @@ from corehq.apps.users.models import (
     CouchUser,
     DeactivateMobileWorkerTrigger,
 )
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -311,7 +312,9 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return [('none', _('(none)'))] + self.editable_role_choices
+        role_choices = self.editable_role_choices
+        default_role = UserRole.commcare_user_default(self.domain)
+        return [(default_role.get_qualified_id(), default_role.name or _('Default Role'))] + role_choices
 
     @property
     @memoized
