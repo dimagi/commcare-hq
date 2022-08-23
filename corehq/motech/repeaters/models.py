@@ -1706,7 +1706,7 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return SQLRepeater.objects.get(self.repeater_id)
+            return SQLRepeater.objects.get(repeater_id=self.repeater_id)
         except SQLRepeater.DoesNotExist:
             return None
 
