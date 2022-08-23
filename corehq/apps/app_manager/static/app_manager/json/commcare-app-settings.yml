@@ -158,8 +158,8 @@
   name: Modules Menu Display
   description: Display root menu as a list or grid. Read more on the <a target="_blank" href="https://help.commcarehq.org/display/commcarepublic/Grid+View+for+Form+and+Module+Screens">Help Site</a>.
   values:
-    - ['false', 'List']
-    - ['true', 'Grid']
+    - [false, 'List']
+    - [true, 'Grid']
   default: false
   since: "2.24"
 
