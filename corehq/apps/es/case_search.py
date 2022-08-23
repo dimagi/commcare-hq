@@ -139,7 +139,7 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
+    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-08-23")
     type = ElasticCase.type
 
     @property
