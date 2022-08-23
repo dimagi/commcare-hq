@@ -906,7 +906,10 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {
