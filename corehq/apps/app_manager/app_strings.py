@@ -41,17 +41,6 @@ def _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, fo
 
 
 def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=None):
-    # HELPME
-    #
-    # This method has been flagged for refactoring due to its complexity and
-    # frequency of touches in changesets
-    #
-    # If you are writing code that touches this method, your changeset
-    # should leave the method better than you found it.
-    #
-    # Please remove this flag when this method no longer triggers an 'E' or 'F'
-    # classification from the radon code static analysis
-
     # build_profile_id is relevant only if for_default is true
 
     yield id_strings.homescreen_title(), app.name
