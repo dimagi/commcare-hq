@@ -72,7 +72,7 @@ branches:
     - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
-    - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
+    # - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
     - bmb/upgrade-django-compressor-4.1  # Biyeun Aug 22 (impacts all static files / css)
