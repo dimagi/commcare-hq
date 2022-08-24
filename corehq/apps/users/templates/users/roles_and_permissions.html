@@ -125,12 +125,10 @@
           <th>
             <span data-bind="visible: name, text: name"></span>
             <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
-            <p data-bind="visible: is_commcare_user_default">
-              <span class='hq-help-template'
+            <span data-bind="visible: is_commcare_user_default, makeHqHelp: {}"
                 data-title="{% trans "Mobile Worker Default Role" %}"
-                data-content="{% trans "This is the default role for all Mobile Workers that do not have a role assigned" %}">
-              </span>
-            </p>
+                data-content="{% trans "This is the default role for all Mobile Workers that do not have a role assigned." %}">
+            </span>
           </th>
           <td class="text-center">
             <div data-bind="visible: permissions.access_all_locations,
