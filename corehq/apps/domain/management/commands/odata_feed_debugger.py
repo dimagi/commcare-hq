@@ -51,7 +51,7 @@ class Command(BaseCommand):
                 # truncate labels for PowerBI and Tableau limits
                 if len(column.label) >= 255:
                     column.label = column.label[:255]
-                if column.label in ['formid']:
+                if column.label in ['formid'] and column.is_deleted:
                     column.label = f"{column.label}_deleted"
                     print("\n\nremove this column\n")
                     print(column)
