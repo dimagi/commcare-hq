@@ -36,9 +36,6 @@ class AppMigrationCommandBase(BaseCommand):
     chunk_size = 100
     include_builds = False
     include_linked_apps = False
-    # Overwrite these to avoid conflicting naming with another managment command.
-    DOMAIN_LIST_FILENAME = "app_migration_command_domain_list.txt"
-    DOMAIN_PROGRESS_NUMBER_FILENAME = "app_migration_command_domain_progress.txt"
 
     options = {}
 
@@ -71,6 +68,8 @@ class AppMigrationCommandBase(BaseCommand):
     def handle(self, **options):
         start_time = time()
         self.options = options
+        self.set_filenames()
+
         if self.options['domain']:
             domains = [self.options['domain']]
             domain_list_position = 0
@@ -103,10 +102,6 @@ class AppMigrationCommandBase(BaseCommand):
     def log_debug(self):
         return self.options.get("verbosity", 0) > 2
 
-    @property
-    def restartable(self):
-        return self.options.get('restartable', False)
-
     def _doc_types(self):
         doc_types = ["Application", "Application-Deleted"]
         if self.include_linked_apps:
@@ -131,7 +126,7 @@ class AppMigrationCommandBase(BaseCommand):
             version = app_doc['version']
         except KeyError:
             return
-        if copy_of and version:
+        if not copy_of and version:
             app_doc['version'] = version + 1
         return app_doc
 
@@ -145,26 +140,30 @@ class AppMigrationCommandBase(BaseCommand):
         """Return the app dict if the doc is to be saved else None"""
         raise NotImplementedError()
 
+    def set_filenames(self):
+        self.domain_list_filename = __class__.__name__ + "app_migration_command_domain_list.txt"
+        self.domain_progress_number_filenane = __class__.__name__ + "app_migration_command_domain_progress.txt"
+
     def increment_progress(self, domain_list_position):
         logger.info(f"Migrated domain #{domain_list_position}")
         domain_list_position += 1
-        with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
+        with open(self.domain_progress_number_filenane, 'w') as f:
             f.write(str(domain_list_position))
         return domain_list_position
 
     def store_domain_list(self, domains):
-        with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
+        with open(self.domain_list_filename, 'w') as f:
             f.writelines(f'{domain}\n' for domain in domains)
 
     def try_to_continue_progress(self):
         if not self.options['start_from_scratch']:
             try:
-                with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'r') as f:
+                with open(self.domain_progress_number_filenane, 'r') as f:
                     domain_list_position = int(f.readline())
-                with open(self.DOMAIN_LIST_FILENAME, 'r') as f:
+                with open(self.domain_list_filename, 'r') as f:
                     domains = []
                     for line in f:
-                        domains.append(line[:-1])
+                        domains.append(line.strip())
                 logger.info(f"Continuing migration progress at domain number {domain_list_position}...")
                 return True, domain_list_position, domains
             except FileNotFoundError:
@@ -173,7 +172,7 @@ class AppMigrationCommandBase(BaseCommand):
 
     def remove_storage_files(self):
         try:
-            os.remove(self.DOMAIN_LIST_FILENAME)
-            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
+            os.remove(self.domain_list_filename)
+            os.remove(self.domain_progress_number_filenane)
         except FileNotFoundError:
             pass

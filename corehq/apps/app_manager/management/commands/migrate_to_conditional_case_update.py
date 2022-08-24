@@ -22,8 +22,6 @@ class Command(AppMigrationCommandBase):
     include_linked_apps = True
     include_builds = True
     chunk_size = 5
-    DOMAIN_LIST_FILENAME = "migrate_to_cond_case_update_cmd_domain_list.txt"
-    DOMAIN_PROGRESS_NUMBER_FILENAME = "migrate_to_cond_case_update_cmd_domain_progress.txt"
     APP_WRAPPING_ERRORS_LOG = "migrate_to_cond_case_update_wrapping_errors.txt"
 
     def add_arguments(self, parser):
@@ -85,7 +83,6 @@ class Command(AppMigrationCommandBase):
 
     def get_domains(self):
         if self.is_dry_run and self.num_domains_test:
-            print(self.num_domains_test)
             all_domain_names = Domain.get_all_names()
             random.shuffle(all_domain_names)
             return all_domain_names[:int(self.num_domains_test)]
