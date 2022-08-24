@@ -75,6 +75,7 @@
     - hq.use_grid_menus
     - hq.grid_form_menus
     - hq.target_commcare_flavor
+    - features.dependencies  # Required Android apps
 
 - title: 'Advanced'
   id: app-settings-advanced
