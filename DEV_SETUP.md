@@ -58,7 +58,8 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
+    
 
     ```sh
     brew install python@3.9
