@@ -826,7 +826,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             return form_data
         except Exception as e:
-            raise InvalidRequestException(_("Check your request: {}".format(e)))
+            raise InvalidRequestException(_("Check your request: {}").format(e))
 
 
 @require_can_edit_commcare_users
