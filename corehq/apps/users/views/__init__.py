@@ -894,8 +894,11 @@ def post_user_role(request, domain):
         }, status=400)
 
     response_data = role.to_json()
-    user_count = get_role_user_count(domain, role.couch_id)
-    response_data['preventRoleDelete'] = user_count > 0
+    if role.is_commcare_user_default:
+        response_data["preventRoleDelete"] = True
+    else:
+        user_count = get_role_user_count(domain, role.couch_id)
+        response_data['preventRoleDelete'] = user_count > 0
     return JsonResponse(response_data)
 
 
