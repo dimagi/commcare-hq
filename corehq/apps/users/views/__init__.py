@@ -948,27 +948,37 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    user_count = get_role_user_count(domain, role_data["_id"])
-    if user_count:
-        return JsonResponse({
-            "message": ngettext(
-                "Unable to delete role '{role}'. "
-                "It has one user and/or invitation still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. "
-                "It has {user_count} users and/or invitations still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                user_count,
-            ).format(role=role_data["name"], user_count=user_count)
-        }, status=400)
+
+    try:
+        response_data = _delete_user_role(domain, role_data)
+    except ValueError as e:
+        return JsonResponse({"message": str(e)}, status=400)
+
+    return JsonResponse(response_data)
+
+
+def _delete_user_role(domain, role_data):
     try:
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except UserRole.DoesNotExist:
-        return JsonResponse({})
+        raise Http404
+
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        raise ValueError(ngettext(
+            "Unable to delete role '{role}'. "
+            "It has one user and/or invitation still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            "Unable to delete role '{role}'. "
+            "It has {user_count} users and/or invitations still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            user_count,
+        ).format(role=role_data["name"], user_count=user_count))
+
     copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
-    return JsonResponse({"_id": copy_id})
+    return {"_id": copy_id}
 
 
 @always_allow_project_access

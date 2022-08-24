@@ -1,25 +1,32 @@
 import json
+from unittest.mock import patch
 
+from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
 
-from corehq.apps.es.tests.utils import populate_user_index
-from corehq.util.elastic import ensure_index_deleted
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import populate_user_index
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, HqPermissions, CommCareUser, UserHistory
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.views import _update_role_from_view
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    HqPermissions,
+    UserHistory,
+    UserRole,
+    WebUser,
+)
+from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.util.test_utils import generate_cases
-from corehq.apps.locations.tests.util import make_loc, delete_all_locations
-from corehq.apps.locations.models import LocationType
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import generate_cases
 
 
 class TestMobileWorkerListView(TestCase):
@@ -161,6 +168,31 @@ class TestUpdateRoleFromView(TestCase):
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
+
+
+class TestDeleteRole(TestCase):
+    domain = 'test-role-delete'
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=0)
+    def test_delete_role(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        _delete_user_role(self.domain, {"_id": role.get_id})
+        self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
+
+    def test_delete_role_not_exist(self):
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": "mising"})
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
+    def test_delete_role_with_users(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        with self.assertRaisesRegex(ValueError, "It has one user"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
+    def test_delete_role_wrong_domain(self):
+        role = UserRole.create("other-domain", 'test-role')
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": role.get_id})
 
 
 class TestDeletePhoneNumberView(TestCase):
