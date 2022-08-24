@@ -481,3 +481,4 @@
     - ['org.commcare.dalvik.abha', 'CommCare ABHA']
   default: []  # multiSelect default takes a list
   since: '2.53'
+  force: true
