@@ -22,6 +22,8 @@ class Command(AppMigrationCommandBase):
     include_linked_apps = True
     include_builds = True
     chunk_size = 5
+    DOMAIN_LIST_FILENAME = "migrate_to_cond_case_update_cmd_domain_list.txt"
+    DOMAIN_PROGRESS_NUMBER_FILENAME = "migrate_to_cond_case_update_cmd_domain_progress.txt"
     APP_WRAPPING_ERRORS_LOG = "migrate_to_cond_case_update_wrapping_errors.txt"
 
     def add_arguments(self, parser):

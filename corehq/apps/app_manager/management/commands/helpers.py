@@ -39,6 +39,9 @@ class AppMigrationCommandBase(BaseCommand):
 
     options = {}
 
+    DOMAIN_LIST_FILENAME = None
+    DOMAIN_PROGRESS_NUMBER_FILENAME = None
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--failfast',
@@ -68,7 +71,7 @@ class AppMigrationCommandBase(BaseCommand):
     def handle(self, **options):
         start_time = time()
         self.options = options
-        self.set_filenames()
+        self.check_filenames_set()
 
         if self.options['domain']:
             domains = [self.options['domain']]
@@ -140,27 +143,27 @@ class AppMigrationCommandBase(BaseCommand):
         """Return the app dict if the doc is to be saved else None"""
         raise NotImplementedError()
 
-    def set_filenames(self):
-        self.domain_list_filename = __class__.__name__ + "app_migration_command_domain_list.txt"
-        self.domain_progress_number_filenane = __class__.__name__ + "app_migration_command_domain_progress.txt"
+    def check_filenames_set(self):
+        if not self.DOMAIN_LIST_FILENAME or not self.DOMAIN_PROGRESS_NUMBER_FILENAME:
+            raise Exception("You must set filenames that track progress on the domain list for this command.")
 
     def increment_progress(self, domain_list_position):
         logger.info(f"Migrated domain #{domain_list_position}")
         domain_list_position += 1
-        with open(self.domain_progress_number_filenane, 'w') as f:
+        with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
             f.write(str(domain_list_position))
         return domain_list_position
 
     def store_domain_list(self, domains):
-        with open(self.domain_list_filename, 'w') as f:
+        with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
             f.writelines(f'{domain}\n' for domain in domains)
 
     def try_to_continue_progress(self):
         if not self.options['start_from_scratch']:
             try:
-                with open(self.domain_progress_number_filenane, 'r') as f:
+                with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'r') as f:
                     domain_list_position = int(f.readline())
-                with open(self.domain_list_filename, 'r') as f:
+                with open(self.DOMAIN_LIST_FILENAME, 'r') as f:
                     domains = []
                     for line in f:
                         domains.append(line.strip())
@@ -172,7 +175,7 @@ class AppMigrationCommandBase(BaseCommand):
 
     def remove_storage_files(self):
         try:
-            os.remove(self.domain_list_filename)
-            os.remove(self.domain_progress_number_filenane)
+            os.remove(self.DOMAIN_LIST_FILENAME)
+            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
         except FileNotFoundError:
             pass
