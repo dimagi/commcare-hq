@@ -90,7 +90,7 @@ from corehq.apps.users.decorators import (
     require_can_view_roles,
     require_permission_to_edit_user,
 )
-from corehq.apps.users.exceptions import MissingRoleException
+from corehq.apps.users.exceptions import MissingRoleException, InvalidRequestException
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
@@ -951,7 +951,7 @@ def delete_user_role(request, domain):
 
     try:
         response_data = _delete_user_role(domain, role_data)
-    except ValueError as e:
+    except InvalidRequestException as e:
         return JsonResponse({"message": str(e)}, status=400)
 
     return JsonResponse(response_data)
@@ -964,14 +964,14 @@ def _delete_user_role(domain, role_data):
         raise Http404
 
     if role.is_commcare_user_default:
-        raise ValueError(_(
+        raise InvalidRequestException(_(
             "Unable to delete role '{role}'. "
             "This role is the default role for Mobile Users and can not be deleted.",
         ).format(role=role_data["name"]))
 
     user_count = get_role_user_count(domain, role_data["_id"])
     if user_count:
-        raise ValueError(ngettext(
+        raise InvalidRequestException(ngettext(
             "Unable to delete role '{role}'. "
             "It has one user and/or invitation still assigned to it. "
             "Remove all users assigned to the role before deleting it.",

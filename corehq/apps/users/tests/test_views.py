@@ -11,6 +11,7 @@ from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.exceptions import InvalidRequestException
 from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
@@ -186,12 +187,12 @@ class TestDeleteRole(TestCase):
     @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
     def test_delete_role_with_users(self, _):
         role = UserRole.create(self.domain, 'test-role')
-        with self.assertRaisesRegex(ValueError, "It has one user"):
+        with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
             _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
 
     def test_delete_commcare_user_default_role(self):
         role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
-        with self.assertRaisesRegex(ValueError, "default role for Mobile Users"):
+        with self.assertRaisesRegex(InvalidRequestException, "default role for Mobile Users"):
             _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
 
     def test_delete_role_wrong_domain(self):

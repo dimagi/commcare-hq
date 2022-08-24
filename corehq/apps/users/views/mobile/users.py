@@ -79,7 +79,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
+from corehq.apps.users.exceptions import InvalidRequestException
 from corehq.apps.users.forms import (
     CommCareAccountForm,
     CommCareUserFormSet,
@@ -736,7 +736,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         try:
             self._ensure_proper_request(in_data)
             form_data = self._construct_form_data(in_data)
-        except InvalidMobileWorkerRequest as e:
+        except InvalidRequestException as e:
             return {
                 'error': str(e)
             }
@@ -798,10 +798,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
-            raise InvalidMobileWorkerRequest(_("No Permission."))
+            raise InvalidRequestException(_("No Permission."))
 
         if 'user' not in in_data:
-            raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
+            raise InvalidRequestException(_("Please provide mobile worker data."))
 
         return None
 
@@ -826,7 +826,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             return form_data
         except Exception as e:
-            raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+            raise InvalidRequestException(_("Check your request: {}".format(e)))
 
 
 @require_can_edit_commcare_users
