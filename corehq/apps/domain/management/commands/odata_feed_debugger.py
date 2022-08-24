@@ -42,6 +42,21 @@ class Command(BaseCommand):
         new_instance.transform_dates = False
         new_instance.name = ("Copy of {}").format(new_instance.name)
 
-        for col in new_instance.tables[0].selected_columns:
-            if col.is_deleted:
-                print(col)
+        # mimic clean_odata_columns
+        for table in export_instance.tables:
+            for column in table.columns:
+                column.label = column.label.replace('@', '').replace(
+                    '.', ' ').replace('\n', '').replace('\t', ' ').replace(
+                    '#', '').replace(',', '')
+                # truncate labels for PowerBI and Tableau limits
+                if column.label in ['formid']:
+                    print("\n\nremove this column\n")
+                    print('table columns before')
+                    print(table.columns)
+                    print('\n column to be removed:')
+                    print(column)
+                    print('\n removing column...')
+                    table.columns.remove(column)
+                    print('\ntable columns after\n')
+                if len(column.label) >= 255:
+                    column.label = column.label[:255]
