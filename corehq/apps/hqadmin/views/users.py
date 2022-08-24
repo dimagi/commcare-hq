@@ -119,6 +119,7 @@ class SuperuserManagement(UserAdministration):
                 if can_toggle_status and web_user.can_assign_superuser is not can_assign_superuser:
                     web_user.can_assign_superuser = can_assign_superuser
                     web_user.save()
+                    fields_changed['can_assign_superuser'] = can_assign_superuser
 
                 if fields_changed:
                     user.save()
@@ -135,6 +136,8 @@ class SuperuserManagement(UserAdministration):
                         fields_changed['same_superuser'] = user.is_superuser
                     if 'is_staff' not in fields_changed:
                         fields_changed['same_staff'] = user.is_staff
+                    if 'can_assign_superuser' not in fields_changed:
+                        fields_changed['same_management_privilege'] = web_user.can_assign_superuser
                     user_changes.append(fields_changed)
             if user_changes:
                 send_email_notif(user_changes, self.request.couch_user.username)
