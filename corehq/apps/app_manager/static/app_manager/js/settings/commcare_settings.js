@@ -226,19 +226,20 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 return setting.disabled && setting.visibleValue() !== setting['default'];
             });
 
-            // Returns values and value_names as select/multiSelect options.
+            // Returns values and value names as select/multiSelect options.
             // Accepts an array of default values to support multiSelect.
-            setting.getOptions = function (values, value_names, defaults) {
-                if (!values || !value_names || values.length !== value_names.length) {
-                    console.error("select and multiSelect widgets require values " +
-                        "and value_names of equal length", values, value_names);
-                    throw {};
+            setting.getOptions = function (values, valueNames, defaults) {
+                if (!values || !valueNames || values.length !== valueNames.length) {
+                    var msg = ("select and multiSelect widgets require values " +
+                        "and value names of equal length");
+                    console.error(msg, values, valueNames);
+                    throw new Error(msg);
                 }
                 var options = [];
                 for (var i = 0; i < values.length; i++) {
                     options.push({
                         label: (defaults.includes(values[i]) ? '* ' : '') +
-                            value_names[i],
+                            valueNames[i],
                         value: values[i],
                     });
                 }
