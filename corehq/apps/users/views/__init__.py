@@ -963,6 +963,12 @@ def _delete_user_role(domain, role_data):
     except UserRole.DoesNotExist:
         raise Http404
 
+    if role.is_commcare_user_default:
+        raise ValueError(_(
+            "Unable to delete role '{role}'. "
+            "This role is the default role for Mobile Users and can not be deleted.",
+        ).format(role=role_data["name"]))
+
     user_count = get_role_user_count(domain, role_data["_id"])
     if user_count:
         raise ValueError(ngettext(

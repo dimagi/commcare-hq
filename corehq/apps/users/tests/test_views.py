@@ -189,6 +189,11 @@ class TestDeleteRole(TestCase):
         with self.assertRaisesRegex(ValueError, "It has one user"):
             _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
 
+    def test_delete_commcare_user_default_role(self):
+        role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
+        with self.assertRaisesRegex(ValueError, "default role for Mobile Users"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
     def test_delete_role_wrong_domain(self):
         role = UserRole.create("other-domain", 'test-role')
         with self.assertRaises(Http404):
