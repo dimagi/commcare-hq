@@ -24,7 +24,7 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.standard.cases.case_data import can_view_attachments
 from corehq.apps.reports.views import (
     get_form_attachment_response,
-    require_form_view_permission,
+    augmented_form_view_permissions,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CaseAttachment, CommCareCase
@@ -129,7 +129,7 @@ class CaseAttachmentAPI(View):
 
 
 @api_auth
-@require_form_view_permission
+@augmented_form_view_permissions
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
     return get_form_attachment_response(request, domain, instance_id, attachment_id)
