@@ -58,5 +58,6 @@ class Command(BaseCommand):
                     print('\n removing column...')
                     table.columns.remove(column)
                     print('\ntable columns after\n')
+                    print(table.columns)
                 if len(column.label) >= 255:
                     column.label = column.label[:255]
