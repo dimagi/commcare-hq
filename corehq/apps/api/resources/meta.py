@@ -42,7 +42,7 @@ class HQThrottle(BaseThrottle):
         if API_THROTTLE_WHITELIST.enabled(identifier.username):
             return False
 
-        return api_rate_limiter.allow_usage(identifier.domain)
+        return not api_rate_limiter.allow_usage(identifier.domain)
 
 
     def accessed(self, identifier, **kwargs):
