@@ -88,7 +88,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
             build_profile_id,
         )
 
-        yield from _create_search_app_strings(
+        yield from _create_case_search_app_strings(
             app,
             module,
             lang,
@@ -306,7 +306,7 @@ def _create_case_list_app_strings(
                 yield id_strings.case_list_audio_locale(module), audio
 
 
-def _create_search_app_strings(
+def _create_case_search_app_strings(
     app,
     module,
     lang,
