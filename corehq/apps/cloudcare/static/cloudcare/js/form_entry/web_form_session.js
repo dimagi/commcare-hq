@@ -125,9 +125,16 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             if (requestParams.action === Const.ANSWER_MEDIA) {
                 var newData = new FormData();
                 newData.append("file", requestParams.file);
-                newData.append("answer", JSON.stringify(_.omit(requestParams, "file")));
+
+                // use a blob here so that we can set the content type
+                let answerData = new Blob(
+                    [JSON.stringify(_.omit(requestParams, "file"))],
+                    {type: 'application/json'}
+                );
+                newData.append("answer", answerData);
+
                 contentParams = {
-                    contentType: "multipart/form-data",
+                    contentType: false,
                     data: newData,
                 };
             } else {
@@ -140,7 +147,6 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
                 processData: false,
-                dataType: "json",
                 crossDomain: {
                     crossDomain: true,
                 },
