@@ -127,7 +127,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 newData.append("file", requestParams.file);
                 newData.append("answer", JSON.stringify(_.omit(requestParams, "file")));
                 contentParams = {
-                    contentType: "multipart/form-data",
+                    contentType: false,
                     data: newData,
                 };
             } else {
@@ -140,7 +140,6 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 type: 'POST',
                 url: self.urls.xform + "/" + requestParams.action,
                 processData: false,
-                dataType: "json",
                 crossDomain: {
                     crossDomain: true,
                 },
