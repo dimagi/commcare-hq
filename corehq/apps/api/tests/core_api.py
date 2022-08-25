@@ -714,8 +714,8 @@ class TestApiThrottle(APIResourceTest):
     def test_throttle_allowlist(self):
         """Test that the allowlist toggle allows all traffic through
         """
-        with patch('corehq.apps.api.resources.meta.BaseThrottle.should_be_throttled') as should_be_throttled:
-            should_be_throttled.return_value = True
+        with patch('corehq.apps.api.resources.meta.api_rate_limiter.allow_usage') as allow_access:
+            allow_access.return_value = False
 
             response = self.client.get(self.endpoint)
             self.assertEqual(response.status_code, 429)
