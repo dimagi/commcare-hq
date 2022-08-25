@@ -345,6 +345,11 @@ def reports_last_updated_on():
     return 'cchq.reports_last_updated_on'
 
 
+@pattern('android.package.name.%s')
+def android_package_name(package_id):
+    return 'android.package.name.{package_id}'.format(package_id=package_id)
+
+
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
 
 
