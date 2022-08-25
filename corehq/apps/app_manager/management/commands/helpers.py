@@ -1,5 +1,8 @@
+from datetime import timedelta
 import logging
 from collections import namedtuple
+import os
+from time import time
 
 from django.core.management import BaseCommand
 
@@ -36,6 +39,9 @@ class AppMigrationCommandBase(BaseCommand):
 
     options = {}
 
+    DOMAIN_LIST_FILENAME = None
+    DOMAIN_PROGRESS_NUMBER_FILENAME = None
+
     def add_arguments(self, parser):
         parser.add_argument(
             '--failfast',
@@ -54,18 +60,38 @@ class AppMigrationCommandBase(BaseCommand):
             default=False,
             help="Perform the migration but don't save any changes",
         )
+        parser.add_argument(
+            '--start-from-scratch',
+            action='store_true',
+            default=False,
+            help="If existing progress files for this command exist, turn this flag on to ignore them and start"
+                 "from scratch.",
+        )
 
     def handle(self, **options):
+        start_time = time()
         self.options = options
+        self.check_filenames_set()
+
         if self.options['domain']:
             domains = [self.options['domain']]
+            domain_list_position = 0
         else:
-            domains = self.get_domains() or [None]
+            can_continue_progress, domain_list_position, domains = self.try_to_continue_progress()
+            if can_continue_progress:
+                domains = domains[domain_list_position:]
+            else:
+                domains = self.get_domains() or [None]
+                self.store_domain_list(domains)
         for domain in domains:
             app_ids = self.get_app_ids(domain)
             logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
-        logger.info('done')
+            domain_list_position = self.increment_progress(domain_list_position)
+        self.remove_storage_files()
+        end_time = time()
+        execution_time_seconds = end_time - start_time
+        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
 
     @property
     def is_dry_run(self):
@@ -98,8 +124,13 @@ class AppMigrationCommandBase(BaseCommand):
 
     @staticmethod
     def increment_app_version(app_doc):
-        if not app_doc.get('copy_of') and app_doc.get('version'):
-            app_doc['version'] = app_doc['version'] + 1
+        try:
+            copy_of = app_doc['copy_of']
+            version = app_doc['version']
+        except KeyError:
+            return
+        if not copy_of and version:
+            app_doc['version'] = version + 1
         return app_doc
 
     def get_app_ids(self, domain=None):
@@ -111,3 +142,40 @@ class AppMigrationCommandBase(BaseCommand):
     def migrate_app(self, app):
         """Return the app dict if the doc is to be saved else None"""
         raise NotImplementedError()
+
+    def check_filenames_set(self):
+        if not self.DOMAIN_LIST_FILENAME or not self.DOMAIN_PROGRESS_NUMBER_FILENAME:
+            raise Exception("You must set filenames that track progress on the domain list for this command.")
+
+    def increment_progress(self, domain_list_position):
+        logger.info(f"Migrated domain #{domain_list_position}")
+        domain_list_position += 1
+        with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'w') as f:
+            f.write(str(domain_list_position))
+        return domain_list_position
+
+    def store_domain_list(self, domains):
+        with open(self.DOMAIN_LIST_FILENAME, 'w') as f:
+            f.writelines(f'{domain}\n' for domain in domains)
+
+    def try_to_continue_progress(self):
+        if not self.options['start_from_scratch']:
+            try:
+                with open(self.DOMAIN_PROGRESS_NUMBER_FILENAME, 'r') as f:
+                    domain_list_position = int(f.readline())
+                with open(self.DOMAIN_LIST_FILENAME, 'r') as f:
+                    domains = []
+                    for line in f:
+                        domains.append(line.strip())
+                logger.info(f"Continuing migration progress at domain number {domain_list_position}...")
+                return True, domain_list_position, domains
+            except FileNotFoundError:
+                logger.info("Domain progress file(s) not found. Starting from scratch...")
+        return False, 0, None
+
+    def remove_storage_files(self):
+        try:
+            os.remove(self.DOMAIN_LIST_FILENAME)
+            os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
+        except FileNotFoundError:
+            pass
