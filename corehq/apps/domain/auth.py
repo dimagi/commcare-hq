@@ -299,12 +299,9 @@ class HQApiKeyAuthentication(ApiKeyAuthentication):
         are domain specific.
 
         """
-        username = self.extract_credentials(request)[0]
-        if API_THROTTLE_WHITELIST.enabled(username):
-            return username
+        # inline to avoid circular import
+        from corehq.apps.api.resources.auth import ApiIdentifier
 
-        try:
-            api_key = self.extract_credentials(request)[1]
-        except ValueError:
-            api_key = ''
-        return f"{getattr(request, 'domain', '')}_{api_key}"
+        username = self.extract_credentials(request)[0]
+        domain = getattr(request, 'domain', '')
+        return ApiIdentifier(username=username, domain=domain)
