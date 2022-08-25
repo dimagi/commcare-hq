@@ -12,7 +12,7 @@ from dimagi.utils.dates import add_months_to_date
 
 
 class Command(BaseCommand):
-    help = """Gets often requested statistics for a given list of partners' 
+    help = """Gets often requested statistics for a given list of partners'
     domains: number of mobile users, submissions and estimated web users broken
     down by month."""
 
