@@ -1283,7 +1283,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility that gets the display options from a parent form of a question.
      * */
     function _getDisplayOptions(question) {
-        const form = Utils.getRootForm(question);
+        const form = Utils.getRootContainer(question);
         if (form === undefined) {
             return {};
         }

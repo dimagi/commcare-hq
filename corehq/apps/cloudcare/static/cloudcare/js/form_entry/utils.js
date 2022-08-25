@@ -150,17 +150,23 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     /**
-     * Gets the root form of a question.
+     * Gets the root container of a question.
      * @param {Object} question - The Question Object
+     * @param {Function} predicate - Optional. If provided, stop when this condition is reached.
+     * If not provided, the root Form object will be returned.
     **/
-    module.getRootForm = (question) => {
+    module.getRootContainer = (question, stopCallback) => {
         if (question.parent === undefined) {
             return undefined;
         }
 
+        if (!_.isFunction(stopCallback)) {
+            stopCallback = function (container) { return false; };
+        }
+
         // logic in case the question is in a group or repeat or nested group, etc.
         let curr = question.parent;
-        while (curr.parent) {
+        while (curr.parent && !stopCallback(curr.parent)) {
             curr = curr.parent;
         }
         return curr;
