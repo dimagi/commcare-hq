@@ -40,8 +40,6 @@ class TestRawDocLookup(TestCase):
 
         data = raw_doc_lookup(str(table.id))
         self.assertEqual(json.loads(data["doc"]), expected_doc)
-        results = {r.dbname: r for r in data["db_results"]}
-        self.assertEqual(results["test_commcarehq__fixtures"].result, "missing")
 
     def test_lookuptablerow_raw_doc(self):
         table = make_lookuptable()
@@ -76,8 +74,6 @@ class TestRawDocLookup(TestCase):
 
         data = raw_doc_lookup(str(row.id))
         self.assertEqual(json.loads(data["doc"]), expected_doc)
-        results = {r.dbname: r for r in data["db_results"]}
-        self.assertEqual(results["test_commcarehq__fixtures"].result, "missing")
 
 
 def make_lookuptable():
