@@ -411,7 +411,7 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             concurrent_save.set()
             if not allow_migration.wait(timeout=10):
                 raise RuntimeError("allow_migration timeout")
-            return False
+            return set()
 
         def diff(doc):
             return self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id))
@@ -432,9 +432,9 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             color.save(sync_to_sql=False)
             shape.save(sync_to_sql=False)
 
-            with patch.object(LookupTableCommand, "should_ignore", migration_blocker):
+            with patch.object(LookupTableCommand, "get_ids_to_ignore", migration_blocker):
                 migration = Thread(target=migration_runner)
-                migration.start()  # loads Couch docs, blocks on should_ignore
+                migration.start()  # loads Couch docs, blocks on get_ids_to_ignore
 
                 if not concurrent_save.wait(timeout=10):
                     raise RuntimeError("concurrent_save timeout")
@@ -617,6 +617,7 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_lookuptablerows', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", log.content)
+            self.assertNotIn(f'Doc "{doc_id}" has diff', log.content)
 
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)
@@ -722,6 +723,15 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
         doc, obj = self.create_owner()
         self.temporarily_delete_row()
         doc_id = self.db.save_doc(doc.to_json())["id"]
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_lookuptablerowowners', log_path=log.path)
+            self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", log.content)
+
+    def test_migration_with_deleted_table(self):
+        doc, obj = self.create_owner()
+        TestLookupTableRowCouchToSQLMigration.temporarily_delete_table(self)
+        doc_id = self.db.save_doc(doc.to_json())["id"]
+        assert FixtureDataItem.get(doc.data_item_id) is not None, "missing row"
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_lookuptablerowowners', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", log.content)
@@ -856,7 +866,7 @@ def jsonattrify(model_type, data):
 
 
 @contextmanager
-def atomic_check(using=None):
+def atomic_check(using=None, savepoint='ignored'):
     with _atomic(using=using):
         yield
         connection.check_constraints()

@@ -66,9 +66,18 @@ class PopulateSQLCommand(BaseCommand):
     def _should_migrate_in_bulk(self):
         return not hasattr(self, "update_or_create_sql_object")
 
-    def should_ignore(self, doc):
-        """Return true if the document should not be synced to SQL"""
-        return False
+    def get_ids_to_ignore(self, docs):
+        """Return a set of document ids that should be ignored by the migration
+
+        One example of how this might be used is when there are
+        documents in Couch that have been orphaned from their parent
+        (the parent doc has been deleted), and they cannot be inserted
+        into SQL because a foreign key constraint would fail.
+
+        The default implementation returns an empty set, which means no
+        documents will be ignored unless this method is overridden.
+        """
+        return set()
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
@@ -338,10 +347,12 @@ Run the following commands to run the migration and get up to date:
             objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
         creates = []
         updates = []
-        ignored = []
+        # cache ignored ids in instance variable so _verify_docs does not need to recalculate
+        self._ignored_ids_cache = ignored = self.get_ids_to_ignore(
+            [d for d in docs if d["_id"] not in objs_by_couch_id])
+        self.ignored_count += len(ignored)
         for doc in docs:
-            if self.should_ignore(doc):
-                ignored.append(doc)
+            if doc["_id"] in ignored:
                 continue
             if doc["_id"] in objs_by_couch_id:
                 if fixup_diffs:
@@ -364,8 +375,7 @@ Run the following commands to run the migration and get up to date:
                     obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
-        update_log("Ignored", [doc["_id"] for doc in ignored])
-        self.ignored_count += len(ignored)
+        update_log("Ignored", ignored)
 
     def _verify_docs(self, docs, logfile, verify_only):
         sql_class = self.sql_class()
@@ -374,9 +384,14 @@ Run the following commands to run the migration and get up to date:
         objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         diff_count = self.diff_count
+        if verify_only:
+            ignored = self.get_ids_to_ignore(
+                [d for d in docs if d["_id"] not in objs_by_couch_id])
+            self.ignored_count += len(ignored)
+        else:
+            ignored = self._ignored_ids_cache
         for doc in docs:
-            if verify_only and self.should_ignore(doc):
-                self.ignored_count += 1
+            if doc["_id"] in ignored:
                 continue
             self._do_diff(doc, objs_by_couch_id.get(doc["_id"]), logfile)
         if diff_count != self.diff_count:
@@ -399,8 +414,10 @@ Run the following commands to run the migration and get up to date:
                 raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
 
     def _verify_doc(self, doc, logfile, verify_only):
-        if verify_only and self.should_ignore(doc):
-            self.ignored_count += 1
+        ignored = self.get_ids_to_ignore([doc]) if verify_only else self._ignored_ids_cache
+        if doc["_id"] in ignored:
+            if verify_only:
+                self.ignored_count += 1
             return
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
@@ -410,7 +427,9 @@ Run the following commands to run the migration and get up to date:
         self._do_diff(doc, obj, logfile, exit=not verify_only)
 
     def _migrate_doc(self, doc, logfile):
-        if self.should_ignore(doc):
+        # cache ignored ids in instance variable so _verify_doc does not need to recalculate
+        self._ignored_ids_cache = ignored = self.get_ids_to_ignore([doc])
+        if doc["_id"] in ignored:
             self.ignored_count += 1
             logfile.write(f"Ignored model for {self.couch_doc_type()} with id {doc['_id']}\n")
             return
