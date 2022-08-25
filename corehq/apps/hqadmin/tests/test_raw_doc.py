@@ -7,7 +7,7 @@ from corehq.apps.fixtures.models import Field, LookupTable, LookupTableRow, Type
 from ..views.data import raw_doc_lookup
 
 
-class TestRawDockLookup(TestCase):
+class TestRawDocLookup(TestCase):
     maxDiff = None
 
     def test_lookuptable_raw_doc(self):
