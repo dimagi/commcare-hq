@@ -772,11 +772,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
             or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
-        role_id = None
-        default_cc_user_role = UserRole.commcare_user_default(self.domain)
-        if default_cc_user_role:
-            role_id = default_cc_user_role.get_id
-
+        role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
             self.domain,
             username,
