@@ -314,7 +314,7 @@ class EditCommCareUserView(BaseEditUserView):
     def user_role_choices(self):
         role_choices = self.editable_role_choices
         default_role = UserRole.commcare_user_default(self.domain)
-        return [(default_role.get_qualified_id(), default_role.name or _('Default Role'))] + role_choices
+        return [(default_role.get_qualified_id(), default_role.name)] + role_choices
 
     @property
     @memoized
