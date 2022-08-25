@@ -161,7 +161,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         }
 
         if (!_.isFunction(stopCallback)) {
-            stopCallback = function (container) { return false; };
+            stopCallback = function () { return false; };
         }
 
         // logic in case the question is in a group or repeat or nested group, etc.
