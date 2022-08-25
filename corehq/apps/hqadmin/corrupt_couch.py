@@ -379,7 +379,7 @@ def _get_couch_node_databases(db, node_port=COUCH_NODE_PORT):
     resp = db.server._request_session.get(urljoin(db.server.uri, '/_membership'))
     resp.raise_for_status()
     membership = resp.json()
-    nodes = [node.split("@")[1] for node in membership["cluster_nodes"]]
+    nodes = [node.split("@")[1] for node in membership["cluster_nodes"] if not node.endswith("@False")]
     proxy_url = urlparse(settings.COUCH_DATABASE)._replace(path=f"/{db.dbname}")
     auth = proxy_url.netloc.split('@')[0]
     return [Database(node_url(proxy_url, node)) for node in nodes]
