@@ -569,7 +569,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         const form = Utils.getRootContainer(self, function (container) {
             return container instanceof Repeat;
         });
-        self.contextPubSub = (form) ? form.pubsub : new ko.subscribable();
+        self.broadcastPubSub = (form) ? form.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));

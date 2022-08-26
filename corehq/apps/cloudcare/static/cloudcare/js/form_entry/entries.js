@@ -139,7 +139,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (match) {
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
-                question.contextPubSub.subscribe(function (message) {
+                question.broadcastPubSub.subscribe(function (message) {
                     if (message === Const.NO_ANSWER) {
                         self.rawAnswer(Const.NO_ANSWER);
                     } else if (message) {
@@ -266,7 +266,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.editing = false;
             var broadcastObj = Utils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.contextPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             if (_.isEmpty(broadcastObj)) {
                 question.answer(Const.NO_ANSWER);
@@ -283,7 +283,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.error(null);
             self.editing = true;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.contextPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
             });
         };
 
