@@ -1142,6 +1142,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
+    ("f'{a}'[1:3]", {"a": 1234}, "23"),
     ("a and not b", {"a": 1, "b": 0}, True),
     ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
 ])
