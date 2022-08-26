@@ -1,6 +1,8 @@
 import json
+from unittest.mock import patch
+from django.http import Http404
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from corehq.apps.es.tests.utils import populate_user_index
@@ -12,7 +14,7 @@ from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CouchUser, WebUser, HqPermissions, CommCareUser, UserHistory
 from corehq.apps.users.models import UserRole
-from corehq.apps.users.views import _update_role_from_view
+from corehq.apps.users.views import _update_role_from_view, delete_user_role
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
 from corehq.util.test_utils import generate_cases
@@ -20,6 +22,7 @@ from corehq.apps.locations.tests.util import make_loc, delete_all_locations
 from corehq.apps.locations.models import LocationType
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
+from corehq.apps.users import views
 
 
 class TestMobileWorkerListView(TestCase):
@@ -161,6 +164,107 @@ class TestUpdateRoleFromView(TestCase):
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
+
+    def test_cannot_update_parent_data(self):
+        role = UserRole.objects.create(domain='test-domain', name='initial_name', upstream_id='some_parent')
+
+        role_data = self.BASE_JSON.copy()
+        role_data["_id"] = role.get_id
+        role_data["name"] = "updated_role"
+
+        with self.assertRaises(Http404):
+            _update_role_from_view('test-domain', role_data)
+
+
+class DeleteRoleTests(TestCase):
+    def test_delete_role_removes_role(self):
+        role = UserRole.objects.create(domain=self.domain, name='test-role')
+        request = self._create_request(_id=role.get_id)
+
+        delete_user_role(request, 'test-domain')
+
+        with self.assertRaises(UserRole.DoesNotExist):
+            UserRole.objects.get(couch_id=role.get_id)
+
+    # NOTE: Documenting current behavior. The API should probably be changed to return an error
+    def test_missing_role_returns_nothing(self):
+        request = self._create_request(_id='invalid_id')
+
+        response = delete_user_role(request, 'test-domain')
+        content = json.loads(response.content)
+        self.assertEqual(content, {})
+
+    def test_cannot_remove_role_with_existing_users(self):
+        role = UserRole.objects.create(domain=self.domain, name='test-role')
+        request = self._create_request(_id=role.get_id, name='test-role')
+        self.user_count = 5
+
+        response = delete_user_role(request, 'test-domain')
+        content = json.loads(response.content)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            content['message'],
+            "Unable to delete role 'test-role'. It has 5 users still assigned to it. "
+            "Remove all users assigned to the role before deleting it."
+        )
+
+    def test_cannot_delete_linked_domain_data(self):
+        role = UserRole.objects.create(domain='test-domain', name='test-role', upstream_id='parent_id')
+        request = self._create_request(_id=role.get_id)
+
+        response = delete_user_role(request, 'test-domain')
+        content = json.loads(response.content)
+        remaining_role = UserRole.objects.get(id=role.id)
+        # Following existing behavior. This should return an error when the missing role also returns an error
+        self.assertEqual(content, {})
+        self.assertIsNotNone(remaining_role)
+
+    # Helpers
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.project = create_domain(cls.domain)
+
+        cls.user = cls._create_user()
+
+    def setUp(self):
+        privilege_mock = patch.object(views, 'domain_has_privilege', lambda x, y: True)
+        privilege_mock.start()
+        self.addCleanup(privilege_mock.stop)
+
+        self.user_count = 0
+        user_count_mock = patch.object(views, 'get_role_user_count', lambda domain, id: self.user_count)
+        user_count_mock.start()
+        self.addCleanup(user_count_mock.stop)
+
+        self.factory = RequestFactory()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(cls.domain, deleted_by=None)
+        cls.project.delete()
+        super().tearDownClass()
+
+    @classmethod
+    def _create_user(cls):
+        existing_user = WebUser.get_by_username('test@dimagi.com')
+        if existing_user:
+            existing_user.delete(cls.domain, deleted_by=None)
+
+        web_user = WebUser.create(cls.domain, 'test@dimagi.com', '******', None, None)
+        web_user.is_authenticated = True
+        web_user.is_superuser = True
+        web_user.save()
+
+        return web_user
+
+    def _create_request(self, **kwargs):
+        request = self.factory.post('/some/url', data=json.dumps(kwargs), content_type='application/json')
+        request.user = request.couch_user = self.user
+
+        return request
 
 
 class TestDeletePhoneNumberView(TestCase):

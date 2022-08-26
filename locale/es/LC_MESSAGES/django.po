@@ -37537,6 +37537,12 @@ msgid "Subscription Info"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+#, fuzzy
+#| msgid "Lookup Table Config"
+msgid "Local App Config"
+msgstr "Configuración de Tabla de Búsqueda"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Manage All"
 msgstr ""
 
