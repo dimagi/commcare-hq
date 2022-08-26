@@ -613,7 +613,7 @@ These examples using `Python f-strings`_ to format the dates.
     }
 
 
-**Convert a datetime to only show 3 digit microseconds**
+**Convert a datetime to show only 3 digits in the microseconds field**
 
 2022-01-01T15:32:54.109971Z :raw-html:`&rarr;` 2022-01-01T15:32:54.110Z
 
