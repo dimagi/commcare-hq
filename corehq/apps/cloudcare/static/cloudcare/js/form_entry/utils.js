@@ -166,7 +166,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
 
         // logic in case the question is in a group or repeat or nested group, etc.
         let curr = question.parent;
-        while (curr.parent && !stopCallback(curr.parent)) {
+        while (curr.parent && !stopCallback(curr)) {
             curr = curr.parent;
         }
         return curr;
