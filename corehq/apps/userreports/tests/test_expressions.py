@@ -1162,6 +1162,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     ("max(a, b)", {"a": 3, "b": 5}),
     # method calls not allowed
     ('"WORD".lower()', {"a": 5}),
+    ('f"{a.lower()}"', {"a": "b"}),
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
