@@ -166,7 +166,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * Gets a question's form, which will be the root of the question's tree.
     **/
     module.getRootForm = (question) => {
-        return getRoot(question, function (container) {
+        return getRoot(question, function () {
             // Don't stop for any reason, just return topmost container
             return false;
         });

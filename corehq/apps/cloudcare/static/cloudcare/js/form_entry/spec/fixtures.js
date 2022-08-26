@@ -1,6 +1,6 @@
 hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
     return {
-        textJSON: (options={}) => (_.defaults(options, {
+        textJSON: (options = {}) => (_.defaults(options, {
             "caption_audio": null,
             "caption_video": null,
             "caption_image": null,
@@ -26,7 +26,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "add-choice": null
         })),
 
-        selectJSON: (options={}) => (_.defaults(options, {
+        selectJSON: (options = {}) => (_.defaults(options, {
             "caption_audio": null,
             "caption_video": null,
             "caption_image": null,
@@ -52,7 +52,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "add-choice": null
         })),
 
-        labelJSON: (options={}) => (_.defaults(options, {
+        labelJSON: (options = {}) => (_.defaults(options, {
             "caption_audio": null,
             "caption_video": null,
             "caption_image": null,
@@ -78,7 +78,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "add-choice": null
         })),
 
-        repeatJSON: (options={}) => (_.defaults(options, {
+        repeatJSON: (options = {}) => (_.defaults(options, {
             "caption_audio": null,
             "caption": "Repeater",
             "caption_image": null,
@@ -128,7 +128,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "caption_video": null,
         }),
 
-        groupJSON: (options={}) => (_.defaults(options, {
+        groupJSON: (options = {}) => (_.defaults(options, {
             "type": "sub-group",
             "ix": "1",
             "children": [
