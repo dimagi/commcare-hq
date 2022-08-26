@@ -725,5 +725,6 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         Question: function (json, parent) {
             return new Question(json, parent);
         },
+        RepeatClass: Repeat,
     };
 });

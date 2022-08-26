@@ -128,7 +128,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
             "caption_video": null,
         }),
 
-        groupJSON: () => ({
+        groupJSON: (options={}) => (_.defaults(options, {
             "type": "sub-group",
             "ix": "1",
             "children": [
@@ -146,7 +146,7 @@ hqDefine("cloudcare/js/form_entry/spec/fixtures", function () {
                     ],
                 },
             ],
-        }),
+        })),
 
         noQuestionGroupJSON: () => ({
             "type": "sub-group",
