@@ -2306,3 +2306,10 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+VIEW_FORM_ATTACHMENT = StaticToggle(
+    'view_form_attachments',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
