@@ -448,7 +448,6 @@ requests==2.25.1
     #   requests-oauthlib
     #   requests-toolbelt
     #   stripe
-    #   tinys3
     #   twilio
 requests-mock==1.9.3
     # via -r test-requirements.in
@@ -539,8 +538,6 @@ text-unidecode==1.3
     # via
     #   -r base-requirements.in
     #   faker
-tinys3==0.1.12
-    # via -r base-requirements.in
 toml==0.10.2
     # via pep517
 toposort==1.7

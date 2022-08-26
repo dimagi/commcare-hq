@@ -113,10 +113,6 @@ def _set_source_root(source_root):
 
 
 def run_patches():
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    import mimetypes
-    mimetypes.init()
-
     patch_jsonfield()
     patch_celery_task()
 
