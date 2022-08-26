@@ -155,13 +155,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Function} predicate - Optional. If provided, stop when this condition is reached.
      * If not provided, the root Form object will be returned.
     **/
-    module.getRootContainer = (question, stopCallback) => {
+    var getRoot = (question, stopCallback) => {
         if (question.parent === undefined) {
             return undefined;
-        }
-
-        if (!_.isFunction(stopCallback)) {
-            stopCallback = function () { return false; };
         }
 
         // logic in case the question is in a group or repeat or nested group, etc.
@@ -170,6 +166,21 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             curr = curr.parent;
         }
         return curr;
+    };
+
+    module.getRootForm = (question) => {
+        return getRoot(question, function (container) {
+            // Don't stop for any reason, just return topmost container
+            return false;
+        });
+    };
+
+    module.getBroadcastContainer = (question) => {
+        var Const = hqImport("cloudcare/js/form_entry/const");
+        return getRoot(question, function (container) {
+            // Return first containing repeat group, or form if there are no ancestor repeats
+            return container.type && container.type() === Const.REPEAT_TYPE;
+        });
     };
 
     return module;

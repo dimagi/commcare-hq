@@ -46,15 +46,12 @@ describe('Formplayer utils', function () {
         [textInRepeat, groupInRepeat] = repeat.children();
         [textInNestedGroup] = groupInRepeat.children();
 
-        assert.equal(Utils.getRootContainer(text), form);
-        assert.equal(Utils.getRootContainer(textInRepeat), form);
-        assert.equal(Utils.getRootContainer(groupInRepeat), form);
+        assert.equal(Utils.getRootForm(text), form);
+        assert.equal(Utils.getRootForm(textInRepeat), form);
+        assert.equal(Utils.getRootForm(groupInRepeat), form);
 
-        var repeatCallback = function (container) {
-            return container instanceof UI.RepeatClass;
-        }
-        assert.equal(Utils.getRootContainer(text, repeatCallback), form);
-        assert.equal(Utils.getRootContainer(textInRepeat, repeatCallback), repeat);
-        assert.equal(Utils.getRootContainer(textInNestedGroup, repeatCallback), repeat);
+        assert.equal(Utils.getBroadcastContainer(text), form);
+        assert.equal(Utils.getBroadcastContainer(textInRepeat), repeat);
+        assert.equal(Utils.getBroadcastContainer(textInNestedGroup), repeat);
     });
 });

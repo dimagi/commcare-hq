@@ -566,10 +566,8 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         self.fromJS(json);
         self.parent = parent;
         // Grab the containing pubsub so questions can interact with other questions on the same form.
-        const form = Utils.getRootContainer(self, function (container) {
-            return container instanceof Repeat;
-        });
-        self.broadcastPubSub = (form) ? form.pubsub : new ko.subscribable();
+        const container = Utils.getBroadcastContainer(self);
+        self.broadcastPubSub = (container) ? container.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));
@@ -725,6 +723,5 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         Question: function (json, parent) {
             return new Question(json, parent);
         },
-        RepeatClass: Repeat,
     };
 });
