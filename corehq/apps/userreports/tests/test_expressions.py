@@ -1099,6 +1099,17 @@ class RelatedDocExpressionDbTest(TestCase):
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
     ({}, "range(3)", {}, [0, 1, 2]),
+    (
+        {'dob': "2022-01-01T14:44:23.123689Z"},
+        "f'{d}'[:-6] + str(round(int(f'{d:%f}')/1000)) + 'Z'",
+        {
+            "d": {
+                "type": "property_name",
+                "property_name": "dob",
+                "datatype": "datetime",
+            },
+        },
+        '2022-01-01 14:44:23.124Z'),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -1106,8 +1117,11 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
         "statement": statement,
         "context_variables": context
     })
-    # almostEqual handles decimal (im)precision - it means "equal to 7 places"
-    self.assertAlmostEqual(expression(source_doc), expected_value)
+    if isinstance(expected_value, str):
+        self.assertEqual(expression(source_doc), expected_value)
+    else:
+        # almostEqual handles decimal (im)precision - it means "equal to 7 places"
+        self.assertAlmostEqual(expression(source_doc), expected_value)
 
 
 @generate_cases([
@@ -1144,6 +1158,8 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("range(200)", {}, None),
     ("f'{a}'[1:3]", {"a": 1234}, "23"),
     ("a and not b", {"a": 1, "b": 0}, True),
+    ("int(a)", {"a": 1.23}, 1),
+    ("round(a)", {"a": 1.23}, 1),
     ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
