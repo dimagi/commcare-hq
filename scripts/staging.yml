@@ -83,4 +83,5 @@ branches:
     - sk/expose-mobile-worker-default-role+mjr/erm-overwrite+mjr/report-logging-verification
     - sk/expose-mobile-worker-default-role  # Simon Aug 24
     - nh/app_deps1  # Norman Aug 24
+    - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
 submodules: { }
