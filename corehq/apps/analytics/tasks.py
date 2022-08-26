@@ -737,7 +737,7 @@ def _track_periodic_data_on_kiss(submit_json):
             ] + [prop['value'] for prop in webuser['properties']]
             csvwriter.writerow(row)
 
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
+    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
         s3 = boto3.client(
             's3',
             aws_access_key_id=settings.S3_ACCESS_KEY,
