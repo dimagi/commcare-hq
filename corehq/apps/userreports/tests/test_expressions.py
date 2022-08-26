@@ -17,6 +17,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.expressions.getters import transform_datetime
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
@@ -1142,6 +1143,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
     ("a and not b", {"a": 1, "b": 0}, True),
+    ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
