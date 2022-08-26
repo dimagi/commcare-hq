@@ -27,31 +27,28 @@ describe('Formplayer utils', function () {
          *     group
          *         textInGroup
          *     repeat
-         *         textInRepeat
          *         groupInRepeat
-         *             textInNestedGroup
+         *             textInRepeat
          */
         var text = Fixtures.textJSON({ix: "0"}),
             textInGroup = Fixtures.textJSON({ix: "1,0"}),
             group = Fixtures.groupJSON({ix: "1", children: [textInGroup]}),
-            textInRepeat = Fixtures.textJSON({ix: "2,0"}),
-            textInNestedGroup = Fixtures.textJSON({ix: "2,1,0"}),
-            groupInRepeat = Fixtures.groupJSON({ix: "2,1", children: [textInNestedGroup]}),
-            repeat = Fixtures.repeatJSON({ix: "2", children: [textInRepeat, groupInRepeat]}),
+            textInRepeat = Fixtures.textJSON({ix: "2_0,0"}),
+            groupInRepeat = Fixtures.groupJSON({ix: "2_0", children: [textInRepeat]}),
+            repeat = Fixtures.repeatJSON({ix: "2", children: [groupInRepeat]}),
             form = UI.Form({
                 tree: [text, group, repeat],
             });
 
         [text, group, repeat] = form.children();
-        [textInRepeat, groupInRepeat] = repeat.children();
-        [textInNestedGroup] = groupInRepeat.children();
+        [groupInRepeat] = repeat.children();
+        [textInRepeat] = groupInRepeat.children();
 
         assert.equal(Utils.getRootForm(text), form);
-        assert.equal(Utils.getRootForm(textInRepeat), form);
         assert.equal(Utils.getRootForm(groupInRepeat), form);
+        assert.equal(Utils.getRootForm(textInRepeat), form);
 
         assert.equal(Utils.getBroadcastContainer(text), form);
-        assert.equal(Utils.getBroadcastContainer(textInRepeat), repeat);
-        assert.equal(Utils.getBroadcastContainer(textInNestedGroup), repeat);
+        assert.equal(Utils.getBroadcastContainer(textInRepeat), groupInRepeat);
     });
 });

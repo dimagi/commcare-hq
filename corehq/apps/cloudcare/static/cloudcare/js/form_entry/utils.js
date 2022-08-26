@@ -149,12 +149,6 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return broadcastObj;
     };
 
-    /**
-     * Gets the root container of a question.
-     * @param {Object} question - The Question Object
-     * @param {Function} predicate - Optional. If provided, stop when this condition is reached.
-     * If not provided, the root Form object will be returned.
-    **/
     var getRoot = (question, stopCallback) => {
         if (question.parent === undefined) {
             return undefined;
@@ -168,6 +162,9 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return curr;
     };
 
+    /**
+     * Gets a question's form, which will be the root of the question's tree.
+    **/
     module.getRootForm = (question) => {
         return getRoot(question, function (container) {
             // Don't stop for any reason, just return topmost container
@@ -175,11 +172,17 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         });
     };
 
+    /**
+     * Get the appropriate Container to which a question can broadcast messages.
+     * This is typically the root form, but for questions inside of repeats, it's
+     * the current group (a child of the repeat juncture).
+    **/
     module.getBroadcastContainer = (question) => {
         var Const = hqImport("cloudcare/js/form_entry/const");
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
-            return container.type && container.type() === Const.REPEAT_TYPE;
+            var parent = container.parent;
+            return parent && parent.type && parent.type() === Const.REPEAT_TYPE;
         });
     };
 
