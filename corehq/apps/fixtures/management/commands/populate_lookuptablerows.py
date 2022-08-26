@@ -61,14 +61,16 @@ class Command(PopulateSQLCommand):
         ]
         return diffs
 
-    def should_ignore(self, doc):
-        data_type_id = doc["data_type_id"]
-        try:
-            exists = self.data_type_existence[data_type_id]
-        except KeyError:
-            exists = self.couch_db().doc_exist(data_type_id)
-            self.data_type_existence[data_type_id] = exists
-        return not exists
+    def get_ids_to_ignore(self, docs):
+        existence_map = self.data_type_existence
+        data_type_ids = {d["data_type_id"] for d in docs}
+        new_ids = data_type_ids - existence_map.keys()
+        if new_ids:
+            items = self.couch_db().view("_all_docs", keys=list(new_ids), reduce=False)
+            existing_ids = {i["id"] for i in items if not (i.get("error") or i["value"].get("deleted"))}
+            for data_type_id in new_ids:
+                existence_map[data_type_id] = data_type_id in existing_ids
+        return {d["_id"] for d in docs if not existence_map[d["data_type_id"]]}
 
 
 def couch_to_sql_fields(data):
