@@ -76,9 +76,11 @@ class ConstantExpressionTest(SimpleTestCase):
             self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
 
     def test_constant_date_conversion(self):
+        # this is due to the type conversion in JsonObject
         self.assertEqual(date(2015, 2, 4), ExpressionFactory.from_spec('2015-02-04')({}))
 
     def test_constant_datetime_conversion(self):
+        # this is due to the type conversion in JsonObject
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
     def test_legacy_constant_no_type_casting(self):
