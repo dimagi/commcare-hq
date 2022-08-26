@@ -1100,8 +1100,8 @@ class RelatedDocExpressionDbTest(TestCase):
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
     ({}, "range(3)", {}, [0, 1, 2]),
     (
-        {'dob': "2022-01-01T14:44:23.123689Z"},
-        "f'{d}'[:-6] + str(round(int(f'{d:%f}')/1000)) + 'Z'",
+        {'dob': "2022-01-01T14:44:23.001567Z"},
+        "f'{d}'[:-6] + '%03d' % round(int(f'{d:%f}')/1000) + 'Z'",
         {
             "d": {
                 "type": "property_name",
@@ -1109,7 +1109,7 @@ class RelatedDocExpressionDbTest(TestCase):
                 "datatype": "datetime",
             },
         },
-        '2022-01-01 14:44:23.124Z'),
+        '2022-01-01 14:44:23.002Z'),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({

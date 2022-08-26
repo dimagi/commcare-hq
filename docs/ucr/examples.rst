@@ -621,7 +621,7 @@ These examples using `Python f-strings`_ to format the dates.
 
     {
         "type": "evaluator",
-        "statement": "f'{date:%Y-%m-%dT%H:%M:%S}.' + str(round(int(f'{date:%f}')/1000)) + 'Z'",
+        "statement": "f'{date:%Y-%m-%dT%H:%M:%S}.' + '%03d' % round(int(f'{date:%f}')/1000) + 'Z'",
         "context_variables": {
             "date": {
                 "type": "property_name",
