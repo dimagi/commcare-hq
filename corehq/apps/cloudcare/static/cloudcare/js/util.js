@@ -307,7 +307,11 @@ hqDefine('cloudcare/js/util', [
         return inputDate;
     };
 
-    var initDateTimePicker = function (el, extraOptions) {
+    var initDateTimePicker = function ($el, extraOptions) {
+        if (!$el.length) {
+            return;
+        }
+
         extraOptions = extraOptions || {};
         el.datetimepicker(_.extend({
             useCurrent: false,
