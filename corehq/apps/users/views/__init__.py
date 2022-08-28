@@ -506,49 +506,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
             not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
 
-    @property
-    @memoized
-    def non_admin_roles(self):
-        return list(sorted(
-            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
-            key=lambda role: role.name if role.name else '\uFFFF'
-        )) + [UserRole.commcare_user_default(self.domain)]
-
-    def get_roles_for_display(self):
-        show_es_issue = False
-        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
-        for role in self.non_admin_roles:
-            role_data = role.to_json()
-            role_view_data.append(role_data)
-
-            if role.is_commcare_user_default:
-                role_data["preventRoleDelete"] = True
-            else:
-                try:
-                    user_count = get_role_user_count(role.domain, role.couch_id)
-                    role_data["preventRoleDelete"] = bool(user_count)
-                except TypeError:
-                    # when query_result['hits'] returns None due to an ES issue
-                    show_es_issue = True
-
-            role_data["has_unpermitted_location_restriction"] = (
-                not self.can_restrict_access_by_location
-                and not role.permissions.access_all_locations
-            )
-
-        if show_es_issue:
-            messages.error(
-                self.request,
-                mark_safe(_(  # nosec: no user input
-                    "We might be experiencing issues fetching the entire list "
-                    "of user roles right now. This issue is likely temporary and "
-                    "nothing to worry about, but if you keep seeing this for "
-                    "more than a day, please <a href='#modalReportIssue' "
-                    "data-toggle='modal'>Report an Issue</a>."
-                ))
-            )
-        return role_view_data
-
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
@@ -577,7 +534,7 @@ class ListWebUsersView(BaseRoleAccessView):
     def role_labels(self):
         return {
             r.get_qualified_id(): r.name
-            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+            for r in [StaticRole.domain_admin(self.domain)] + UserRole.objects.get_by_domain(self.domain)
         }
 
     @property
@@ -674,6 +631,49 @@ class ListRolesView(BaseRoleAccessView):
             {'id': page.id, 'name': _(page.name)}
             for page in get_allowed_landing_pages(self.domain)
         ]
+
+    @property
+    @memoized
+    def non_admin_roles(self):
+        return list(sorted(
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
+            key=lambda role: role.name if role.name else '\uFFFF'
+        )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
+
+    def get_roles_for_display(self):
+        show_es_issue = False
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
+            if role.is_commcare_user_default:
+                role_data["preventRoleDelete"] = True
+            else:
+                try:
+                    user_count = get_role_user_count(role.domain, role.couch_id)
+                    role_data["preventRoleDelete"] = bool(user_count)
+                except TypeError:
+                    # when query_result['hits'] returns None due to an ES issue
+                    show_es_issue = True
+
+            role_data["has_unpermitted_location_restriction"] = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
+
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(  # nosec: no user input
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
+            )
+        return role_view_data
 
     @property
     def page_context(self):
