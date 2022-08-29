@@ -633,6 +633,14 @@ Once your application is online, you'll want to create a superuser, which you ca
 
 This can also be used to promote a user created by signing up to a superuser.
 
+If you want to create more superusers in the future using the in-app Superuser Management UI,
+you can do that by running:
+
+```sh
+./manage.py make_superuser <email> --allow_superuser_management
+```
+
+If this command raises an error, make sure that `ALLOW_SUPERUSER_MANAGEMENT` in `settings.py` is set to `True`.
 
 ## Running Formplayer and submitting data with Web Apps
 
