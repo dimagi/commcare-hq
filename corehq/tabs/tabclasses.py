@@ -104,7 +104,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
-    regroup_sidebar_items,
     sidebar_to_dropdown,
 )
 
