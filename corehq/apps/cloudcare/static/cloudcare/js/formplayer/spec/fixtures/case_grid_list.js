@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
             "UATBC Calendar Testing",
             "[hidden] Adherence Reg Form Shell",
             "[hidden] Adherence Reg Form Shell",
-            "New Adherence Data"
+            "New Adherence Data",
         ],
         "entities": [
             {
@@ -15,46 +15,46 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
                 "data": [
                     "5",
                     "",
-                    "jr://file/commcare/image/data/question1.png"
+                    "jr://file/commcare/image/data/question1.png",
                 ],
-                "details": null
+                "details": null,
             },
             {
                 "id": "16958",
                 "data": [
                     "6",
                     "",
-                    "jr://file/commcare/image/data/question1.png"
+                    "jr://file/commcare/image/data/question1.png",
                 ],
-                "details": null
+                "details": null,
             },
             {
                 "id": "17053",
                 "data": [
                     "9",
                     "",
-                    "jr://file/commcare/image/data/question1.png"
+                    "jr://file/commcare/image/data/question1.png",
                 ],
-                "details": null
-            }
+                "details": null,
+            },
         ],
         "action": null,
         "styles": [
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 0,
                 "widthHint": null,
-                "displayFormat": "Image"
-            }
+                "displayFormat": "Image",
+            },
         ],
         "headers": [
             "Date",
@@ -68,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
                 "gridWidth": 3,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 1,
@@ -76,7 +76,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 0,
@@ -84,13 +84,13 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
                 "gridWidth": 7,
                 "gridHeight": 7,
                 "cssId": null,
-                "fontSize": null
-            }
+                "fontSize": null,
+            },
         ],
         "widthHints": [
             33,
             33,
-            33
+            33,
         ],
         "numEntitiesPerRow": 7,
         "usesCaseTiles": true,

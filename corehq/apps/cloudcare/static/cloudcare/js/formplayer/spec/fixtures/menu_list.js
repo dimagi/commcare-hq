@@ -5,40 +5,40 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", function () {
         "title": "Case Tests",
         "breadcrumbs": [
             "Basic",
-            "Case Tests"
+            "Case Tests",
         ],
         "commands": [
             {
                 "index": 0,
                 "displayText": "Create a Case",
-                "navigationState": "JUMP"
+                "navigationState": "JUMP",
             },
             {
                 "index": 1,
                 "displayText": "Update a Case",
-                "navigationState": "NEXT"
+                "navigationState": "NEXT",
             },
             {
                 "index": 2,
                 "displayText": "Close a Case",
-                "navigationState": "NEXT"
+                "navigationState": "NEXT",
             },
             {
                 "index": 3,
                 "displayText": "Create a Sub Case",
-                "navigationState": "NEXT"
+                "navigationState": "NEXT",
             },
             {
                 "index": 4,
                 "displayText": "Create Multiple Sub Cases",
-                "navigationState": "NEXT"
+                "navigationState": "NEXT",
             },
             {
                 "index": 5,
                 "displayText": "Case list",
-                "navigationState": "NEXT"
-            }
+                "navigationState": "NEXT",
+            },
         ],
-        "type": "commands"
+        "type": "commands",
     });
 });

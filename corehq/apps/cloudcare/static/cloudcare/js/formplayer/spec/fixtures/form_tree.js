@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
     return {
       "notification": {
           "message": null,
-          "error": false
+          "error": false,
       },
       "title": "Question #Types",
       "clearSession": false,
@@ -58,7 +58,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
               "choices": [
                   "One",
                   "Two",
-                  "Three"
+                  "Three",
               ],
           }),
           _.extend(questionDefaults, {
@@ -69,7 +69,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
               "choices": [
                   "One",
                   "Two",
-                  "Three"
+                  "Three",
               ],
           }),
           _.extend(questionDefaults, {
@@ -84,12 +84,12 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                   "binding": "/data/list_view/list_label",
                   "datatype": "select",
                   "style": {
-                      "raw": "label"
+                      "raw": "label",
                   },
                   "ix": "8,0",
                   "choices": [
                       "Yes",
-                      "No"
+                      "No",
                   ],
                 }),
                 _.extend(questionDefaults, {
@@ -97,13 +97,13 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                   "binding": "/data/list_view/red",
                   "datatype": "select",
                   "style": {
-                      "raw": "list-nolabel"
+                      "raw": "list-nolabel",
                   },
                   "caption_markdown": "Red",
                   "ix": "8,1",
                   "choices": [
                       "Yes",
-                      "No"
+                      "No",
                   ],
                 }),
                 _.extend(questionDefaults, {
@@ -111,14 +111,14 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                   "binding": "/data/list_view/Green",
                   "datatype": "select",
                   "style": {
-                      "raw": "list-nolabel"
+                      "raw": "list-nolabel",
                   },
                   "type": "question",
                   "caption_markdown": "Green",
                   "ix": "8,2",
                   "choices": [
                       "Yes",
-                      "No"
+                      "No",
                   ],
                 }),
                 _.extend(questionDefaults, {
@@ -126,14 +126,14 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                   "binding": "/data/list_view/Yellow",
                   "datatype": "select",
                   "style": {
-                      "raw": "list-nolabel"
+                      "raw": "list-nolabel",
                   },
                   "ix": "8,3",
                   "choices": [
                       "Yes",
-                      "No"
+                      "No",
                   ],
-                })
+                }),
             ],
         }),
         _.extend(questionDefaults, {
@@ -156,7 +156,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "caption": "You should be able to enter digits here. Enter multiple zeroes and navigate back and forth to make sure they remain.",
             "binding": "/data/numerictext",
             "style": {
-                "raw": "numeric"
+                "raw": "numeric",
             },
             "ix": "12",
         }),
@@ -165,7 +165,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "binding": "/data/no_confirmation",
             "datatype": "info",
             "style": {
-                "raw": "minimal"
+                "raw": "minimal",
             },
             "ix": "13",
         }),
@@ -180,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "binding": "/data/sig_cap",
             "datatype": "binary",
             "style": {
-                "raw": "signature"
+                "raw": "signature",
             },
             "ix": "15",
         }),
@@ -225,7 +225,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "binding": "/data/q_image_acquire",
             "datatype": "binary",
             "style": {
-                "raw": "acquire"
+                "raw": "acquire",
             },
             "ix": "22",
         }),
@@ -234,7 +234,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "binding": "/data/q_audio_acquire",
             "datatype": "binary",
             "style": {
-                "raw": "acquire"
+                "raw": "acquire",
             },
             "ix": "23",
         }),
@@ -243,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
             "binding": "/data/q_video_acquire",
             "datatype": "binary",
             "style": {
-                "raw": "acquire"
+                "raw": "acquire",
             },
             "ix": "24",
         }),
@@ -267,7 +267,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                     "choices": [
                         "One",
                         "Two",
-                        "Three"
+                        "Three",
                     ],
                 }),
                 _.extend(questionDefaults, {
@@ -278,17 +278,17 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                     "choices": [
                         "One",
                         "Two",
-                        "Three"
+                        "Three",
                     ],
-                })
+                }),
             ],
         }),
       ],
       "langs": [
           "en",
-          "hin"
+          "hin",
       ],
       "session_id": "7fad68e5-1836-494c-be04-cc1f7b8bba44",
-      "seq_id": 0
+      "seq_id": 0,
     };
 });

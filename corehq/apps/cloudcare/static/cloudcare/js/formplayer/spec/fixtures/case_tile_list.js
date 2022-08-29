@@ -5,7 +5,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
         "title": "Active Patients",
         "breadcrumbs": [
             "*mLabour India App*",
-            "Active Patients"
+            "Active Patients",
         ],
         "entities": [
             {
@@ -24,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                     "<b>Next exam late by 2110:20</b>",
                     "Admitted: 2016-06-04 ",
                     "Parity: primi",
-                    "Bed #1 "
+                    "Bed #1 ",
                 ],
                 "details": [
                     {
@@ -36,7 +36,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -46,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "graph",
                             "graph",
                             "graph",
-                            "graph"
+                            "graph",
                         ],
                         "styles": null,
                         "headers": [
@@ -55,8 +55,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "\u00a0",
                             "\u00a0",
                             "\u00a0",
-                            "\u00a0"
-                        ]
+                            "\u00a0",
+                        ],
                     },
                     {
                         "notification": null,
@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -89,7 +89,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "",
                             "",
                             "",
-                            ""
+                            "",
                         ],
                         "styles": null,
                         "headers": [
@@ -110,8 +110,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "Oxytocin",
                             "Drugs & IV Fluids",
                             "Emergency Signs Flagging Explanation",
-                            "Patient Notes"
-                        ]
+                            "Patient Notes",
+                        ],
                     },
                     {
                         "notification": null,
@@ -122,7 +122,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -155,7 +155,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "",
                             "",
                             "",
-                            ""
+                            "",
                         ],
                         "styles": null,
                         "headers": [
@@ -187,10 +187,10 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "On Call Doctor 1",
                             "On Call Doctor 2",
                             "On Call Doctor 3",
-                            "On Call Doctor 4"
-                        ]
-                    }
-                ]
+                            "On Call Doctor 4",
+                        ],
+                    },
+                ],
             },
             {
                 "id": "fa371212-eb46-490d-b8bb-7cf80df9275d",
@@ -208,7 +208,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                     "Time until next exam: ",
                     "Admitted: 2016-06-06 11:00:00",
                     "Parity: second",
-                    "Bed #12 (Septic)"
+                    "Bed #12 (Septic)",
                 ],
                 "details": [
                     {
@@ -220,7 +220,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -230,7 +230,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "graph",
                             "graph",
                             "graph",
-                            "graph"
+                            "graph",
                         ],
                         "styles": null,
                         "headers": [
@@ -239,8 +239,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "\u00a0",
                             "\u00a0",
                             "\u00a0",
-                            "\u00a0"
-                        ]
+                            "\u00a0",
+                        ],
                     },
                     {
                         "notification": null,
@@ -251,7 +251,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -273,7 +273,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "",
                             "",
                             "",
-                            ": He is grumpy"
+                            ": He is grumpy",
                         ],
                         "styles": null,
                         "headers": [
@@ -294,8 +294,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "Oxytocin",
                             "Drugs & IV Fluids",
                             "Emergency Signs Flagging Explanation",
-                            "Patient Notes"
-                        ]
+                            "Patient Notes",
+                        ],
                     },
                     {
                         "notification": null,
@@ -306,7 +306,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                         "locales": [
                             "default",
                             "en",
-                            "hin"
+                            "hin",
                         ],
                         "breadcrumbs": null,
                         "menuSessionId": null,
@@ -339,7 +339,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "",
                             "",
                             "",
-                            ""
+                            "",
                         ],
                         "styles": null,
                         "headers": [
@@ -371,84 +371,84 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "On Call Doctor 1",
                             "On Call Doctor 2",
                             "On Call Doctor 3",
-                            "On Call Doctor 4"
-                        ]
-                    }
-                ]
-            }
+                            "On Call Doctor 4",
+                        ],
+                    },
+                ],
+            },
         ],
         "action": null,
         "styles": [
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 0,
                 "widthHint": null,
-                "displayFormat": "Image"
+                "displayFormat": "Image",
             },
             {
                 "fontSize": 0,
                 "widthHint": "0",
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 0,
                 "widthHint": null,
-                "displayFormat": "Image"
+                "displayFormat": "Image",
             },
             {
                 "fontSize": 0,
                 "widthHint": null,
-                "displayFormat": "Image"
+                "displayFormat": "Image",
             },
             {
                 "fontSize": 0,
                 "widthHint": null,
-                "displayFormat": "Image"
+                "displayFormat": "Image",
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
+                "displayFormat": null,
             },
             {
                 "fontSize": 12,
                 "widthHint": null,
-                "displayFormat": null
-            }
+                "displayFormat": null,
+            },
         ],
         "headers": [
             "Name",
@@ -464,7 +464,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
             "",
             "",
             "",
-            ""
+            "",
         ],
         "tiles": [
             {
@@ -473,7 +473,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": "large"
+                "fontSize": "large",
             },
             {
                 "gridX": 4,
@@ -481,7 +481,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 7,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 4,
@@ -489,7 +489,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 7,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 4,
@@ -497,7 +497,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 7,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 0,
@@ -505,7 +505,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "small"
+                "fontSize": "small",
             },
             {
                 "gridX": 6,
@@ -513,7 +513,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 2,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": null
+                "fontSize": null,
             },
             null,
             {
@@ -522,7 +522,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 2,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": null
+                "fontSize": null,
             },
             {
                 "gridX": 8,
@@ -530,7 +530,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 2,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": null
+                "fontSize": null,
             },
             {
                 "gridX": 4,
@@ -538,7 +538,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 2,
                 "gridHeight": 2,
                 "cssId": null,
-                "fontSize": null
+                "fontSize": null,
             },
             {
                 "gridX": 4,
@@ -546,7 +546,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 8,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "medium"
+                "fontSize": "medium",
             },
             {
                 "gridX": 0,
@@ -554,7 +554,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "small"
+                "fontSize": "small",
             },
             {
                 "gridX": 0,
@@ -562,7 +562,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "small"
+                "fontSize": "small",
             },
             {
                 "gridX": 0,
@@ -570,8 +570,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                 "gridWidth": 4,
                 "gridHeight": 1,
                 "cssId": null,
-                "fontSize": "small"
-            }
+                "fontSize": "small",
+            },
         ],
         "widthHints": [
             7,
@@ -587,7 +587,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
             7,
             7,
             7,
-            7
+            7,
         ],
         "usesCaseTiles": true,
         "maxWidth": 12,
