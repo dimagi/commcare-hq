@@ -329,10 +329,17 @@ class RegistryAuditHelper:
         )
 
     def data_accessed(self, user, domain, related_object, filters=None):
-        if not related_object or not hasattr(related_object, "doc_type"):
+        is_repeater = True if hasattr(related_object, 'repeater_type') else False
+        if (
+            not (related_object and hasattr(related_object, "doc_type"))
+            and not is_repeater
+        ):
             raise ValueError("Unexpected related object")
 
-        doc_type = getattr(related_object, 'base_doc', related_object.doc_type)
+        doc_type = (
+            getattr(related_object, 'base_doc', related_object.doc_type)
+            if not is_repeater else 'Repeater'
+        )
         try:
             related_object_type = {
                 "ReportConfiguration": RegistryAuditLog.RELATED_OBJECT_UCR,
