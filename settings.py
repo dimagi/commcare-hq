@@ -168,6 +168,8 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    # middleware that adds cookies must come before SecureCookiesMiddleware
+    'corehq.middleware.SecureCookiesMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -247,7 +249,6 @@ HQ_APPS = (
     'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
-    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -905,7 +906,10 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {

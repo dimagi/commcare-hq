@@ -185,6 +185,10 @@ describe('WebForm', function () {
                         },
                     };
                 },
+                entry: {
+                    xformAction: Const.ANSWER,
+                    xformParams: function () { return {}; },
+                },
             };
 
             // First blocking request

@@ -76,6 +76,21 @@ class TestCaseAPIBulkGet(TestCase):
             external_id=external_id,
         )
 
+    def test_get_single_case(self):
+        res = self.client.get(reverse('case_api', args=(self.domain, self.case_ids[0])))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['case_id'], self.case_ids[0])
+
+    def test_get_single_case_not_found(self):
+        res = self.client.get(reverse('case_api', args=(self.domain, 'fake_id')))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], "Case 'fake_id' not found")
+
+    def test_get_single_case_on_other_domain(self):
+        res = self.client.get(reverse('case_api', args=(self.domain, self.other_domain_case_id)))
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.json()['error'], f"Case '{self.other_domain_case_id}' not found")
+
     def test_bulk_get(self):
         case_ids = self.case_ids[0:2]
         self._call_get_api_check_results(case_ids, matching=2, missing=0)

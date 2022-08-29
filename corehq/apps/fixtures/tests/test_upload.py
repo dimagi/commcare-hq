@@ -705,6 +705,52 @@ class TestFixtureUpload(TestCase):
         connection.check_constraints()  # should not raise
         self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
 
+    def test_upload_rows_with_concurrently_saved_sql_table(self):
+        def upload_runner():
+            # use the same connection as main test thread
+            connections[DEFAULT_DB_ALIAS] = test_connection
+            self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
+
+        def flush_blocker(*args):
+            # wait to flush until concurrent save has occurred
+            nonlocal thread_success
+            concurrent_save.set()
+            if not continue_upload.wait(timeout=10):
+                raise RuntimeError("continue_upload timeout")
+            real_flush(*args)
+            thread_success = True
+
+        from threading import Thread, Event
+        from django.db import DEFAULT_DB_ALIAS, connections
+        test_connection = connections[DEFAULT_DB_ALIAS]
+        test_connection.inc_thread_sharing()
+        thread_success = False
+        try:
+            concurrent_save = Event()
+            continue_upload = Event()
+
+            with disable_save_to_sql():
+                # simulate save prior to start of migration
+                self.upload([(None, 'N', 'apple')])
+
+            real_flush = mod.flush
+            with patch.object(mod, "flush", flush_blocker):
+                upload = Thread(target=upload_runner)
+                upload.start()  # loads Couch docs, blocks on flush
+
+                if not concurrent_save.wait(timeout=10):
+                    raise RuntimeError("concurrent_save timeout")
+                things = self.get_table()
+                things.save()  # save to SQL
+
+                continue_upload.set()
+                upload.join()
+                assert thread_success, "upload in thread did not finish"
+        finally:
+            test_connection.dec_thread_sharing()
+
+        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
+
 
 class TestFixtureOwnershipUpload(TestCase):
     do_upload = _run_upload

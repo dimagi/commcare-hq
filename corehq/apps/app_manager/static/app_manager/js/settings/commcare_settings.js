@@ -226,6 +226,20 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                 return setting.disabled && setting.visibleValue() !== setting['default'];
             });
 
+            // Returns values and value names as select/multiSelect options.
+            // Accepts default values as an array to support multiSelect.
+            setting.getOptions = function (values, valueNames, defaults) {
+                var options = [];
+                for (var i = 0; i < values.length; i++) {
+                    options.push({
+                        label: (defaults.includes(values[i]) ? '* ' : '') +
+                            valueNames[i],
+                        value: values[i],
+                    });
+                }
+                return options;
+            };
+
             // valueToSave is only ever used during serialization/save;
             // different from visibleValue
             // in that you want to save null and not the shown value
@@ -338,26 +352,11 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
     CommcareSettings.widgets = {};
 
     CommcareSettings.widgets.select = function (self) {
-        self.updateOptions = function () {
-            var values = ko.utils.unwrapObservable(self.values);
-            var value_names = ko.utils.unwrapObservable(self.value_names);
-            if (!values || !value_names || values.length !== value_names.length) {
-                console.error("Widget select requires values " +
-                    "and value_names of equal length", self);
-                throw {};
-            }
-            var options = [];
-            for (var i = 0; i < values.length; i++) {
-                options.push({
-                    label: (self['default'] === values[i] ? '* ' : '') +
-                        value_names[i],
-                    value: values[i],
-                });
-            }
-            self.options(options);
-        };
-        self.options = ko.observable([]);
-        self.updateOptions();
+        self.options = ko.observable(self.getOptions(
+            ko.utils.unwrapObservable(self.values),
+            ko.utils.unwrapObservable(self.value_names),
+            [self['default']]
+        ));
         self.selectOption = function (selectedOption) {
             if (selectedOption) {
                 self.visibleValue(selectedOption.value);
@@ -389,6 +388,45 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             var value = self.value();
             return !value || _(self.options()).some(function (option) {
                 return option.value === value;
+            });
+        };
+    };
+
+    CommcareSettings.widgets.multiSelect = function (self) {
+        self.options = ko.observable(self.getOptions(
+            ko.utils.unwrapObservable(self.values),
+            ko.utils.unwrapObservable(self.value_names),
+            self['default']  // multiSelect default is an array
+        ));
+
+        self.selectOptions = function (selectedOptions) {
+            var values = _.map(selectedOptions, function (o) {
+                return o.value;
+            });
+            self.visibleValue(values);
+        };
+
+        self.selectedOptions = ko.computed({
+            read: function () {
+                var visibleValue = self.visibleValue();
+                return _.filter(self.options(), function (o) {
+                    return visibleValue.includes(o.value);
+                });
+            },
+            write: self.selectOptions,
+        });
+
+        self.writeSelectedOptions = ko.computed({
+            read: function () { return []; },
+            write: self.selectOptions,
+        });
+
+        self.valueIsLegal = function () {
+            var optionValues = _.map(self.options(), function (o) {
+                return o.value;
+            });
+            return _.every(self.value(), function (v) {
+                return optionValues.includes(v);
             });
         };
     };

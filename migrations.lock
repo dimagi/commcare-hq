@@ -124,6 +124,7 @@ app_manager
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
  0021_migrate_case_search_itemset_ids
+ 0022_migrate_to_conditional_case_update
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -686,6 +687,8 @@ reports
  0006_remove_tableauserver_allow_domain_username_override
  0007_tableauvisualization_upstream_id
  0008_tableauvisualization_title
+ 0009_remove_tableauserver_domain_username
+ 0010_delete_reportssidebarordering
 saved_reports
  0001_initial
  0002_scheduledreportlog
