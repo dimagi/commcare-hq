@@ -78,7 +78,7 @@ class FixtureDataTest(TestCase):
             owner_type=OwnerType.User,
             row_id=self.data_item.id,
         )
-        self.ownership.save(sync_to_couch=False)
+        self.ownership.save()
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):

@@ -18,7 +18,6 @@ from .couchmodels import (  # noqa: F401
     FixtureDataItem,
     FixtureDataType,
     FixtureItemField,
-    FixtureOwnership,
     FixtureTypeField,
 )
 from .exceptions import FixtureVersionError
@@ -362,7 +361,7 @@ class OwnerType(models.IntegerChoices):
         return getattr(cls, value.title())
 
 
-class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
+class LookupTableRowOwner(models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
@@ -374,21 +373,6 @@ class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
         indexes = [
             models.Index(fields=["domain", "owner_type", "owner_id"])
         ]
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "owner_id"]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if couch_object.data_item_id is None or UUID(couch_object.data_item_id) != self.row_id:
-            couch_object.data_item_id = self.row_id.hex
-        if OwnerType(self.owner_type).name.lower() != couch_object.owner_type:
-            couch_object.owner_type = OwnerType(self.owner_type).name.lower()
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureOwnership
 
 
 class UserLookupTableType:

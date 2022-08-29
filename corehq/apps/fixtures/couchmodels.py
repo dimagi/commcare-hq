@@ -400,35 +400,11 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         transaction.delete(self)
 
 
-class FixtureOwnership(SyncCouchToSQLMixin, Document):
+class FixtureOwnership(Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group', 'location'])
-
-    @property
-    def _migration_couch_id(self):
-        return self._id
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return [
-            "domain",
-            "owner_id",
-        ]
-
-    def _migration_sync_to_sql(self, sql_object, save=True):
-        from .models import OwnerType
-        if sql_object.row_id is None or sql_object.row_id != UUID(self.data_item_id):
-            sql_object.row_id = UUID(self.data_item_id)
-        if OwnerType.from_string(self.owner_type) != sql_object.owner_type:
-            sql_object.owner_type = OwnerType.from_string(self.owner_type)
-        super()._migration_sync_to_sql(sql_object, save=save)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from .models import LookupTableRowOwner
-        return LookupTableRowOwner
 
     @classmethod
     def by_item_id(cls, item_id, domain):

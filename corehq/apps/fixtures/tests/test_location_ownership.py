@@ -63,7 +63,7 @@ class TestLocationOwnership(LocationHierarchyTestCase):
                 owner_id=cls.locations[location_name].location_id,
                 owner_type=OwnerType.Location,
                 row_id=data_item.id,
-            ).save(sync_to_couch=False)
+            ).save()
 
         make_data_item('Suffolk', '8')
         make_data_item('Boston', '10')
