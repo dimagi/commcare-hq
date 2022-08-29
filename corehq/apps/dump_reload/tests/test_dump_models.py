@@ -6,7 +6,6 @@ from testil import eq
 from corehq.apps.dump_reload.sql.dump import _get_app_list
 from corehq.apps.dump_reload.util import get_model_label
 
-# TODO: determine which of these should not be ignored
 IGNORE_MODELS = {
     "accounting.BillingAccount",
     "accounting.BillingContactInfo",
@@ -34,10 +33,35 @@ IGNORE_MODELS = {
     "accounting.Subscription",
     "accounting.SubscriptionAdjustment",
     "accounting.WireBillingRecord",
-    "accounting.WireInvoice",
+    "accounting.WireInvoice",   # this has a domain, but nothing else in accounting does
     "accounting.WirePrepaymentBillingRecord",
     "accounting.WirePrepaymentInvoice",
     "admin.LogEntry",
+    "api.ApiUser",
+    "app_manager.ExchangeApplication",
+    "django_celery_results.TaskResult",
+    "django_celery_results.ChordCounter",
+    "django_celery_results.GroupResult",
+    "dropbox.DropboxUploadHelper",
+    "enterprise.EnterpriseMobileWorkerSettings",    # tied to an account, not a domain
+    "enterprise.EnterprisePermissions",
+    "export.DefaultExportSettings",     # tied to an account, not a domain
+    "hqadmin.HistoricalPillowCheckpoint",
+    "hqadmin.HqDeploy",
+    "notifications.DismissedUINotify",
+    "notifications.LastSeenNotification",
+    "notifications.Notification",
+    "toggle_ui.ToggleAudit",
+    "two_factor.PhoneDevice",
+    "util.BouncedEmail",
+    "util.ComplaintBounceMeta",
+    "util.PermanentBounceMeta",
+    "util.TransientBounceEmail",
+    "users.Permission",
+}
+
+# TODO: determine which of these should not be ignored
+UNKNOWN_MODELS = {
     "aggregate_ucrs.AggregateTableDefinition",
     "aggregate_ucrs.PrimaryColumn",
     "aggregate_ucrs.SecondaryColumn",
@@ -46,8 +70,6 @@ IGNORE_MODELS = {
     "analytics.PartnerAnalyticsContact",
     "analytics.PartnerAnalyticsDataPoint",
     "analytics.PartnerAnalyticsReport",
-    "api.ApiUser",
-    "app_manager.ExchangeApplication",
     "auditcare.AccessAudit",
     "auditcare.AuditcareMigrationMeta",
     "auditcare.HttpAccept",
@@ -67,18 +89,11 @@ IGNORE_MODELS = {
     "data_interfaces.CaseDuplicate",
     "dhis2.SQLDataSetMap",
     "dhis2.SQLDataValueMap",
-    "django_celery_results.TaskResult",
-    "django_celery_results.ChordCounter",
-    "django_celery_results.GroupResult",
     "django_digest.PartialDigest",
     "django_digest.UserNonce",
     "django_prbac.Grant",
     "django_prbac.Role",
     "django_prbac.UserRole",
-    "dropbox.DropboxUploadHelper",
-    "enterprise.EnterpriseMobileWorkerSettings",
-    "enterprise.EnterprisePermissions",
-    "export.DefaultExportSettings",
     "export.EmailExportWhenDoneRequest",
     "export.IncrementalExport",
     "export.IncrementalExportCheckpoint",
@@ -89,8 +104,6 @@ IGNORE_MODELS = {
     "fhir.ResourceTypeRelationship",
     "fixtures.UserLookupTableStatus",
     "form_processor.DeprecatedXFormAttachmentSQL",
-    "hqadmin.HistoricalPillowCheckpoint",
-    "hqadmin.HqDeploy",
     "hqwebapp.HQOauthApplication",
     "hqwebapp.MaintenanceAlert",
     "hqwebapp.UserAccessLog",
@@ -100,9 +113,6 @@ IGNORE_MODELS = {
     "integration.HmacCalloutSettings",
     "integration.SimprintsIntegration",
     "ivr.Call",
-    "notifications.DismissedUINotify",
-    "notifications.LastSeenNotification",
-    "notifications.Notification",
     "oauth2_provider.AccessToken",
     "oauth2_provider.Application",
     "oauth2_provider.Grant",
@@ -155,8 +165,6 @@ IGNORE_MODELS = {
     "tastypie.ApiAccess",
     "tastypie.ApiKey",
     "telerivet.IncomingRequest",
-    "toggle_ui.ToggleAudit",
-    "two_factor.PhoneDevice",
     "userreports.AsyncIndicator",
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
@@ -168,13 +176,8 @@ IGNORE_MODELS = {
     "users.DomainRequest",
     "users.HQApiKey",
     "users.Invitation",
-    "users.Permission",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
-    "util.BouncedEmail",
-    "util.ComplaintBounceMeta",
-    "util.PermanentBounceMeta",
-    "util.TransientBounceEmail",
 }
 
 
@@ -186,7 +189,7 @@ def test_domain_dump_sql_models():
         if not model._meta.managed:
             return True
 
-        if get_model_label(model) in IGNORE_MODELS:
+        if get_model_label(model) in IGNORE_MODELS | UNKNOWN_MODELS:
             return True
 
         if model._meta.proxy:
