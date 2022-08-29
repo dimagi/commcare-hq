@@ -155,27 +155,6 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-def ordering_config_validator(value):
-
-    error = ValidationError(
-        _('The config format is invalid'),
-        params={'value': value}
-    )
-
-    if not isinstance(value, list):
-        raise error
-    for group in value:
-        if not isinstance(group, list) or len(group) != 2:
-            raise error
-        if not isinstance(group[0], str):
-            raise error
-        if not isinstance(group[1], list):
-            raise error
-        for report in group[1]:
-            if not isinstance(report, str):
-                raise error
-
-
 class TableauServer(models.Model):
     SERVER_TYPES = (
         ('server', gettext_lazy('Tableau Server')),
