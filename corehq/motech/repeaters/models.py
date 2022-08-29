@@ -352,7 +352,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                 raise e
 
     def get_url(self, record):
-        return self.repeater.get_url(record)
+        return self.connection_settings.url
 
     @classmethod
     @property
@@ -624,7 +624,7 @@ class SQLFormRepeater(SQLRepeater):
             return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
         headers.update({
             "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
@@ -1707,8 +1707,8 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.get(self.repeater_id)
-        except ResourceNotFound:
+            return SQLRepeater.objects.get(repeater_id=self.repeater_id)
+        except SQLRepeater.DoesNotExist:
             return None
 
     @property

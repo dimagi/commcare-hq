@@ -30,8 +30,12 @@ class Command(PopulateSQLCommand):
         differences, or None if the two are equivalent. The list may
         contain `None` or empty strings.
         """
-        fields = ["domain", "is_global", "tag"]
-        diffs = [cls.diff_attr(name, couch, sql) for name in fields]
+        diffs = [cls.diff_attr(name, couch, sql) for name in ["domain", "tag"]]
+        diffs.append(cls.diff_value(
+            "is_global",
+            couch.get("is_global") or False,
+            sql.is_global,
+        ))
         for field in ["item_attributes", "description"]:
             diffs.append(cls.diff_maybe_empty_field(field, couch, sql))
         diffs.append(cls.diff_value(
@@ -45,19 +49,6 @@ class Command(PopulateSQLCommand):
     def diff_maybe_empty_field(cls, field, couch, sql):
         if couch.get(field) or getattr(sql, field):
             return cls.diff_value(field, couch.get(field), getattr(sql, field))
-
-    def update_or_create_sql_object(self, doc):
-        return self.sql_class().objects.update_or_create(
-            id=doc['_id'],
-            defaults={
-                "domain": doc["domain"],
-                "is_global": doc.get("is_global", False),
-                "tag": doc["tag"],
-                "fields": [transform_field(f) for f in doc.get("fields", [])],
-                "item_attributes": doc.get("item_attributes", []),
-                "description": doc.get("description") or ""
-            },
-        )
 
 
 def transform_field(data):

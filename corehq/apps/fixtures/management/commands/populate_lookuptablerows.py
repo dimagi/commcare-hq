@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
@@ -49,7 +50,7 @@ class Command(PopulateSQLCommand):
             ),
             cls.diff_value(
                 "item_attributes",
-                couch.get("item_attributes") or {},
+                transform_item_attributes(couch.get("item_attributes") or {}),
                 sql.item_attributes,
             ),
             cls.diff_value(
@@ -60,27 +61,14 @@ class Command(PopulateSQLCommand):
         ]
         return diffs
 
-    def update_or_create_sql_object(self, doc):
-        if not self.data_type_exists(doc["data_type_id"]):
-            return None, False
-        return self.sql_class().objects.update_or_create(
-            id=UUID(doc['_id']),
-            defaults={
-                "domain": doc["domain"],
-                "table_id": UUID(doc["data_type_id"]),
-                "fields": couch_to_sql_fields(doc["fields"]),
-                "item_attributes": doc.get("item_attributes") or {},
-                "sort_key": doc.get("sort_key") or 0,
-            },
-        )
-
-    def data_type_exists(self, data_type_id):
+    def should_ignore(self, doc):
+        data_type_id = doc["data_type_id"]
         try:
-            return self.data_type_existence[data_type_id]
+            exists = self.data_type_existence[data_type_id]
         except KeyError:
             exists = self.couch_db().doc_exist(data_type_id)
             self.data_type_existence[data_type_id] = exists
-            return exists
+        return not exists
 
 
 def couch_to_sql_fields(data):
@@ -97,3 +85,11 @@ def couch_to_sql_fields(data):
         ]
         for name, field in data.items()
     }
+
+
+def transform_item_attributes(data):
+    def convert(value):
+        if isinstance(value, Decimal):
+            return str(value)
+        return value
+    return {name: convert(value) for name, value in data.items()}

@@ -8,7 +8,6 @@ from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
@@ -188,11 +187,7 @@ def _process_repeat_record(repeat_record):
         return
 
     try:
-        if repeater.doc_type.endswith(DELETED_SUFFIX):
-            if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
-                repeat_record.doc_type += DELETED_SUFFIX
-                repeat_record.save()
-        elif repeater.paused:
+        if repeater.is_paused:
             # postpone repeat record by MAX_RETRY_WAIT so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
             repeat_record.postpone_by(MAX_RETRY_WAIT)
