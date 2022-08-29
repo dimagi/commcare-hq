@@ -77,7 +77,6 @@ branches:
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
     - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
-    - dmr/remove-unused-couch-form-views  # Danny Aug 11
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
-    - dmr/fix-uwsgi  # Danny Aug 11
+    - jls/web-apps-upload # Jenny Aug 15
 submodules: { }

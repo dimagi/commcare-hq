@@ -27,6 +27,7 @@ from corehq.util.view_utils import reverse
 
 from .api.core import SubmissionError, UserError, serialize_case
 from .api.get_list import get_list
+from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
 
@@ -89,7 +90,7 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @api_throttle
 def case_api(request, domain, case_id=None):
     if request.method == 'GET' and case_id:
-        return _handle_individual_get(request, case_id)
+        return _handle_get(request, case_id)
     if request.method == 'GET' and not case_id:
         return _handle_list_view(request)
     if request.method == 'POST' and not case_id:
@@ -99,7 +100,35 @@ def case_api(request, domain, case_id=None):
     return JsonResponse({'error': "Request method not allowed"}, status=405)
 
 
-def _handle_individual_get(request, case_id):
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST'])
+@api_auth
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
+@CASE_API_V0_6.required_decorator()
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@api_throttle
+def case_api_bulk_fetch(request, domain):
+    return _handle_bulk_fetch(request)
+
+
+def _handle_get(request, case_id):
+    if ',' in case_id:
+        return _get_bulk_cases(request, case_ids=case_id.split(','))
+    return _get_single_case(request, case_id)
+
+
+def _get_bulk_cases(request, case_ids=None, external_ids=None):
+    try:
+        res = get_bulk(request.domain, case_ids, external_ids)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse(res)
+
+
+def _get_single_case(request, case_id):
     try:
         case = CommCareCase.objects.get_case(case_id, request.domain)
         if case.domain != request.domain:
@@ -107,6 +136,20 @@ def _handle_individual_get(request, case_id):
     except CaseNotFound:
         return JsonResponse({'error': f"Case '{case_id}' not found"}, status=404)
     return JsonResponse(serialize_case(case))
+
+
+def _handle_bulk_fetch(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return JsonResponse({'error': "Payload must be valid JSON"}, status=400)
+
+    case_ids = data.get('case_ids')
+    external_ids = data.get('external_ids')
+    if not case_ids and not external_ids:
+        return JsonResponse({'error': "Payload must include 'case_ids' or 'external_ids' fields"}, status=400)
+
+    return _get_bulk_cases(request, case_ids=case_ids, external_ids=external_ids)
 
 
 def _handle_list_view(request):
