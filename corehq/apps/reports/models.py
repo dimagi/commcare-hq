@@ -176,36 +176,6 @@ def ordering_config_validator(value):
                 raise error
 
 
-class ReportsSidebarOrdering(models.Model):
-    domain = models.CharField(
-        max_length=256,
-        null=False,
-        blank=False,
-        unique=True
-    )
-    # Example config value:
-    # [
-    #     ["Adherence", [
-    #         "DynamicReport7613ac1402e2c41db782526e9c43e040",
-    #         "DynamicReport1233ac1402e2c41db782526e9c43e040"
-    #     ]],
-    #     ["Test Results", [
-    #         "DynamicReport4563ac1402e2c41db782526e9c43e040",
-    #         "DynamicReportmy-static-ucr-id"
-    #     ]]
-    # ]
-    config = JSONField(
-        validators=[ordering_config_validator],
-        default=list,
-        help_text=(
-            "An array of arrays. Each array represents a heading in the sidebar navigation. "
-            "The first item in each array is a string, which will be the title of the heading. The second item in "
-            "the array is another array, each item of which is the name of a report class. Each of these reports "
-            "will be listed under the given heading in the sidebar nav."
-        )
-    )
-
-
 class TableauServer(models.Model):
     SERVER_TYPES = (
         ('server', gettext_lazy('Tableau Server')),
