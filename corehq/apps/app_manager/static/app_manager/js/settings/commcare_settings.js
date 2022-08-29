@@ -227,14 +227,8 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
             });
 
             // Returns values and value names as select/multiSelect options.
-            // Accepts an array of default values to support multiSelect.
+            // Accepts default values as an array to support multiSelect.
             setting.getOptions = function (values, valueNames, defaults) {
-                if (!values || !valueNames || values.length !== valueNames.length) {
-                    var msg = ("select and multiSelect widgets require values " +
-                        "and value names of equal length");
-                    console.error(msg, values, valueNames);
-                    throw new Error(msg);
-                }
                 var options = [];
                 for (var i = 0; i < values.length; i++) {
                     options.push({
