@@ -59,7 +59,7 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
         "headers": [
             "Date",
             "",
-            ""
+            "",
         ],
         "tiles": [
             {

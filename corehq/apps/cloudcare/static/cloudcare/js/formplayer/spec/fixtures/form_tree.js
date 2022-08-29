@@ -73,66 +73,66 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                 ],
             }),
             _.extend(questionDefaults, {
-              "caption": "This question should display with a label at the top and allow you to choose from either option on each row",
-              "style": {},
-              "type": "sub-group",
-              "ix": "8",
-              "repeatable": "false",
-              "children": [
-                  _.extend(questionDefaults, {
-                    "caption": "Choose for each:",
-                    "binding": "/data/list_view/list_label",
-                    "datatype": "select",
-                    "style": {
-                        "raw": "label",
-                    },
-                    "ix": "8,0",
-                    "choices": [
-                        "Yes",
-                        "No",
-                    ],
+                "caption": "This question should display with a label at the top and allow you to choose from either option on each row",
+                "style": {},
+                "type": "sub-group",
+                "ix": "8",
+                "repeatable": "false",
+                "children": [
+                    _.extend(questionDefaults, {
+                      "caption": "Choose for each:",
+                      "binding": "/data/list_view/list_label",
+                      "datatype": "select",
+                      "style": {
+                          "raw": "label",
+                      },
+                      "ix": "8,0",
+                      "choices": [
+                          "Yes",
+                          "No",
+                      ],
                   }),
                   _.extend(questionDefaults, {
-                    "caption": "Red",
-                    "binding": "/data/list_view/red",
-                    "datatype": "select",
-                    "style": {
-                        "raw": "list-nolabel",
-                    },
-                    "caption_markdown": "Red",
-                    "ix": "8,1",
-                    "choices": [
-                        "Yes",
-                        "No",
-                    ],
+                      "caption": "Red",
+                      "binding": "/data/list_view/red",
+                      "datatype": "select",
+                      "style": {
+                          "raw": "list-nolabel",
+                      },
+                      "caption_markdown": "Red",
+                      "ix": "8,1",
+                      "choices": [
+                          "Yes",
+                          "No",
+                      ],
                   }),
                   _.extend(questionDefaults, {
-                    "caption": "Green",
-                    "binding": "/data/list_view/Green",
-                    "datatype": "select",
-                    "style": {
-                        "raw": "list-nolabel",
-                    },
-                    "type": "question",
-                    "caption_markdown": "Green",
-                    "ix": "8,2",
-                    "choices": [
-                        "Yes",
-                        "No",
-                    ],
+                      "caption": "Green",
+                      "binding": "/data/list_view/Green",
+                      "datatype": "select",
+                      "style": {
+                          "raw": "list-nolabel",
+                      },
+                      "type": "question",
+                      "caption_markdown": "Green",
+                      "ix": "8,2",
+                      "choices": [
+                          "Yes",
+                          "No",
+                      ],
                   }),
                   _.extend(questionDefaults, {
-                    "caption": "Yellow",
-                    "binding": "/data/list_view/Yellow",
-                    "datatype": "select",
-                    "style": {
-                        "raw": "list-nolabel",
-                    },
-                    "ix": "8,3",
-                    "choices": [
-                        "Yes",
-                        "No",
-                    ],
+                      "caption": "Yellow",
+                      "binding": "/data/list_view/Yellow",
+                      "datatype": "select",
+                      "style": {
+                          "raw": "list-nolabel",
+                      },
+                      "ix": "8,3",
+                      "choices": [
+                          "Yes",
+                          "No",
+                      ],
                   }),
               ],
           }),
