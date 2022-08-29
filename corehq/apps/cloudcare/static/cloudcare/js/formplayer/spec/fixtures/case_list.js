@@ -1,24 +1,13 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_list", function () {
-    return {
-      "notification": {
-        "message": null,
-        "error": false
-      },
+    var Util = hqImport("cloudcare/js/formplayer/spec/fixtures/util");
+
+    return Util.makeEntityResponse({
       "title": "Update a Case",
-      "clearSession": false,
-      "appId": "d8404850d060879c5e56e63e047dde09",
-      "appVersion": "CommCare Version: 2.27, App Version: 32",
-      "locales": [
-        "default",
-        "en",
-        "hin"
-      ],
       "breadcrumbs": [
         "Basic",
         "Case Tests",
         "Update a Case"
       ],
-      "menuSessionId": "f1aac6a8-b8e7-412b-b8ef-416ac60a946d",
       "entities": [
         {
           "id": "56d9bea5-fc2d-481a-adef-d121e839c5eb",
@@ -140,12 +129,5 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_list", function () {
         33,
         33
       ],
-      "numEntitiesPerRow": 0,
-      "pageCount": 2,
-      "currentPage": 0,
-      "type": "entities",
-      "usesCaseTiles": false,
-      "maxWidth": 0,
-      "maxHeight": 0
-    };
+    });
 });

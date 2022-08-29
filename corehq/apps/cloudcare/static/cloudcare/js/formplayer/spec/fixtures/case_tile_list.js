@@ -1,23 +1,12 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
-    return {
-      "notification": {
-        "message": null,
-        "error": false
-      },
+    var Util = hqImport("cloudcare/js/formplayer/spec/fixtures/util");
+
+    return Util.makeEntityResponse({
       "title": "Active Patients",
-      "clearSession": false,
-      "appId": "aa6848731f21006181a7a3b60f5e08a1",
-      "appVersion": "CommCare Version: 2.27, App Version: 31",
-      "locales": [
-        "default",
-        "en",
-        "hin"
-      ],
       "breadcrumbs": [
         "*mLabour India App*",
         "Active Patients"
       ],
-      "menuSessionId": "cbde2f21-a681-4c2c-9208-ada3f777f7c5",
       "entities": [
         {
           "id": "a8775035-ad1e-4ad9-95a8-4b3d12fa2fc0",
@@ -600,12 +589,8 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
         7,
         7
       ],
-      "numEntitiesPerRow": 1,
-      "pageCount": 0,
-      "currentPage": 0,
-      "type": "entities",
       "usesCaseTiles": true,
       "maxWidth": 12,
-      "maxHeight": 6
-    };
+      "maxHeight": 6,
+    });
 });

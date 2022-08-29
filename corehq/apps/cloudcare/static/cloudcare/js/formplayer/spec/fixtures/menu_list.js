@@ -1,23 +1,12 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", function () {
-    return {
-      "notification": {
-        "message": null,
-        "error": false
-      },
+    var Util = hqImport("cloudcare/js/formplayer/spec/fixtures/util");
+
+    return Util.makeResponse({
       "title": "Case Tests",
-      "clearSession": false,
-      "appId": "d8404850d060879c5e56e63e047dde09",
-      "appVersion": "CommCare Version: 2.27, App Version: 32",
-      "locales": [
-        "default",
-        "en",
-        "hin"
-      ],
       "breadcrumbs": [
         "Basic",
         "Case Tests"
       ],
-      "menuSessionId": "e9fad761-5239-4096-bb71-0aba1ebd7377",
       "commands": [
         {
           "index": 0,
@@ -51,5 +40,5 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", function () {
         }
       ],
       "type": "commands"
-    };
+    });
 });
