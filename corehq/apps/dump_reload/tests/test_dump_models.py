@@ -139,7 +139,6 @@ IGNORE_MODELS = {
     "registry.RegistryGrant",
     "registry.RegistryInvitation",
     "reminders.EmailUsage",
-    "reports.ReportsSidebarOrdering",
     "reports.TableauServer",
     "reports.TableauVisualization",
     "saved_reports.ScheduledReportLog",

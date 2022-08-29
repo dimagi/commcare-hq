@@ -68,7 +68,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -141,16 +140,8 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
