@@ -313,7 +313,7 @@ hqDefine('cloudcare/js/util', [
         }
 
         extraOptions = extraOptions || {};
-        el.datetimepicker(_.extend({
+        $el.datetimepicker(_.extend({
             useCurrent: false,
             showClear: true,
             showClose: true,
@@ -352,7 +352,7 @@ hqDefine('cloudcare/js/util', [
             },
         }, extraOptions));
 
-        var picker = el.data("DateTimePicker"),
+        var picker = $el.data("DateTimePicker"),
             superParseInputDate = picker.parseInputDate();
         picker.parseInputDate(function (inputDate) {
             if (!moment.isMoment(inputDate) || inputDate instanceof Date) {
@@ -361,7 +361,7 @@ hqDefine('cloudcare/js/util', [
             return superParseInputDate(inputDate);
         });
 
-        el.on("focusout", function () {
+        $el.on("focusout", function () {
             picker.hide();
         });
     };
