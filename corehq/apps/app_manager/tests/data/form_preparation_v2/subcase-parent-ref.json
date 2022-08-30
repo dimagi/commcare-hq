@@ -83,7 +83,7 @@
                }
            },
            "open_case": {
-               "name_path": null,
+               "name_update": null,
                "doc_type": "OpenCaseAction",
                "external_id": null,
                "condition": {
@@ -258,7 +258,7 @@
                            }
                        },
                        "open_case": {
-                           "name_path": null,
+                           "name_update": null,
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {
@@ -466,7 +466,9 @@
                        "subcases": [
                            {
                                "doc_type": "OpenSubCaseAction",
-                               "case_name": "/data/parent",
+                               "name_update": {
+                                   "question_path": "/data/parent"
+                               },
                                "case_properties": {
                                },
                                "case_type": "cc_bihar_pregnancy",
@@ -512,7 +514,9 @@
                            }
                        },
                        "open_case": {
-                           "name_path": "/data/name",
+                           "name_update": {
+                                "question_path": "/data/name"
+                           },
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {

@@ -343,7 +343,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/cooperative/cooperative_name",
+              "name_update": {
+                "question_path": "/data/cooperative/cooperative_name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -822,7 +824,9 @@
                 "case_type": "farmer",
                 "reference_id": null,
                 "repeat_context": "/data/farmer",
-                "case_name": "/data/farmer/farmer_name/farmer_full_name",
+                "name_update": {
+                  "question_path": "/data/farmer/farmer_name/farmer_full_name"
+                },
                 "condition": {
                   "answer": "1",
                   "type": "if",
@@ -888,7 +892,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1054,7 +1058,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1261,7 +1265,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2082,7 +2086,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2402,7 +2406,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2684,7 +2688,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2911,7 +2915,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -3687,7 +3691,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {

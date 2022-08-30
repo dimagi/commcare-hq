@@ -271,7 +271,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/what_is_the_mothers_name"
+                            "name_update": {
+                                "question_path": "/data/what_is_the_mothers_name"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -424,7 +426,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/how_are_you_today"
+                            "name_update": {
+                                "question_path": "/data/how_are_you_today"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -915,7 +919,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -1323,7 +1327,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
