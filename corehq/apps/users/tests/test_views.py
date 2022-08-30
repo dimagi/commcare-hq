@@ -45,7 +45,6 @@ class TestMobileWorkerListView(TestCase):
         self.web_user.save()
 
         self.role = UserRole.create(self.domain, 'default mobile use role', is_commcare_user_default=True)
-        UserRole.commcare_user_default.clear(UserRole.__class__, self.domain)
 
     def tearDown(self):
         self.project.delete()
