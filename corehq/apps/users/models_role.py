@@ -22,6 +22,7 @@ class StaticRole:
     upstream_id = None
     couch_id = None
     assignable_by = []
+    is_commcare_user_default = False
 
     @classmethod
     def domain_admin(cls, domain):
@@ -301,6 +302,7 @@ def role_to_dict(role):
         "is_non_admin_editable",
         "is_archived",
         "upstream_id",
+        "is_commcare_user_default"
     ]
     data = {}
     for field in simple_fields:
