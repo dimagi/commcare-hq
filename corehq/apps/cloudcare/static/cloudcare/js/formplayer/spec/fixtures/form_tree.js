@@ -80,209 +80,209 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
                 "repeatable": "false",
                 "children": [
                     _.extend(questionDefaults, {
-                      "caption": "Choose for each:",
-                      "binding": "/data/list_view/list_label",
-                      "datatype": "select",
-                      "style": {
-                          "raw": "label",
-                      },
-                      "ix": "8,0",
-                      "choices": [
-                          "Yes",
-                          "No",
-                      ],
-                  }),
-                  _.extend(questionDefaults, {
-                      "caption": "Red",
-                      "binding": "/data/list_view/red",
-                      "datatype": "select",
-                      "style": {
-                          "raw": "list-nolabel",
-                      },
-                      "caption_markdown": "Red",
-                      "ix": "8,1",
-                      "choices": [
-                          "Yes",
-                          "No",
-                      ],
-                  }),
-                  _.extend(questionDefaults, {
-                      "caption": "Green",
-                      "binding": "/data/list_view/Green",
-                      "datatype": "select",
-                      "style": {
-                          "raw": "list-nolabel",
-                      },
-                      "type": "question",
-                      "caption_markdown": "Green",
-                      "ix": "8,2",
-                      "choices": [
-                          "Yes",
-                          "No",
-                      ],
-                  }),
-                  _.extend(questionDefaults, {
-                      "caption": "Yellow",
-                      "binding": "/data/list_view/Yellow",
-                      "datatype": "select",
-                      "style": {
-                          "raw": "list-nolabel",
-                      },
-                      "ix": "8,3",
-                      "choices": [
-                          "Yes",
-                          "No",
-                      ],
-                  }),
-              ],
-          }),
-          _.extend(questionDefaults, {
-              "caption": "This question should only allow you to enter a time.",
-              "binding": "/data/q_time",
-              "datatype": "time",
-              "ix": "9",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "The value of this question should be hidden, but anything can be entered.",
-              "binding": "/data/q_pass",
-              "ix": "10",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "The value of this question should be hidden and only numbers are allowed.",
-              "binding": "/data/q_pass_int",
-              "ix": "11",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "You should be able to enter digits here. Enter multiple zeroes and navigate back and forth to make sure they remain.",
-              "binding": "/data/numerictext",
-              "style": {
-                  "raw": "numeric",
-              },
-              "ix": "12",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "You should only see this message. It should have no confirmation box.",
-              "binding": "/data/no_confirmation",
-              "datatype": "info",
-              "style": {
-                  "raw": "minimal",
-              },
-              "ix": "13",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "You should be able to see this message and a confirmation box. The next set of questions will go over complex question types and will only be available on some devices.",
-              "binding": "/data/q_label",
-              "datatype": "info",
-              "ix": "14",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If using an Android device, you should be able to capture a signature. Try it out!",
-              "binding": "/data/sig_cap",
-              "datatype": "binary",
-              "style": {
-                  "raw": "signature",
-              },
-              "ix": "15",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If using an Android device, this question should allow you to scan a barcode.",
-              "binding": "/data/q_barcode",
-              "datatype": "barcode",
-              "ix": "16",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If using an Android device, this question should display a QR Code (similar to a barcode. If you scanned one in the previous question, it should contain its contents.)",
-              "binding": "/data/qroutput",
-              "datatype": "info",
-              "ix": "17",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If using an Android device, this question should allow you to capture a GPS location. Try it out.",
-              "binding": "/data/q_gps",
-              "datatype": "geo",
-              "ix": "18",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should allow you to take a picture or upload an image.",
-              "binding": "/data/q_image",
-              "datatype": "binary",
-              "ix": "19",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should allow you to record or upload audio, and then play it.",
-              "binding": "/data/q_audio",
-              "datatype": "binary",
-              "ix": "20",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should allow you to record or upload video, and then play it.",
-              "binding": "/data/q_video",
-              "datatype": "binary",
-              "ix": "21",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should only allow you to take a picture.",
-              "binding": "/data/q_image_acquire",
-              "datatype": "binary",
-              "style": {
-                  "raw": "acquire",
-              },
-              "ix": "22",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should only allow you to record audio, and then play it.",
-              "binding": "/data/q_audio_acquire",
-              "datatype": "binary",
-              "style": {
-                  "raw": "acquire",
-              },
-              "ix": "23",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "If available on your device, this question should only allow you to record a video, and then play it.",
-              "binding": "/data/q_video_acquire",
-              "datatype": "binary",
-              "style": {
-                  "raw": "acquire",
-              },
-              "ix": "24",
-          }),
-          _.extend(questionDefaults, {
-              "caption": "Group List Question",
-              "style": {},
-              "type": "sub-group",
-              "ix": "25",
-              "repeatable": "false",
-              "children": [
-                  _.extend(questionDefaults, {
-                      "caption": "This question should let you enter any form of text or special characters. Try different values.",
-                      "binding": "/data/group_list/q_text_2",
-                      "ix": "25,0",
-                  }),
-                  _.extend(questionDefaults, {
-                      "caption": "You should be able to choose one or more answers here.",
-                      "binding": "/data/group_list/q_multiselect_2",
-                      "datatype": "multiselect",
-                      "ix": "25,1",
-                      "choices": [
-                          "One",
-                          "Two",
-                          "Three",
-                      ],
-                  }),
-                  _.extend(questionDefaults, {
-                      "caption": "You should be able to choose only one answer here.",
-                      "binding": "/data/group_list/q_singleselect_2",
-                      "datatype": "select",
-                      "ix": "25,2",
-                      "choices": [
-                          "One",
-                          "Two",
-                          "Three",
-                      ],
-                  }),
-              ],
-          }),
+                        "caption": "Choose for each:",
+                        "binding": "/data/list_view/list_label",
+                        "datatype": "select",
+                        "style": {
+                            "raw": "label",
+                        },
+                        "ix": "8,0",
+                        "choices": [
+                            "Yes",
+                            "No",
+                        ],
+                    }),
+                    _.extend(questionDefaults, {
+                        "caption": "Red",
+                        "binding": "/data/list_view/red",
+                        "datatype": "select",
+                        "style": {
+                            "raw": "list-nolabel",
+                        },
+                        "caption_markdown": "Red",
+                        "ix": "8,1",
+                        "choices": [
+                            "Yes",
+                            "No",
+                        ],
+                    }),
+                    _.extend(questionDefaults, {
+                        "caption": "Green",
+                        "binding": "/data/list_view/Green",
+                        "datatype": "select",
+                        "style": {
+                            "raw": "list-nolabel",
+                        },
+                        "type": "question",
+                        "caption_markdown": "Green",
+                        "ix": "8,2",
+                        "choices": [
+                            "Yes",
+                            "No",
+                        ],
+                    }),
+                    _.extend(questionDefaults, {
+                        "caption": "Yellow",
+                        "binding": "/data/list_view/Yellow",
+                        "datatype": "select",
+                        "style": {
+                            "raw": "list-nolabel",
+                        },
+                        "ix": "8,3",
+                        "choices": [
+                            "Yes",
+                            "No",
+                        ],
+                    }),
+                ],
+            }),
+            _.extend(questionDefaults, {
+                "caption": "This question should only allow you to enter a time.",
+                "binding": "/data/q_time",
+                "datatype": "time",
+                "ix": "9",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "The value of this question should be hidden, but anything can be entered.",
+                "binding": "/data/q_pass",
+                "ix": "10",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "The value of this question should be hidden and only numbers are allowed.",
+                "binding": "/data/q_pass_int",
+                "ix": "11",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "You should be able to enter digits here. Enter multiple zeroes and navigate back and forth to make sure they remain.",
+                "binding": "/data/numerictext",
+                "style": {
+                    "raw": "numeric",
+                },
+                "ix": "12",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "You should only see this message. It should have no confirmation box.",
+                "binding": "/data/no_confirmation",
+                "datatype": "info",
+                "style": {
+                    "raw": "minimal",
+                },
+                "ix": "13",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "You should be able to see this message and a confirmation box. The next set of questions will go over complex question types and will only be available on some devices.",
+                "binding": "/data/q_label",
+                "datatype": "info",
+                "ix": "14",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If using an Android device, you should be able to capture a signature. Try it out!",
+                "binding": "/data/sig_cap",
+                "datatype": "binary",
+                "style": {
+                    "raw": "signature",
+                },
+                "ix": "15",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If using an Android device, this question should allow you to scan a barcode.",
+                "binding": "/data/q_barcode",
+                "datatype": "barcode",
+                "ix": "16",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If using an Android device, this question should display a QR Code (similar to a barcode. If you scanned one in the previous question, it should contain its contents.)",
+                "binding": "/data/qroutput",
+                "datatype": "info",
+                "ix": "17",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If using an Android device, this question should allow you to capture a GPS location. Try it out.",
+                "binding": "/data/q_gps",
+                "datatype": "geo",
+                "ix": "18",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should allow you to take a picture or upload an image.",
+                "binding": "/data/q_image",
+                "datatype": "binary",
+                "ix": "19",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should allow you to record or upload audio, and then play it.",
+                "binding": "/data/q_audio",
+                "datatype": "binary",
+                "ix": "20",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should allow you to record or upload video, and then play it.",
+                "binding": "/data/q_video",
+                "datatype": "binary",
+                "ix": "21",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should only allow you to take a picture.",
+                "binding": "/data/q_image_acquire",
+                "datatype": "binary",
+                "style": {
+                    "raw": "acquire",
+                },
+                "ix": "22",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should only allow you to record audio, and then play it.",
+                "binding": "/data/q_audio_acquire",
+                "datatype": "binary",
+                "style": {
+                    "raw": "acquire",
+                },
+                "ix": "23",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "If available on your device, this question should only allow you to record a video, and then play it.",
+                "binding": "/data/q_video_acquire",
+                "datatype": "binary",
+                "style": {
+                    "raw": "acquire",
+                },
+                "ix": "24",
+            }),
+            _.extend(questionDefaults, {
+                "caption": "Group List Question",
+                "style": {},
+                "type": "sub-group",
+                "ix": "25",
+                "repeatable": "false",
+                "children": [
+                    _.extend(questionDefaults, {
+                        "caption": "This question should let you enter any form of text or special characters. Try different values.",
+                        "binding": "/data/group_list/q_text_2",
+                        "ix": "25,0",
+                    }),
+                    _.extend(questionDefaults, {
+                        "caption": "You should be able to choose one or more answers here.",
+                        "binding": "/data/group_list/q_multiselect_2",
+                        "datatype": "multiselect",
+                        "ix": "25,1",
+                        "choices": [
+                            "One",
+                            "Two",
+                            "Three",
+                        ],
+                    }),
+                    _.extend(questionDefaults, {
+                        "caption": "You should be able to choose only one answer here.",
+                        "binding": "/data/group_list/q_singleselect_2",
+                        "datatype": "select",
+                        "ix": "25,2",
+                        "choices": [
+                            "One",
+                            "Two",
+                            "Three",
+                        ],
+                    }),
+                ],
+            }),
         ],
         "langs": [
             "en",
