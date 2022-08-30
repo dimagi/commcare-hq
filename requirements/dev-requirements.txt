@@ -86,7 +86,7 @@ contextlib2==21.6.0
     #   schema
 coverage==5.5
     # via -r test-requirements.in
-cryptography==3.4.8
+cryptography==37.0.4
     # via
     #   jwcrypto
     #   oic
@@ -460,7 +460,7 @@ pyjwt==2.4.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==20.0.1
+pyopenssl==22.0.0
     # via -r sso-requirements.in
 pyparsing==2.4.7
     # via
@@ -590,7 +590,6 @@ six==1.16.0
     #   packaging
     #   protobuf
     #   pyjwkest
-    #   pyopenssl
     #   python-dateutil
     #   pyzxcvbn
     #   qrcode
