@@ -24,6 +24,7 @@ def main():
         GeventCommand('ptop_preindex'),
         GeventCommand('sync_prepare_couchdb_multi'),
         GeventCommand('sync_couch_views'),
+        GeventCommand('delete_old_couch_views_from_disk'),
         GeventCommand('populate_form_date_modified'),
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
@@ -112,10 +113,6 @@ def _set_source_root(source_root):
 
 
 def run_patches():
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    import mimetypes
-    mimetypes.init()
-
     patch_jsonfield()
     patch_celery_task()
 

@@ -48,10 +48,11 @@ class RateLimiter(object):
 
     def allow_usage(self, scope=''):
         allowed = False
+        # allow usage if any scope has capacity
         for limit_scope, rates in self.iter_rates(scope):
             allow = all(current_rate < limit
                         for rate_counter_key, current_rate, limit in rates)
-            # allow usage if any limiter is below the threshold
+            # for each scope all counters must be below threshold
             if allow:
                 allowed = True
             else:

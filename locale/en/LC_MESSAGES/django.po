@@ -12822,10 +12822,6 @@ msgid "Add Update Case Property"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-msgid "case property name"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 msgid "Set case property"
 msgstr ""
@@ -20261,14 +20257,13 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Email address '{}' is not a dimagi email address"
+msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-
 "The following users do not exist on this site, please have the user "
-"registered first."
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -25215,7 +25210,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Get Free Trial\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
@@ -26930,10 +26925,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -27541,51 +27532,6 @@ msgid "same"
 msgstr ""
 
 #: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
-msgstr ""
-
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr ""
 
@@ -27851,7 +27797,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -36304,11 +36252,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 

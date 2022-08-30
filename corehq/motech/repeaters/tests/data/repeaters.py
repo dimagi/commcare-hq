@@ -1821,8 +1821,13 @@ repeater_test_data = [
             "doc_type": "OpenmrsConfig"
         },
         "atom_feed_enabled": False,
-        "atom_feed_status":
-        {},
+        "atom_feed_status": {
+            'patient': {
+                'last_polled_at': '2022-06-01T00:00:00.000000Z',
+                'last_page': None,
+                'doc_type': 'AtomFeedStatus'
+            }
+        },
         "doc_type": "OpenmrsRepeater",
         "version": "2.0",
         "white_listed_case_types":

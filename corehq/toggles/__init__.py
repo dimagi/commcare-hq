@@ -901,6 +901,14 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
+WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
+    'web_apps_upload_questions',
+    'USH: Support signature, image, audio, and video questions in Web Apps',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Jenny Schweers',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -2283,6 +2291,18 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     Toggle only when testing the new Google Sheet Integration. The Google Sheet Integration can be found
     on the Exports page.
     """
+)
+
+APP_DEPENDENCIES = StaticToggle(
+    'app-dependencies',
+    'Set Android app dependencies that must be installed before using a '
+    'CommCare app',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Prevents mobile workers from using a CommCare app until the Android apps
+    that it needs have been installed on the device.
+    """,
 )
 
 SUPERSET_ANALYTICS = StaticToggle(

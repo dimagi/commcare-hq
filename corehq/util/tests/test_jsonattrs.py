@@ -104,6 +104,18 @@ def test_jsonattrs_from_json():
     eq(check.events, [Event(day=date(2022, 7, 20))])
 
 
+def test_value_to_string_returns_json_serializable():
+    @unregistered_django_model
+    class Check(models.Model):
+        events = AttrsList(Event)
+
+    check = Check(events=[Event()])
+    eq(
+        Check._meta.get_field("events").value_to_string(check),
+        [{"day": "2022-07-19"}],
+    )
+
+
 def get_json_value(model, field_name):
     """Get the JSON value of a field as it would be stored in the database
 

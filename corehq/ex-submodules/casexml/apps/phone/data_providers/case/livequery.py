@@ -82,7 +82,11 @@ def do_livequery(timing_context, restore_state, response, async_task=None):
                 sync_ids = discard_already_synced_cases(live_ids, restore_state)
         else:
             sync_ids = live_ids
+
+        dependent_ids = live_ids - set(owned_ids)
+        debug('updating synclog: live=%r dependent=%r', live_ids, dependent_ids)
         restore_state.current_sync_log.case_ids_on_phone = live_ids
+        restore_state.current_sync_log.dependent_case_ids_on_phone = dependent_ids
 
         total_cases = len(sync_ids)
         with timing_context("compile_response(%s cases)" % total_cases):

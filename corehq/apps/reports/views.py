@@ -59,7 +59,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.groups.models import Group
@@ -1856,6 +1856,7 @@ class TableauServerView(BaseProjectReportSectionView):
     page_title = gettext_lazy('Tableau Server Config')
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
+    @method_decorator(require_superuser)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(TableauServerView, self).dispatch(request, *args, **kwargs)

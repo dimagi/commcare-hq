@@ -438,7 +438,8 @@ class SubmissionPost(object):
             close_extension_cases(
                 case_db,
                 case_stock_result.case_models,
-                "SubmissionPost-%s-close_extensions" % instance.form_id
+                "SubmissionPost-%s-close_extensions" % instance.form_id,
+                instance.last_sync_token
             )
         except PostSaveError:
             raise

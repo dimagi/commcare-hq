@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
 
@@ -5,6 +6,10 @@ from ...models import Field
 
 
 class Command(PopulateSQLCommand):
+
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        self.data_type_existence = {}
 
     @classmethod
     def couch_db_slug(cls):
@@ -45,7 +50,7 @@ class Command(PopulateSQLCommand):
             ),
             cls.diff_value(
                 "item_attributes",
-                couch.get("item_attributes") or {},
+                transform_item_attributes(couch.get("item_attributes") or {}),
                 sql.item_attributes,
             ),
             cls.diff_value(
@@ -56,17 +61,16 @@ class Command(PopulateSQLCommand):
         ]
         return diffs
 
-    def update_or_create_sql_object(self, doc):
-        return self.sql_class().objects.update_or_create(
-            id=UUID(doc['_id']),
-            defaults={
-                "domain": doc["domain"],
-                "table_id": UUID(doc["data_type_id"]),
-                "fields": couch_to_sql_fields(doc["fields"]),
-                "item_attributes": doc.get("item_attributes") or {},
-                "sort_key": doc.get("sort_key") or 0,
-            },
-        )
+    def get_ids_to_ignore(self, docs):
+        existence_map = self.data_type_existence
+        data_type_ids = {d["data_type_id"] for d in docs}
+        new_ids = data_type_ids - existence_map.keys()
+        if new_ids:
+            items = self.couch_db().view("_all_docs", keys=list(new_ids), reduce=False)
+            existing_ids = {i["id"] for i in items if not (i.get("error") or i["value"].get("deleted"))}
+            for data_type_id in new_ids:
+                existence_map[data_type_id] = data_type_id in existing_ids
+        return {d["_id"] for d in docs if not existence_map[d["data_type_id"]]}
 
 
 def couch_to_sql_fields(data):
@@ -83,3 +87,11 @@ def couch_to_sql_fields(data):
         ]
         for name, field in data.items()
     }
+
+
+def transform_item_attributes(data):
+    def convert(value):
+        if isinstance(value, Decimal):
+            return str(value)
+        return value
+    return {name: convert(value) for name, value in data.items()}
