@@ -98,17 +98,23 @@ class TestLookupTable(TestCase):
 class TestLookupTableRow(TestCase):
 
     def test_fields(self):
-        table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
-        row = LookupTableRow(domain="test", table=table, fields={
-            "vera": [Field("What has become of you?")],
-        }, sort_key=0)
+        row = self.make_row(save=False)
         self.assertEqual(row.fields["vera"][0].value, "What has become of you?")
         self.assertEqual(row.fields["vera"][0].properties, {})
-        table.save(sync_to_couch=False)
+        row.table.save(sync_to_couch=False)
         row.save(sync_to_couch=False)
         new = LookupTableRow.objects.get(id=row.id)
         self.assertEqual(new.fields, row.fields)
         self.assertIsNot(new.fields, row.fields)
+
+    def test_on_delete_cascade(self):
+        row = self.make_row()
+        table = row.table
+        # Django's implementation of cascading deletes does 5 queries
+        #with self.assertNumQueries(1):
+        LookupTable.objects.filter(domain=table.domain, tag=table.tag).delete()
+        with self.assertRaises(LookupTableRow.DoesNotExist):
+            LookupTableRow.objects.get(id=row.id)
 
     @generate_cases([
         # Detect incompatibilities between the JSON data stored in the
@@ -136,6 +142,16 @@ class TestLookupTableRow(TestCase):
             )
         else:
             self.assertEqual(obj.fields, value)
+
+    def make_row(self, save=True):
+        table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
+        row = LookupTableRow(domain="test", table=table, fields={
+            "vera": [Field("What has become of you?")],
+        }, sort_key=0)
+        if save:
+            row.table.save(sync_to_couch=False)
+            row.save(sync_to_couch=False)
+        return row
 
 
 class TestFieldTypes(SimpleTestCase):

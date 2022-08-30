@@ -146,13 +146,7 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
-        return cls.view(
-            'fixtures/data_types_by_domain_tag',
-            key=[domain, tag],
-            reduce=False,
-            include_docs=True,
-            descending=True,
-        )
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def fixture_tag_exists(cls, domain, tag):
@@ -570,7 +564,11 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def get_item_list(cls, domain, tag, **kw):
-        data_type = FixtureDataType.by_domain_tag(domain, tag).one()
+        from .models import LookupTable
+        try:
+            data_type = LookupTable.objects.by_domain_tag(domain, tag)
+        except LookupTable.DoesNotExist:
+            return []
         return cls.by_data_type(domain, data_type, **kw)
 
     @classmethod

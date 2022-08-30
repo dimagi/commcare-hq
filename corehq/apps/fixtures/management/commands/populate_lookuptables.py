@@ -73,7 +73,13 @@ class Command(PopulateLookupTableCommand):
             doc = couch_by_id[missing_in_sql]
             domain = doc["domain"]
             tag = doc["tag"]
-            couch_docs = list(FixtureDataType.by_domain_tag(domain, tag))
+            couch_docs = list(FixtureDataType.view(
+                'fixtures/data_types_by_domain_tag',
+                key=[domain, tag],
+                reduce=False,
+                include_docs=True,
+                descending=True,
+            ))
             if len(couch_docs) == 1:
                 delete_orphaned_sql_row(couch_docs[0], logfile)
             elif len(couch_docs) > 1:

@@ -439,7 +439,13 @@ class TestFixtureUpload(TestCase):
         return type(self).do_upload(domain, workbook, **kw)
 
     def get_table(self, domain=None):
-        return FixtureDataType.by_domain_tag(domain or self.domain, 'things').one()
+        return FixtureDataType.view(
+            'fixtures/data_types_by_domain_tag',
+            key=[domain or self.domain, 'things'],
+            reduce=False,
+            include_docs=True,
+            descending=True,
+        ).one()
 
     def get_rows(self, transform=row_name, *, domain=None):
         # return list of field values of fixture table 'things'
@@ -934,14 +940,6 @@ class TestFixtureOwnershipUpload(TestCase):
         result = self.upload([(None, 'N', 'apple', 3, 3, 3)], check_result=False)
         self.assertEqual(self.get_rows(), [('apple', {'3'}, {'3'}, {'3'})])
         self.assertFalse(result.errors)
-
-    def test_row_ownership_without_sql_row(self):
-        with disable_save_to_sql():  # simulate save prior to start of migration
-            self.upload([(None, 'N', 'apple')])
-
-        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
-        connection.check_constraints()  # should not raise
-        self.assertEqual(self.get_rows(), [('apple', {'user1'}, {'G1'}, {'loc1'})])
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)
