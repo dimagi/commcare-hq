@@ -352,13 +352,12 @@ hqDefine('cloudcare/js/util', [
             },
         }, extraOptions));
 
-        var picker = $el.data("DateTimePicker"),
-            superParseInputDate = picker.parseInputDate();
+        var picker = $el.data("DateTimePicker");
         picker.parseInputDate(function (inputDate) {
             if (!moment.isMoment(inputDate) || inputDate instanceof Date) {
                 inputDate = convertTwoDigitYear(inputDate);
             }
-            return superParseInputDate(inputDate);
+            return picker.getMoment(inputDate);     // undocumented/private datetimepicker function
         });
 
         $el.on("focusout", function () {
