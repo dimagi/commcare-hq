@@ -4,13 +4,14 @@ from corehq.blobs import get_blob_db
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
-    FixtureDataType, FixtureTypeField,
-    FixtureDataItem, FieldList, FixtureItemField,
-    FIXTURE_BUCKET
+    FIXTURE_BUCKET,
+    LookupTable,
+    LookupTableRow,
+    TypeField,
+    Field,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors import delete_all_users
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.form_processor.tests.utils import sharded
 
@@ -26,7 +27,9 @@ class OtaFixtureTest(TestCase):
     def setUpClass(cls):
         super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
         cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic', None, None)
+        cls.addClassCleanup(cls.user.delete, None, None)
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
         cls.group1.save()
         cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[cls.user._id])
@@ -36,22 +39,13 @@ class OtaFixtureTest(TestCase):
             SA_PROVINCES: make_item_lists(SA_PROVINCES, 'western cape'),
             FR_PROVINCES: make_item_lists(FR_PROVINCES, 'burgundy'),
         }
+        from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+        for ftype, fitem in cls.item_lists.values():
+            cls.addClassCleanup(FixtureDataType.get_db().delete_doc, ftype._migration_couch_id)
+            cls.addClassCleanup(FixtureDataItem.get_db().delete_doc, fitem._migration_couch_id)
+        cls.addClassCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + "/" + DOMAIN)
 
         cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
-
-    @classmethod
-    def tearDownClass(cls):
-        for group in Group.by_domain(DOMAIN):
-            group.delete()
-        delete_all_users()
-
-        for _, item_list in cls.item_lists.items():
-            item_list[0].delete()
-            item_list[1].delete()
-
-        get_blob_db().delete(key=FIXTURE_BUCKET + "/" + DOMAIN)
-        cls.domain.delete()
-        super(OtaFixtureTest, cls).tearDownClass()
 
     def _check_fixture(self, fixture_xml, has_groups=True, item_lists=None):
         fixture_xml = list(fixture_xml)
@@ -120,25 +114,21 @@ def _get_item_list_fixture(user_id, tag, fixture_item):
 
 
 def make_item_lists(tag, item_name):
-    data_type = FixtureDataType(
+    data_type = LookupTable(
         domain=DOMAIN,
         tag=tag,
-        name="Provinces",
-        fields=[FixtureTypeField(field_name="name", properties=[])],
+        fields=[TypeField(name="name")],
         item_attributes=[],
         is_global=True
     )
     data_type.save()
 
-    data_item = FixtureDataItem(
+    data_item = LookupTableRow(
         domain=DOMAIN,
-        data_type_id=data_type.get_id,
-        fields={
-            "name": FieldList(
-                field_list=[FixtureItemField(field_value=item_name, properties={})]
-            )
-        },
+        table_id=data_type.id,
+        fields={"name": [Field(value=item_name)]},
         item_attributes={},
+        sort_key=0,
     )
     data_item.save()
     return data_type, data_item

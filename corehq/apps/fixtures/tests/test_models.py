@@ -1,6 +1,7 @@
 from django.db import IntegrityError
 from django.test import SimpleTestCase, TestCase
 
+from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import generate_cases
 from corehq.util.tests.test_jsonattrs import set_json_value
 
@@ -13,6 +14,31 @@ from ..models import (
     LookupTableRow,
     TypeField,
 )
+
+
+class TestLookupTableManager(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = Domain.get_or_create_with_name("lookup-table-domain", is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
+
+    def test_by_domain(self):
+        tables = LookupTable.objects.by_domain(self.domain)
+        self.assertFalse(tables.count())
+        self.make_table()
+        self.assertEqual([t.tag for t in tables], ['price'])
+
+    def make_table(self):
+        table = LookupTable(
+            domain=self.domain.name,
+            is_global=True,
+            tag='price',
+            fields=[],
+            item_attributes=[],
+        )
+        table.save(sync_to_couch=False)
 
 
 class TestLookupTable(TestCase):

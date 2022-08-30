@@ -37,7 +37,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider('CaseExportInstance'),
     DocTypeIDProvider('CaseExportDataSchema'),
     DocTypeIDProvider('FixtureOwnership'),
-    DocTypeIDProvider('FixtureDataType'),
     DocTypeIDProvider('FixtureDataItem'),
     ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),

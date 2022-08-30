@@ -26,7 +26,7 @@ from corehq.apps.export.dbaccessors import (
     get_export_count_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
@@ -490,7 +490,7 @@ def num_saved_exports(domain):
 
 
 def num_lookup_tables(domain):
-    return len(FixtureDataType.by_domain(domain))
+    return LookupTable.by_domain(domain).count()
 
 
 def has_domain_icon(domain_obj):

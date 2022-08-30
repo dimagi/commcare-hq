@@ -21,6 +21,12 @@ from .couchmodels import (  # noqa: F401
 )
 
 
+class LookupTableManager(models.Manager):
+
+    def by_domain(self, domain_name):
+        return self.filter(domain=domain_name)
+
+
 @define
 class Alias:
     name = field()
@@ -60,6 +66,8 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
     ]
     ```
     """
+    objects = LookupTableManager()
+
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
     is_global = models.BooleanField(default=False)
