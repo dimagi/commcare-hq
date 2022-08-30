@@ -1977,3 +1977,106 @@ class IndexSyncTest(BaseSyncTest):
         self.assertEqual(set(sync.cases), {child_id, parent_id, other_parent_id})
         self.assertIn(branch_index, sync.cases[child_id].index)
         self.assertIn(wave_index, sync.cases[child_id].index)
+
+
+class TestUpdatesToSynclog(BaseSyncTest):
+    @classmethod
+    def setUpClass(cls):
+        super(TestUpdatesToSynclog, cls).setUpClass()
+        cls.other_user = create_restore_user(
+            cls.project.name,
+            username=OTHER_USERNAME,
+        )
+
+    def _create_cases(self):
+        """
+        host <--ext-- claim (owned) >> host, client, claim
+             <--ext-- client
+        """
+
+        host = CaseStructure(case_id='host',
+                             attrs={'create': True, 'owner_id': 'other_user'})
+        claim = CaseStructure(
+            case_id='claim',
+            attrs={'create': True, 'owner_id': self.device.user_id},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+        )
+        client = CaseStructure(
+            case_id='client',
+            attrs={'create': True, 'owner_id': 'other_user'},
+            indices=[CaseIndex(
+                host,
+                identifier='idx',
+                relationship='extension',
+                related_type='case_type',
+            )],
+            walk_related=False
+        )
+        self.device.change_cases([claim, client])
+        self.device.sync()
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_remove_index(self):
+        self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+
+        # remove the index on 'client'
+        # this should result in the 'client' case being purged since it is not owned
+        # and is no longer an extension case of host
+        self.device.change_cases([
+            CaseBlock(case_id='client', index={
+                'idx': ('case_type', '')
+            }),
+        ])
+
+        self.device.post_changes()
+
+        # changes to the case should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases(CaseBlock(case_id="client", update={"name": "edit"}))
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertNotIn("client", result.cases)
+
+        # claiming the case again should result in it being synced to the device
+        ferrel.change_cases(CaseBlock(case_id="claim2", owner_id=self.user_id, create=True, index={
+            "host": ("client", "client")
+        }))
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertIn("client", result.cases)
+
+    @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
+    def test_close_host(self):
+        self._create_cases()
+
+        synclog = self.device.last_sync.log
+        self.assertEqual(synclog.case_ids_on_phone, {"host", "claim", "client"})
+
+        # closing the host case should remove the host and claim case from the phone
+        self.device.change_cases([
+            CaseBlock(case_id='host', close=True),
+        ])
+
+        self.device.post_changes()
+
+        # changes to the cases should not be synced
+        ferrel = self.get_device(user=self.other_user)
+        ferrel.change_cases([
+            CaseBlock(case_id="host", update={"name": "edit"}),
+            CaseBlock(case_id="claim", update={"name": "edit"}),
+        ])
+        ferrel.post_changes()
+
+        result = self.device.sync()
+        self.assertNotIn("host", result.cases)
+        self.assertNotIn("claim", result.cases)

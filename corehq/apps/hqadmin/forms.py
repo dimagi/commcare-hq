@@ -24,7 +24,7 @@ class EmailForm(forms.Form):
     real_email = forms.BooleanField(required=False)
 
 class ReprocessMessagingCaseUpdatesForm(forms.Form):
-    case_ids = forms.CharField(widget=forms.Textarea)
+    case_ids = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}))
 
     def clean_case_ids(self):
         value = self.cleaned_data.get('case_ids', '')
@@ -60,7 +60,7 @@ class ReprocessMessagingCaseUpdatesForm(forms.Form):
 class SuperuserManagementForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma or new-line separated email addresses",
-        widget=forms.Textarea(),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=True
     )
     privileges = forms.MultipleChoiceField(
@@ -101,7 +101,7 @@ class SuperuserManagementForm(forms.Form):
 class OffboardingUserListForm(forms.Form):
     csv_email_list = forms.CharField(
         label="Comma/new-line seperated email addresses",
-        widget=forms.Textarea(),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False
     )
 
@@ -145,11 +145,11 @@ def clean_data(cleaned_data, offboarding_list=False):
 
     users = []
     validation_errors = []
+    non_dimagi_email = []
     for username in csv_email_list:
         if not offboarding_list:
-            if settings.IS_DIMAGI_ENVIRONMENT and "@dimagi.com" not in username:
-                validation_errors.append(ValidationError(_("Email address '{}' is not a "
-                                                          "dimagi email address".format(username))))
+            if settings.IS_DIMAGI_ENVIRONMENT and not is_dimagi_email(username):
+                non_dimagi_email.append(ValidationError(username))
                 continue
         try:
             users.append(User.objects.get(username=username))
@@ -157,11 +157,17 @@ def clean_data(cleaned_data, offboarding_list=False):
             if not offboarding_list:
                 validation_errors.append(ValidationError(username))
             else:
-                validation_errors.append(username)
-    if not offboarding_list and validation_errors:
-        validation_errors.insert(0, ValidationError(_(
-            "The following users do not exist on this site, please have the user registered first.")))
-        raise ValidationError(validation_errors)
+                validation_errors.append(ValidationError(username))
+    if not offboarding_list and (validation_errors or non_dimagi_email):
+        if non_dimagi_email:
+            non_dimagi_email.insert(0, ValidationError(
+                _("The following email addresses are not dimagi email addresses:")))
+        if validation_errors:
+            validation_errors.insert(0, ValidationError(
+                _("The following users do not exist on this site, please have the user registered first:")))
+            if non_dimagi_email:
+                validation_errors.append('+')
+        raise ValidationError(validation_errors + non_dimagi_email)
     if offboarding_list and validation_errors:
         cleaned_data['validation_errors'] = validation_errors
 

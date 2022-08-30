@@ -1,11 +1,15 @@
-import uuid
-from collections import defaultdict
 import json
 import logging
+from collections import defaultdict
+from contextlib import ExitStack
+
+from django.db.transaction import atomic
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
 from dimagi.utils.chunked import chunked
+
+from .migration import SyncCouchToSQLMixin
 
 
 class BulkFetchException(Exception):
@@ -55,7 +59,8 @@ class CouchTransaction(object):
     def __init__(self):
         self.depth = 0
         self.docs_to_delete = defaultdict(set)
-        self.docs_to_save = defaultdict(dict)
+        self.docs_to_save = defaultdict(set)
+        self.sql_save_actions = {}
         self.post_commit_actions = []
 
     def add_post_commit_action(self, action):
@@ -70,25 +75,63 @@ class CouchTransaction(object):
 
     def save(self, doc):
         cls = doc.__class__
-        if not doc.get_id:
-            doc._id = uuid.uuid4().hex
-        self.docs_to_save[cls][doc.get_id] = doc
+        self.docs_to_save[cls].add(doc)
 
-    def preview_save(self, cls=None):
-        if cls:
-            return list(self.docs_to_save[cls].values())
-        else:
-            return [doc for _cls in self.docs_to_save
-                            for doc in self.preview_save(cls=_cls)]
+    def set_sql_save_action(self, doc_class, action):
+        """Set action callback to perform instead of bulk SQL insert
+
+        This must be used when updating existing documents since it is
+        not possible for the transaction to efficiently apply updates to
+        large numbers of existing SQL rows.
+        """
+        if doc_class in self.sql_save_actions:
+            raise TypeError(f"Save action already set for {doc_class.__name__}")
+        self.docs_to_save.setdefault(doc_class, set())
+        self.sql_save_actions[doc_class] = action
 
     def commit(self):
-        for cls, docs in self.docs_to_delete.items():
-            for chunk in chunked(docs, 1000):
-                cls.bulk_delete(chunk)
+        def start_sql_transaction():
+            nonlocal started
+            if not started:
+                context.enter_context(atomic())
+                started = True
+        started = False
+        with ExitStack() as context:
+            self._commit(start_sql_transaction)
 
-        for cls, doc_map in self.docs_to_save.items():
-            for docs in chunked(doc_map.values(), 1000, list):
-                cls.bulk_save(docs)
+    def _commit(self, start_sql_transaction):
+        for cls, docs in self.docs_to_delete.items():
+            if issubclass(cls, SyncCouchToSQLMixin):
+                def delete(chunk):
+                    start_sql_transaction()
+                    ids = [doc._id for doc in chunk if doc._id]
+                    cls.bulk_delete(chunk)
+                    sql_class.objects.filter(**{id_name + "__in": ids}).delete()
+                sql_class = cls._migration_get_sql_model_class()
+                id_name = sql_class._migration_couch_id_name
+            else:
+                delete = cls.bulk_delete
+            for chunk in chunked(docs, 1000):
+                delete(chunk)
+
+        for cls, docs in self.docs_to_save.items():
+            if cls in self.sql_save_actions:
+                start_sql_transaction()
+                self.sql_save_actions[cls]()
+                save = cls.bulk_save
+            elif issubclass(cls, SyncCouchToSQLMixin) and cls not in self.sql_save_actions:
+                def save(chunk):
+                    if any(doc._rev is not None for doc in chunk):
+                        raise NotImplementedError("Cannot update "
+                            f"{cls.__name__}. Use CouchTransaction."
+                            "set_sql_save_action() to update objects in bulk.")
+                    cls.bulk_save(chunk)
+                    start_sql_transaction()
+                    cls._migration_bulk_sync_to_sql(chunk)
+            else:
+                save = cls.bulk_save
+            for chunk in chunked(docs, 1000, list):
+                save(chunk)
 
         for action in self.post_commit_actions:
             action()

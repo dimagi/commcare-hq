@@ -13209,6 +13209,15 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr "Veuillez spécifier au moins une action."
 
+#: corehq/apps/data_interfaces/forms.py
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+msgid "Cases Filter"
+msgstr ""
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr "Transférer les dossiers"
@@ -13389,10 +13398,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 msgid "Add Update Case Property"
 msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-msgid "case property name"
-msgstr "Nom de la propriété de dossier"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
@@ -13826,6 +13831,21 @@ msgid "Date case property (advanced)"
 msgstr "Date de la propriété de dossier (avancé)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Site"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr "Le dossier parent est fermé"
 
@@ -13900,6 +13920,14 @@ msgstr "Le dossier parent est fermé"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "Identifiant du filtre personnalisé"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Include cases from child locations"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14181,7 +14209,8 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
+#, python-format
+msgid "Deduplication rule not saved due to the following issues: %s"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
@@ -14939,20 +14968,6 @@ msgstr "Sélectionnez un type de suscription..."
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr "Type d'abonnement "
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Site"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -21086,13 +21101,13 @@ msgstr ""
 "numéros de téléphone du dossier seront synchronisés."
 
 #: corehq/apps/hqadmin/forms.py
-msgid "Email address '{}' is not a dimagi email address"
+msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
 "The following users do not exist on this site, please have the user "
-"registered first."
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -26266,7 +26281,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Get Free Trial\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
@@ -28034,10 +28049,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -28675,52 +28686,6 @@ msgid "same"
 msgstr "pareil"
 
 #: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr "Temps d'activité d'utilisateur"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-"Représentation graphique des dates des formulaires complétés ou soumis."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr "Remarque : Aucune soumission ne correspond à vos filtres."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr "Lun"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr "Mar"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr "Mer"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr "Jeu"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr "Ven"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr "Sam"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr "Dim"
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
-msgstr "Heure ({timezone})"
-
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr "Activité d'utilisateur"
 
@@ -29006,7 +28971,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -37749,11 +37716,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""

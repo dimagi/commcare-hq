@@ -160,7 +160,7 @@ class FormplayerMain(View):
             ).run()
             if login_as_users.total == 1:
                 def set_cookie(response):
-                    response.set_cookie(cookie_name, user.raw_username, secure=settings.SECURE_COOKIES)
+                    response.set_cookie(cookie_name, user.raw_username)
                     return response
 
                 user = CouchUser.get_by_username(login_as_users.hits[0]['username'])

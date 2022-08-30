@@ -346,20 +346,31 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 false
             );
         }
+
+        const reconnectTimingWindow = 2000;
+        let offlineTime;
+
         window.addEventListener(
-            'offline', function () {
-                showError(gettext("You are now offline. Web Apps is not optimized " +
-                    "for offline use. Please reconnect to the Internet before " +
-                    "continuing."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', 'disabled');
-                $('.form-control').prop('disabled', 'disabled');
-            }
-        );
+            'offline',function () {
+                offlineTime = new Date();
+                _.delay(function () {
+                    if (!this.navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
+                        showError(gettext("You are now offline. Web Apps is not optimized " +
+                            "for offline use. Please reconnect to the Internet before " +
+                            "continuing."), $("#cloudcare-notifications"));
+                        $('.submit').prop('disabled', 'disabled');
+                        $('.form-control').prop('disabled', 'disabled');
+                    }
+                },reconnectTimingWindow);
+            });
+
         window.addEventListener(
             'online', function () {
-                showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', false);
-                $('.form-control').prop('disabled', false);
+                if ((new Date() - offlineTime) > reconnectTimingWindow) {
+                    showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+                    $('.submit').prop('disabled', false);
+                    $('.form-control').prop('disabled', false);
+                }
             }
         );
     });
