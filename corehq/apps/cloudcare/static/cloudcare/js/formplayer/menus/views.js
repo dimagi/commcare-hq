@@ -338,9 +338,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 this.selectedCaseIds = [];
             }
             this.isMultiSelect = options.isMultiSelect;
-            if (this.isMultiSelect) {
-                this.reconcileSelectedValues();
-            }
         },
 
         ui: {
@@ -382,7 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-                self.reconcileSelectedValues();
                 self.reconcileMultiSelectUI();
             });
             this.reconcileMultiSelectUI();
@@ -413,7 +409,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
-            FormplayerFrontend.trigger("menu:paginate", pageSelection);
+            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
@@ -427,7 +423,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
-            FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+            FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
@@ -468,17 +464,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         continueAction: function () {
             var self = this;
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
-        },
-
-        reconcileSelectedValues: function () {
-            var self = this;
-            if (sessionStorage.selectedValues !== undefined) {
-                var selectedValues = JSON.parse(sessionStorage.selectedValues)
-            } else {
-                var selectedValues = {};
-            }
-            selectedValues[sessionStorage.queryKey] = self.selectedCaseIds.join(',');
-            sessionStorage.selectedValues = JSON.stringify(selectedValues);
         },
 
         reconcileMultiSelectUI: function () {
