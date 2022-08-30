@@ -52,6 +52,12 @@ class TypeField:
     is_indexed = field(default=False)
     field_name = Alias("name")
 
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((self.name, tuple(self.properties), self.is_indexed))
+
 
 class LookupTable(SyncSQLToCouchMixin, models.Model):
     """Lookup Table
@@ -106,12 +112,12 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
             "item_attributes",
         ]
 
-    def _migration_sync_to_couch(self, couch_object):
+    def _migration_sync_to_couch(self, couch_object, save=True):
         if self.fields != couch_object._sql_fields:
             couch_object.fields = [FixtureTypeField.from_sql(f) for f in self.fields]
         if self.description != (couch_object.description or ""):
             couch_object.description = self.description
-        super()._migration_sync_to_couch(couch_object)
+        super()._migration_sync_to_couch(couch_object, save=save)
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -195,7 +201,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
     def _migration_get_fields(cls):
         return ["domain", "sort_key"]
 
-    def _migration_sync_to_couch(self, couch_object):
+    def _migration_sync_to_couch(self, couch_object, save=True):
         if couch_object.data_type_id is None or UUID(couch_object.data_type_id) != self.table_id:
             couch_object.data_type_id = self.table_id.hex
         if self.fields != couch_object._sql_fields:
@@ -209,7 +215,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
             }
         if self.item_attributes != couch_object._sql_item_attributes:
             couch_object.item_attributes = self.item_attributes
-        super()._migration_sync_to_couch(couch_object)
+        super()._migration_sync_to_couch(couch_object, save=save)
 
     @classmethod
     def _migration_get_couch_model_class(cls):
@@ -251,12 +257,12 @@ class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
     def _migration_get_fields(cls):
         return ["domain", "owner_id"]
 
-    def _migration_sync_to_couch(self, couch_object):
+    def _migration_sync_to_couch(self, couch_object, save=True):
         if couch_object.data_item_id is None or UUID(couch_object.data_item_id) != self.row_id:
             couch_object.data_item_id = self.row_id.hex
         if OwnerType(self.owner_type).name.lower() != couch_object.owner_type:
             couch_object.owner_type = OwnerType(self.owner_type).name.lower()
-        super()._migration_sync_to_couch(couch_object)
+        super()._migration_sync_to_couch(couch_object, save=save)
 
     @classmethod
     def _migration_get_couch_model_class(cls):

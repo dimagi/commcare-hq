@@ -16,7 +16,6 @@ from soil import DownloadBase
 
 from corehq.apps.fixtures.models import (
     FixtureDataItem,
-    FixtureDataType,
     FixtureOwnership,
     LookupTable,
     LookupTableRow,
@@ -41,7 +40,7 @@ def upload_fixture_file(domain, filename, replace, task=None, skip_orm=False):
 def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     """Run lookup table upload
 
-    Performs only deletes and/or inserts on table row and ownership
+    Performs only deletes and/or inserts on table, row, and ownership
     records to optimize database interactions.
 
     Upload with `skip_orm=True` is faster than the default with the
@@ -72,9 +71,6 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
             for owner in retry(FixtureOwnership.for_all_item_ids)(list(sort_keys), domain):
                 old_owners[owner.data_item_id].append(owner)
 
-        if table is not new_table and table._id not in sql_table_ids:
-            tables.to_sync.append(table)
-
         rows.process(
             workbook,
             old_rows,
@@ -96,10 +92,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     else:
         owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
-    old_tables = FixtureDataType.by_domain(domain, bypass_cache=True)
-    sql_table_ids = {id.hex for id in LookupTable.objects
-        .filter(id__in=[t._id for t in old_tables])
-        .values_list("id", flat=True)}
+    old_tables = list(LookupTable.objects.by_domain(domain))
     tables = Mutation()
     rows = Mutation()
     owners = Mutation()
@@ -167,15 +160,20 @@ class Mutation:
 
 def flush(tables, rows, owners):
     def sync_docs_to_sql():
-        if tables.to_sync:
-            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync, ignore_conflicts=True)
+        assert not tables.to_sync, tables.to_sync
         if rows.to_sync:
             FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync, ignore_conflicts=True)
         assert not owners.to_sync, owners.to_sync
 
     with CouchTransaction() as couch:
-        for table in tables.to_delete:
+        # keep Couch in sync with recursive_delete
+        from dimagi.utils.couch.database import iter_docs
+        doc_ids = [t._migration_couch_id for t in tables.to_delete]
+        CouchType = LookupTable._migration_get_couch_model_class()
+        couch_deletes = [CouchType.wrap(d) for d in iter_docs(CouchType.get_db(), doc_ids)]
+        for table in couch_deletes:
             table.recursive_delete(couch)
+
         deleted_ids = {d._id for dx in couch.docs_to_delete.values() for d in dx}
         to_delete = chain(rows.to_delete, owners.to_delete)
         couch.delete_all(d for d in to_delete if d._id not in deleted_ids)

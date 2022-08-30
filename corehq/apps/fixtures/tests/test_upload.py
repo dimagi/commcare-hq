@@ -1,9 +1,7 @@
-from contextlib import contextmanager
 from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
-from django.db import connection
 from django.test import SimpleTestCase, TestCase
 
 import openpyxl
@@ -19,9 +17,8 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureOwnership,
     FixtureItemField,
-    FixtureTypeField,
     LookupTable,
-    LookupTableRow,
+    TypeField,
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
@@ -439,13 +436,10 @@ class TestFixtureUpload(TestCase):
         return type(self).do_upload(domain, workbook, **kw)
 
     def get_table(self, domain=None):
-        return FixtureDataType.view(
-            'fixtures/data_types_by_domain_tag',
-            key=[domain or self.domain, 'things'],
-            reduce=False,
-            include_docs=True,
-            descending=True,
-        ).one()
+        try:
+            return LookupTable.objects.by_domain_tag(domain or self.domain, 'things')
+        except LookupTable.DoesNotExist:
+            return None
 
     def get_rows(self, transform=row_name, *, domain=None):
         # return list of field values of fixture table 'things'
@@ -477,11 +471,11 @@ class TestFixtureUpload(TestCase):
         self.upload([(None, 'N', 'apple')])
         rows = self.get_rows(None)
         self.assertEqual(len(rows), 1, rows)
-        table_id = self.get_table()._id
+        table_id = self.get_table().id
         apple_id = rows[0]._id
 
         self.upload([(apple_id, 'N', 'apple')])
-        self.assertEqual(self.get_table()._id, table_id)
+        self.assertEqual(self.get_table().id, table_id)
         self.assertEqual(self.get_rows(None)[0]._id, apple_id)
 
     def test_replace_duplicate_rows(self):
@@ -616,7 +610,7 @@ class TestFixtureUpload(TestCase):
 
     def upload_table_with_uid_conflict(self):
         self.upload([(None, 'N', 'apple')], domain=self.domain + "2")
-        bad_uid = self.get_table(self.domain + "2")._id
+        bad_uid = self.get_table(self.domain + "2").id
 
         headers = (
             ('types', ('UID', 'Delete(Y/N)', 'table_id', 'is_global?', 'field 1')),
@@ -627,7 +621,7 @@ class TestFixtureUpload(TestCase):
             ('things', [(None, 'N', 'apple')]),
         ]
         result = self.upload(self.get_workbook_from_data(headers, data))
-        self.assertNotEqual(self.get_table()._id, bad_uid)
+        self.assertNotEqual(self.get_table().id, bad_uid)
         return result
 
     def test_row_uid_conflict(self):
@@ -753,60 +747,6 @@ class TestFixtureUpload(TestCase):
         # previously failed with BulkSaveError due to stale cache
         self.upload([(orange_id, 'N', 'banana')])
         self.assertEqual(self.get_rows(), ['banana'])
-
-    def test_upload_rows_without_sql_table(self):
-        with disable_save_to_sql():  # simulate save prior to start of migration
-            self.upload([(None, 'N', 'apple')])
-
-        self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
-        connection.check_constraints()  # should not raise
-        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
-
-    def test_upload_rows_with_concurrently_saved_sql_table(self):
-        def upload_runner():
-            # use the same connection as main test thread
-            connections[DEFAULT_DB_ALIAS] = test_connection
-            self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
-
-        def flush_blocker(*args):
-            # wait to flush until concurrent save has occurred
-            nonlocal thread_success
-            concurrent_save.set()
-            if not continue_upload.wait(timeout=10):
-                raise RuntimeError("continue_upload timeout")
-            real_flush(*args)
-            thread_success = True
-
-        from threading import Thread, Event
-        from django.db import DEFAULT_DB_ALIAS, connections
-        test_connection = connections[DEFAULT_DB_ALIAS]
-        test_connection.inc_thread_sharing()
-        thread_success = False
-        try:
-            concurrent_save = Event()
-            continue_upload = Event()
-
-            with disable_save_to_sql():
-                # simulate save prior to start of migration
-                self.upload([(None, 'N', 'apple')])
-
-            real_flush = mod.flush
-            with patch.object(mod, "flush", flush_blocker):
-                upload = Thread(target=upload_runner)
-                upload.start()  # loads Couch docs, blocks on flush
-
-                if not concurrent_save.wait(timeout=10):
-                    raise RuntimeError("concurrent_save timeout")
-                things = self.get_table()
-                things.save()  # save to SQL
-
-                continue_upload.set()
-                upload.join()
-                assert thread_success, "upload in thread did not finish"
-        finally:
-            test_connection.dec_thread_sharing()
-
-        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
 
 
 class TestFixtureOwnershipUpload(TestCase):
@@ -1056,43 +996,43 @@ class FakeTask:
 class TestTableKey(SimpleTestCase):
 
     def test_tag(self):
-        t1 = FixtureDataType(tag="this")
-        t2 = FixtureDataType(tag="this")
+        t1 = LookupTable(tag="this")
+        t2 = LookupTable(tag="this")
         self.assertEqual(mod.table_key(t1), mod.table_key(t2))
 
-        t3 = FixtureDataType(tag="that")
+        t3 = LookupTable(tag="that")
         self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
 
     def test_is_global(self):
-        t1 = FixtureDataType(is_global=True)
-        t2 = FixtureDataType(is_global=True)
+        t1 = LookupTable(is_global=True)
+        t2 = LookupTable(is_global=True)
         self.assertEqual(mod.table_key(t1), mod.table_key(t2))
 
-        t3 = FixtureDataType(is_global=False)
+        t3 = LookupTable(is_global=False)
         self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
 
     def test_fields(self):
-        t1 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["color"])])
-        t2 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["color"])])
+        t1 = LookupTable(fields=[TypeField(name="name", properties=["color"])])
+        t2 = LookupTable(fields=[TypeField(name="name", properties=["color"])])
         self.assertEqual(mod.table_key(t1), mod.table_key(t2))
 
-        t3 = FixtureDataType(fields=[FixtureTypeField(field_name="name", properties=["hue"])])
+        t3 = LookupTable(fields=[TypeField(name="name", properties=["hue"])])
         self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
 
     def test_item_attributes(self):
-        t1 = FixtureDataType(item_attributes=["name"])
-        t2 = FixtureDataType(item_attributes=["name"])
+        t1 = LookupTable(item_attributes=["name"])
+        t2 = LookupTable(item_attributes=["name"])
         self.assertEqual(mod.table_key(t1), mod.table_key(t2))
 
-        t3 = FixtureDataType(item_attributes=["origin"])
+        t3 = LookupTable(item_attributes=["origin"])
         self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
 
     def test_description(self):
-        t1 = FixtureDataType(description="Hello old friend")
-        t2 = FixtureDataType(description="Hello old friend")
+        t1 = LookupTable(description="Hello old friend")
+        t2 = LookupTable(description="Hello old friend")
         self.assertEqual(mod.table_key(t1), mod.table_key(t2))
 
-        t3 = FixtureDataType(description="It's good to see you")
+        t3 = LookupTable(description="It's good to see you")
         self.assertNotEqual(mod.table_key(t1), mod.table_key(t3))
 
 
@@ -1171,11 +1111,3 @@ class TestOwnerKey(SimpleTestCase):
 
         t3 = FixtureOwnership(owner_id="def")
         self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))
-
-
-@contextmanager
-def disable_save_to_sql():
-    p1 = patch.object(LookupTable.objects, "bulk_create", lambda x: None)
-    p2 = patch.object(LookupTableRow.objects, "bulk_create", lambda x: None)
-    with p1, p2:
-        yield

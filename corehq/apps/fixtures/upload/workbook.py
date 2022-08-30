@@ -4,7 +4,6 @@ from weakref import WeakKeyDictionary
 from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.fixtures.exceptions import FixtureUploadError
-from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER, INVALID, MULTIPLE
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
 from corehq.apps.fixtures.utils import is_identifier_invalid
@@ -17,9 +16,10 @@ from corehq.util.workbook_json.excel import get_workbook as excel_get_workbook
 from ..models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     FixtureItemField,
     FixtureOwnership,
+    LookupTable,
+    TypeField,
 )
 
 
@@ -117,8 +117,7 @@ class _FixtureWorkbook(object):
             if sheet.delete:
                 yield Deleted(sheet.table_id)
                 continue
-            table = FixtureDataType(
-                _id=uuid4().hex,
+            table = LookupTable(
                 domain=domain,
                 tag=sheet.table_id,
                 is_global=sheet.is_global,
@@ -141,7 +140,7 @@ class _FixtureWorkbook(object):
             item = FixtureDataItem(
                 _id=uuid4().hex,
                 domain=data_type.domain,
-                data_type_id=data_type._id,
+                data_type_id=data_type._migration_couch_id,
                 fields={
                     field.field_name: _process_item_field(field, di)
                     for field in type_fields
@@ -270,10 +269,10 @@ class _FixtureTableDefinition(object):
                 raise FixtureUploadError([message])
 
         fields = [
-            FixtureTypeField(
-                field_name=field,
-                properties=_get_field_properties('field {count}'.format(count=i + 1)),
-                is_indexed=_get_field_is_indexed('field {count}'.format(count=i + 1)),
+            TypeField(
+                name=field,
+                properties=_get_field_properties(f'field {i + 1}'),
+                is_indexed=_get_field_is_indexed(f'field {i + 1}'),
             ) for i, field in enumerate(field_names)
         ]
 
