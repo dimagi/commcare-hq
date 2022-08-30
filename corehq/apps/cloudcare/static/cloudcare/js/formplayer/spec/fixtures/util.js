@@ -1,7 +1,9 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/util", function () {
-    var module = {};
+    var AssertProperties = hqImport("hqwebapp/js/assert_properties"),
+        module = {};
 
     module.makeResponse = function (options) {
+        AssertProperties.assertRequired(["title", "breadcrumbs"]);
         return _.defaults(options, {
             "notification": {"message": null, "error": false},
             "clearSession": false,
@@ -12,7 +14,15 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/util", function () {
         });
     };
 
+    module.makeCommandResponse = function (options) {
+        AssertProperties.assertRequired(["commands"]);
+        return _.defaults(module.makeResponse(options), {
+            type: "commands",
+        });
+    };
+
     module.makeEntityResponse = function (options) {
+        AssertProperties.assertRequired(["entities"]);
         return _.defaults(module.makeResponse(options), {
             "numEntitiesPerRow": 0,
             "pageCount": 2,

@@ -2,6 +2,7 @@
 
 describe('Util', function () {
     var API = hqImport("cloudcare/js/formplayer/menus/api"),
+        FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
@@ -31,15 +32,6 @@ describe('Util', function () {
     describe('CloudcareUrl', function () {
         var stubs = {};
 
-        /**
-         *  The following tests all presume an app with this structure:
-         *      m0: a menu that does not use cases
-         *          m0-f0
-         *      m1: a menu that uses cases
-         *          m1-f0: a form that updates a case
-         *  No menus use display-only forms.
-         */
-
         beforeEach(function () {
             var currentUrl = new Util.CloudcareUrl({appId: 'abc123'});
 
@@ -55,9 +47,7 @@ describe('Util', function () {
                 return JSON.stringify(currentUrl);
             });
 
-            stubs.queryFormplayer = sinon.stub(API, 'queryFormplayer').callsFake(function (options, route) {
-                return {success: 1};
-            });
+            stubs.queryFormplayer = sinon.stub(API, 'queryFormplayer').callsFake(FakeFormplayer.queryFormplayer);
 
             // Prevent showing views, which doesn't work properly in tests
             FormplayerFrontend.off("before:start");
@@ -72,6 +62,7 @@ describe('Util', function () {
 
             // Note this calls queryFormplayer
             FormplayerFrontend.getChannel().request("app:select:menus", {
+                appId: 'abc123',
                 isInitial: true,    // navigate_menu_start
             });
         });
@@ -84,24 +75,17 @@ describe('Util', function () {
             Backbone.history.start.restore();
         });
 
-        // Get route of the most recent call to queryFormplayer
-        var getLastRoute = function () {
-            if (!stubs.queryFormplayer) {
-                return null;
-            }
-            return _.last(stubs.queryFormplayer.args)[1];   // second arg passed to the latest call
-        };
-
         it("should navigate to a form", function () {
             FormplayerFrontend.trigger("menu:select", 0);
-
             var url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['0']);
             assert.isNotOk(url.queryData);
             assert.isNotOk(url.search);
             assert.equal(url.appId, 'abc123');
             assert.isTrue(stubs.queryFormplayer.calledTwice);
-            assert.equal(getLastRoute(), "navigate_menu");
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.args[1], "navigate_menu");
+            assert.equal(lastCall.returnValue.title, "Survey Menu");
 
             FormplayerFrontend.trigger("menu:select", 0);
             var url = Util.currentUrlToObject();
@@ -110,18 +94,30 @@ describe('Util', function () {
             assert.isNotOk(url.search);
             assert.equal(url.appId, 'abc123');
             assert.isTrue(stubs.queryFormplayer.calledThrice);
-            assert.equal(getLastRoute(), "navigate_menu");
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.args[1], "navigate_menu");
+            assert.equal(lastCall.returnValue.title, "Survey Form");
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Survey Menu", "Survey Form"]);
         });
 
         it("should select a case", function () {
             FormplayerFrontend.trigger("menu:select", 1);
+            assert.isTrue(stubs.queryFormplayer.calledTwice);
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.args[1], "navigate_menu");
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases"]);
+            assert.equal(lastCall.returnValue.type, "entities");
+
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
             var url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['1', 'some_case_id']);
             assert.isNotOk(url.queryData);
             assert.isNotOk(url.search);
             assert.isTrue(stubs.queryFormplayer.calledThrice);
-            assert.equal(getLastRoute(), "navigate_menu");
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.args[1], "navigate_menu");
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases"]);
+            assert.equal(lastCall.returnValue.type, "commands");
         });
     });
 });
