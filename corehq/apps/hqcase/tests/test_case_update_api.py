@@ -592,7 +592,40 @@ class TestCaseAPI(TestCase):
             },
         })
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "Case properties must be strings"})
+        self.assertEqual(res.json(), {
+            'error': "Error with case property 'age'. Values must be strings, received '72'"
+        })
+
+    def test_non_xml_properties(self):
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+            'properties': {'not good': 'tsk tsk'},
+        })
+        self.assertEqual(res.status_code, 400)
+        msg = "Error with case property 'not good'. Case property names must be valid XML identifiers."
+        self.assertEqual(res.json()['error'], msg)
+
+    def test_non_xml_index_name(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+            'indices': {
+                "Robert'); DROP TABLE students;--": {
+                    'case_id': parent_case.case_id,
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        })
+        self.assertEqual(res.status_code, 400)
+        msg = ("Error with index 'Robert'); DROP TABLE students;--'. "
+               "Index names must be valid XML identifiers.")
+        self.assertEqual(res.json()['error'], msg)
+
 
     def test_bad_index_reference(self):
         res = self._create_case({
