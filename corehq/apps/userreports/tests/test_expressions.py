@@ -1161,14 +1161,13 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("int(a)", {"a": 1.23}, 1),
     ("round(a)", {"a": 1.23}, 1),
     ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
+    ("a + b", {"a": 'this is ', "b": 'text'}, 'this is text'),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
 @generate_cases([
-    # variables can't be strings
-    ("a + b", {"a": 2, "b": 'text'}),
     # missing context, b not defined
     ("a + (a*b)", {"a": 2}),
     # power function not supported
