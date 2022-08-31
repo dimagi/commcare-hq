@@ -93,16 +93,16 @@ class BaseSyncTest(TestCase):
     def _checkLists(self, l1, l2, msg=None):
         self.assertEqual(set(l1), set(l2), msg)
 
-    def _testUpdate(self, sync_log_or_id, case_id_map, dependent_case_id_map=None):
-        dependent_case_id_map = dependent_case_id_map or {}
+    def _testUpdate(self, sync_log_or_id, case_ids, dependent_case_ids=None):
+        dependent_case_ids = dependent_case_ids or set()
         if isinstance(sync_log_or_id, AbstractSyncLog):
             sync_log = sync_log_or_id
         else:
             sync_log = get_properly_wrapped_sync_log(sync_log_or_id)
 
-        all_ids = {}
-        all_ids.update(case_id_map)
-        all_ids.update(dependent_case_id_map)
+        all_ids = set()
+        all_ids.update(case_ids)
+        all_ids.update(dependent_case_ids)
         self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
         self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
 
@@ -134,7 +134,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         """
         Tests that a newly created sync token has no cases attached to it.
         """
-        self._testUpdate(self.device.last_sync.log.get_id, {}, {})
+        self._testUpdate(self.device.last_sync.log.get_id, set(), set())
 
     def testOwnUpdatesDontSync(self):
         case_id = "own_updates_dont_sync"
@@ -162,9 +162,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             create=False, case_id=child_id, user_id=self.user_id,
             index={index_id: (updated_type, parent_id)},
         ))
-        parent_ref.referenced_type = updated_type
-        self._testUpdate(self.device.last_sync.log._id,
-            {parent_id: [], child_id: [parent_ref]})
+        self._testUpdate(self.device.last_sync.log._id, {parent_id, child_id})
 
     def test_change_index_id(self):
         """
@@ -183,9 +181,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=index_id,
             )],
         ))
-        parent_ref.referenced_id = updated_id
-        self._testUpdate(self.device.last_sync.log.get_id,
-            {parent_id: [], updated_id: [], child_id: [parent_ref]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id, updated_id, child_id})
 
     def test_add_multiple_indices(self):
         """
@@ -205,14 +201,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=new_index_identifier,
             )],
         ))
-        new_index_ref = CommCareCaseIndex(
-            identifier=new_index_identifier,
-            referenced_type=PARENT_TYPE,
-            referenced_id=new_case_id,
-        )
-
-        self._testUpdate(self.device.last_sync.log.get_id,
-            {parent_id: [], new_case_id: [], child_id: [parent_ref, new_index_ref]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id, new_case_id, child_id})
 
     def test_delete_only_index(self):
         child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
@@ -223,7 +212,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             user_id=self.user_id,
             index={index_id: (PARENT_TYPE, "")},
         ))
-        self._testUpdate(self.device.last_sync.log.get_id, {parent_id: [], child_id: []})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id, child_id})
 
     def test_delete_one_of_multiple_indices(self):
         # make IDs both human readable and globally unique to this test
@@ -252,12 +241,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 ),
             ],
         ))
-        parent_ref_1 = CommCareCaseIndex(
-            identifier=index_id_1, referenced_type=PARENT_TYPE, referenced_id=parent_id_1)
-        parent_ref_2 = CommCareCaseIndex(
-            identifier=index_id_2, referenced_type=PARENT_TYPE, referenced_id=parent_id_2)
-        self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1: [], parent_id_2: [],
-                                                child_id: [parent_ref_1, parent_ref_2]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1, parent_id_2, child_id})
 
         # delete the first index
         self.device.post_changes(CaseBlock(
@@ -266,8 +250,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             user_id=self.user_id,
             index={index_id_1: (PARENT_TYPE, "")},
         ))
-        self._testUpdate(self.device.last_sync.log.get_id,
-            {parent_id_1: [], parent_id_2: [], child_id: [parent_ref_2]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1, parent_id_2, child_id})
 
     def _initialize_parent_child(self):
         child_id = "child_id"
@@ -288,8 +271,8 @@ class SyncTokenUpdateTest(BaseSyncTest):
             referenced_type=PARENT_TYPE,
             referenced_id=parent_id,
         )
-        self._testUpdate(self.device.last_sync.log._id, {parent_id: [], child_id: [parent_ref]})
-        return (child_id, parent_id, index_id, parent_ref)
+        self._testUpdate(self.device.last_sync.log._id, {parent_id, child_id})
+        return child_id, parent_id, index_id, parent_ref
 
     def testClosedParentIndex(self):
         """
@@ -315,14 +298,12 @@ class SyncTokenUpdateTest(BaseSyncTest):
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
 
-        self._testUpdate(self.device.last_sync.log.get_id,
-            {parent_id: [], child_id: [index_ref]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id, child_id})
 
         # close the mother case
         close = CaseBlock(create=False, case_id=parent_id, user_id=self.user_id, close=True)
         self.device.post_changes(close)
-        self._testUpdate(self.device.last_sync.log.get_id, {child_id: [index_ref]},
-                         {parent_id: []})
+        self._testUpdate(self.device.last_sync.log.get_id, {child_id}, {parent_id})
 
         # try a clean restore again
         self.device.last_sync = None
@@ -349,8 +330,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                                       referenced_type=PARENT_TYPE,
                                       referenced_id=parent_id)
         # should be there
-        self._testUpdate(self.device.last_sync.log.get_id,
-            {parent_id: [], child_id: [index_ref]})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id, child_id})
 
         # assign the child to a new owner
         new_owner = "not_mine"
@@ -359,7 +339,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         )
 
         # child should be moved, parent should still be there
-        self._testUpdate(self.device.last_sync.log.get_id, {parent_id: []}, {})
+        self._testUpdate(self.device.last_sync.log.get_id, {parent_id})
 
     def testArchiveUpdates(self):
         """
@@ -466,11 +446,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=parent_id)
-        self._testUpdate(self.device.last_sync.log._id,
-            {child_id: [index_ref]}, {parent_id: []})
+        self._testUpdate(self.device.last_sync.log._id, {parent_id, child_id})
 
     def test_index_case_not_on_device(self):
         """
@@ -503,10 +479,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 walk_related=False
             )
         ])
-        index_ref = CommCareCaseIndex(identifier=PARENT_TYPE,
-                                      referenced_type=PARENT_TYPE,
-                                      referenced_id=case_not_on_device.case_id)
-        self._testUpdate(self.device.last_sync.log._id, {child_id: [index_ref]})
+        self._testUpdate(self.device.last_sync.log._id, {child_id})
 
     def test_closed_case_not_in_next_sync(self):
         # create a case
@@ -623,7 +596,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             )
         ])
         # they should both be gone
-        self._testUpdate(self.device.last_sync.log._id, {}, {})
+        self._testUpdate(self.device.last_sync.log._id, set(), set())
 
     def test_create_closed_child_case_and_close_parent_in_same_form(self):
         # create the parent
@@ -649,7 +622,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
             )
         ])
         # they should both be gone
-        self._testUpdate(self.device.last_sync.log._id, {}, {})
+        self._testUpdate(self.device.last_sync.log._id, set(), set())
 
     def test_create_irrelevant_owner_and_close_in_same_form(self):
         # this tests an edge case that used to crash on submission which is why there are no asserts
@@ -727,11 +700,8 @@ class SyncTokenUpdateTest(BaseSyncTest):
 
         self._testUpdate(
             self.device.last_sync.log._id,
-            {child.case_id: [parent_ref],
-             parent.case_id: [grandparent_ref],
-             grandparent.case_id: []},
-            {parent.case_id: [grandparent.case_id],
-             grandparent.case_id: []}
+            {child.case_id, parent.case_id, grandparent.case_id},
+            {parent.case_id, grandparent.case_id}
         )
 
     def test_reassign_case_and_sync(self):
@@ -1625,12 +1595,12 @@ class MultiUserSyncTest(BaseSyncTest):
 
         # sanity check that we are in the right state
         sync_log = self.guy.last_sync.get_log()
-        self._testUpdate(sync_log._id, {child_id: [index_ref]}, {parent_id: []})
+        self._testUpdate(sync_log._id, {child_id}, {parent_id})
 
         # have another user modify the owner ID of the dependent case to be the shared ID
         self.ferrel.post_changes(case_id=parent_id)
         gsync = self.guy.sync()
-        self._testUpdate(gsync.log._id, {child_id: [index_ref], parent_id: []})
+        self._testUpdate(gsync.log._id, {child_id, parent_id})
 
     def test_index_tree_conflict_handling(self):
         """
@@ -1660,14 +1630,8 @@ class MultiUserSyncTest(BaseSyncTest):
                 ],
             )
         ])
-        mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=mom_id)
-        dad_ref = CommCareCaseIndex(identifier='dad', referenced_type='dad', referenced_id=dad_id)
         # sanity check that we are in the right state
-        self._testUpdate(self.guy.last_sync.log._id, {
-            child_id: [mom_ref, dad_ref],
-            mom_id: [],
-            dad_id: [],
-        })
+        self._testUpdate(self.guy.last_sync.log._id, {child_id, mom_id, dad_id})
 
         # have another user modify the index ID of one of the cases
         new_mom_id = uuid.uuid4().hex
@@ -1684,13 +1648,7 @@ class MultiUserSyncTest(BaseSyncTest):
                 ]
             )
         )
-        new_mom_ref = CommCareCaseIndex(identifier='mom', referenced_type='mom', referenced_id=new_mom_id)
-        self._testUpdate(self.guy.sync().log._id, {
-            child_id: [new_mom_ref, dad_ref],
-            mom_id: [],
-            dad_id: [],
-            new_mom_id: [],
-        })
+        self._testUpdate(self.guy.sync().log._id, {child_id, mom_id, dad_id, new_mom_id})
 
     def test_incremental_sync_with_close_and_create(self):
         def create_case_graph(num):
