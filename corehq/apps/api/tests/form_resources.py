@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.utils.http import urlencode
+from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
@@ -17,8 +18,12 @@ from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.elastic import reset_es_index
+from corehq.apps.users.models import WebUser
+from corehq.apps.domain.models import Domain
+from django_prbac.models import Role
 
 from .utils import APIResourceTest, FakeFormESView
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
@@ -364,3 +369,60 @@ class TestXFormPillow(TestCase):
         self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
         self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
         self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+
+
+class TestViewFormAttachment(TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        Role.get_cache().clear()
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.view_form_endpoint = self._get_view_form_endpoint()
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None,
+                                  email='rudoph@example.com', first_name='rudolph', last_name='commcare')
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete(deleted_by_domain=self.domain.name, deleted_by=None)
+        self.domain.delete()
+        super(TestViewFormAttachment, self).tearDown()
+
+    def _get_view_form_endpoint(self):
+        return reverse('api_form_attachment',
+                kwargs=dict(
+                    domain=self.domain.name,
+                    instance_id='5321',
+                    attachment_id='1234',
+                )
+            )
+
+    @flag_enabled('VIEW_FORM_ATTACHMENT')
+    def test_domain_has_feature_flag_enabled(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+        # 404 status code means the request is successful, but resource is
+        # not found which is OK for the purposes of this test
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_has_permission(self):
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+
+        # 404 status code means the request is successful, but resource is
+        # not found which is OK for the purposes of this test
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_has_no_permission(self):
+        self.user.set_role(self.domain.name, 'none')
+        self.user.save()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+
+        self.assertEqual(response.status_code, 403)

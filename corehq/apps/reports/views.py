@@ -18,6 +18,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
+    HttpResponseForbidden,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -41,6 +42,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from functools import wraps
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -124,6 +126,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq.toggles import VIEW_FORM_ATTACHMENT
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
@@ -134,6 +137,8 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
+from corehq.apps.domain.utils import domain_restricts_superusers
+from corehq.apps.domain.decorators import api_auth
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -161,6 +166,39 @@ require_form_view_permission = require_permission(
 )
 
 require_can_view_all_reports = require_permission(HqPermissions.view_reports)
+
+
+def _can_view_form_attachment():
+    def decorator(view_func):
+        @wraps(view_func)
+        def _inner(request, domain, *args, **kwargs):
+            if VIEW_FORM_ATTACHMENT.enabled(domain):
+                user = request.couch_user
+                user_allowed = False
+
+                domain_membership = user.get_domain_membership(domain, allow_enterprise=True)
+
+                if domain_membership:
+                    user_allowed = True
+                elif user.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
+                    user_allowed = True
+
+                if not user_allowed:
+                    return HttpResponseForbidden()
+
+                return view_func(request, domain, *args, **kwargs)
+
+            try:
+                response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
+            except PermissionDenied:
+                response = HttpResponseForbidden()
+            return response
+
+        return api_auth(_inner)
+    return decorator
+
+
+can_view_form_attachment = _can_view_form_attachment()
 
 
 @login_and_domain_required
