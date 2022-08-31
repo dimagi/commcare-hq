@@ -751,9 +751,11 @@ class ScheduledReportsView(BaseProjectReportSectionView):
         form.fields['hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
                                         (Domain.get_by_name(self.domain)['default_timezone'],
                                         get_timezone_difference(self.domain))
-        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is %s (UTC%s)") % \
-                                        (Domain.get_by_name(self.domain)['default_timezone'],
-                                        get_timezone_difference(self.domain))
+
+        # Note! This will only show up for hourly intervals which is configured on the UI in GMT. This
+        # feature sits behind a feature flag.
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is GMT (UTC+00).")
+
         return form
 
     @property
