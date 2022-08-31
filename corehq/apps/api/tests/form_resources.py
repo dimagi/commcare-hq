@@ -391,13 +391,14 @@ class TestViewFormAttachment(TestCase):
         super(TestViewFormAttachment, self).tearDown()
 
     def _get_view_form_endpoint(self):
-        return reverse('api_form_attachment',
-                kwargs=dict(
-                    domain=self.domain.name,
-                    instance_id='5321',
-                    attachment_id='1234',
-                )
+        return reverse(
+            'api_form_attachment',
+            kwargs=dict(
+                domain=self.domain.name,
+                instance_id='5321',
+                attachment_id='1234',
             )
+        )
 
     @flag_enabled('VIEW_FORM_ATTACHMENT')
     def test_domain_has_feature_flag_enabled(self):
