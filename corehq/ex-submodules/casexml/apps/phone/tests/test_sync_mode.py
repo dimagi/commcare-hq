@@ -6,6 +6,7 @@ from xml.etree import cElementTree as ElementTree
 
 from django.test import TestCase
 
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import (
     CaseBlock,
     CaseFactory,
@@ -44,7 +45,8 @@ from corehq.util.test_utils import flag_enabled
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
 PARENT_TYPE = "mother"
-CHILD_RELATIONSHIP = "child"
+CHILD_RELATIONSHIP = CASE_INDEX_CHILD
+EXTENSION_RELATIONSHIP = CASE_INDEX_EXTENSION
 
 
 class BaseSyncTest(TestCase):
@@ -256,6 +258,36 @@ class SyncTokenUpdateTest(BaseSyncTest):
             index={index_id_1: (PARENT_TYPE, "")},
         ))
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id_1, parent_id_2, child_id})
+
+    def test_delete_extension_index_removes_case(self):
+        extension_id = "ext_id"
+        host_id = "host_id"
+        index_id = 'host_index_id'
+        self.device.post_changes(CaseStructure(
+            case_id=extension_id,
+            attrs={'create': True, 'owner_id': self.device.user_id},
+            indices=[CaseIndex(
+                CaseStructure(case_id=host_id, attrs={'create': True, 'owner_id': 'someone else'}),
+                relationship=EXTENSION_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+                identifier=index_id,
+            )],
+        ))
+        self._testUpdate(self.device.last_sync.log.get_id, {extension_id}, {host_id})
+
+        # delete the index outside of the purview of the device
+        self.device.case_factory.post_case_blocks([
+            CaseBlock(
+                create=False,
+                case_id=extension_id,
+                user_id=self.user_id,
+                index={index_id: (PARENT_TYPE, "")},
+            ).as_text()
+        ])
+
+        # purge the host case from the device
+        self.device.sync()
+        self._testUpdate(self.device.last_sync.log.get_id, {extension_id}, set())
 
     def _initialize_parent_child(self):
         child_id = "child_id"
