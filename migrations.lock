@@ -882,6 +882,7 @@ sql_accessors
  0064_remove_get_case_models_functions
  0065_get_ledger_values_for_cases_3
  0066_drop_unused_function
+ 0067_livequery_sql
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
