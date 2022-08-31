@@ -137,8 +137,6 @@ UNKNOWN_MODELS = {
     "registry.RegistryGrant",
     "registry.RegistryInvitation",
     "reminders.EmailUsage",
-    "reports.TableauServer",
-    "reports.TableauVisualization",
     "saved_reports.ScheduledReportLog",
     "saved_reports.ScheduledReportsCheckpoint",
     "scheduling.MigratedReminder",
