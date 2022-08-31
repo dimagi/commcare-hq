@@ -18,6 +18,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
+    HttpResponseForbidden,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -136,6 +137,8 @@ from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
 from corehq.apps.domain.utils import domain_restricts_superusers
+from corehq.apps.domain.decorators import api_auth
+
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -165,7 +168,7 @@ require_form_view_permission = require_permission(
 require_can_view_all_reports = require_permission(HqPermissions.view_reports)
 
 
-def _augmented_form_view_permissions(login_decorator=login_and_domain_required):
+def _can_view_form_attachment():
     def decorator(view_func):
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
@@ -181,19 +184,21 @@ def _augmented_form_view_permissions(login_decorator=login_and_domain_required):
                     user_allowed = True
 
                 if not user_allowed:
-                    raise Http403()
+                    return HttpResponseForbidden()
 
                 return view_func(request, domain, *args, **kwargs)
-            return require_form_view_permission(view_func)(request, domain, *args, **kwargs)
 
-        if login_decorator:
-            return login_decorator(_inner)
-        else:
-            return _inner
+            try:
+                response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
+            except PermissionDenied:
+                response = HttpResponseForbidden()
+            return response
+
+        return api_auth(_inner)
     return decorator
 
 
-augmented_form_view_permissions = _augmented_form_view_permissions(login_decorator=None)
+can_view_form_attachment = _can_view_form_attachment()
 
 
 @login_and_domain_required

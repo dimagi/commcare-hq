@@ -417,3 +417,12 @@ class TestViewFormAttachment(TestCase):
         # 404 status code means the request is successful, but resource is
         # not found which is OK for the purposes of this test
         self.assertEqual(response.status_code, 404)
+
+    def test_user_has_no_permission(self):
+        self.user.set_role(self.domain.name, 'none')
+        self.user.save()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+
+        self.assertEqual(response.status_code, 403)
