@@ -43,6 +43,12 @@ class Command(BaseCommand):
             help="Only migrate documents in the specified domains",
         )
         parser.add_argument(
+            '--chunk-size',
+            type=int,
+            default=1000,
+            help="Number of docs to fetch at once (default: 100).",
+        )
+        parser.add_argument(
             '--log-dir',
             default="-" if settings.UNIT_TESTING else None,
             help="Directory to write logs to. Defaults to the current directory."

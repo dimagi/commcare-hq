@@ -238,7 +238,7 @@ Run the following commands to run the migration and get up to date:
         parser.add_argument(
             '--chunk-size',
             type=int,
-            default=100,
+            default=1000,
             help="Number of docs to fetch at once (default: 100).",
         )
         parser.add_argument(
