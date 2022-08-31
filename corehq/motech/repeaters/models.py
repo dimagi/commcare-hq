@@ -1722,6 +1722,12 @@ class RepeatRecord(Document):
         except SQLRepeater.DoesNotExist:
             return None
 
+    def is_repeater_deleted(self):
+        try:
+            return SQLRepeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+        except SQLRepeater.DoesNotExist:
+            return True
+
     @property
     def url(self):
         warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
