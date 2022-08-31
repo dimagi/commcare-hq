@@ -312,7 +312,9 @@
                            }
                        },
                        "open_case": {
-                           "name_path": "/data/question3",
+                           "name_update": {
+                               "question_path": "/data/question3"
+                           },
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {
@@ -459,7 +461,7 @@
                            "followup_date": null
                        },
                        "open_case": {
-                           "name_path": null,
+                           "name_update": null,
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {
@@ -854,7 +856,7 @@
                            }
                        },
                        "open_case": {
-                           "name_path": null,
+                           "name_update": null,
                            "doc_type": "OpenCaseAction",
                            "external_id": null,
                            "condition": {
