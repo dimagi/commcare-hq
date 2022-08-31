@@ -4097,6 +4097,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Android app dependencies"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr ""
 
@@ -4706,6 +4710,12 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Prevents mobile workers from using a CommCare app until the Android apps "
+"that it needs have been installed on the device.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -26944,10 +26954,6 @@ msgstr ""
 
 #: corehq/apps/reports/models.py
 msgid "Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/reports/models.py
-msgid "The config format is invalid"
 msgstr ""
 
 #: corehq/apps/reports/standard/__init__.py
