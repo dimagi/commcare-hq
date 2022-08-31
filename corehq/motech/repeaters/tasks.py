@@ -18,6 +18,7 @@ from corehq.util.metrics import (
 )
 from corehq.util.metrics.const import MPM_MAX
 from corehq.util.soft_assert import soft_assert
+from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
@@ -179,6 +180,11 @@ def _process_repeat_record(repeat_record):
         return
     if repeat_record.cancelled:
         return
+
+    if repeat_record.is_repeater_deleted():
+        if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
+            repeat_record.doc_type += DELETED_SUFFIX
+            repeat_record.save()
 
     repeater = repeat_record.repeater
     if not repeater:
