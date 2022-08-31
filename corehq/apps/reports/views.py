@@ -136,7 +136,6 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
-from corehq.apps.domain.utils import domain_restricts_superusers
 from corehq.apps.domain.decorators import api_auth
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
