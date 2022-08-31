@@ -390,11 +390,22 @@ class RestoreState:
                 self.last_sync_log.error_hash = str(parsed_hash)
                 self.last_sync_log.save()
 
-                raise BadStateException(
-                    server_hash=computed_hash,
-                    phone_hash=parsed_hash,
-                    case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
-                )
+                if self.params.is_webapps:
+                    # ignore this from webapps for now and just report
+                    notify_error("State hash mistmatch from webapps", details={
+                        'synclog_id': self.params.sync_log_id,
+                        'device_id': self.params.device_id,
+                        'app_id': self.params.app_id,
+                        'user_id': self.restore_user.user_id,
+                        'request_user_id': self.restore_user.request_user_id,
+                        'domain': self.domain,
+                    })
+                else:
+                    raise BadStateException(
+                        server_hash=computed_hash,
+                        phone_hash=parsed_hash,
+                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
+                    )
 
     @property
     def last_sync_log(self):
