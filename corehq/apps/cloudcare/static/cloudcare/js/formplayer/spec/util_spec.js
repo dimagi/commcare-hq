@@ -116,8 +116,30 @@ describe('Util', function () {
             assert.isTrue(stubs.queryFormplayer.calledThrice);
             var lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
-            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases"]);
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases", "Some Case"]);
             assert.equal(lastCall.returnValue.type, "commands");
+        });
+
+        it("should navigate to breadcrumb", function () {
+            FormplayerFrontend.trigger("menu:select", 0);
+            FormplayerFrontend.trigger("menu:select", 0);
+            FormplayerFrontend.trigger("breadcrumbSelect", 1);
+            var url = Util.currentUrlToObject();
+            assert.deepEqual(url.selections, ['0']);
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.returnValue.title, "Survey Menu");
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Survey Menu"]);
+        });
+
+        it("should navigate to breadcrumb with case", function () {
+            FormplayerFrontend.trigger("menu:select", 1);
+            FormplayerFrontend.trigger("menu:select", 'some_case_id');
+            FormplayerFrontend.trigger("breadcrumbSelect", 1);
+            var url = Util.currentUrlToObject();
+            assert.deepEqual(url.selections, ['1']);
+            var lastCall = stubs.queryFormplayer.lastCall;
+            assert.equal(lastCall.returnValue.title, "Some Cases");
+            assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases"]);
         });
     });
 });

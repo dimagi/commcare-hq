@@ -31,6 +31,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
                         }],
                         entities: [{
                             id: 'some_case_id',
+                            name: 'Some Case',
                         }],
                     },
                 ],
@@ -56,13 +57,20 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         }
 
         _.each(selections, function (selection) {
-            if (currentMenu.commands[selection]) {
+            var item = currentMenu.commands[selection];     // is selection a command?
+            if (item) {
                 currentMenu = currentMenu.commands[selection];
                 needEntity = !!currentMenu.entities;
                 breadcrumbs.push(currentMenu.title);
-            } else if (_.findWhere(currentMenu.entities, {id: selection})) {
-                needEntity = false;
-            } else {
+            }
+            if (!item) {
+                item = _.findWhere(currentMenu.entities, {id: selection});  // is selection a case id?
+                if (item) {
+                    needEntity = false;
+                    breadcrumbs.push(item.name);
+                }
+            }
+            if (!item) {
                 throw new Error("Could not select " + selection);
             }
         });
