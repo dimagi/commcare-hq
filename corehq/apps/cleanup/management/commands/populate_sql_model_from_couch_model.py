@@ -244,7 +244,7 @@ Run the following commands to run the migration and get up to date:
         parser.add_argument(
             '--log-path',
             default="-" if settings.UNIT_TESTING else None,
-            help="File path to write logs to. If not provided a default will be used."
+            help="File or directory path to write logs to. If not provided a default will be used."
         )
         parser.add_argument(
             '--append-log',
@@ -258,10 +258,11 @@ Run the following commands to run the migration and get up to date:
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
-        if not log_path:
+        if not log_path or os.path.isdir(log_path):
             date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S.%f')
             command_name = self.__class__.__module__.split('.')[-1]
-            log_path = f"{command_name}_{date}.log"
+            filename = f"{command_name}_{date}.log"
+            log_path = os.path.join(log_path, filename) if log_path else filename
 
         if log_path != "-" and os.path.exists(log_path) and not append_log:
             raise CommandError(f"Log file already exists: {log_path}")
