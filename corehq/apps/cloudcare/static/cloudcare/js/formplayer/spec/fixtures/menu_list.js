@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/menu_list", function () {
     var FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    return FakeFormplayer.makeCommandResponse({
+    return FakeFormplayer.makeCommandsResponse({
         "title": "Case Tests",
         "breadcrumbs": [
             "Basic",

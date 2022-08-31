@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_list", function () {
     var FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    return FakeFormplayer.makeEntityResponse({
+    return FakeFormplayer.makeEntitiesResponse({
         "title": "Update a Case",
         "breadcrumbs": [
             "Basic",

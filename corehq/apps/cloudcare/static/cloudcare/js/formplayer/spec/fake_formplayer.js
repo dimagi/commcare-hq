@@ -46,7 +46,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         };
 
     var navigateMenuStart = function (app) {
-        return module.makeCommandResponse({
+        return module.makeCommandsResponse({
             title: app.title,
             breadcrumbs: [app.title],
             commands: app.commands,
@@ -102,7 +102,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             breadcrumbs: breadcrumbs,
         };
         if (needEntity) {
-            return module.makeEntityResponse(_.extend(responseOptions, {
+            return module.makeEntitiesResponse(_.extend(responseOptions, {
                 entities: currentMenu.entities,
             }));
         } else if (action) {
@@ -111,7 +111,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
                 queryKey: action.queryKey,
             }));
         }
-        return module.makeCommandResponse(_.extend(responseOptions, {
+        return module.makeCommandsResponse(_.extend(responseOptions, {
             commands: currentMenu.commands,
         }));
     };
@@ -145,14 +145,14 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         });
     };
 
-    module.makeCommandResponse = function (options) {
+    module.makeCommandsResponse = function (options) {
         AssertProperties.assertRequired(["commands"]);
         return _.defaults(makeResponse(options), {
             type: "commands",
         });
     };
 
-    module.makeEntityResponse = function (options) {
+    module.makeEntitiesResponse = function (options) {
         AssertProperties.assertRequired(["entities"]);
         return _.defaults(makeResponse(options), {
             "numEntitiesPerRow": 0,

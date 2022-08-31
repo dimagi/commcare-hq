@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_grid_list", function () {
     var FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    return FakeFormplayer.makeEntityResponse({
+    return FakeFormplayer.makeEntitiesResponse({
         "title": "New Adherence Data",
         "breadcrumbs": [
             "UATBC Calendar Testing",
