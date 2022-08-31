@@ -375,22 +375,21 @@ class RestoreState:
 
     def validate_state(self):
         check_version(self.params.version)
-        if self.last_sync_log:
-            if self.params.state_hash:
-                parsed_hash = CaseStateHash.parse(self.params.state_hash)
-                computed_hash = self.last_sync_log.get_state_hash()
-                if computed_hash != parsed_hash:
-                    # log state error on the sync log
-                    self.last_sync_log.had_state_error = True
-                    self.last_sync_log.error_date = datetime.utcnow()
-                    self.last_sync_log.error_hash = str(parsed_hash)
-                    self.last_sync_log.save()
+        if self.last_sync_log and self.params.state_hash:
+            parsed_hash = CaseStateHash.parse(self.params.state_hash)
+            computed_hash = self.last_sync_log.get_state_hash()
+            if computed_hash != parsed_hash:
+                # log state error on the sync log
+                self.last_sync_log.had_state_error = True
+                self.last_sync_log.error_date = datetime.utcnow()
+                self.last_sync_log.error_hash = str(parsed_hash)
+                self.last_sync_log.save()
 
-                    raise BadStateException(
-                        server_hash=computed_hash,
-                        phone_hash=parsed_hash,
-                        case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
-                    )
+                raise BadStateException(
+                    server_hash=computed_hash,
+                    phone_hash=parsed_hash,
+                    case_ids=self.last_sync_log.get_footprint_of_cases_on_phone()
+                )
 
     @property
     def last_sync_log(self):
