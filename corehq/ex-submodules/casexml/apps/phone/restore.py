@@ -33,6 +33,7 @@ from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_error
 
 from .checksum import CaseStateHash
 from .const import (
@@ -304,6 +305,10 @@ class RestoreParams(object):
     @property
     def app_id(self):
         return self.app.get_id if self.app else None
+
+    @property
+    def is_webapps(self):
+        return self.device_id and self.device_id.startswith("WebAppsLogin")
 
     def __repr__(self):
         return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
@@ -747,7 +752,6 @@ class RestoreConfig(object):
         timing = self.timing_context
         assert timing.is_finished()
         duration = timing.duration
-        device_id = self.params.device_id
         if duration > 20 or status == 412:
             if status == 412:
                 # use last sync log since there is no current sync log
@@ -759,15 +763,14 @@ class RestoreConfig(object):
                 "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
                 sync_log_id,
                 self.restore_user.username,
-                device_id,
+                self.params.device_id,
                 self.domain,
                 status,
                 duration,
             )
-        is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = {
             'status_code': status,
-            'device_type': 'webapps' if is_webapps else 'other',
+            'device_type': 'webapps' if self.params.is_webapps else 'other',
             'domain': self.domain,
         }
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
