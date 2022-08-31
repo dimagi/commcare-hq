@@ -107,7 +107,8 @@ class BaseSyncTest(TestCase):
         all_ids = set()
         all_ids.update(case_ids)
         all_ids.update(dependent_case_ids)
-        self.assertEqual(set(all_ids), sync_log.case_ids_on_phone)
+        self.assertEqual(all_ids, sync_log.case_ids_on_phone)
+        self.assertEqual(dependent_case_ids, sync_log.dependent_case_ids_on_phone)
         self.assertEqual(sync_log.log_format, LOG_FORMAT_LIVEQUERY)
 
 
@@ -445,7 +446,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 )],
             )
         ])
-        self._testUpdate(self.device.last_sync.log._id, {parent_id, child_id})
+        self._testUpdate(self.device.last_sync.log._id, {child_id}, {parent_id})
 
     def test_index_case_not_on_device(self):
         """
