@@ -172,19 +172,6 @@ def _can_view_form_attachment():
         @wraps(view_func)
         def _inner(request, domain, *args, **kwargs):
             if VIEW_FORM_ATTACHMENT.enabled(domain):
-                user = request.couch_user
-                user_allowed = False
-
-                domain_membership = user.get_domain_membership(domain, allow_enterprise=True)
-
-                if domain_membership:
-                    user_allowed = True
-                elif user.is_global_admin() and (domain is None or not domain_restricts_superusers(domain)):
-                    user_allowed = True
-
-                if not user_allowed:
-                    return HttpResponseForbidden()
-
                 return view_func(request, domain, *args, **kwargs)
 
             try:
