@@ -132,6 +132,7 @@ auditcare
  0004_add_couch_id
  0005_auditcaremigrationmeta
  0006_auto_20210811_1215
+ 0007_delete_auditcaremigrationmeta
 auth
  0001_initial
  0002_alter_permission_name_max_length
