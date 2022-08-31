@@ -296,6 +296,8 @@ iso8601==0.1.13
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
+isort==5.10.1
+    # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
 jinja2==2.11.3
