@@ -141,5 +141,63 @@ describe('Util', function () {
             assert.equal(lastCall.returnValue.title, "Some Cases");
             assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases"]);
         });
+
+        it("should paginate, filter, and sort case lists", function () {
+            FormplayerFrontend.trigger("menu:select", 1);
+            FormplayerFrontend.trigger("menu:perPageLimit", 2);
+            var url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, null);
+            assert.equal(url.search, null);
+            assert.equal(url.sortIndex, null);
+
+            FormplayerFrontend.trigger("menu:search", "x");
+            url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, null);
+            assert.equal(url.search, "x");
+            assert.equal(url.sortIndex, null);
+
+            FormplayerFrontend.trigger("menu:paginate", 1);
+            url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, 1);
+            assert.equal(url.search, "x");
+            assert.equal(url.sortIndex, null);
+
+            FormplayerFrontend.trigger("menu:sort", 2);
+            url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, 1);
+            assert.equal(url.search, "x");
+            assert.equal(url.sortIndex, 2);
+        });
+
+        it("should clear pagination on search", function () {
+            FormplayerFrontend.trigger("menu:select", 1);
+            FormplayerFrontend.trigger("menu:perPageLimit", 2);
+            FormplayerFrontend.trigger("menu:paginate", 1);
+            FormplayerFrontend.trigger("menu:sort", 2);
+            FormplayerFrontend.trigger("menu:search", "y");
+            url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, null);
+            assert.equal(url.search, "y");
+            assert.equal(url.sortIndex, null);
+        });
+
+        it("should clear pagination and search on selecting a case", function () {
+            FormplayerFrontend.trigger("menu:select", 1);
+            FormplayerFrontend.trigger("menu:perPageLimit", 2);
+            FormplayerFrontend.trigger("menu:paginate", 1);
+            FormplayerFrontend.trigger("menu:sort", 2);
+            FormplayerFrontend.trigger("menu:search", "z");
+            FormplayerFrontend.trigger("menu:select", 'some_case_id');
+            url = Util.currentUrlToObject();
+            assert.equal(url.casesPerPage, 2);
+            assert.equal(url.page, null);
+            assert.equal(url.search, null);
+            assert.equal(url.sortIndex, null);
+        });
     });
 });
