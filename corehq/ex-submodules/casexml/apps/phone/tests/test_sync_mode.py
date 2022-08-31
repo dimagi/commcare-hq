@@ -1,41 +1,45 @@
 import os
 import uuid
 from datetime import datetime
-from xml.etree import cElementTree as ElementTree
-from django.test import TestCase
 from unittest.mock import patch
+from xml.etree import cElementTree as ElementTree
 
+from django.test import TestCase
+
+from casexml.apps.case.mock import (
+    CaseBlock,
+    CaseFactory,
+    CaseIndex,
+    CaseStructure,
+)
+from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
+from casexml.apps.case.xml import V1, V2
 from casexml.apps.phone.exceptions import RestoreException
+from casexml.apps.phone.models import (
+    LOG_FORMAT_LIVEQUERY,
+    AbstractSyncLog,
+    get_properly_wrapped_sync_log,
+)
+from casexml.apps.phone.restore import (
+    CachedResponse,
+    RestoreCacheSettings,
+    RestoreConfig,
+    RestoreParams,
+)
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
-from casexml.apps.case.mock import CaseBlock, CaseStructure, CaseIndex, CaseFactory
 from casexml.apps.phone.tests.utils import create_restore_user
-from casexml.apps.phone.utils import get_restore_config, MockDevice
+from casexml.apps.phone.utils import MockDevice, get_restore_config
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.receiverwrapper.util import submit_form_locally
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    sharded,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.util.test_utils import flag_enabled
-from casexml.apps.case.tests.util import TEST_DOMAIN_NAME
-from casexml.apps.phone.models import (
-    AbstractSyncLog,
-    get_properly_wrapped_sync_log,
-    LOG_FORMAT_LIVEQUERY,
-)
-from casexml.apps.phone.restore import (
-    CachedResponse,
-    RestoreConfig,
-    RestoreParams,
-    RestoreCacheSettings,
-)
-from casexml.apps.case.xml import V2, V1
 
 USERNAME = "syncguy"
 OTHER_USERNAME = "ferrel"
@@ -155,7 +159,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         """
         Test that changing an index type updates the sync log
         """
-        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        child_id, parent_id, index_id = self._initialize_parent_child()
         # update the child's index (parent type)
         updated_type = "updated_type"
         self.device.post_changes(CaseBlock(
@@ -168,7 +172,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         """
         Test that changing an index ID updates the sync log
         """
-        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        child_id, parent_id, index_id = self._initialize_parent_child()
 
         # update the child's index (parent id)
         updated_id = 'changed_index_id'
@@ -187,7 +191,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         """
         Test that adding multiple indices works as expected
         """
-        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        child_id, parent_id, index_id = self._initialize_parent_child()
         # add new index
         new_case_id = 'new_case_id'
         new_index_identifier = 'new_index_id'
@@ -204,7 +208,7 @@ class SyncTokenUpdateTest(BaseSyncTest):
         self._testUpdate(self.device.last_sync.log.get_id, {parent_id, new_case_id, child_id})
 
     def test_delete_only_index(self):
-        child_id, parent_id, index_id, parent_ref = self._initialize_parent_child()
+        child_id, parent_id, index_id = self._initialize_parent_child()
         # delete the first index
         self.device.post_changes(CaseBlock(
             create=False,
@@ -266,13 +270,8 @@ class SyncTokenUpdateTest(BaseSyncTest):
                 identifier=index_id,
             )],
         ))
-        parent_ref = CommCareCaseIndex(
-            identifier=index_id,
-            referenced_type=PARENT_TYPE,
-            referenced_id=parent_id,
-        )
         self._testUpdate(self.device.last_sync.log._id, {parent_id, child_id})
-        return child_id, parent_id, index_id, parent_ref
+        return child_id, parent_id, index_id
 
     def testClosedParentIndex(self):
         """
