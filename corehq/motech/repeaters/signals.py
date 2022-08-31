@@ -73,7 +73,7 @@ def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
     domain = payload.domain
 
     if domain_can_forward(domain):
-        repeaters = repeater_cls.by_domain(domain, stale_query=True)
+        repeaters = repeater_cls.objects.by_domain(domain)
         for repeater in repeaters:
             repeater.register(payload, fire_synchronously=fire_synchronously)
 
