@@ -246,15 +246,9 @@ Run the following commands to run the migration and get up to date:
             default="-" if settings.UNIT_TESTING else None,
             help="File or directory path to write logs to. If not provided a default will be used."
         )
-        parser.add_argument(
-            '--append-log',
-            action="store_true",
-            help="Append to log file if it already exists."
-        )
 
     def handle(self, chunk_size, fixup_diffs, **options):
         log_path = options.get("log_path")
-        append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
@@ -264,7 +258,7 @@ Run the following commands to run the migration and get up to date:
             filename = f"{command_name}_{date}.log"
             log_path = os.path.join(log_path, filename) if log_path else filename
 
-        if log_path != "-" and os.path.exists(log_path) and not append_log:
+        if log_path != "-" and os.path.exists(log_path):
             raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
@@ -314,7 +308,7 @@ Run the following commands to run the migration and get up to date:
             migrate = self._migrate_doc
             verify = self._verify_doc
 
-        with self.open_log(log_path, append_log) as logfile:
+        with self.open_log(log_path) as logfile:
             for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
                 if not verify_only:
                     migrate(item, logfile)
@@ -465,11 +459,10 @@ Run the following commands to run the migration and get up to date:
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
 
     @staticmethod
-    def open_log(log_path, append_log):
+    def open_log(log_path):
         if log_path == "-":
             return nullcontext(sys.stdout)
-        mode = "a" if append_log else "w"
-        return open(log_path, mode)
+        return open(log_path, "w")
 
 
 DIFF_HEADER = "Doc {} has differences:\n"
