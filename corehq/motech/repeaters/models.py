@@ -391,6 +391,13 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
+    def get_attempt_info(self, repeat_record):
+        return None
+
+    @property
+    def verify(self):
+        return not self.connection_settings.skip_cert_verify
+
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
