@@ -199,5 +199,25 @@ describe('Util', function () {
             assert.equal(url.search, null);
             assert.equal(url.sortIndex, null);
         });
+
+        it("should navigate through case search", function () {
+            FormplayerFrontend.trigger("menu:select", 1);
+            FormplayerFrontend.trigger("menu:select", "action 0");
+
+            var response = stubs.queryFormplayer.lastCall.returnValue;  // inspect last formplayer response
+            assert.equal(response.type, "query");
+            assert.deepEqual(_.pluck(response.displays, 'id'), ['dob']);
+
+            FormplayerFrontend.trigger("menu:query", {dob: "2010-01-19"});
+            url = Util.currentUrlToObject();
+            assert.deepEqual(url.selections, ['1', 'action 0']);
+            assert.deepEqual(_.keys(url.queryData), ["search_command.m1"]);
+            assert.isTrue(url.queryData["search_command.m1"].execute);
+            assert.deepEqual(url.queryData["search_command.m1"].inputs, {
+                dob: "2010-01-19",
+            });
+            var response = stubs.queryFormplayer.lastCall.returnValue;
+            assert.equal(response.type, "entities");
+        });
     });
 });

@@ -33,6 +33,13 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
                             id: 'some_case_id',
                             name: 'Some Case',
                         }],
+                        actions: [{
+                            title: "Search for Case",
+                            queryKey: "search_command.m1",
+                            displays: [{
+                                id: "dob",
+                            }],
+                        }],
                     },
                 ],
             },
@@ -50,7 +57,8 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         var currentMenu = app,
             selections = options.selections,
             breadcrumbs = [app.title],
-            needEntity = false;
+            needEntity = false,
+            action = undefined;
 
         if (!selections || !selections.length) {
             throw new Error("No selections given to navigate_menu");
@@ -70,6 +78,20 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
                     breadcrumbs.push(item.name);
                 }
             }
+            if (selection.startsWith("action ")) {   // actions are assumed to be case search
+                item = currentMenu.actions[selection.replace("action ", "")];
+                if (item) {
+                    var menuQueryData = options.queryData ? options.queryData[sessionStorage.queryKey] : undefined;
+                    if (menuQueryData && menuQueryData.inputs) {
+                        // run search and show results
+                        needEntity = true;
+                    } else {
+                        // show search screen
+                        action = item;
+                        needEntity = false;
+                    }
+                }
+            }
             if (!item) {
                 throw new Error("Could not select " + selection);
             }
@@ -82,6 +104,11 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         if (needEntity) {
             return Util.makeEntityResponse(_.extend(responseOptions, {
                 entities: currentMenu.entities,
+            }));
+        } else if (action) {
+            return Util.makeQueryResponse(_.extend(responseOptions, {
+                displays: action.displays,
+                queryKey: action.queryKey,
             }));
         }
         return Util.makeCommandResponse(_.extend(responseOptions, {

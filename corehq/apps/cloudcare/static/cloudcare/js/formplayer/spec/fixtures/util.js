@@ -34,5 +34,12 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/util", function () {
         });
     };
 
+    module.makeQueryResponse = function (options) {
+        AssertProperties.assertRequired(["displays", "queryKey"]);
+        return _.defaults(module.makeResponse(options), {
+            type: "query",
+        });
+    };
+
     return module;
 });
