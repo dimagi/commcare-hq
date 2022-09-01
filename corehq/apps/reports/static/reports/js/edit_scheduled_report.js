@@ -44,9 +44,19 @@ hqDefine("reports/js/edit_scheduled_report", [
         if ($interval.val() === 'hourly') {
             $("label[for='id_hour']").text(gettext('From Time') + "*");
             $('#div_id_stop_hour').show();
+
+            // Hide default hint text
+            $("#hint_id_hour").hide();
+
+            // Set hint text to same as stop_hour help text
+            var parentElement = $("#id_hour").parent();
+            parentElement.append("<div id='hint_id_stop_hour_gmt' class='help-block'></div>");
+            $("#hint_id_stop_hour_gmt").text($("#hint_id_stop_hour").text());
         }
         else {
             $("label[for='id_hour']").text(gettext('Time') + "*");
+            $("#hint_id_hour").show();
+            $("#hint_id_stop_hour_gmt").remove();
         }
     };
 

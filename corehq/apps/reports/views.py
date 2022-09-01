@@ -642,15 +642,19 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def report_notification(self):
         if self.scheduled_report_id:
             instance = ReportNotification.get(self.scheduled_report_id)
-            time_difference = get_timezone_difference(self.domain)
-            (instance.hour, day_change) = recalculate_hour(
-                instance.hour,
-                time_difference.hours,
-                time_difference.minutes
-            )
-            instance.minute = 0
-            if day_change:
-                instance.day = calculate_day(instance.interval, instance.day, day_change)
+
+            # For hourly option, GMT should be used (don't worry, it sits behind
+            # a custom FF)
+            if instance.interval != "hourly":
+                time_difference = get_timezone_difference(self.domain)
+                (instance.hour, day_change) = recalculate_hour(
+                    instance.hour,
+                    time_difference.hours,
+                    time_difference.minutes
+                )
+                instance.minute = 0
+                if day_change:
+                    instance.day = calculate_day(instance.interval, instance.day, day_change)
 
             if not self.can_edit_report(instance):
                 raise Http403()
@@ -754,7 +758,8 @@ class ScheduledReportsView(BaseProjectReportSectionView):
 
         # Note! This will only show up for hourly intervals which is configured on the UI in GMT. This
         # feature sits behind a feature flag.
-        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is GMT (UTC+00).")
+        form.fields['stop_hour'].help_text = _("This scheduled report's timezone is GMT (UTC+00). "
+                                               "Please account for your own timezone when selecting the time.")
 
         return form
 
@@ -802,18 +807,21 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 kwargs['error'] = str(err)
                 messages.error(request, gettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
-            time_difference = get_timezone_difference(self.domain)
-            (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, time_difference.hours, time_difference.minutes
-            )
-            self.report_notification.minute = time_difference.minutes
-            if day_change:
-                self.report_notification.day = calculate_day(
-                    self.report_notification.interval,
-                    self.report_notification.day,
-                    day_change
-                )
 
+            # For hourly option, GMT should be used (don't worry, it sits behind
+            # a custom FF)
+            if self.report_notification.interval != "hourly":
+                time_difference = get_timezone_difference(self.domain)
+                (self.report_notification.hour, day_change) = calculate_hour(
+                    self.report_notification.hour, time_difference.hours, time_difference.minutes
+                )
+                self.report_notification.minute = time_difference.minutes
+                if day_change:
+                    self.report_notification.day = calculate_day(
+                        self.report_notification.interval,
+                        self.report_notification.day,
+                        day_change
+                    )
             self.report_notification.save()
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
             ReportConfig.shared_on_domain.clear(ReportConfig, self.domain)
