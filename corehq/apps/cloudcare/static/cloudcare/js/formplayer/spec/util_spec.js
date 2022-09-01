@@ -158,7 +158,7 @@ describe('Util', function () {
             assert.equal(url.search, "x");
             assert.equal(url.sortIndex, null);
 
-            FormplayerFrontend.trigger("menu:paginate", 1);
+            FormplayerFrontend.trigger("menu:paginate", 1, []);
             url = Util.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, 1);
@@ -176,7 +176,7 @@ describe('Util', function () {
         it("should clear pagination on search", function () {
             FormplayerFrontend.trigger("menu:select", 1);
             FormplayerFrontend.trigger("menu:perPageLimit", 2);
-            FormplayerFrontend.trigger("menu:paginate", 1);
+            FormplayerFrontend.trigger("menu:paginate", 1, []);
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "y");
             url = Util.currentUrlToObject();
@@ -189,7 +189,7 @@ describe('Util', function () {
         it("should clear pagination and search on selecting a case", function () {
             FormplayerFrontend.trigger("menu:select", 1);
             FormplayerFrontend.trigger("menu:perPageLimit", 2);
-            FormplayerFrontend.trigger("menu:paginate", 1);
+            FormplayerFrontend.trigger("menu:paginate", 1, []);
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "z");
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
