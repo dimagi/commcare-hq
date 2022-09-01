@@ -183,7 +183,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setSelections = function (selections) {
             this.selections = selections || [];
-            sessionStorage.removeItem('selectedValues');
         };
 
         this.addSelection = function (selection) {
