@@ -70,8 +70,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (!urlObject.appId) {
                 if (!response.appId) {
                     let formplayer = hqImport("cloudcare/js/formplayer/app");
-                    formplayer.trigger('showError', "Response did not contain appId even though it was" +
-                        "required. If this persists, please report an issue to CommCareHQ");
+                    formplayer.trigger('showError', gettext(
+                        "Response did not contain appId even though it was" +
+                        "required. If this persists, please report an issue to CommCareHQ"
+                    ));
                     formplayer.trigger("apps:list");
                     return false;
                 }
