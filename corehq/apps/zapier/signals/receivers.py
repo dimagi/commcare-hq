@@ -6,7 +6,7 @@ from tastypie.http import HttpBadRequest
 
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.motech.repeaters.models import FormRepeater, SQLFormRepeater
+from corehq.motech.repeaters.models import SQLFormRepeater
 
 
 @receiver(pre_save, sender=ZapierSubscription)
@@ -18,7 +18,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
         return
 
     if instance.event_name == EventTypes.NEW_FORM:
-        repeater = FormRepeater(
+        repeater = SQLFormRepeater(
             domain=instance.domain,
             url=instance.url,
             format='form_json',
