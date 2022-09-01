@@ -47,9 +47,9 @@ IGNORE_MODELS = {
     "contenttypes.ContentType",
     "data_analytics.GIRRow",
     "data_analytics.MALTRow",
-    "django_celery_results.TaskResult",
     "django_celery_results.ChordCounter",
     "django_celery_results.GroupResult",
+    "django_celery_results.TaskResult",
     "django_digest.PartialDigest",
     "django_digest.UserNonce",
     "django_prbac.Grant",
@@ -95,11 +95,11 @@ IGNORE_MODELS = {
     "userreports.ReportComparisonDiff",
     "userreports.ReportComparisonException",
     "userreports.ReportComparisonTiming",
+    "users.Permission",
     "util.BouncedEmail",
     "util.ComplaintBounceMeta",
     "util.PermanentBounceMeta",
     "util.TransientBounceEmail",
-    "users.Permission",
 }
 
 # TODO: determine which of these should not be ignored
