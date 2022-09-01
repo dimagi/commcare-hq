@@ -82,5 +82,5 @@ branches:
     - sk/expose-mobile-worker-default-role+mjr/erm-overwrite+mjr/report-logging-verification
     - sk/expose-mobile-worker-default-role  # Simon Aug 24
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
-    - sk/webapps-update-url # Simon Sep 01
+    - cs/SC-2135-fix-hourly-scheduled-report-timezone # Charl 1 Sept
 submodules: { }
