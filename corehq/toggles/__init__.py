@@ -2329,3 +2329,10 @@ SMS_USE_LATEST_RELEASE = FeatureRelease(
                 'SMS processing instead of the current dev version',
     default_randomness=1.0
 )
+
+VIEW_FORM_ATTACHMENT = StaticToggle(
+    'view_form_attachments',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
