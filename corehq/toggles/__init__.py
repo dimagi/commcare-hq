@@ -2319,15 +2319,15 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-SMS_USE_LATEST_RELEASE = FeatureRelease(
-    'sms_use_latest_release',
-    'Use latest app release for SMS processing',
+SMS_USE_LATEST_DEV_APP = FeatureRelease(
+    'sms_use_latest_dev_app',
+    'Use latest development version of the app for SMS processing',
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly',
-    description='Use the latest "released" version of an app for '
-                'SMS processing instead of the current dev version',
-    default_randomness=1.0
+    description='This will revert the SMS processing to previous functionality of using the '
+                'development version of the app instead of the latest release. It should only'
+                'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
 )
 
 VIEW_FORM_ATTACHMENT = StaticToggle(

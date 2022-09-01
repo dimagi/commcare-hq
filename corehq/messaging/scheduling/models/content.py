@@ -189,7 +189,7 @@ class SMSSurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            if toggles.SMS_USE_LATEST_RELEASE.enabled(domain):
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain):
                 app = get_latest_released_app(domain, self.app_id)
             else:
                 app = get_app(domain, self.app_id)
