@@ -59,7 +59,7 @@ IGNORE_MODELS = {
     "enterprise.EnterpriseMobileWorkerSettings",    # tied to an account, not a domain
     "enterprise.EnterprisePermissions",
     "export.DefaultExportSettings",     # tied to an account, not a domain
-    "export.EmailExportWhenDoneRequest",   # temporary model
+    "export.EmailExportWhenDoneRequest",  # transient model tied to an export task
     "form_processor.DeprecatedXFormAttachmentSQL",
     "hqadmin.HistoricalPillowCheckpoint",
     "hqadmin.HqDeploy",
@@ -88,8 +88,8 @@ IGNORE_MODELS = {
 
     "sessions.Session",
     "sites.Site",
-    "tastypie.ApiAccess",
-    "tastypie.ApiKey",
+    "tastypie.ApiAccess",  # not tagged by domain
+    "tastypie.ApiKey",  # not domain-specific
     "toggle_ui.ToggleAudit",
     "two_factor.PhoneDevice",
     "userreports.ReportComparisonDiff",
@@ -124,7 +124,6 @@ UNKNOWN_MODELS = {
     "dhis2.SQLDataValueMap",
     "export.IncrementalExport",
     "export.IncrementalExportCheckpoint",
-    "export.LedgerSectionEntry",
     "fhir.FHIRImportConfig",
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",
@@ -168,10 +167,7 @@ UNKNOWN_MODELS = {
     "userreports.DataSourceActionLog",
     "userreports.InvalidUCRData",
     "userreports.UCRExpression",
-    "users.DeactivateMobileWorkerTrigger",
-    "users.DomainRequest",
     "users.HQApiKey",
-    "users.Invitation",
     "users.UserHistory",
     "users.UserReportingMetadataStaging",
 }
