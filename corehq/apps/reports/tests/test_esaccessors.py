@@ -74,19 +74,6 @@ from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 
 
-def _forms_with_attachments(es_query):
-    query = es_query.source(['_id', 'external_blobs'])
-
-    for form in query.scroll():
-        try:
-            for attachment in form.get('external_blobs', {}).values():
-                if attachment['content_type'] != "text/xml":
-                    yield form
-                    continue
-        except AttributeError:
-            pass
-
-
 @es_test
 class BaseESAccessorsTest(TestCase):
 

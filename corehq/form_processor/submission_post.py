@@ -47,7 +47,6 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
-from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -396,7 +395,8 @@ class SubmissionPost(object):
         task_id = async_restore_task_id_cache.get_value()
 
         if task_id is not None:
-            revoke_celery_task(task_id)
+            from corehq.apps.celery import app
+            app.control.revoke(task_id)
             async_restore_task_id_cache.invalidate()
 
     @tracer.wrap(name='submission.save_models')
@@ -438,7 +438,8 @@ class SubmissionPost(object):
             close_extension_cases(
                 case_db,
                 case_stock_result.case_models,
-                "SubmissionPost-%s-close_extensions" % instance.form_id
+                "SubmissionPost-%s-close_extensions" % instance.form_id,
+                instance.last_sync_token
             )
         except PostSaveError:
             raise

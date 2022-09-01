@@ -1,7 +1,7 @@
 /* global Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures"),
+    var MenuListFixture = hqImport("cloudcare/js/formplayer/spec/fixtures/menu_list"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
 
     before(function () {
@@ -28,24 +28,24 @@ describe('Render a case list', function () {
 
         var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
-            var view = getMenuView(fixtures.caseList);
+            var view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_list"));
             assert.isFalse(view.templateContext().useTiles);
             assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
-            var view = getMenuView(fixtures.menuList);
+            var view = getMenuView(MenuListFixture);
             assert.isTrue(view.childViewContainer === ".menus-container");
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
-            var view = getMenuView(fixtures.caseTileList);
+            var view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_tile_list"));
             assert.isTrue(view.templateContext().useTiles);
             assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-            var view = getMenuView(fixtures.caseGridList);
+            var view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_grid_list"));
             assert.isTrue(view.templateContext().useTiles);
             assert.isTrue(view.templateContext().useGrid);
         });
@@ -147,7 +147,7 @@ describe('Render a case list', function () {
             requests[1].respond(
                 200,
                 { "Content-Type": "application/json" },
-                JSON.stringify(fixtures.menuList)
+                JSON.stringify(MenuListFixture)
             );
 
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
@@ -185,7 +185,7 @@ describe('Render a case list', function () {
             requests[1].respond(
                 200,
                 { "Content-Type": "application/json" },
-                JSON.stringify(fixtures.menuList)
+                JSON.stringify(MenuListFixture)
             );
 
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress

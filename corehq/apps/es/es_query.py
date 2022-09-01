@@ -104,6 +104,10 @@ from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 
 
+class InvalidQueryError(Exception):
+    """Query parameters cannot be assembled into a valid search."""
+
+
 class ESQuery(object):
     """
     This query builder only outputs the following query structure::
@@ -210,10 +214,11 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        # FIXME: we should crash if someone tries this:
-        # if self.uses_aggregations():
-        #     raise Error("aggregation scroll queries will yield invalid hits "
-        #                 "if the scroll requires more than one request.")
+        if self.uses_aggregations():
+            raise InvalidQueryError(
+                "aggregation scroll queries will yield invalid hits if the "
+                "scroll requires more than one request."
+            )
         raw_query = self.raw_query
         raw_query["size"] = SCROLL_SIZE if self._size is None else self._size
         # The '_assemble()' method sets size=SIZE_LIMIT when no query size is

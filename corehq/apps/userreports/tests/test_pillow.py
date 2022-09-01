@@ -391,6 +391,7 @@ class IndicatorPillowTest(TestCase):
     def tearDown(self):
         self.adapter.clear_table()
 
+    @flaky_slow
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now

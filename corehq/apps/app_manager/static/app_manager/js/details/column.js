@@ -55,7 +55,8 @@ hqDefine("app_manager/js/details/column", function () {
             relevant: "",
         };
         self.original = _.defaults(self.original, tabDefaults);
-        if (!self.original.nodeset && screen.childCaseTypes && screen.childCaseTypes.length) {
+        let screenHasChildCaseTypes = screen.childCaseTypes && screen.childCaseTypes.length;
+        if (!self.original.nodeset && !self.original.nodesetCaseType && screenHasChildCaseTypes) {
             // If there's no nodeset but there are child case types, default to showing a case type
             self.original.nodesetCaseType = screen.childCaseTypes[0];
         }

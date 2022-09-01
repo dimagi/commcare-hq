@@ -31,7 +31,7 @@ class EnterpriseSettingsForm(forms.Form):
         label="Signup Restriction Message",
         required=False,
         help_text=gettext_lazy("Message to display to users who attempt to sign up for an account"),
-        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512}),
+        widget=forms.Textarea(attrs={'rows': 2, 'maxlength': 512, "class": "vertical-resize"}),
     )
 
     forms_filetype = forms.ChoiceField(

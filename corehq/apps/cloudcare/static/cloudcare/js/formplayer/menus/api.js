@@ -44,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
-                                response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                                response.exception,
                                 response.type === 'html'
                             );
 
@@ -150,7 +150,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
         if (sessionStorage.selectedValues !== undefined) {
-            options.selectedValues = sessionStorage.selectedValues.split(',');
+            const currentSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
+            options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
         }
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");

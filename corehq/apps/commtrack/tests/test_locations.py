@@ -5,14 +5,14 @@ from corehq.apps.commtrack.tests.util import (
     bootstrap_location_types,
     make_loc,
 )
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, get_domain_locations
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.supply import SupplyInterface
 
 
 def _count_locations(domain):
-    return SQLLocation.active_objects.filter(domain=domain).count()
+    return get_domain_locations(domain).count()
 
 
 def _count_root_locations(domain):

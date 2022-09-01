@@ -1,9 +1,11 @@
+from datetime import datetime
 import doctest
 
 import attr
 from testil import assert_raises, eq
 
-from corehq.motech.repeaters.optionvalue import OptionValue
+from corehq.motech.repeaters.optionvalue import DateTimeCoder, OptionValue
+from dimagi.utils.parsing import json_format_datetime
 
 
 def test_basic_option_value():
@@ -47,6 +49,26 @@ def test_raises_on_invalid_choice():
     eq(order.options, {})
 
 
+def test_datetime_coder_with_datetime():
+    order = FoodOptions()
+    ordered_on = datetime.now()
+    order.ordered_on = ordered_on
+    eq(order.options['ordered_on'], json_format_datetime(ordered_on))
+
+
+def test_datetime_coder_with_str_datetime():
+    order = FoodOptions()
+    ordered_on = json_format_datetime(datetime.now())
+    order.ordered_on = ordered_on
+    eq(order.options['ordered_on'], ordered_on)
+
+
+def test_datetime_coder_with_invalid_str():
+    order = FoodOptions()
+    with assert_raises(ValueError):
+        order.ordered_on = 'blah_blah'
+
+
 def test_instance_of_optionvalue():
     assert isinstance(FoodOptions.dish, OptionValue), repr(FoodOptions.dish)
 
@@ -81,6 +103,7 @@ class FoodOptions:
     dish = OptionValue()
     food_option = OptionValue(default="veg", choices=["veg", "non-veg"])
     condiments = OptionValue(default=list)
+    ordered_on = OptionValue(coder=DateTimeCoder)
 
 
 class BadFoodOptions:

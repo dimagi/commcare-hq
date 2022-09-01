@@ -141,35 +141,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         ].join(':');
     };
 
-    Util.pagesToShow = function (selectedPage, totalPages, limit) {
-        var limitHalf = Math.floor(limit / 2);
-        if (totalPages < limit) {
-            return {
-                start: 0,
-                end: totalPages,
-            };
-        }
-
-        if (selectedPage < limitHalf) {
-            return {
-                start: 0,
-                end: limit,
-            };
-        }
-
-        if (selectedPage > totalPages - limitHalf) {
-            return {
-                start: totalPages - limit,
-                end: totalPages,
-            };
-        }
-
-        return {
-            start: selectedPage - limitHalf,
-            end: selectedPage + limitHalf,
-        };
-    };
-
     Util.getCurrentQueryInputs = function () {
         var queryData = Util.currentUrlToObject().queryData[sessionStorage.queryKey];
         if (queryData) {
@@ -221,6 +192,9 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             // Selections only deal with strings, because formplayer will send them back as strings
             if (_.isArray(selection)) {
+                var selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+                selectedValues[sessionStorage.queryKey] = selection.join(',');
+                sessionStorage.selectedValues = JSON.stringify(selectedValues);
                 this.selections.push(String('use_selected_values'));
             } else {
                 this.selections.push(String(selection));

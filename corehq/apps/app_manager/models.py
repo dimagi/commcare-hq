@@ -4032,7 +4032,7 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+    def __set_cached_attachment(self, name, content, timeout=60*10):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
@@ -4129,7 +4129,7 @@ def absolute_url_property(method):
     """
     @wraps(method)
     def _inner(self):
-        return "%s%s" % (self.url_base, method(self))
+        return urljoin(self.url_base, method(self))
     return property(_inner)
 
 
@@ -4510,12 +4510,14 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def generate_shortened_url(self, view_name, build_profile_id=None):
         try:
             if bitly.BITLY_CONFIGURED:
+                view_url = reverse(view_name, args=[self.domain, self._id])
                 if build_profile_id is not None:
-                    long_url = "{}{}?profile={}".format(
-                        self.url_base, reverse(view_name, args=[self.domain, self._id]), build_profile_id
+                    long_url = urljoin(
+                        self.url_base,
+                        f'{view_url}?profile={build_profile_id}'
                     )
                 else:
-                    long_url = "{}{}".format(self.url_base, reverse(view_name, args=[self.domain, self._id]))
+                    long_url = urljoin(self.url_base, view_url)
                 shortened_url = bitly.shorten(long_url)
             else:
                 shortened_url = None

@@ -68,7 +68,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -105,7 +104,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
-    regroup_sidebar_items,
     sidebar_to_dropdown,
 )
 
@@ -141,16 +139,8 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
@@ -1809,7 +1799,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech() and has_project_access:
-            integration_nav = _get_integration_section(self.domain)
+            integration_nav = _get_integration_section(self.domain, self.couch_user)
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
@@ -1951,7 +1941,7 @@ def _get_administration_section(domain):
     return administration
 
 
-def _get_integration_section(domain):
+def _get_integration_section(domain, couch_user):
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -2044,11 +2034,12 @@ def _get_integration_section(domain):
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
-        from corehq.apps.reports.views import TableauServerView
-        integration.append({
-            'title': _(TableauServerView.page_title),
-            'url': reverse(TableauServerView.urlname, args=[domain])
-        })
+        if couch_user.is_superuser:
+            from corehq.apps.reports.views import TableauServerView
+            integration.append({
+                'title': _(TableauServerView.page_title),
+                'url': reverse(TableauServerView.urlname, args=[domain])
+            })
 
         from corehq.apps.reports.views import TableauVisualizationListView
         integration.append({
