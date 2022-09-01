@@ -308,16 +308,22 @@ Run the following commands to run the migration and get up to date:
             migrate = self._migrate_doc
             verify = self._verify_doc
 
+        aborted = False
         with self.open_log(log_path) as logfile:
-            for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
-                if not verify_only:
-                    migrate(item, logfile)
-                if not skip_verify:
-                    verify(item, logfile, verify_only)
-                if not is_bulk:
-                    doc_index += 1
-                    if doc_index % 1000 == 0:
-                        print(f"Diff count: {self.diff_count}")
+            try:
+                for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
+                    if not verify_only:
+                        migrate(item, logfile)
+                    if not skip_verify:
+                        verify(item, logfile, verify_only)
+                    if not is_bulk:
+                        doc_index += 1
+                        if doc_index % 1000 == 0:
+                            print(f"Diff count: {self.diff_count}")
+            except KeyboardInterrupt:
+                traceback.print_exc(file=logfile)
+                aborted = True
+                print("Aborted.")
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
@@ -325,6 +331,8 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+        if aborted:
+            sys.exit(1)
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
         def update_log(action, doc_ids):
