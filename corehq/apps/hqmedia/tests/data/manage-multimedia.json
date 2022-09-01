@@ -925,7 +925,9 @@
                 "case_type": "show",
                 "reference_id": null,
                 "repeat_context": "/data/shows",
-                "case_name": "/data/shows/where_is_the_show",
+                "name_update": {
+                  "question_path": "/data/shows/where_is_the_show"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,

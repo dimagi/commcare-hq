@@ -613,7 +613,7 @@
               "followup_date": null
             },
             "open_case": {
-              "namename_updatepath": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -947,7 +947,9 @@
                 "case_type": "point",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/x",
+                "name_update": {
+                  "question_path": "/data/x"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,

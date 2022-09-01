@@ -455,7 +455,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/voucher-name",
+                                "name_update": {
+                                    "question_path": "/data/voucher-name"
+                                },
                                 "case_properties": {
                                     "how_many_babies": "/data/how_many_babies"
                                 },
@@ -480,7 +482,9 @@
                                 "repeat_context": null
                             },
                             {
-                                "case_name": "/data/babies/whats_the_babys_name",
+                                "name_update": {
+                                    "question_path": "/data/babies/whats_the_babys_name"
+                                },
                                 "case_properties": {
                                   "eye_color": {
                                     "doc_type": "ConditionalCaseUpdate",

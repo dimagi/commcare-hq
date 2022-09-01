@@ -954,7 +954,9 @@
                 "case_type": "point",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/x",
+                "name_update": {
+                  "question_path": "/data/x"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,

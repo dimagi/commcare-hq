@@ -604,7 +604,9 @@
                        "subcases": [
                            {
                                "doc_type": "OpenSubCaseAction",
-                               "case_name": "/data/x_q",
+                               "name_update": {
+                                   "question_path": "/data/x_q"
+                               },
                                "close_condition": {
                                    "answer": null,
                                    "type": "never",

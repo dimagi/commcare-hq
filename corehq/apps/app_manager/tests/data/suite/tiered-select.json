@@ -172,7 +172,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/child_info/child_name",
+                                "name_update": {
+                                    "question_path": "/data/child_info/child_name"
+                                },
                                 "case_properties": {},
                                 "case_type": "child",
                                 "condition": {

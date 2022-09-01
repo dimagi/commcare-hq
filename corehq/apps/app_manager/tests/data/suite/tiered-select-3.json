@@ -174,7 +174,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/child_info/child_name",
+                                "name_update": {
+                                    "question_path": "/data/child_info/child_name"
+                                },
                                 "case_properties": {},
                                 "case_type": "child",
                                 "condition": {
@@ -376,7 +378,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/grandchild_info/name",
+                                "name_update": {
+                                    "question_path": "/data/grandchild_info/name"
+                                },
                                 "case_properties": {},
                                 "case_type": "grandchild",
                                 "condition": {
