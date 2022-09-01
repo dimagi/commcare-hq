@@ -164,9 +164,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
+    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setCasesPerPage(casesPerPage);
+        Util.setSelectedValues(selections);
         Util.setUrlToObject(urlObject);
         Util.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
