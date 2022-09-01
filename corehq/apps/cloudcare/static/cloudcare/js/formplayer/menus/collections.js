@@ -54,22 +54,6 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
-            var urlObject = Util.currentUrlToObject(),
-                updateUrl = false;
-            if (!urlObject.appId && response.appId) {
-                // will be undefined on urlObject when coming from an incomplete form
-                urlObject.appId = response.appId;
-                this.appId = urlObject.appId;
-                updateUrl = true;
-            }
-            if (response.selections) {
-                urlObject.setSelections(response.selections);
-                updateUrl = true;
-            }
-            if (updateUrl) {
-                Util.setUrlToObject(urlObject, true);
-            }
-
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
                 return response.commands;
