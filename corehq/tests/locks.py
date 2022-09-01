@@ -72,14 +72,14 @@ class ReentrantTestLock:
     lock = attr.ib(factory=RLock, init=False, repr=False)
 
     def acquire(self, **kw):
-        no_timeout = "timeout" not in kw
-        kw.setdefault("timeout", 10)
+        timeout_added = kw.get("blocking", True) and "timeout" not in kw
+        if timeout_added:
+            kw["timeout"] = 10
         self.level += 1
         try:
             acquired = self.lock.acquire(**kw)
-            if not acquired and no_timeout and kw.get("blocking", True):
+            if not acquired and timeout_added:
                 # caller expected to block indefinitely,
-                # may not be checking for failed acquire
                 raise RuntimeError(f"could not acquire lock: {self.name}")
             return acquired
         finally:
