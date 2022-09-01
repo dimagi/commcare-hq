@@ -290,7 +290,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/client_full_name",
+              "name_update": {
+                "question_path": "/data/client_full_name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -703,7 +705,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -794,7 +798,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_meter",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_meter"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -992,7 +998,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": null,
                   "question": "/data/create_referral",
@@ -1067,7 +1075,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/where_you_able_to_access_the_housetap",
+              "name_update": {
+                "question_path": "/data/where_you_able_to_access_the_housetap"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1614,7 +1624,9 @@
                 "case_type": "referall",
                 "reference_id": null,
                 "repeat_context": null,
-                "case_name": "/data/client_name",
+                "name_update": {
+                  "question_path": "/data/client_name"
+                },
                 "condition": {
                   "answer": "1",
                   "question": "/data/create_referral",
@@ -1697,7 +1709,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/cut_water_group/cut_water",
+              "name_update": {
+                "question_path": "/data/cut_water_group/cut_water"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2311,7 +2325,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -2978,7 +2992,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
