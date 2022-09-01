@@ -130,7 +130,6 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             default:
                 throw new Error("Did not recognize route " + route);
         }
-        return {success: 1};
     };
 
     var makeResponse = function (options) {

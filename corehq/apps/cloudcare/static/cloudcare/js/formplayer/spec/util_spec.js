@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* global Backbone */
 
 describe('Util', function () {
     var API = hqImport("cloudcare/js/formplayer/menus/api"),
@@ -88,13 +89,13 @@ describe('Util', function () {
             assert.equal(lastCall.returnValue.title, "Survey Menu");
 
             FormplayerFrontend.trigger("menu:select", 0);
-            var url = Util.currentUrlToObject();
+            url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['0', '0']);
             assert.isNotOk(url.queryData);
             assert.isNotOk(url.search);
             assert.equal(url.appId, 'abc123');
             assert.isTrue(stubs.queryFormplayer.calledThrice);
-            var lastCall = stubs.queryFormplayer.lastCall;
+            lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
             assert.equal(lastCall.returnValue.title, "Survey Form");
             assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Survey Menu", "Survey Form"]);
@@ -114,7 +115,7 @@ describe('Util', function () {
             assert.isNotOk(url.queryData);
             assert.isNotOk(url.search);
             assert.isTrue(stubs.queryFormplayer.calledThrice);
-            var lastCall = stubs.queryFormplayer.lastCall;
+            lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.args[1], "navigate_menu");
             assert.deepEqual(lastCall.returnValue.breadcrumbs, ["My App", "Some Cases", "Some Case"]);
             assert.equal(lastCall.returnValue.type, "commands");
@@ -179,7 +180,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:paginate", 1, []);
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "y");
-            url = Util.currentUrlToObject();
+            var url = Util.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, "y");
@@ -193,7 +194,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "z");
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
-            url = Util.currentUrlToObject();
+            var url = Util.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, null);
@@ -209,14 +210,14 @@ describe('Util', function () {
             assert.deepEqual(_.pluck(response.displays, 'id'), ['dob']);
 
             FormplayerFrontend.trigger("menu:query", {dob: "2010-01-19"});
-            url = Util.currentUrlToObject();
+            var url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['1', 'action 0']);
             assert.deepEqual(_.keys(url.queryData), ["search_command.m1"]);
             assert.isTrue(url.queryData["search_command.m1"].execute);
             assert.deepEqual(url.queryData["search_command.m1"].inputs, {
                 dob: "2010-01-19",
             });
-            var response = stubs.queryFormplayer.lastCall.returnValue;
+            response = stubs.queryFormplayer.lastCall.returnValue;
             assert.equal(response.type, "entities");
         });
     });
