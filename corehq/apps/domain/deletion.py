@@ -69,13 +69,13 @@ class CustomDeletion(BaseDeletion):
 
 class ModelDeletion(BaseDeletion):
 
-    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, delete_kwargs={}):
+    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, delete_kwargs=None):
         models = extra_models or []
         models.append(model_name)
         super(ModelDeletion, self).__init__(app_label, models)
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
-        self.delete_kwargs = delete_kwargs
+        self.delete_kwargs = delete_kwargs or {}
 
     def get_model_class(self):
         return apps.get_model(self.app_label, self.model_name)
