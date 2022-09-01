@@ -4424,6 +4424,10 @@ msgstr ""
 "accessible dans l'application CommCare."
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Android app dependencies"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr "Paramètres Android"
 
@@ -5050,6 +5054,12 @@ msgstr "Format du mot de passe"
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Prevents mobile workers from using a CommCare app until the Android apps "
+"that it needs have been installed on the device.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -28069,10 +28079,6 @@ msgstr "admin"
 msgid "Deactivated Mobile Workers"
 msgstr ""
 
-#: corehq/apps/reports/models.py
-msgid "The config format is invalid"
-msgstr "Le format de configuration n'est pas valide"
-
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
 msgid "Project Reports"
@@ -42769,3 +42775,6 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "The config format is invalid"
+#~ msgstr "Le format de configuration n'est pas valide"
