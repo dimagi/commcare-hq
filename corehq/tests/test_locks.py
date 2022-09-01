@@ -54,15 +54,15 @@ def test_unreleased_lock():
     with assert_raises(AssertionError, msg=msg):
         with reentrant_redis_locks():
             lock = get_redis_lock("unreleased", timeout=0.5, name="test")
-            assert lock.acquire(blocking_timeout=1)
+            assert lock.acquire()
     lock.release()
 
 
 @timelimit(0.1)
 def test_extra_lock_release():
     with reentrant_redis_locks():
-        lock = get_redis_lock("unreleased", timeout=0.5, name="test")
-        assert lock.acquire(blocking_timeout=1)
+        lock = get_redis_lock("extra_release", timeout=0.5, name="test")
+        assert lock.acquire()
         lock.release()
         with assert_raises(RuntimeError):
             lock.release()
