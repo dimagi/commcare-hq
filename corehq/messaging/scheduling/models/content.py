@@ -3,8 +3,9 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
+from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
-from corehq.apps.app_manager.dbaccessors import get_latest_released_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -188,7 +189,10 @@ class SMSSurveyContent(Content):
     @memoized
     def get_memoized_app_module_form(self, domain):
         try:
-            app = get_latest_released_app(domain, self.app_id)
+            if toggles.SMS_USE_LATEST_RELEASE.enabled(domain):
+                app = get_latest_released_app(domain, self.app_id)
+            else:
+                app = get_app(domain, self.app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()
         except (Http404, FormNotFoundException):

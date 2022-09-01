@@ -2318,3 +2318,14 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+SMS_USE_LATEST_RELEASE = FeatureRelease(
+    'sms_use_latest_release',
+    'Use latest app release for SMS processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly',
+    description='Use the latest "released" version of an app for '
+                'SMS processing instead of the current dev version',
+    default_randomness=1.0
+)
