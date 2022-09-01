@@ -319,7 +319,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
     template_name = 'export/download_data_files.html'
-    page_title = gettext_lazy("Download Data Files")
+    page_title = gettext_lazy("Secure File Transfer")
 
     def dispatch(self, request, *args, **kwargs):
         if can_download_data_files(self.domain, request.couch_user):
