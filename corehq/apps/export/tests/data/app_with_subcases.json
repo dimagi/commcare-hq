@@ -459,7 +459,9 @@
                                     "question_path": "/data/voucher-name"
                                 },
                                 "case_properties": {
-                                    "how_many_babies": "/data/how_many_babies"
+                                    "how_many_babies": {
+                                        "question_path": "/data/how_many_babies"
+                                    }
                                 },
                                 "case_type": "voucher",
                                 "close_condition": {
