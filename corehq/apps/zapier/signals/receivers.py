@@ -6,7 +6,7 @@ from tastypie.http import HttpBadRequest
 
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.motech.repeaters.models import FormRepeater
+from corehq.motech.repeaters.models import FormRepeater, SQLFormRepeater
 
 
 @receiver(pre_save, sender=ZapierSubscription)
@@ -48,7 +48,7 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
     Deletes the repeater object when the corresponding zap is turned off
     """
     if instance.event_name == EventTypes.NEW_FORM:
-        repeater = FormRepeater.get(instance.repeater_id)
+        repeater = SQLFormRepeater.objects.get(repeater_id=instance.repeater_id)
     elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
         repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].get(instance.repeater_id)
     else:
