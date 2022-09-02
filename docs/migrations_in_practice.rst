@@ -246,16 +246,19 @@ PRs as described above and deploy them separately. The steps would be:
 Single Deploy
 -------------
 
-**While this single-deploy option is tempting compared to waiting weeks to get out a multi-deploy migration,
-it’s really only suitable for specific situations like custom work and unreleased features,
-where we can be confident the drawbacks are insignificant.**
+**While this single-deploy option is tempting compared to waiting weeks to get out
+a multi-deploy migration, it’s really only suitable for specific situations like
+custom work and unreleased features, where we can be confident the drawbacks are
+insignificant.**
 
 The main drawbacks are:
 
-  * This method requires manually running the Django migrations which are normally only run
-    during deploy. Running migrations manually on a production environment is generally a bad idea.
-  * It is possible that there will be a gap in data between the final run of the data migration command
-    and the new going live (due to the sequence of events during a deploy).
+  * This method requires manually running the Django migrations which are normally
+    only run during deploy. Running migrations manually on a production environment
+    is generally a bad idea.
+  * It is possible that there will be a gap in data between the final run of the
+    data migration command and the new going live (due to the sequence of events
+    during a deploy).
 
 If you decide to go down this route you should split your changes into two PRs:
 
@@ -263,9 +266,11 @@ If you decide to go down this route you should split your changes into two PRs:
 - **PR 2**: Handle new data correctly; Django migration calling the management
   command; actual code relying on the migration
 
-Once the PRs have both been approved, **merge PR 1**, then set up a private release containing that change.
-Merging the PR first will prevent migration conflicts with anyone else working in the area,
-and it's a good idea that anything run on a production environment is on the master branch.
+Once the PRs have both been approved, **merge PR 1**, then set up a private release
+containing that change. Merging the PR first will prevent migration conflicts with
+anyone else working in the area, and it's a good idea that anything run on a
+production environment is on the master branch.
+
 Run your schema migration and management command directly:
 
     ``cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>``
