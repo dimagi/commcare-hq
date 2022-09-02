@@ -429,6 +429,7 @@ class XFormServerModifiedParams:
 xform_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
+    TermParam('case_id', '__retrieved_case_ids'),
     DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('server_date_modified', 'server_modified_on'),
