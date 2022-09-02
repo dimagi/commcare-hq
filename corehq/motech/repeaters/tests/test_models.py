@@ -523,6 +523,33 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         self.assertTrue(is_migrated)
 
 
+class TestConnectionSettingsUsedBy(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        url = 'https://www.example.com/api/'
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id
+        )
+        self.repeater.save()
+
+    def test_connection_settings_used_by(self):
+        self.assertEqual(self.conn.used_by, {'Data Forwarding'})
+
+    def test_conn_with_no_used_by(self):
+        new_conn = ConnectionSettings.objects.create(
+            url='http://blah-url.com',
+            domain='nice-domain'
+        )
+        self.assertEqual(new_conn.used_by, set())
+
+    def tearDown(self):
+        self.repeater.delete()
+        super().tearDown()
+
+
 class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
 
     def test_connection_settings_are_accessible(self):

@@ -278,7 +278,8 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     options = JSONField(default=dict)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
 
@@ -401,7 +402,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type,
+            'doc_type': self.repeater_type,
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
