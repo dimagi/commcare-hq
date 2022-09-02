@@ -33,6 +33,7 @@ from corehq.const import LOADTEST_HARD_LIMIT
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.metrics import metrics_counter, metrics_histogram
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_error
 
 from .checksum import CaseStateHash
 from .const import (
@@ -305,6 +306,10 @@ class RestoreParams(object):
     def app_id(self):
         return self.app.get_id if self.app else None
 
+    @property
+    def is_webapps(self):
+        return self.device_id and self.device_id.startswith("WebAppsLogin")
+
     def __repr__(self):
         return "RestoreParams(sync_log_id='{}', version={}, app='{}', device_id='{}'".format(
             self.sync_log_id,
@@ -375,17 +380,27 @@ class RestoreState:
 
     def validate_state(self):
         check_version(self.params.version)
-        if self.last_sync_log:
-            if self.params.state_hash:
-                parsed_hash = CaseStateHash.parse(self.params.state_hash)
-                computed_hash = self.last_sync_log.get_state_hash()
-                if computed_hash != parsed_hash:
-                    # log state error on the sync log
-                    self.last_sync_log.had_state_error = True
-                    self.last_sync_log.error_date = datetime.utcnow()
-                    self.last_sync_log.error_hash = str(parsed_hash)
-                    self.last_sync_log.save()
+        if self.last_sync_log and self.params.state_hash:
+            parsed_hash = CaseStateHash.parse(self.params.state_hash)
+            computed_hash = self.last_sync_log.get_state_hash()
+            if computed_hash != parsed_hash:
+                # log state error on the sync log
+                self.last_sync_log.had_state_error = True
+                self.last_sync_log.error_date = datetime.utcnow()
+                self.last_sync_log.error_hash = str(parsed_hash)
+                self.last_sync_log.save()
 
+                if self.params.is_webapps:
+                    # ignore this from webapps for now and just report
+                    notify_error("State hash mistmatch from webapps", details={
+                        'synclog_id': self.params.sync_log_id,
+                        'device_id': self.params.device_id,
+                        'app_id': self.params.app_id,
+                        'user_id': self.restore_user.user_id,
+                        'request_user_id': self.restore_user.request_user_id,
+                        'domain': self.domain,
+                    })
+                else:
                     raise BadStateException(
                         server_hash=computed_hash,
                         phone_hash=parsed_hash,
@@ -748,7 +763,6 @@ class RestoreConfig(object):
         timing = self.timing_context
         assert timing.is_finished()
         duration = timing.duration
-        device_id = self.params.device_id
         if duration > 20 or status == 412:
             if status == 412:
                 # use last sync log since there is no current sync log
@@ -760,15 +774,14 @@ class RestoreConfig(object):
                 "restore %s: user=%s device=%s domain=%s status=%s duration=%.3f",
                 sync_log_id,
                 self.restore_user.username,
-                device_id,
+                self.params.device_id,
                 self.domain,
                 status,
                 duration,
             )
-        is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = {
             'status_code': status,
-            'device_type': 'webapps' if is_webapps else 'other',
+            'device_type': 'webapps' if self.params.is_webapps else 'other',
             'domain': self.domain,
         }
         timer_buckets = (1, 5, 20, 60, 120, 300, 600)
