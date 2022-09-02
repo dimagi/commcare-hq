@@ -11,7 +11,6 @@ from no_exceptions.exceptions import Http400
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
-from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
@@ -369,7 +368,8 @@ def validate_date(date):
     raise DateTimeError("Unknown date format: {}".format(date))
 
 
-RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q'] + TASTYPIE_RESERVED_GET_PARAMS)
 
 
 class DateRangeParams(object):
@@ -473,10 +473,16 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
+def es_query_from_get_params(search_params, domain, doc_type='form'):
+    query_params = {
+        param: value
+        for param, value in search_params.items()
+        if param not in RESERVED_QUERY_PARAMS and not param.endswith('__full')
+    }
+
     if doc_type == 'form':
         query = FormES().remove_default_filters().domain(domain)
-        if 'include_archived' in search_params:
+        if query_params.pop('include_archived', None) is not None:
             query = query.filter(filters.OR(
                 filters.term('doc_type', 'xforminstance'),
                 filters.term('doc_type', 'xformarchived'),
@@ -488,19 +494,12 @@ def es_query_from_get_params(search_params, domain, reserved_query_params=None, 
     else:
         raise AssertionError("unknown doc type")
 
-    if '_search' in search_params:
+    if '_search' in query_params:
         # This is undocumented usecase by Data export tool and one custom project
         #   Validate that the passed in param is one of these two expected
-        _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
+        _filter = _validate_and_get_es_filter(json.loads(query_params.pop('_search')))
         query = query.filter(_filter)
 
-    # filters are actually going to be a more common case
-    reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
-    query_params = {
-        param: value
-        for param, value in search_params.items()
-        if param not in reserved_query_params and not param.endswith('__full')
-    }
     for consumer in query_param_consumers:
         try:
             payload_filter = consumer.consume_params(query_params)
