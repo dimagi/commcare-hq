@@ -42,10 +42,13 @@
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @esoergel @millerdev
+/corehq/apps/locations/resources/v0_6.py @AddisonDunn
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
+/corehq/apps/reports/models.py @AddisonDunn
 /corehq/apps/reports/standard/cases/ @esoergel
+/corehq/apps/reports/standard/tableau.py @AddisonDunn
 /corehq/apps/receiverwrapper/ @snopoke
 /corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
@@ -62,7 +65,7 @@
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 /corehq/util/es/ @joxl
 
-/custom/covid/management/commands/ @stephherbers
+/custom/covid/management/commands/ @stephherbers @AddisonDunn
 /custom/icds_reports/ @calellowitz
 /custom/icds_reports/templates/ @calellowitz
 /custom/icds_reports/static/ @calellowitz
