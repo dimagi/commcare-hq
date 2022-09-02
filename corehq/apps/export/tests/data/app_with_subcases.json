@@ -271,7 +271,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/what_is_the_mothers_name"
+                            "name_update": {
+                                "question_path": "/data/what_is_the_mothers_name"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -424,7 +426,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/how_are_you_today"
+                            "name_update": {
+                                "question_path": "/data/how_are_you_today"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -451,7 +455,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/voucher-name",
+                                "name_update": {
+                                    "question_path": "/data/voucher-name"
+                                },
                                 "case_properties": {
                                     "how_many_babies": "/data/how_many_babies"
                                 },
@@ -476,7 +482,9 @@
                                 "repeat_context": null
                             },
                             {
-                                "case_name": "/data/babies/whats_the_babys_name",
+                                "name_update": {
+                                    "question_path": "/data/babies/whats_the_babys_name"
+                                },
                                 "case_properties": {
                                   "eye_color": {
                                     "doc_type": "ConditionalCaseUpdate",
@@ -915,7 +923,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -1323,7 +1331,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
