@@ -93,7 +93,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
     };
 
     var ruleList = function (options) {
-        assertProperties.assert(options, ['listUrl']);
+        assertProperties.assert(options, ['refreshUrl']);
         var self = {};
 
         self.rules = ko.observableArray();
@@ -111,7 +111,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             self.showPaginationSpinner(true);
             self.currentPage(page);
             $.ajax({
-                url: options.listUrl,
+                url: options.refreshUrl,
                 data: {
                     action: 'list_conditional_alerts',
                     page: page,
@@ -147,7 +147,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
 
     $(function () {
         $("#conditional-alert-list").koApplyBindings(ruleList({
-            listUrl: initialPageData.reverse("conditional_alert_list"),
+            refreshUrl: initialPageData.reverse("conditional_alert_list_refresh"),
         }));
     });
 });
