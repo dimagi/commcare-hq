@@ -1,3 +1,5 @@
+from datetime import timedelta
+from threading import Thread
 import time
 import uuid
 
@@ -243,4 +245,50 @@ def set_request_duration_reporting_threshold(seconds):
         setattr(view, DURATION_REPORTING_THRESHOLD, seconds)
         return view
 
+    return decorator
+
+
+class ManagementCommandTimer(Thread):
+
+    def __init__(self, interval=1):
+        Thread.__init__(self)
+        self.interval = interval
+
+    def __enter__(self):
+        print('Beginning execution...')
+        self.is_running = True
+        self.count = 1
+        self.start_time = time.time()
+        self.start()
+
+    def run(self):
+        while self.is_running:
+            time.sleep(1)
+            if self.count * self.interval * 60 < self.duration:
+                self.count += 1
+                print(f'Execution duration: {timedelta(seconds=self.duration)}...')
+
+    def stop(self):
+        self.is_running = False
+
+    @property
+    def duration(self):
+        return time.time() - self.start_time
+
+    def __exit__(self, exc_type, exc_value, tb):
+        print(f"Completed in {timedelta(seconds=self.duration)}.")
+        self.is_running = False
+        return not exc_value
+
+
+def time_command(interval=1):
+    """Prints out every {interval} minutes a command has been running, i.e.
+        Execution duration: 0:01:00.063119...
+        Execution duration: 0:02:00.124327...
+    """
+    def decorator(fn):
+        def _inner(self, *args, **kwargs):
+            with ManagementCommandTimer(interval):
+                return fn(self, *args, **kwargs)
+        return _inner
     return decorator
