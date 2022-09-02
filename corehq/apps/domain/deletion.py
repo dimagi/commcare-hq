@@ -69,13 +69,30 @@ class CustomDeletion(BaseDeletion):
 
 class ModelDeletion(BaseDeletion):
 
-    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, delete_kwargs=None):
+    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, audit_action=None):
+        """Deletes all records of an app model matching the provided domain
+        filter.
+
+        :param app_label: label of the app containing the model(s)
+        :param model_name: name of the model in the app
+        :param domain_filter_kwarg: name of the model field to filter by domain
+        :param extra_models: (optional) a collection of other models in the same
+            app to be filtered and deleted in the same way as ``model_name``.
+            The default (``None``) results in only instances of ``model_name``
+            being deleted.
+        :param audit_action: (optional) an audit action to be provided as a
+            keyword argument when deleting records (e.g.
+            ``<QuerySet>.delete(audit_action=audit_action)``). Necessary for
+            models whose manager is an instance of
+            ``field_audit.models.AuditingManager``. The default (``None``)
+            results in ``<QuerySet>.delete()`` being called without parameters.
+        """
         models = extra_models or []
         models.append(model_name)
         super(ModelDeletion, self).__init__(app_label, models)
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
-        self.delete_kwargs = delete_kwargs or {}
+        self.delete_kwargs = {} if audit_action is None else {"audit_action": audit_action}
 
     def get_model_class(self):
         return apps.get_model(self.app_label, self.model_name)
