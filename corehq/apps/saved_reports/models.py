@@ -717,40 +717,6 @@ class ReportNotification(CachedCouchDocumentMixin, Document):
             recipients[language].append(email)
         return immutabledict(recipients)
 
-    def soft_shift_to_domain_timezone(self):
-        from corehq.apps.reports.views import (
-            get_timezone_difference,
-            calculate_day,
-            recalculate_hour,
-        )
-        time_difference = get_timezone_difference(self.domain)
-        (self.hour, day_change) = recalculate_hour(
-            self.hour,
-            time_difference.hours,
-            time_difference.minutes
-        )
-        self.minute = 0
-        if day_change:
-            self.day = calculate_day(self.interval, self.day, day_change)
-
-    def soft_shift_to_server_timezone(self):
-        from corehq.apps.reports.views import (
-            get_timezone_difference,
-            calculate_hour,
-            calculate_day,
-        )
-        time_difference = get_timezone_difference(self.domain)
-        (self.report_notification.hour, day_change) = calculate_hour(
-            self.report_notification.hour, time_difference.hours, time_difference.minutes
-        )
-        self.report_notification.minute = time_difference.minutes
-        if day_change:
-            self.report_notification.day = calculate_day(
-                self.report_notification.interval,
-                self.report_notification.day,
-                day_change
-            )
-
     def get_secret(self, email):
         uuid = self._get_or_create_uuid()
         return hashlib.sha1((uuid + email).encode('utf-8')).hexdigest()[:20]
