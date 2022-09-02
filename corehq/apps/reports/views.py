@@ -266,7 +266,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         scheduled_reports = sorted(scheduled_reports,
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
-            self._adjust_report_day_and_time(report)
+            report.soft_shift_to_domain_timezone()
         return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
@@ -293,7 +293,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or owner_id == scheduled_report.owner_email:
                 continue
-            self._adjust_report_day_and_time(scheduled_report)
+            scheduled_report.soft_shift_to_domain_timezone()
             if scheduled_report.can_be_viewed_by(user):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
@@ -320,18 +320,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
-
-    def _adjust_report_day_and_time(self, report):
-        time_difference = get_timezone_difference(self.domain)
-        (report.hour, day_change) = recalculate_hour(
-            report.hour,
-            time_difference.hours,
-            time_difference.minutes
-        )
-        report.minute = 0
-        if day_change:
-            report.day = calculate_day(report.interval, report.day, day_change)
-        return report
 
     @property
     def page_context(self):
@@ -666,15 +654,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def report_notification(self):
         if self.scheduled_report_id:
             instance = ReportNotification.get(self.scheduled_report_id)
-            time_difference = get_timezone_difference(self.domain)
-            (instance.hour, day_change) = recalculate_hour(
-                instance.hour,
-                time_difference.hours,
-                time_difference.minutes
-            )
-            instance.minute = 0
-            if day_change:
-                instance.day = calculate_day(instance.interval, instance.day, day_change)
+            instance.soft_shift_to_domain_timezone()
 
             if not self.can_edit_report(instance):
                 raise Http403()
@@ -824,19 +804,10 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 kwargs['error'] = str(err)
                 messages.error(request, gettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
-            time_difference = get_timezone_difference(self.domain)
-            (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, time_difference.hours, time_difference.minutes
-            )
-            self.report_notification.minute = time_difference.minutes
-            if day_change:
-                self.report_notification.day = calculate_day(
-                    self.report_notification.interval,
-                    self.report_notification.day,
-                    day_change
-                )
 
+            self.report_notification.soft_shift_to_server_timezone()
             self.report_notification.save()
+
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
             ReportConfig.shared_on_domain.clear(ReportConfig, self.domain)
             if self.is_new:
