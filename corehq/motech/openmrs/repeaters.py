@@ -476,7 +476,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(OpenmrsRepeater, xform)
+    create_repeat_records(SQLOpenmrsRepeater, xform)
 
 
 successful_form_received.connect(create_openmrs_repeat_records)
