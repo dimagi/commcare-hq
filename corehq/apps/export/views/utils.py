@@ -310,7 +310,7 @@ class DailySavedExportPaywall(BaseProjectDataView):
 
 
 class DashboardFeedPaywall(BaseProjectDataView):
-    urlname = 'dashbaord_feeds_paywall'
+    urlname = 'dashboard_feeds_paywall'
     template_name = 'export/paywall.html'
 
 
