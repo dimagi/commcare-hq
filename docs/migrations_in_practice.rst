@@ -246,8 +246,18 @@ PRs as described above and deploy them separately. The steps would be:
 Single Deploy
 -------------
 
-This has limitations, but can be in the right circumstances, some migrations can
-be done with a single deploy.  You should split your changes into two PRs:
+**While this single-deploy option is tempting compared to waiting weeks to get out a multi-deploy migration,
+it’s really only suitable for specific situations like custom work and unreleased features,
+where we can be confident the drawbacks are insignificant.**
+
+The main drawbacks are:
+
+  * This method requires manually running the Django migrations which are normally only run
+    during deploy. Running migrations manually on a production environment is generally a bad idea.
+  * It is possible that there will be a gap in data between the final run of the data migration command
+    and the new going live (due to the sequence of events during a deploy).
+
+If you decide to go down this route you should split your changes into two PRs:
 
 - **PR 1**: Schema migration; data migration management command
 - **PR 2**: Handle new data correctly; Django migration calling the management
@@ -292,12 +302,6 @@ run, there will be missing data in the DB and that data will be in-use in the
 UI. Remember also that third party environments will have the management command
 run only once, on the second deploy (unless we announce this as a required
 maintenance operation), which would mean their data would have a gap in it.
-
-While this single-deploy option is tempting compared to waiting weeks to get out
-a multi-deploy migration, it’s really only suitable for specific situations like
-custom work and unreleased features, where we can be confident the drawbacks are
-insignificant.
-
 
 Best practices for data migrations in Python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
