@@ -21,8 +21,8 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeaters,
-    get_all_repeater_docs,
 )
+from corehq.motech.repeaters.utils import get_all_repeater_docs
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
     SQLCaseExpressionRepeater,

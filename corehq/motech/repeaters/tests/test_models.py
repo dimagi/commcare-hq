@@ -17,9 +17,9 @@ from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeaters,
-    get_all_repeater_docs,
     iter_repeat_records_by_domain,
 )
+from corehq.motech.repeaters.utils import get_all_repeater_docs
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
