@@ -474,18 +474,19 @@ def _validate_and_get_es_filter(search_param):
 
 
 def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
-    # doc_type can be form or case
-    assert doc_type in ['form', 'case']
-    es = FormES() if doc_type == 'form' else CaseES()
-
-    query = es.remove_default_filters().domain(domain)
-
     if doc_type == 'form':
+        query = FormES().remove_default_filters().domain(domain)
         if 'include_archived' in search_params:
-            query = query.filter(
-                filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
+            query = query.filter(filters.OR(
+                filters.term('doc_type', 'xforminstance'),
+                filters.term('doc_type', 'xformarchived'),
+            ))
         else:
             query = query.filter(filters.term('doc_type', 'xforminstance'))
+    elif doc_type == 'case':
+        query = CaseES().domain(domain)
+    else:
+        raise AssertionError("unknown doc type")
 
     if '_search' in search_params:
         # This is undocumented usecase by Data export tool and one custom project
