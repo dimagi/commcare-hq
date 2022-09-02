@@ -392,6 +392,11 @@ class DateRangeParams(object):
 
 
 class TermParam(object):
+    """Allows for use of params that differ between the API and the ES mapping
+
+    It's also used without the `term` argument for non-analyzed values, to
+    prevent them from being coerced to lowercase
+    """
     def __init__(self, param, term=None, analyzed=False):
         self.param = param
         self.term = term or param
@@ -421,19 +426,22 @@ class XFormServerModifiedParams:
             )
 
 
-query_param_consumers = [
+xform_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
+    DateRangeParams('indexed_on', 'inserted_at'),
+]
+
+case_param_consumers = [
     TermParam('case_name', 'name', analyzed=True),
     TermParam('case_type', 'type', analyzed=True),
-    # terms listed here to prevent conversion of their values to lower case since
-    # since they are indexed as `not_analyzed` in ES
     TermParam('type.exact'),
     TermParam('name.exact'),
     TermParam('external_id.exact'),
     TermParam('contact_phone_number'),
-
-    DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
     DateRangeParams('server_date_modified', 'server_modified_on'),
@@ -489,8 +497,10 @@ def es_query_from_get_params(search_params, domain, doc_type='form'):
             ))
         else:
             query = query.filter(filters.term('doc_type', 'xforminstance'))
+        query_param_consumers = xform_param_consumers
     elif doc_type == 'case':
         query = CaseES().domain(domain)
+        query_param_consumers = case_param_consumers
     else:
         raise AssertionError("unknown doc type")
 
