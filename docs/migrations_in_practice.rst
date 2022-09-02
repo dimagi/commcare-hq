@@ -269,6 +269,7 @@ and it's a good idea that anything run on a production environment is on the mas
 Run your schema migration and management command directly:
 
     ``cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>``
+    ``cchq <ENV> django-manage --release=<NAME> my_data_migration_command``
 
 Then merge PR 2. The subsequent deploy will run your management command again,
 though it should be very quick this time around, since nearly all data has been
