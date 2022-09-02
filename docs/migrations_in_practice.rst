@@ -234,7 +234,7 @@ PRs as described above and deploy them separately. The steps would be:
    time before the second deploy. This should almost certainly be done on prod.
    Whether or not it needs to be done on the other Dimagi-managed environments
    (india, swiss) depends on how much data those environments have.
-3. **Second PR deployed**: This will run the management command again on prod,
+3. **Second PR deployed**: This will run the management command again,
    but since all logs have already been migrated, it won’t actually make any
    changes and should run fast - see the migrations best practices section
    below. This will also make sure third party environments have the change
@@ -253,7 +253,10 @@ be done with a single deploy.  You should split your changes into two PRs:
 - **PR 2**: Handle new data correctly; Django migration calling the management
   command; actual code relying on the migration
 
-Once the PRs have both been approved, **merge PR 1**, then set up a private release containing that change. Merging the PR first will prevent migration conflicts with anyone else working in the area, and it's a good idea that anything run on prod is on the master branch. Run your schema migration and management command directly:
+Once the PRs have both been approved, **merge PR 1**, then set up a private release containing that change.
+Merging the PR first will prevent migration conflicts with anyone else working in the area,
+and it's a good idea that anything run on a production environment is on the master branch.
+Run your schema migration and management command directly:
 
     ``cchq <ENV> django-manage --release=<NAME> migrate <APP_NAME>``
 
