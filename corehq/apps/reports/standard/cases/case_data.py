@@ -34,12 +34,14 @@ from casexml.apps.case.views import get_wrapped_case
 from casexml.apps.case.xml import V2
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
+from dimagi.utils.chunked import chunked
 from dimagi.utils.web import json_response
 
 from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
+from corehq.apps.data_dictionary.util import get_data_dict_props_by_group
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
@@ -51,6 +53,7 @@ from corehq.apps.hqcase.utils import (
 )
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
+    DisplayConfig,
     get_default_definition,
     get_tables_as_rows,
 )
@@ -252,10 +255,24 @@ class CaseDataView(BaseProjectReportSectionView):
         if not dynamic_data:
             return None
         dynamic_keys = sorted(dynamic_data.keys())
-        definition = get_default_definition(
-            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+        if toggles.DD_CASE_DATA.enabled_for_request(self.request):
+            definition = self._get_dd_table_definition()
+        else:
+            definition = get_default_definition(
+                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
         return get_tables_as_rows(dynamic_data, definition, timezone)
+
+    def _get_dd_table_definition(self):
+        return [
+            {
+                "name": group,
+                "layout": list(chunked([
+                    DisplayConfig(expr=prop, has_history=True) for prop in props
+                ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+            }
+            for group, props in get_data_dict_props_by_group(self.domain, self.case_instance.type)
+        ]
 
 
 def form_to_json(domain, form, timezone):

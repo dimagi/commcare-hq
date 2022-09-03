@@ -140,10 +140,6 @@ from corehq.apps.domain.decorators import api_auth
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
-# Number of columns in case property history popup
-DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
-
-
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
