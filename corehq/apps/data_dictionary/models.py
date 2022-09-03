@@ -95,8 +95,13 @@ class CaseProperty(models.Model):
 
     @classmethod
     def clear_caches(cls, domain, case_type):
-        from .util import get_data_dict_props_by_case_type, get_gps_properties
+        from .util import (
+            get_data_dict_props_by_case_type,
+            get_data_dict_props_by_group,
+            get_gps_properties,
+        )
         get_data_dict_props_by_case_type.clear(domain)
+        get_data_dict_props_by_group.clear(domain, case_type)
         get_gps_properties.clear(domain, case_type)
 
     def save(self, *args, **kwargs):

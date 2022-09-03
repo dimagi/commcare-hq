@@ -223,6 +223,17 @@ def get_data_dict_props_by_case_type(domain, exclude_deprecated=True):
     }
 
 
+@quickcache(vary_on=['domain', 'case_type'], timeout=24 * 60 * 60)
+def get_data_dict_props_by_group(domain, case_type):
+    ret = defaultdict(list)
+    for prop in CaseProperty.objects.filter(
+            case_type__domain=domain,
+            case_type__name=case_type,
+    ):
+        ret[prop.group].append(prop.name)
+    return list(sorted(ret.items()))
+
+
 @quickcache(vary_on=['domain'], timeout=24 * 60 * 60)
 def get_data_dict_case_types(domain):
     case_types = CaseType.objects.filter(domain=domain).values_list('name', flat=True)
