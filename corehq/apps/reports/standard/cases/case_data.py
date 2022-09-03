@@ -209,9 +209,6 @@ class CaseDataView(BaseProjectReportSectionView):
         else:
             dynamic_properties = None
 
-        the_time_is_now = datetime.utcnow()
-        tz_abbrev = timezone.localize(the_time_is_now).tzname()
-
         product_name_by_id = {
             product['product_id']: product['name']
             for product in SQLProduct.objects.filter(domain=self.domain).values('product_id', 'name').all()
@@ -252,7 +249,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "dynamic_properties_as_table": dynamic_properties,
             "show_properties_edit": show_properties_edit,
             "timezone": timezone,
-            "tz_abbrev": tz_abbrev,
+            "tz_abbrev": timezone.zone,
             "ledgers": ledger_map,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
