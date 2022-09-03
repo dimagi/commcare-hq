@@ -50,6 +50,10 @@ from corehq.apps.hqcase.utils import (
     submit_case_blocks,
 )
 from corehq.apps.hqwebapp.decorators import use_datatables
+from corehq.apps.hqwebapp.templatetags.proptable_tags import (
+    get_default_definition,
+    get_tables_as_rows,
+)
 from corehq.apps.locations.permissions import (
     location_restricted_exception,
     location_safe,
@@ -176,12 +180,10 @@ class CaseDataView(BaseProjectReportSectionView):
                 "To fix this you can archive the other forms listed here."
             ))
 
-        from corehq.apps.hqwebapp.templatetags.proptable_tags import get_tables_as_rows, get_default_definition
         wrapped_case = get_wrapped_case(self.case_instance)
         timezone = get_timezone_for_user(self.request.couch_user, self.domain)
         # Get correct timezone for the current date: https://github.com/dimagi/commcare-hq/pull/5324
         timezone = timezone.localize(datetime.utcnow()).tzinfo
-        _get_tables_as_rows = partial(get_tables_as_rows, timezone=timezone)
         show_transaction_export = toggles.COMMTRACK.enabled(self.request.user.username)
 
         def _get_case_url(case_id):
@@ -189,25 +191,13 @@ class CaseDataView(BaseProjectReportSectionView):
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
         display = wrapped_case.get_display_config()
-        default_properties = _get_tables_as_rows(data, display)
+        default_properties = get_tables_as_rows(data, display, timezone)
         dynamic_data = wrapped_case.dynamic_properties()
 
         for section in display:
             for row in section['layout']:
                 for item in row:
                     dynamic_data.pop(item.expr, None)
-
-        if dynamic_data:
-            dynamic_keys = sorted(dynamic_data.keys())
-            definition = get_default_definition(
-                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
-
-            dynamic_properties = _get_tables_as_rows(
-                dynamic_data,
-                definition,
-            )
-        else:
-            dynamic_properties = None
 
         product_name_by_id = {
             product['product_id']: product['name']
@@ -246,7 +236,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
-            "dynamic_properties_as_table": dynamic_properties,
+            "dynamic_properties_as_table": self._get_dynamic_properties_as_table(dynamic_data, timezone),
             "show_properties_edit": show_properties_edit,
             "timezone": timezone,
             "tz_abbrev": timezone.zone,
@@ -257,6 +247,15 @@ class CaseDataView(BaseProjectReportSectionView):
         }
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
+
+    def _get_dynamic_properties_as_table(self, dynamic_data, timezone):
+        if not dynamic_data:
+            return None
+        dynamic_keys = sorted(dynamic_data.keys())
+        definition = get_default_definition(
+            dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+
+        return get_tables_as_rows(dynamic_data, definition, timezone)
 
 
 def form_to_json(domain, form, timezone):
