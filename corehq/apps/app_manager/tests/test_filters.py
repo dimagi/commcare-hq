@@ -328,12 +328,3 @@ class AutoFilterTests(TestCase):
         ui_filter = self._get_dynamic_choice_list_ui_filter()
         ancestor_state_value = ucr_filter.get_filter_value(self.nate, ui_filter)
         self.assertEqual(ancestor_state_value, ui_filter.default_value())
-
-
-class NumericFilterTests(SimpleTestCase):
-
-    def test_numeric_filter(self):
-        self.assertEqual(
-            NumericFilter.wrap({'operator': '>', 'operand': '1.5'}).get_filter_value(None, None),
-            {'operator': '>', 'operand': 1.5}
-        )
