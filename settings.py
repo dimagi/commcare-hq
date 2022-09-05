@@ -232,6 +232,7 @@ DEFAULT_APPS = (
     'django_user_agents',
     'logentry_admin',
     'oauth2_provider',
+    'rest_framework.authtoken',
 )
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
@@ -2011,6 +2012,9 @@ del _value, _protocol
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+       'rest_framework.authentication.TokenAuthentication',
+   ),
 }
 
 if not SENTRY_DSN:
