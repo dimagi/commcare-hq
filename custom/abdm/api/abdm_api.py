@@ -1,22 +1,19 @@
-from tastypie.resources import ModelResource
-from custom.abdm.model.abdm_model import Product, Order
+from tastypie.resources import Resource
 from custom.abdm.auth.abdm_auth import CustomApiKeyAuthentication
 
 
-class ProductResource(ModelResource):
+class ProductResource(Resource):
+
+    def obj_create(self, bundle, request=None, **kwargs):
+        print("in obj_create")
+        return bundle
+
+    def obj_update(self, bundle, **kwargs):
+        print("in obj_update")
+        return bundle
 
     class Meta:
-        queryset = Product.objects.all()
-        resource_name = 'product'
-        excludes = ["product_type", "price"]
-        allowed_methods = ['get']
         authentication = CustomApiKeyAuthentication()
-
-
-class OrderResource(ModelResource):
-
-    class Meta:
-        queryset = Order.objects.all()
-        resource_name = 'order'
-        allowed_methods = ['get', 'post', 'put']
-        authentication = CustomApiKeyAuthentication()
+        object_class = Repeater
+        resource_name = 'data-forwarding'
+        detail_allowed_methods = ['post', 'get', 'put']
