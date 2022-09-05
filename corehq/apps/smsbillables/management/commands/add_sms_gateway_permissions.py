@@ -18,13 +18,13 @@ class Command(BaseCommand):
             '--remove-user',
             action='store_true',
             default=False,
-            help='Remove the users specified from the DEV_SUPPORT_TEAM privilege',
+            help='Remove the users specified from the Global SMS Gateway privilege',
         )
 
     def handle(self, usernames, **options):
 
         global_sms_gateway_access = Role.objects.get_or_create(
-            name="Accounting Admin",
+            name="Global SMS Gateway",
             slug=privileges.GLOBAL_SMS_GATEWAY,
         )[0]
 
