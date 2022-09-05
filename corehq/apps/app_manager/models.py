@@ -2613,18 +2613,6 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     arbitrary_datums = SchemaListProperty(ArbitraryDatum)
     schedule = SchemaProperty(FormSchedule, default=None)
 
-    @classmethod
-    def wrap(cls, data):
-        # lazy migration to swap keys with values in action preload dict.
-        # http://manage.dimagi.com/default.asp?162213
-        load_actions = data.get('actions', {}).get('load_update_cases', [])
-        for action in load_actions:
-            preload = action['preload']
-            if preload and list(preload.values())[0].startswith('/'):
-                action['preload'] = {v: k for k, v in preload.items()}
-
-        return super(AdvancedForm, cls).wrap(data)
-
     def pre_delete_hook(self):
         try:
             self.disable_schedule()

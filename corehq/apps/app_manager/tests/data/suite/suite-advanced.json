@@ -662,7 +662,7 @@
             "load_update_cases": [
               {
                 "preload": {
-                  "name": "/data/amount"
+                  "/data/amount": "name"
                 },
                 "doc_type": "LoadUpdateAction",
                 "case_tag": "case_requisition",

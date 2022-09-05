@@ -140,6 +140,13 @@ class Command(BaseCommand):
                         should_write = True
                     if f.get("form_type") == "advanced_form":
                         should_write = self.apply_wrap(f['actions'], self.wrap_action) or should_write
+                        # AdvancedForm.wrap
+                        load_actions = f.get('actions', {}).get('load_update_cases', [])
+                        for action in load_actions:
+                            preload = action['preload']
+                            if preload and list(preload.values())[0].startswith('/'):
+                                action['preload'] = {v: k for k, v in preload.items()}
+                                should_write = True
 
             if should_write:
                 with open(filename, 'w') as f:
