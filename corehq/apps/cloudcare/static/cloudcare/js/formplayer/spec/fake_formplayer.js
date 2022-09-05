@@ -12,7 +12,7 @@
  *  No menus use display-only forms.
  */
 hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
-    var AssertProperties = hqImport("hqwebapp/js/assert_properties"),
+    let AssertProperties = hqImport("hqwebapp/js/assert_properties"),
         module = {},
         apps = {
             'abc123': {
@@ -45,7 +45,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             },
         };
 
-    var navigateMenuStart = function (app) {
+    let navigateMenuStart = function (app) {
         return module.makeCommandsResponse({
             title: app.title,
             breadcrumbs: [app.title],
@@ -53,8 +53,8 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         });
     };
 
-    var navigateMenu = function (app, options) {
-        var currentMenu = app,
+    let navigateMenu = function (app, options) {
+        let currentMenu = app,
             selections = options.selections,
             breadcrumbs = [app.title],
             needEntity = false,
@@ -65,7 +65,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         }
 
         _.each(selections, function (selection) {
-            var item = currentMenu.commands[selection];     // is selection a command?
+            let item = currentMenu.commands[selection];     // is selection a command?
             if (item) {
                 currentMenu = currentMenu.commands[selection];
                 needEntity = !!currentMenu.entities;
@@ -81,7 +81,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             if (selection.startsWith("action ")) {   // actions are assumed to be case search
                 item = currentMenu.actions[selection.replace("action ", "")];
                 if (item) {
-                    var menuQueryData = options.queryData ? options.queryData[sessionStorage.queryKey] : undefined;
+                    let menuQueryData = options.queryData ? options.queryData[sessionStorage.queryKey] : undefined;
                     if (menuQueryData && menuQueryData.inputs) {
                         // run search and show results
                         needEntity = true;
@@ -97,7 +97,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             }
         });
 
-        var responseOptions = {
+        let responseOptions = {
             title: currentMenu.title,
             breadcrumbs: breadcrumbs,
         };
@@ -117,7 +117,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     };
 
     module.queryFormplayer = function (options, route) {
-        var app = apps[options.appId];
+        let app = apps[options.appId];
         if (!app) {
             throw new Error("Could not find app " + options.appId);
         }
@@ -132,7 +132,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
         }
     };
 
-    var makeResponse = function (options) {
+    let makeResponse = function (options) {
         AssertProperties.assertRequired(["title", "breadcrumbs"]);
         return _.defaults(options, {
             "notification": {"message": null, "error": false},
