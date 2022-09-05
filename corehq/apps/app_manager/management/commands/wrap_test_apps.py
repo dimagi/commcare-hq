@@ -50,6 +50,11 @@ class Command(BaseCommand):
                 doc = json.loads(f.read())
 
             for m in doc.get("modules", []):
+                if m.get("doc_type") == "AdvancedModule":
+                    # AdvancedModule.wrap
+                    if m.get('search_config') == []:
+                        m['search_config'] = {}
+                        should_write = True
                 for f in m.get("forms", []):
                     # Form.wrap
                     if f.get('case_references') == []:
