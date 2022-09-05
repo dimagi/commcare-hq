@@ -80,8 +80,8 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:select", 0);
             let url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['0']);
-            assert.isNotOk(url.queryData);
-            assert.isNotOk(url.search);
+            assert.equal(url.queryData, null);
+            assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
             assert.isTrue(stubs.queryFormplayer.calledTwice);
             let lastCall = stubs.queryFormplayer.lastCall;
@@ -91,8 +91,8 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:select", 0);
             url = Util.currentUrlToObject();
             assert.deepEqual(url.selections, ['0', '0']);
-            assert.isNotOk(url.queryData);
-            assert.isNotOk(url.search);
+            assert.equal(url.queryData, null);
+            assert.equal(url.search, null);
             assert.equal(url.appId, 'abc123');
             assert.isTrue(stubs.queryFormplayer.calledThrice);
             lastCall = stubs.queryFormplayer.lastCall;
