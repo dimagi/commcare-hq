@@ -3473,13 +3473,6 @@ class CustomMonthFilter(ReportAppFilter):
         validators=(is_gte(0),)
     )
 
-    @classmethod
-    def wrap(cls, doc):
-        doc['start_of_month'] = int(doc['start_of_month'])
-        if 'period' in doc:
-            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
-        return super(CustomMonthFilter, cls).wrap(doc)
-
     def get_filter_value(self, user, ui_filter):
         def get_last_month(this_month):
             return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
@@ -3543,11 +3536,6 @@ class AncestorLocationTypeFilter(ReportAppFilter):
 class NumericFilter(ReportAppFilter):
     operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
     operand = FloatProperty()
-
-    @classmethod
-    def wrap(cls, doc):
-        doc['operand'] = float(doc['operand'])
-        return super(NumericFilter, cls).wrap(doc)
 
     def get_filter_value(self, user, ui_filter):
         return {

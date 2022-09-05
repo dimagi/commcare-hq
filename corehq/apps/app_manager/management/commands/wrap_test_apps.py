@@ -76,6 +76,18 @@ class Command(BaseCommand):
                         old_media.pop('default')
         return should_write
 
+    # CustomMonthFilter and NumericFilter
+    @classmethod
+    def wrap_report_module(cls, data):
+        if data.get("doc_type") == "CustomMonthFilter":
+            data['start_of_month'] = int(data['start_of_month'])
+            if 'period' in data:
+                data['period'] = int(data['period'] or 0)
+        elif data.get("doc_type") == "NumericFilter":
+            data['operand'] = float(data['operand'])
+            return True
+        return False
+
     # AdvancedAction subclasses wrap
     @classmethod
     def wrap_action(cls, data):
@@ -119,6 +131,8 @@ class Command(BaseCommand):
                     if m.get('search_config') == []:
                         m['search_config'] = {}
                         should_write = True
+                elif m.get("doc_type") == "ReportModule":
+                    should_write = self.apply_wrap(m, self.wrap_report_module) or should_write
                 if m.get("search_config"):
                     for prop in m.get("search_config").get("properties", []):
                         # CaseSearchProperty.wrap
