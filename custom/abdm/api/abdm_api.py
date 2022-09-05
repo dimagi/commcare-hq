@@ -14,6 +14,6 @@ class ProductResource(Resource):
 
     class Meta:
         authentication = CustomApiKeyAuthentication()
-        object_class = Repeater
-        resource_name = 'data-forwarding'
+        #object_class = Repeater
+        resource_name = 'abdm-util'
         detail_allowed_methods = ['post', 'get', 'put']
