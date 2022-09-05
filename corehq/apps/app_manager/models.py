@@ -3570,20 +3570,6 @@ class ReportAppConfig(DocumentSchema):
         if not self.uuid:
             self.uuid = uuid.uuid4().hex
 
-    @classmethod
-    def wrap(cls, doc):
-        # for backwards compatibility with apps that have localized or xpath descriptions
-        old_description = doc.get('description')
-        if old_description:
-            if isinstance(old_description, str) and not doc.get('xpath_description'):
-                doc['xpath_description'] = old_description
-            elif isinstance(old_description, dict) and not doc.get('localized_description'):
-                doc['localized_description'] = old_description
-        if not doc.get('xpath_description'):
-            doc['xpath_description'] = '""'
-
-        return super(ReportAppConfig, cls).wrap(doc)
-
     def report(self, domain):
         if self._report is None:
             from corehq.apps.userreports.models import get_report_config

@@ -76,7 +76,7 @@ class Command(BaseCommand):
                         old_media.pop('default')
         return should_write
 
-    # CustomMonthFilter and NumericFilter
+    # CustomMonthFilter and NumericFilter and ReportAppConfig
     @classmethod
     def wrap_report_module(cls, data):
         if data.get("doc_type") == "CustomMonthFilter":
@@ -86,6 +86,15 @@ class Command(BaseCommand):
         elif data.get("doc_type") == "NumericFilter":
             data['operand'] = float(data['operand'])
             return True
+        elif data.get("doc_type") == "ReportAppConfig":
+            old_description = data.get('description')
+            if old_description:
+                if isinstance(old_description, str) and not data.get('xpath_description'):
+                    data['xpath_description'] = old_description
+                elif isinstance(old_description, dict) and not data.get('localized_description'):
+                    data['localized_description'] = old_description
+            if not data.get('xpath_description'):
+                data['xpath_description'] = '""'
         return False
 
     # AdvancedAction subclasses wrap
