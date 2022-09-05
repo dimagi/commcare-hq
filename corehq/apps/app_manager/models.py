@@ -1390,25 +1390,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
     use_default_image_for_all = BooleanProperty(default=False)
     use_default_audio_for_all = BooleanProperty(default=False)
 
-    @classmethod
-    def wrap(cls, data):
-        # Lazy migration from single-language media to localizable media
-        for media_attr in ('media_image', 'media_audio'):
-            old_media = data.get(media_attr, None)
-            if old_media:
-                # Single-language media was stored in a plain string.
-                # Convert this to a dict, using a dummy key because we
-                # don't know the app's supported or default lang yet.
-                if isinstance(old_media, str):
-                    new_media = {'default': old_media}
-                    data[media_attr] = new_media
-                elif isinstance(old_media, dict):
-                    # Once the media has localized data, discard the dummy key
-                    if 'default' in old_media and len(old_media) > 1:
-                        old_media.pop('default')
-
-        return super(NavMenuItemMediaMixin, cls).wrap(data)
-
     def get_app(self):
         raise NotImplementedError
 

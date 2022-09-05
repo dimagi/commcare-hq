@@ -55,6 +55,27 @@ class Command(BaseCommand):
             return should_write
         return False
 
+    # NavMenuItemMediaMixin.wrap
+    @classmethod
+    def wrap_media(cls, data):
+        should_write = False
+        for media_attr in ('media_image', 'media_audio'):
+            old_media = data.get(media_attr, None)
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, str):
+                    should_write = True
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media) > 1:
+                        should_write = True
+                        old_media.pop('default')
+        return should_write
+
     # AdvancedAction subclasses wrap
     @classmethod
     def wrap_action(cls, data):
@@ -89,6 +110,8 @@ class Command(BaseCommand):
 
             with open(filename, encoding='utf-8') as f:
                 doc = json.loads(f.read())
+
+            should_write = self.apply_wrap(doc, self.wrap_media) or should_write
 
             for m in doc.get("modules", []):
                 if m.get("doc_type") == "AdvancedModule":
