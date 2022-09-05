@@ -580,20 +580,6 @@ class LoadUpdateAction(AdvancedAction):
     def case_session_var(self):
         return 'case_id_{0}'.format(self.case_tag)
 
-    @classmethod
-    def wrap(cls, data):
-        if 'parent_tag' in data:
-            if data['parent_tag']:
-                data['case_index'] = {
-                    'tag': data['parent_tag'],
-                    'reference_id': data.get('parent_reference_id', 'parent'),
-                    'relationship': data.get('relationship', 'child')
-                }
-            del data['parent_tag']
-            data.pop('parent_reference_id', None)
-            data.pop('relationship', None)
-        return super(LoadUpdateAction, cls).wrap(data)
-
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
@@ -614,24 +600,6 @@ class AdvancedOpenCaseAction(AdvancedAction):
     @property
     def case_session_var(self):
         return 'case_id_new_{}_{}'.format(self.case_type, self.id)
-
-    @classmethod
-    def wrap(cls, data):
-        if 'parent_tag' in data:
-            if data['parent_tag']:
-                index = {
-                    'tag': data['parent_tag'],
-                    'reference_id': data.get('parent_reference_id', 'parent'),
-                    'relationship': data.get('relationship', 'child')
-                }
-                if hasattr(data.get('case_indices'), 'append'):
-                    data['case_indices'].append(index)
-                else:
-                    data['case_indices'] = [index]
-            del data['parent_tag']
-            data.pop('parent_reference_id', None)
-            data.pop('relationship', None)
-        return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
 class ArbitraryDatum(DocumentSchema):
