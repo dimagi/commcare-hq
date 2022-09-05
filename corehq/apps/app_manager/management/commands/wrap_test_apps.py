@@ -119,6 +119,20 @@ class Command(BaseCommand):
                     if m.get('search_config') == []:
                         m['search_config'] = {}
                         should_write = True
+                if m.get("search_config"):
+                    for prop in m.get("search_config").get("properties", []):
+                        # CaseSearchProperty.wrap
+                        required = prop.get('required')
+                        if required and isinstance(required, str):
+                            prop['required'] = {'test': required}
+                            should_write = True
+                        old_validations = prop.pop('validation', None)  # it was changed to plural
+                        if old_validations:
+                            prop['validations'] = [{
+                                'test': old['xpath'],
+                                'text': old['message'],
+                            } for old in old_validations if old.get('xpath')]
+                            should_write = True
                 for f in m.get("forms", []):
                     # Form.wrap
                     if f.get('case_references') == []:

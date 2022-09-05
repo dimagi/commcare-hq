@@ -2091,21 +2091,6 @@ class CaseSearchProperty(DocumentSchema):
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
 
-    @classmethod
-    def wrap(cls, data):
-        required = data.get('required')
-        if required and isinstance(required, str):
-            data['required'] = {'test': required}
-
-        old_validations = data.pop('validation', None)  # it was changed to plural
-        if old_validations:
-            data['validations'] = [{
-                'test': old['xpath'],
-                'text': old['message'],
-            } for old in old_validations if old.get('xpath')]
-
-        return super().wrap(data)
-
 
 class DefaultCaseSearchProperty(DocumentSchema):
     """Case Properties with fixed value to search on"""
