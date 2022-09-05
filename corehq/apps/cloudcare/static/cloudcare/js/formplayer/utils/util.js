@@ -186,7 +186,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setQueryData = function (inputs, execute, forceManualSearch) {
             var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
-            this.queryData = queryData || {};
+            this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: inputs,
                 execute: execute,
