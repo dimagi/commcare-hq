@@ -516,6 +516,7 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
 
     def tearDown(self):
         docs = list(get_all_docs_with_doc_types(self.db, ['FixtureDataItem']))
+        docs.append(LookupTableRowCommand.get_migration_status())
         self.db.bulk_delete(docs)
         super().tearDown()
 
@@ -618,6 +619,7 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
             call_command('populate_lookuptablerows', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", log.content)
             self.assertNotIn(f'Doc "{doc_id}" has diff', log.content)
+        self.assertEqual(LookupTableRowCommand.count_items_to_be_migrated(), 0)
 
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)

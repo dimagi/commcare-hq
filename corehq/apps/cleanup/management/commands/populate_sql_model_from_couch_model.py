@@ -8,10 +8,13 @@ from functools import partial
 
 from attrs import define, field
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils.functional import classproperty
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -137,8 +140,27 @@ class PopulateSQLCommand(BaseCommand):
     @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        ignored_count = cls.get_migration_status().get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
-        return couch_count - sql_count
+        return couch_count - ignored_count - sql_count
+
+    @classproperty
+    def _migration_status_slug(cls):
+        return f"{cls.couch_doc_type()}-sql-migration-status"
+
+    def save_migration_status(self):
+        self.couch_db().save_doc({
+            "_id": self._migration_status_slug,
+            "doc_type": "PopulateSQLCommandStatus",
+            "ignored_count": self.ignored_count,
+        }, force_update=True)
+
+    @classmethod
+    def get_migration_status(cls):
+        try:
+            return cls.couch_db().get(cls._migration_status_slug)
+        except ResourceNotFound:
+            return {}
 
     @classmethod
     def commit_adding_migration(cls):
@@ -238,32 +260,27 @@ Run the following commands to run the migration and get up to date:
         parser.add_argument(
             '--chunk-size',
             type=int,
-            default=100,
+            default=1000,
             help="Number of docs to fetch at once (default: 100).",
         )
         parser.add_argument(
             '--log-path',
             default="-" if settings.UNIT_TESTING else None,
-            help="File path to write logs to. If not provided a default will be used."
-        )
-        parser.add_argument(
-            '--append-log',
-            action="store_true",
-            help="Append to log file if it already exists."
+            help="File or directory path to write logs to. If not provided a default will be used."
         )
 
     def handle(self, chunk_size, fixup_diffs, **options):
         log_path = options.get("log_path")
-        append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
-        if not log_path:
+        if not log_path or os.path.isdir(log_path):
             date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S.%f')
             command_name = self.__class__.__module__.split('.')[-1]
-            log_path = f"{command_name}_{date}.log"
+            filename = f"{command_name}_{date}.log"
+            log_path = os.path.join(log_path, filename) if log_path else filename
 
-        if log_path != "-" and os.path.exists(log_path) and not append_log:
+        if log_path != "-" and os.path.exists(log_path):
             raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
@@ -313,16 +330,23 @@ Run the following commands to run the migration and get up to date:
             migrate = self._migrate_doc
             verify = self._verify_doc
 
-        with self.open_log(log_path, append_log) as logfile:
-            for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
-                if not verify_only:
-                    migrate(item, logfile)
-                if not skip_verify:
-                    verify(item, logfile, verify_only)
-                if not is_bulk:
-                    doc_index += 1
-                    if doc_index % 1000 == 0:
-                        print(f"Diff count: {self.diff_count}")
+        aborted = False
+        with self.open_log(log_path) as logfile:
+            try:
+                for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
+                    if not verify_only:
+                        migrate(item, logfile)
+                    if not skip_verify:
+                        verify(item, logfile, verify_only)
+                    if not is_bulk:
+                        doc_index += 1
+                        if doc_index % 1000 == 0:
+                            print(f"Diff count: {self.diff_count}")
+                self.save_migration_status()
+            except KeyboardInterrupt:
+                traceback.print_exc(file=logfile)
+                aborted = True
+                print("Aborted.")
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
@@ -330,6 +354,8 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+        if aborted:
+            sys.exit(1)
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
         def update_log(action, doc_ids):
@@ -464,11 +490,10 @@ Run the following commands to run the migration and get up to date:
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
 
     @staticmethod
-    def open_log(log_path, append_log):
+    def open_log(log_path):
         if log_path == "-":
             return nullcontext(sys.stdout)
-        mode = "a" if append_log else "w"
-        return open(log_path, mode)
+        return open(log_path, "w")
 
 
 DIFF_HEADER = "Doc {} has differences:\n"
