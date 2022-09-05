@@ -1592,13 +1592,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
 
-    @classmethod
-    def wrap(cls, data):
-        # rare schema bug: http://manage.dimagi.com/default.asp?239236
-        if data.get('case_references') == []:
-            del data['case_references']
-        return super(Form, cls).wrap(data)
-
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
         xform.add_case_and_meta(self)
