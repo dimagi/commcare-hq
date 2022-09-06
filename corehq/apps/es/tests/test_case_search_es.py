@@ -13,6 +13,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_starts_with_query,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
@@ -543,3 +544,22 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
             case_property_geo_distance('coords', GeoPoint(-33.1, 151.8), kilometers=1000),
         ).get_ids()
         self.assertItemsEqual(res, ['c3', 'c4'])
+
+    def test_starts_with_query(self):
+        self._assert_query_runs_correctly(
+            self.domain,
+            [
+                {'_id': 'c1', 'ssn': '10'},
+                {'_id': 'c2', 'ssn': "100"},
+                {'_id': 'c3', 'ssn': '200'},
+                {'_id': 'c4', 'ssn': '102'},
+                {'_id': 'c5', 'ssn': '1001'},
+                {'_id': 'c6', 'ssn': '100-1'},
+            ],
+            CaseSearchES().domain(self.domain).add_query(
+                case_property_starts_with_query('ssn', '100'),
+                clause=queries.MUST
+            ),
+            "starts-with(ssn, '100')",
+            ['c5', 'c6', 'c2']
+        )
