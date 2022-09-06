@@ -1865,13 +1865,6 @@ class DetailColumn(IndexedSchema):
             data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
             data['format'] = 'time-ago'
 
-        # Lazy migration: enum used to be a dict, now is a list
-        if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted(
-                [{'key': key, 'value': value} for key, value in data['enum'].items()],
-                key=lambda d: d['key'],
-            )
-
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
             property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath

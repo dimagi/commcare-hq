@@ -97,6 +97,19 @@ class Command(BaseCommand):
                 data['xpath_description'] = '""'
         return False
 
+    @classmethod
+    def wrap_detail_column(cls, data):
+        should_save = False
+        if data.get("doc_type") == "DetailColumn":
+            # Lazy migration: enum used to be a dict, now is a list
+            if isinstance(data.get('enum'), dict):
+                should_save = True
+                data['enum'] = sorted(
+                    [{'key': key, 'value': value} for key, value in data['enum'].items()],
+                    key=lambda d: d['key'],
+                )
+        return should_save
+
     # AdvancedAction subclasses wrap
     @classmethod
     def wrap_action(cls, data):
@@ -135,6 +148,7 @@ class Command(BaseCommand):
             should_write = self.apply_wrap(doc, self.wrap_media) or should_write
 
             for m in doc.get("modules", []):
+                should_write = self.apply_wrap(m, self.wrap_detail_column) or should_write
                 if m.get("doc_type") == "AdvancedModule":
                     # AdvancedModule.wrap
                     if m.get('search_config') == []:
