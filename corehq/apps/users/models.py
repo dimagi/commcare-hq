@@ -2507,6 +2507,16 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_location(self, domain):
         return self.get_sql_location(domain)
 
+    def get_usercase_by_domain(self, domain):
+        return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
+
+    def get_usercase_id_by_domain(self, domain):
+        domains = self.get_domains()
+        if domain not in domains:
+            return None
+        case = self.get_usercase_by_domain(domain)
+        return case.case_id if case else None
+
 
 class FakeUser(WebUser):
     """
