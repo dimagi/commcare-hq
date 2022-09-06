@@ -353,11 +353,12 @@ hqDefine('cloudcare/js/util', [
         }, extraOptions));
 
         var picker = $el.data("DateTimePicker");
-        picker.parseInputDate(function (inputDate) {
-            if (!moment.isMoment(inputDate) || inputDate instanceof Date) {
-                inputDate = convertTwoDigitYear(inputDate);
+        picker.parseInputDate(function (dateString) {
+            if (!moment.isMoment(dateString) || dateString instanceof Date) {
+                dateString = convertTwoDigitYear(dateString);
             }
-            return picker.getMoment(inputDate);     // undocumented/private datetimepicker function
+            let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
+            return dateObj.isValid() ? dateObj : "";
         });
 
         $el.on("focusout", function () {
