@@ -3,6 +3,7 @@ import uuid
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.app_manager.xpath import dot_interpolate
 
 class Command(BaseCommand):
     help = ("Import an app from another Commcare instance")
@@ -129,6 +130,16 @@ class Command(BaseCommand):
                     [{'key': key, 'value': value} for key, value in data['enum'].items()],
                     key=lambda d: d['key'],
                 )
+
+            # Lazy migration: xpath expressions from format to first-class property
+            if data.get('format') == 'calculate':
+                should_save = True
+                property_xpath = "case_name" if data['field'] == "name" else data['field']
+                data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
+                data['useXpathExpression'] = True
+                data['hasAutocomplete'] = False
+                data['format'] = 'plain'
+
         return should_save
 
     # AdvancedAction subclasses wrap

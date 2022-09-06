@@ -668,7 +668,7 @@
               "case_tile_field": "",
               "doc_type": "DetailColumn",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "late_flag": 30,
               "nodeset": "",
               "enum": [],
@@ -684,13 +684,14 @@
               "model": "case",
               "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             },
             {
               "case_tile_field": "",
               "doc_type": "DetailColumn",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "late_flag": 30,
               "nodeset": "",
               "enum": [],
@@ -706,7 +707,8 @@
               "model": "case",
               "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             },
             {
               "doc_type": "DetailColumn",

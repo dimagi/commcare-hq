@@ -260,7 +260,7 @@
             {
               "case_tile_field": "header",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "isTab": false,
               "enum": [],
               "time_ago_interval": 365.25,
@@ -270,11 +270,12 @@
               },
               "doc_type": "DetailColumn",
               "calc_xpath": "if(today() - date(dob) > 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))",
-              "field": "name",
+              "field": "if(today() - date(dob) > 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))",
               "model": "case",
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             },
             {
               "case_tile_field": "top_left",
@@ -352,20 +353,21 @@
               "case_tile_field": "date",
               "doc_type": "DetailColumn",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "late_flag": 30,
               "enum": [],
               "header": {
                 "en": ""
               },
               "time_ago_interval": 365.25,
-              "field": "dob",
+              "field": "format-date(date(dob), \"%e/%n/%Y\")",
               "isTab": false,
               "calc_xpath": "format-date(date(dob), \"%e/%n/%Y\")",
               "model": "case",
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "graph_configuration": null,
-              "advanced": ""
+              "advanced": "",
+              "useXpathExpression": true
             }
           ]
         },

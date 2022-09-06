@@ -599,11 +599,11 @@
               "calc_xpath": "concat(., .)",
               "case_tile_field": "",
               "enum": [],
-              "field": "plain",
+              "field": "concat(plain, plain)",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "graph_configuration": null,
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "hasNodeset": false,
               "header": {
                 "en": "Calculation"
@@ -612,7 +612,8 @@
               "late_flag": 30,
               "model": "case",
               "nodeset": "",
-              "time_ago_interval": 365.25
+              "time_ago_interval": 365.25,
+              "useXpathExpression": true
             },
             {
               "advanced": "",
@@ -620,11 +621,11 @@
               "calc_xpath": "if($lang = 'en', ., 'nope')",
               "case_tile_field": "",
               "enum": [],
-              "field": "plain",
+              "field": "if($lang = 'en', plain, 'nope')",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "graph_configuration": null,
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "hasNodeset": false,
               "header": {
                 "en": "Calculation with Language"
@@ -633,7 +634,8 @@
               "late_flag": 30,
               "model": "case",
               "nodeset": "",
-              "time_ago_interval": 365.25
+              "time_ago_interval": 365.25,
+              "useXpathExpression": true
             },
             {
               "advanced": "",
@@ -641,11 +643,11 @@
               "calc_xpath": "if($lang = 'en', ., 'nope')",
               "case_tile_field": "",
               "enum": [],
-              "field": "name",
+              "field": "if($lang = 'en', case_name, 'nope')",
               "filter_xpath": "",
-              "format": "calculate",
+              "format": "plain",
               "graph_configuration": null,
-              "hasAutocomplete": true,
+              "hasAutocomplete": false,
               "hasNodeset": false,
               "header": {
                 "en": "Calculation with Language"
@@ -654,7 +656,8 @@
               "late_flag": 30,
               "model": "case",
               "nodeset": "",
-              "time_ago_interval": 365.25
+              "time_ago_interval": 365.25,
+              "useXpathExpression": true
             }
           ],
           "doc_type": "Detail",
