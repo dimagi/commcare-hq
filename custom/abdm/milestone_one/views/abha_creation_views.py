@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK)
 from rest_framework.response import Response
 
-from custom.abdm import abdm_util
+from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 
 
 def login(request):
