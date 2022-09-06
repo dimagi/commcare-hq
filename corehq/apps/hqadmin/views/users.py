@@ -236,8 +236,6 @@ class AdminRestoreView(TemplateView):
             response['Content-Disposition'] = "attachment; filename={}-restore.xml".format(username)
             return response
 
-        print(request)
-
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
