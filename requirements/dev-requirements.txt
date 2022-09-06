@@ -158,6 +158,8 @@ django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
     # via -r dev-requirements.in
+django-field-audit==1.2.2
+    # via -r base-requirements.in
 django-formtools==2.3
     # via
     #   -r base-requirements.in
