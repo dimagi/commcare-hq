@@ -37,6 +37,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
 
     FilteredModelIteratorBuilder('case_search.CaseSearchConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_search.FuzzyProperties', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('case_search.IgnorePatterns', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('alertevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent', SimpleFilter('timedevent__schedule__domain')),
     UniqueFilteredModelIteratorBuilder('scheduling.SMSContent',
@@ -84,6 +85,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('scheduling_partitioned.CaseTimedScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('scheduling_partitioned.TimedScheduleInstance', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('custom_data_fields.CustomDataFieldsDefinition', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('custom_data_fields.CustomDataFieldsProfile', SimpleFilter('definition__domain')),
     FilteredModelIteratorBuilder('custom_data_fields.Field', SimpleFilter('definition__domain')),
     FilteredModelIteratorBuilder('data_interfaces.AutomaticUpdateRule', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.ClosedParentDefinition',
@@ -91,6 +93,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     UniqueFilteredModelIteratorBuilder('data_interfaces.CustomMatchDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.MatchPropertyDefinition',
+                                       SimpleFilter('caserulecriteria__rule__domain')),
+    UniqueFilteredModelIteratorBuilder('data_interfaces.LocationFilterDefinition',
                                        SimpleFilter('caserulecriteria__rule__domain')),
     UniqueFilteredModelIteratorBuilder('data_interfaces.CustomActionDefinition',
                                        SimpleFilter('caseruleaction__rule__domain')),
@@ -110,8 +114,13 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserEntry', UserIDFilter('user_id')),
     FilteredModelIteratorBuilder('ota.DemoUserRestore', UserIDFilter('demo_user_id', include_web_users=False)),
+    FilteredModelIteratorBuilder('ota.DeviceLogRequest', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('ota.MobileRecoveryMeasure', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('ota.SerialIdBucket', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain_migration_flags.DomainMigrationProgress', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('products.SQLProduct', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('reports.TableauServer', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('reports.TableauVisualization', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('smsforms.SQLXFormsSession', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('parent__domain')),
@@ -126,6 +135,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('cloudcare.SQLAppGroup', SimpleFilter('application_access__domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLink', SimpleFilter('linked_domain')),
     FilteredModelIteratorBuilder('linked_domain.DomainLinkHistory', SimpleFilter('link__linked_domain')),
+    FilteredModelIteratorBuilder('user_importer.UserUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.UserRole', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('users.RolePermission', SimpleFilter('role__domain')),
     FilteredModelIteratorBuilder('users.RoleAssignableBy', SimpleFilter('role__domain')),
@@ -146,22 +156,33 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('app_manager.GlobalAppConfig', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.AppReleaseByLocation', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('app_manager.LatestEnabledBuildProfiles', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('app_manager.ResourceOverride', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('repeaters.SQLRepeater', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
     # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)
     # RepeatRecord, but this does not seem like a good idea.
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
-    UniqueFilteredModelIteratorBuilder('translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
+    UniqueFilteredModelIteratorBuilder(
+        'translations.TransifexOrganization', SimpleFilter('transifexproject__domain')),
     FilteredModelIteratorBuilder('translations.TransifexProject', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('zapier.ZapierSubscription', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.AllowedUCRExpressionSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.DomainAuditRecordEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.OperatorCallLimitSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.ProjectLimit', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('domain.SMSAccountConfirmationSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.SuperuserProjectEntryRecord', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('domain.TransferDomainRequest', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTable', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
 ]]
 
 
@@ -170,7 +191,13 @@ class SqlDataDumper(DataDumper):
 
     def dump(self, output_stream):
         stats = Counter()
-        objects = get_objects_to_dump(self.domain, self.excludes, self.includes, stats_counter=stats, stdout=self.stdout)
+        objects = get_objects_to_dump(
+            self.domain,
+            self.excludes,
+            self.includes,
+            stats_counter=stats,
+            stdout=self.stdout,
+        )
         JsonLinesSerializer().serialize(
             objects,
             use_natural_foreign_keys=False,

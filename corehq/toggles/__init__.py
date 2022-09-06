@@ -901,6 +901,14 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
+WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
+    'web_apps_upload_questions',
+    'USH: Support signature, image, audio, and video questions in Web Apps',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Jenny Schweers',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -2285,6 +2293,18 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     """
 )
 
+APP_DEPENDENCIES = StaticToggle(
+    'app-dependencies',
+    'Set Android app dependencies that must be installed before using a '
+    'CommCare app',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Prevents mobile workers from using a CommCare app until the Android apps
+    that it needs have been installed on the device.
+    """,
+)
+
 SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
@@ -2295,6 +2315,13 @@ SUPERSET_ANALYTICS = StaticToggle(
 TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     'two_stage_user_provisioning_by_sms',
     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+VIEW_FORM_ATTACHMENT = StaticToggle(
+    'view_form_attachments',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )

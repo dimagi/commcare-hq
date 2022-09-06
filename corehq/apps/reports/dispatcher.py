@@ -243,7 +243,6 @@ class ProjectReportDispatcher(ReportDispatcher):
         return {
             'daily_completions': 'daily_form_stats',
             'daily_submissions': 'daily_form_stats',
-            'submit_time_punchcard': 'worker_activity_times',
         }
 
     @cls_to_view_login_and_domain

@@ -1,6 +1,9 @@
+from contextlib import contextmanager
+from datetime import timedelta
 from io import BytesIO
 from unittest.mock import patch
 
+from django.db import connection
 from django.test import SimpleTestCase, TestCase
 
 import openpyxl
@@ -17,6 +20,8 @@ from corehq.apps.fixtures.models import (
     FixtureOwnership,
     FixtureItemField,
     FixtureTypeField,
+    LookupTable,
+    LookupTableRow,
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
@@ -28,7 +33,7 @@ from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
-from corehq.util.test_utils import generate_cases, make_make_path
+from corehq.util.test_utils import generate_cases, make_make_path, new_db_connection
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -558,7 +563,6 @@ class TestFixtureUpload(TestCase):
         self.assertEqual(self.get_rows(), ['orange'])
 
     def test_upload_progress_and_result(self):
-        from datetime import timedelta
         task = FakeTask()
         with patch.object(mod, "timedelta", lambda **k: timedelta()):
             result = self.upload([
@@ -576,6 +580,14 @@ class TestFixtureUpload(TestCase):
         ])
         self.assertEqual(result.number_of_fixtures, 1)
         self.assertTrue(result.success)
+
+    def test_upload_progress_with_zero_tables(self):
+        workbook = self.get_workbook_from_data(self.headers, [])
+        task = FakeTask()
+        with patch.object(mod, "timedelta", lambda **k: timedelta()):
+            result = self.upload(workbook, task=task)
+        self.assertEqual(result.errors, [])
+        self.assertIsNone(self.get_table())
 
     def test_table_uid_conflict(self):
         result = self.upload_table_with_uid_conflict()
@@ -641,6 +653,103 @@ class TestFixtureUpload(TestCase):
         ownerships = list(FixtureOwnership.for_all_item_ids([apple_id], self.domain))
         self.assertFalse(ownerships)
         self.assertFalse(result.errors)
+
+    def test_sql_transaction(self):
+        def checked_tx():
+            tx = CouchTransaction()
+            tx.add_post_commit_action(check)
+            return tx
+
+        def check():
+            with new_db_connection(), self.assertRaises(LookupTable.DoesNotExist):
+                get_table()
+            did_check.append(True)
+
+        def get_table():
+            return LookupTable.objects.get(domain=self.domain, tag='things')
+
+        CouchTransaction = mod.CouchTransaction
+        did_check = []
+        with patch.object(mod, "CouchTransaction", checked_tx):
+            self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
+        self.assertIsNotNone(get_table())
+        self.assertTrue(did_check)
+
+    def test_upload_should_clear_cache_on_error(self):
+        def error_tx():
+            def error():
+                raise Exception("cannot save")
+            tx = CouchTransaction()
+            tx.add_post_commit_action(error)
+            return tx
+        CouchTransaction = mod.CouchTransaction
+
+        self.upload([(None, 'N', 'apple')])  # create lookup table
+        apple_id = self.get_rows(None)[0]._id
+
+        upload_error = patch.object(mod, "CouchTransaction", error_tx)
+        with upload_error, self.assertRaises(Exception):
+            # failed upload, previously resulted in stale cache
+            self.upload([(apple_id, 'N', 'orange')])
+        orange_id = self.get_rows(None)[0]._id
+
+        # previously failed with BulkSaveError due to stale cache
+        self.upload([(orange_id, 'N', 'banana')])
+        self.assertEqual(self.get_rows(), ['banana'])
+
+    def test_upload_rows_without_sql_table(self):
+        with disable_save_to_sql():  # simulate save prior to start of migration
+            self.upload([(None, 'N', 'apple')])
+
+        self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
+        connection.check_constraints()  # should not raise
+        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
+
+    def test_upload_rows_with_concurrently_saved_sql_table(self):
+        def upload_runner():
+            # use the same connection as main test thread
+            connections[DEFAULT_DB_ALIAS] = test_connection
+            self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
+
+        def flush_blocker(*args):
+            # wait to flush until concurrent save has occurred
+            nonlocal thread_success
+            concurrent_save.set()
+            if not continue_upload.wait(timeout=10):
+                raise RuntimeError("continue_upload timeout")
+            real_flush(*args)
+            thread_success = True
+
+        from threading import Thread, Event
+        from django.db import DEFAULT_DB_ALIAS, connections
+        test_connection = connections[DEFAULT_DB_ALIAS]
+        test_connection.inc_thread_sharing()
+        thread_success = False
+        try:
+            concurrent_save = Event()
+            continue_upload = Event()
+
+            with disable_save_to_sql():
+                # simulate save prior to start of migration
+                self.upload([(None, 'N', 'apple')])
+
+            real_flush = mod.flush
+            with patch.object(mod, "flush", flush_blocker):
+                upload = Thread(target=upload_runner)
+                upload.start()  # loads Couch docs, blocks on flush
+
+                if not concurrent_save.wait(timeout=10):
+                    raise RuntimeError("concurrent_save timeout")
+                things = self.get_table()
+                things.save()  # save to SQL
+
+                continue_upload.set()
+                upload.join()
+                assert thread_success, "upload in thread did not finish"
+        finally:
+            test_connection.dec_thread_sharing()
+
+        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
 
 
 class TestFixtureOwnershipUpload(TestCase):
@@ -774,6 +883,14 @@ class TestFixtureOwnershipUpload(TestCase):
         result = self.upload([(None, 'N', 'apple', 3, 3, 3)], check_result=False)
         self.assertEqual(self.get_rows(), [('apple', {'3'}, {'3'}, {'3'})])
         self.assertFalse(result.errors)
+
+    def test_row_ownership_without_sql_row(self):
+        with disable_save_to_sql():  # simulate save prior to start of migration
+            self.upload([(None, 'N', 'apple')])
+
+        self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])
+        connection.check_constraints()  # should not raise
+        self.assertEqual(self.get_rows(), [('apple', {'user1'}, {'G1'}, {'loc1'})])
 
     def upload(self, rows, *, check_result=True, **kw):
         data = self.make_rows(rows)
@@ -1005,3 +1122,11 @@ class TestOwnerKey(SimpleTestCase):
 
         t3 = FixtureOwnership(owner_id="def")
         self.assertNotEqual(mod.owner_key(t1), mod.owner_key(t3))
+
+
+@contextmanager
+def disable_save_to_sql():
+    p1 = patch.object(LookupTable.objects, "bulk_create", lambda x: None)
+    p2 = patch.object(LookupTableRow.objects, "bulk_create", lambda x: None)
+    with p1, p2:
+        yield

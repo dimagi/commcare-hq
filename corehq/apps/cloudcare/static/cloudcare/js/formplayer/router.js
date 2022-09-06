@@ -156,7 +156,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:paginate", function (page) {
+    FormplayerFrontend.on("menu:paginate", function (page, selections) {
+        var selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+        selectedValues[sessionStorage.queryKey] = selections.join(',');
+        sessionStorage.selectedValues = JSON.stringify(selectedValues);
         var urlObject = Util.currentUrlToObject();
         urlObject.setPage(page);
         Util.setUrlToObject(urlObject);

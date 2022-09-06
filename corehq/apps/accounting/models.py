@@ -1366,7 +1366,10 @@ class Subscription(models.Model):
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
                     do_not_invoice=None, no_invoice_reason=None,
-                    auto_generate_credits=False, is_trial=False):
+                    auto_generate_credits=False, is_trial=False,
+                    do_not_email_invoice=False, do_not_email_reminder=False,
+                    skip_invoicing_if_no_feature_charges=False,
+                    skip_auto_downgrade=False, skip_auto_downgrade_reason=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1404,13 +1407,16 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            do_not_email_invoice=do_not_email_invoice,
+            do_not_email_reminder=do_not_email_reminder,
             auto_generate_credits=auto_generate_credits,
+            skip_invoicing_if_no_feature_charges=skip_invoicing_if_no_feature_charges,
             is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
-            skip_auto_downgrade=False,
-            skip_auto_downgrade_reason='',
+            skip_auto_downgrade=skip_auto_downgrade,
+            skip_auto_downgrade_reason=skip_auto_downgrade_reason or '',
         )
 
         new_subscription.save()
