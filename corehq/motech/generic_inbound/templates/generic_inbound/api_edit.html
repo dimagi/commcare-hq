@@ -1,7 +1,9 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load hq_shared_tags %}
 
+{% requirejs_main "generic_inbound/js/api_edit" %}
 
 {% block page_content %}
 <div id="edit-api">
@@ -17,7 +19,10 @@
           {% trans "URL" %}
         </label>
         <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
-          <pre>{{ api_model.absolute_url }}</pre>
+          <pre id="api_url">{{ api_model.absolute_url }}</pre>
+          <a class="btn btn-default" onclick="copyData('api_url')">
+            <i class="fa fa-copy"></i> {% trans "Copy URL" %}
+          </a>
         </div>
       </div>
     </div>
