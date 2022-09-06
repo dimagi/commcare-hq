@@ -64,6 +64,7 @@ def validate_form(form_xml):
         })
         raise FormplayerRequestException(response.status_code)
 
+    print(response.status_code)
     api_result = ValidationAPIResult(response.json())
     result = FormValidationResult(
         problems=[problem.to_json() for problem in api_result.problems],
