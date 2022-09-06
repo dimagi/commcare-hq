@@ -37,6 +37,7 @@ describe('Util', function () {
             assert.deepEqual(Util.splitMultiValue('texas "new mexico" utah'), ["texas", "new mexico", "utah"]);
             assert.deepEqual(Util.splitMultiValue("'things' 'other things'"), ["things", "other things"]);
             assert.deepEqual(Util.splitMultiValue('"Jenny\'s teapot" "Ethan\'s mug"'), ["Jenny's teapot", "Ethan's mug"]);
+            assert.deepEqual(Util.splitMultiValue(" blank"), ["", "blank"]);
         });
 
         it('should join multiple values', function () {
@@ -44,6 +45,7 @@ describe('Util', function () {
             assert.equal(Util.joinMultiValue([]), "");
             assert.equal(Util.joinMultiValue(["texas", "new mexico", "utah"]), 'texas "new mexico" utah');
             assert.equal(Util.joinMultiValue(['they said "hello"', "thing"]), '"they said \\"hello\\"" thing');
+            assert.equal(Util.joinMultiValue(["", "blank"]), " blank");
         });
     });
 
