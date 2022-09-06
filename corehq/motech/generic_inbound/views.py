@@ -149,7 +149,15 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        result = api.parsed_expression(context.root_doc, context)
+        data = api.parsed_expression(context.root_doc, context)
     except BadSpecError as e:
         return JsonResponse({'error': str(e)}, status=500)
-    return JsonResponse(result)
+
+    response = _execute_case_api(data)
+
+    return JsonResponse(response)
+
+
+def _execute_case_api(data):
+    # TODO: call hqcase API
+    return data
