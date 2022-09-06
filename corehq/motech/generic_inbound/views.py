@@ -3,9 +3,7 @@ from django.http import Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_http_methods
-
 from memoized import memoized
-from psycopg2 import IntegrityError
 
 from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
@@ -78,12 +76,9 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         return ConfigurableAPICreateForm(self.request)
 
     def get_create_item_data(self, create_form):
-        try:
-            new_expression = create_form.save()
-        except IntegrityError:
-            return {'error': _(f"API with name \"{create_form.cleaned_data['name']}\" already exists.")}
+        new_api = create_form.save()
         return {
-            "itemData": self._item_data(new_expression),
+            "itemData": self._item_data(new_api),
             "template": "base-api-config-template",
         }
 
