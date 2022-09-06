@@ -4,12 +4,12 @@
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var separator = " to ",
-        dateFormat = "YYYY-MM-DD";
-    var selectDelimiter = "#,#"; // Formplayer also uses this
-    var Const = hqImport("cloudcare/js/form_entry/const"),
+    let kissmetrics = hqImport("analytix/js/kissmetrix"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        separator = " to ",
+        dateFormat = "YYYY-MM-DD",
+        Const = hqImport("cloudcare/js/form_entry/const"),
+        Util = hqImport("cloudcare/js/formplayer/utils/util"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
@@ -19,12 +19,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
             } else if (value && model.get('input') === 'select') {
-                value = value.join(selectDelimiter);
+                value = Util.joinMultiValue(value);
             }
 
             var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
-                return selectDelimiter + value;
+                return Util.joinMultiValue(["", value])
             } else if (queryProvided) {
                 return value;
             } else if (searchForBlank) {
@@ -35,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (!_.isString(value)) {
                 return [false, undefined];
             }
-            var values = value.split(selectDelimiter),
+            var values = Util.splitMultiValue(value),
                 searchForBlank = _.contains(values, ""),
                 values = _.without(values, "");
 
@@ -183,7 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = stickyValue;
             }
             if (this.model.get('input') === 'select' && _.isString(value)) {
-                value = value.split(selectDelimiter);
+                value = Util.splitMultiValue(value);
             }
             this.model.set('value', value);
         },
@@ -413,7 +413,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             $field.select2('close');
                         }
                         if (value !== null) {
-                            value = value.split(selectDelimiter);
+                            value = Util.splitMultiValue(value);
                             value = _.filter(value, function (val) { return val !== ''; });
                             if (!$field.attr('multiple')) {
                                 value = _.isEmpty(value) ? null : value[0];
