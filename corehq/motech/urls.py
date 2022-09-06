@@ -9,6 +9,7 @@ from corehq.motech.dhis2.views import (
     config_dhis2_repeater,
 )
 from corehq.motech.fhir.views import AddFHIRRepeaterView, EditFHIRRepeaterView
+from corehq.motech.generic_inbound.views import ConfigurableAPIListView
 from corehq.motech.openmrs.views import (
     AddOpenmrsRepeaterView,
     EditOpenmrsRepeaterView,
@@ -114,4 +115,7 @@ urlpatterns = [
     url(r'^logs/(?P<pk>\d+)/$', MotechLogDetailView.as_view(), name=MotechLogDetailView.urlname),
     url(r'^logs/remote_api_logs.csv$', motech_log_export_view,
         name='motech_log_export_view'),
+
+    # Generic inbound
+    url(r'^inbound/$', ConfigurableAPIListView.as_view(), name=ConfigurableAPIListView.urlname)
 ]

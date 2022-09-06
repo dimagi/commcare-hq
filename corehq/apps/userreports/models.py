@@ -1352,6 +1352,9 @@ class InvalidUCRData(models.Model):
 
 
 class UCRExpressionManager(models.Manager):
+    def get_expression_models_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+
     def get_filters_for_domain(self, domain, factory_context):
         return {
             f.name: f.wrapped_definition(factory_context)
@@ -1361,7 +1364,7 @@ class UCRExpressionManager(models.Manager):
     def get_expressions_for_domain(self, domain, factory_context):
         return {
             f.name: f.wrapped_definition(factory_context)
-            for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+            for f in self.get_expression_models_for_domain(domain)
         }
 
 
@@ -1404,6 +1407,12 @@ class UCRExpression(models.Model):
             setattr(self, prop, getattr(upstream_ucr_expression, prop))
         self.save()
 
+    def __str__(self):
+        description = self.description
+        if len(self.description) > 64:
+            description = f"{self.description[:64]}…"
+        description = f": {description}" if description else ""
+        return f"{self.name}{description}"
 
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))

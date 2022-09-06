@@ -1,0 +1,16 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+
+{% block pagination_header %}
+  <h3>{% trans 'Manage Generic Inbound APIs' %}</h3>
+{% endblock %}
+
+{% block pagination_templates %}
+<script type="text/html" id="base-api-config-template">
+    <td data-bind="text: name"></td>
+    <td data-bind="text: description"></td>
+</script>
+{% endblock %}
