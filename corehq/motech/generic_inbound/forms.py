@@ -23,7 +23,7 @@ class ConfigurableAPIForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.domain = request.domain
         self.fields['transform_expression'] = forms.ModelChoiceField(
-            queryset=UCRExpression.objects.get_expression_models_for_domain(self.domain)
+            queryset=UCRExpression.objects.get_expressions_for_domain(self.domain)
         )
         self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
