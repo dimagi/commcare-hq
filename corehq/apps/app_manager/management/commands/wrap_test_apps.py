@@ -97,10 +97,30 @@ class Command(BaseCommand):
                 data['xpath_description'] = '""'
         return False
 
+    class TimeAgoInterval(object):
+        map = {
+            'day': 1.0,
+            'week': 7.0,
+            'month': 30.4375,
+            'year': 365.25
+        }
+
+        @classmethod
+        def get_from_old_format(cls, format):
+            if format == 'years-ago':
+                return cls.map['year']
+            elif format == 'months-ago':
+                return cls.map['month']
+
     @classmethod
     def wrap_detail_column(cls, data):
         should_save = False
         if data.get("doc_type") == "DetailColumn":
+            if data.get('format') in ('months-ago', 'years-ago'):
+                should_save = True
+                data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
+                data['format'] = 'time-ago'
+
             # Lazy migration: enum used to be a dict, now is a list
             if isinstance(data.get('enum'), dict):
                 should_save = True

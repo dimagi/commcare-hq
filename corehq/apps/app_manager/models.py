@@ -1844,27 +1844,8 @@ class DetailColumn(IndexedSchema):
         else:
             return self.field
 
-    class TimeAgoInterval(object):
-        map = {
-            'day': 1.0,
-            'week': 7.0,
-            'month': 30.4375,
-            'year': 365.25
-        }
-
-        @classmethod
-        def get_from_old_format(cls, format):
-            if format == 'years-ago':
-                return cls.map['year']
-            elif format == 'months-ago':
-                return cls.map['month']
-
     @classmethod
     def wrap(cls, data):
-        if data.get('format') in ('months-ago', 'years-ago'):
-            data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
-            data['format'] = 'time-ago'
-
         # Lazy migration: xpath expressions from format to first-class property
         if data.get('format') == 'calculate':
             property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath

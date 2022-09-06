@@ -57,12 +57,13 @@
               "enum": [],
               "field": "dob",
               "filter_xpath": "",
-              "format": "years-ago",
+              "format": "time-ago",
               "header": {
                 "en": "Dob"
               },
               "late_flag": 30,
-              "model": "case"
+              "model": "case",
+              "time_ago_interval": 365.25
             },
             {
               "advanced": "",
@@ -70,12 +71,13 @@
               "enum": [],
               "field": "last_checkup",
               "filter_xpath": "",
-              "format": "months-ago",
+              "format": "time-ago",
               "header": {
                 "en": "Last Checkup"
               },
               "late_flag": 30,
-              "model": "case"
+              "model": "case",
+              "time_ago_interval": 30.4375
             },
             {
               "advanced": "",
@@ -115,12 +117,13 @@
               "enum": [],
               "field": "dob",
               "filter_xpath": "",
-              "format": "years-ago",
+              "format": "time-ago",
               "header": {
                 "en": "Dob"
               },
               "late_flag": 30,
-              "model": "case"
+              "model": "case",
+              "time_ago_interval": 365.25
             },
             {
               "advanced": "",
@@ -128,12 +131,13 @@
               "enum": [],
               "field": "last_checkup",
               "filter_xpath": "",
-              "format": "months-ago",
+              "format": "time-ago",
               "header": {
                 "en": "Last Checkup"
               },
               "late_flag": 30,
-              "model": "case"
+              "model": "case",
+              "time_ago_interval": 30.4375
             },
             {
               "advanced": "",
