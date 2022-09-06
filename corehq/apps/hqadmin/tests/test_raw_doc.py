@@ -75,6 +75,11 @@ class TestRawDocLookup(TestCase):
         data = raw_doc_lookup(str(row.id))
         self.assertEqual(json.loads(data["doc"]), expected_doc)
 
+    def test_raw_doc_with_invalid_uuid(self):
+        data = raw_doc_lookup("abcxyz")
+        self.assertNotIn("doc", data)
+        self.assertEqual({r.result for r in data["db_results"]}, {"missing"})
+
 
 def make_lookuptable():
     return LookupTable(
