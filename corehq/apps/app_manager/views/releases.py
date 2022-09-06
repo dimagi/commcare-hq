@@ -128,7 +128,7 @@ def paginate_releases(request, domain, app_id):
             limit=limit,
             skip=skip,
             wrapper=lambda x: (
-                SavedAppBuild.wrap(x['value'], scrap_old_conventions=False)
+                SavedAppBuild.wrap(x['value'])
                 .releases_list_json(timezone)
             ),
         ).all()
@@ -163,7 +163,7 @@ def paginate_releases(request, domain, app_id):
         apps = get_docs(Application.get_db(), app_ids)
 
         saved_apps = [
-            SavedAppBuild.wrap(app, scrap_old_conventions=False).releases_list_json(timezone)
+            SavedAppBuild.wrap(app).releases_list_json(timezone)
             for app in apps
         ]
 

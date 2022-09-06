@@ -12,9 +12,6 @@
   "application_version": "2.0",
   "attribution_notes": null,
   "build_comment": "newer version - not sure what's changed",
-  "build_langs": [
-    "en"
-  ],
   "build_signed": true,
   "build_spec": {
     "build_number": null,

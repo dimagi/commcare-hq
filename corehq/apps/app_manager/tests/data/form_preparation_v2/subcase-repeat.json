@@ -10,10 +10,6 @@
   "attribution_notes": null,
   "build_broken": false,
   "build_comment": null,
-  "build_langs": [
-    "en",
-    "lat-pig"
-  ],
   "build_signed": true,
   "build_spec": {
     "build_number": null,

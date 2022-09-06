@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from django.core.management.base import BaseCommand
 
@@ -166,6 +167,19 @@ class Command(BaseCommand):
                 doc = json.loads(f.read())
 
             should_write = self.apply_wrap(doc, self.wrap_media) or should_write
+
+            # ApplicationBase.wrap
+            if 'build_langs' in doc:
+                if doc['build_langs'] != doc['langs'] and 'build_profiles' not in doc:
+                    doc['build_profiles'] = {
+                        uuid.uuid4().hex: dict(
+                            name=', '.join(doc['build_langs']),
+                            langs=doc['build_langs']
+                        )
+                    }
+                    should_save = True
+                del doc['build_langs']
+                should_write = True
 
             for m in doc.get("modules", []):
                 should_write = self.apply_wrap(m, self.wrap_detail_column) or should_write

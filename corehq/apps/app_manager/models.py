@@ -4088,36 +4088,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             return self.doc_type
 
-    @staticmethod
-    def _scrap_old_conventions(data):
-        should_save = False
-        # scrape for old conventions and get rid of them
-
-        if 'build_langs' in data:
-            if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
-                data['build_profiles'] = {
-                    uuid.uuid4().hex: dict(
-                        name=', '.join(data['build_langs']),
-                        langs=data['build_langs']
-                    )
-                }
-                should_save = True
-            del data['build_langs']
-
-        return should_save
-
     @classmethod
-    def wrap(cls, data, scrap_old_conventions=True):
-        if scrap_old_conventions:
-            should_save = cls._scrap_old_conventions(data)
-        data["description"] = data.get('description') or data.get('short_description')
-
+    def wrap(cls, data):
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = get_default_build_spec()
-
-        if scrap_old_conventions and should_save:
-            self.save()
 
         return self
 
