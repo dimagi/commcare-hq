@@ -55,219 +55,6 @@
         "show": true
       },
       "case_type": "FLW",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "CommCare Username"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [
-                {
-                  "key": "admin",
-                  "value": {
-                    "en": "Administrator"
-                  }
-                },
-                {
-                  "key": "call_center",
-                  "value": {
-                    "en": "Call Center"
-                  }
-                },
-                {
-                  "key": "ict_coord",
-                  "value": {
-                    "en": "ICT Coordinator"
-                  }
-                }
-              ],
-              "field": "debug_level",
-              "filter_xpath": "",
-              "format": "enum",
-              "header": {
-                "en": "Debug Level"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "top_of_tech_support_list",
-              "filter_xpath": "",
-              "format": "invisible",
-              "header": {
-                "en": ""
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [
-            {
-              "direction": "descending",
-              "doc_type": "SortElement",
-              "field": "top_of_tech_support_list",
-              "type": "plain"
-            }
-          ],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "CommCare Username"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "phone_number",
-              "filter_xpath": "",
-              "format": "phone",
-              "header": {
-                "en": "Phone Number"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date_identified",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Date Identified"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 1.0
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date_identified",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Days Since Identified"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 1.0
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [
-                {
-                  "key": "admin",
-                  "value": {
-                    "en": "Administrator"
-                  }
-                },
-                {
-                  "key": "call_center",
-                  "value": {
-                    "en": "Call Center"
-                  }
-                },
-                {
-                  "key": "ict_coord",
-                  "value": {
-                    "en": "ICT Coordinator"
-                  }
-                }
-              ],
-              "field": "debug_level",
-              "filter_xpath": "",
-              "format": "enum",
-              "header": {
-                "en": "Debug Level"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "issue_description",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Notes"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "issue_identified",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Issue Identified"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -520,20 +307,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "e7682261e9b36a1f839ed9702da0bbb9ea3ce184"
-    },
-    {
-      "case_label": {
-        "en": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {},
-        "show": false
-      },
-      "case_type": "FLW",
-      "details": [
-        {
+      "unique_id": "e7682261e9b36a1f839ed9702da0bbb9ea3ce184",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -543,7 +319,40 @@
               "filter_xpath": "",
               "format": "plain",
               "header": {
-                "en": "Name"
+                "en": "CommCare Username"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "key": "admin",
+                  "value": {
+                    "en": "Administrator"
+                  }
+                },
+                {
+                  "key": "call_center",
+                  "value": {
+                    "en": "Call Center"
+                  }
+                },
+                {
+                  "key": "ict_coord",
+                  "value": {
+                    "en": "ICT Coordinator"
+                  }
+                }
+              ],
+              "field": "debug_level",
+              "filter_xpath": "",
+              "format": "enum",
+              "header": {
+                "en": "Debug Level"
               },
               "late_flag": 30,
               "model": "case",
@@ -553,39 +362,11 @@
               "advanced": "",
               "doc_type": "DetailColumn",
               "enum": [],
-              "field": "indicator:call-center/formsSubmittedInLastWeek",
+              "field": "top_of_tech_support_list",
               "filter_xpath": "",
-              "format": "plain",
+              "format": "invisible",
               "header": {
-                "en": "Forms last week"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "indicator:call-center/formsSubmittedInWeekPrior",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Forms week prior"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "call_back",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Just testing"
+                "en": ""
               },
               "late_flag": 30,
               "model": "case",
@@ -595,21 +376,15 @@
           "doc_type": "Detail",
           "sort_elements": [
             {
-              "direction": "ascending",
+              "direction": "descending",
               "doc_type": "SortElement",
-              "field": "call_back",
+              "field": "top_of_tech_support_list",
               "type": "plain"
-            },
-            {
-              "direction": "ascending",
-              "doc_type": "SortElement",
-              "field": "indicator:call-center/formsSubmittedInLastWeek",
-              "type": "int"
             }
           ],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -619,7 +394,7 @@
               "filter_xpath": "",
               "format": "plain",
               "header": {
-                "en": "Name"
+                "en": "CommCare Username"
               },
               "late_flag": 30,
               "model": "case",
@@ -631,7 +406,7 @@
               "enum": [],
               "field": "phone_number",
               "filter_xpath": "",
-              "format": "plain",
+              "format": "phone",
               "header": {
                 "en": "Phone Number"
               },
@@ -643,11 +418,58 @@
               "advanced": "",
               "doc_type": "DetailColumn",
               "enum": [],
-              "field": "indicator:call-center/formsSubmittedInLastWeek",
+              "field": "date_identified",
               "filter_xpath": "",
-              "format": "plain",
+              "format": "date",
               "header": {
-                "en": "Forms last week"
+                "en": "Date Identified"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 1.0
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date_identified",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Days Since Identified"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 1.0
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "key": "admin",
+                  "value": {
+                    "en": "Administrator"
+                  }
+                },
+                {
+                  "key": "call_center",
+                  "value": {
+                    "en": "Call Center"
+                  }
+                },
+                {
+                  "key": "ict_coord",
+                  "value": {
+                    "en": "ICT Coordinator"
+                  }
+                }
+              ],
+              "field": "debug_level",
+              "filter_xpath": "",
+              "format": "enum",
+              "header": {
+                "en": "Debug Level"
               },
               "late_flag": 30,
               "model": "case",
@@ -657,11 +479,11 @@
               "advanced": "",
               "doc_type": "DetailColumn",
               "enum": [],
-              "field": "indicator:call-center/formsSubmittedInWeekPrior",
+              "field": "issue_description",
               "filter_xpath": "",
               "format": "plain",
               "header": {
-                "en": "Forms week prior"
+                "en": "Notes"
               },
               "late_flag": 30,
               "model": "case",
@@ -671,11 +493,11 @@
               "advanced": "",
               "doc_type": "DetailColumn",
               "enum": [],
-              "field": "indicator:call-center/activeClientsLast30Days",
+              "field": "issue_identified",
               "filter_xpath": "",
               "format": "plain",
               "header": {
-                "en": "Indicator:call Center Activeclientslast30days"
+                "en": "Issue Identified"
               },
               "late_flag": 30,
               "model": "case",
@@ -685,20 +507,33 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "FLW",
       "doc_type": "Module",
       "forms": [
         {
@@ -847,7 +682,176 @@
         "label": {},
         "show": false
       },
-      "unique_id": "7791b2a462c5ea68002f8bd9882c6f7268dabd6e"
+      "unique_id": "7791b2a462c5ea68002f8bd9882c6f7268dabd6e",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/formsSubmittedInLastWeek",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Forms last week"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/formsSubmittedInWeekPrior",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Forms week prior"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "call_back",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Just testing"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [
+            {
+              "direction": "ascending",
+              "doc_type": "SortElement",
+              "field": "call_back",
+              "type": "plain"
+            },
+            {
+              "direction": "ascending",
+              "doc_type": "SortElement",
+              "field": "indicator:call-center/formsSubmittedInLastWeek",
+              "type": "int"
+            }
+          ],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "phone_number",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Phone Number"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/formsSubmittedInLastWeek",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Forms last week"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/formsSubmittedInWeekPrior",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Forms week prior"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/activeClientsLast30Days",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Indicator:call Center Activeclientslast30days"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},

@@ -48,365 +48,6 @@
         "show": false
       },
       "case_type": "suite_test",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "plain",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Plain"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date-opened",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Date Opened"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "time-ago",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Time Ago"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 7.0
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "phone",
-              "filter_xpath": "",
-              "format": "phone",
-              "header": {
-                "en": "Phone"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [
-                {
-                  "key": "a",
-                  "value": {
-                    "en": "A"
-                  }
-                },
-                {
-                  "key": "b",
-                  "value": {
-                    "en": "B"
-                  }
-                }
-              ],
-              "field": "enum",
-              "filter_xpath": "",
-              "format": "enum",
-              "header": {
-                "en": "Enum"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "late-flag",
-              "filter_xpath": "",
-              "format": "late-flag",
-              "header": {
-                "en": "Late Flag"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "invisible",
-              "filter_xpath": "",
-              "format": "invisible",
-              "header": {
-                "en": "Invisible"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "filter",
-              "filter_xpath": "",
-              "format": "filter",
-              "header": {
-                "en": "Filter"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "address",
-              "filter_xpath": "",
-              "format": "address",
-              "header": {
-                "en": "Address"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "indicator:call-center/activeClientsLast30Day",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Indicator"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "filter": "(filter = 'danny')",
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "plain",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Plain"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date-opened",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Date Opened"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "time-ago",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Time Ago"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 7.0
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "phone",
-              "filter_xpath": "",
-              "format": "phone",
-              "header": {
-                "en": "Phone"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [
-                {
-                  "key": "a",
-                  "value": {
-                    "en": "A"
-                  }
-                },
-                {
-                  "key": "b",
-                  "value": {
-                    "en": "B"
-                  }
-                }
-              ],
-              "field": "enum",
-              "filter_xpath": "",
-              "format": "enum",
-              "header": {
-                "en": "Enum"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "late-flag",
-              "filter_xpath": "",
-              "format": "late-flag",
-              "header": {
-                "en": "Late Flag"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "invisible",
-              "filter_xpath": "",
-              "format": "invisible",
-              "header": {
-                "en": "Invisible"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "filter",
-              "filter_xpath": "",
-              "format": "filter",
-              "header": {
-                "en": "Filter"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "address",
-              "filter_xpath": "",
-              "format": "address",
-              "header": {
-                "en": "Address"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "calc_xpath": "concat(., .)",
-              "case_tile_field": "",
-              "enum": [],
-              "field": "plain",
-              "filter_xpath": "",
-              "format": "calculate",
-              "graph_configuration": null,
-              "hasAutocomplete": true,
-              "hasNodeset": false,
-              "header": {
-                "en": "Calculation"
-              },
-              "isTab": false,
-              "late_flag": 30,
-              "model": "case",
-              "nodeset": "",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "calc_xpath": "if($lang = 'en', ., 'nope')",
-              "case_tile_field": "",
-              "enum": [],
-              "field": "plain",
-              "filter_xpath": "",
-              "format": "calculate",
-              "graph_configuration": null,
-              "hasAutocomplete": true,
-              "hasNodeset": false,
-              "header": {
-                "en": "Calculation with Language"
-              },
-              "isTab": false,
-              "late_flag": 30,
-              "model": "case",
-              "nodeset": "",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -649,6 +290,367 @@
         "doc_type": "CaseList",
         "label": {},
         "show": false
+      },
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "plain",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Plain"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Date Opened"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "time-ago",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Time Ago"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 7.0
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "phone",
+              "filter_xpath": "",
+              "format": "phone",
+              "header": {
+                "en": "Phone"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "key": "a",
+                  "value": {
+                    "en": "A"
+                  }
+                },
+                {
+                  "key": "b",
+                  "value": {
+                    "en": "B"
+                  }
+                }
+              ],
+              "field": "enum",
+              "filter_xpath": "",
+              "format": "enum",
+              "header": {
+                "en": "Enum"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "late-flag",
+              "filter_xpath": "",
+              "format": "late-flag",
+              "header": {
+                "en": "Late Flag"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "invisible",
+              "filter_xpath": "",
+              "format": "invisible",
+              "header": {
+                "en": "Invisible"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "filter",
+              "filter_xpath": "",
+              "format": "filter",
+              "header": {
+                "en": "Filter"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "address",
+              "filter_xpath": "",
+              "format": "address",
+              "header": {
+                "en": "Address"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "indicator:call-center/activeClientsLast30Day",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Indicator"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "filter": "(filter = 'danny')",
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "plain",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Plain"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Date Opened"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "time-ago",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Time Ago"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 7.0
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "phone",
+              "filter_xpath": "",
+              "format": "phone",
+              "header": {
+                "en": "Phone"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [
+                {
+                  "key": "a",
+                  "value": {
+                    "en": "A"
+                  }
+                },
+                {
+                  "key": "b",
+                  "value": {
+                    "en": "B"
+                  }
+                }
+              ],
+              "field": "enum",
+              "filter_xpath": "",
+              "format": "enum",
+              "header": {
+                "en": "Enum"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "late-flag",
+              "filter_xpath": "",
+              "format": "late-flag",
+              "header": {
+                "en": "Late Flag"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "invisible",
+              "filter_xpath": "",
+              "format": "invisible",
+              "header": {
+                "en": "Invisible"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "filter",
+              "filter_xpath": "",
+              "format": "filter",
+              "header": {
+                "en": "Filter"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "address",
+              "filter_xpath": "",
+              "format": "address",
+              "header": {
+                "en": "Address"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "calc_xpath": "concat(., .)",
+              "case_tile_field": "",
+              "enum": [],
+              "field": "plain",
+              "filter_xpath": "",
+              "format": "calculate",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Calculation"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "calc_xpath": "if($lang = 'en', ., 'nope')",
+              "case_tile_field": "",
+              "enum": [],
+              "field": "plain",
+              "filter_xpath": "",
+              "format": "calculate",
+              "graph_configuration": null,
+              "hasAutocomplete": true,
+              "hasNodeset": false,
+              "header": {
+                "en": "Calculation with Language"
+              },
+              "isTab": false,
+              "late_flag": 30,
+              "model": "case",
+              "nodeset": "",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
       }
     }
   ],

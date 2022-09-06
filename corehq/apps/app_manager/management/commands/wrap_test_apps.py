@@ -177,12 +177,32 @@ class Command(BaseCommand):
                             langs=doc['build_langs']
                         )
                     }
-                    should_save = True
                 del doc['build_langs']
                 should_write = True
 
             for m in doc.get("modules", []):
                 should_write = self.apply_wrap(m, self.wrap_detail_column) or should_write
+
+                # ModuleDetailsMixin.wrap_details
+                if 'details' in m:
+                    try:
+                        case_short, case_long, ref_short, ref_long = m['details']
+                    except ValueError:
+                        # "need more than 0 values to unpack"
+                        pass
+                    else:
+                        m['case_details'] = {
+                            'short': case_short,
+                            'long': case_long,
+                        }
+                        m['ref_details'] = {
+                            'short': ref_short,
+                            'long': ref_long,
+                        }
+                    finally:
+                        del m['details']
+                    should_write = True
+
                 if m.get("doc_type") == "AdvancedModule":
                     # AdvancedModule.wrap
                     if m.get('search_config') == []:

@@ -53,62 +53,6 @@
         "show": true
       },
       "case_type": "parent",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -249,20 +193,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "849470603f057e88e14aac23393c7fd73e54bbc3"
-    },
-    {
-      "case_label": {
-        "en": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {},
-        "show": false
-      },
-      "case_type": "child",
-      "details": [
-        {
+      "unique_id": "849470603f057e88e14aac23393c7fd73e54bbc3",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -283,7 +216,7 @@
           "sort_elements": [],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -303,20 +236,33 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "child",
       "doc_type": "Module",
       "forms": [
         {
@@ -454,20 +400,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "5e50168c997a3ccd5fdf90786e0b8ee9cb8c5a8d"
-    },
-    {
-      "case_label": {
-        "en": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {},
-        "show": false
-      },
-      "case_type": "grandchild",
-      "details": [
-        {
+      "unique_id": "5e50168c997a3ccd5fdf90786e0b8ee9cb8c5a8d",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -488,7 +423,7 @@
           "sort_elements": [],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -508,20 +443,33 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "grandchild",
       "doc_type": "Module",
       "forms": [
         {
@@ -645,7 +593,65 @@
         "label": {},
         "show": false
       },
-      "unique_id": null
+      "unique_id": null,
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},

@@ -50,78 +50,6 @@
         "show": false
       },
       "case_type": "asd",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "status",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Status"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [
-            {
-              "direction": "ascending",
-              "doc_type": "SortElement",
-              "field": "name",
-              "type": "plain",
-              "display": {
-                "en": "Name"
-              }
-            },
-            {
-              "direction": "ascending",
-              "doc_type": "SortElement",
-              "field": "date-opened",
-              "type": "date"
-            }
-          ],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "status",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Status"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -242,7 +170,81 @@
         "label": {},
         "show": false
       },
-      "unique_id": "2ae584461bf71ca8b284b0a451da416b52afa7bd"
+      "unique_id": "2ae584461bf71ca8b284b0a451da416b52afa7bd",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "status",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Status"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [
+            {
+              "direction": "ascending",
+              "doc_type": "SortElement",
+              "field": "name",
+              "type": "plain",
+              "display": {
+                "en": "Name"
+              }
+            },
+            {
+              "direction": "ascending",
+              "doc_type": "SortElement",
+              "field": "date-opened",
+              "type": "date"
+            }
+          ],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "status",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Status"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},

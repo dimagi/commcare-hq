@@ -48,167 +48,6 @@
         "show": false
       },
       "case_type": "patient",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "birthdate",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Birthdate"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "birthdate",
-              "filter_xpath": "",
-              "format": "date",
-              "date_format": "%d/%m/%Y",
-              "header": {
-                "en": "Birthdate"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date-opened",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Date Opened"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [
-            {
-              "direction": "descending",
-              "doc_type": "SortElement",
-              "field": "birthdate",
-              "type": "date"
-            },
-            {
-              "direction": "descending",
-              "doc_type": "SortElement",
-              "field": "date-opened",
-              "type": "date"
-            },
-            {
-              "direction": "ascending",
-              "doc_type": "SortElement",
-              "field": "name",
-              "type": "plain"
-            }
-          ],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "birthdate",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Birthdate"
-              },
-              "date_format": "%b %d, %Y",
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "birthdate",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Birthdate"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date-opened",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Date Opened"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -424,6 +263,169 @@
         "doc_type": "CaseList",
         "label": {},
         "show": false
+      },
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "birthdate",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Birthdate"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "birthdate",
+              "filter_xpath": "",
+              "format": "date",
+              "date_format": "%d/%m/%Y",
+              "header": {
+                "en": "Birthdate"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Date Opened"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [
+            {
+              "direction": "descending",
+              "doc_type": "SortElement",
+              "field": "birthdate",
+              "type": "date"
+            },
+            {
+              "direction": "descending",
+              "doc_type": "SortElement",
+              "field": "date-opened",
+              "type": "date"
+            },
+            {
+              "direction": "ascending",
+              "doc_type": "SortElement",
+              "field": "name",
+              "type": "plain"
+            }
+          ],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "birthdate",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Birthdate"
+              },
+              "date_format": "%b %d, %Y",
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "birthdate",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Birthdate"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Date Opened"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
       }
     }
   ],

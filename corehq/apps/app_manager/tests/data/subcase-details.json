@@ -53,43 +53,6 @@
         "show": false
       },
       "case_type": "pregnancy_u",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "date-opened",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Date"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -323,7 +286,46 @@
         "label": {},
         "show": false
       },
-      "unique_id": "m1"
+      "unique_id": "m1",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "date-opened",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Date"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
+      }
     },
     {
       "case_label": {
@@ -337,142 +339,6 @@
         "show": true
       },
       "case_type": "child",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/age",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Age"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/only_parent_has_this",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Only Parent Has This"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/age",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Age"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "age",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Age"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "parent/only_parent_has_this",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Parent Only Parent Has This"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -586,7 +452,145 @@
         "label": {},
         "show": false
       },
-      "unique_id": "m2"
+      "unique_id": "m2",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/only_parent_has_this",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Only Parent Has This"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "age",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Age"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "parent/only_parent_has_this",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Parent Only Parent Has This"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},

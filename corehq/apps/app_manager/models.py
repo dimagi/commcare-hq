@@ -2385,29 +2385,8 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         return True
 
+
 class ModuleDetailsMixin(object):
-
-    @classmethod
-    def wrap_details(cls, data):
-        if 'details' in data:
-            try:
-                case_short, case_long, ref_short, ref_long = data['details']
-            except ValueError:
-                # "need more than 0 values to unpack"
-                pass
-            else:
-                data['case_details'] = {
-                    'short': case_short,
-                    'long': case_long,
-                }
-                data['ref_details'] = {
-                    'short': ref_short,
-                    'long': ref_long,
-                }
-            finally:
-                del data['details']
-        return data
-
     @property
     def case_list_filter(self):
         try:
@@ -2463,11 +2442,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
-
-    @classmethod
-    def wrap(cls, data):
-        data = cls.wrap_details(data)
-        return super(Module, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3664,11 +3638,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     shadow_module_version = IntegerProperty(default=1)
 
     get_forms = IndexedSchema.Getter('forms')
-
-    @classmethod
-    def wrap(cls, data):
-        data = cls.wrap_details(data)
-        return super(ShadowModule, cls).wrap(data)
 
     @property
     def source_module(self):

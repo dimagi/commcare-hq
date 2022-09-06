@@ -50,92 +50,6 @@
         "show": false
       },
       "case_type": "parent",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -295,20 +209,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "bca6ab262d8e0b8ba8a4aabf648b6f37ba6a2885"
-    },
-    {
-      "case_label": {
-        "en": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {},
-        "show": false
-      },
-      "case_type": "child1",
-      "details": [
-        {
+      "unique_id": "bca6ab262d8e0b8ba8a4aabf648b6f37ba6a2885",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -329,7 +232,7 @@
           "sort_elements": [],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -349,8 +252,10 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -371,7 +276,7 @@
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -392,7 +297,18 @@
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "child1",
       "doc_type": "Module",
       "forms": [
         {
@@ -519,20 +435,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "1409cde22d97d022100399cb7ccf19f335ea9d95"
-    },
-    {
-      "case_label": {
-        "en": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {},
-        "show": false
-      },
-      "case_type": "child2",
-      "details": [
-        {
+      "unique_id": "1409cde22d97d022100399cb7ccf19f335ea9d95",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -553,7 +458,7 @@
           "sort_elements": [],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -573,8 +478,10 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -595,7 +502,7 @@
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -616,7 +523,18 @@
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {},
+        "show": false
+      },
+      "case_type": "child2",
       "doc_type": "Module",
       "forms": [
         {
@@ -743,7 +661,95 @@
         "label": {},
         "show": false
       },
-      "unique_id": "43949260920eecb2b6e79f6554a13a1040a754e5"
+      "unique_id": "43949260920eecb2b6e79f6554a13a1040a754e5",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},

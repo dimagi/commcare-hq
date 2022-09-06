@@ -45,138 +45,6 @@
         "show": false
       },
       "case_type": "days_ago_test",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "dob",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Dob"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_checkup",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Last Checkup"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 30.4375
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_party",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Last Party"
-              },
-              "late_flag": 30,
-              "model": "case"
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_beer",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Last Beer"
-              },
-              "late_flag": 30,
-              "model": "case"
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "dob",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Dob"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_checkup",
-              "filter_xpath": "",
-              "format": "time-ago",
-              "header": {
-                "en": "Last Checkup"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 30.4375
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_party",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Last Party"
-              },
-              "late_flag": 30,
-              "model": "case"
-            },
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "last_beer",
-              "filter_xpath": "",
-              "format": "date",
-              "header": {
-                "en": "Last Beer"
-              },
-              "late_flag": 30,
-              "model": "case"
-            }
-          ],
-          "doc_type": "Detail",
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -304,6 +172,140 @@
         "doc_type": "CaseList",
         "label": {},
         "show": false
+      },
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "dob",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Dob"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_checkup",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Last Checkup"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 30.4375
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_party",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Last Party"
+              },
+              "late_flag": 30,
+              "model": "case"
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_beer",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Last Beer"
+              },
+              "late_flag": 30,
+              "model": "case"
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "dob",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Dob"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_checkup",
+              "filter_xpath": "",
+              "format": "time-ago",
+              "header": {
+                "en": "Last Checkup"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 30.4375
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_party",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Last Party"
+              },
+              "late_flag": 30,
+              "model": "case"
+            },
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "last_beer",
+              "filter_xpath": "",
+              "format": "date",
+              "header": {
+                "en": "Last Beer"
+              },
+              "late_flag": 30,
+              "model": "case"
+            }
+          ],
+          "doc_type": "Detail",
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "type": "ref_long"
+        }
       }
     }
   ],

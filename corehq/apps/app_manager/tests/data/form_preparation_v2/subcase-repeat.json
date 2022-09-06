@@ -53,62 +53,6 @@
         "show": false
       },
       "case_type": "mother",
-      "details": [
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_short"
-        },
-        {
-          "columns": [
-            {
-              "advanced": "",
-              "doc_type": "DetailColumn",
-              "enum": [],
-              "field": "name",
-              "filter_xpath": "",
-              "format": "plain",
-              "header": {
-                "en": "Name"
-              },
-              "late_flag": 30,
-              "model": "case",
-              "time_ago_interval": 365.25
-            }
-          ],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "case_long"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_short"
-        },
-        {
-          "columns": [],
-          "doc_type": "Detail",
-          "sort_elements": [],
-          "type": "ref_long"
-        }
-      ],
       "doc_type": "Module",
       "forms": [
         {
@@ -255,23 +199,9 @@
         "label": {},
         "show": false
       },
-      "unique_id": "1d3d918877b31b62f0479fa9c1b5d3e1ca85de1f"
-    },
-    {
-      "case_label": {
-        "en": "Children",
-        "lat-pig": "Cases"
-      },
-      "case_list": {
-        "doc_type": "CaseList",
-        "label": {
-          "en": "Children"
-        },
-        "show": true
-      },
-      "case_type": "child",
-      "details": [
-        {
+      "unique_id": "1d3d918877b31b62f0479fa9c1b5d3e1ca85de1f",
+      "case_details": {
+        "short": {
           "columns": [
             {
               "advanced": "",
@@ -292,7 +222,7 @@
           "sort_elements": [],
           "type": "case_short"
         },
-        {
+        "long": {
           "columns": [
             {
               "advanced": "",
@@ -312,20 +242,36 @@
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "case_long"
-        },
-        {
+        }
+      },
+      "ref_details": {
+        "short": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_short"
         },
-        {
+        "long": {
           "columns": [],
           "doc_type": "Detail",
           "sort_elements": [],
           "type": "ref_long"
         }
-      ],
+      }
+    },
+    {
+      "case_label": {
+        "en": "Children",
+        "lat-pig": "Cases"
+      },
+      "case_list": {
+        "doc_type": "CaseList",
+        "label": {
+          "en": "Children"
+        },
+        "show": true
+      },
+      "case_type": "child",
       "doc_type": "Module",
       "forms": [
         {
@@ -454,7 +400,65 @@
         "label": {},
         "show": false
       },
-      "unique_id": "7386f6a118647c036eb4f00a39e04956ab0edad4"
+      "unique_id": "7386f6a118647c036eb4f00a39e04956ab0edad4",
+      "case_details": {
+        "short": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_short"
+        },
+        "long": {
+          "columns": [
+            {
+              "advanced": "",
+              "doc_type": "DetailColumn",
+              "enum": [],
+              "field": "name",
+              "filter_xpath": "",
+              "format": "plain",
+              "header": {
+                "en": "Name"
+              },
+              "late_flag": 30,
+              "model": "case",
+              "time_ago_interval": 365.25
+            }
+          ],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "case_long"
+        }
+      },
+      "ref_details": {
+        "short": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_short"
+        },
+        "long": {
+          "columns": [],
+          "doc_type": "Detail",
+          "sort_elements": [],
+          "type": "ref_long"
+        }
+      }
     }
   ],
   "multimedia_map": {},
