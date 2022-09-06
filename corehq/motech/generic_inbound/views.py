@@ -1,20 +1,27 @@
 from django.contrib import messages
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 from psycopg2 import IntegrityError
 
 from corehq import toggles
+from corehq.apps.api.decorators import api_throttle
+from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.forms import (
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
 from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
+from corehq.util.view_utils import json_error
 
 
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
@@ -126,5 +133,23 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         return self.get(request, domain, **kwargs)
 
 
+@json_error
+@api_auth
+@api_throttle
+@require_http_methods(["POST"])
 def generic_inbound_api(request, domain, api_id):
-    pass
+    try:
+        api = ConfigurableAPI.objects.get(key=api_id, domain=domain)
+    except ConfigurableAPI.DoesNotExist:
+        raise Http404
+
+    try:
+        context = get_context_from_request(request)
+    except GenericInboundUserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    try:
+        result = api.parsed_expression(context.root_doc, context)
+    except BadSpecError as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse(result)
