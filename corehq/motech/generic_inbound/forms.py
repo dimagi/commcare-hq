@@ -7,7 +7,9 @@ from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.models import ConfigurableAPI
 
 
-class ConfigurableAPIForm(forms.ModelForm):
+class ConfigurableAPICreateForm(forms.ModelForm):
+    fieldset_title = _('Create a new API')
+
     class Meta:
         model = ConfigurableAPI
         fields = [
@@ -28,17 +30,27 @@ class ConfigurableAPIForm(forms.ModelForm):
         self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _('Create a new API'),
+                self.fieldset_title,
                 crispy.Field('name'),
                 crispy.Field('description'),
                 crispy.Field('transform_expression'),
             )
         )
+        self.helper.render_required_fields = True
+        self.add_to_helper()
+
+    def add_to_helper(self):
         self.helper.add_input(
             crispy.Submit('submit', _('Save'))
         )
-        self.helper.render_required_fields = True
 
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)
+
+
+class ConfigurableAPIUpdateForm(ConfigurableAPICreateForm):
+    fieldset_title = _('Update Configuration')
+
+    def add_to_helper(self):
+        self.helper.form_tag = False

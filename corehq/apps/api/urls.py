@@ -1,4 +1,4 @@
-from django.conf.urls import include, re_path as url
+from django.urls import path, include, re_path as url
 from django.http import HttpResponseNotFound
 
 from tastypie.api import Api
@@ -37,6 +37,7 @@ from corehq.apps.fixtures.resources.v0_1 import (
 from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
+from corehq.motech.generic_inbound.views import generic_inbound_api
 
 API_LIST = (
     ((0, 3), (
@@ -132,6 +133,8 @@ def api_url_patterns():
               name="api_case_attachment")
     yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
               name="api_form_attachment")
+
+    yield path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api")
 
 
 urlpatterns = list(api_url_patterns())

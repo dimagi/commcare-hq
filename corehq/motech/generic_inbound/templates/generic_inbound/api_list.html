@@ -12,5 +12,12 @@
 <script type="text/html" id="base-api-config-template">
     <td data-bind="text: name"></td>
     <td data-bind="text: description"></td>
+    <td><pre data-bind="text: url"></pre></td>
+    <td> <!-- actions -->
+        <a class="btn btn-primary"
+                data-bind="attr: {href: edit_url}">
+            {% trans "Edit" %}
+        </a>
+    </td>
 </script>
 {% endblock %}

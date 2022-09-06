@@ -6,6 +6,7 @@ from memoized import memoized
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.userreports.specs import FactoryContext
 from corehq.motech.generic_inbound.utils import make_url_key
+from corehq.util import reverse
 
 
 class ConfigurableAPI(models.Model):
@@ -31,3 +32,8 @@ class ConfigurableAPI(models.Model):
     @memoized
     def parsed_expression(self):
         return self.transform_expression.wrapped_definition(FactoryContext.empty())
+
+    @property
+    @memoized
+    def absolute_url(self):
+        return reverse("generic_inbound_api", args=[self.domain, self.key], absolute=True)
