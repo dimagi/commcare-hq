@@ -8,10 +8,13 @@ from functools import partial
 
 from attrs import define, field
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils.functional import classproperty
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -137,8 +140,27 @@ class PopulateSQLCommand(BaseCommand):
     @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        ignored_count = cls.get_migration_status().get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
-        return couch_count - sql_count
+        return couch_count - ignored_count - sql_count
+
+    @classproperty
+    def _migration_status_slug(cls):
+        return f"{cls.couch_doc_type()}-sql-migration-status"
+
+    def save_migration_status(self):
+        self.couch_db().save_doc({
+            "_id": self._migration_status_slug,
+            "doc_type": "PopulateSQLCommandStatus",
+            "ignored_count": self.ignored_count,
+        }, force_update=True)
+
+    @classmethod
+    def get_migration_status(cls):
+        try:
+            return cls.couch_db().get(cls._migration_status_slug)
+        except ResourceNotFound:
+            return {}
 
     @classmethod
     def commit_adding_migration(cls):
@@ -320,6 +342,7 @@ Run the following commands to run the migration and get up to date:
                         doc_index += 1
                         if doc_index % 1000 == 0:
                             print(f"Diff count: {self.diff_count}")
+                self.save_migration_status()
             except KeyboardInterrupt:
                 traceback.print_exc(file=logfile)
                 aborted = True

@@ -66,9 +66,6 @@
 /corehq/util/es/ @joxl
 
 /custom/covid/management/commands/ @stephherbers @AddisonDunn
-/custom/icds_reports/ @calellowitz
-/custom/icds_reports/templates/ @calellowitz
-/custom/icds_reports/static/ @calellowitz
 
 /docs/js-guide/ @orangejenny @millerdev
 

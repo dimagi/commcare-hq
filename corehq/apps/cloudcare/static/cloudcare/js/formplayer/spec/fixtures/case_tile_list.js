@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
-    var Util = hqImport("cloudcare/js/formplayer/spec/fixtures/util");
+    let FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer");
 
-    return Util.makeEntityResponse({
+    return FakeFormplayer.makeEntitiesResponse({
         "title": "Active Patients",
         "breadcrumbs": [
             "*mLabour India App*",

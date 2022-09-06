@@ -74,7 +74,7 @@ branches:
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
-    - ad/remove-entered-wrap-functions # Addison Aug 22
+    #- ad/remove-entered-wrap-functions # Addison Aug 22
     - jls/datetimepicker-fixes  # Jenny Aug 23
     - revert-32051-revert-31975-jc/USH-2151 # Jenny Aug 25
     - ce/api-rate-limits # Cal Aug 23
@@ -84,4 +84,6 @@ branches:
     - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - ad/fix-conditional-alerts-page-timeout # Addison Sep 1
     - do/migrate-apps # Dominic Sep 2
+    - akj/abdm-api # Akash Sep 5
+    - jm/userrole-audit  # Joel Sep 6
 submodules: { }

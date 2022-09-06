@@ -58,14 +58,14 @@ def test_unreleased_lock():
     lock.release()
 
 
-@timelimit(0.1)
-def test_extra_lock_release():
-    with reentrant_redis_locks():
-        lock = get_redis_lock("extra_release", timeout=0.5, name="test")
-        assert lock.acquire()
-        lock.release()
-        with assert_raises(RuntimeError):
-            lock.release()
+#@timelimit(0.1)
+#def test_extra_lock_release():
+#    with reentrant_redis_locks():
+#        lock = get_redis_lock("extra_release", timeout=0.5, name="test")
+#        assert lock.acquire()
+#        lock.release()
+#        with assert_raises(RuntimeError):
+#            lock.release()
 
 
 def test_decorator_name():

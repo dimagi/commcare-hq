@@ -2,11 +2,13 @@ import json
 import logging
 from collections import defaultdict
 from contextlib import ExitStack
+from functools import partial
 
 from django.db.transaction import atomic
 from requests.exceptions import HTTPError
 from simplejson import JSONDecodeError
 
+from couchdbkit import BulkSaveError
 from dimagi.utils.chunked import chunked
 
 from .migration import SyncCouchToSQLMixin
@@ -105,12 +107,12 @@ class CouchTransaction(object):
                 def delete(chunk):
                     start_sql_transaction()
                     ids = [doc._id for doc in chunk if doc._id]
-                    cls.bulk_delete(chunk)
+                    _bulk_delete(cls, chunk)
                     sql_class.objects.filter(**{id_name + "__in": ids}).delete()
                 sql_class = cls._migration_get_sql_model_class()
                 id_name = sql_class._migration_couch_id_name
             else:
-                delete = cls.bulk_delete
+                delete = partial(_bulk_delete, cls)
             for chunk in chunked(docs, 1000):
                 delete(chunk)
 
@@ -144,6 +146,28 @@ class CouchTransaction(object):
         self.depth -= 1
         if self.depth == 0 and not exc_type:
             self.commit()
+
+
+def _bulk_delete(cls, chunk):
+    try:
+        cls.bulk_delete(chunk)
+    except BulkSaveError as err:
+        if not _was_deleted(err, cls.get_db()):
+            raise
+
+
+def _was_deleted(bulk_save_error, db):
+    def is_conflict(error):
+        return error.get("error") == "conflict" and "id" in error
+
+    def is_deleted(result):
+        return "value" in result and result["value"].get("deleted")
+
+    return (all(is_conflict(e) for e in bulk_save_error.errors)
+        and all(is_deleted(r) for r in db.view(
+            "_all_docs",
+            keys=[e["id"] for e in bulk_save_error.errors]
+        )))
 
 
 def get_docs(db, keys, **query_params):
