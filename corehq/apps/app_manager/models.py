@@ -4092,21 +4092,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     def _scrap_old_conventions(data):
         should_save = False
         # scrape for old conventions and get rid of them
-        if 'commcare_build' in data:
-            version, build_number = data['commcare_build'].split('/')
-            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
-            del data['commcare_build']
-        if 'commcare_tag' in data:
-            version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
-            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
-            del data['commcare_tag']
-        if "built_with" in data and isinstance(data['built_with'], str):
-            data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
-
-        if 'native_input' in data:
-            if 'text_input' not in data:
-                data['text_input'] = 'native' if data['native_input'] else 'roman'
-            del data['native_input']
 
         if 'build_langs' in data:
             if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
@@ -4119,9 +4104,6 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 should_save = True
             del data['build_langs']
 
-        if 'original_doc' in data:
-            data['copy_history'] = [data.pop('original_doc')]
-            should_save = True
         return should_save
 
     @classmethod
