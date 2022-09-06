@@ -1,5 +1,10 @@
 /*global Backbone */
 
+/**
+ *  A menu is implemented as a collection of items. Typically, the user
+ *  selects one of these items. The query screen is also implemented as
+ *  a menu, where each search field is an item.
+ */
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Util = hqImport("cloudcare/js/formplayer/utils/util");
