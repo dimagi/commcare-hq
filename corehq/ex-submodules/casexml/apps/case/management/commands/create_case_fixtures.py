@@ -1,7 +1,7 @@
 import random
+import sys
 import uuid
 
-import faker
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
@@ -9,6 +9,12 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.util.log import with_progress_bar
+
+try:
+    import faker
+except ModuleNotFoundError:
+    print("Error: faker is not installed. Run `pip install -r requirements/dev-requirements.txt`")
+    sys.exit(1)
 
 
 class Command(BaseCommand):
