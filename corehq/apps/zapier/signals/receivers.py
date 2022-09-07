@@ -46,7 +46,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
         )
 
     repeater.save()
-    instance.repeater_id = repeater.get_id
+    instance.repeater_id = repeater.repeater_id
 
 
 @receiver(post_delete, sender=ZapierSubscription)
