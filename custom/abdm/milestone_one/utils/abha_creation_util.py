@@ -5,18 +5,19 @@ import logging
 from django.conf import settings
 
 base_url = "https://healthidsbx.abdm.gov.in/api/"
+logger = logging.getLogger(__name__)
 
 
 def get_access_token():
     url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
-    logging.info(
+    logger.info(
         f"ABDM_CLIENT_ID {len(settings.ABDM_CLIENT_ID)} ABDM_CLIENT_SECRET {len(settings.ABDM_CLIENT_SECRET)}"
     )
     payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
     if resp.status_code == 200:
-        logging.info("Received token info from abdm")
+        logger.info("Received token info from abdm")
         return resp.json().get("accessToken")
 
 
@@ -29,7 +30,7 @@ def generate_aadhar_otp(aadhaar_number):
     print(token)
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     print(resp)
-    logging.info(resp.content)
+    logger.info(resp.content)
     print(resp.json())
     return resp.json()
 

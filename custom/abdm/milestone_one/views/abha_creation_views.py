@@ -23,8 +23,10 @@ def login(request):
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
 def generate_aadhaar_otp(request):
+    from django.conf import settings
     aadhaar_number = request.data.get("aadhaar")
     resp = abdm_util.generate_aadhar_otp(aadhaar_number)
+    resp.update({"info": [len(settings.ABDM_CLIENT_ID), len(settings.ABDM_CLIENT_SECRET)]})
     return Response(resp, status=HTTP_200_OK)
 
 
