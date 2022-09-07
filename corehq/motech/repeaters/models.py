@@ -310,10 +310,6 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             if isinstance(attr_tuple[1], OptionValue)
         ]
 
-    @property
-    def get_id(self):
-        return self.repeater_id
-
     def to_json(self):
         repeater_dict = self.__dict__.copy()
         options = repeater_dict.pop('options', None)
