@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 from couchdbkit.exceptions import ResourceNotFound
+from lxml.etree import XMLSyntaxError
 
 
 class Command(BaseCommand):
@@ -22,10 +23,13 @@ class Command(BaseCommand):
 
                 current_app = Application.get(app_id)
                 self.migrate(current_app)
-                errors = current_app.validate_app()
-                if errors:
-                    # do something here with unvalidated app
-                    continue
+                try:
+                    errors = current_app.validate_app()
+                    if errors:
+                        # do something here with unvalidated app
+                        continue
+                except XMLSyntaxError as e:
+                    print(e)
                 # current_app.save()
 
     def needs_to_be_migrated(self, version):
@@ -37,9 +41,9 @@ class Command(BaseCommand):
             return
         try:
             translations = app.translations
-            print(translations)
         except ResourceNotFound:
             return
+
         for module in app.modules:
             search_config = getattr(module, 'search_config')
             default_label_dict = getattr(search_config, 'title_label')
