@@ -357,6 +357,9 @@ hqDefine('cloudcare/js/util', [
             if (!moment.isMoment(dateString) || dateString instanceof Date) {
                 dateString = convertTwoDigitYear(dateString);
             }
+            if (extraOptions.parseInputDate) {
+                return extraOptions.parseInputDate(dateString);
+            }
             let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
             return dateObj.isValid() ? dateObj : "";
         });
