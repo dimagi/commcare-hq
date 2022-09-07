@@ -143,7 +143,7 @@ def get_csv_details_for_partner(contact, year, month):
                     domain,
                     data_point.first().value,
                 ])
-    return headers, body
+    return headers, sorted(body)
 
 
 def send_partner_emails(year, month):
