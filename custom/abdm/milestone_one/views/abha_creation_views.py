@@ -1,13 +1,15 @@
 from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK)
 from rest_framework.response import Response
 
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 
 
+@api_view(["POST"])
+@permission_classes((AllowAny,))
 def login(request):
     username = request.data.get("username")
     password = request.data.get("password")
@@ -17,16 +19,14 @@ def login(request):
     if not user:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_404_NOT_FOUND)
     token, _ = Token.objects.get_or_create(user=user)
-    return token.key
+    return Response({'token': token.key}, status=HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
 def generate_aadhaar_otp(request):
-    from django.conf import settings
     aadhaar_number = request.data.get("aadhaar")
     resp = abdm_util.generate_aadhar_otp(aadhaar_number)
-    resp.update({"info": [len(settings.ABDM_CLIENT_ID), len(settings.ABDM_CLIENT_SECRET)]})
     return Response(resp, status=HTTP_200_OK)
 
 
