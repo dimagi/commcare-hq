@@ -1,12 +1,14 @@
 import requests
 import json
 
+from django.conf import settings
+
 base_url = "https://healthidsbx.abdm.gov.in/api/"
 
 
 def get_access_token():
     url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
-    payload = {"clientId": "", "clientSecret": ""}
+    payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
     if resp.status_code == 200:
