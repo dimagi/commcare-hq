@@ -10,15 +10,16 @@
 
 {% block pagination_templates %}
 <script type="text/html" id="base-api-config-template">
-    <td data-bind="text: name"></td>
+    <td>
+      <a data-bind="text: name, attr: {href: edit_url}"></a>
+    </td>
     <td data-bind="text: description"></td>
     <td><pre data-bind="text: api_url, attr: {id: 'api_url_' + id}"></pre></td>
     <td> <!-- actions -->
         <a class="btn btn-default copy_url" data-bind="click: () => copyData('api_url_' + id)">
           <i class="fa fa-copy"></i> {% trans "Copy URL" %}
         </a>
-        <a class="btn btn-primary"
-                data-bind="attr: {href: edit_url}">
+        <a class="btn btn-primary" data-bind="attr: {href: edit_url}">
             {% trans "Edit" %}
         </a>
     </td>
