@@ -1,3 +1,4 @@
+from django.core.exceptions import FieldError
 from django.core.validators import validate_slug
 from django.db import models
 
@@ -21,11 +22,18 @@ class ConfigurableAPI(models.Model):
     class Meta:
         unique_together = ('domain', 'key')
 
+    def __init__(self, *args, **kwargs):
+        super(ConfigurableAPI, self).__init__(*args, **kwargs)
+        # keep track to avoid refetching to check whether value is updated
+        self.__original_key = self.key
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             if self.key:
-                raise Exception("'key' is auto-assigned")
+                raise FieldError("'key' is auto-assigned")
             self.key = make_url_key()
+        elif self.key != self.__original_key:
+            raise FieldError("'key' can not be changed")
         super().save(*args, **kwargs)
 
     @property

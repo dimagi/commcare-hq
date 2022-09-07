@@ -1,3 +1,4 @@
+from django.core.exceptions import FieldError
 from django.test import TestCase
 
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
@@ -37,6 +38,12 @@ class TestGenericInboundModels(TestCase):
     def test_key_created(self):
         self.assertIsNotNone(self.api.key)
         self.assertTrue(len(self.api.key) > 0)
+
+    def test_key_read_only(self):
+        self.assertIsNotNone(self.api.key)
+        self.api.key = 'new key'
+        with self.assertRaisesRegex(FieldError, "'key' can not be changed"):
+            self.api.save()
 
     def test_transform(self):
         body = {'name': 'cricket', 'is_team_sport': True}
