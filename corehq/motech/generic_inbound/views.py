@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_http_methods
 from memoized import memoized
 
@@ -23,7 +23,7 @@ from corehq.util.view_utils import json_error
 
 
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
-    page_title = _("API Configurations")
+    page_title = gettext_lazy("API Configurations")
     urlname = "configurable_api_list"
     template_name = "generic_inbound/api_list.html"
     create_item_form_class = "form form-horizontal"
@@ -85,7 +85,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
 
 @method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
 class ConfigurableAPIEditView(BaseProjectSettingsView):
-    page_title = _("Edit API Configuration")
+    page_title = gettext_lazy("Edit API Configuration")
     urlname = "configurable_api_edit"
     template_name = "generic_inbound/api_edit.html"
 
