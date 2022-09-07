@@ -28,8 +28,8 @@ class Command(BaseCommand):
                     if errors:
                         # do something here with unvalidated app
                         continue
-                except XMLSyntaxError as e:
-                    print(e)
+                except XMLSyntaxError:
+                    pass
                 # current_app.save()
 
     def needs_to_be_migrated(self, version):
@@ -41,18 +41,17 @@ class Command(BaseCommand):
             return
         try:
             translations = app.translations
-        except ResourceNotFound:
-            return
-
-        for module in app.modules:
-            search_config = getattr(module, 'search_config')
-            default_label_dict = getattr(search_config, 'title_label')
-            label_dict = {lang: label.get('case.search.title')
-                for lang, label in translations.items() if label and not default_label_dict[lang]}
-            label_dict.update(default_label_dict)
-            print(f"Old: {default_label_dict}")
-            print(f"New: {label_dict}")
-            # setattr(search_config, 'title_label', label_dict)
+            for module in app.modules:
+                search_config = getattr(module, 'search_config')
+                default_label_dict = getattr(search_config, 'title_label')
+                label_dict = {lang: label.get('case.search.title')
+                    for lang, label in translations.items() if label and not default_label_dict[lang]}
+                label_dict.update(default_label_dict)
+                print(f"Old: {default_label_dict}")
+                print(f"New: {label_dict}")
+                # setattr(search_config, 'title_label', label_dict)
+        except (ResourceNotFound, AttributeError):
+            pass
         return
 
     def progress_bar(self, domain, current, total):
