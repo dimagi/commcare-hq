@@ -33,7 +33,7 @@ from corehq.motech.openmrs.exceptions import (
     OpenmrsFeedRuntimeException,
     OpenmrsFeedSyntaxError,
 )
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater, SQLOpenmrsRepeater
 from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
@@ -156,10 +156,10 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             type='patient',
             owner_id='123456'
         )
+        self.connx = ConnectionSettings.objects.create(url='abcd', domain='test_domain')
 
     def tearDown(self):
-        self.repeater.connection_settings.delete()
-        self.repeater.delete()
+        self.connx.delete()
 
     def setUpRepeater(self):
         observations = [
@@ -215,7 +215,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 "case_property": "hypothermia_date"
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
+        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -296,15 +296,13 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 }
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
+        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def get_repeater_dict(self, observations, diagnoses):
         return {
-            "_id": "123456",
             "domain": "test_domain",
-            "url": "https://example.com/openmrs/",
-            "username": "foo",
-            "password": "bar",
+            "repeater_id": "123456",
+            "connection_settings": self.connx,
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
                 "form_configs": [{
