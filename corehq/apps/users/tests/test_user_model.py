@@ -323,15 +323,7 @@ class TestCommCareUserRoles(TestCase):
 
         cls.role1 = UserRole.create(domain=cls.domain, name="role1")
         cls.role2 = UserRole.create(domain=cls.domain, name="role2")
-        cls.mobile_worker_default_role = UserRole.create(
-            cls.domain,
-            UserRolePresets.MOBILE_WORKER,
-            is_commcare_user_default=True,
-        )
-
-    def setUp(self):
-        # clear cache
-        UserRole.commcare_user_default.clear(UserRole.__class__, self.domain)
+        cls.mobile_worker_default_role = UserRole.commcare_user_default(cls.domain)
 
     def test_create_user_without_role(self):
         user = self._create_user('scotch game')
