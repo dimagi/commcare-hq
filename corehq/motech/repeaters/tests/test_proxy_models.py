@@ -297,7 +297,6 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             # other attrs
             'to_json', '_convert_to_serializable',
             '_optionvalue_fields', '_wrap_schema_attrs',
-            'get_id'
         }
 
 
