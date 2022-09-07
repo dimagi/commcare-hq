@@ -3,7 +3,7 @@ hqDefine('generic_inbound/js/api_edit', [
 ], function (alertUserModule) {
     let alertUser = alertUserModule.alert_user;
 
-    window.copyData = function(elementId) {
+    window.copyData = function (elementId) {
         let range = document.createRange();
         range.selectNode(document.getElementById(elementId));
         window.getSelection().removeAllRanges();
