@@ -66,8 +66,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
             'id': api.id,
             'name': api.name,
             'description': api.description,
-            'slug': api.key,
-            'url': api.absolute_url,
+            'api_url': api.absolute_url,
             'edit_url': reverse(ConfigurableAPIEditView.urlname, args=[self.domain, api.id]),
         }
 
@@ -135,7 +134,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 @require_http_methods(["POST"])
 def generic_inbound_api(request, domain, api_id):
     try:
-        api = ConfigurableAPI.objects.get(key=api_id, domain=domain)
+        api = ConfigurableAPI.objects.get(url_key=api_id, domain=domain)
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 

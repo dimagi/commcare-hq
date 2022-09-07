@@ -36,13 +36,13 @@ class TestGenericInboundModels(TestCase):
         )
 
     def test_key_created(self):
-        self.assertIsNotNone(self.api.key)
-        self.assertTrue(len(self.api.key) > 0)
+        self.assertIsNotNone(self.api.url_key)
+        self.assertTrue(len(self.api.url_key) > 0)
 
     def test_key_read_only(self):
-        self.assertIsNotNone(self.api.key)
-        self.api.key = 'new key'
-        with self.assertRaisesRegex(FieldError, "'key' can not be changed"):
+        self.assertIsNotNone(self.api.url_key)
+        self.api.url_key = 'new key'
+        with self.assertRaisesRegex(FieldError, "'url_key' can not be changed"):
             self.api.save()
 
     def test_transform(self):

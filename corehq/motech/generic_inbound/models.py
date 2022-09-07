@@ -12,7 +12,7 @@ from corehq.util import reverse
 
 class ConfigurableAPI(models.Model):
     domain = models.CharField(max_length=255)
-    key = models.CharField(max_length=32, validators=[validate_slug])
+    url_key = models.CharField(max_length=32, validators=[validate_slug])
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255, blank=True)
@@ -20,20 +20,20 @@ class ConfigurableAPI(models.Model):
     transform_expression = models.ForeignKey(UCRExpression, on_delete=models.PROTECT)
 
     class Meta:
-        unique_together = ('domain', 'key')
+        unique_together = ('domain', 'url_key')
 
     def __init__(self, *args, **kwargs):
         super(ConfigurableAPI, self).__init__(*args, **kwargs)
         # keep track to avoid refetching to check whether value is updated
-        self.__original_key = self.key
+        self.__original_url_key = self.url_key
 
     def save(self, *args, **kwargs):
         if self._state.adding:
-            if self.key:
-                raise FieldError("'key' is auto-assigned")
-            self.key = make_url_key()
-        elif self.key != self.__original_key:
-            raise FieldError("'key' can not be changed")
+            if self.url_key:
+                raise FieldError("'url_key' is auto-assigned")
+            self.url_key = make_url_key()
+        elif self.url_key != self.__original_url_key:
+            raise FieldError("'url_key' can not be changed")
         super().save(*args, **kwargs)
 
     @property
@@ -44,4 +44,4 @@ class ConfigurableAPI(models.Model):
     @property
     @memoized
     def absolute_url(self):
-        return reverse("generic_inbound_api", args=[self.domain, self.key], absolute=True)
+        return reverse("generic_inbound_api", args=[self.domain, self.url_key], absolute=True)

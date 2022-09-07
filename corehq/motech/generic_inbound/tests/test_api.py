@@ -47,7 +47,7 @@ class TestGenericInboundAPI(TestCase):
 
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
-        cls.url = reverse('generic_inbound_api', args=[cls.domain_name, cls.generic_api.key])
+        cls.url = reverse('generic_inbound_api', args=[cls.domain_name, cls.generic_api.url_key])
 
     def test_post_denied(self):
         response = self.client.post(self.url, data={})

@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('domain', models.CharField(max_length=255)),
-                ('key', models.CharField(max_length=32, validators=[django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z'), 'Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.', 'invalid')])),
+                ('url_key', models.CharField(max_length=32, validators=[django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z'), 'Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.', 'invalid')])),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('updated_on', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=255, blank=True)),
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('transform_expression', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='userreports.ucrexpression')),
             ],
             options={
-                'unique_together': {('domain', 'key')},
+                'unique_together': {('domain', 'url_key')},
             },
         ),
     ]
