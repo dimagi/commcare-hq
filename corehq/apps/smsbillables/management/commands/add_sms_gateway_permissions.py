@@ -61,10 +61,9 @@ class Command(BaseCommand):
                         from_role=user_role.role,
                         to_role=global_sms_gateway_access,
                     )
-                    print(f"Enabled privilege to Edit Global SMS Gateways for the user {username}")
+                    print(f"Enabled privilege to Edit Global SMS Gateways for the user {user.username}")
                 else:
-                    print("User %s already have the requested privilege"
-                          % user.username)
+                    print(f"User {user.username} already have the requested privilege")
 
             except User.DoesNotExist:
                 print(f"User {username} does not exist")
