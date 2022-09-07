@@ -82,7 +82,6 @@ branches:
     - sk/expose-mobile-worker-default-role  # Simon Aug 24
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
-    - ad/fix-conditional-alerts-page-timeout # Addison Sep 1
     - do/migrate-apps # Dominic Sep 2
     - akj/abdm-api # Akash Sep 5
     - jm/userrole-audit  # Joel Sep 6
