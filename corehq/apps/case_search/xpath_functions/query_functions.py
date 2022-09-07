@@ -29,6 +29,7 @@ def starts_with(node, context):
     property_name = _property_name_to_string(property_name, node)
     return case_property_starts_with_query(property_name, search_value)
 
+
 def selected_any(node, context):
     return _selected_query(node, context, operator='or')
 

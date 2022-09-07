@@ -25,6 +25,7 @@ def match_all():
 def prefix(field, value):
     return {"prefix": {field: value}}
 
+
 def term(field, value):
     """
     Filter docs by a field
