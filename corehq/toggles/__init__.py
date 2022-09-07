@@ -2325,3 +2325,11 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
+
+FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
+    'formplayer_include_state_hash',
+    'Make Formplayer include the state hash in sync and restore requests',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly'
+)
