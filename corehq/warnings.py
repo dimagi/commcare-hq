@@ -138,8 +138,12 @@ def augment_warning_messages():
         # -- end code copied from Python's warnings.py:warn --
         else:
             module = filename
+        if not isinstance(message, str):
+            category = category or message.__class__
+            message = str(message)
         message += f"\nmodule: {module} line {lineno}"
-        message += POSSIBLE_RESOLUTIONS
+        if category and issubclass(category, DeprecationWarning):
+            message += POSSIBLE_RESOLUTIONS
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)
