@@ -22,14 +22,6 @@
   {% endcompress %}
 {% endblock %}
 
-{% block breadcrumbs %}
-  <li>
-    <a href="{% url "view_app" domain app.id %}">
-      <span class="app-manager-title variable-app_name">{{ app.name|html_name }}</span>
-    </a>
-  </li>
-{% endblock %}
-
 {% block page_navigation %}
   {% if app %}
     <div class="appmanager-loading-container">
