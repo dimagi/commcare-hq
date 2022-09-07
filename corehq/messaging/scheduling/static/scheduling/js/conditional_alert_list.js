@@ -141,7 +141,7 @@ hqDefine("scheduling/js/conditional_alert_list", [
             }, 10000);
         };
 
-        self.reloadPageSoon()
+        self.reloadPageSoon();
         return self;
     };
 
