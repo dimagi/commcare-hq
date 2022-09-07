@@ -59,7 +59,7 @@ branches:
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
-    - bmb/sso/api/test-001  # Biyeun June 15
+    # - bmb/sso/api/test-001  # Biyeun June 15
     - mjr/erm-overwrite # Matt June 24
     - gh/upgrade-twilio # Graham July 8
    # - rp/fix-case-properties-modal-styling # Rynhard 20 July
