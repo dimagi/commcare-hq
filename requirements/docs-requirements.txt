@@ -197,8 +197,6 @@ ethiopian-date-converter==0.1.5
     # via -r base-requirements.in
 eulxml==1.1.3
     # via -r base-requirements.in
-faker==14.1.0
-    # via -r base-requirements.in
 future==0.18.2
     # via pyjwkest
 gevent==21.8.0
@@ -389,7 +387,6 @@ python-dateutil==2.8.2
     #   -r base-requirements.in
     #   botocore
     #   django-tastypie
-    #   faker
 python-imap==1.0.0
     # via -r base-requirements.in
 python-magic==0.4.22

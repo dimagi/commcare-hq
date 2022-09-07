@@ -223,7 +223,7 @@ executing==0.8.3
 fakecouch==0.0.15
     # via -r test-requirements.in
 faker==14.1.0
-    # via -r base-requirements.in
+    # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
 flake8==3.9.2
