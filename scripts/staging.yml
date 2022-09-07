@@ -87,4 +87,5 @@ branches:
     - akj/abdm-api # Akash Sep 5
     - jm/userrole-audit  # Joel Sep 6
     - bmb/okta-idp  # Biyeun Sep 7
+    - ad/embed-tab-report-by-user # Addison Sep 7
 submodules: { }
