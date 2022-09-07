@@ -1,11 +1,10 @@
 from django.db import transaction
 
-from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
-
+from .base import PopulateLookupTableCommand
 from ...models import FixtureDataType, LookupTable, TypeField
 
 
-class Command(PopulateSQLCommand):
+class Command(PopulateLookupTableCommand):
 
     @classmethod
     def couch_db_slug(cls):

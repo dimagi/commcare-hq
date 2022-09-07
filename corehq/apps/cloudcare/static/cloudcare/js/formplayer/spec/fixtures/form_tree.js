@@ -1,5 +1,5 @@
 hqDefine("cloudcare/js/formplayer/spec/fixtures/form_tree", function () {
-    var questionDefaults = {
+    let questionDefaults = {
         type: "question",
         required: 0,
         relevant: 0,
