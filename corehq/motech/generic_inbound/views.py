@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.http import Http404, JsonResponse
+from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_http_methods
@@ -125,7 +126,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         if form.is_valid():
             form.save()
             messages.success(request, _("API Configuration updated successfully."))
-        return self.get(request, domain, **kwargs)
+        return redirect(self.page_url, domain, self.api_id)
 
 
 @json_error
