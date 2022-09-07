@@ -433,9 +433,8 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
             _assert = soft_assert(['nhooper_at_dimagi_dot_com'.replace('_at_', '@').replace('_dot_', '.')])
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
-            args = {'domain': domain_name} if couch_user.doc_type == 'WebUser' else {}
             if EntriesHelper.any_usercase_datums(extra_datums):
-                restore_user = couch_user.to_ota_restore_user(**args)
+                restore_user = couch_user.to_ota_restore_user(domain_name)
                 usercase_id = restore_user.get_usercase_id()
                 if usercase_id:
                     session_data[USERCASE_ID] = usercase_id

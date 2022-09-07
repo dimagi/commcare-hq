@@ -1734,7 +1734,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def supports_lockout(self):
         return not self.project.disable_mobile_login_lockout
 
-    def to_ota_restore_user(self, request_user=None):
+    def to_ota_restore_user(self, domain, request_user=None):
+        assert domain == self.domain
         return OTARestoreCommCareUser(
             self.domain,
             self,
