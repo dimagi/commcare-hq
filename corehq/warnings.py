@@ -15,7 +15,7 @@ WHITELIST = [
     # avoid it if possible.
     #
     # Item format:
-    # (module_path, message_substring_or_regex, optional_warning_class)
+    # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
@@ -51,6 +51,10 @@ WHITELIST = [
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",
         SAWarning),
     ("unittest.case", "TestResult has no addExpectedFailure method", RuntimeWarning),
+
+    # warnings that should not be ignored
+    # note: override_action "default" causes warning to be printed on stderr
+    ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
 ]
 
 
@@ -66,7 +70,7 @@ def configure_warnings(is_testing):
             whitelist(action, *args)
 
 
-def whitelist(action, module, message, category=DeprecationWarning):
+def whitelist(action, module, message, category=DeprecationWarning, override_action=None):
     """Whitelist warnings with matching criteria
 
     Similar to `warnings.filterwarnings` except `re.escape` `module`
@@ -78,7 +82,7 @@ def whitelist(action, module, message, category=DeprecationWarning):
             message = r".*" + re.escape(message)
         else:
             message = message.pattern
-    warnings.filterwarnings(action, message, category, re.escape(module))
+    warnings.filterwarnings(override_action or action, message, category, re.escape(module))
 
 
 def get_whitelist_action():
