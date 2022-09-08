@@ -6,7 +6,8 @@ from tastypie.http import HttpBadRequest
 
 from corehq.apps.zapier.consts import CASE_TYPE_REPEATER_CLASS_MAP, EventTypes
 from corehq.apps.zapier.models import ZapierSubscription
-from corehq.motech.repeaters.models import FormRepeater, SQLFormRepeater
+from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.models import SQLFormRepeater
 
 
 @receiver(pre_save, sender=ZapierSubscription)
@@ -16,20 +17,26 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
     """
     if instance.pk:
         return
-
+    conn = ConnectionSettings(
+        domain=instance.domain,
+        name=instance.url,
+        url=instance.url,
+    )
     if instance.event_name == EventTypes.NEW_FORM:
-        repeater = FormRepeater(
+        conn.save()
+        repeater = SQLFormRepeater(
             domain=instance.domain,
-            url=instance.url,
+            connection_settings=conn,
             format='form_json',
             include_app_id_param=False,
             white_listed_form_xmlns=[instance.form_xmlns]
         )
 
     elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
+        conn.save()
         repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name](
             domain=instance.domain,
-            url=instance.url,
+            connection_settings=conn,
             format='case_json',
             white_listed_case_types=[instance.case_type],
         )
@@ -39,7 +46,7 @@ def zapier_subscription_pre_save(sender, instance, *args, **kwargs):
         )
 
     repeater.save()
-    instance.repeater_id = repeater.get_id
+    instance.repeater_id = repeater.repeater_id
 
 
 @receiver(post_delete, sender=ZapierSubscription)
@@ -50,7 +57,7 @@ def zapier_subscription_post_delete(sender, instance, *args, **kwargs):
     if instance.event_name == EventTypes.NEW_FORM:
         repeater = SQLFormRepeater.objects.get(repeater_id=instance.repeater_id)
     elif instance.event_name in CASE_TYPE_REPEATER_CLASS_MAP:
-        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].get(instance.repeater_id)
+        repeater = CASE_TYPE_REPEATER_CLASS_MAP[instance.event_name].objects.get(repeater_id=instance.repeater_id)
     else:
         raise ImmediateHttpResponse(
             HttpBadRequest('The passed event type is not valid.')

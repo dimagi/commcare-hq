@@ -1,7 +1,9 @@
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import timedelta
+from unittest.mock import patch
 from uuid import uuid4
+import uuid
 
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
@@ -10,12 +12,14 @@ from django.utils import timezone
 
 from nose.tools import assert_in, assert_raises
 
+from corehq.util.test_utils import _create_case
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeaters,
-    get_all_repeater_docs,
+    iter_repeat_records_by_domain,
 )
+from corehq.motech.repeaters.utils import get_all_repeater_docs
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
@@ -615,3 +619,42 @@ class TestSQLRepeaterToJSON(TestCase):
             couch_data = self._clean_couch_json(couch_repeater.to_json())
 
             self.assertEqual(sql_data, couch_data)
+
+
+class TestSQLRepeaterModelMethods(RepeaterTestCase):
+
+    def test_register(self):
+        case_id = uuid.uuid4().hex
+        payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
+        )
+        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        self.addCleanup(repeat_record.delete)
+        self.assertEqual(repeat_record.payload_id, payload.get_id)
+        all_records = list(iter_repeat_records_by_domain(DOMAIN))
+        self.assertEqual(len(all_records), 1)
+        self.assertEqual(all_records[0]._id, repeat_record.get_id)
+
+    def test_send_request(self):
+        case_id = uuid.uuid4().hex
+        payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
+        )
+        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        self.addCleanup(repeat_record.delete)
+        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
+        resp = ResponseMock(status_code=200, reason='OK')
+        # will assert if all the args passed in SQL and couch repeater are same
+        # This also compares various other functions defined in Repeater class
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
+            self.sql_repeater.send_request(repeat_record, payload)
+            self.repeater.send_request(repeat_record, payload)
+            first_call, second_call = simple_request.mock_calls
+
+        self.assertEqual(first_call.args, second_call.args)
+        sql_authmanager = first_call.kwargs.pop('auth_manager')
+        couch_authmanager = second_call.kwargs.pop('auth_manager')
+        self.assertEqual(type(sql_authmanager), type(couch_authmanager))
+
+        self.assertEqual(first_call.kwargs, second_call.kwargs)
