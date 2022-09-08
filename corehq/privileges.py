@@ -143,6 +143,9 @@ MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 ACCOUNTING_ADMIN = 'accounting_admin'
 OPERATIONS_TEAM = 'dimagi_ops'
 
+# This is a special privilege that is meant for Dev and Support team which allows access to Global SMS Gateway Page
+GLOBAL_SMS_GATEWAY = 'global_sms_gateway'
+
 
 class Titles(object):
 

@@ -1,8 +1,9 @@
 from functools import cmp_to_key
 
+from corehq import toggles
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
 from corehq.apps.formplayer_api.smsforms.api import (
     FormplayerInterface,
     TouchformsError,
@@ -300,7 +301,10 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     Returns (app, module, form, error, error_code)
     """
     try:
-        app = get_app(domain, app_id)
+        if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain):
+            app = get_app(domain, app_id)
+        else:
+            app = get_latest_released_app(domain, app_id)
         form = app.get_form(form_unique_id)
         module = form.get_module()
         return app, module, form, False, None
@@ -495,7 +499,10 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            app = get_app(survey_keyword.domain, action.app_id)
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain):
+                app = get_app(survey_keyword.domain, action.app_id)
+            else:
+                app = get_latest_released_app(survey_keyword.domain, action.app_id)
             form = app.get_form(action.form_unique_id)
             if form.requires_case():
                 return True

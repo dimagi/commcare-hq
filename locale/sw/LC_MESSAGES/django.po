@@ -40453,16 +40453,6 @@ msgstr ""
 msgid "FAO/WHO GIFT Food Group Description"
 msgstr ""
 
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can not be same as last {restricted} passwords."
-msgstr ""
-
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can't be same as last {restricted} passwords."
-msgstr ""
-
 #: custom/reports/mc/reports/definitions.py
 msgid "mc_section_home_visits"
 msgstr ""
