@@ -552,6 +552,21 @@ class TestFixtureUpload(TestCase):
         self.upload(self.get_workbook_from_data(headers, data))
         self.assertEqual(self.get_rows(part), ['branch'])
 
+    def test_upload_sheet_with_missing_UID_column(self):
+        self.upload([(None, 'N', 'apple')])
+
+        headers = (
+            self.headers[0],
+            ('things', ('Delete(Y/N)', 'field: name')),
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name', 'yes')]),
+            ('things', [('N', 'apple')]),
+            ('things', [('N', 'orange')]),
+        ]
+        self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
     def test_delete_row(self):
         self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
         ids = {row_name(r): r._id for r in self.get_rows(None)}
