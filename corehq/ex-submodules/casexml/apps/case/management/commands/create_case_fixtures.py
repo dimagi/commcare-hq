@@ -10,11 +10,15 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.util.log import with_progress_bar
 
-try:
-    import faker
-except ModuleNotFoundError:
-    print("Error: faker is not installed. Run `pip install -r requirements/dev-requirements.txt`")
-    sys.exit(1)
+
+def get_faker():
+    try:
+        import faker
+    except ModuleNotFoundError:
+        print("Error: faker is not installed. Run `pip install -r requirements/dev-requirements.txt`")
+        sys.exit(1)
+
+    return faker
 
 
 class Command(BaseCommand):
@@ -31,6 +35,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain, num_root_items, owner_ids, **kwargs):
+        faker = get_faker()
         num_cases = 0
         structures = []
         for n in with_progress_bar(range(num_root_items)):
@@ -52,6 +57,7 @@ class Command(BaseCommand):
             print ("Generated Sample App")
 
     def _create_case_structure(self, locale, owner_id):
+        faker = get_faker()
         fake = faker.Faker(locale)
         structures = []
         profile = fake.profile(fields=[
