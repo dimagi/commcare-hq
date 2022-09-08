@@ -218,14 +218,28 @@ class AdminRestoreView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
+
         if not full_username or '@' not in full_username:
-            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+            msg = 'Please specify a user using ?as=user@domain\nOr a web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
 
-        username, domain = full_username.split('@')
-        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-            full_username = format_username(username, domain)
+        username, possible_domain = full_username.split("@")
+        if "." in possible_domain:
+            if possible_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+                self.domain = possible_domain.split(".")[0]
+                self.user = CommCareUser.get_by_username(full_username)
+            else:
+                self.domain = request.GET.get('domain', '')
+                self.user = CouchUser.get_by_username(full_username)
+        else:
+            self.domain = possible_domain
+            full_username = format_username(username, self.domain)
+            self.user = CommCareUser.get_by_username(full_username)
 
-        self.user = CommCareUser.get_by_username(full_username)
+        if self.user.is_web_user and not self.domain:
+            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
+
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
@@ -249,8 +263,8 @@ class AdminRestoreView(TemplateView):
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request, self.user.domain)
+            self.domain, self.user, app_id=self.app_id,
+            **get_restore_params(self.request, self.domain)
         )
 
     @staticmethod
