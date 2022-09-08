@@ -45,6 +45,7 @@ def generate_mobile_otp(mobile_number, txnid):
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     print(resp)
     print(resp.content)
+    return resp.json()
 
 
 def verify_aadhar_otp(otp, txnid):
@@ -57,6 +58,7 @@ def verify_aadhar_otp(otp, txnid):
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     print(resp)
     print(resp.content)
+    return resp.json()
 
 
 def verify_mobile_otp(otp, txnid):
@@ -69,6 +71,7 @@ def verify_mobile_otp(otp, txnid):
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     print(resp)
     print(resp.content)
+    return resp.json()
 
 
 def create_health_id(txnid):
