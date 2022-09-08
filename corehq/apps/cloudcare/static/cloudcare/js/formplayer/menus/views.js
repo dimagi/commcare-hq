@@ -788,6 +788,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
             }
+            kissmetrics.track.event("Selected case(s)");
         },
     });
 
