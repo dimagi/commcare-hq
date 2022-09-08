@@ -788,7 +788,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
             }
-            kissmetrics.track.event("Selected case(s)");
+            var eventData = {
+                splitScreenSearch: hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')
+            };
+            kissmetrics.track.event("Selected case(s)", eventData);
         },
     });
 
