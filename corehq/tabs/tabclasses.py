@@ -267,10 +267,6 @@ class ProjectReportsTab(UITab):
     def dropdown_items(self):
         items = self._get_saved_reports_dropdown()
 
-        if not self.can_access_all_locations:
-            items.extend(self._get_all_sidebar_items_as_dropdown())
-            return items
-
         reports = sidebar_to_dropdown(
             self._get_tableau_items()
             + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
