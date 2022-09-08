@@ -366,6 +366,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                                                      RECORD_FAILURE_STATE))
 
     @property
+    def name(self):
+        return self.connection_settings.name
+
+    @property
     def is_ready(self):
         if self.is_paused:
             return False
