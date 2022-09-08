@@ -146,12 +146,15 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        data = api.parsed_expression(context.root_doc, context)
+        response = _execute_case_api(
+            request.domain,
+            request.couch_user,
+            request.META.get('HTTP_USER_AGENT'),
+            context,
+            api
+        )
     except BadSpecError as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-    try:
-        response = _execute_case_api(request, data)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except SubmissionError as e:
@@ -163,16 +166,18 @@ def generic_inbound_api(request, domain, api_id):
     return JsonResponse(response)
 
 
-def _execute_case_api(request, data):
+def _execute_case_api(domain, couch_user, device_id, context, api_model):
+    data = api_model.parsed_expression(context.root_doc, context)
+
     if not isinstance(data, list):
         # the bulk API always requires a list
         data = [data]
 
     xform, case_or_cases = handle_case_update(
-        domain=request.domain,
+        domain=domain,
         data=data,
-        user=request.couch_user,
-        device_id=request.META.get('HTTP_USER_AGENT'),
+        user=couch_user,
+        device_id=device_id,
         is_creation=None,
     )
 
