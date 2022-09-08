@@ -63,7 +63,7 @@ def verify_mobile_otp(request):
     if not txn_id or not otp:
         return Response({'error': "Missing required data - txn_id and otp"}, status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.verify_mobile_otp(otp, txn_id)
-    if resp.status_code == 200:
+    if resp and "txnId" in resp:
         resp = abdm_util.create_health_id(txn_id)
     else:
         return Response({"error": "Error during mobile verification."})
