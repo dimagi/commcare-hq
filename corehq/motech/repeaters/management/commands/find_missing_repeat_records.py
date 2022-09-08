@@ -15,9 +15,9 @@ from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
-    get_repeat_records_by_payload_id,
-    get_repeaters_by_domain,
+    get_repeat_records_by_payload_id
 )
+from corehq.motech.repeaters.utils import get_repeaters_by_domain
 from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater, CreateCaseRepeater, \
     UpdateCaseRepeater, RepeatRecord, LocationRepeater, UserRepeater, AppStructureRepeater
 from corehq.util.argparse_types import date_type

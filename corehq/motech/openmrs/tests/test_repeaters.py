@@ -819,7 +819,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
 
 
 def test_observation_mappings():
-    repeater = OpenmrsRepeater.wrap({
+    repeater = SQLOpenmrsRepeater(**{
         "openmrs_config": {
             "openmrs_provider": "",
             "case_config": {},
@@ -831,6 +831,7 @@ def test_observation_mappings():
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
                         "case_property": "abnormal_temperature",
+                        'doc_type': 'ObservationMapping',
                         "value": {
                             "doc_type": "FormQuestionMap",
                             "form_question": "/data/abnormal_temperature",
@@ -843,6 +844,7 @@ def test_observation_mappings():
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
                         "case_property": "bahmni_abnormal_temperature",
+                        'doc_type': 'ObservationMapping',
                         "value": {
                             "doc_type": "ConstantString",
                             "value": "",
@@ -867,7 +869,7 @@ def test_observation_mappings():
                         'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
                     }
                 }
-            ),
+            ).to_json(),
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='bahmni_abnormal_temperature',
@@ -876,7 +878,7 @@ def test_observation_mappings():
                     "doc_type": "ConstantString",
                     "value": ''
                 }
-            )
+            ).to_json()
         ]
     })
 
