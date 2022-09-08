@@ -137,7 +137,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, include_docs=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = call_fixture_generator(self.user.to_ota_restore_user())
+        fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -166,7 +166,7 @@ class FixtureDataTest(TestCase):
 
         self.data_item.remove_user(self.user)
 
-        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -197,7 +197,7 @@ class FixtureDataTest(TestCase):
         self.data_type.fields[2].is_indexed = True  # Set "district_id" as indexed
         self.data_type.save()
 
-        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(len(fixtures), 2)
         check_xml_line_by_line(
             self,
@@ -245,7 +245,7 @@ class FixtureDataTest(TestCase):
         self.addCleanup(empty_data_type.delete)
         get_fixture_data_types.clear(self.domain)
 
-        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -275,7 +275,7 @@ class FixtureDataTest(TestCase):
         self.make_data_item(cookie, "2.50")
         self.make_data_item(latte, "5.75")
 
-        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         # make sure each fixture is there, and only once
         self.assertEqual(
             [item.attrib['id'] for item in fixtures],
@@ -289,7 +289,7 @@ class FixtureDataTest(TestCase):
     def test_empty_user_data_types(self):
         self.make_data_type("cookie", is_global=False)
 
-        fixtures = call_fixture_generator(self.user.to_ota_restore_user())
+        fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         # make sure each fixture is there, and only once
         self.assertEqual(
             [item.attrib['id'] for item in fixtures],
@@ -302,7 +302,7 @@ class FixtureDataTest(TestCase):
     def test_cached_global_fixture_user_id(self):
         sandwich = self.make_data_type("sandwich", is_global=True)
         self.make_data_item(sandwich, "7.39")
-        frank = self.user.to_ota_restore_user()
+        frank = self.user.to_ota_restore_user(self.domain)
         sammy = CommCareUser.create(self.domain, 'sammy', '***', None, None).to_ota_restore_user()
 
         fixtures = call_fixture_generator(frank)
@@ -405,7 +405,7 @@ class TestFixtureOrdering(TestCase):
         super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):
-        (fixture,) = call_fixture_generator(self.user.to_ota_restore_user())
+        (fixture,) = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         actual_names = [row[0].text for row in fixture[0]]
         self.assertEqual(
             ["Targaryen", "Stark", "Lannister", "Tyrell", "Tully", "Martell", "Baratheon"],
