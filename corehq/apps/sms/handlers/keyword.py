@@ -301,7 +301,7 @@ def get_app_module_form(domain, app_id, form_unique_id, logged_subevent=None):
     Returns (app, module, form, error, error_code)
     """
     try:
-        if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain):
+        if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
             app = get_app(domain, app_id)
         else:
             app = get_latest_released_app(domain, app_id)
@@ -499,7 +499,7 @@ def is_form_complete(current_question):
 def keyword_uses_form_that_requires_case(survey_keyword):
     for action in survey_keyword.keywordaction_set.all():
         if action.action in [KeywordAction.ACTION_SMS_SURVEY, KeywordAction.ACTION_STRUCTURED_SMS]:
-            if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain):
+            if toggles.SMS_USE_LATEST_DEV_APP.enabled(survey_keyword.domain, toggles.NAMESPACE_DOMAIN):
                 app = get_app(survey_keyword.domain, action.app_id)
             else:
                 app = get_latest_released_app(survey_keyword.domain, action.app_id)
