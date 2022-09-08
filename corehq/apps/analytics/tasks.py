@@ -25,6 +25,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     generate_monthly_submissions_statistics,
     send_partner_emails,
 )
+from corehq.celery_monitoring.decorators import tag_with_no_domain
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from dimagi.utils.dates import add_months_to_date
@@ -287,6 +288,7 @@ def _send_hubspot_form_request(hubspot_id, form_id, data):
 
 
 @analytics_task()
+@tag_with_no_domain
 def update_hubspot_properties(webuser_id, properties):
     webuser = WebUser.get_by_user_id(webuser_id)
     vid = _get_user_hubspot_id(webuser)

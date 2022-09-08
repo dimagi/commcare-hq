@@ -142,6 +142,8 @@ class TimeToRunTimer(CeleryTimer):
 
 
 def get_domain_from_task(task, args, kwargs):
+    if getattr(task, '_tag_with_no_domain', False):
+        return '_no_domain'
     undecorated_task_function = inspect.unwrap(task)
     call_args = inspect.getcallargs(undecorated_task_function, *args, **kwargs)
     if 'domain' in call_args:
