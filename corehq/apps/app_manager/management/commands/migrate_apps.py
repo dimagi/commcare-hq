@@ -16,43 +16,42 @@ class Command(BaseCommand):
     def handle(self, **options):
         domains = sorted(SYNC_SEARCH_CASE_CLAIM.get_enabled_domains())
         for domain in domains:
-            app_ids = get_all_app_ids(domain)  # , include_builds=True)
+            app_ids = get_all_app_ids(domain)
             total_apps = len(app_ids)
             for i, app_id in enumerate(app_ids):
                 self.progress_bar(domain, i, total_apps)
-
                 current_app = Application.get(app_id)
-                self.migrate(current_app)
                 try:
+                    self.migrate(current_app)
                     errors = current_app.validate_app()
                     if errors:
-                        # do something here with unvalidated app
                         continue
                 except XMLSyntaxError:
                     pass
-                # current_app.save()
+                current_app.save()
 
-    def needs_to_be_migrated(self, version):
+    def _needs_to_be_migrated(self, version):
         major, minor, patch = [int(x) for x in version.split('.')]
         return major >= 2 and minor >= 53
 
     def migrate(self, app):
-        if not self.needs_to_be_migrated(app['build_spec'].version):
-            return
+        if not self._needs_to_be_migrated(app['build_spec'].version):
+            return False
         try:
             translations = app.translations
             for module in app.modules:
-                search_config = getattr(module, 'search_config')
-                default_label_dict = getattr(search_config, 'title_label')
-                label_dict = {lang: label.get('case.search.title')
-                    for lang, label in translations.items() if label and not default_label_dict[lang]}
-                label_dict.update(default_label_dict)
-                print(f"Old: {default_label_dict}")
-                print(f"New: {label_dict}")
-                # setattr(search_config, 'title_label', label_dict)
+                self._migrate_module(translations, module)
         except (ResourceNotFound, AttributeError):
             pass
-        return
+        return True
+
+    def _migrate_module(self, translations, module):
+        search_config = getattr(module, 'search_config')
+        default_label_dict = getattr(search_config, 'title_label')
+        label_dict = {lang: label.get('case.search.title')
+            for lang, label in translations.items() if label and not default_label_dict[lang]}
+        label_dict.update(default_label_dict)
+        setattr(search_config, 'title_label', label_dict)
 
     def progress_bar(self, domain, current, total):
         print("   Migrating apps in %s %d/%d [%-20s] %d%%" %
