@@ -87,4 +87,5 @@ branches:
     - jm/userrole-audit  # Joel Sep 6
     - bmb/okta-idp  # Biyeun Sep 7
     - ad/embed-tab-report-by-user # Addison Sep 7
+    - akj/ucr-copy-npi # Akash Sep 8
 submodules: { }
