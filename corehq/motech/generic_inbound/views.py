@@ -10,6 +10,8 @@ from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.hqcase.api.core import UserError, SubmissionError, serialize_case
+from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
@@ -148,11 +150,38 @@ def generic_inbound_api(request, domain, api_id):
     except BadSpecError as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-    response = _execute_case_api(data)
+    try:
+        response = _execute_case_api(request, data)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except SubmissionError as e:
+        return JsonResponse({
+            'error': str(e),
+            'form_id': e.form_id,
+        }, status=400)
 
     return JsonResponse(response)
 
 
-def _execute_case_api(data):
-    # TODO: call hqcase API
-    return data
+def _execute_case_api(request, data):
+    if not isinstance(data, list):
+        # the bulk API always requires a list
+        data = [data]
+
+    xform, case_or_cases = handle_case_update(
+        domain=request.domain,
+        data=data,
+        user=request.couch_user,
+        device_id=request.META.get('HTTP_USER_AGENT'),
+        is_creation=None,
+    )
+
+    if isinstance(case_or_cases, list):
+        return {
+            'form_id': xform.form_id,
+            'cases': [serialize_case(case) for case in case_or_cases],
+        }
+    return {
+        'form_id': xform.form_id,
+        'case': serialize_case(case_or_cases),
+    }

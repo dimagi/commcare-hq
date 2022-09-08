@@ -27,14 +27,22 @@ class TestGenericInboundAPI(TestCase):
             definition={
                 'type': 'dict',
                 'properties': {
+                    'create': True,
                     'case_type': 'sport',
                     'case_name': {
                         'type': 'jsonpath',
                         'jsonpath': 'body.name',
                     },
-                    'is_team_sport': {
-                        'type': 'jsonpath',
-                        'jsonpath': 'body.is_team_sport'
+                    'owner_id': 'abc',
+                    'properties': {
+                        'type': 'dict',
+                        'properties': {
+                            'is_team_sport': {
+                                'type': 'jsonpath',
+                                'jsonpath': 'body.is_team_sport',
+                                'datatype': 'string',
+                            }
+                        }
                     }
                 }
             },
@@ -65,5 +73,5 @@ class TestGenericInboundAPI(TestCase):
             self.url, data=data, content_type="application/json",
             HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {'case_type': 'sport', 'case_name': 'cricket', 'is_team_sport': True})
+        self.assertEqual(response.status_code, 200, response.json())
+        self.assertItemsEqual(response.json().keys(), ['cases', 'form_id'])
