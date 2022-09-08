@@ -10,13 +10,8 @@ from wsgiref.simple_server import make_server
 from prometheus_client import CollectorRegistry, make_wsgi_app, multiprocess
 from prometheus_client.exposition import _SilentHandler
 
-multiproc_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
-if not multiproc_dir and os.environ.get("prometheus_multiproc_dir"):
-    multiproc_dir = os.environ.get("prometheus_multiproc_dir")
-    print(
-        "DEPRECATED: the environment variable 'prometheus_multiproc_dir' has been replaced by "
-        "'PROMETHEUS_MULTIPROC_DIR'. Please update your environment accordingly.")
-
+# DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
+multiproc_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR") or os.environ.get("prometheus_multiproc_dir")
 if not multiproc_dir:
     raise Exception("Environment variable 'PROMETHEUS_MULTIPROC_DIR' is not set")
 
