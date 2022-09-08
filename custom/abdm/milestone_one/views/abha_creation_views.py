@@ -2,7 +2,9 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.status import (HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK)
+from rest_framework.status import (
+    HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_200_OK, HTTP_503_SERVICE_UNAVAILABLE
+)
 from rest_framework.response import Response
 
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
@@ -38,8 +40,7 @@ def generate_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     mobile_number = request.data.get("mobile_number")
     if not txn_id or not mobile_number:
-        return Response({'error': "Missing required data - txn_id and mobile_number"},
-                        status=HTTP_400_BAD_REQUEST)
+        return Response({'error': "Missing required data - txn_id and mobile_number"}, status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.generate_mobile_otp(mobile_number, txn_id)
     return Response(resp, status=HTTP_200_OK)
 
@@ -65,6 +66,8 @@ def verify_mobile_otp(request):
     resp = abdm_util.verify_mobile_otp(otp, txn_id)
     if resp and "txnId" in resp:
         resp = abdm_util.create_health_id(txn_id)
+        resp.pop("token")
+        resp.pop("refreshToken")
     else:
-        return Response({"error": "Error during mobile verification."})
+        return Response(resp, status=HTTP_503_SERVICE_UNAVAILABLE)
     return Response(resp, status=HTTP_200_OK)
