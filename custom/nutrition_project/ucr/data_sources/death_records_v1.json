@@ -2,11 +2,11 @@
   "domains": [
     "india-nutrition-project",
     "mh-mis-staging",
-    "nutrition-project-5",
+    "nutrition-project-5"
   ],
   "server_environment": [
     "india",
-    "staging",
+    "staging"
   ],
   "config": {
     "table_id": "static-death_records_v1",
