@@ -28,10 +28,11 @@ def get_context_from_request(request):
     else:
         raise GenericInboundUserError(_("Unknown user type"))
 
+    query = dict(request.GET.lists())
     return get_evaluation_context(
         restore_user,
         request.method,
-        request.META['QUERY_STRING'],
+        query,
         dict(request.headers),
         body
     )
@@ -39,9 +40,11 @@ def get_context_from_request(request):
 
 def get_evaluation_context(restore_user, method, query, headers, body):
     return EvaluationContext({
-        'request_method': method,
-        'request_query': query,
-        'request_headers': headers,
+        'request': {
+            'method': method,
+            'query': query,
+            'headers': headers
+        },
         'body': body,
         'user': get_registration_element_data(restore_user)
     })
