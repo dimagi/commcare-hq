@@ -26,6 +26,8 @@ def login(request):
 @permission_classes((IsAuthenticated,))
 def generate_aadhaar_otp(request):
     aadhaar_number = request.data.get("aadhaar")
+    if not aadhaar_number:
+        return Response({'error': 'Missing required data - aadhaar'}, status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.generate_aadhar_otp(aadhaar_number)
     return Response(resp, status=HTTP_200_OK)
 
@@ -36,7 +38,8 @@ def generate_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     mobile_number = request.data.get("mobile_number")
     if not txn_id or not mobile_number:
-        return Response("Missing required data - transaction id and mobile number", status=HTTP_400_BAD_REQUEST)
+        return Response({'error': "Missing required data - txn_id and mobile_number"},
+                        status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.generate_mobile_otp(mobile_number, txn_id)
     return Response(resp, status=HTTP_200_OK)
 
@@ -47,7 +50,7 @@ def verify_aadhaar_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
     if not txn_id or not otp:
-        return Response("Missing required data - transaction id and OTP", status=HTTP_400_BAD_REQUEST)
+        return Response({'error': "Missing required data - txn_id and otp"}, status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.verify_aadhar_otp(otp, txn_id)
     return Response(resp, status=HTTP_200_OK)
 
@@ -57,5 +60,11 @@ def verify_aadhaar_otp(request):
 def verify_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
+    if not txn_id or not otp:
+        return Response({'error': "Missing required data - txn_id and otp"}, status=HTTP_400_BAD_REQUEST)
     resp = abdm_util.verify_mobile_otp(otp, txn_id)
+    if resp.status_code == 200:
+        resp = abdm_util.create_health_id(txn_id)
+    else:
+        return Response({"error": "Error during mobile verification."})
     return Response(resp, status=HTTP_200_OK)
