@@ -45,6 +45,8 @@ class TestMobileWorkerListView(TestCase):
         self.web_user.is_superuser = True
         self.web_user.save()
 
+        self.role = UserRole.create(self.domain, 'default mobile use role', is_commcare_user_default=True)
+
     def tearDown(self):
         self.project.delete()
         delete_all_users()
@@ -77,6 +79,8 @@ class TestMobileWorkerListView(TestCase):
                 self.domain,
             )
         )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.get_role(self.domain).id, self.role.id)
 
 
 @generate_cases((
