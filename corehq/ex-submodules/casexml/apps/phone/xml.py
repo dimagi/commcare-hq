@@ -117,7 +117,7 @@ def get_registration_element(restore_user):
         if isinstance(value, str):
             root.append(safe_element(key, value))
         elif isinstance(value, dict):
-            root.append(get_data_element('user_data', restore_user.user_session_data))
+            root.append(get_data_element(key, restore_user.user_session_data))
         else:
             raise RestoreException(f"Unexpected data type: {type(value)} ({value})")
     return root
