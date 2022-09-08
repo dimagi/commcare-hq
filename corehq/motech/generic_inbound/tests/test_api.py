@@ -7,6 +7,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import HQApiKey, WebUser
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.generic_inbound.models import ConfigurableAPI
 
 
@@ -59,6 +60,10 @@ class TestGenericInboundAPI(TestCase):
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
         cls.url = reverse('generic_inbound_api', args=[cls.domain_name, cls.generic_api.url_key])
+
+    @classmethod
+    def tearDownClass(cls):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
 
     def test_post_denied(self):
         response = self.client.post(self.url, data={})
