@@ -62,7 +62,7 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         case = self.factory.create_case()
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2)
         )
         payload_string = restore_config.get_payload().as_string()
@@ -77,7 +77,7 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         case2 = self.factory.create_case(case_name='case2')
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2),
         )
         payload_string = restore_config.get_payload().as_string()
@@ -104,10 +104,10 @@ class LoadtestUserTest(TestCase, DomainSubscriptionMixin):
         )
         restore_config = RestoreConfig(
             project=self.domain,
-            restore_user=self.user.to_ota_restore_user(),
+            restore_user=self.user.to_ota_restore_user(self.domain.name),
             params=RestoreParams(version=V2)
         )
-        payload_string = restore_config.get_payload().as_string()
+        payload_string = restore_config.get_payload().as_string(self.domain)
         caseblocks = extract_caseblocks_from_xml(payload_string)
         self.assertEqual(6, len(caseblocks))
         self.assertEqual(1, len([cb for cb in caseblocks
