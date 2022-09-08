@@ -20,7 +20,6 @@ from corehq.apps.hqadmin.views.system import (
     system_ajax,
 )
 from corehq.apps.hqadmin.views.users import (
-    AdminRestoreView,
     DisableTwoFactorView,
     DisableUserView,
     DomainAdminRestoreView,
