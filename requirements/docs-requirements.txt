@@ -582,6 +582,8 @@ xlrd==2.0.1
     # via -r base-requirements.in
 xlwt==1.3.0
     # via -r base-requirements.in
+zipp==3.7.0
+    # via importlib-metadata
 zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0
