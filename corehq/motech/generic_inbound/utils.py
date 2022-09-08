@@ -40,8 +40,8 @@ def get_context_from_request(request):
 def get_evaluation_context(restore_user, method, query, headers, body):
     return EvaluationContext({
         'request_method': method,
-        'query': query,
-        'headers': headers,
+        'request_query': query,
+        'request_headers': headers,
         'body': body,
         'user': get_registration_element_data(restore_user)
     })
