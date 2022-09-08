@@ -11,7 +11,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.generic_inbound.models import ConfigurableAPI
 
 
-class TestGenericInboundAPI(TestCase):
+class TestGenericInboundAPIView(TestCase):
     domain_name = 'ucr-api-test'
 
     @classmethod
