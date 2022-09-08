@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "india",
-    "staging"
+    "production"
   ],
   "report_id": "static-deaths_v1",
   "data_source_table": "static-death_records_v1",

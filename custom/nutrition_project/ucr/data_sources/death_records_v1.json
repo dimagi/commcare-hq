@@ -6,7 +6,7 @@
   ],
   "server_environment": [
     "india",
-    "staging"
+    "production"
   ],
   "config": {
     "table_id": "static-death_records_v1",
