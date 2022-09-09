@@ -213,12 +213,12 @@ class AdminRestoreView(TemplateView):
             full_username = format_username(username, self.domain)
             self.user = CommCareUser.get_by_username(full_username)
 
-        if self.user.is_web_user and not self.domain:
-            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
-            return HttpResponseBadRequest(msg)
-
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
+
+        if self.user.is_web_user() and not self.domain:
+            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
 
         if not self._validate_user_access(self.user):
             raise Http404()
@@ -353,7 +353,7 @@ class DomainAdminRestoreView(AdminRestoreView):
         return super(DomainAdminRestoreView, self).get(request, **kwargs)
 
     def _validate_user_access(self, user):
-        return self.domain == user.domain
+        return user.is_member_of(self.domain) if user.is_web_user() else self.domain == user.domain
 
 
 @require_superuser
