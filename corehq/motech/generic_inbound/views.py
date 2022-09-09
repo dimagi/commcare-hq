@@ -126,8 +126,8 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         if form.is_valid():
             form.save()
             messages.success(request, _("API Configuration updated successfully."))
-        return redirect(self.page_url, domain, self.api_id)
-
+            return redirect(self.urlname, self.domain, self.api_id)
+        return self.get(request, self.domain, **kwargs)
 
 @json_error
 @api_auth
