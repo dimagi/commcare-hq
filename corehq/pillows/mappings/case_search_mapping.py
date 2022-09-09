@@ -52,6 +52,10 @@ CASE_SEARCH_MAPPING = {
                         "numeric": {
                             "ignore_malformed": True,
                             "type": "double"
+                        },
+                        "phonetic": {
+                            "analyzer": "phonetic",
+                            "type": "string"
                         }
                     },
                     "null_value": "",
