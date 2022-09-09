@@ -87,5 +87,4 @@ branches:
     - jm/userrole-audit  # Joel Sep 6
     - bmb/okta-idp  # Biyeun Sep 7
     - ad/embed-tab-report-by-user # Addison Sep 7
-    - dependabot/pip/requirements/sentry-sdk-1.9.0 # Graham Sep 8
 submodules: { }
