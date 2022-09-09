@@ -2050,7 +2050,7 @@ def _get_integration_section(domain, couch_user):
     if toggles.GENERIC_INBOUND_API.enabled(domain):
         from corehq.motech.generic_inbound.views import ConfigurableAPIListView
         integration.append({
-            'title': _(ConfigurableAPIListView.page_title),
+            'title': ConfigurableAPIListView.page_title,
             'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
         })
 
