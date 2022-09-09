@@ -19,7 +19,7 @@ class Command(BaseCommand):
             app_ids = get_all_app_ids(domain)
             total_apps = len(app_ids)
             for i, app_id in enumerate(app_ids):
-                self.progress_bar(domain, i, total_apps)
+                # self.progress_bar(domain, i, total_apps)
                 current_app = Application.get(app_id)
                 try:
                     self.migrate(current_app)
@@ -47,15 +47,15 @@ class Command(BaseCommand):
 
     def _migrate_module(self, translations, module):
         search_config = getattr(module, 'search_config')
-        default_label_dict = getattr(search_config, 'title_label')
-        label_dict = {lang: label.get('case.search.title')
-            for lang, label in translations.items() if label and not default_label_dict[lang]}
-        label_dict.update(default_label_dict)
-        setattr(search_config, 'title_label', label_dict)
+        print(search_config.title_label)
+        # label_dict = {lang: label.get('case.search.title')
+        #     for lang, label in translations.items() if label and not default_label_dict[lang]}
+        # label_dict.update(default_label_dict)
+        # setattr(search_config, 'title_label', label_dict)
 
-    def progress_bar(self, domain, current, total):
-        print("   Migrating apps in %s %d/%d [%-20s] %d%%" %
-            (domain, current + 1, total,
-            '=' * int((20 * (current / total))),
-            (current / total) * 100), end="\r")
-        print()  # prevents the progress bar from deleting from the console, needed for debugging
+    # def progress_bar(self, domain, current, total):
+    #     print("   Migrating apps in %s %d/%d [%-20s] %d%%" %
+    #         (domain, current + 1, total,
+    #         '=' * int((20 * (current / total))),
+    #         (current / total) * 100), end="\r")
+    #     print()  # prevents the progress bar from deleting from the console, needed for debugging
