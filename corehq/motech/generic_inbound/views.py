@@ -129,6 +129,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
             return redirect(self.urlname, self.domain, self.api_id)
         return self.get(request, self.domain, **kwargs)
 
+
 @json_error
 @api_auth
 @api_throttle
