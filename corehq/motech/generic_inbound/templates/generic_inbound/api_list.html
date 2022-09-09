@@ -4,9 +4,7 @@
 
 {% requirejs_main "generic_inbound/js/api_list" %}
 
-{% block pagination_header %}
-  <h3>{% trans 'Manage Generic Inbound APIs' %}</h3>
-{% endblock %}
+{% block page_title %}{{ current_page.title }}{% endblock %}
 
 {% block pagination_templates %}
 <script type="text/html" id="base-api-config-template">

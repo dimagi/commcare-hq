@@ -24,7 +24,7 @@ from corehq.util.view_utils import json_error
 
 
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
-    page_title = gettext_lazy("API Configurations")
+    page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
     template_name = "generic_inbound/api_list.html"
     create_item_form_class = "form form-horizontal"
@@ -117,6 +117,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
         main_context.update({
             "form": self.get_form(),
             "api_model": self.api,
+            "page_title": self.page_title
         })
         return main_context
 
