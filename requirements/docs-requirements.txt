@@ -455,7 +455,7 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
-sentry-sdk==1.9.8
+sentry-sdk==1.9.0
     # via -r base-requirements.in
 sh==1.14.2
     # via -r base-requirements.in
@@ -557,7 +557,7 @@ unidecode==1.2.0
     # via pyphonetics
 uritemplate==4.1.1
     # via google-api-python-client
-urllib3==1.26.12
+urllib3==1.26.5
     # via
     #   botocore
     #   elasticsearch2
