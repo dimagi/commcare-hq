@@ -580,343 +580,32 @@ class ProjectDataTab(UITab):
         # Please remove this flag when this method no longer triggers an 'E' or 'F'
         # classification from the radon code static analysis
 
+        export_data_header, export_data_views = self.export_data_views
+        explore_data_header, explore_data_section = self.explore_data_views
+        edit_data_header, edit_data_section = self.edit_data_views
+        lookup_tables_header, lookup_tables_section = self.lookup_tables_views
+        data_dictionary_header, data_dictionary_section = self.data_dictionary_views
+        data_manipulation_header, data_manipulation_section = self.data_manipulation_views
+
         items = []
-
-        export_data_views = []
-        if self.can_only_see_deid_exports:
-            from corehq.apps.export.views.list import (
-                DeIdFormExportListView,
-                DeIdDailySavedExportListView,
-                DeIdDashboardFeedListView,
-                ODataFeedListView,
-            )
-            export_data_views.append({
-                'title': _(DeIdFormExportListView.page_title),
-                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
-            })
-            export_data_views.extend([
-                {
-                    'title': _(DeIdDailySavedExportListView.page_title),
-                    'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
-                },
-                {
-                    'title': _(DeIdDashboardFeedListView.page_title),
-                    'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
-                },
-            ])
-
-            if self.can_view_odata_feed:
-                export_data_views.append({
-                    'title': _(ODataFeedListView.page_title),
-                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
-                })
-
-        elif self.can_export_data:
-            from corehq.apps.export.views.download import (
-                DownloadNewFormExportView,
-                DownloadNewCaseExportView,
-                DownloadNewSmsExportView,
-                BulkDownloadNewFormExportView,
-            )
-            from corehq.apps.export.views.edit import (
-                EditCaseDailySavedExportView,
-                EditCaseFeedView,
-                EditODataCaseFeedView,
-                EditODataFormFeedView,
-                EditFormDailySavedExportView,
-                EditFormFeedView,
-                EditNewCustomCaseExportView,
-                EditNewCustomFormExportView,
-            )
-            from corehq.apps.export.views.list import (
-                FormExportListView,
-                CaseExportListView,
-                DashboardFeedListView,
-                DailySavedExportListView,
-                ODataFeedListView,
-            )
-            from corehq.apps.export.views.new import (
-                CreateNewCustomFormExportView,
-                CreateNewCustomCaseExportView,
-                CreateNewDailySavedFormExport,
-                CreateNewDailySavedCaseExport,
-                CreateNewFormFeedView,
-                CreateNewCaseFeedView,
-                CreateODataCaseFeedView,
-                CreateODataFormFeedView,
-            )
-            from corehq.apps.export.views.utils import (
-                DashboardFeedPaywall,
-                DailySavedExportPaywall
-            )
-
-            if self.can_view_form_exports:
-                export_data_views.append(
-                    {
-                        'title': _(FormExportListView.page_title),
-                        'url': reverse(FormExportListView.urlname,
-                                       args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-list-alt fa fa-list-alt',
-                        'subpages': [_f for _f in [
-                            {
-                                'title': _(CreateNewCustomFormExportView.page_title),
-                                'urlname': CreateNewCustomFormExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': _(BulkDownloadNewFormExportView.page_title),
-                                'urlname': BulkDownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(DownloadNewFormExportView.page_title),
-                                'urlname': DownloadNewFormExportView.urlname,
-                            },
-                            {
-                                'title': _(EditNewCustomFormExportView.page_title),
-                                'urlname': EditNewCustomFormExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                        ] if _f]
-                    }
-                )
-            if self.can_view_case_exports:
-                export_data_views.extend([
-                    {
-                        'title': _(CaseExportListView.page_title),
-                        'url': reverse(CaseExportListView.urlname,
-                                       args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
-                        'subpages': [_f for _f in [
-                            {
-                                'title': _(CreateNewCustomCaseExportView.page_title),
-                                'urlname': CreateNewCustomCaseExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                            {
-                                'title': _(DownloadNewCaseExportView.page_title),
-                                'urlname': DownloadNewCaseExportView.urlname,
-                            },
-                            {
-                                'title': _(EditNewCustomCaseExportView.page_title),
-                                'urlname': EditNewCustomCaseExportView.urlname,
-                            } if self.can_edit_commcare_data else None,
-                        ] if _f]
-                    },
-                ])
-            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
-                export_data_views.append(
-                    {
-                        'title': _(IncrementalExportView.page_title),
-                        'url': reverse(IncrementalExportView.urlname,
-                                       args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-share-square-o',
-                        'subpages': []
-                    }
-                )
-
-            if self.can_view_sms_exports:
-                export_data_views.append(
-                    {
-                        'title': _(DownloadNewSmsExportView.page_title),
-                        'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
-                        'show_in_dropdown': True,
-                        'icon': 'icon icon-share fa fa-commenting-o',
-                        'subpages': []
-                    })
-
-            if self.can_view_form_exports or self.can_view_case_exports:
-                export_data_views.append({
-                    'title': _('Find Data by ID'),
-                    'url': reverse('data_find_by_id', args=[self.domain]),
-                    'icon': 'fa fa-search',
-                })
-
-            if self.should_see_daily_saved_export_list_view:
-                export_data_views.append({
-                    "title": _(DailySavedExportListView.page_title),
-                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
-                    "show_in_dropdown": True,
-                    "subpages": [_f for _f in [
-                        {
-                            'title': _(CreateNewDailySavedFormExport.page_title),
-                            'urlname': CreateNewDailySavedFormExport.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': _(CreateNewDailySavedCaseExport.page_title),
-                            'urlname': CreateNewDailySavedCaseExport.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': _(EditFormDailySavedExportView.page_title),
-                            'urlname': EditFormDailySavedExportView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                        {
-                            'title': _(EditCaseDailySavedExportView.page_title),
-                            'urlname': EditCaseDailySavedExportView.urlname,
-                        } if self.can_edit_commcare_data else None,
-                    ] if _f]
-                })
-            elif self.should_see_daily_saved_export_paywall:
-                export_data_views.append({
-                    'title': _(DailySavedExportListView.page_title),
-                    'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-calendar',
-                    'show_in_dropdown': True,
-                    'subpages': []
-                })
-            if self.should_see_dashboard_feed_list_view:
-                subpages = []
-                if self.can_edit_commcare_data:
-                    subpages = [
-                        {
-                            'title': _(CreateNewFormFeedView.page_title),
-                            'urlname': CreateNewFormFeedView.urlname,
-                        },
-                        {
-                            'title': _(CreateNewCaseFeedView.page_title),
-                            'urlname': CreateNewCaseFeedView.urlname,
-                        },
-                        {
-                            'title': _(EditFormFeedView.page_title),
-                            'urlname': EditFormFeedView.urlname,
-                        },
-                        {
-                            'title': _(EditCaseFeedView.page_title),
-                            'urlname': EditCaseFeedView.urlname,
-                        },
-                    ]
-                export_data_views.append({
-                    'title': _(DashboardFeedListView.page_title),
-                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
-                    'show_in_dropdown': True,
-                    'subpages': subpages
-                })
-            elif self.should_see_dashboard_feed_paywall:
-                export_data_views.append({
-                    'title': _(DashboardFeedListView.page_title),
-                    'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-dashboard',
-                    'show_in_dropdown': True,
-                    'subpages': []
-                })
-            if self.can_view_odata_feed:
-                subpages = [
-                    {
-                        'title': _(CreateODataCaseFeedView.page_title),
-                        'urlname': CreateODataCaseFeedView.urlname,
-                    },
-                    {
-                        'title': _(EditODataCaseFeedView.page_title),
-                        'urlname': EditODataCaseFeedView.urlname,
-                    },
-                    {
-                        'title': _(CreateODataFormFeedView.page_title),
-                        'urlname': CreateODataFormFeedView.urlname,
-                    },
-                    {
-                        'title': _(EditODataFormFeedView.page_title),
-                        'urlname': EditODataFormFeedView.urlname,
-                    },
-                ]
-                export_data_views.append({
-                    'title': _(ODataFeedListView.page_title),
-                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-plug',
-                    'show_in_dropdown': False,
-                    'subpages': subpages
-                })
-
-        if can_download_data_files(self.domain, self.couch_user):
-            from corehq.apps.export.views.utils import DataFileDownloadList
-
-            export_data_views.append({
-                'title': _(DataFileDownloadList.page_title),
-                'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                'icon': 'fa fa-file-text-o',
-                'show_in_dropdown': True,
-                'subpages': []
-            })
-
         if export_data_views:
-            items.append([_("Export Data"), export_data_views])
+            items.append([export_data_header, export_data_views])
 
-        if self.can_edit_commcare_data:
-            edit_section = None
-            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
-            edit_section = EditDataInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain)
+        if explore_data_section:
+            items.append([explore_data_header, explore_data_section])
 
-            if self.can_use_data_cleanup:
-                from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
-                automatic_update_rule_list_view = {
-                    'title': _(AutomaticUpdateRuleListView.page_title),
-                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
-                }
-                if edit_section:
-                    edit_section[0][1].append(automatic_update_rule_list_view)
-                else:
-                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+        if edit_data_section:
+            items.append([edit_data_header, edit_data_section])
 
-            if self.can_deduplicate_cases:
-                from corehq.apps.data_interfaces.views import DeduplicationRuleListView
-                deduplication_list_view = {
-                    'title': _(DeduplicationRuleListView.page_title),
-                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
-                }
-                edit_section[0][1].append(deduplication_list_view)
+        if lookup_tables_section:
+            items.append([lookup_tables_header, lookup_tables_section])
 
-            items.extend(edit_section)
+        if data_dictionary_section:
+            items.append([data_dictionary_header, data_dictionary_section])
 
+        if data_manipulation_section:
+            items.append([data_manipulation_header, data_manipulation_section])
 
-        explore_data_views = []
-        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
-             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
-            from corehq.apps.data_interfaces.views import ExploreCaseDataView
-            explore_data_views.append({
-                'title': _(ExploreCaseDataView.page_title),
-                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
-                'show_in_dropdown': False,
-                'icon': 'fa fa-map-marker',
-                'subpages': [],
-            })
-        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
-            from corehq.apps.case_search.models import case_search_enabled_for_domain
-            if case_search_enabled_for_domain(self.domain):
-                from corehq.apps.case_search.views import CaseSearchView
-                explore_data_views.append({
-                    'title': _(CaseSearchView.page_title),
-                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
-                    'icon': 'fa fa-search',
-                    'show_in_dropdown': False,
-                    'subpages': [],
-                })
-        if explore_data_views:
-            items.append([_("Explore Data"), explore_data_views])
-
-        if self.can_use_lookup_tables:
-            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-            items.extend(FixtureInterfaceDispatcher.navigation_sections(
-                request=self._request, domain=self.domain))
-
-        if toggles.DATA_DICTIONARY.enabled(self.domain):
-            items.append([_('Data Dictionary'),
-                          [{'title': 'Data Dictionary',
-                            'url': reverse('data_dictionary', args=[self.domain])}]])
-
-        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
-            from corehq.apps.userreports.views import UCRExpressionListView
-            items.append(
-                [
-                    _("Data Manipulation"),
-                    [
-                        {
-                            "title": _("Filters and Expressions"),
-                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
-                        },
-                    ]
-                ]
-            )
         return items
 
     @property
@@ -968,6 +657,359 @@ class ProjectDataTab(UITab):
             items += [self.divider]
         items += [dropdown_dict(_("View All"), url=self.url)]
         return items
+
+    @property
+    def data_manipulation_views(self):
+        views = []
+        if toggles.UCR_EXPRESSION_REGISTRY.enabled(self.domain):
+            from corehq.apps.userreports.views import UCRExpressionListView
+            views.append(
+                    [
+                        {
+                            "title": _("Filters and Expressions"),
+                            "url": reverse(UCRExpressionListView.urlname, args=[self.domain]),
+                        },
+                    ]
+            )
+        return _("Data Manipulation"), views
+
+    @property
+    def edit_data_views(self):
+        items = []
+        if self.can_edit_commcare_data:
+            edit_section = None
+            from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
+            edit_section = EditDataInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)
+
+            if self.can_use_data_cleanup:
+                from corehq.apps.data_interfaces.views import AutomaticUpdateRuleListView
+                automatic_update_rule_list_view = {
+                    'title': _(AutomaticUpdateRuleListView.page_title),
+                    'url': reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]),
+                }
+                if edit_section:
+                    edit_section[0][1].append(automatic_update_rule_list_view)
+                else:
+                    edit_section = [(gettext_lazy('Edit Data'), [automatic_update_rule_list_view])]
+
+            if self.can_deduplicate_cases:
+                from corehq.apps.data_interfaces.views import DeduplicationRuleListView
+                deduplication_list_view = {
+                    'title': _(DeduplicationRuleListView.page_title),
+                    'url': reverse(DeduplicationRuleListView.urlname, args=[self.domain]),
+                }
+                edit_section[0][1].append(deduplication_list_view)
+
+            items.extend(edit_section)
+
+        header = items[0][0]
+        views = items[0][1]
+
+        return header, views
+
+    @property
+    def data_dictionary_views(self):
+        views = []
+        if toggles.DATA_DICTIONARY.enabled(self.domain):
+            views.append([{'title': 'Data Dictionary',
+                            'url': reverse('data_dictionary', args=[self.domain])}])
+        return _('Data Dictionary'), views
+
+    @property
+    def lookup_tables_views(self):
+        if self.can_use_lookup_tables:
+            from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
+            return FixtureInterfaceDispatcher.navigation_sections(
+                request=self._request, domain=self.domain)[0]
+
+    @property
+    def export_data_views(self):
+        views = []
+        if self.can_only_see_deid_exports:
+            from corehq.apps.export.views.list import (
+                DeIdFormExportListView,
+                DeIdDailySavedExportListView,
+                DeIdDashboardFeedListView,
+                ODataFeedListView,
+            )
+            views.append({
+                'title': _(DeIdFormExportListView.page_title),
+                'url': reverse(DeIdFormExportListView.urlname, args=(self.domain,)),
+            })
+            views.extend([
+                {
+                    'title': _(DeIdDailySavedExportListView.page_title),
+                    'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _(DeIdDashboardFeedListView.page_title),
+                    'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                },
+            ])
+
+            if self.can_view_odata_feed:
+                views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                })
+
+        elif self.can_export_data:
+            from corehq.apps.export.views.download import (
+                DownloadNewFormExportView,
+                DownloadNewCaseExportView,
+                DownloadNewSmsExportView,
+                BulkDownloadNewFormExportView,
+            )
+            from corehq.apps.export.views.edit import (
+                EditCaseDailySavedExportView,
+                EditCaseFeedView,
+                EditODataCaseFeedView,
+                EditODataFormFeedView,
+                EditFormDailySavedExportView,
+                EditFormFeedView,
+                EditNewCustomCaseExportView,
+                EditNewCustomFormExportView,
+            )
+            from corehq.apps.export.views.list import (
+                FormExportListView,
+                CaseExportListView,
+                DashboardFeedListView,
+                DailySavedExportListView,
+                ODataFeedListView,
+            )
+            from corehq.apps.export.views.new import (
+                CreateNewCustomFormExportView,
+                CreateNewCustomCaseExportView,
+                CreateNewDailySavedFormExport,
+                CreateNewDailySavedCaseExport,
+                CreateNewFormFeedView,
+                CreateNewCaseFeedView,
+                CreateODataCaseFeedView,
+                CreateODataFormFeedView,
+            )
+            from corehq.apps.export.views.utils import (
+                DashboardFeedPaywall,
+                DailySavedExportPaywall
+            )
+
+            if self.can_view_form_exports:
+                views.append(
+                    {
+                        'title': _(FormExportListView.page_title),
+                        'url': reverse(FormExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-list-alt fa fa-list-alt',
+                        'subpages': [_f for _f in [
+                            {
+                                'title': _(CreateNewCustomFormExportView.page_title),
+                                'urlname': CreateNewCustomFormExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': _(BulkDownloadNewFormExportView.page_title),
+                                'urlname': BulkDownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': _(DownloadNewFormExportView.page_title),
+                                'urlname': DownloadNewFormExportView.urlname,
+                            },
+                            {
+                                'title': _(EditNewCustomFormExportView.page_title),
+                                'urlname': EditNewCustomFormExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ] if _f]
+                    }
+                )
+            if self.can_view_case_exports:
+                views.extend([
+                    {
+                        'title': _(CaseExportListView.page_title),
+                        'url': reverse(CaseExportListView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': [_f for _f in [
+                            {
+                                'title': _(CreateNewCustomCaseExportView.page_title),
+                                'urlname': CreateNewCustomCaseExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                            {
+                                'title': _(DownloadNewCaseExportView.page_title),
+                                'urlname': DownloadNewCaseExportView.urlname,
+                            },
+                            {
+                                'title': _(EditNewCustomCaseExportView.page_title),
+                                'urlname': EditNewCustomCaseExportView.urlname,
+                            } if self.can_edit_commcare_data else None,
+                        ] if _f]
+                    },
+                ])
+            if toggles.INCREMENTAL_EXPORTS.enabled(self.domain):
+                views.append(
+                    {
+                        'title': _(IncrementalExportView.page_title),
+                        'url': reverse(IncrementalExportView.urlname,
+                                       args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-share-square-o',
+                        'subpages': []
+                    }
+                )
+
+            if self.can_view_sms_exports:
+                views.append(
+                    {
+                        'title': _(DownloadNewSmsExportView.page_title),
+                        'url': reverse(DownloadNewSmsExportView.urlname, args=(self.domain,)),
+                        'show_in_dropdown': True,
+                        'icon': 'icon icon-share fa fa-commenting-o',
+                        'subpages': []
+                    })
+
+            if self.can_view_form_exports or self.can_view_case_exports:
+                views.append({
+                    'title': _('Find Data by ID'),
+                    'url': reverse('data_find_by_id', args=[self.domain]),
+                    'icon': 'fa fa-search',
+                })
+
+            if self.should_see_daily_saved_export_list_view:
+                views.append({
+                    "title": _(DailySavedExportListView.page_title),
+                    "url": reverse(DailySavedExportListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
+                    "show_in_dropdown": True,
+                    "subpages": [_f for _f in [
+                        {
+                            'title': _(CreateNewDailySavedFormExport.page_title),
+                            'urlname': CreateNewDailySavedFormExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': _(CreateNewDailySavedCaseExport.page_title),
+                            'urlname': CreateNewDailySavedCaseExport.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': _(EditFormDailySavedExportView.page_title),
+                            'urlname': EditFormDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                        {
+                            'title': _(EditCaseDailySavedExportView.page_title),
+                            'urlname': EditCaseDailySavedExportView.urlname,
+                        } if self.can_edit_commcare_data else None,
+                    ] if _f]
+                })
+            elif self.should_see_daily_saved_export_paywall:
+                views.append({
+                    'title': _(DailySavedExportListView.page_title),
+                    'url': reverse(DailySavedExportPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-calendar',
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
+
+            if self.should_see_dashboard_feed_list_view:
+                subpages = []
+                if self.can_edit_commcare_data:
+                    subpages = [
+                        {
+                            'title': _(CreateNewFormFeedView.page_title),
+                            'urlname': CreateNewFormFeedView.urlname,
+                        },
+                        {
+                            'title': _(CreateNewCaseFeedView.page_title),
+                            'urlname': CreateNewCaseFeedView.urlname,
+                        },
+                        {
+                            'title': _(EditFormFeedView.page_title),
+                            'urlname': EditFormFeedView.urlname,
+                        },
+                        {
+                            'title': _(EditCaseFeedView.page_title),
+                            'urlname': EditCaseFeedView.urlname,
+                        },
+                    ]
+                views.append({
+                    'title': _(DashboardFeedListView.page_title),
+                    'url': reverse(DashboardFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
+                    'show_in_dropdown': True,
+                    'subpages': subpages
+                })
+            elif self.should_see_dashboard_feed_paywall:
+                views.append({
+                    'title': _(DashboardFeedListView.page_title),
+                    'url': reverse(DashboardFeedPaywall.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-dashboard',
+                    'show_in_dropdown': True,
+                    'subpages': []
+                })
+
+            if self.can_view_odata_feed:
+                subpages = [
+                    {
+                        'title': _(CreateODataCaseFeedView.page_title),
+                        'urlname': CreateODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataCaseFeedView.page_title),
+                        'urlname': EditODataCaseFeedView.urlname,
+                    },
+                    {
+                        'title': _(CreateODataFormFeedView.page_title),
+                        'urlname': CreateODataFormFeedView.urlname,
+                    },
+                    {
+                        'title': _(EditODataFormFeedView.page_title),
+                        'urlname': EditODataFormFeedView.urlname,
+                    },
+                ]
+                views.append({
+                    'title': _(ODataFeedListView.page_title),
+                    'url': reverse(ODataFeedListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-plug',
+                    'show_in_dropdown': False,
+                    'subpages': subpages
+                })
+
+        if can_download_data_files(self.domain, self.couch_user):
+            from corehq.apps.export.views.utils import DataFileDownloadList
+
+            views.append({
+                'title': _(DataFileDownloadList.page_title),
+                'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
+                'icon': 'fa fa-file-text-o',
+                'show_in_dropdown': True,
+                'subpages': []
+            })
+
+        return _("Export Data"), views
+
+    @property
+    def explore_data_views(self):
+        views = []
+        if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
+             or self.can_view_ecd_preview) and self.can_edit_commcare_data):
+            from corehq.apps.data_interfaces.views import ExploreCaseDataView
+            views.append({
+                'title': _(ExploreCaseDataView.page_title),
+                'url': reverse(ExploreCaseDataView.urlname, args=(self.domain,)),
+                'show_in_dropdown': False,
+                'icon': 'fa fa-map-marker',
+                'subpages': [],
+            })
+        if self.couch_user.is_superuser or toggles.IS_CONTRACTOR.enabled(self.couch_user.username):
+            from corehq.apps.case_search.models import case_search_enabled_for_domain
+            if case_search_enabled_for_domain(self.domain):
+                from corehq.apps.case_search.views import CaseSearchView
+                views.append({
+                    'title': _(CaseSearchView.page_title),
+                    'url': reverse(CaseSearchView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-search',
+                    'show_in_dropdown': False,
+                    'subpages': [],
+                })
+        return _("Explore Data"), views
 
 
 class ApplicationsTab(UITab):
