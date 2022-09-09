@@ -140,6 +140,40 @@ class LookupTableViewsTest(TestCase):
             "e": FieldList(field_list=[]),
         })
 
+    def test_update_table_with_stale_caches(self):
+        table = self.create_lookup_table()
+        row1 = self.create_row(table)
+        row2 = self.create_row(table)
+
+        self.stale_caches(table)
+        data = {
+            'tag': 'a_modified_table',
+            'description': 'A Modified Table',
+            'is_global': False,
+            'fields': {'wing': {'update': 'foot'}},
+        }
+        with self.get_client(data) as client:
+            # should not raise BulkSaveError
+            response = client.put(self.url(data_type_id=table.id.hex), data)
+        self.assertEqual(response.status_code, 200)
+
+        # verify FixtureDataType caches have been reset
+        FixtureDataType = LookupTable._migration_get_couch_model_class()
+        data_types = FixtureDataType.by_domain(self.domain.name)
+        data_types.append(FixtureDataType.get(table._migration_couch_id))
+        for data_type in data_types:
+            self.assertEqual(data_type.tag, "a_modified_table")
+
+        # verify FixtureDataItem caches have been reset
+        FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
+        rows = [
+            FixtureDataItem.get(row1._migration_couch_id),
+            FixtureDataItem.get(row2._migration_couch_id),
+        ]
+        rows.extend(FixtureDataItem.by_data_type(table.domain, table._migration_couch_id))
+        for row in rows:
+            self.assertIn("foot", row.fields)
+
     def test_delete_table_with_stale_caches(self):
         table = self.create_lookup_table()
         row1 = self.create_row(table)

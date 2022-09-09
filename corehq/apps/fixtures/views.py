@@ -170,6 +170,10 @@ def update_tables(request, domain, data_type_id=None):
 
         with CouchTransaction() as transaction:
             if data_type_id:
+                # HACK ensure we get the latest version. Bypass Couch concurrency
+                # protection because caching is hard, and the client does
+                # not specify what version they are updating anyway.
+                data_type.clear_caches()
                 data_type = _update_types(
                     fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
                 _update_items(fields_patches, domain, data_type_id, transaction)
@@ -219,7 +223,7 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
 
 
 def _update_items(fields_patches, domain, data_type_id, transaction):
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
     for item in data_items:
         fields = item.fields
         updated_fields = {}
