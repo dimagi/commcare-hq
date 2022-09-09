@@ -1050,3 +1050,19 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
         return context
+
+
+@location_safe
+class CommCareAnalyticsListView(BaseProjectDataView):
+    urlname = 'commcare_analytics'
+    page_title = gettext_lazy("CommCare Analytics")
+    template_name = 'export/commcare_analytics.html'
+
+    @property
+    def page_context(self):
+        super()
+        analytics_redirect_url = "https://commcare-analytics.dimagi.com/"
+
+        return {
+            "analytics_redirect_url": analytics_redirect_url
+        }

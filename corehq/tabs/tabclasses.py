@@ -652,6 +652,12 @@ class ProjectDataTab(UITab):
                 _(ODataFeedListView.page_title),
                 url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
             ))
+        if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+            from corehq.apps.export.views.list import CommCareAnalyticsListView
+            items.append(dropdown_dict(
+                _(CommCareAnalyticsListView.page_title),
+                reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
+            ))
 
         if items:
             items += [self.divider]
@@ -970,6 +976,16 @@ class ProjectDataTab(UITab):
                     'icon': 'fa fa-plug',
                     'show_in_dropdown': False,
                     'subpages': subpages
+                })
+
+            if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+                from corehq.apps.export.views.list import CommCareAnalyticsListView
+                views.append({
+                    'title': _(CommCareAnalyticsListView.page_title),
+                    'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-bar-chart',
+                    'show_in_dropdown': False,
+                    'subpages': []
                 })
 
         if can_download_data_files(self.domain, self.couch_user):
