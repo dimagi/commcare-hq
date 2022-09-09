@@ -181,7 +181,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/parent_name"
+                            "name_update": {
+                                "question_path": "/data/parent_name"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -206,7 +208,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/children/child_name",
+                                "name_update": {
+                                    "question_path": "/data/children/child_name"
+                                },
                                 "case_properties": {},
                                 "case_type": "child1",
                                 "condition": {
@@ -219,7 +223,9 @@
                                 "repeat_context": "/data/children"
                             },
                             {
-                                "case_name": "/data/children/child_name",
+                                "name_update": {
+                                    "question_path": "/data/children/child_name"
+                                },
                                 "case_properties": {},
                                 "case_type": "child2",
                                 "condition": {
@@ -432,7 +438,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -656,7 +662,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -823,7 +829,7 @@
                 },
                 "doc_type": "OpenCaseAction",
                 "external_id": null,
-                "name_path": null
+                "name_update": null
             },
             "open_referral": {
                 "condition": {
