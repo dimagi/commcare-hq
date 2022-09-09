@@ -827,6 +827,16 @@ class ProjectDataTab(UITab):
                     'subpages': subpages
                 })
 
+            if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+                from corehq.apps.export.views.list import CommCareAnalyticsListView
+                export_data_views.append({
+                    'title': _(CommCareAnalyticsListView.page_title),
+                    'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
+                    'icon': 'fa fa-bar-chart',
+                    'show_in_dropdown': False,
+                    'subpages': []
+                })
+
         if can_download_data_files(self.domain, self.couch_user):
             from corehq.apps.export.views.utils import DataFileDownloadList
 
@@ -867,7 +877,6 @@ class ProjectDataTab(UITab):
                 edit_section[0][1].append(deduplication_list_view)
 
             items.extend(edit_section)
-
 
         explore_data_views = []
         if ((toggles.EXPLORE_CASE_DATA.enabled_for_request(self._request)
@@ -962,6 +971,12 @@ class ProjectDataTab(UITab):
             items.append(dropdown_dict(
                 _(ODataFeedListView.page_title),
                 url=reverse(ODataFeedListView.urlname, args=(self.domain,)),
+            ))
+        if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
+            from corehq.apps.export.views.list import CommCareAnalyticsListView
+            items.append(dropdown_dict(
+                _(CommCareAnalyticsListView.page_title),
+                url=reverse(CommCareAnalyticsListView.urlname, args=(self.domain,))
             ))
 
         if items:
