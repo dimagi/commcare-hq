@@ -190,9 +190,9 @@ class SMSSurveyContent(Content):
     def get_memoized_app_module_form(self, domain):
         try:
             if toggles.SMS_USE_LATEST_DEV_APP.enabled(domain, toggles.NAMESPACE_DOMAIN):
-                app = get_latest_released_app(domain, self.app_id)
-            else:
                 app = get_app(domain, self.app_id)
+            else:
+                app = get_latest_released_app(domain, self.app_id)
             form = app.get_form(self.form_unique_id)
             module = form.get_module()
         except (Http404, FormNotFoundException):
