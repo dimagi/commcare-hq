@@ -266,24 +266,14 @@ class ProjectReportsTab(UITab):
     @property
     def dropdown_items(self):
         items = self._get_saved_reports_dropdown()
-
         reports = sidebar_to_dropdown(
             self._get_tableau_items()
             + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
             current_url=self.url
         )
+        print(reports)
         items.extend(reports)
-
         return items
-
-    def _get_all_sidebar_items_as_dropdown(self):
-        def show(page):
-            page['show_in_dropdown'] = True
-            return page
-        return sidebar_to_dropdown([
-            (header, list(map(show, pages)))
-            for header, pages in self.sidebar_items
-        ])
 
 
 class DashboardTab(UITab):

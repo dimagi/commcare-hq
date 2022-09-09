@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
+from corehq.apps.locations.permissions import location_safe
 
 from no_exceptions.exceptions import Http403
 import requests
@@ -14,6 +15,7 @@ from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.views.base import BaseDomainView
 
 
+@location_safe
 class TableauView(BaseDomainView):
     urlname = 'tableau'
     template_name = 'reports/tableau_template.html'

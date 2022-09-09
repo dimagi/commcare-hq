@@ -88,6 +88,10 @@ class UITab(object):
         return getattr(self._request, 'can_access_all_locations', True)
 
     @property
+    def can_access_tableau_reports(self):
+        return getattr(self._request.couch_user, 'can_view_some_tableau_viz', False)
+
+    @property
     def dropdown_items(self):
         return sidebar_to_dropdown(sidebar_items=self.sidebar_items,
                                    domain=self.domain, current_url=self.url)
@@ -108,7 +112,8 @@ class UITab(object):
 
         filtered = []
         for item in items:
-            if url_is_location_safe(item['url']):
+            if url_is_location_safe(item['url']) or \
+                (self.can_access_tableau_reports and item['is_header']):
                 filtered.append(item)
         return filtered
 
@@ -167,7 +172,6 @@ class UITab(object):
                 return False
         except AttributeError:
             return False
-
         if not self.can_access_all_locations:
             if self.dropdown_items and not self.filtered_dropdown_items:
                 # location-safe filtering makes this whole tab inaccessible
