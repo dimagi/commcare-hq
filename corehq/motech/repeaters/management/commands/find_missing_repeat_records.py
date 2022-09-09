@@ -113,11 +113,7 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
         if not repeater.allowed_to_forward(form):
             continue
 
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the window we care about
-            continue
-
-        if repeater.get_id in triggered_repeater_ids:
+        if repeater.repeater_id in triggered_repeater_ids:
             successful_count += 1
         else:
             missing_count += 1
@@ -219,11 +215,8 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
             # not dealing with these right now because their expected payload appears to be a form?
             continue
 
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the outage
-            continue
 
-        if fired_repeater_ids_and_counts_after_enddate.get(repeater.get_id, 0) > 0:
+        if fired_repeater_ids_and_counts_after_enddate.get(repeater.repeater_id, 0) > 0:
             # no need to trigger a repeater if it has fired since the outage ended
             continue
 
@@ -413,11 +406,8 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
         fired_repeater_ids_and_counts[record.repeater_id] += 1
 
     for repeater in repeaters:
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the outage
-            continue
 
-        if fired_repeater_ids_and_counts.get(repeater.get_id, 0) > 0:
+        if fired_repeater_ids_and_counts.get(repeater.repeater_id, 0) > 0:
             # no need to trigger a repeater if it has fired since startdate
             continue
 
