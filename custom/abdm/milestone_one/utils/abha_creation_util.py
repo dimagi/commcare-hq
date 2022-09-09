@@ -10,9 +10,6 @@ logger = logging.getLogger(__name__)
 
 def get_access_token():
     url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
-    logger.info(
-        f"ABDM_CLIENT_ID {len(settings.ABDM_CLIENT_ID)} ABDM_CLIENT_SECRET {len(settings.ABDM_CLIENT_SECRET)}"
-    )
     payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
