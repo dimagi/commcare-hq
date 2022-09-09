@@ -167,7 +167,7 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             form_xmlns=FORM_XMLNS
         )
-        self.assertNotEqual(len(SQLFormRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertNotEqual(len(SQLFormRepeater.objects.by_domain(TEST_DOMAIN)), 0)
         data = {
             "target_url": ZAPIER_URL
         }
