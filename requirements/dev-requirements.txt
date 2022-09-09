@@ -222,7 +222,7 @@ executing==0.8.3
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==14.1.0
+faker==14.2.0
     # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
