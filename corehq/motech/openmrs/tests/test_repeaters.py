@@ -314,7 +314,7 @@ class AllowedToForwardTests(TestCase):
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
         self.assertFalse(repeater.allowed_to_forward(payload))
 
     def test_excluded_case_type(self):
@@ -325,7 +325,7 @@ class AllowedToForwardTests(TestCase):
         form_payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
         )
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
         repeater.white_listed_case_types = ['patient']
         self.assertFalse(repeater.allowed_to_forward(form_payload))
 
@@ -336,7 +336,7 @@ class AllowedToForwardTests(TestCase):
         """
         case_id = uuid.uuid4().hex
         form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
         self.assertTrue(repeater.allowed_to_forward(form_payload))
 
     def test_update_from_sqlopenmrs(self):
@@ -401,8 +401,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     def tearDown(self):
         delete_all_users()
-        for repeater in OpenmrsRepeater.by_domain(self.domain):
-            repeater.delete()
+        SQLOpenmrsRepeater.objects.all().delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -495,8 +494,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         gardens = self.locations['Gardens']
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
-        gardens_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        gardens_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': gardens.location_id,
             'connection_settings_id': self.conn.id,
@@ -504,8 +502,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         gardens_repeater.save()
 
         repeaters = get_case_location_ancestor_repeaters(case)
-        couch_repeater = repeaters[0].repeater
-        self.assertEqual(couch_repeater, gardens_repeater)
+        self.assertEqual(repeaters[0], gardens_repeater)
 
     def test_get_case_location_ancestor_repeaters_multi(self):
         """
@@ -516,15 +513,13 @@ class CaseLocationTests(LocationHierarchyTestCase):
             case_id=uuid.uuid4().hex,
             owner_id=self.locations['Gardens'].location_id
         )
-        cape_town_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        cape_town_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
-        western_cape_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        western_cape_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
             'connection_settings_id': self.conn.id,
@@ -532,9 +527,8 @@ class CaseLocationTests(LocationHierarchyTestCase):
         western_cape_repeater.save()
 
         repeaters = get_case_location_ancestor_repeaters(gardens_case)
-        couch_repeater = repeaters[0].repeater
 
-        self.assertEqual(couch_repeater, cape_town_repeater)
+        self.assertEqual(repeaters[0], cape_town_repeater)
 
     def test_get_case_location_ancestor_repeaters_none(self):
         """
