@@ -58,6 +58,7 @@ from corehq.apps.fixtures.upload import (
     upload_fixture_file,
     validate_fixture_file_format,
 )
+from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import (
     clear_fixture_cache,
     is_identifier_invalid,
@@ -120,9 +121,17 @@ def update_tables(request, domain, data_type_id=None):
             return json_response(strip_json(data_type))
 
         elif request.method == 'DELETE':
-            with CouchTransaction() as transaction:
-                data_type.recursive_delete(transaction)
-            clear_fixture_cache(domain)
+            # HACK ensure we get the latest version. Bypass Couch concurrency
+            # protection because caching is hard, and the client does
+            # not specify what version they are deleting anyway.
+            data_type.clear_caches()
+            data_type = FixtureDataType.get(data_type_id)
+            try:
+                with CouchTransaction() as transaction:
+                    data_type.recursive_delete(transaction)
+            finally:
+                clear_fixture_quickcache(domain, [data_type])
+                clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()

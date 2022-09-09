@@ -6,6 +6,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from couchdbkit import ResourceNotFound
+from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -139,6 +140,18 @@ class LookupTableViewsTest(TestCase):
             "e": FieldList(field_list=[]),
         })
 
+    def test_delete_table_with_stale_caches(self):
+        table = self.create_lookup_table()
+        row1 = self.create_row(table)
+        row2 = self.create_row(table)
+
+        self.stale_caches(table)
+        with self.get_client() as client:
+            # should not raise BulkSaveError
+            response = client.delete(self.url(data_type_id=table.id.hex))
+        self.assertEqual(response.status_code, 200)
+        self.assert_deleted(table, [row1, row2])
+
     def test_delete_table_with_previously_deleted_row(self):
         from dimagi.utils.couch.bulk import _bulk_delete as real_bulk_delete
 
@@ -155,11 +168,49 @@ class LookupTableViewsTest(TestCase):
         with self.get_client() as client, delete_patch:
             response = client.delete(self.url(data_type_id=table.id.hex))
         self.assertEqual(response.status_code, 200)
-        ids = [row1.id.hex, row2.id.hex]
-        self.assertFalse(LookupTableRow.objects.filter(id__in=ids).exists())
+        self.assert_deleted(table, [row1, row2])
+
+    def stale_caches(self, table):
+        # An error during save can cause caches to become stale.
+        # Additionaly, QuickCache maintains a local in-memory cache,
+        # which immediately becomes stale when any other process
+        # updates the cached document, even if proper cache invalidation
+        # is performed in the foreign process.
+        #
+        # Caching on these documents is a performance optimization. A
+        # side effect is that the Couch concurrency protections (document
+        # versions) become less useful because caching is hard. We are
+        # not using that anyway since docuemnt versions are not passed
+        # to and from the client.
+
+        # populate caches
+        couch_table = LookupTable._migration_get_couch_model_class().get(table._migration_couch_id)
+        couch_rows = LookupTableRow._migration_get_couch_model_class().get_item_list(table.domain, table.tag)
+        cache_patch = patch.object(
+            # simulate failed cache invalidation, which could be caused by
+            # BulkSaveError and probably for other things too
+            LookupTable._migration_get_couch_model_class(),
+            "clear_caches",
+            lambda self: None
+        )
+        with cache_patch, CouchTransaction() as tx:
+            # transaction does not clear caches -> stale caches
+            tx.save(couch_table)
+            for row in couch_rows:
+                tx.save(row)
+            tx.set_sql_save_action(type(couch_table), lambda: None)
+            tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
+
+    def assert_deleted(self, table, rows):
+        row_ids = [row.id.hex for row in rows]
+        self.assertFalse(LookupTable.objects.filter(id=table.id).exists())
+        self.assertFalse(LookupTableRow.objects.filter(id__in=row_ids).exists())
+        doc_ids = [table._migration_couch_id] + row_ids
         db = LookupTable._migration_get_couch_model_class().get_db()
-        couch_rows = db.view("_all_docs", keys=ids)
+        couch_rows = db.view("_all_docs", keys=doc_ids)
         self.assertTrue(all(r["value"]["deleted"] for r in couch_rows), couch_rows)
+        self.assertFalse(LookupTableRow._migration_get_couch_model_class()
+            .by_data_type(table.domain, table._migration_couch_id))
 
     @contextmanager
     def get_client(self, data=None):

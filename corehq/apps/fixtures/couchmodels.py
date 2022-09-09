@@ -168,12 +168,13 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
 
     def recursive_delete(self, transaction):
         item_ids = []
-        for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
+        for item in FixtureDataItem.by_data_type(self.domain, self.get_id, bypass_cache=True):
             transaction.delete(item)
             item_ids.append(item.get_id)
         for item_id_chunk in chunked(item_ids, 1000):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
+        # NOTE cache must be invalidated after transaction commit
 
     @classmethod
     def delete_fixtures_by_domain(cls, domain, transaction):
