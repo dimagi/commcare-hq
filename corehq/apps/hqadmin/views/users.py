@@ -206,28 +206,48 @@ def _augment_users_with_accounting_admin(users):
     return users
 
 
-class AdminRestoreView(TemplateView):
+class DomainAdminRestoreView(TemplateView):
     template_name = 'hqadmin/admin_restore.html'
+    urlname = 'domain_admin_restore'
+
+    def _validate_user_access(self, user):
+        return self.domain == user.domain
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
+        return super(DomainAdminRestoreView, self).dispatch(request, *args, **kwargs)
 
     def _validate_user_access(self, user):
         return True
 
+    @method_decorator(login_or_basic)
+    @method_decorator(domain_admin_required)
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
+
         if not full_username or '@' not in full_username:
-            return HttpResponseBadRequest('Please specify a user using ?as=user@domain')
+            msg = 'Please specify a user using ?as=user@domain\nOr a web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
 
-        username, domain = full_username.split('@')
-        if not domain.endswith(settings.HQ_ACCOUNT_ROOT):
-            full_username = format_username(username, domain)
+        username, possible_domain = full_username.split("@")
+        if "." in possible_domain:
+            if possible_domain.endswith(settings.HQ_ACCOUNT_ROOT):
+                self.domain = possible_domain.split(".")[0]
+                self.user = CommCareUser.get_by_username(full_username)
+            else:
+                self.domain = request.GET.get('domain', '')
+                self.user = CouchUser.get_by_username(full_username)
+        else:
+            self.domain = possible_domain
+            full_username = format_username(username, self.domain)
+            self.user = CommCareUser.get_by_username(full_username)
 
-        self.user = CommCareUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
+
+        if self.user.is_web_user and not self.domain:
+            msg = 'Please specify domain for web-user using ?as=email&domain=domain'
+            return HttpResponseBadRequest(msg)
 
         if not self._validate_user_access(self.user):
             raise Http404()
@@ -245,12 +265,12 @@ class AdminRestoreView(TemplateView):
             response['Content-Disposition'] = "attachment; filename={}-restore.xml".format(username)
             return response
 
-        return super(AdminRestoreView, self).get(request, *args, **kwargs)
+        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
         return get_restore_response(
-            self.user.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request, self.user.domain)
+            self.domain, self.user, app_id=self.app_id,
+            **get_restore_params(self.request, self.domain)
         )
 
     @staticmethod
@@ -292,11 +312,11 @@ class AdminRestoreView(TemplateView):
         num_locations = len(locations)
         location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
 
-        num_v1_reports, v1_report_row_counts = AdminRestoreView._parse_reports(
+        num_v1_reports, v1_report_row_counts = DomainAdminRestoreView._parse_reports(
             "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS), xml_payload
         )
 
-        num_v2_reports, v2_report_row_counts = AdminRestoreView._parse_reports(
+        num_v2_reports, v2_report_row_counts = DomainAdminRestoreView._parse_reports(
             # the @id is dynamic, so we can't search for it directly - instead, look for the right format
             "{{{0}}}fixture[@report_id][{{{0}}}rows]".format(RESPONSE_XMLNS), xml_payload
         )
@@ -318,7 +338,7 @@ class AdminRestoreView(TemplateView):
         }
 
     def get_context_data(self, **kwargs):
-        context = super(AdminRestoreView, self).get_context_data(**kwargs)
+        context = super(DomainAdminRestoreView, self).get_context_data(**kwargs)
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
@@ -347,22 +367,6 @@ class AdminRestoreView(TemplateView):
             'hide_xml': hide_xml,
         })
         return context
-
-
-class DomainAdminRestoreView(AdminRestoreView):
-    urlname = 'domain_admin_restore'
-
-    def dispatch(self, request, *args, **kwargs):
-        return TemplateView.dispatch(self, request, *args, **kwargs)
-
-    @method_decorator(login_or_basic)
-    @method_decorator(domain_admin_required)
-    def get(self, request, domain, **kwargs):
-        self.domain = domain
-        return super(DomainAdminRestoreView, self).get(request, **kwargs)
-
-    def _validate_user_access(self, user):
-        return self.domain == user.domain
 
 
 @require_superuser

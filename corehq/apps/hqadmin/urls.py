@@ -21,10 +21,10 @@ from corehq.apps.hqadmin.views.system import (
     system_ajax,
 )
 from corehq.apps.hqadmin.views.users import (
-    AdminRestoreView,
     AppBuildTimingsView,
     DisableTwoFactorView,
     DisableUserView,
+    DomainAdminRestoreView,
     SuperuserManagement,
     OffboardingUserList,
     WebUserDataView,
@@ -49,8 +49,8 @@ urlpatterns = [
     url(r'^superuser_table.csv$', superuser_table, name='superuser_table'),
     url(r'^tombstone_management/$', TombstoneManagement.as_view(), name=TombstoneManagement.urlname),
     url(r'^create_tombstone/$', create_tombstone, name='create_tombstone'),
-    url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
-    url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
+    url(r'^phone/restore/$', DomainAdminRestoreView.as_view(), name="admin_restore"),
+    url(r'^phone/restore/(?P<app_id>[\w-]+)/$', DomainAdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^app_build_timings/$', AppBuildTimingsView.as_view(), name="app_build_timings"),
     url(r'^do_pillow_op/$', pillow_operation_api, name="pillow_operation_api"),
     url(r'^web_user_lookup/$', web_user_lookup, name='web_user_lookup'),

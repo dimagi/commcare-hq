@@ -7,7 +7,7 @@ from couchdbkit import ResourceNotFound
 from lxml import etree
 
 from corehq.apps.app_manager.dbaccessors import get_current_app_doc
-from corehq.apps.hqadmin.views.users import AdminRestoreView
+from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 from corehq.apps.ota.views import get_restore_response
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import get_timestamp_for_filename
@@ -58,7 +58,7 @@ def _get_headers_and_rows(domain, users, app_id):
         )
         timing_dict = timing_context.to_dict()
         xml_payload = etree.fromstring(b''.join(response.streaming_content))
-        stats = AdminRestoreView.get_stats_from_xml(xml_payload)
+        stats = DomainAdminRestoreView.get_stats_from_xml(xml_payload)
         row = {
             'timestamp': datetime.datetime.now().isoformat(),
             'username': user.username,

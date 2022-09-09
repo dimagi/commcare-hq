@@ -7,7 +7,7 @@ from lxml import etree
 from unittest.mock import Mock, patch
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
+from corehq.apps.hqadmin.views.users import DisableUserView, DomainAdminRestoreView
 
 
 class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
@@ -17,7 +17,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
 
     def test_bad_restore(self):
         user = Mock()
-        user.domain = None
+        domain = None
         app_id = None
         request = Mock()
         request.GET = {}
@@ -27,11 +27,11 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
         with patch('corehq.apps.hqadmin.views.users.get_restore_response',
                    return_value=(HttpResponse('bad response', status=500), timing_context)):
 
-            view = AdminRestoreView(user=user, app_id=app_id, request=request)
-            context = view.get_context_data(foo='bar', view='AdminRestoreView')
+            view = DomainAdminRestoreView(user=user, app_id=app_id, request=request, domain=domain)
+            context = view.get_context_data(foo='bar', view='DomainAdminRestoreView')
             self.assertEqual(context, {
                 'foo': 'bar',
-                'view': 'AdminRestoreView',
+                'view': 'DomainAdminRestoreView',
                 'payload': '<error>Unexpected restore response 500: bad response. If you believe this is a bug '
                            'please report an issue.</error>\n',
                 'status_code': 500,
@@ -41,7 +41,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
 
     def test_admin_restore_counts(self):
         xml_payload = etree.fromstring(self.get_xml('restore'))
-        self.assertEqual(AdminRestoreView.get_stats_from_xml(xml_payload), {
+        self.assertEqual(DomainAdminRestoreView.get_stats_from_xml(xml_payload), {
             'restore_id': '02bbfb3ea17711e8adb9bc764e203eaf',
             'num_cases': 2,
             'num_locations': 7,
