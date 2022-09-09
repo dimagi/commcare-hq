@@ -1,10 +1,8 @@
-from datetime import datetime
+import os.path
 
 from django.conf import settings
-from django.core.management import call_command
+from django.core.management import call_command, CommandError
 from django.core.management.base import BaseCommand
-
-from .populate_sql_model_from_couch_model import PopulateSQLCommand
 
 
 class Command(BaseCommand):
@@ -45,19 +43,22 @@ class Command(BaseCommand):
             help="Only migrate documents in the specified domains",
         )
         parser.add_argument(
-            '--log-path',
+            '--chunk-size',
+            type=int,
+            default=1000,
+            help="Number of docs to fetch at once (default: 100).",
+        )
+        parser.add_argument(
+            '--log-dir',
             default="-" if settings.UNIT_TESTING else None,
-            help="File path to write logs to. If not provided a default will be used."
+            help="Directory to write logs to. Defaults to the current directory."
         )
 
-    def handle(self, **options):
-        if not options["log_path"]:
-            date = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S.%f')
-            command_name = self.__class__.__module__.split('.')[-1]
-            options["log_path"] = f"{command_name}_{date}.log"
-        options["append_log"] = True
-        for command in options.pop("commands"):
+    def handle(self, commands, log_dir=None, **options):
+        if log_dir:
+            if not os.path.isdir(log_dir):
+                raise CommandError("--log-dir must specify a directory.")
+            options["log_path"] = log_dir
+        for command in commands:
             print(f"\n\n{command}...")
-            with PopulateSQLCommand.open_log(options["log_path"], True) as log:
-                print(f"\n{command} logs:", file=log)
             call_command(command, **options)

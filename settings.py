@@ -382,7 +382,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.abdm',
@@ -1024,8 +1023,6 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 # used for creating releases and deploys
 SENTRY_API_KEY = None
 
-OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
-RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
@@ -2053,13 +2050,6 @@ if SENTRY_DSN:
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
-        }
-    ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 

@@ -19,6 +19,9 @@ urlpatterns = [
     url(r'^broadcasts/edit/(?P<broadcast_type>[\w-]+)/(?P<broadcast_id>[\w-]+)/$', EditScheduleView.as_view(),
         name=EditScheduleView.urlname),
     url(r'^conditional/$', ConditionalAlertListView.as_view(), name=ConditionalAlertListView.urlname),
+    # System URL only, to enabling data refresh without logging as user activity
+    url(r'^conditional/refresh/$', ConditionalAlertListView.as_view(),
+        name=ConditionalAlertListView.refresh_urlname),
     url(r'^conditional/add/$', CreateConditionalAlertView.as_view(), name=CreateConditionalAlertView.urlname),
     url(r'^conditional/edit/(?P<rule_id>[\w-]+)/$', EditConditionalAlertView.as_view(),
         name=EditConditionalAlertView.urlname),
