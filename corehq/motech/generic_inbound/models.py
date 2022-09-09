@@ -15,7 +15,7 @@ class ConfigurableAPI(models.Model):
     url_key = models.CharField(max_length=32, validators=[validate_slug])
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     transform_expression = models.ForeignKey(UCRExpression, on_delete=models.PROTECT)
 

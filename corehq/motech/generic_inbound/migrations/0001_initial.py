@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('url_key', models.CharField(max_length=32, validators=[django.core.validators.RegexValidator(re.compile('^[-a-zA-Z0-9_]+\\Z'), 'Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.', 'invalid')])),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('updated_on', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=255, blank=True)),
+                ('name', models.CharField(max_length=255)),
                 ('description', models.TextField(blank=True, null=True)),
                 ('transform_expression', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='userreports.ucrexpression')),
             ],
