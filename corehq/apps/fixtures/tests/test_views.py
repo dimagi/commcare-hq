@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import BulkSaveError, ResourceNotFound
 from dimagi.utils.couch.bulk import CouchTransaction
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -166,6 +166,37 @@ class LookupTableViewsTest(TestCase):
 
         # verify FixtureDataItem caches have been reset
         FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
+        rows = [
+            FixtureDataItem.get(row1._migration_couch_id),
+            FixtureDataItem.get(row2._migration_couch_id),
+        ]
+        rows.extend(FixtureDataItem.by_data_type(table.domain, table._migration_couch_id))
+        for row in rows:
+            self.assertIn("foot", row.fields)
+
+    def test_update_table_clears_caches_on_error(self):
+        def bulk_save_fail(docs):
+            cls = type(docs[0])
+            super(cls, cls).bulk_save(docs)
+            raise BulkSaveError([{}], [{}])
+            # NOTE SQL state is probably out of sync at this point.
+
+        table = self.create_lookup_table()
+        row1 = self.create_row(table)
+        row2 = self.create_row(table)
+        FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
+
+        data = {
+            'tag': 'a_modified_table',
+            'description': 'A Modified Table',
+            'is_global': False,
+            'fields': {'wing': {'update': 'foot'}},
+        }
+        save_patch = patch.object(FixtureDataItem, "bulk_save", bulk_save_fail)
+        with self.get_client(data) as client, save_patch, self.assertRaises(BulkSaveError):
+            client.put(self.url(data_type_id=table.id.hex), data)
+
+        # verify FixtureDataItem caches have been reset
         rows = [
             FixtureDataItem.get(row1._migration_couch_id),
             FixtureDataItem.get(row2._migration_couch_id),
