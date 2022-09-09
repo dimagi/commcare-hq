@@ -13,7 +13,7 @@ from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.es import queries
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_property_starts_with_query,
+    case_property_starts_with,
     case_property_geo_distance,
     case_property_missing,
     case_property_query,
@@ -556,9 +556,8 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 {'_id': 'c5', 'ssn': '1001'},
                 {'_id': 'c6', 'ssn': '100-1'},
             ],
-            CaseSearchES().domain(self.domain).add_query(
-                case_property_starts_with_query('ssn', '100'),
-                clause=queries.MUST
+            CaseSearchES().domain(self.domain).filter(
+                case_property_starts_with('ssn', '100'),
             ),
             "starts-with(ssn, '100')",
             ['c5', 'c6', 'c2']

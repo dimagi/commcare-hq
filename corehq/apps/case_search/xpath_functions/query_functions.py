@@ -12,7 +12,7 @@ from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.es.case_search import (
     case_property_geo_distance,
     case_property_query,
-    case_property_starts_with_query,
+    case_property_starts_with,
 )
 
 from .utils import confirm_args_count
@@ -27,7 +27,7 @@ def not_(node, context):
 def starts_with(node, context):
     property_name, search_value = node.args
     property_name = _property_name_to_string(property_name, node)
-    return case_property_starts_with_query(property_name, search_value)
+    return case_property_starts_with(property_name, search_value)
 
 
 def selected_any(node, context):

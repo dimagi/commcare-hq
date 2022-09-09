@@ -107,39 +107,30 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
     def test_starts_with(self):
         parsed = parse_xpath("starts-with(ssn, '100')")
-        expected_filter_single = {
+        expected_filter = {
             "nested": {
                 "path": "case_properties",
                 "query": {
                     "bool": {
-                        "filter": [
+                        "filter": (
                             {
-                                "bool": {
-                                    "filter": (
-                                        {
-                                            "term": {
-                                                "case_properties.key.exact": "ssn"
-                                            }
-                                        },
-                                        {
-                                            "prefix": {
-                                                "case_properties.value.exact": "100"
-                                            }
-                                        }
-                                    )
+                                "term": {
+                                    "case_properties.key.exact": "ssn"
+                                }
+                            },
+                            {
+                                "prefix": {
+                                    "case_properties.value.exact": "100"
                                 }
                             }
-                        ],
-                        "must": {
-                            "match_all": {}
-                        }
+                        )
                     }
                 }
             }
         }
 
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
-        self.checkQuery(built_filter, expected_filter_single, is_raw_query=True)
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
@@ -168,6 +159,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
+
 
     @freeze_time('2021-08-02')
     def test_date_comparison__today(self):
