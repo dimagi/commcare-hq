@@ -278,7 +278,7 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             # renamed
             'paused',
             # connection setting props
-            'plaintext_password', 'username', 'notify_addresses_str', 'create_connection_settings', 'name', 'url',
+            'plaintext_password', 'username', 'notify_addresses_str', 'create_connection_settings', 'url',
             'skip_cert_verify', 'password', 'auth_type',
             # not required in sql
             'by_domain', 'base_doc',
