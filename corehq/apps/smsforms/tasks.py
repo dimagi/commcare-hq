@@ -1,18 +1,32 @@
-from celery.task import task
 from datetime import timedelta
 
+from dimagi.utils.logging import notify_error, notify_exception
+
 from corehq import toggles
-from corehq.apps.formplayer_api.smsforms.api import FormplayerInterface, TouchformsError
-from corehq.apps.sms.api import MessageMetadata, send_sms_to_verified_number, send_sms
-from corehq.apps.sms.models import PhoneNumber, MessagingEvent
+from corehq.apps.celery.shared_task import task
+from corehq.apps.formplayer_api.smsforms.api import (
+    FormplayerInterface,
+    TouchformsError,
+)
+from corehq.apps.sms.api import (
+    MessageMetadata,
+    send_sms,
+    send_sms_to_verified_number,
+)
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import format_message_list
-from corehq.apps.smsforms.models import SQLXFormsSession, XFormsSessionSynchronization
+from corehq.apps.smsforms.app import (
+    _responses_to_text,
+    get_events_from_responses,
+)
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+)
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from corehq.apps.smsforms.app import _responses_to_text, get_events_from_responses
 from corehq.messaging.scheduling.util import utcnow
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_error, notify_exception
 
 
 @no_result_task(serializer='pickle', queue='background_queue')
@@ -95,6 +109,7 @@ def handle_due_survey_action(domain, contact_id, session_id):
         if toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(domain):
             if not XFormsSessionSynchronization.claim_channel_for_session(session):
                 from .management.commands import handle_survey_actions
+
                 # Unless we release this lock, handle_survey_actions will be unable to requeue this task
                 # for the default duration of 1h, which we don't want
                 handle_survey_actions.Command.get_enqueue_lock(session_id, session.current_action_due).release()

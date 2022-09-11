@@ -5,9 +5,6 @@ from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery import chord
-from celery.task import task
-from corehq.apps.linked_domain.ucr_expressions import create_linked_ucr_expression, update_linked_ucr_expression
-from corehq.apps.userreports.models import UCRExpression
 
 from dimagi.utils.logging import notify_exception
 
@@ -15,6 +12,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
 from corehq.apps.app_manager.views.utils import update_linked_app
+from corehq.apps.celery.shared_task import task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.linked_domain.const import (
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
@@ -39,9 +37,16 @@ from corehq.apps.linked_domain.ucr import (
     get_downstream_report,
     update_linked_ucr,
 )
+from corehq.apps.linked_domain.ucr_expressions import (
+    create_linked_ucr_expression,
+    update_linked_ucr_expression,
+)
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
+from corehq.apps.linked_domain.util import (
+    pull_missing_multimedia_for_app_and_notify,
+)
 from corehq.apps.sms.models import Keyword
+from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import CouchUser
 
 

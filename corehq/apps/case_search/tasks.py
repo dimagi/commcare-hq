@@ -1,5 +1,4 @@
-from celery.task import task
-
+from corehq.apps.celery.shared_task import task
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
