@@ -3,23 +3,24 @@ import traceback
 from datetime import datetime
 
 from django.core.serializers.json import DjangoJSONEncoder
-from psycopg2 import DatabaseError
 from django.utils.translation import gettext_lazy as _
-from celery.schedules import crontab
-from celery.task import periodic_task, task
 
-from corehq.motech.utils import pformat_json
-from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
+from celery.schedules import crontab
+from psycopg2 import DatabaseError
 
 from corehq import toggles
+from corehq.apps.celery.periodic import periodic_task
+from corehq.apps.celery.shared_task import task
+from corehq.apps.domain.models import Domain
 from corehq.motech.dhis2.models import (
     SQLDataSetMap,
     parse_dataset_for_request,
     should_send_on_date,
 )
-from corehq.util.view_utils import reverse
+from corehq.motech.utils import pformat_json
 from corehq.privileges import DATA_FORWARDING
-from corehq.apps.domain.models import Domain
+from corehq.toggles.shortcuts import find_domains_with_toggle_enabled
+from corehq.util.view_utils import reverse
 
 
 @periodic_task(

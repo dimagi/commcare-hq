@@ -3,13 +3,14 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection, get_redis_lock
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
+from corehq.apps.celery.periodic import periodic_task
+from corehq.apps.celery.shared_task import task
 from corehq.motech.models import RequestLog
 from corehq.util.metrics import (
     make_buckets_from_timedeltas,
@@ -22,8 +23,8 @@ from corehq.util.soft_assert import soft_assert
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
-    CHECK_REPEATERS_PARTITION_COUNT,
     CHECK_REPEATERS_KEY,
+    CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
