@@ -1,7 +1,6 @@
-from corehq.apps.celery.shared_task import task
-
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+from corehq.apps.celery.shared_task import task
 from corehq.apps.userreports.const import UCR_CELERY_QUEUE
 from corehq.apps.userreports.util import get_indicator_adapter
 
