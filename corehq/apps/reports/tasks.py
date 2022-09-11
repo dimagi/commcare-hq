@@ -4,7 +4,6 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
@@ -15,6 +14,8 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.celery.periodic import periodic_task
+from corehq.apps.celery.shared_task import task
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
@@ -216,8 +217,8 @@ def build_form_multimedia_zipfile(
         download_id,
         owner_id,
 ):
-    from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
+    from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
     es_query = get_export_query(export, es_filters)
     form_ids = get_form_ids_with_multimedia(es_query)

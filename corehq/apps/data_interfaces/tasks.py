@@ -6,11 +6,12 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
 
+from corehq.apps.celery.periodic import periodic_task
+from corehq.apps.celery.shared_task import task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
@@ -26,7 +27,7 @@ from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 
-from .deduplication import reset_deduplicate_rule, backfill_deduplicate_rule
+from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,

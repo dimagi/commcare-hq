@@ -12,7 +12,6 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 
@@ -22,6 +21,8 @@ from corehq import toggles
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.const import LookupErrors
 from corehq.apps.case_importer.util import EXTERNAL_ID
+from corehq.apps.celery.periodic import periodic_task
+from corehq.apps.celery.shared_task import task
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
