@@ -4,8 +4,6 @@
 {% load compress %}
 {% load hq_shared_tags %}
 
-{% requirejs_main 'export/js/commcare_analytics' %}
-
 {% block page_content %}
   {% initial_page_data 'analytics_redirect_url' analytics_redirect_url %}
   <p>Click the button below to navigate to the CommCare Analytics tool.</p>
