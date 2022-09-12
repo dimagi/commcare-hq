@@ -581,30 +581,30 @@ class ProjectDataTab(UITab):
         # classification from the radon code static analysis
 
         export_data_header, export_data_views = self.export_data_views
-        explore_data_header, explore_data_section = self.explore_data_views
-        edit_data_header, edit_data_section = self.edit_data_views
-        lookup_tables_header, lookup_tables_section = self.lookup_tables_views
-        data_dictionary_header, data_dictionary_section = self.data_dictionary_views
-        data_manipulation_header, data_manipulation_section = self.data_manipulation_views
+        explore_data_header, explore_data_views = self.explore_data_views
+        edit_data_header, edit_data_views = self.edit_data_views
+        lookup_tables_header, lookup_tables_views = self.lookup_tables_views
+        data_dictionary_header, data_dictionary_views = self.data_dictionary_views
+        data_manipulation_header, data_manipulation_views = self.data_manipulation_views
 
         items = []
         if export_data_views:
             items.append([export_data_header, export_data_views])
 
-        if explore_data_section:
-            items.append([explore_data_header, explore_data_section])
+        if explore_data_views:
+            items.append([explore_data_header, explore_data_views])
 
-        if edit_data_section:
-            items.append([edit_data_header, edit_data_section])
+        if edit_data_views:
+            items.append([edit_data_header, edit_data_views])
 
-        if lookup_tables_section:
-            items.append([lookup_tables_header, lookup_tables_section])
+        if lookup_tables_views:
+            items.append([lookup_tables_header, lookup_tables_views])
 
-        if data_dictionary_section:
-            items.append([data_dictionary_header, data_dictionary_section])
+        if data_dictionary_views:
+            items.append([data_dictionary_header, data_dictionary_views])
 
-        if data_manipulation_section:
-            items.append([data_manipulation_header, data_manipulation_section])
+        if data_manipulation_views:
+            items.append([data_manipulation_header, data_manipulation_views])
 
         return items
 
