@@ -13,7 +13,7 @@ from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import transaction
 from django.forms.fields import (
     BooleanField,
@@ -96,30 +96,38 @@ from corehq.apps.callcenter.views import (
 from corehq.apps.domain.auth import get_active_users_by_email
 from corehq.apps.domain.extension_points import validate_password_rules
 from corehq.apps.domain.models import (
-    RESTRICTED_UCR_EXPRESSIONS,
     AREA_CHOICES,
     BUSINESS_UNITS,
     DATA_DICT,
     LOGO_ATTACHMENT,
+    RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
-    SMSAccountConfirmationSettings,
+    AllowedUCRExpressionSettings,
     OperatorCallLimitSettings,
+    SMSAccountConfirmationSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
-    AllowedUCRExpressionSettings
 )
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.hqwebapp.fields import MultiCharField
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, GeoCoderInput
+from corehq.apps.hqwebapp.widgets import (
+    BootstrapCheckboxInput,
+    GeoCoderInput,
+    Select2Ajax,
+)
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
+from corehq.toggles import (
+    HIPAA_COMPLIANCE_CHECKBOX,
+    MOBILE_UCR,
+    RESTRICT_MOBILE_ACCESS,
+    SECURE_SESSION_TIMEOUT,
+    TWO_STAGE_USER_PROVISIONING_BY_SMS,
+)
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
-
 
 mark_safe_lazy = lazy(mark_safe, str)  # TODO: Use library method
 
