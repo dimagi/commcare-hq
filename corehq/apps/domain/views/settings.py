@@ -309,6 +309,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         if self.privacy_form.is_valid():
             self.privacy_form.save(self.domain_object)
             messages.success(request, _("Your project settings have been saved!"))
+            return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
