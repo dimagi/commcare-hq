@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import datetime, timedelta
 
@@ -1060,9 +1061,12 @@ class CommCareAnalyticsListView(BaseProjectDataView):
 
     @property
     def page_context(self):
-        super()
-        analytics_redirect_url = "https://commcare-analytics.dimagi.com/"
-
         return {
-            "analytics_redirect_url": analytics_redirect_url
+            "analytics_redirect_url": self.commcare_analytics_url
         }
+
+    @property
+    def commcare_analytics_url(self):
+        url = "https://commcare-analytics.dimagi.com" \
+            if settings.SERVER_ENVIRONMENT == "production" else "http://commcare-analytics-demo.dimagi.com/"
+        return url
