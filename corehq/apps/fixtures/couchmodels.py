@@ -144,9 +144,9 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
         return count_fixture_data_types(domain)
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, **kw):
         from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-        return get_fixture_data_types(domain)
+        return get_fixture_data_types(domain, **kw)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -569,9 +569,9 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
                         reduce=False, include_docs=True)
 
     @classmethod
-    def get_item_list(cls, domain, tag):
+    def get_item_list(cls, domain, tag, **kw):
         data_type = FixtureDataType.by_domain_tag(domain, tag).one()
-        return cls.by_data_type(domain, data_type)
+        return cls.by_data_type(domain, data_type, **kw)
 
     @classmethod
     def get_indexed_items(cls, domain, tag, index_field):
