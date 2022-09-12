@@ -8,8 +8,8 @@
 
 {% block page_content %}
   {% initial_page_data 'analytics_redirect_url' analytics_redirect_url %}
-  <p>To view your data using the CommCare Analytics tool, click the button below.</p>
+  <p>Click the button below to navigate to the CommCare Analytics tool.</p>
   <button class="btn btn-primary" type="button" onclick="window.open('{{ analytics_redirect_url }}', '_blank')">
-    {% trans "View data in Superset" %}
+    {% trans "Navigate to Superset" %}
   </button>
 {% endblock %}
