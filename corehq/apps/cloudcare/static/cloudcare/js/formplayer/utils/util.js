@@ -127,9 +127,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     Util.setSelectedValues = function (selections) {
-        let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
-        selectedValues[sessionStorage.queryKey] = selections.join(',');
-        sessionStorage.selectedValues = JSON.stringify(selectedValues);
+        if (selections !== undefined) {
+            let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+            selectedValues[sessionStorage.queryKey] = selections.join(',');
+            sessionStorage.selectedValues = JSON.stringify(selectedValues);
+        }
     };
 
     Util.CloudcareUrl = function (options) {
