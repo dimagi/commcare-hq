@@ -1907,14 +1907,6 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-RESTRICT_MOBILE_ACCESS = StaticToggle(
-    'restrict_mobile_endpoints',
-    'USH: Displays a security setting option to require explicit permissions to access mobile app endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
-)
-
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
     "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",

@@ -122,7 +122,6 @@ from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import (
     HIPAA_COMPLIANCE_CHECKBOX,
     MOBILE_UCR,
-    RESTRICT_MOBILE_ACCESS,
     SECURE_SESSION_TIMEOUT,
     TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
@@ -757,8 +756,6 @@ class PrivacySecurityForm(forms.Form):
         super(PrivacySecurityForm, self).__init__(*args, **kwargs)
 
         excluded_fields = []
-        if not RESTRICT_MOBILE_ACCESS.enabled(domain):
-            excluded_fields.append('restrict_mobile_access')
         if not domain_has_privilege(domain, privileges.ADVANCED_DOMAIN_SECURITY):
             excluded_fields.append('ga_opt_out')
             excluded_fields.append('strong_mobile_passwords')
@@ -808,8 +805,7 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.secure_submissions = secure_submissions
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
-        if RESTRICT_MOBILE_ACCESS.enabled(domain_obj.name):
-            domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
+        domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
 
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
 
