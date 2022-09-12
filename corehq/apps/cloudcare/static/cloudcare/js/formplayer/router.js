@@ -157,18 +157,17 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:paginate", function (page, selections) {
-        var selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
-        selectedValues[sessionStorage.queryKey] = selections.join(',');
-        sessionStorage.selectedValues = JSON.stringify(selectedValues);
         var urlObject = Util.currentUrlToObject();
         urlObject.setPage(page);
+        Util.setSelectedValues(selections);
         Util.setUrlToObject(urlObject);
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage) {
+    FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
         var urlObject = Util.currentUrlToObject();
         urlObject.setCasesPerPage(casesPerPage);
+        Util.setSelectedValues(selections);
         Util.setUrlToObject(urlObject);
         Util.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
