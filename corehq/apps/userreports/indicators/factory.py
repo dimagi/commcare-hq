@@ -30,17 +30,17 @@ from corehq.apps.userreports.indicators.specs import (
 )
 
 
-def _build_count_indicator(spec, context):
+def _build_count_indicator(spec, factory_context):
     wrapped = IndicatorSpecBase.wrap(spec)
     return BooleanIndicator(
         wrapped.display_name,
         wrapped.column_id,
-        CustomFilter(lambda item, context=None: True),
+        CustomFilter(lambda item, evaluation_context=None: True),
         wrapped,
     )
 
 
-def _build_raw_indicator(spec, context):
+def _build_raw_indicator(spec, factory_context):
     wrapped = RawIndicatorSpec.wrap(spec)
     column = Column(
         id=wrapped.column_id,
@@ -57,7 +57,7 @@ def _build_raw_indicator(spec, context):
     )
 
 
-def _build_expression_indicator(spec, context):
+def _build_expression_indicator(spec, factory_context):
     wrapped = ExpressionIndicatorSpec.wrap(spec)
     column = Column(
         id=wrapped.column_id,
@@ -69,32 +69,32 @@ def _build_expression_indicator(spec, context):
     return RawIndicator(
         wrapped.display_name,
         column,
-        getter=wrapped.parsed_expression(context),
+        getter=wrapped.parsed_expression(factory_context),
         wrapped_spec=wrapped,
     )
 
 
-def _build_small_boolean_indicator(spec, context):
+def _build_small_boolean_indicator(spec, factory_context):
     wrapped = SmallBooleanIndicatorSpec.wrap(spec)
     return SmallBooleanIndicator(
         wrapped.display_name,
         wrapped.column_id,
-        FilterFactory.from_spec(wrapped.filter, context),
+        FilterFactory.from_spec(wrapped.filter, factory_context),
         wrapped_spec=wrapped,
     )
 
 
-def _build_boolean_indicator(spec, context):
+def _build_boolean_indicator(spec, factory_context):
     wrapped = BooleanIndicatorSpec.wrap(spec)
     return BooleanIndicator(
         wrapped.display_name,
         wrapped.column_id,
-        FilterFactory.from_spec(wrapped.filter, context),
+        FilterFactory.from_spec(wrapped.filter, factory_context),
         wrapped_spec=wrapped,
     )
 
 
-def _build_choice_list_indicator(spec, context):
+def _build_choice_list_indicator(spec, factory_context):
     wrapped_spec = ChoiceListIndicatorSpec.wrap(spec)
     base_display_name = wrapped_spec.display_name
 
@@ -119,17 +119,17 @@ def _build_choice_list_indicator(spec, context):
     return CompoundIndicator(base_display_name, choice_indicators, wrapped_spec)
 
 
-def _build_ledger_balances_indicator(spec, context):
+def _build_ledger_balances_indicator(spec, factory_context):
     wrapped_spec = LedgerBalancesIndicatorSpec.wrap(spec)
     return LedgerBalancesIndicator(wrapped_spec)
 
 
-def _build_due_list_date_indicator(spec, context):
+def _build_due_list_date_indicator(spec, factory_context):
     wrapped_spec = DueListDateIndicatorSpec.wrap(spec)
     return DueListDateIndicator(wrapped_spec)
 
 
-def _build_repeat_iteration_indicator(spec, context):
+def _build_repeat_iteration_indicator(spec, factory_context):
     return RawIndicator(
         "base document iteration",
         Column(
@@ -143,7 +143,7 @@ def _build_repeat_iteration_indicator(spec, context):
     )
 
 
-def _build_inserted_at(spec, context):
+def _build_inserted_at(spec, factory_context):
     return RawIndicator(
         "inserted at",
         Column(
@@ -172,10 +172,10 @@ class IndicatorFactory(object):
     }
 
     @classmethod
-    def from_spec(cls, spec, context=None):
+    def from_spec(cls, spec, factory_context=None):
         cls.validate_spec(spec)
         try:
-            return cls.constructor_map[spec['type']](spec, context)
+            return cls.constructor_map[spec['type']](spec, factory_context)
         except BadValueError as e:
             # for now reraise jsonobject exceptions as BadSpecErrors
             raise BadSpecError(str(e))

@@ -101,6 +101,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         cls.domain_obj.save()
         cls.user = CommCareUser.create(cls.domain, 'test1', 'abc', None, None)
 
+
     @classmethod
     def tearDownClass(cls):
         cls.user.delete(cls.domain, deleted_by=None)
@@ -121,6 +122,18 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         delete_alert_schedules(self.domain)
         delete_timed_schedules(self.domain)
+
+    def update_case_and_sync(self, domain, case_id, *args, **kwargs):
+        res = update_case(domain, case_id, *args, **kwargs)
+        sync_case_for_messaging(domain, case_id)
+        return res
+
+    @contextmanager
+    def create_case_and_sync(self, *args, **kwargs):
+        with create_case(*args, **kwargs) as case:
+            sync_case_for_messaging(case.domain, case.case_id)
+            yield case
+
 
     @patch('corehq.messaging.scheduling.util.utcnow')
     def test_timed_schedule_instance_creation(self, utcnow_patch):
@@ -148,7 +161,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -157,7 +170,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for minute in [1, 2]:
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+                self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
 
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
@@ -176,7 +189,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Make the rule not match. Instance should no longer exist.
             utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'N'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
@@ -205,7 +218,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -214,7 +227,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for minute in range(1, 3):
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+                self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
 
                 instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
@@ -232,7 +245,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Make the rule not match. Instance should no longer exist.
             utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'N'})
 
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -263,7 +276,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -272,7 +285,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # nothing is changed.
             for minute in (1, 2):
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                update_case(self.domain, case.case_id,
+                self.update_case_and_sync(self.domain, case.case_id,
                     case_properties={'start_sending': 'Y', 'reset_property': 'a'})
 
                 instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
@@ -292,7 +305,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Update the reset property, and the instance is reset.
             utcnow_patch.return_value = datetime(2017, 6, 1, 7, 0)
-            update_case(self.domain, case.case_id, case_properties={'reset_property': 'b'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'reset_property': 'b'})
 
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
@@ -336,7 +349,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -345,7 +358,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for day in [1, 2]:
                 utcnow_patch.return_value = datetime(2017, 5, day, 20, 0)
-                update_case(self.domain, case.case_id,
+                self.update_case_and_sync(self.domain, case.case_id,
                     case_properties={'start_sending': 'Y', 'reset_property': '1'})
 
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -365,7 +378,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Change the value of 'reset_property', and the start date should be reset
             utcnow_patch.return_value = datetime(2017, 5, 2, 20, 0)
-            update_case(self.domain, case.case_id, case_properties={'reset_property': '2'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'reset_property': '2'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -383,7 +396,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Make the rule not match. Instance should no longer exist.
             utcnow_patch.return_value = datetime(2017, 5, 2, 20, 0)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'N'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
@@ -408,9 +421,9 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2018, 7, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # The case matches the rule and is setup to start sending
-            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-07-03'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'stop_date': '2018-07-03'})
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instance.case_id, case.case_id)
@@ -462,7 +475,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertFalse(instance.active)
 
             # Update the stop date and the instance should be reactivated
-            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instance.case_id, case.case_id)
@@ -478,7 +491,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instance.active)
 
             # Update the stop date and the instance should be deactivated
-            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-06-01'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'stop_date': '2018-06-01'})
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instance.case_id, case.case_id)
@@ -495,7 +508,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Update the stop date and the instance should be reactivated and fast-forwarded
             utcnow_patch.return_value = datetime(2018, 7, 4, 13, 1)
-            update_case(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'stop_date': '2018-08-01'})
 
             [instance] = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instance.case_id, case.case_id)
@@ -538,13 +551,13 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
             # Make the rule match, but don't give a start date. No instances are created.
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
@@ -552,7 +565,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for minute in [1, 2]:
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                update_case(self.domain, case.case_id, case_properties={'appointment_date': '2017-06-01'})
+                self.update_case_and_sync(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'appointment_date': '2017-06-01'}
+                )
 
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
@@ -570,7 +587,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 self.assertTrue(instances[0].active)
 
             # Update start date. Instance is updated with new start date,
-            update_case(self.domain, case.case_id, case_properties={'appointment_date': '2017-07-01'})
+            self.update_case_and_sync(
+                self.domain,
+                case.case_id,
+                case_properties={'appointment_date': '2017-07-01'}
+            )
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -587,7 +608,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Set start date to the past. Instance is updated with new start date and is inactive
-            update_case(self.domain, case.case_id, case_properties={'appointment_date': '2017-04-01'})
+            self.update_case_and_sync(
+                self.domain,
+                case.case_id,
+                case_properties={'appointment_date': '2017-04-01'}
+            )
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -604,7 +629,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertFalse(instances[0].active)
 
             # Give an invalid start date. Instance should no longer exist.
-            update_case(self.domain, case.case_id, case_properties={'appointment_date': 'xyz'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'appointment_date': 'xyz'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
@@ -636,7 +661,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2018, 2, 28, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             yield schedule, rule, definition, case
 
     @patch('corehq.messaging.scheduling.util.utcnow')
@@ -651,7 +676,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # no new instance is created since it already exists.
             for minute in [1, 2]:
                 utcnow_patch.return_value = datetime(2018, 2, 28, 7, minute)
-                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+                self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
 
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
@@ -715,7 +740,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
         with setup as (schedule, rule, definition, case):
             utcnow_patch.return_value = datetime(2018, 2, 28, 7, 1)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -728,7 +753,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         setup = self.setup_timed_schedule_with_case(utcnow_patch)
         with setup as (schedule, rule, definition, case):
             utcnow_patch.return_value = datetime(2018, 2, 28, 7, 1)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -762,13 +787,13 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
             # Make the rule match, but don't give a preferred time. Default scheduling time is used.
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -785,7 +810,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Update the preferred time, and the schedule should recalculate
-            update_case(self.domain, case.case_id, case_properties={'reminder_time': '09:00'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'reminder_time': '09:00'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             self.assertEqual(instances[0].case_id, case.case_id)
@@ -801,7 +826,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Update the preferred time to a bad value and the default time is used again.
-            update_case(self.domain, case.case_id, case_properties={'reminder_time': 'x'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'reminder_time': 'x'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             self.assertEqual(instances[0].case_id, case.case_id)
@@ -852,12 +877,12 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         utcnow_patch.return_value = datetime(2017, 8, 1, 7, 0)
         module_and_form_patch.return_value = module, form
 
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             # Schedule phase does not match, nothing is scheduled
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-            update_case(self.domain, case.case_id,
+            self.update_case_and_sync(self.domain, case.case_id,
                 case_properties={'add': '2017-08-01', 'current_schedule_phase': '2'})
 
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -876,7 +901,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # If the anchor date gets updated (due to correction, for example), the schedule recalculates
-            update_case(self.domain, case.case_id, case_properties={'add': '2017-08-10'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'add': '2017-08-10'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -893,7 +918,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # If the anchor date is in the past, the schedule instance is deactivated
-            update_case(self.domain, case.case_id, case_properties={'add': '2017-07-01'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'add': '2017-07-01'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -910,7 +935,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertFalse(instances[0].active)
 
             # If the anchor date is reset, the schedule instance is reactivated
-            update_case(self.domain, case.case_id, case_properties={'add': '2017-08-01'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'add': '2017-08-01'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -929,7 +954,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # Making an arbitrary update doesn't cause any recalculating to happen
             with patch('corehq.messaging.scheduling.scheduling_partitioned.models.'
                        'AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
-                update_case(self.domain, case.case_id, case_properties={'new_property': 'new value'})
+                self.update_case_and_sync(self.domain, case.case_id, case_properties={'new_property': 'new value'})
                 self.assertEqual(recalculate_patch.call_count, 0)
 
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -948,7 +973,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             self.assertTrue(instances[0].active)
 
             # Terminate the schedule, no more schedule instances should be scheduled
-            update_case(self.domain, case.case_id, case_properties={'current_schedule_phase': '-1'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'current_schedule_phase': '-1'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
@@ -972,7 +997,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
         utcnow_patch.return_value = datetime(2017, 8, 1, 15, 0)
 
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
 
@@ -996,7 +1021,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             schedule.save()
             schedule = TimedSchedule.objects.get(schedule_id=schedule.schedule_id)
             utcnow_patch.return_value = datetime(2017, 8, 4, 7, 0)
-            update_case(self.domain, case.case_id, case_properties={'new_property': 'new value'})
+            self.update_case_and_sync(self.domain, case.case_id, case_properties={'new_property': 'new value'})
 
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
@@ -1017,7 +1042,11 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # Making another arbitrary update doesn't cause any recalculating to happen
             with patch('corehq.messaging.scheduling.scheduling_partitioned.models.'
                        'AbstractTimedScheduleInstance.recalculate_schedule') as recalculate_patch:
-                update_case(self.domain, case.case_id, case_properties={'new_property': 'new value 2'})
+                self.update_case_and_sync(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'new_property': 'new value 2'}
+                )
                 self.assertEqual(recalculate_patch.call_count, 0)
 
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -1058,7 +1087,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
     @patch('corehq.apps.es.es_query.ESQuery.count', return_value=10)
     def test_run_messaging_rule_sharded(self, es_patch, shard_rule_patch, sync_patch):
         rule_id = self._setup_rule()
-        with create_case(self.domain, 'person') as case1, create_case(self.domain, 'person') as case2:
+        with self.create_case_and_sync(self.domain, 'person') as case1, \
+             self.create_case_and_sync(self.domain, 'person') as case2:
             run_messaging_rule(self.domain, rule_id)
             shard_rule_patch.assert_has_calls(
                 [
@@ -1099,7 +1129,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/1 at 7am local time; the schedule instance gets scheduled for the same day
         utcnow_patch.return_value = datetime(2018, 3, 1, 12, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]
@@ -1118,7 +1148,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/1 at 10am local time; the schedule instance gets scheduled for the next day
         utcnow_patch.return_value = datetime(2018, 3, 1, 15, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]
@@ -1180,7 +1210,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/4 at 10pm local time; the schedule instance gets scheduled for the same week
         utcnow_patch.return_value = datetime(2018, 3, 5, 3, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]
@@ -1199,7 +1229,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/5 at 10pm local time; the schedule instance gets scheduled for the next week
         utcnow_patch.return_value = datetime(2018, 3, 6, 3, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]
@@ -1259,7 +1289,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/4 at 5pm local time; the schedule instance gets scheduled for the same month
         utcnow_patch.return_value = datetime(2018, 3, 4, 22, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]
@@ -1278,7 +1308,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         # It's 3/16 at 5pm local time; the schedule instance gets scheduled for the next month
         utcnow_patch.return_value = datetime(2018, 3, 16, 21, 0)
-        with create_case(self.domain, 'person') as case:
+        with self.create_case_and_sync(self.domain, 'person') as case:
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 1)
             instance = instances[0]

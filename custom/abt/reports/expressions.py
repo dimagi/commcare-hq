@@ -195,7 +195,7 @@ class AbtExpressionSpec(JsonObject):
     def _get_responsible_follow_up(self, spec):
         return spec.get('responsible_follow_up', "")
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         """
         Given a document (item), return a list of documents representing each
         of the flagged questions.
@@ -374,17 +374,17 @@ class AbtSupervisorV2020ExpressionSpec(AbtExpressionSpec):
     comment_from_root = True
 
 
-def abt_supervisor_expression(spec, context):
+def abt_supervisor_expression(spec, factory_context):
     return AbtSupervisorExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2_expression(spec, context):
+def abt_supervisor_v2_expression(spec, factory_context):
     return AbtSupervisorV2ExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2019_expression(spec, context):
+def abt_supervisor_v2019_expression(spec, factory_context):
     return AbtSupervisorV2019ExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2020_expression(spec, context):
+def abt_supervisor_v2020_expression(spec, factory_context):
     return AbtSupervisorV2020ExpressionSpec.wrap(spec)

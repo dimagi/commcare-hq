@@ -45,6 +45,7 @@ from corehq.apps.userreports.models import (
     guess_data_source_type,
     RegistryDataSourceConfiguration, RegistryReportConfiguration,
 )
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
@@ -1070,7 +1071,7 @@ class DataSourceForm(forms.Form):
         """
         cleaned_data = super(DataSourceForm, self).clean()
 
-        existing_reports = ReportConfiguration.by_domain(self.domain)
+        existing_reports = get_report_and_registry_report_configs_for_domain(self.domain)
         builder_reports = [report for report in existing_reports if report.report_meta.created_by_builder]
         if has_report_builder_access(self.domain) and len(builder_reports) >= self.max_allowed_reports:
             # Don't show the warning when domain does not have report buidler access, because this is just a

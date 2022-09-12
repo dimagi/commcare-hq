@@ -315,7 +315,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             _Validation(
                 validation.name,
                 validation.error_message,
-                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+                FilterFactory.from_spec(validation.expression, self.get_factory_context())
             )
             for validation in self.validations
         ]
@@ -359,7 +359,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.get_factory_context(),
+            self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -456,7 +456,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, self.get_factory_context())
         return None
 
     @memoized
@@ -1352,15 +1352,15 @@ class InvalidUCRData(models.Model):
 
 
 class UCRExpressionManager(models.Manager):
-    def get_filters_for_domain(self, domain, context):
+    def get_filters_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(context)
+            f.name: f.wrapped_definition(factory_context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
         }
 
-    def get_expressions_for_domain(self, domain, context):
+    def get_expressions_for_domain(self, domain, factory_context):
         return {
-            f.name: f.wrapped_definition(context)
+            f.name: f.wrapped_definition(factory_context)
             for f in self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
         }
 
@@ -1390,11 +1390,11 @@ class UCRExpression(models.Model):
         app_label = 'userreports'
         unique_together = ('name', 'domain')
 
-    def wrapped_definition(self, context):
+    def wrapped_definition(self, factory_context):
         if self.expression_type == UCR_NAMED_EXPRESSION:
-            return ExpressionFactory.from_spec(self.definition, context)
+            return ExpressionFactory.from_spec(self.definition, factory_context)
         elif self.expression_type == UCR_NAMED_FILTER:
-            return FilterFactory.from_spec(self.definition, context)
+            return FilterFactory.from_spec(self.definition, factory_context)
 
     def update_from_upstream(self, upstream_ucr_expression):
         """

@@ -53,6 +53,7 @@ def get_user_import_validators(domain_obj, all_specs, is_web_user_import, allowe
             PasswordValidator(domain) if validate_passwords else noop,
             GroupValidator(domain, allowed_groups),
             ProfileValidator(domain, allowed_profiles),
+            ConfirmationSmsValidator(domain)
         ]
 
 
@@ -343,3 +344,35 @@ class TargetDomainValidator(ImportValidator):
         if target_domain and target_domain != self.domain:
             if target_domain not in EnterprisePermissions.get_domains(self.domain):
                 return self.error_message.format(target_domain, self.domain)
+
+
+class ConfirmationSmsValidator(ImportValidator):
+    confirmation_sms_header = "send_confirmation_sms"
+    account_confirmed_header = "is_account_confirmed"
+    active_status_header = "is_active"
+    error_new_user = _("When '{}' is True for a new user, {} must be either empty or set to False.")
+    error_existing_user = _("When '{}' is True for an existing user, {}.")
+
+    def validate_spec(self, spec):
+        send_account_confirmation_sms = spec_value_to_boolean_or_none(spec, self.confirmation_sms_header)
+
+        if send_account_confirmation_sms:
+            is_active = spec_value_to_boolean_or_none(spec, self.active_status_header)
+            is_account_confirmed = spec_value_to_boolean_or_none(spec, self.account_confirmed_header)
+            user_id = spec.get('user_id')
+            error_values = []
+            if not user_id:
+                if is_active:
+                    error_values.append(self.active_status_header)
+                if is_account_confirmed:
+                    error_values.append(self.account_confirmed_header)
+                if error_values:
+                    return self.error_new_user.format(self.confirmation_sms_header, ' and '.join(error_values))
+            else:
+                if is_active:
+                    error_values.append(f"{self.active_status_header} must be empty or set to False")
+                if is_account_confirmed is not None:
+                    error_values.append(f"{self.account_confirmed_header} must be empty")
+                if error_values:
+                    errors_formatted = ' and '.join(error_values)
+                    return self.error_existing_user.format(self.confirmation_sms_header, errors_formatted)

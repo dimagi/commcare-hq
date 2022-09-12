@@ -10,11 +10,10 @@ class TestUpdateTableauVisualization(BaseLinkedDomainTest):
         server_type='server',
         server_name='server name',
         validate_hostname='host name',
-        target_site='target site',
-        domain_username='username')
+        target_site='target site')
         self.server.save()
         self.tableau_visualization_setup_1 = TableauVisualization(domain=self.domain,
-        server=self.server, view_url='url_1')
+        title="title", server=self.server, view_url='url_1')
         self.tableau_visualization_setup_1.save()
 
     def tearDown(self):
@@ -30,14 +29,16 @@ class TestUpdateTableauVisualization(BaseLinkedDomainTest):
 
         # Linked domain should now have master domain's tableau visualization
         models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
+        self.assertEqual(models[0].title, 'title')
         self.assertEqual(models[0].view_url, 'url_1')
         self.assertEqual(models[0].server.server_name, 'server name')
         self.assertEqual(models[0].server.domain, self.linked_domain)
 
         # Updating master reflected in linked domain after update
-        TableauVisualization.objects.all().update(view_url='different url_1')
+        TableauVisualization.objects.all().update(title="different title", view_url='different url_1')
         update_tableau_server_and_visualizations(self.domain_link)
 
         models = TableauVisualization.objects.all().filter(domain=self.linked_domain)
         for model in models:
+            self.assertEqual(model.title, 'different title')
             self.assertEqual(model.view_url, 'different url_1')

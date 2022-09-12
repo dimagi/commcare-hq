@@ -1,3 +1,11 @@
+"""
+FixtureContributor
+------------------
+
+This contributor adds a tiny fixture with a demo user group.
+
+It's also the parent class for ``SchedulerFixtureContributor``, a flagged feature.
+"""
 from lxml import etree
 
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor

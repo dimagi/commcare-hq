@@ -661,10 +661,17 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.size(0)
         user_query = user_query.aggregations([
-            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
-            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+            DateHistogram(
+                'last_submission',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                DateHistogram.Interval.DAY,
+            ),
+            DateHistogram(
+                'last_sync',
+                'reporting_metadata.last_sync_for_user.sync_date',
+                DateHistogram.Interval.DAY,
+            )
         ])
         return user_query
 
@@ -729,8 +736,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].raw_buckets
-        last_sync_buckets = aggregations[1].raw_buckets
+        last_submission_buckets = aggregations[0].normalized_buckets
+        last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
@@ -744,7 +751,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             extra = total = running_total = 0
             today = datetime.today().date()
             for bucket_val in buckets:
-                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
                 val = bucket_val['doc_count']
                 if delta_days in vals:

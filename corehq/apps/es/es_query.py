@@ -99,9 +99,13 @@ from corehq.elastic import (
 )
 
 from . import aggregations, filters, queries
-from .const import SIZE_LIMIT
+from .const import SCROLL_SIZE, SIZE_LIMIT
 from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
+
+
+class InvalidQueryError(Exception):
+    """Query parameters cannot be assembled into a valid search."""
 
 
 class ESQuery(object):
@@ -196,28 +200,31 @@ class ESQuery(object):
             size = sliced_or_int.stop - start
         return self.start(start).size(size).run().hits
 
-    def run(self, include_hits=False):
+    def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        query = self._clean_before_run(include_hits)
         raw = run_query(
-            query.index,
-            query.raw_query,
+            self.index,
+            self.raw_query,
             for_export=self.for_export,
         )
-        return ESQuerySet(raw, deepcopy(query))
-
-    def _clean_before_run(self, include_hits=False):
-        query = deepcopy(self)
-        if not include_hits and query.uses_aggregations():
-            query = query.size(0)
-        return query
+        return ESQuerySet(raw, deepcopy(self))
 
     def scroll(self):
         """
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query, for_export=self.for_export)
+        if self.uses_aggregations():
+            raise InvalidQueryError(
+                "aggregation scroll queries will yield invalid hits if the "
+                "scroll requires more than one request."
+            )
+        raw_query = self.raw_query
+        raw_query["size"] = SCROLL_SIZE if self._size is None else self._size
+        # The '_assemble()' method sets size=SIZE_LIMIT when no query size is
+        # configured, and overrides that with size=0 for aggregation queries,
+        # neither of which are acceptable for a scroll query.
+        result = scroll_query(self.index, raw_query, for_export=self.for_export)
         for r in result:
             yield ESQuerySet.normalize_result(self, r)
 
@@ -271,9 +278,6 @@ class ESQuery(object):
             agg = agg.order(sort_field, order)
         return self.aggregation(agg)
 
-    def date_histogram(self, name, datefield, interval, timezone=None):
-        return self.aggregation(aggregations.DateHistogram(name, datefield, interval, timezone=timezone))
-
     @property
     def _query(self):
         return self.es_query['query']['bool']['must']
@@ -319,22 +323,6 @@ class ESQuery(object):
             queries.search_string_query(search_string, default_fields)
         )
 
-    def _assemble(self):
-        """Build out the es_query dict"""
-        self._filters.extend(list(self._default_filters.values()))
-        if self._start is not None:
-            self.es_query['from'] = self._start
-        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
-        if self._exclude_source:
-            self.es_query['_source'] = False
-        elif self._source is not None:
-            self.es_query['_source'] = self._source
-        if self._aggregations:
-            self.es_query['aggs'] = {
-                agg.name: agg.assemble()
-                for agg in self._aggregations
-            }
-
     def fields(self, fields):
         """
             Restrict the fields returned from elasticsearch
@@ -372,7 +360,10 @@ class ESQuery(object):
         return query
 
     def size(self, size):
-        """Restrict number of results returned.  Analagous to SQL limit."""
+        """Restrict number of results returned. Analagous to SQL limit, except
+        when performing a scroll, in which case this value becomes the number of
+        results to fetch per scroll request.
+        """
         query = deepcopy(self)
         query._size = size
         return query
@@ -382,6 +373,23 @@ class ESQuery(object):
         query = deepcopy(self)
         query._assemble()
         return query.es_query
+
+    def _assemble(self):
+        """Build out the es_query dict"""
+        self._filters.extend(list(self._default_filters.values()))
+        if self._start is not None:
+            self.es_query['from'] = self._start
+        self.es_query['size'] = self._size if self._size is not None else SIZE_LIMIT
+        if self._exclude_source:
+            self.es_query['_source'] = False
+        elif self._source is not None:
+            self.es_query['_source'] = self._source
+        if self.uses_aggregations():
+            self.es_query['size'] = 0
+            self.es_query['aggs'] = {
+                agg.name: agg.assemble()
+                for agg in self._aggregations
+            }
 
     def dumps(self, pretty=False):
         """Returns the JSON query that will be sent to elasticsearch."""
@@ -468,7 +476,7 @@ class ESQuery(object):
 
     def scroll_ids(self):
         """Returns a generator of all matching ids"""
-        return self.exclude_source().size(5000).scroll()
+        return self.exclude_source().scroll()
 
 
 class ESQuerySet(object):
@@ -512,11 +520,10 @@ class ESQuerySet(object):
     @property
     def hits(self):
         """Return the docs from the response."""
-        raw_hits = self.raw_hits
-        if not raw_hits and self.query.uses_aggregations() and self.query._size == 0:
-            raise ESError("no hits, did you forget about no_hits_with_aggs?")
+        if self.query.uses_aggregations():
+            raise ESError("We exclude hits for aggregation queries")
 
-        return [self.normalize_result(self.query, r) for r in raw_hits]
+        return [self.normalize_result(self.query, r) for r in self.raw_hits]
 
     @property
     def total(self):

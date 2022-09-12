@@ -98,7 +98,6 @@ class TestCaseListAPI(TestCase):
         self.assertNotIn('next', res)  # No pages after this one
 
 
-
 @generate_cases([
     ("", ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("limit=2", ['good_guys', 'bad_guys']),
@@ -115,13 +114,14 @@ class TestCaseListAPI(TestCase):
     ("date_opened.lte=1878-02-19T00:00:00", ["mattie", "rooster"]),
     ("date_opened.gt=1878-02-18&date_opened.lt=1878-02-20", ["laboeuf"]),
     ("date_opened.gt=1878-02-19T11:00:00&date_opened.lt=1878-02-19T13:00:00", ["laboeuf"]),
+    ("date_opened.gt=1878-02-19T08:00:00-03:00&date_opened.lt=1878-02-19T10:00:00-03:00", ["laboeuf"]),
     ("date_opened.lt=1878-02-18&date_opened.gt=1878-02-19", []),
-    ("property.alias=Rooster", ["rooster"]),
-    ("property.alias=rooster", []),
-    ('property.foo {"test": "json"}=bar', []),  # This is escaped as expected
-    ('property.foo={"test": "json"}', []),  # This is escaped as expected
-    ("case_type=person&property.alias=", ["mattie", "laboeuf"]),
-    ('xpath=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
+    ("properties.alias=Rooster", ["rooster"]),
+    ("properties.alias=rooster", []),
+    ('properties.foo {"test": "json"}=bar', []),  # This is escaped as expected
+    ('properties.foo={"test": "json"}', []),  # This is escaped as expected
+    ("case_type=person&properties.alias=", ["mattie", "laboeuf"]),
+    ('query=(alias="Rooster" or name="Mattie Ross")', ["mattie", "rooster"]),
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
@@ -140,8 +140,8 @@ def test_case_list_queries(self, querystring, expected):
     ("case_name.gte=a", "'case_name.gte' is not a valid parameter."),
     ("date_opened=2020-01-30", "'date_opened' is not a valid parameter."),
     ("date_opened.start=2020-01-30", "'start' is not a valid type of date range."),
-    ('xpath=gibberish',
-     "Bad XPath: Your search query is required to have at least one boolean "
+    ('query=gibberish',
+     "Bad query: Your search query is required to have at least one boolean "
      "operator (=, !=, >, >=, <, <=)"),
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):

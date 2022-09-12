@@ -98,6 +98,12 @@ class Command(BaseCommand):
         print(f"\n################# add {command_file} #################")
         print(command_content)
 
+        test_file_name = f'test_{self.class_name.lower()}_attr_comparision.py'
+        test_file = os.path.join("corehq", "apps", self.django_app, "tests", test_file_name)
+        test_content = self.generate_test_file()
+        print(f"\n################# add {test_file} #################\n")
+        print(test_content)
+
     def evaluate_doc(self, doc, prefix=None):
         for key, value in doc.items():
             if key in self.COUCH_FIELDS:
@@ -341,6 +347,13 @@ class Command(BaseCommand):
             dates_import=dates_import,
             suggested_updates=suggested_updates,
             submodels=submodels
+        )
+
+    def generate_test_file(self):
+        return render_tempate(
+            'migration_attr_equality_test.j2',
+            class_name=self.class_name,
+            models_path=self.models_path
         )
 
     def is_submodel_key(self, key):

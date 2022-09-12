@@ -4,8 +4,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.utils import clear_domain_names
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, CouchUser, WebUser, UserRolePresets, UserRole
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.models import CommCareUser, CouchUser, UserRole, WebUser
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 
 
 class CreateTestCase(TestCase):

@@ -174,7 +174,8 @@ class SimplifiedUserInfo(
         ))):
 
     ES_FIELDS = [
-        '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
+        '_id', 'domain', 'username', 'first_name', 'last_name',
+        'doc_type', 'is_active', 'location_id', '__group_ids'
     ]
 
     @property
@@ -360,16 +361,6 @@ def validate_xform_for_edit(xform):
             raise EditFormValidationError(_('Form cannot be edited because it will create a new case'))
 
     return None
-
-
-def get_report_timezone(request, domain):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(request.couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)

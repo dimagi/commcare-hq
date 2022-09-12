@@ -15,6 +15,7 @@ from corehq.toggles import (
     deterministic_random,
     DynamicallyPredictablyRandomToggle,
     NAMESPACE_EMAIL_DOMAIN,
+    TWO_STAGE_USER_PROVISIONING_BY_SMS,
 )
 from .models import generate_toggle_id, Toggle
 from .shortcuts import (
@@ -118,6 +119,9 @@ class ToggleTestCase(TestCase):
         self.assertTrue(toggle_enabled(self.slug, 'jon'))
         self.assertFalse(toggle_enabled(self.slug, 'benjen'))
         self.assertTrue(toggle_enabled(self.slug, 'aemon'))
+
+    def test_two_stage_user_provisioning_by_sms_toggle_exists(self):
+        self.assertIsInstance(TWO_STAGE_USER_PROVISIONING_BY_SMS, StaticToggle)
 
 
 @override_settings(DISABLE_RANDOM_TOGGLES=False)

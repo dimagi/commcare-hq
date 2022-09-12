@@ -1,17 +1,21 @@
 import json
 import os
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
-from unittest.mock import patch
-
-from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_LOAD_CASE, REGISTRY_WORKFLOW_SMART_LINK
+from corehq.apps.app_manager.const import (
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    REGISTRY_WORKFLOW_SMART_LINK,
+    WORKFLOW_MODULE,
+)
 from corehq.apps.app_manager.models import (
     Application,
     CaseList,
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    DetailColumn,
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -220,23 +224,59 @@ class BuildErrorsTest(SimpleTestCase):
             'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
         }, factory.app.validate_app())
 
-    @flag_enabled('DATA_REGISTRY')
-    @patch.object(Application, 'supports_data_registry', lambda: True)
-    def test_inline_search_module_errors(self, *args):
+    def test_search_module_errors_instances(self, *args):
         factory = AppFactory()
         module, form = factory.new_basic_module('basic', 'person')
         factory.form_requires_case(form, 'person')
 
+        module.case_details.long.columns.extend([
+            DetailColumn.wrap(dict(
+                header={"en": "name"},
+                model="case",
+                format="plain",
+                useXpathExpression=True,
+                field="instance('results')/results",
+            )),
+            DetailColumn.wrap(dict(
+                header={"en": "age"},
+                model="case",
+                format="plain",
+                useXpathExpression=True,
+                field="instance('search-input:results')/input",
+            ))
+        ])
         module.search_config = CaseSearch(
             search_label=CaseSearchLabel(label={'en': 'Search'}),
-            properties=[CaseSearchProperty(name=field) for field in ['name', 'greatest_fear']],
-            data_registry="so_many_cases",
-            data_registry_workflow=REGISTRY_WORKFLOW_SMART_LINK,
-            auto_launch=True,
-            inline_search=True,
+            properties=[CaseSearchProperty(name='name')],
         )
 
+        errors = [(error['type'], error.get('details', '')) for error in factory.app.validate_app()]
+        self.assertIn(('case search instance used in casedb case details', 'results'), errors)
+        self.assertIn(('case search instance used in casedb case details', 'search-input:results'), errors)
+
+        module.search_config.auto_launch = True
+        self.assertNotIn(
+            'case search instance used in casedb case details',
+            [error['type'] for error in factory.app.validate_app()]
+        )
+
+    @flag_enabled('FORM_LINK_WORKFLOW')
+    def test_form_module_validation(self, *args):
+        factory = AppFactory(build_version='2.24.0')
+        app = factory.app
+        m0, m0f0 = factory.new_basic_module('register', 'case')
+
+        m0f0.post_form_workflow = WORKFLOW_MODULE
+
+        m1 = factory.new_shadow_module('shadow', m0, with_form=False)
+        m1.put_in_root = True
+
+        errors = app.validate_app()
+
+        self._clean_unique_id(errors)
         self.assertIn({
-            'type': "smart links inline search",
-            'module': {'id': 0, 'unique_id': 'basic_module', 'name': {'en': 'basic module'}}
-        }, factory.app.validate_app())
+            'type': 'form link to display only forms',
+            'form_type': 'module_form',
+            'module': {'id': 1, 'name': {'en': 'shadow module'}},
+            'form': {'id': 0, 'name': {'en': 'register form 0'}},
+        }, errors)

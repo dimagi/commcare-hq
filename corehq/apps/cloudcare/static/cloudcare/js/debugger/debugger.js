@@ -172,6 +172,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             this.options.baseUrl,
             {
                 selections: this.options.selections,
+                query_data: self.options.queryData,
                 username: this.options.username,
                 restoreAs: this.options.restoreAs,
                 domain: this.options.domain,
@@ -196,6 +197,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             baseUrl: null,
             formSessionId: null,
             selections: null,
+            queryData: null,
             username: null,
             restoreAs: null,
             domain: null,
@@ -352,6 +354,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
                     xpath: xpath,
                     app_id: self.options.appId,
                     selections: self.options.selections,
+                    query_data: self.options.queryData,
                     debugOutput: self.selectedDebugOption().key,
                 },
                 self.options.sessionType

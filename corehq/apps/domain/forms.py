@@ -13,6 +13,7 @@ from django.contrib.auth.hashers import UNUSABLE_PASSWORD_PREFIX
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import transaction
 from django.forms.fields import (
     BooleanField,
@@ -101,6 +102,8 @@ from corehq.apps.domain.models import (
     DATA_DICT,
     LOGO_ATTACHMENT,
     SUB_AREA_CHOICES,
+    SMSAccountConfirmationSettings,
+    OperatorCallLimitSettings,
     TransferDomainRequest,
     all_restricted_ucr_expressions,
     AllowedUCRExpressionSettings
@@ -113,7 +116,7 @@ from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput, Select2Ajax, Ge
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.users.models import CouchUser, WebUser
 from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR, \
-    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS
+    SECURE_SESSION_TIMEOUT, RESTRICT_MOBILE_ACCESS, TWO_STAGE_USER_PROVISIONING_BY_SMS
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 
@@ -308,7 +311,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     project_description = forms.CharField(
         label=gettext_lazy("Project Description"),
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
         max_length=1000,
         help_text=gettext_lazy(
@@ -384,6 +387,32 @@ class DomainGlobalSettingsForm(forms.Form):
         )
     )
 
+    confirmation_link_expiry = IntegerField(
+        label=gettext_lazy("Account confirmation link expiry"),
+        required=True,
+        help_text=gettext_lazy(
+            """
+            Default time (in days) for which account confirmation link will be valid.
+            """
+        )
+    )
+
+    operator_call_limit = IntegerField(
+        label=gettext_lazy("Call limit"),
+        required=True,
+        help_text=gettext_lazy(
+            """
+            Limit on number of calls allowed to an operator for each call type.
+            """
+        )
+    )
+
+    confirmation_sms_project_name = CharField(
+        label=gettext_lazy("Confirmation SMS project name"),
+        required=True,
+        help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -424,6 +453,42 @@ class DomainGlobalSettingsForm(forms.Form):
         if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
+        self._handle_call_limit_visibility()
+        self._handle_account_confirmation_by_sms_settings()
+
+    def _handle_account_confirmation_by_sms_settings(self):
+        if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            del self.fields['confirmation_link_expiry']
+            del self.fields['confirmation_sms_project_name']
+        else:
+            settings_obj = SMSAccountConfirmationSettings.get_settings(self.domain)
+            min_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM
+            max_value_expiry = SMSAccountConfirmationSettings.CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM
+            self.fields['confirmation_link_expiry'].initial = settings_obj.confirmation_link_expiry_time
+            self._add_range_validation_to_integer_input(
+                "confirmation_link_expiry", min_value_expiry, max_value_expiry
+            )
+            project_max_length = SMSAccountConfirmationSettings.PROJECT_NAME_MAX_LENGTH
+            self.fields['confirmation_sms_project_name'].initial = settings_obj.project_name
+            self.fields['confirmation_sms_project_name'].max_length = project_max_length
+
+    def _handle_call_limit_visibility(self):
+        if self.domain not in OperatorCallLimitSettings.objects.values_list('domain', flat=True):
+            del self.fields['operator_call_limit']
+            return
+        existing_limit_setting = OperatorCallLimitSettings.objects.get(domain=self.domain)
+        self.fields['operator_call_limit'].initial = existing_limit_setting.call_limit
+        self._add_range_validation_to_integer_input(
+            "operator_call_limit", OperatorCallLimitSettings.CALL_LIMIT_MINIMUM,
+            OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
+        )
+
+    def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
+        setting = self.fields.get(settings_name)
+        min_validator = MinValueValidator(min_value)
+        max_validator = MaxValueValidator(max_value)
+        setting.validators.extend([min_validator, max_validator])
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
@@ -435,6 +500,21 @@ class DomainGlobalSettingsForm(forms.Form):
         if isinstance(data, dict):
             return data
         return json.loads(data or '{}')
+
+    def clean_confirmation_link_expiry(self):
+        data = self.cleaned_data['confirmation_link_expiry']
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Confirmation link expiry")
+
+    def clean_operator_call_limit(self):
+        data = self.cleaned_data['operator_call_limit']
+        return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    @staticmethod
+    def validate_integer_value(value, value_name):
+        try:
+            return int(value)
+        except ValueError:
+            raise forms.ValidationError(_("{} should be an integer.").format(value_name))
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -502,17 +582,29 @@ class DomainGlobalSettingsForm(forms.Form):
             if users_to_save:
                 WebUser.bulk_save(users_to_save)
 
+    def _save_account_confirmation_settings(self, domain):
+        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(domain.name):
+            settings = SMSAccountConfirmationSettings.get_settings(domain.name)
+            settings.project_name = self.cleaned_data.get('confirmation_sms_project_name')
+            settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
+            settings.save()
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
         domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         domain.default_geocoder_location = self.cleaned_data.get('default_geocoder_location')
+        if self.cleaned_data.get("operator_call_limit"):
+            setting_obj = OperatorCallLimitSettings.objects.get(domain=self.domain)
+            setting_obj.call_limit = self.cleaned_data.get("operator_call_limit")
+            setting_obj.save()
         try:
             self._save_logo_configuration(domain)
         except IOError as err:
             messages.error(request, _('Unable to save custom logo: {}').format(err))
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
+        self._save_account_confirmation_settings(domain)
         domain.save()
         return True
 
@@ -763,7 +855,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Quick 1-2 sentence summary of the project.",
     )
-    notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
+    notes = CharField(label="Notes*", required=False, widget=forms.Textarea(attrs={"class": "vertical-resize"}))
     phone_model = CharField(
         label="Device Model",
         help_text="Add Web Apps, if this project is using Web Apps as well",
@@ -877,7 +969,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     app_design_comments = CharField(
         label="App Design Comments",
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
         help_text=(
             "Unusual workflows or design decisions for others to watch out for."
@@ -1684,10 +1776,14 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 class ProBonoForm(forms.Form):
     contact_email = MultiCharField(label=gettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=gettext_lazy("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    project_overview = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Project overview"
+    )
     airtime_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on airtime:"))
     device_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on devices:"))
-    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
+    pay_only_features_needed = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Pay only features needed"
+    )
     duration_of_project = forms.CharField(help_text=gettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
         "project, up to a maximum of 12 months at a time (at which point "

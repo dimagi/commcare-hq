@@ -15,6 +15,7 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = 'commcare_blacklisted_owner_ids'
 CASE_SEARCH_XPATH_QUERY_KEY = '_xpath_query'
 CASE_SEARCH_CASE_TYPE_KEY = "case_type"
+CASE_SEARCH_INDEX_KEY_PREFIX = "indices."
 
 # These use the `x_commcare_` prefix to distinguish them from 'filter' keys
 # This is a purely aesthetic distinction and not functional
@@ -70,6 +71,14 @@ class SearchCriteria:
     @property
     def is_ancestor_query(self):
         return '/' in self.key
+
+    @property
+    def is_index_query(self):
+        return self.key.startswith(CASE_SEARCH_INDEX_KEY_PREFIX)
+
+    @property
+    def index_query_identifier(self):
+        return self.key.removeprefix(CASE_SEARCH_INDEX_KEY_PREFIX)
 
     def get_date_range(self):
         """The format is __range__YYYY-MM-DD__YYYY-MM-DD"""
@@ -244,6 +253,7 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
+    synchronous_web_apps = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
@@ -273,6 +283,7 @@ class CaseSearchConfig(models.Model):
         if not config:
             return None
 
+        config.synchronous_web_apps = json_def['synchronous_web_apps']
         config.ignore_patterns.all().delete()
         config.fuzzy_properties.all().delete()
         config.save()
@@ -304,6 +315,17 @@ def case_search_enabled_for_domain(domain):
         return False
     else:
         return True
+
+
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
+def case_search_synchronous_web_apps_for_domain(domain):
+    if not case_search_enabled_for_domain(domain):
+        return False
+
+    config = CaseSearchConfig.objects.get_or_none(pk=domain)
+    if config:
+        return config.synchronous_web_apps
+    return False
 
 
 def enable_case_search(domain):

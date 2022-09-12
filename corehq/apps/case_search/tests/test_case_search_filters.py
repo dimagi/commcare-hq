@@ -184,3 +184,21 @@ class TestCaseSearchLookups(BaseCaseSearchTest):
                 ['song'],
                 {'_xpath_query': "selected-all(3, 'New York Boston')"},
             )
+
+    def test_index_case_search(self):
+        self._create_case_search_config()
+        self._bootstrap_cases_in_es_for_domain(self.domain, [
+            {'_id': 'c1', 'foo': 'redbeard'},
+            {'_id': 'c2', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
+            {'_id': 'c3', 'case_type': 'child', 'index': {'parent': (self.case_type, 'c1')}},
+            {'_id': 'c4', 'case_type': 'child', 'index': {'host': (self.case_type, 'c1')}},
+        ])
+        actual = get_case_search_query(self.domain, ['child'], {
+            'indices.parent': ['c1'],
+        }).get_ids()
+        self.assertItemsEqual(actual, ['c2', 'c3'])
+
+        actual = get_case_search_query(self.domain, ['child'], {
+            'indices.host': ['c1'],
+        }).get_ids()
+        self.assertItemsEqual(actual, ['c4'])

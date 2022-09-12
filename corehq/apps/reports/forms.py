@@ -8,7 +8,7 @@ from memoized import memoized
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
-from crispy_forms.bootstrap import InlineField, StrictButton
+from crispy_forms.bootstrap import StrictButton
 
 import langcodes
 from corehq.apps.hqwebapp.crispy import FormActions, HQFormHelper, LinkButton
@@ -28,7 +28,7 @@ class SavedReportConfigForm(forms.Form):
     name = forms.CharField()
     description = forms.CharField(
         required=False,
-        widget=forms.Textarea(),
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
     )
     start_date = forms.DateField(
         required=False,
@@ -132,6 +132,11 @@ class ScheduledReportForm(forms.Form):
         coerce=int,
         choices=ReportNotification.hour_choices())
 
+    stop_hour = forms.TypedChoiceField(
+        label=_('To Time'),
+        coerce=int,
+        choices=ReportNotification.hour_choices())
+
     start_date = forms.DateField(
         label=_('Report Start Date'),
         required=False
@@ -187,6 +192,7 @@ class ScheduledReportForm(forms.Form):
                     'interval',
                     'day',
                     'hour',
+                    'stop_hour',
                     'start_date',
                     crispy.Field(
                         'email_subject',
@@ -216,9 +222,16 @@ class ScheduledReportForm(forms.Form):
             del cleaned_data["day"]
         if cleaned_data.get("interval") == "hourly":
             del cleaned_data["day"]
-            del cleaned_data["hour"]
         _verify_email(cleaned_data)
         return cleaned_data
+
+    def clean_stop_hour(self):
+        cleaned_data = super(ScheduledReportForm, self).clean()
+        if cleaned_data.get("interval") == "hourly":
+            if cleaned_data['hour'] > cleaned_data['stop_hour']:
+                self.add_error('stop_hour', _("Must be after 'From Time'"))
+
+        return cleaned_data.get('stop_hour')
 
 
 class EmailReportForm(forms.Form):
@@ -266,10 +279,6 @@ class TableauServerForm(forms.Form):
         label=_('Target Site'),
     )
 
-    domain_username = forms.CharField(
-        label=_('Domain Username'),
-    )
-
     class Meta:
         model = TableauServer
         fields = [
@@ -277,7 +286,6 @@ class TableauServerForm(forms.Form):
             'server_name',
             'validate_hostname',
             'target_site',
-            'domain_username',
         ]
 
     def __init__(self, data, *args, **kwargs):
@@ -300,9 +308,6 @@ class TableauServerForm(forms.Form):
             crispy.Div(
                 crispy.Field('target_site'),
             ),
-            crispy.Div(
-                crispy.Field('domain_username'),
-            ),
             FormActions(
                 crispy.Submit('submit_btn', 'Submit')
             )
@@ -323,7 +328,6 @@ class TableauServerForm(forms.Form):
             'server_name': self._existing_config.server_name,
             'validate_hostname': self._existing_config.validate_hostname,
             'target_site': self._existing_config.target_site,
-            'domain_username': self._existing_config.domain_username,
         }
 
     def save(self):
@@ -331,7 +335,6 @@ class TableauServerForm(forms.Form):
         self._existing_config.server_name = self.cleaned_data['server_name']
         self._existing_config.validate_hostname = self.cleaned_data['validate_hostname']
         self._existing_config.target_site = self.cleaned_data['target_site']
-        self._existing_config.domain_username = self.cleaned_data['domain_username']
         self._existing_config.save()
 
 
@@ -343,6 +346,7 @@ class TableauVisualizationForm(forms.ModelForm):
     class Meta:
         model = TableauVisualization
         fields = [
+            'title',
             'server',
             'view_url',
         ]
@@ -357,6 +361,7 @@ class TableauVisualizationForm(forms.ModelForm):
         helper = HQFormHelper()
         from corehq.apps.reports.views import TableauVisualizationListView
         helper.layout = crispy.Layout(
+            crispy.Field('title'),
             crispy.Field('server'),
             crispy.Field('view_url'),
 

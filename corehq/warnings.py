@@ -15,11 +15,10 @@ WHITELIST = [
     # avoid it if possible.
     #
     # Item format:
-    # (module_path, message_substring_or_regex, optional_warning_class)
+    # (module_path, message_substring_or_regex, optional_warning_class, override_action)
 
     # warnings that may be resolved with a library upgrade
     ("captcha.fields", "ugettext_lazy() is deprecated"),
-    ("celery", "'collections.abc'"),
     ("compressor.filters.base", "smart_text() is deprecated"),
     ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
@@ -32,17 +31,18 @@ WHITELIST = [
     ]) + ")' defines default_app_config"), RemovedInDjango41Warning),
     ("django_celery_results", "ugettext_lazy() is deprecated"),
     ("django_otp.plugins", "django.conf.urls.url() is deprecated"),
-    ("kombu.utils.functional", "'collections.abc'"),
     ("logentry_admin.admin", "ugettext_lazy() is deprecated"),
     ("nose.importer", "the imp module is deprecated"),
     ("nose.util", "inspect.getargspec() is deprecated"),
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
+    ("nose.suite", "'collections.abc'"),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
+    ("corehq.apps.userreports.util", "'collections.abc'"),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
@@ -51,6 +51,10 @@ WHITELIST = [
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",
         SAWarning),
     ("unittest.case", "TestResult has no addExpectedFailure method", RuntimeWarning),
+
+    # warnings that should not be ignored
+    # note: override_action "default" causes warning to be printed on stderr
+    ("django.db.backends.postgresql.base", "unable to create a connection", RuntimeWarning, "default"),
 ]
 
 
@@ -66,7 +70,7 @@ def configure_warnings(is_testing):
             whitelist(action, *args)
 
 
-def whitelist(action, module, message, category=DeprecationWarning):
+def whitelist(action, module, message, category=DeprecationWarning, override_action=None):
     """Whitelist warnings with matching criteria
 
     Similar to `warnings.filterwarnings` except `re.escape` `module`
@@ -78,7 +82,7 @@ def whitelist(action, module, message, category=DeprecationWarning):
             message = r".*" + re.escape(message)
         else:
             message = message.pattern
-    warnings.filterwarnings(action, message, category, re.escape(module))
+    warnings.filterwarnings(override_action or action, message, category, re.escape(module))
 
 
 def get_whitelist_action():
@@ -138,8 +142,12 @@ def augment_warning_messages():
         # -- end code copied from Python's warnings.py:warn --
         else:
             module = filename
+        if not isinstance(message, str):
+            category = category or message.__class__
+            message = str(message)
         message += f"\nmodule: {module} line {lineno}"
-        message += POSSIBLE_RESOLUTIONS
+        if category and issubclass(category, DeprecationWarning):
+            message += POSSIBLE_RESOLUTIONS
 
         stacklevel += 1
         return real_warn(message, category, stacklevel, source)

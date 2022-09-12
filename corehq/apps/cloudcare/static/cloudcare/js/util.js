@@ -3,10 +3,12 @@ hqDefine('cloudcare/js/util', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
+    "cloudcare/js/formplayer/constants",
 ], function (
     $,
     initialPageData,
-    HMACCallout
+    HMACCallout,
+    constants
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -35,16 +37,15 @@ hqDefine('cloudcare/js/util', [
         return urlRoot + "/" + appId + "/";
     };
 
-    var showError = function (message, $el) {
-        if (message === undefined) {
-            message = gettext("Sorry, an error occurred while processing that request.");
-        }
+    var showError = function (message, $el, reportToHq) {
+        message = getErrorMessage(message);
         _show(message, $el, null, "alert alert-danger");
-        reportFormplayerErrorToHQ({
-            type: 'show_error_notification',
-            message: message,
-        });
-
+        if (reportToHq === undefined || reportToHq) {
+            reportFormplayerErrorToHQ({
+                type: 'show_error_notification',
+                message: message,
+            });
+        }
     };
 
     var showWarning = function (message, $el) {
@@ -54,8 +55,8 @@ hqDefine('cloudcare/js/util', [
         _show(message, $el, null, "alert alert-danger");
     };
 
-    var showHTMLError = function (message, $el, autoHideTime) {
-        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
+    var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
+        var htmlMessage = message = getErrorMessage(message);
         var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
@@ -63,11 +64,23 @@ hqDefine('cloudcare/js/util', [
         } catch (e) {
             // leave the message as at came in if there's an issue parsing text from the container
         }
-        reportFormplayerErrorToHQ({
-            type: 'show_error_notification',
-            message: message,
-            htmlMessage: htmlMessage,
-        });
+        if (reportToHq === undefined || reportToHq) {
+            reportFormplayerErrorToHQ({
+                type: 'show_error_notification',
+                message: message,
+                htmlMessage: htmlMessage,
+            });
+        }
+    };
+
+    var getErrorMessage = function (message) {
+        message = message || constants.GENERIC_ERROR;
+        const originalLen = message.length;
+        message = message.substr(0, 500);
+        if (message.length < originalLen) {
+            message += " ...";
+        }
+        return message;
     };
 
     var showSuccess = function (message, $el, autoHideTime, isHTML) {
@@ -279,7 +292,49 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
+    var dateTimePickerOptions = function () {
+        return {
+            useCurrent: false,
+            showClear: true,
+            showClose: true,
+            showTodayButton: true,
+            debug: true,
+            extraFormats: ["MM/DD/YYYY"],
+            icons: {
+                today: 'glyphicon glyphicon-calendar',
+            },
+            tooltips: {     // use default text, but enable translations
+                today: gettext('Go to today'),
+                clear: gettext('Clear selection'),
+                close: gettext('Close the picker'),
+                selectMonth: gettext('Select Month'),
+                prevMonth: gettext('Previous Month'),
+                nextMonth: gettext('Next Month'),
+                selectYear: gettext('Select Year'),
+                prevYear: gettext('Previous Year'),
+                nextYear: gettext('Next Year'),
+                selectDecade: gettext('Select Decade'),
+                prevDecade: gettext('Previous Decade'),
+                nextDecade: gettext('Next Decade'),
+                prevCentury: gettext('Previous Century'),
+                nextCentury: gettext('Next Century'),
+                pickHour: gettext('Pick Hour'),
+                incrementHour: gettext('Increment Hour'),
+                decrementHour: gettext('Decrement Hour'),
+                pickMinute: gettext('Pick Minute'),
+                incrementMinute: gettext('Increment Minute'),
+                decrementMinute: gettext('Decrement Minute'),
+                pickSecond: gettext('Pick Second'),
+                incrementSecond: gettext('Increment Second'),
+                decrementSecond: gettext('Decrement Second'),
+                togglePeriod: gettext('Toggle Period'),
+                selectTime: gettext('Select Time'),
+            },
+        };
+    };
+
     return {
+        dateTimePickerOptions: dateTimePickerOptions,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,

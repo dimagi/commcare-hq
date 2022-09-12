@@ -1,10 +1,10 @@
-from copy import deepcopy
-from django.test import SimpleTestCase
 from unittest.mock import patch
 
+from django.test import SimpleTestCase
+
 from corehq.apps.es import filters, forms, users
-from corehq.apps.es.const import SIZE_LIMIT
-from corehq.apps.es.es_query import HQESQuery
+from corehq.apps.es.const import SCROLL_SIZE, SIZE_LIMIT
+from corehq.apps.es.es_query import HQESQuery, InvalidQueryError
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 
 
@@ -261,37 +261,6 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         ]
         self.checkQuery(query.sort('timeStart', reset_sort=False), json_output)
 
-    def test_cleanup_before_run(self):
-        json_output = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {
-                            "match_all": {}
-                        }
-                    ],
-                    "must": {
-                        "match_all": {}
-                    }
-                }
-            },
-            "size": SIZE_LIMIT,
-            "aggs": {
-                "by_day": {
-                    "date_histogram": {
-                        "field": "date",
-                        "interval": "day",
-                        "time_zone": "-01:00"
-                    }
-                }
-            }
-        }
-        expected_output = deepcopy(json_output)
-        expected_output['size'] = 0
-        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
-        self.checkQuery(query, json_output)
-        self.checkQuery(query._clean_before_run(), expected_output)
-
     def test_exclude_source(self):
         json_output = {
             "query": {
@@ -316,3 +285,44 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         }
         query = HQESQuery('forms').domain('test-exclude').exclude_source()
         self.checkQuery(query, json_output)
+
+    def test_scroll_uses_scroll_size_from_query(self):
+        query = HQESQuery('forms').size(1)
+        self.assertEqual(1, query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll())
+
+    def test_scroll_without_query_size_uses_default_scroll_size(self):
+        query = HQESQuery('forms')
+        self.assertIsNone(query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll())
+
+    def test_scroll_ids_uses_scroll_size_from_query(self):
+        query = HQESQuery('forms').size(1)
+        self.assertEqual(1, query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll_ids())
+
+    def test_scroll_ids_without_query_size_uses_default_scroll_size(self):
+        query = HQESQuery('forms')
+        self.assertIsNone(query._size)
+        scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
+        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+            list(query.scroll_ids())
+
+    def test_scroll_with_aggregations_raises(self):
+        query = HQESQuery('forms').terms_aggregation('domain.exact', 'domain')
+        with self.assertRaises(InvalidQueryError):
+            list(query.scroll())
+
+    def _scroll_query_mock_assert(self, **raw_query_assertions):
+        def scroll_query_tester(index, raw_query, **kw):
+            for key, value in raw_query_assertions.items():
+                self.assertEqual(value, raw_query[key])
+            return []
+        self.assertNotEqual({}, raw_query_assertions)
+        return scroll_query_tester

@@ -192,13 +192,13 @@ class IdentityProvider(models.Model):
     def get_login_url(self, username=None):
         """
         Gets the login endpoint for the IdentityProvider based on the protocol
-        being used. Since we only support SAML2 right now, this redirects to
-        the SAML2 login endpoint.
+        being used.
         :param username: (string) username to pre-populate IdP login with
         :return: (String) identity provider login url
         """
+        login_view_name = 'sso_saml_login' if self.protocol == IdentityProviderProtocol.SAML else 'sso_oidc_login'
         return '{}?username={}'.format(
-            reverse('sso_saml_login', args=(self.slug,)),
+            reverse(login_view_name, args=(self.slug,)),
             username
         )
 
@@ -373,13 +373,24 @@ class IdentityProvider(models.Model):
         """
         Gets the Identity Provider for the given username only if that
         user is required to login or sign up with that Identity Provider.
+
+        An Identity Provider is required if:
+        - it exists
+        - is active
+        - is Globally enforcing logins (login_enforcement_type) or is in Test login_enforcement_type
+          and there is an SsoTestUser that maps to the given username
+
         :param username: String
         :return: IdentityProvider or None
         """
         idp = cls.get_active_identity_provider_by_username(username)
-        if idp and not UserExemptFromSingleSignOn.objects.filter(
-            username=username
-        ).exists():
+        if not idp:
+            return None
+        if (idp.login_enforcement_type == LoginEnforcementType.GLOBAL
+                and not UserExemptFromSingleSignOn.objects.filter(username=username).exists()):
+            return idp
+        if (idp.login_enforcement_type == LoginEnforcementType.TEST
+                and SsoTestUser.objects.filter(username=username).exists()):
             return idp
         return None
 

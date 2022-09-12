@@ -21,7 +21,8 @@ from corehq.apps.app_manager.models import (
     ParentSelect,
     ShadowModule,
 )
-from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE
+from corehq.apps.app_manager.suite_xml.post_process.remote_requests import RESULTS_INSTANCE, \
+    RESULTS_INSTANCE_INLINE
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -125,7 +126,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             </query>
             <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                 value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-            <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
+            <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
@@ -162,7 +163,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
 
         expected_entry_query = f"""
         <partial>
-          <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/" storage-instance="registry"
+          <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/" storage-instance="registry"
                 template="case" default_search="true">
             <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
             <data key="case_type" ref="'case'"/>
@@ -205,14 +206,14 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         <partial>
           <create>
             <command value="'m0'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_new_case_0"/>
             </query>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id_new_case_0"/>
-            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_type" ref="'other_case'"/>
@@ -265,13 +266,13 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             <partial>
               <create>
                 <command value="'m1'"/>
-                <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="case_type" ref="'case'"/>
                   <data key="x_commcare_data_registry" ref="'myregistry'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
                 </query>
                 <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-                <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+                <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
                   <data key="x_commcare_data_registry" ref="'myregistry'"/>
                   <data key="case_type" ref="'case'"/>
                   <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>
@@ -281,6 +282,48 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             """,
             suite,
             "./entry[2]/stack/create"
+        )
+
+    @flag_enabled('MOBILE_UCR')
+    def test_prompt_itemset_mobile_report(self):
+        self.module.search_config.properties[0].input_ = 'select1'
+        instance_id = "123abc"
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id=instance_id,
+            instance_uri="jr://fixture/commcare-reports:abcdef",
+            nodeset=f"instance('{instance_id}')/rows/row",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = f"""
+                <partial>
+                  <prompt key="name" input="select1">
+                    <display>
+                      <text>
+                        <locale id="search_property.m0.name"/>
+                      </text>
+                    </display>
+                    <itemset nodeset="instance('{instance_id}')/rows/row">
+                      <label ref="name"/>
+                      <value ref="id"/>
+                      <sort ref="id"/>
+                    </itemset>
+                  </prompt>
+                </partial>
+                """
+        self.assertXmlPartialEqual(expected, suite, "./entry[1]/session/query/prompt[@key='name']")
+
+        expected_instance = f"""
+                <partial>
+                  <instance id="{instance_id}" src="jr://fixture/commcare-reports:abcdef"/>
+                </partial>
+                """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            f"./entry[1]/instance[@id='{instance_id}']",
         )
 
 
@@ -438,13 +481,13 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
             <command value="'m0'"/>
             <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
             <command value="'m1'"/>
-            <query id="results" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="results" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="case_type" ref="'case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
             </query>
             <datum id="case_id_case" value="instance('commcaresession')/session/data/case_id_case"/>
-            <query id="registry" value="http://localhost:8000/a/test_domain/phone/registry_case/123/">
+            <query id="registry" value="http://localhost:8000/a/test_domain/phone/case_fixture/123/">
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <data key="case_type" ref="'case'"/>
               <data key="case_id" ref="instance('commcaresession')/session/data/case_id_case"/>
@@ -498,7 +541,7 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="commcaresession" src="jr://instance/session"/>
             <session>
-                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="results"
+                <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
                   <data key="case_type" ref="'case'"/>
                   <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
@@ -510,9 +553,9 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
                     </display>
                   </prompt>
                 </query>
-                <datum id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
+                <datum id="case_id" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]"
                     value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
-                <query url="http://localhost:8000/a/test_domain/phone/registry_case/123/"
+                <query url="http://localhost:8000/a/test_domain/phone/case_fixture/123/"
                 storage-instance="registry" template="case" default_search="true">
                   <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
                   <data key="case_type" ref="'case'"/>

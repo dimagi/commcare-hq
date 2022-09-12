@@ -348,9 +348,12 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
     def _migration_get_couch_model_class(cls):
         return Dhis2Repeater
 
+    def _wrap_schema_attrs(self, couch_object):
+        couch_object.dhis2_config = Dhis2Config.wrap(self.dhis2_config)
+
     @classmethod
     def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["dhis2_config", "dhis2_version", "dhis2_version_last_modified"]
+        return super()._migration_get_fields() + ["dhis2_version", "dhis2_version_last_modified"]
 
 
 class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
@@ -416,10 +419,12 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
             )
             raise
 
+    def _wrap_schema_attrs(self, couch_object):
+        couch_object.dhis2_entity_config = Dhis2EntityConfig.wrap(self.dhis2_entity_config)
+
     @classmethod
     def _migration_get_fields(cls):
         return super()._migration_get_fields() + [
-            "dhis2_entity_config",
             "dhis2_version",
             "dhis2_version_last_modified"
         ]

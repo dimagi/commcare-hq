@@ -1,31 +1,32 @@
-from django.contrib import auth, messages
+from django.contrib import auth
 from django.http import (
     HttpResponse,
     HttpResponseServerError,
     HttpResponseRedirect,
 )
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.translation import gettext as _
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
-from corehq.apps.domain.exceptions import NameUnavailableException
-from corehq.apps.registration.models import AsyncSignupRequest
-from corehq.apps.registration.utils import request_new_domain
 from corehq.apps.sso.decorators import (
     identity_provider_required,
     use_saml2_auth,
 )
 from corehq.apps.sso.configuration import get_saml2_config
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.login_helpers import process_async_signup_requests
+from corehq.apps.sso.utils.message_helpers import show_sso_login_success_or_error_messages
 from corehq.apps.sso.utils.session_helpers import (
     store_saml_data_in_session,
 )
 from corehq.apps.sso.utils.url_helpers import (
-    get_documentation_url,
     get_saml_login_url,
+    add_username_hint_to_login_url,
+)
+from corehq.apps.sso.utils.view_helpers import (
+    render_sso_user_login_failed,
+    render_saml_acs_error,
 )
 
 
@@ -59,7 +60,6 @@ def sso_saml_acs(request, idp_slug):
     to CommCare HQ.
     """
     request_id = request.session.get('AuthNRequestID')
-    error_template = 'sso/acs_errors.html'
 
     try:
         request.saml2_auth.process_response(request_id=request_id)
@@ -70,14 +70,14 @@ def sso_saml_acs(request, idp_slug):
         errors = [e]
 
     if errors:
-        return render(request, error_template, {
-            'saml_error_reason': request.saml2_auth.get_last_error_reason() or errors[0],
-            'idp_type': "Azure AD",  # we will update this later,
-            'docs_link': get_documentation_url(request.idp),
-        })
+        return render_saml_acs_error(
+            request,
+            saml_error_reason=request.saml2_auth.get_last_error_reason() or errors[0],
+            idp_service_name=request.idp.service_name,
+        )
 
     if not request.saml2_auth.is_authenticated():
-        return render(request, 'sso/sso_request_denied.html', {})
+        return render_sso_user_login_failed(request)
 
     if 'AuthNRequestID' in request.session:
         del request.session['AuthNRequestID']
@@ -91,38 +91,11 @@ def sso_saml_acs(request, idp_slug):
         is_handshake_successful=True,
     )
 
-    # we add the messages to the django messages framework here since
-    # that middleware was not available for SsoBackend
-    if hasattr(request, 'sso_new_user_messages'):
-        for success_message in request.sso_new_user_messages['success']:
-            messages.success(request, success_message)
-        for error_message in request.sso_new_user_messages['error']:
-            messages.error(request, error_message)
+    show_sso_login_success_or_error_messages(request)
 
     if user:
         auth.login(request, user)
-
-        # activate new project if needed
-        async_signup = AsyncSignupRequest.get_by_username(user.username)
-        if async_signup and async_signup.project_name:
-            try:
-                request_new_domain(
-                    request,
-                    async_signup.project_name,
-                    is_new_user=True,
-                    is_new_sso_user=True
-                )
-            except NameUnavailableException:
-                # this should never happen, but in the off chance it does
-                # we don't want to throw a 500 on this view
-                messages.error(
-                    request,
-                    _("We were unable to create your requested project "
-                      "because the name was already taken."
-                      "Please contact support.")
-                )
-
-        AsyncSignupRequest.clear_data_for_username(user.username)
+        process_async_signup_requests(request, user)
 
         relay_state = request.saml2_request_data['post_data'].get('RelayState')
         if relay_state not in [
@@ -136,9 +109,10 @@ def sso_saml_acs(request, idp_slug):
 
         return redirect("homepage")
 
-    return render(request, error_template, {
-        'login_error': getattr(request, 'sso_login_error', None),
-    })
+    return render_saml_acs_error(
+        request,
+        login_error=getattr(request, 'sso_login_error', None),
+    )
 
 
 @use_saml2_auth
@@ -146,12 +120,8 @@ def sso_saml_login(request, idp_slug):
     """
     This view initiates a SAML 2.0 login request with the Identity Provider.
     """
-    login_url = request.saml2_auth.login(return_to=request.GET.get('next'))
-    username = request.GET.get('username')
-    if username:
-        # verify that the stored user data actually the current IdP
-        idp = IdentityProvider.get_active_identity_provider_by_username(username)
-        if idp and idp.slug == idp_slug:
-            # pre-populate username for Azure AD
-            login_url = f'{login_url}&login_hint={username}'
+    login_url = add_username_hint_to_login_url(
+        request.saml2_auth.login(return_to=request.GET.get('next')),
+        request
+    )
     return HttpResponseRedirect(login_url)

@@ -11,7 +11,7 @@ from corehq.apps.saved_reports.scheduled import (
     get_scheduled_report_ids,
     guess_reporting_minute,
 )
-from corehq.apps.users.models import Permissions, UserRole, WebUser
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_active_es, ensure_index_deleted
 
@@ -92,11 +92,36 @@ class ScheduledReportTest(TestCase):
         ReportNotification(hour=1, minute=None, interval='hourly').save()
         self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
 
-    def testHourlyReportHourDontMatter(self):
-        ReportNotification(hour=1, minute=0, interval='hourly').save()
-        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+    def testHourlyReportWithoutSpecifyingStopHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
         self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithNoneStopHour(self):
+        # It should return every hour if stop_hour not valid
+        ReportNotification(hour=0, stop_hour=None, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+
+    def testHourlyReportWithInterval_everyHour(self):
+        ReportNotification(hour=0, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 0, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 1, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 7, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 18, 0), 1)
         self._check('hourly', datetime(2014, 10, 31, 23, 0), 1)
+
+    def testHourlyReportWithInterval_onlyAt12(self):
+        ReportNotification(hour=12, stop_hour=12, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 0)
+
+    def testHourlyReportWithInterval_between12And15(self):
+        ReportNotification(hour=12, stop_hour=15, interval='hourly').save()
+        self._check('hourly', datetime(2014, 10, 31, 11, 0), 0)
+        self._check('hourly', datetime(2014, 10, 31, 12, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 13, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 14, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 15, 0), 1)
+        self._check('hourly', datetime(2014, 10, 31, 16, 0), 0)
 
     def testHourlyReportOtherTypesDontCount(self):
         ReportNotification(hour=1, minute=0, interval='hourly').save()
@@ -224,7 +249,7 @@ class ScheduledReportSendingTest(TestCase):
         super(ScheduledReportSendingTest, cls).setUpClass()
 
         cls.domain_obj = create_domain(cls.domain)
-        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=Permissions(
+        cls.reports_role = UserRole.create(cls.domain, 'Test Role', permissions=HqPermissions(
             view_report_list=[cls.REPORT_NAME_LOOKUP['worker_activity']]
         ))
         cls.user = WebUser.create(

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -109,7 +108,7 @@ from corehq.apps.domain.decorators import (
     track_domain_request,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.fixturegenerators import item_lists_by_app
+from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
@@ -124,9 +123,11 @@ from corehq.apps.reports.analytics.esaccessors import (
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.toggles import toggles_enabled_for_request
 from corehq.apps.userreports.models import (
+    RegistryReportConfiguration,
     ReportConfiguration,
     StaticReportConfiguration,
 )
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
     '''
     Get context items that are used by both basic and advanced modules.
     '''
-    item_lists = item_lists_by_app(app) if app.enable_search_prompt_appearance else []
+    item_lists = item_lists_by_app(app, module) if app.enable_search_prompt_appearance else []
     case_types = set(module.search_config.additional_case_types) | {module.case_type}
     context = {
         'details': _get_module_details_context(request, app, module, case_property_builder),
@@ -221,33 +222,36 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 domain_has_privilege(app.domain, privileges.GEOCODER)
                 and toggles.USH_CASE_CLAIM_UPDATES.enabled(app.domain)
             ),
-            'exclude_from_search_enabled': app.enable_exclude_from_search,
-            'required_search_fields_enabled': app.enable_required_search_fields,
+            'ush_case_claim_2_53': app.ush_case_claim_2_53,
             'item_lists': item_lists,
-            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == 'lookup_table_fixture']),
-            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == 'report_fixture']),
-            'search_properties': module.search_config.properties if module_offers_search(module) else [],
-            'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
-            'default_search': module.search_config.default_search if module_offers_search(module) else False,
-            'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
-            'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
-            'search_button_display_condition':
-                module.search_config.search_button_display_condition if module_offers_search(module) else "",
-            'search_additional_relevant':
-                module.search_config.additional_relevant if module_offers_search(module) else "",
-            'blacklisted_owner_ids_expression': (
-                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+            'has_lookup_tables': bool([i for i in item_lists if i['fixture_type'] == LOOKUP_TABLE_FIXTURE]),
+            'has_mobile_ucr': bool([i for i in item_lists if i['fixture_type'] == REPORT_FIXTURE]),
             'default_value_expression_enabled': app.enable_default_value_expression,
-            # populate these even if module_offers_search is false because search_config might just not exist yet
-            'search_label':
-                module.search_config.search_label.label if hasattr(module, 'search_config') else "",
-            'search_again_label':
-                module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
-            'data_registry': module.search_config.data_registry,
-            'data_registry_workflow': module.search_config.data_registry_workflow,
-            'additional_registry_cases': module.search_config.additional_registry_cases,
-            'custom_related_case_property': module.search_config.custom_related_case_property,
-            'inline_search': module.search_config.inline_search,
+            'search_config': {
+                'search_properties':
+                    module.search_config.properties if module_offers_search(module) else [],
+                'default_properties':
+                    module.search_config.default_properties if module_offers_search(module) else [],
+                'auto_launch': module.search_config.auto_launch if module_offers_search(module) else False,
+                'default_search': module.search_config.default_search if module_offers_search(module) else False,
+                'search_filter': module.search_config.search_filter if module_offers_search(module) else "",
+                'search_button_display_condition':
+                    module.search_config.search_button_display_condition if module_offers_search(module) else "",
+                'additional_relevant':
+                    module.search_config.additional_relevant if module_offers_search(module) else "",
+                'blacklisted_owner_ids_expression': (
+                    module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
+                # populate labels even if module_offers_search is false - search_config might just not exist yet
+                'search_label':
+                    module.search_config.search_label.label if hasattr(module, 'search_config') else "",
+                'search_again_label':
+                    module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+                'data_registry': module.search_config.data_registry if module.search_config.data_registry else "",
+                'data_registry_workflow': module.search_config.data_registry_workflow,
+                'additional_registry_cases': module.search_config.additional_registry_cases,
+                'custom_related_case_property': module.search_config.custom_related_case_property,
+                'inline_search': module.search_config.inline_search,
+            },
         },
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -336,8 +340,8 @@ def _get_report_module_context(app, module):
             'filter_structure': report.filters_without_prefilters,
         }
 
-    all_reports = ReportConfiguration.by_domain(app.domain) + \
-                  StaticReportConfiguration.by_domain(app.domain)
+    all_reports = get_report_and_registry_report_configs_for_domain(app.domain) + \
+        StaticReportConfiguration.by_domain(app.domain)
     validity = module.check_report_validity()
 
     # We're now proactively deleting these references, so after that's been
@@ -425,7 +429,7 @@ def get_all_case_modules(app, module):
         'unique_id': mod.unique_id,
         'name': mod.name,
         'is_parent': False,
-    } for mod in app.modules if mod.case_type and mod.unique_id != module.unique_id]
+    } for mod in app.get_modules() if mod.case_type and mod.unique_id != module.unique_id]
 
 
 # Parent/child modules: get modules that may be used as parents of the given module
@@ -776,7 +780,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 
@@ -789,7 +793,7 @@ def _new_report_module(request, domain, app, name, lang):
             header={lang: report.title},
             description={lang: report.description} if report.description else None,
         )
-        for report in ReportConfiguration.by_domain(domain)
+        for report in get_report_and_registry_report_configs_for_domain(domain)
     ]
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
@@ -1008,30 +1012,45 @@ def _update_search_properties(module, search_properties, lang='en'):
     True
 
     """
-    current = {p.name: p.label for p in module.search_config.properties}
+
+    # Replace translation for current language in a translations dict
+    def _update_translation(old_obj, new_data, old_attr, new_attr=None):
+        new_attr = new_attr or old_attr
+        values = getattr(old_obj, old_attr) if old_obj else {}
+        values.pop(lang, None)
+        new_value = new_data.get(new_attr)
+        if new_value:
+            values[lang] = new_value
+        return values
+
+    props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
-        if prop['name'] in current:
-            label = current[prop['name']].copy()
-            label.update({lang: prop['label']})
-        else:
-            label = {lang: prop['label']}
-        hint = {lang: prop['hint']}
+        current = props_by_name.get(prop['name'])
+
         ret = {
             'name': prop['name'],
-            'label': label,
+            'label': _update_translation(current, prop, 'label'),
+            'hint': _update_translation(current, prop, 'hint'),
         }
-        if prop['default_value']:
+        if prop.get('default_value'):
             ret['default_value'] = prop['default_value']
-        if prop['hint']:
-            ret['hint'] = hint
-        if prop['hidden']:
+        if prop.get('hidden'):
             ret['hidden'] = prop['hidden']
-        if prop['allow_blank_value']:
+        if prop.get('allow_blank_value'):
             ret['allow_blank_value'] = prop['allow_blank_value']
-        if prop['exclude']:
+        if prop.get('exclude'):
             ret['exclude'] = prop['exclude']
-        if prop['required']:
-            ret['required'] = prop['required']
+        if prop.get('required_test'):
+            ret['required'] = {
+                'test': prop['required_test'],
+                'text': _update_translation(current.required if current else None, prop, "text", "required_text"),
+            }
+        if prop.get('validation_test'):
+            ret['validations'] = [{
+                'test': prop['validation_test'],
+                'text': _update_translation(current.validations[0] if current and current.validations else None,
+                                            prop, "text", "validation_text"),
+            }]
         if prop.get('appearance', '') == 'fixture':
             if prop.get('is_multiselect', False):
                 ret['input_'] = 'select'
@@ -1054,8 +1073,8 @@ def _update_search_properties(module, search_properties, lang='en'):
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'daterange':
-            ret['input_'] = 'daterange'
+        elif prop.get('appearance', '') in ['date', 'daterange']:
+            ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
             ret['receiver_expression'] = prop.get('receiver_expression', '')
@@ -1072,6 +1091,17 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
@@ -1116,6 +1146,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
+        detail.short.multi_select = multi_select
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -1142,8 +1173,6 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.filter = filter
     if custom_xml is not None:
         detail.short.custom_xml = custom_xml
-    if multi_select is not None:
-        detail.short.multi_select = multi_select
 
     if custom_variables['short'] is not None:
         try:
@@ -1228,7 +1257,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 return HttpResponseBadRequest(e)
             xpath_props = [
                 "search_filter", "blacklisted_owner_ids_expression",
-                "search_button_display_condition", "search_additional_relevant"
+                "search_button_display_condition", "additional_relevant"
             ]
 
             def _check_xpath(xpath, location):
@@ -1269,7 +1298,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_again_label=search_again_label,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
-                additional_relevant=search_properties.get('search_additional_relevant', ''),
+                additional_relevant=search_properties.get('additional_relevant', ''),
                 auto_launch=force_auto_launch or bool(search_properties.get('auto_launch')),
                 default_search=bool(search_properties.get('default_search')),
                 search_filter=search_properties.get('search_filter', ""),
@@ -1386,7 +1415,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1425,7 +1454,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]

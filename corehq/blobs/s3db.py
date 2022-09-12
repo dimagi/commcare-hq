@@ -34,8 +34,8 @@ class S3BlobDB(AbstractBlobDB):
         self.db = boto3.resource(
             's3',
             endpoint_url=config.get("url"),
-            aws_access_key_id=config.get("access_key", ""),
-            aws_secret_access_key=config.get("secret_key", ""),
+            aws_access_key_id=config.get("access_key"),
+            aws_secret_access_key=config.get("secret_key"),
             **kwargs
         )
         self.bulk_delete_chunksize = config.get("bulk_delete_chunksize", DEFAULT_BULK_DELETE_CHUNKSIZE)

@@ -54,6 +54,8 @@ class CaseDisplayWrapper(object):
         # so also check and add it here
         if self.case.external_id:
             dynamic_data['external_id'] = self.case.external_id
+        if self.case.location_id:
+            dynamic_data['location_id'] = self.case.location_id
 
         return dynamic_data
 

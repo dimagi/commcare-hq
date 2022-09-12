@@ -17,6 +17,9 @@ from corehq.util.metrics import metrics_histogram
 from corehq.util.xml_utils import serialize
 from .utils import clean_fixture_field_name, get_index_schema_node
 
+LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
+REPORT_FIXTURE = 'report_fixture'
+
 
 def item_lists_by_domain(domain, namespace_ids=False):
     ret = list()
@@ -50,9 +53,7 @@ def item_lists_by_domain(domain, namespace_ids=False):
     return ret
 
 
-def item_lists_by_app(app):
-    LOOKUP_TABLE_FIXTURE = 'lookup_table_fixture'
-    REPORT_FIXTURE = 'report_fixture'
+def item_lists_by_app(app, module):
     lookup_lists = item_lists_by_domain(app.domain, namespace_ids=True).copy()
     for item in lookup_lists:
         item['fixture_type'] = LOOKUP_TABLE_FIXTURE
@@ -62,18 +63,44 @@ def item_lists_by_app(app):
         for module in app.get_report_modules()
         for report_config in module.report_configs
     ]
+    if not report_configs:
+        return lookup_lists
+
+    legacy_instance_ids = {
+        prop.itemset.instance_id
+        for prop in module.search_config.properties
+        if prop.itemset.instance_id and 'commcare-reports:' not in prop.itemset.instance_id
+    }
     ret = list()
     for config in report_configs:
-        uri = 'jr://fixture/commcare-reports:%s' % (config.uuid)
-        ret.append({
-            'id': config.uuid,
+        instance_id = f'commcare-reports:{config.uuid}'  # follow HQ instance ID convention
+        uri = f'jr://fixture/{instance_id}'
+        item = {
+            'id': instance_id,
             'uri': uri,
             'path': "/rows/row",
             'name': config.header.get(app.default_language),
             'structure': {},
             'fixture_type': REPORT_FIXTURE,
-        })
+        }
+        ret.append(item)
+        if config.uuid in legacy_instance_ids:
+            # add in item with the legacy ID to support apps using the old ID format
+            legacy_item = item.copy()
+            legacy_item['id'] = config.uuid
+            legacy_item['name'] = f"{item['name']} (legacy)"
+            ret.append(legacy_item)
     return lookup_lists + ret
+
+
+def get_global_items_by_domain(domain, case_id):
+    global_types = {}
+    for data_type in FixtureDataType.by_domain(domain):
+        if data_type.is_global:
+            global_types[data_type._id] = data_type
+    if global_types:
+        data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
+        return get_or_cache_global_fixture(domain, case_id, FIXTURE_BUCKET, '', data_fn)
 
 
 class ItemListsProvider(FixtureProvider):
@@ -112,7 +139,12 @@ class ItemListsProvider(FixtureProvider):
     def get_global_items(self, global_types, restore_state):
         domain = restore_state.restore_user.domain
         data_fn = partial(self._get_global_items, global_types, domain)
-        return get_or_cache_global_fixture(restore_state, FIXTURE_BUCKET, '', data_fn)
+        return get_or_cache_global_fixture(restore_state.restore_user.domain,
+                                           restore_state.restore_user.user_id,
+                                           FIXTURE_BUCKET,
+                                           '',
+                                           data_fn,
+                                           restore_state.overwrite_cache)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
@@ -182,12 +214,13 @@ class ItemListsProvider(FixtureProvider):
         for attribute in item['_data_type'].item_attributes:
             try:
                 xData.attrib[attribute] = serialize(item['item_attributes'][attribute])
-            except KeyError as e:
+            except KeyError:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
                 raise FixtureTypeCheckError(
-                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
-                    % (item['_data_type'].tag, item['_id'])
+                    f"Table with tag {item['_data_type'].tag} has an item with "
+                    f"id {item['_id']} that doesn't have an attribute as "
+                    "defined in its types definition"
                 )
         for field in item['_data_type'].fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)

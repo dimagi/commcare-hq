@@ -3,6 +3,7 @@
 describe('Fullform UI', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         UI = hqImport("cloudcare/js/form_entry/form_ui"),
+        Fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
         questionJSON,
         formJSON,
         groupJSON,
@@ -13,108 +14,15 @@ describe('Fullform UI', function () {
         repeatNestJSON;
 
     beforeEach(function () {
-        questionJSON = {
-            "caption_audio": null,
-            "caption": "Do you want to modify the visit number?",
-            "binding": "/data/start/update_visit_count",
-            "caption_image": null,
-            "type": "question",
-            "caption_markdown": null,
-            "required": 0,
-            "ix": "1,2",
-            "relevant": 1,
-            "help": null,
-            "answer": null,
-            "datatype": "select",
-            "style": {},
-            "caption_video": null,
-            "choices": [
-                "Yes",
-                "No",
-            ],
-        };
+        questionJSON = Fixtures.selectJSON();
 
-        repeatJSON = {
-            "caption_audio": null,
-            "caption": "Repeater",
-            "caption_image": null,
-            "type": "repeat-juncture",
-            "caption_markdown": null,
-            "ix": "0J",
-            "relevant": 1,
-            "main-header": "Repeater",
-            "children": [],
-            "add-choice": "None - Add Repeater",
-            "caption_video": null,
-        };
+        repeatJSON = Fixtures.repeatJSON();
 
-        repeatNestJSON = {
-            "caption_audio": null,
-            "caption": "Repeat Simple",
-            "caption_image": null,
-            "type": "repeat-juncture",
-            "caption_markdown": null,
-            "ix": "0J",
-            "relevant": 1,
-            "children": [{
-                "caption": "Repeat Simple 1/1",
-                "type": "sub-group",
-                "uuid": "ed3f01b37034",
-                "ix": "0:0",
-                "children": [{
-                    "caption_audio": null,
-                    "caption": "Text_Question",
-                    "binding": "/data/repeat/Text_Question",
-                    "caption_image": null,
-                    "type": "question",
-                    "caption_markdown": null,
-                    "required": 0,
-                    "ix": "0:0,0",
-                    "relevant": 1,
-                    "help": null,
-                    "answer": null,
-                    "datatype": "str",
-                    "style": {},
-                    "caption_video": null,
-                }],
-                "repeatable": 1,
-            }],
-            "add-choice": "Add another Repeat Simple",
-            "header": "Repeat Simple",
-            "caption_video": null,
-        };
+        repeatNestJSON = Fixtures.repeatNestJSON();
 
-        groupJSON = {
-            "type": "sub-group",
-            "ix": "1",
-            "children": [
-                {
-                    "type": "sub-group",
-                    "ix": "1,2",
-                    "children": [
-                        {
-                            "type": "question",
-                            "ix": "2,3",
-                            "datatype": "str",
-                            "answer": null,
-                            "children": [],
-                        },
-                    ],
-                },
-            ],
-        };
+        groupJSON = Fixtures.groupJSON();
 
-        noQuestionGroupJSON = {
-            "type": "sub-group",
-            "ix": "2",
-            "children": [
-                {
-                    "type": "sub-group",
-                    "ix": "2,2",
-                    "children": [],
-                },
-            ],
-        };
+        noQuestionGroupJSON = Fixtures.noQuestionGroupJSON();
 
         nestedGroupJSON = {
             tree: [groupJSON, noQuestionGroupJSON],

@@ -5,6 +5,7 @@ from django.views.decorators.http import require_POST
 
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.reports.v2.reports import get_report
+from corehq.util.json import CommCareJSONEncoder
 
 
 @login_and_domain_required
@@ -17,7 +18,7 @@ def endpoint_data(request, domain, report_slug, endpoint_slug):
     endpoint = report_config.get_data_endpoint(endpoint_slug)
 
     return HttpResponse(
-        json.dumps(report_config.get_data_response(endpoint)),
+        json.dumps(report_config.get_data_response(endpoint), cls=CommCareJSONEncoder),
         content_type="application/json"
     )
 

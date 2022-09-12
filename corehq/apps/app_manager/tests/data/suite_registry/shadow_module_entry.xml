@@ -33,7 +33,7 @@
         </prompt>
       </query>
       <datum detail-confirm="m1_case_long" detail-select="m1_case_short" id="case_id" nodeset="instance('results')/results/case[@case_type='case'][@status='open'][not(commcare_is_related_case=true())]" value="./@case_id"/>
-      <query default_search="true" storage-instance="registry" template="case" url="https://www.example.com/a/test_domain/phone/registry_case/456/">
+      <query default_search="true" storage-instance="registry" template="case" url="https://www.example.com/a/test_domain/phone/case_fixture/456/">
         <data key="x_commcare_data_registry" ref="'myregistry'"/>
         <data key="case_type" ref="'case'"/>
         <data key="case_id" ref="instance('commcaresession')/session/data/case_id"/>

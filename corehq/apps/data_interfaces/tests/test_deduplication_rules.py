@@ -9,14 +9,22 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleEditView,
     HttpResponseRedirect,
 )
+from corehq.apps.es.tests.utils import es_test
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
+from corehq.elastic import get_es_new
+from pillowtop.es_utils import initialize_index_and_mapping
 
 
+@es_test
 class DeduplicationRuleCreateViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain-create'
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
+
 
     @patch('corehq.apps.data_interfaces.views.messages')
     @patch('corehq.apps.data_interfaces.views.reverse', Mock(return_value='url'))
@@ -24,12 +32,17 @@ class DeduplicationRuleCreateViewTest(TestCase):
         view = DeduplicationRuleCreateView()
         view.args = []
         view.kwargs = {}
+
         request = self._create_request(params={
             'properties_to_update': json.dumps({}),
             'case_properties': json.dumps({}),
             'name': 'test_name',
             'case_type': 'test_type',
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
+
         view.post(request)
         self.assertEqual(1, len(AutomaticUpdateRule.objects.all()))
         self.assertEqual(False, AutomaticUpdateRule.objects.all()[0].active)
@@ -51,7 +64,10 @@ class DeduplicationRuleCreateViewTest(TestCase):
             'case_properties': json.dumps({}),
             'name': rule_name,
             'case_type': case_type,
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
         view.post(request)
         # Rules count after making call
         latest_rules = AutomaticUpdateRule.objects.all()
@@ -81,12 +97,15 @@ class DeduplicationRuleCreateViewTest(TestCase):
         return res.id
 
 
+@es_test
 class DeduplicationRuleEditViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = 'test-domain-edit'
+        cls.es = get_es_new()
+        initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
 
     @patch('corehq.apps.data_interfaces.views.messages')
     @patch('corehq.apps.data_interfaces.views.DeduplicationRuleEditView.dedupe_action')
@@ -104,7 +123,10 @@ class DeduplicationRuleEditViewTest(TestCase):
             'case_properties': json.dumps({}),
             'name': rule_name,
             'case_type': case_type,
-            'match_type': 'ttype'})
+            'match_type': 'ttype',
+            'case-filter-property_match_definitions': json.dumps([]),
+            'case-filter-location_filter_definition': json.dumps([]),
+        })
         resp = view.post(request)
         self.assertEqual(HttpResponseRedirect, type(resp))
 

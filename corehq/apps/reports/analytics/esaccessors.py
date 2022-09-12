@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from datetime import datetime, timedelta
+
 from django.conf import settings
 
 from dimagi.utils.chunked import chunked
@@ -17,6 +18,7 @@ from corehq.apps.es import (
 )
 from corehq.apps.es.aggregations import (
     MISSING_KEY,
+    DateHistogram,
     ExtendedStatsAggregation,
     MissingAggregation,
     TermsAggregation,
@@ -264,37 +266,19 @@ def get_completed_counts_by_date(domain, user_ids, datespan, timezone):
 
 
 def _get_form_counts_by_date(domain, user_ids, datespan, timezone, is_submission_time):
-    form_query = (FormES()
-                  .domain(domain)
-                  .user_id(user_ids))
-    for xmlns in SYSTEM_FORM_XMLNS_MAP.keys():
-        form_query = form_query.filter(filters.NOT(xmlns_filter(xmlns)))
-
-    if is_submission_time:
-        form_query = (form_query
-            .submitted(gte=datespan.startdate.date(),
-                     lte=datespan.enddate.date())
-            .submitted_histogram(timezone.zone))
-
-    else:
-        form_query = (form_query
-            .completed(gte=datespan.startdate.date(),
-                     lte=datespan.enddate.date())
-            .completed_histogram(timezone.zone))
-
-    form_query = form_query.size(0)
-
-    results = form_query.run().aggregations.date_histogram.buckets_list
-
-    # Convert timestamp from millis -> seconds -> aware datetime
-    # ES bucket key is an epoch timestamp relative to the timezone specified,
-    # so pass timezone into fromtimestamp() to create an accurate datetime, otherwise will be treated as UTC
-    results = list(map(
-        lambda result:
-            (datetime.fromtimestamp(result.key // 1000, timezone).date().isoformat(), result.doc_count),
-        results,
-    ))
-    return dict(results)
+    date_field = 'received_on' if is_submission_time else 'form.meta.timeEnd'
+    return (FormES()
+            .domain(domain)
+            .user_id(user_ids)
+            .NOT(xmlns_filter(list(SYSTEM_FORM_XMLNS_MAP)))
+            .date_range(date_field, gte=datespan.startdate.date(), lte=datespan.enddate.date())
+            .aggregation(DateHistogram(
+                'date_histogram',
+                date_field,
+                DateHistogram.Interval.DAY,
+                timezone=timezone.zone,
+            ))
+            .run().aggregations.date_histogram.counts_by_bucket())
 
 
 def get_group_stubs(group_ids):
@@ -336,7 +320,6 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
         FormES()
         .domain(domain)
         .filter(date_filter_fn(gte=startdate, lte=enddate))
-        .app(app_ids)
         .xmlns(xmlnss)
         .size(5000)
     )
@@ -345,6 +328,9 @@ def get_forms(domain, startdate, enddate, user_ids=None, app_ids=None, xmlnss=No
         query = (query
             .user_ids_handle_unknown(user_ids)
             .remove_default_filter('has_user'))
+
+    if app_ids:
+        query = query.app(app_ids)
 
     result = query.run()
     return PagedResult(total=result.total, hits=result.hits)
@@ -599,13 +585,24 @@ def get_form_ids_having_multimedia(domain, app_id, xmlns, datespan, user_types):
 
 
 def media_export_is_too_big(es_query):
+    size = get_attachments_size(es_query)
+    if size > MAX_MULTIMEDIA_EXPORT_SIZE:
+        return True
+    return False
+
+
+def get_attachments_size(es_query):
     size = 0
+    unique_attachments = set()
+
     for form in _forms_with_attachments(es_query):
         for attachment in form.get('external_blobs', {}).values():
-            size += attachment.get('content_length', 0)
-            if size > MAX_MULTIMEDIA_EXPORT_SIZE:
-                return True
-    return False
+            attachment_id = attachment.get('id', None)
+            if attachment_id is not None and attachment_id not in unique_attachments:
+                size += attachment.get('content_length', 0)
+                unique_attachments.add(attachment_id)
+
+    return size
 
 
 def scroll_case_names(domain, case_ids):

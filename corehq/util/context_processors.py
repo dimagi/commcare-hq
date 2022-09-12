@@ -25,6 +25,7 @@ def base_template(request):
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
+        'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
     }
 
 
@@ -100,8 +101,8 @@ def js_api_keys(request):
     if getattr(request, 'couch_user', None) and not request.couch_user.analytics_enabled:
         return {}  # disable js analytics
     api_keys = {
-        'ANALYTICS_IDS': settings.ANALYTICS_IDS,
-        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
+        'ANALYTICS_IDS': settings.ANALYTICS_IDS.copy(),
+        'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG.copy(),
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
     }
     if getattr(request, 'project', None) and request.project.ga_opt_out and api_keys['ANALYTICS_IDS'].get('GOOGLE_ANALYTICS_API_ID'):

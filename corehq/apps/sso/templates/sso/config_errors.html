@@ -15,7 +15,7 @@
               {% endblocktrans %}
             </h2>
 
-            {% if error.code == error.REDIRECT_INVALID_URL %}
+            {% if is_saml and error.code == error.REDIRECT_INVALID_URL %}
               <p class="lead">
                 {% blocktrans %}
                   Your Redirect URL is invalid.
@@ -29,20 +29,29 @@
                   support so we can find a permanent solution.
                 {% endblocktrans %}
               </p>
+            {% elif is_oidc and error.code == error.OP_ERROR_MESSAGE %}
+              <p class="lead">
+                {% blocktrans with request.idp.service_name as service %}
+                  There was an issue logging in with {{ service }}:
+                {% endblocktrans %}
+              </p>
+              <p>
+                {{ error.message }}
+              </p>
             {% elif request.idp.is_active %}
               <p class="lead">
-                {% blocktrans with request.idp.is_active as idp_name %}
+                {% blocktrans with request.idp.name as idp_name %}
                   It looks like there is an issue with {{ idp_name }}'s configuration.
                 {% endblocktrans %}
               </p>
               <p>
                 {% blocktrans %}
-                  Please reach out to support so we can quickly resolve this
+                  Please reach out to support, so we can quickly resolve this
                   problem. Thank you!
                 {% endblocktrans %}
               </p>
             {% else %}
-              {% if error.code == error.SETTINGS_INVALID %}
+              {% if is_saml and error.code == error.SETTINGS_INVALID %}
                 <p class="lead">
                   {% blocktrans %}
                     It looks like your setup is not complete.
@@ -55,7 +64,7 @@
                     for setting up SSO.
                   {% endblocktrans %}
                 </p>
-              {% elif error.code == error.CERT_NOT_FOUND %}
+              {% elif is_saml and error.code == error.CERT_NOT_FOUND %}
                 <p class="lead">
                   {% blocktrans %}
                     It looks like we are missing your certificate.
@@ -67,6 +76,43 @@
                     SSO setup.  Please review the
                     <a href="{{ docs_link }}">documentation</a>
                     for setting up SSO.
+                  {% endblocktrans %}
+                </p>
+              {% elif is_oidc and error.code == error.USER_PERMISSION_ISSUE %}
+                <p class="lead">
+                  {% blocktrans %}
+                    Obtaining User Information Was Not Possible
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans %}
+                    It looks like there was an issue obtaining the user's information from
+                    your Identity Provider. Please review the <a href="{{ docs_link }}">documentation</a>
+                    for setting up SSO.
+                  {% endblocktrans %}
+                </p>
+              {% elif is_oidc and error.code == error.SESSION_UNKNOWN %}
+                <p class="lead">
+                  {% blocktrans %}
+                    OpenID Connect Session Unknown
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans %}
+                    It looks like you tried to authenticate without a valid OpenID Connect Session.
+                    Please review the <a href="{{ docs_link }}">documentation</a> for setting up SSO.
+                  {% endblocktrans %}
+                </p>
+              {% elif is_oidc and error.code == error.METHOD_NOT_ALLOWED %}
+                <p class="lead">
+                  {% blocktrans %}
+                    OIDC Method Not Allowed
+                  {% endblocktrans %}
+                </p>
+                <p>
+                  {% blocktrans %}
+                    You did not complete a full SSO handshake.
+                    Please review the <a href="{{ docs_link }}">documentation</a> for setting up SSO.
                   {% endblocktrans %}
                 </p>
               {% else %}

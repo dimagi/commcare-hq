@@ -17,8 +17,6 @@ from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
     SmsReindexerFactory,
-    ReportCaseReindexerFactory,
-    ReportFormReindexerFactory,
     AppReindexerFactory,
 )
 from corehq.elastic import get_es_new
@@ -33,9 +31,7 @@ from pillowtop.es_utils import (
     APP_HQ_INDEX_NAME,
     GROUP_HQ_INDEX_NAME,
     SMS_HQ_INDEX_NAME,
-    REPORT_CASE_HQ_INDEX_NAME,
-    REPORT_XFORM_HQ_INDEX_NAME,
-    CASE_SEARCH_HQ_INDEX_NAME
+    CASE_SEARCH_HQ_INDEX_NAME,
 )
 from pillowtop.reindexer.reindexer import ReindexerFactory
 
@@ -59,8 +55,6 @@ def get_reindex_commands(hq_index_name):
         ],
         APP_HQ_INDEX_NAME: [AppReindexerFactory],
         GROUP_HQ_INDEX_NAME: [GroupReindexerFactory],
-        REPORT_XFORM_HQ_INDEX_NAME: [ReportFormReindexerFactory],
-        REPORT_CASE_HQ_INDEX_NAME: [ReportCaseReindexerFactory],
         CASE_SEARCH_HQ_INDEX_NAME: [CaseSearchReindexerFactory],
         SMS_HQ_INDEX_NAME: [SmsReindexerFactory],
     }

@@ -198,6 +198,6 @@ def metadata(key, value):
         'user_data_es',
         filters.AND(
             filters.term(field='user_data_es.key', value=key),
-            queries.match(field='user_data_es.value', search_string=value, fuzziness=0),
+            queries.match(field='user_data_es.value', search_string=value),
         )
     )

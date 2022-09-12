@@ -1,9 +1,8 @@
 import uuid
 from datetime import date, time
+from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
-
-from unittest.mock import Mock, call, patch
 
 from dimagi.utils.parsing import json_format_date
 
@@ -29,12 +28,14 @@ from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -82,7 +83,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.custom_role = UserRole.create(
             self.domain.name,
             "Custom Role",
-            permissions=Permissions(
+            permissions=HqPermissions(
                 edit_apps=True,
                 view_apps=True,
                 edit_web_users=True,
@@ -147,7 +148,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     def _change_std_roles(self):
         for u in self.user_roles:
             user_role = UserRole.objects.by_couch_id(u.get_id)
-            user_role.set_permissions(Permissions(
+            user_role.set_permissions(HqPermissions(
                 view_reports=True,
                 edit_commcare_users=True,
                 view_commcare_users=True,
@@ -166,7 +167,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
-                UserRolePresets.get_permissions(user_role.name)
+                UserRolePresets.INITIAL_ROLES[user_role.name](),
             )
 
     def _assertStdUsers(self):

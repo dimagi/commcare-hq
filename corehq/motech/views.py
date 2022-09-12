@@ -20,7 +20,7 @@ from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.forms import ConnectionSettingsForm, UnrecognizedHost
 from corehq.motech.models import ConnectionSettings, RequestLog
@@ -34,7 +34,7 @@ class Http409(Http400):
     message = "Resource is in use."
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogListView(BaseProjectSettingsView, ListView):
     urlname = 'motech_log_list_view'
     page_title = _("Remote API Logs")
@@ -69,7 +69,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         return self.get_queryset()
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     urlname = 'motech_log_detail_view'
     page_title = _("Remote API Logs")
@@ -91,7 +91,7 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
 
 @login_or_api_key
-@require_permission(Permissions.edit_motech)
+@require_permission(HqPermissions.edit_motech)
 def motech_log_export_view(request, domain):
     """
     Download ``RequestLog``s as CSV. Uses ``StreamingHttpResponse`` to
@@ -158,7 +158,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
     page_title = _('Connection Settings')
     template_name = 'motech/connection_settings.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         if (
             toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
@@ -239,7 +239,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
     model = ConnectionSettings
     form_class = ConnectionSettingsForm
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     def dispatch(self, request, *args, **kwargs):
         if (
             toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)
@@ -277,7 +277,7 @@ class ConnectionSettingsDetailView(BaseProjectSettingsView, ModelFormMixin, Proc
 
 
 @require_POST
-@require_permission(Permissions.edit_motech)
+@require_permission(HqPermissions.edit_motech)
 def test_connection_settings(request, domain):
     if not (
         toggles.INCREMENTAL_EXPORTS.enabled_for_request(request)

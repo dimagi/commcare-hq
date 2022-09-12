@@ -1,4 +1,3 @@
-import itertools
 import logging
 from datetime import date
 
@@ -8,6 +7,8 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
 
+from dimagi.utils.chunked import chunked
+
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.apps.domain.utils import silence_during_tests
@@ -16,15 +17,16 @@ from corehq.apps.userreports.dbaccessors import (
 )
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import get_all_commcare_users_by_domain
-from corehq.apps.users.util import log_user_change, SYSTEM_USER_ID
+from corehq.apps.users.util import SYSTEM_USER_ID, log_user_change
 from corehq.blobs import CODES, get_blob_db
 from corehq.blobs.models import BlobMeta
 from corehq.elastic import ESError
-from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.sql_db.util import (
+    get_db_aliases_for_partitioned_query,
+    paginate_query_across_partitioned_databases, estimate_partitioned_row_count,
+)
 from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
 from settings import HQ_ACCOUNT_ROOT
 
 logger = logging.getLogger(__name__)
@@ -164,23 +166,38 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
-def _delete_all_cases(domain_name):
+def delete_all_cases(domain_name):
     logger.info('Deleting cases...')
-    case_ids = CommCareCase.objects.get_case_ids_in_domain(domain_name)
-    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
-        CommCareCase.objects.soft_delete_cases(domain_name, list(case_id_chunk))
+    case_ids = iter_ids(CommCareCase, 'case_id', domain_name)
+    for chunk in chunked(case_ids, 1000, list):
+        CommCareCase.objects.hard_delete_cases(domain_name, chunk)
     logger.info('Deleting cases complete.')
 
 
-def _delete_all_forms(domain_name):
+def delete_all_forms(domain_name):
     logger.info('Deleting forms...')
-    form_ids = list(itertools.chain(*[
-        XFormInstance.objects.get_form_ids_in_domain(domain_name, doc_type)
-        for doc_type in doc_type_to_state
-    ]))
-    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
-        XFormInstance.objects.soft_delete_forms(domain_name, list(form_id_chunk))
+    form_ids = iter_ids(XFormInstance, 'form_id', domain_name)
+    for chunk in chunked(form_ids, 1000, list):
+        XFormInstance.objects.hard_delete_forms(domain_name, chunk)
     logger.info('Deleting forms complete.')
+
+
+def iter_ids(model_class, field, domain, chunk_size=1000):
+    where = Q(domain=domain)
+    rows = paginate_query_across_partitioned_databases(
+        model_class,
+        where,
+        values=[field],
+        load_source='delete_domain',
+        query_size=chunk_size,
+    )
+    yield from with_progress_bar(
+        (r[0] for r in rows),
+        estimate_partitioned_row_count(model_class, where),
+        prefix="",
+        oneline="concise",
+        stream=silence_during_tests(),
+    )
 
 
 def _delete_data_files(domain_name):
@@ -271,8 +288,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends, ['SQLMobileBackend']),
     CustomDeletion('users', _delete_web_user_membership, []),
     CustomDeletion('accounting', _terminate_subscriptions, ['Subscription']),
-    CustomDeletion('form_processor', _delete_all_cases, ['CommCareCase']),
-    CustomDeletion('form_processor', _delete_all_forms, ['XFormInstance']),
+    CustomDeletion('form_processor', delete_all_cases, ['CommCareCase']),
+    CustomDeletion('form_processor', delete_all_forms, ['XFormInstance']),
     ModelDeletion('aggregate_ucrs', 'AggregateTableDefinition', 'domain', [
         'PrimaryColumn', 'SecondaryColumn', 'SecondaryTableDefinition', 'TimeAggregationDefinition',
     ]),
@@ -304,6 +321,8 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'ClosedParentDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomMatchDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'MatchPropertyDefinition', 'caserulecriteria__rule__domain'),
+    ModelDeletion('data_interfaces', 'LocationFilterDefinition', 'caserulecriteria__rule__domain'),
+    ModelDeletion('data_interfaces', 'UCRFilterDefinition', 'caserulecriteria__rule__domain'),
     ModelDeletion('data_interfaces', 'CustomActionDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'UpdateCaseDefinition', 'caseruleaction__rule__domain'),
     ModelDeletion('data_interfaces', 'CaseDuplicate', 'action__caseruleaction__rule__domain'),
@@ -357,7 +376,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ]),
     ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
-    ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
@@ -377,7 +395,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'Invitation', 'domain'),
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'UserRole', 'domain', [
-        'RolePermission', 'RoleAssignableBy', 'SQLPermission'
+        'RolePermission', 'RoleAssignableBy', 'Permission'
     ]),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
@@ -394,7 +412,10 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('repeaters', 'SQLRepeatRecordAttempt', 'repeat_record__domain'),
     ModelDeletion('couchforms', 'UnfinishedSubmissionStub', 'domain'),
     ModelDeletion('couchforms', 'UnfinishedArchiveStub', 'domain'),
+    ModelDeletion('fixtures', 'LookupTable', 'domain'),
     CustomDeletion('ucr', delete_all_ucr_tables_for_domain, []),
+    ModelDeletion('domain', 'OperatorCallLimitSettings', 'domain'),
+    ModelDeletion('domain', 'SMSAccountConfirmationSettings', 'domain'),
 ]
 
 

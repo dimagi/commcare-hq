@@ -32,6 +32,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Allow visitors to use this application without a login.'),
     gettext_noop('Alphanumeric'),
     gettext_noop('Amount of time previously submitted forms remain accessible in the CommCare app.'),
+    gettext_noop('Android app dependencies'),
     gettext_noop('Android Settings'),
     gettext_noop('Anonymous Usage'),
     gettext_noop('Any positive integer. Represents period of purging in days.'),
@@ -166,6 +167,9 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.'),
     gettext_noop('Password Format'),
     gettext_noop('Practice Mobile Worker'),
+    gettext_noop('Prevents mobile workers from using a CommCare app until the '
+                 'Android apps that it needs have been installed on the '
+                 'device.\n'),
     gettext_noop('Profile URL'),
     gettext_noop('Project Default'),
     gettext_noop('Prompt Updates to Latest CommCare Version'),
@@ -211,7 +215,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Upload a file to serve as an app logo in Web Apps'),
     gettext_noop('Use Secure Submissions'),
     gettext_noop('Use project level setting'),
-    gettext_noop('Use a different base URL for all app URLs. This makes the phone send forms, sync and look for updates from a differnent URL. Main use case is to allow migrating ICDS to a new cluster.'),
+    gettext_noop('Use a different base URL for all app URLs. This makes the phone send forms, sync, and look for updates from a different URL. The main use case is to allow migrating project spaces to a new environment.\n'),
     gettext_noop('User Login Mode'),
     gettext_noop('Validate Multimedia'),
     gettext_noop('Version 1 translations (old)'),

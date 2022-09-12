@@ -108,7 +108,6 @@ def is_probably_j2me(user_agent):
 def get_username_and_password_from_request(request):
     """Returns tuple of (username, password). Tuple values
     may be null."""
-    from corehq.apps.hqwebapp.utils import decode_password
 
     if 'HTTP_AUTHORIZATION' not in request.META:
         return None, None
@@ -135,8 +134,6 @@ def get_username_and_password_from_request(request):
         except binascii.Error:
             return None, None
         username = username.lower()
-        # decode password submitted from mobile app login
-        password = decode_password(password)
     return username, password
 
 

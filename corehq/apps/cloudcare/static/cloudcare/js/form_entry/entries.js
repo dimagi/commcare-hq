@@ -3,7 +3,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -15,6 +16,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.answer = question.answer;
         self.datatype = question.datatype();
         self.entryId = _.uniqueId(this.datatype);
+        self.xformAction = Const.ANSWER;
+        self.xformParams = function () { return {}; };
 
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
@@ -41,6 +44,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // Allows multiple input entries on the same row for Combined Multiple Choice and Combined
     // Checkbox questions in a Question List Group.
     Entry.prototype.getColStyle = function (numChoices) {
+        // Account for number of choices plus column for clear button
         var colWidth = parseInt(12 / (numChoices + 1)) || 1;
         return 'col-xs-' + colWidth;
     };
@@ -237,7 +241,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * The entry that represents an address entry.
      * Takes in a `broadcastStyles` list of strings in format `broadcast-<topic>` to broadcast
      * the address item that is selected. Item contains `full`, `street`, `city`, `us_state`, `us_state_long`,
-     * `zipcode`, `country`, `country_short`, `region`.
+     * `postcode`, `zipcode`, `district`, `county`, `country`, `country_short`, `region`.
      */
     function AddressEntry(question, options) {
         var self = this;
@@ -260,10 +264,15 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
+            var broadcastObj = Utils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                var broadcastObj = Utils.getBroadcastObject(item);
                 question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
+            if (_.isEmpty(broadcastObj)) {
+                question.answer(Const.NO_ANSWER);
+            } else {
+                question.answer(JSON.stringify(broadcastObj));
+            }
             // The default full address returned to the search bar
             return item.place_name;
         };
@@ -727,15 +736,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer(Const.NO_ANSWER);
     };
 
-    $.datetimepicker.setDateFormatter({
-        parseDate: function (date, format) {
-            var d = moment(date, format);
-            return d.isValid() ? d.toDate() : false;
-        },
-        formatDate: function (date, format) {
-            return moment(date).format(format);
-        },
-    });
     /**
      * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
      * date picker between the three types of Entry.
@@ -746,9 +746,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             minDate,
             maxDate,
             yearEnd,
-            yearStart,
-            displayOpts = _getDisplayOptions(question),
-            isPhoneMode = ko.utils.unwrapObservable(displayOpts.phoneMode);
+            yearStart;
 
         EntrySingleAnswer.call(self, question, options);
 
@@ -762,61 +760,24 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            var datepickerOpts = {
-                timepicker: self.timepicker,
-                datepicker: self.datepicker,
+            self.$picker.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
-                formatTime: self.clientTimeFormat,
-                formatDate: self.clientDateFormat,
-                value: self.answer() ? self.convertServerToClientFormat(self.answer()) : self.answer(),
-                maxDate: maxDate,
                 minDate: minDate,
-                yearEnd: yearEnd,
-                yearStart: yearStart,
-                scrollInput: false,
-                onChangeDateTime: function (newDate) {
-                    if (!newDate) {
-                        self.answer(Const.NO_ANSWER);
-                        return;
-                    }
-                    self.answer(moment(newDate).format(self.serverFormat));
+                maxDate: maxDate,
+                keepInvalid: true,
+                parseInputDate: function (date) {
+                    var d = moment(date, self.clientFormat);
+                    return d.isValid() ? d : null;
                 },
-                onGenerate: function () {
-                    var $dt = $(this);
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_prev').append($('<i class="fa fa-chevron-left" />'));
-                    }
-                    if ($dt.find('.xdsoft_mounthpicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_mounthpicker .xdsoft_next').append($('<i class="fa fa-chevron-right" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_prev .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_prev').append($('<i class="fa fa-chevron-up" />'));
-                    }
-                    if ($dt.find('.xdsoft_timepicker .xdsoft_next .fa').length < 1) {
-                        $dt.find('.xdsoft_timepicker .xdsoft_next').append($('<i class="fa fa-chevron-down" />'));
-                    }
-
-                    if ($dt.find('.xdsoft_today_button .fa').length < 1) {
-                        $dt.find('.xdsoft_today_button').append($('<i class="fa fa-home" />'));
-                    }
-
-                    $dt.find('.xdsoft_label i').addClass('fa fa-caret-down');
-
-                    if (isPhoneMode && !self.datepicker && self.timepicker) {
-                        $dt.find('.xdsoft_time_box').addClass('time-box-full');
-                    }
-
-                    if (isPhoneMode && self.timepicker && self.datepicker) {
-                        $dt.find('.xdsoft_save_selected')
-                            .show().text(gettext('Save'))
-                            .addClass('btn btn-primary')
-                            .removeClass('blue-gradient-button');
-                        $dt.find('.xdsoft_save_selected').appendTo($dt);
-                    }
-                },
-            };
-            self.$picker.datetimepicker(datepickerOpts);
+            }, self.extraOptions));
+            self.$picker.on("dp.change", function (e) {
+                if (!e.date) {
+                    self.answer(Const.NO_ANSWER);
+                    return;
+                }
+                self.answer(moment(e.date.toDate()).format(self.serverFormat));
+            });
         };
     }
     DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
@@ -826,40 +787,48 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     };
 
     // Format for time or date or datetime for the browser. Defaults to ISO.
-    // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.clientFormat = undefined;
-    DateTimeEntryBase.prototype.clientTimeFormat = undefined;
-    DateTimeEntryBase.prototype.clientDateFormat = undefined;
 
     // Format for time or date or datetime for the server. Defaults to ISO.
-    // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
+    // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.serverFormat = undefined;
+
+    // Extra options to pass to datetimepicker widget
+    DateTimeEntryBase.prototype.extraOptions = {};
 
     function DateEntry(question, options) {
         this.templateType = 'date';
-        this.timepicker = false;
-        this.datepicker = true;
         DateTimeEntryBase.call(this, question, options);
     }
     DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     DateEntry.prototype.constructor = DateTimeEntryBase;
     // This is format equates to 12/31/2016 and is used by the datetimepicker
     DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
-    DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
     DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
-        this.timepicker = true;
-        this.datepicker = false;
+        var style = "",
+            is12Hour = false;
+        if (question.style) {
+            style = ko.utils.unwrapObservable(question.style.raw);
+            if (style === Const.TIME_12_HOUR) {
+                this.clientFormat = 'h:mm a';
+                is12Hour = true;
+            }
+        }
+        this.helpText = function () {
+            return is12Hour ? gettext("12-hour clock") : gettext("24-hour clock");
+        };
         DateTimeEntryBase.call(this, question, options);
     }
     TimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
     TimeEntry.prototype.constructor = DateTimeEntryBase;
 
-    TimeEntry.prototype.clientTimeFormat = 'HH:mm';
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
+    TimeEntry.prototype.extraOptions = {showTodayButton: false};
 
     function EthiopianDateEntry(question, options) {
         var self = this,
@@ -926,6 +895,100 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
+
+    /**
+     * Base class for entry types that involve uploading a file: multimedia and signatures.
+     */
+    function FileEntry(question, options) {
+        var self = this;
+        EntrySingleAnswer.call(this, question, options);
+        self.templateType = 'file';
+        self.xformAction = Const.ANSWER_MEDIA;
+        self.xformParams = function () {
+            return { file: self.file() };
+        };
+
+        self.file = ko.observable();
+
+    }
+    FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        if (newValue !== Const.NO_ANSWER) {
+            var $input = $('#' + self.entryId);
+            self.answer(newValue.replace(Const.FILE_PREFIX, ""));
+            self.file($input[0].files[0]);
+        } else {
+            self.answer(newValue);
+            self.file(null);
+        }
+        this.question.onchange();
+    };
+
+    /**
+     * Represents an image upload.
+     */
+    function ImageEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*";
+
+        self.helpText = function () {
+            return gettext("Upload image");
+        };
+
+    }
+    ImageEntry.prototype = Object.create(FileEntry.prototype);
+    ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an audio upload.
+     */
+    function AudioEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "audio/*";
+
+        self.helpText = function () {
+            return gettext("Upload audio file");
+        };
+
+    }
+    AudioEntry.prototype = Object.create(FileEntry.prototype);
+    AudioEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a video upload.
+     */
+    function VideoEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "video/*";
+
+        self.helpText = function () {
+            return gettext("Upload video file");
+        };
+
+    }
+    VideoEntry.prototype = Object.create(FileEntry.prototype);
+    VideoEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a signature, which requires the user to upload a signature file.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*,.pdf,.doc,.docx";
+
+        self.helpText = function () {
+            return gettext("Upload signature file");
+        };
+
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1180,9 +1243,30 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
-            default:
-                window.console.warn('No active entry for: ' + question.datatype());
-                entry = new UnsupportedEntry(question, options);
+            case Const.BINARY:
+                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
+                    // do nothing, fall through to unsupported
+                } else if (style === Const.SIGNATURE) {
+                    entry = new SignatureEntry(question, {});
+                    break;
+                } else {
+                    switch (question.control()) {
+                        case Const.CONTROL_IMAGE_CHOOSE:
+                            entry = new ImageEntry(question, {});
+                            break;
+                        case Const.CONTROL_AUDIO_CAPTURE:
+                            entry = new AudioEntry(question, {});
+                            break;
+                        case Const.CONTROL_VIDEO_CAPTURE:
+                            entry = new VideoEntry(question, {});
+                            break;
+                        // any other control types are unsupported
+                    }
+                }
+        }
+        if (!entry) {
+            window.console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
         }
         return entry;
     }
@@ -1245,18 +1329,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
+        AudioEntry: AudioEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
+        ImageEntry: ImageEntry,
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
+        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
+        UnsupportedEntry: UnsupportedEntry,
+        VideoEntry: VideoEntry,
     };
 });

@@ -55,6 +55,8 @@ IGNORE_MODELS = {
     'dropbox.DropboxUploadHelper',
     'export.DefaultExportSettings',
     'fixtures.UserLookupTableStatus',
+    'fixtures.LookupTableRow',          # handled by cascading delete
+    'fixtures.LookupTableRowOwner',     # handled by cascading delete
     'sms.MigrationStatus',
     'util.BouncedEmail',
     'util.ComplaintBounceMeta',
@@ -82,6 +84,10 @@ def test_deletion_sql_models():
 
         if model._meta.proxy:
             return model._meta.concrete_model in covered_models
+
+        # Used in Couch to SQL migration tests
+        if model.__name__ == 'DummySQLModel':
+            return True
 
     installed_models = {
         model for model in apps.get_models() if not _ignore_model(model)

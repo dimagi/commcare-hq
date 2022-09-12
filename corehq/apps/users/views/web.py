@@ -83,6 +83,7 @@ class UserInvitationView(object):
             'invite_to': self.domain,
             'invite_type': _('Project'),
             'hide_password_feedback': has_custom_clean_password(),
+            'button_label': _('Create Account')
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
@@ -137,7 +138,7 @@ class UserInvitationView(object):
         else:
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email)
+                idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
                 form = WebUserInvitationForm(request.POST, is_sso=idp is not None)

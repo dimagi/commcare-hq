@@ -1,16 +1,16 @@
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext as _
+
 from dimagi.utils.couch.bulk import get_docs
 
-from corehq.apps.api.exceptions import (
-    InvalidFormatException,
-    InvalidFieldException,
-    UpdateConflictException,
-)
+from corehq.apps.api.exceptions import UpdateUserException
 from corehq.apps.domain.forms import clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.sms.util import strip_plus
 from corehq.apps.user_importer.helpers import find_differences_in_list
 from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.apps.users.models_role import UserRole
 
 
 def update(user, field, value, user_change_logger=None):
@@ -32,10 +32,11 @@ def update(user, field, value, user_change_logger=None):
         'password': _update_password,
         'phone_numbers': _update_phone_numbers,
         'user_data': _update_user_data,
+        'role': _update_user_role,
     }.get(field)
 
     if not update_fn:
-        raise InvalidFieldException(field)
+        raise UpdateUserException(_("Attempted to update unknown or non-editable field '{}'").format(field))
 
     update_fn(user, value, user_change_logger)
 
@@ -59,7 +60,10 @@ def _update_language(user, language, user_change_logger):
 def _update_password(user, password, user_change_logger):
     domain = Domain.get_by_name(user.domain)
     if domain.strong_mobile_passwords:
-        clean_password(password)
+        try:
+            clean_password(password)
+        except ValidationError:
+            raise UpdateUserException(_("Password is not strong enough."))
     user.set_password(password)
 
     if user_change_logger:
@@ -70,7 +74,7 @@ def _update_default_phone_number(user, phone_number, user_change_logger):
     old_phone_numbers = set(user.phone_numbers)
     new_phone_numbers = set(user.phone_numbers)
     if not isinstance(phone_number, str):
-        raise InvalidFormatException('default_phone_number', 'string')
+        raise UpdateUserException(_("'default_phone_number' must be a string"))
     formatted_phone_number = strip_plus(phone_number)
     new_phone_numbers.add(formatted_phone_number)
     user.set_default_phone_number(formatted_phone_number)
@@ -108,10 +112,27 @@ def _update_user_data(user, user_data, user_change_logger):
     try:
         user.update_metadata(user_data)
     except ValueError as e:
-        raise UpdateConflictException(str(e))
+        raise UpdateUserException(str(e))
 
     if user_change_logger and original_user_data != user.user_data:
         user_change_logger.add_changes({'user_data': user.user_data})
+
+
+def _update_user_role(user, role, user_change_logger):
+    roles = UserRole.objects.by_domain_and_name(user.domain, role)
+    if not roles:
+        raise UpdateUserException(_("The role '{}' does not exist").format(role))
+    if len(roles) > 1:
+        raise UpdateUserException(
+            _("There are multiple roles with the name '{}' in the domain '{}'").format(role, user.domain)
+        )
+
+    original_role = user.get_role(user.domain)
+    new_role = roles[0]
+    if not original_role or original_role.get_qualified_id() != new_role.get_qualified_id():
+        user.set_role(user.domain, new_role.get_qualified_id())
+        if user_change_logger:
+            user_change_logger.add_info(UserChangeMessage.role_change(new_role))
 
 
 def _simple_update(user, key, value, user_change_logger):

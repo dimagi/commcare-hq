@@ -6,6 +6,7 @@ from corehq.apps.app_manager.const import REGISTRY_WORKFLOW_SMART_LINK
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    Assertion,
     CaseSearch,
     CaseSearchAgainLabel,
     CaseSearchLabel,
@@ -15,7 +16,7 @@ from corehq.apps.app_manager.models import (
     Module, DetailColumn, ShadowModule,
 )
 from corehq.apps.app_manager.suite_xml.sections.details import (
-    AUTO_LAUNCH_EXPRESSION,
+    AUTO_LAUNCH_EXPRESSIONS,
     DetailContributor
 )
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesContributor
@@ -163,7 +164,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'})
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date")
             ],
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
@@ -406,7 +407,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         expected = f"""
         <partial>
-          <action auto_launch="{AUTO_LAUNCH_EXPRESSION}" redo_last="false">
+          <action auto_launch="{AUTO_LAUNCH_EXPRESSIONS['single-select']}" redo_last="false">
             <display>
               <text>
                 <locale id="case_search.m0"/>
@@ -711,6 +712,53 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             "./remote-request[1]/instance[@id='item-list:states']",
         )
 
+    def test_prompt_itemset_mobile_report_legacy(self):
+        self._test_prompt_itemset_mobile_report('abcdef')
+
+    def test_prompt_itemset_mobile_report(self):
+        self._test_prompt_itemset_mobile_report('commcare-reports:abcdef')
+
+    @flag_enabled('MOBILE_UCR')
+    def _test_prompt_itemset_mobile_report(self, instance_id):
+        self.module.search_config.properties[0].input_ = 'select1'
+        self.module.search_config.properties[0].itemset = Itemset(
+            instance_id=instance_id,
+            instance_uri="jr://fixture/commcare-reports:abcdef",
+            nodeset=f"instance('{instance_id}')/rows/row",
+            label='name',
+            value='id',
+            sort='id',
+        )
+        suite = self.app.create_suite()
+        expected = f"""
+        <partial>
+          <prompt key="name" input="select1">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <itemset nodeset="instance('{instance_id}')/rows/row">
+              <label ref="name"/>
+              <value ref="id"/>
+              <sort ref="id"/>
+            </itemset>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        expected_instance = f"""
+        <partial>
+          <instance id="{instance_id}" src="jr://fixture/commcare-reports:abcdef"/>
+        </partial>
+        """
+        self.assertXmlPartialEqual(
+            expected_instance,
+            suite,
+            f"./remote-request[1]/instance[@id='{instance_id}']",
+        )
+
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
@@ -795,17 +843,64 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
     def test_required(self, *args):
-        self.module.search_config.properties[0].required = "#session/user/data/is_supervisor = 'n'"
+        self.module.search_config.properties[0].required = Assertion(
+            test="#session/user/data/is_supervisor = 'n'",
+        )
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name" required="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
+            <required test="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+              <text>
+                <locale id="search_property.m0.name.required.text"/>
+              </text>
+            </required>
           </prompt>
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+    def test_case_search_validation_conditions(self, *args):
+        self.module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'}, validations=[
+                Assertion(test='2 + 2 = 5', text={"en": ""})
+            ]),
+            CaseSearchProperty(name='email', label={'en': 'Email'}, validations=[
+                Assertion(
+                    test="contains(instance('search-input:results')/input/field[@name='email'], '@')",
+                    text={"en": "Please enter a valid email address",
+                          "it": "Si prega di inserire un indirizzo email valido"},
+                )
+            ]),
+        ]
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+            <validation test="2 + 2 = 5" />
+          </prompt>
+          <prompt key="email">
+            <display>
+              <text>
+                <locale id="search_property.m0.email"/>
+              </text>
+            </display>
+            <validation test="contains(instance('search-input:results')/input/field[@name='email'], '@')">
+              <text>
+                <locale id="search_property.m0.email.validation.0.text"/>
+              </text>
+            </validation>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt")

@@ -1,11 +1,14 @@
+import uuid
 from copy import deepcopy
+from datetime import datetime
 
 from django.test.testcases import SimpleTestCase
 
-from corehq.apps.es import filters
+from corehq.apps.es import FormES, filters
 from corehq.apps.es.aggregations import (
     AggregationRange,
     AggregationTerm,
+    DateHistogram,
     ExtendedStatsAggregation,
     FilterAggregation,
     FiltersAggregation,
@@ -20,7 +23,13 @@ from corehq.apps.es.aggregations import (
 )
 from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import ESQuerySet, HQESQuery
-from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.es.tests.utils import (
+    ElasticTestMixin,
+    es_test,
+    populate_es_index,
+)
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.util.elastic import ensure_index_deleted
 
 
 @es_test
@@ -68,7 +77,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 }
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
 
         query = HQESQuery('cases').aggregations([
@@ -195,7 +204,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             RangeAggregation('by_date', 'name', [
@@ -229,7 +238,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             StatsAggregation('name_stats', 'name', script='MY weird script')
@@ -258,7 +267,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             ExtendedStatsAggregation('name_stats', 'name', script='MY weird script')
@@ -296,7 +305,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     },
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             TopHitsAggregation(
@@ -329,7 +338,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             MissingAggregation(
@@ -358,13 +367,16 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     "date_histogram": {
                         "field": "date",
                         "interval": "day",
-                        "time_zone": "-01:00"
+                        "time_zone": "-01:00",
+                        'format': 'yyyy-MM-dd',
+                        'min_doc_count': 1,
                     }
                 }
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
-        query = HQESQuery('forms').date_histogram('by_day', 'date', 'day', '-01:00')
+        query = HQESQuery('forms').aggregation(
+            DateHistogram('by_day', 'date', DateHistogram.Interval.DAY, '-01:00'))
         self.checkQuery(query, json_output)
 
     def test_histogram_aggregation(self):
@@ -385,7 +397,8 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
             }
         }
         expected_output = example_response['aggregations']['forms_by_date']['buckets']
-        query = HQESQuery('forms').date_histogram('forms_by_date', '', '')
+        query = HQESQuery('forms').aggregation(
+            DateHistogram('forms_by_date', '', DateHistogram.Interval.DAY))
         res = ESQuerySet(example_response, query)
         output = res.aggregations.forms_by_date.raw_buckets
         self.assertEqual(output, expected_output)
@@ -411,7 +424,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     }
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             NestedAggregation(
@@ -446,9 +459,78 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                     },
                 },
             },
-            "size": SIZE_LIMIT
+            "size": 0
         }
         query = HQESQuery('cases').aggregation(
             TermsAggregation('name', 'name').order('sort_field')
         )
         self.checkQuery(query, json_output)
+
+
+@es_test
+class TestDateHistogram(SimpleTestCase):
+    domain = str(uuid.uuid4())
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        forms = [{
+            '_id': str(uuid.uuid4()),
+            'domain': cls.domain,
+            'received_on': datetime.fromisoformat(d),
+        } for d in [
+            '2021-12-09',
+            '2022-01-01',
+            '2022-01-18',
+            '2022-02-23',
+            '2022-03-01',
+            '2022-03-05',
+            '2022-03-13',
+            '2022-03-13',
+            '2022-03-16',
+            '2022-04-25',
+            '2022-05-04',
+            '2022-05-04',
+            '2022-05-09',
+            '2022-05-10',
+            '2022-05-20',
+            '2022-05-27',
+            '2022-06-07',
+        ]]
+        populate_es_index(forms, 'forms')
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        super().tearDownClass()
+
+    def _run_aggregation(self, aggregation):
+        return (FormES()
+                .remove_default_filters()
+                .domain(self.domain)
+                .aggregation(aggregation)
+                .run())
+
+    def test_year_histogram(self):
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.YEAR))
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(16, counts['2022'])
+
+    def test_month_histogram(self):
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.MONTH))
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(5, counts['2022-03'])
+
+    def test_day_histogram(self):
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.DAY))
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(2, counts['2022-03-13'])
+
+    def test_only_nonzero_buckets_returned(self):
+        res = self._run_aggregation(DateHistogram(
+            'submissions', 'received_on', DateHistogram.Interval.DAY))
+        counts = res.aggregations.submissions.counts_by_bucket()
+        self.assertEqual(15, len(counts))

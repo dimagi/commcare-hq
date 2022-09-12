@@ -70,22 +70,22 @@ class ElasticTestMixin(object):
             index=TEST_INDEX_INFO.index,
             params={'explain': 'true'},
         )
-        self.assertTrue(validation['valid'])
+        self.assertTrue(validation['valid'], validation)
 
-    def checkQuery(self, query, json_output, is_raw_query=False, validate_query=True):
+    def checkQuery(self, query, expected_json, is_raw_query=False, validate_query=True):
         self.maxDiff = None
         if is_raw_query:
             raw_query = query
         else:
             raw_query = query.raw_query
         msg = "Expected Query:\n{}\nGenerated Query:\n{}".format(
-            json.dumps(json_output, indent=4),
+            json.dumps(expected_json, indent=4),
             json.dumps(raw_query, indent=4),
         )
         # NOTE: This makes it [a, b, c] == [b, c, a] which shouldn't matter in ES queries
-        json_output = json.loads(json.dumps(json_output))
+        expected_json = json.loads(json.dumps(expected_json))
         raw_query = json.loads(json.dumps(raw_query))
-        self.assertEqual(raw_query, json_output, msg=msg)
+        self.assertEqual(raw_query, expected_json, msg=msg)
         if validate_query:
             # some queries need more setup to validate like initializing the specific index
             #   that they are querying.
@@ -252,6 +252,10 @@ def case_search_es_setup(domain, case_blocks):
     # send cases to ES in the same order they were passed in so `indexed_on`
     # order is predictable for TestCaseListAPI.test_pagination and others
     cases = sorted(cases, key=lambda case: order[case.case_id])
+    populate_case_search_index(cases)
+
+
+def populate_case_search_index(cases):
     populate_es_index(cases, 'case_search', transform_case_for_elasticsearch)
 
 

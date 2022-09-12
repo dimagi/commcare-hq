@@ -14,14 +14,15 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
-    var encodeValue = function (model, value, searchForBlank) {
+    var encodeValue = function (model, searchForBlank) {
+            var value = model.get('value');
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
-            } else if (model.get('input') === 'select') {
+            } else if (value && model.get('input') === 'select') {
                 value = value.join(selectDelimiter);
             }
 
-            var queryProvided = !(value === '' || (_.isArray(value) && _.isEmpty(value)));
+            var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
                 return selectDelimiter + value;
             } else if (queryProvided) {
@@ -164,59 +165,94 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
-                hasError: this.hasError,
+                errorMessage: this.errorMessage,
             };
         },
 
         initialize: function () {
             this.parentView = this.options.parentView;
             this.model = this.options.model;
-            this.hasError = false;
+            this.errorMessage = null;
 
-            var allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+            var value = this.model.get('value'),
+                allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
-                [searchForBlank, value] = decodeValue(this.model, stickyValue);
-            if (value && !this.model.get('value')) {
-                // Set the value and blank search checkbox from the sticky
-                // values if available and no default is present
-                this.model.set('value', value);
-            }
+                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
+            if (stickyValue && !value) {  // Sticky values don't override default values
+                value = stickyValue;
+            }
+            if (this.model.get('input') === 'select' && _.isString(value)) {
+                value = value.split(selectDelimiter);
+            }
+            this.model.set('value', value);
         },
 
         ui: {
             valueDropdown: 'select.query-field',
             hqHelp: '.hq-help',
             dateRange: 'input.daterange',
+            date: 'input.date',
             queryField: '.query-field',
             searchForBlank: '.search-for-blank',
         },
 
         events: {
             'change @ui.queryField': 'changeQueryField',
+            'change @ui.searchForBlank': 'notifyParentOfFieldChange',
+            'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
-        modelEvents: {
-            'change': 'render',
+        _render: function () {
+            var self = this;
+            _.defer(function () {
+                self.render();
+                if (self.model.get('input') === 'address') {
+                    initMapboxWidget(self.model);
+                }
+            });
         },
 
-        _isValid: function () {
-            if (!this.model.get('required')) {
-                return true;
+        /**
+         * Determines if model has either a server error or is required and missing.
+         * Returns error message, or null if model is valid.
+         */
+        checkValid: function () {
+            if (this.model.get("error")) {
+                return this.model.get("error");
             }
-
+            if (!this.model.get('required')) {
+                return null;
+            }
             var answer = this.getEncodedValue();
-            return answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "");
+            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
+                return null;
+            } else {
+                return this.model.get("required_msg");
+            }
         },
 
         isValid: function () {
-            var hasError = !this._isValid();
-            if (hasError !== this.hasError) {
-                this.hasError = hasError;
-                this.render();
+            var newError = this.checkValid();
+            if (newError !== this.errorMessage) {
+                this.errorMessage = newError;
+                this._render();
             }
-            return !this.hasError;
+            return !this.errorMessage;
+        },
+
+        clear: function () {
+            var self = this;
+            self.model.set('value', '');
+            self.model.set('error', null);
+            self.errorMessage = null;
+            self.model.set('searchForBlank', false);
+            if (self.ui.date.length) {
+                self.ui.date.data("DateTimePicker").clear();
+            }
+            self._render();
+            FormplayerFrontend.trigger('clearNotifications');
         },
 
         getEncodedValue: function () {
@@ -225,18 +261,36 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             var queryValue = $(this.ui.queryField).val(),
                 searchForBlank = $(this.ui.searchForBlank).prop('checked');
-            return encodeValue(this.model, queryValue, searchForBlank);
+            return encodeValue(this.model, searchForBlank);
         },
 
         changeQueryField: function (e) {
-            if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
-                this.parentView.changeDropdown(e);
+            if (this.model.get('input') === 'date') {
+                // Skip because dates get handled by changeDateQueryField
+                return;
+            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
+                this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
+            this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
+        },
+
+        changeDateQueryField: function (e) {
+            this.model.set('value', $(e.currentTarget).val());
+            this.notifyParentOfFieldChange(e);
+            this.parentView.setStickyQueryInputs();
+        },
+
+        notifyParentOfFieldChange: function (e) {
+            if (this.model.get('input') === 'address') {
+                // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
+                return;
+            }
+            this.parentView.notifyFieldChange(e);
         },
 
         toggleBlankSearch: function (e) {
@@ -263,6 +317,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
+            this.ui.date.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+                format: dateFormat,
+            }));
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -286,7 +343,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
                 if (_.every(parts, function (part) { return part.isValid(); }))  {
                     if (parts.length === 1) { // condition where only one valid date is typed in rather than a range
-                        $input.val(oldValue + separator + oldValue).trigger('change');
+                        newValue = oldValue + separator + oldValue;
                     } else if (parts.length === 2) {
                         newValue = parts[0].format(dateFormat) + separator + parts[1].format(dateFormat);
                     }
@@ -341,21 +398,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        changeDropdown: function (e) {
+        notifyFieldChange: function (e) {
             e.preventDefault();
             var self = this;
-            var $fields = $(".query-field");
-
-            // If there aren't at least two dropdowns, there are no dependencies
-            if ($fields.filter("select").length < 2) {
-                return;
-            }
-
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
-            var urlObject = Util.currentUrlToObject();
-            urlObject.setQueryData(this.getAnswers(), false);
-            var fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
+            self.validateFields().always(function (response) {
+                var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
                     if (choices) {
@@ -376,7 +423,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             itemsetChoices: choices,
                             value: value,
                         });
-                        $field.trigger('change.select2');
+                        self.children.findByIndex(i)._render();      // re-render with new choice values
                     }
                 }
             });
@@ -384,35 +431,71 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         clearAction: function () {
             var self = this;
-            _.each(self.collection.models, function (model) {
-                model.set('value', '');
-                model.set('searchForBlank', false);
-                if (model.get('input') === 'address') {
-                    initMapboxWidget(model);
-                }
+            this.children.each(function (childView) {
+                childView.clear();
             });
             self.setStickyQueryInputs();
         },
 
         submitAction: function (e) {
+            var self = this;
             e.preventDefault();
-            FormplayerFrontend.trigger('clearNotifications', errorHTML, true);
 
-            var invalidFields = [];
-            this.children.each(function (childView) {
-                if (!childView.isValid()) {
-                    invalidFields.push(childView.model.get('text'));
+            // validateFields will likely already have been called when user blurred the last field,
+            // but call it here just in case they didn't fill anything out
+            self.validateFields().done(function () {
+                FormplayerFrontend.trigger("menu:query", self.getAnswers());
+            });
+        },
+
+        /*
+         *  Send request to formplayer to validate fields. Displays any errors.
+         *  Returns a promise that contains the formplayer response.
+         */
+        validateFields: function () {
+            var Util = hqImport("cloudcare/js/formplayer/utils/util"),
+                self = this;
+
+            var urlObject = Util.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+
+                // Gather error messages
+                var invalidFields = [];
+                self.children.each(function (childView) {
+                    if (!childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                // Display error messages
+                FormplayerFrontend.trigger('clearNotifications');
+                if (invalidFields.length) {
+                    var errorHTML = gettext("Please check the following fields:");
+                    errorHTML += "<ul>" + _.map(invalidFields, function (f) {
+                        return "<li>" + DOMPurify.sanitize(f) + "</li>";
+                    }).join("") + "</ul>";
+                    FormplayerFrontend.trigger('showError', errorHTML, true, false);
+                }
+
+                if (invalidFields.length) {
+                    promise.reject(response);
+                } else {
+                    promise.resolve(response);
                 }
             });
 
-            if (invalidFields.length) {
-                var errorHTML = "Please enter values for the following fields:";
-                errorHTML += "<ul>" + _.map(invalidFields, function (f) { return "<li>" + f + "</li>"; }).join("") + "</ul>";
-                FormplayerFrontend.trigger('showError', errorHTML, true);
-                return;
-            }
-
-            FormplayerFrontend.trigger("menu:query", this.getAnswers());
+            return promise;
         },
 
         setStickyQueryInputs: function () {

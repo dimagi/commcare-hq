@@ -19,7 +19,7 @@ from corehq.apps.registry.signals import (
     data_registry_deleted,
 )
 from corehq.apps.users.decorators import require_permission_raw
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -34,7 +34,7 @@ class RegistryPermissionCheck:
         self.domain = domain
         self.couch_user = couch_user
         role = couch_user.get_role(domain, allow_enterprise=True)
-        self._permissions = role.permissions if role else Permissions()
+        self._permissions = role.permissions if role else HqPermissions()
         self.manageable_slugs = set(self._permissions.manage_data_registry_list)
 
         self.can_manage_all = self._permissions.manage_data_registry

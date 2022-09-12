@@ -155,57 +155,6 @@ def _apply_removal(export_tables, removal_list):
     return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
 
 
-def ordering_config_validator(value):
-
-    error = ValidationError(
-        _('The config format is invalid'),
-        params={'value': value}
-    )
-
-    if not isinstance(value, list):
-        raise error
-    for group in value:
-        if not isinstance(group, list) or len(group) != 2:
-            raise error
-        if not isinstance(group[0], str):
-            raise error
-        if not isinstance(group[1], list):
-            raise error
-        for report in group[1]:
-            if not isinstance(report, str):
-                raise error
-
-
-class ReportsSidebarOrdering(models.Model):
-    domain = models.CharField(
-        max_length=256,
-        null=False,
-        blank=False,
-        unique=True
-    )
-    # Example config value:
-    # [
-    #     ["Adherence", [
-    #         "DynamicReport7613ac1402e2c41db782526e9c43e040",
-    #         "DynamicReport1233ac1402e2c41db782526e9c43e040"
-    #     ]],
-    #     ["Test Results", [
-    #         "DynamicReport4563ac1402e2c41db782526e9c43e040",
-    #         "DynamicReportmy-static-ucr-id"
-    #     ]]
-    # ]
-    config = JSONField(
-        validators=[ordering_config_validator],
-        default=list,
-        help_text=(
-            "An array of arrays. Each array represents a heading in the sidebar navigation. "
-            "The first item in each array is a string, which will be the title of the heading. The second item in "
-            "the array is another array, each item of which is the name of a report class. Each of these reports "
-            "will be listed under the given heading in the sidebar nav."
-        )
-    )
-
-
 class TableauServer(models.Model):
     SERVER_TYPES = (
         ('server', gettext_lazy('Tableau Server')),
@@ -216,7 +165,6 @@ class TableauServer(models.Model):
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
     target_site = models.CharField(max_length=64, default='Default')
-    domain_username = models.CharField(max_length=64)
 
     def __str__(self):
         return '{server} {server_type} {site}'.format(server=self.server_name,
@@ -225,6 +173,7 @@ class TableauServer(models.Model):
 
 
 class TableauVisualization(models.Model):
+    title = models.CharField(max_length=32, null=True)
     domain = models.CharField(max_length=64)
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     view_url = models.CharField(max_length=256)
@@ -238,3 +187,12 @@ class TableauVisualization(models.Model):
         return '{domain} {server} {view}'.format(domain=self.domain,
                                                  server=self.server,
                                                  view=self.view_url[0:64])
+
+    @classmethod
+    def for_user(cls, domain, couch_user):
+        items = [
+            viz
+            for viz in TableauVisualization.objects.filter(domain=domain)
+            if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
+        ]
+        return sorted(items, key=lambda v: v.name.lower())

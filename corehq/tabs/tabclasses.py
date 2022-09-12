@@ -68,7 +68,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -79,7 +78,6 @@ from corehq.apps.translations.integrations.transifex.utils import (
     transifex_details_available_for_domain,
 )
 from corehq.apps.userreports.util import has_report_builder_access
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.apps.users.permissions import (
     can_download_data_files,
     can_view_sms_exports,
@@ -106,7 +104,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
-    regroup_sidebar_items,
     sidebar_to_dropdown,
 )
 
@@ -123,13 +120,14 @@ class ProjectReportsTab(UITab):
 
     @property
     def _is_viewable(self):
-        return (user_can_view_reports(self.project, self.couch_user)
-                and has_privilege(self._request, privileges.PROJECT_ACCESS))
-
-    @property
-    def view(self):
-        from corehq.apps.reports.views import MySavedReportsView
-        return MySavedReportsView.urlname
+        if not has_privilege(self._request, privileges.PROJECT_ACCESS):
+            return False
+        if user_can_view_reports(self.project, self.couch_user):
+            return True
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            if self.couch_user.can_view_some_tableau_viz(self.domain):
+                return True
+        return False
 
     @property
     def sidebar_items(self):
@@ -141,28 +139,22 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
-        if isinstance(self.couch_user, AnonymousCouchUser) and toggles.PUBLISH_CUSTOM_REPORTS.enabled(self.domain):
+
+        if not user_can_view_reports(self.project, self.couch_user):
             return []
+
         tools = [{
             'title': _(MySavedReportsView.page_title),
             'url': reverse(MySavedReportsView.urlname, args=[self.domain]),
             'icon': 'icon-tasks fa fa-tasks',
             'show_in_dropdown': True,
         }]
-        from corehq.apps.users.models import Permissions
+        from corehq.apps.users.models import HqPermissions
         is_ucr_toggle_enabled = (
             toggles.USER_CONFIGURABLE_REPORTS.enabled(
                 self.domain, namespace=toggles.NAMESPACE_DOMAIN
@@ -173,7 +165,7 @@ class ProjectReportsTab(UITab):
         )
         has_ucr_permissions = self.couch_user.has_permission(
             self.domain,
-            get_permission_name(Permissions.edit_ucrs)
+            get_permission_name(HqPermissions.edit_ucrs)
         )
 
         if is_ucr_toggle_enabled and has_ucr_permissions:
@@ -195,11 +187,14 @@ class ProjectReportsTab(UITab):
 
         from corehq.apps.reports.models import TableauVisualization
         from corehq.apps.reports.standard.tableau import TableauView
-        items = [{
-            'title': viz.name,
-            'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
-            'show_in_dropdown': False,
-        } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+        items = [
+            {
+                'title': viz.title or viz.name,
+                'url': reverse(TableauView.urlname, args=[self.domain, viz.id]),
+                'show_in_dropdown': i < 2,
+            }
+            for i, viz in enumerate(TableauVisualization.for_user(self.domain, self.couch_user))
+        ]
 
         return [(_("Tableau Reports"), items)] if items else []
 
@@ -270,16 +265,20 @@ class ProjectReportsTab(UITab):
 
     @property
     def dropdown_items(self):
-        if self.can_access_all_locations:
-            reports = sidebar_to_dropdown(
-                ProjectReportDispatcher.navigation_sections(
-                    request=self._request, domain=self.domain),
-                current_url=self.url)
-            return self._get_saved_reports_dropdown() + reports
+        items = self._get_saved_reports_dropdown()
 
-        else:
-            return (self._get_saved_reports_dropdown()
-                    + self._get_all_sidebar_items_as_dropdown())
+        if not self.can_access_all_locations:
+            items.extend(self._get_all_sidebar_items_as_dropdown())
+            return items
+
+        reports = sidebar_to_dropdown(
+            self._get_tableau_items()
+            + ProjectReportDispatcher.navigation_sections(request=self._request, domain=self.domain),
+            current_url=self.url
+        )
+        items.extend(reports)
+
+        return items
 
     def _get_all_sidebar_items_as_dropdown(self):
         def show(page):
@@ -570,6 +569,17 @@ class ProjectDataTab(UITab):
 
     @property
     def sidebar_items(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         items = []
 
         export_data_views = []
@@ -1041,7 +1051,6 @@ class CloudcareTab(UITab):
         return (
             has_privilege(self._request, privileges.CLOUDCARE)
             and self.domain
-            and not isinstance(self.couch_user, AnonymousCouchUser)
             and (self.couch_user.can_access_web_apps() or self.couch_user.is_commcare_user())
         )
 
@@ -1790,7 +1799,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech() and has_project_access:
-            integration_nav = _get_integration_section(self.domain)
+            integration_nav = _get_integration_section(self.domain, self.couch_user)
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
@@ -1932,7 +1941,7 @@ def _get_administration_section(domain):
     return administration
 
 
-def _get_integration_section(domain):
+def _get_integration_section(domain, couch_user):
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -2025,11 +2034,12 @@ def _get_integration_section(domain):
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
-        from corehq.apps.reports.views import TableauServerView
-        integration.append({
-            'title': _(TableauServerView.page_title),
-            'url': reverse(TableauServerView.urlname, args=[domain])
-        })
+        if couch_user.is_superuser:
+            from corehq.apps.reports.views import TableauServerView
+            integration.append({
+                'title': _(TableauServerView.page_title),
+                'url': reverse(TableauServerView.urlname, args=[domain])
+            })
 
         from corehq.apps.reports.views import TableauVisualizationListView
         integration.append({
@@ -2223,18 +2233,19 @@ class SMSAdminTab(UITab):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        items.append((_('SMS Connectivity'), [
-            {'title': _('Gateways'),
-             'url': reverse(GlobalSmsGatewayListView.urlname),
-             'subpages': [
-                 {'title': _('Add Gateway'),
-                  'urlname': AddGlobalGatewayView.urlname},
-                 {'title': _('Edit Gateway'),
-                  'urlname': EditGlobalGatewayView.urlname},
-            ]},
-            {'title': _('Default Gateways'),
-             'url': reverse('global_backend_map')},
-        ]))
+        if has_privilege(self._request, privileges.GLOBAL_SMS_GATEWAY):
+            items.append((_('SMS Connectivity'), [
+                {'title': _('Gateways'),
+                'url': reverse(GlobalSmsGatewayListView.urlname),
+                'subpages': [
+                    {'title': _('Add Gateway'),
+                    'urlname': AddGlobalGatewayView.urlname},
+                    {'title': _('Edit Gateway'),
+                    'urlname': EditGlobalGatewayView.urlname},
+                ]},
+                {'title': _('Default Gateways'),
+                'url': reverse('global_backend_map')},
+            ]))
         return items
 
     @property
@@ -2274,9 +2285,10 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             self.divider,
-            dropdown_dict(_("Django Admin"), url="/admin"),
-            dropdown_dict(_("View All"), url=self.url),
         ])
+        if self.couch_user.is_staff:
+            submenu_context.append(dropdown_dict(_("Django Admin"), url="/admin"))
+        submenu_context.append(dropdown_dict(_("View All"), url=self.url))
         return submenu_context
 
     @property
@@ -2328,6 +2340,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Get users for offboarding'),
+                 'url': reverse('get_offboarding_list'),
+                 'icon': 'fa fa-sign-out'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},

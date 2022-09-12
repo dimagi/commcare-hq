@@ -6,6 +6,7 @@ from django.test.testcases import SimpleTestCase
 
 from unittest import mock
 from decorator import contextmanager
+from flaky import flaky
 from testil import eq
 
 from corehq.sql_db.connections import ConnectionManager
@@ -109,6 +110,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
+    @flaky
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
     def test_read_load_balancing_session(self, *args):

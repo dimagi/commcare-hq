@@ -1,16 +1,21 @@
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.test.testcases import SimpleTestCase
 from django.utils.safestring import SafeData
 
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, UserHistory
 from corehq.apps.users.util import (
-    user_display_string,
-    username_to_user_id,
-    user_id_to_username,
-    cached_user_id_to_user_display,
-    bulk_auto_deactivate_commcare_users,
     SYSTEM_USER_ID,
+    bulk_auto_deactivate_commcare_users,
+    cached_user_id_to_user_display,
+    generate_mobile_username,
+    get_complete_mobile_username,
+    is_username_available,
+    user_display_string,
+    user_id_to_username,
+    username_to_user_id,
 )
 from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 
@@ -187,3 +192,71 @@ class TestBulkAutoDeactivateCommCareUser(TestCase):
         self.assertFalse(
             UserHistory.objects.filter(user_id=self.inactive_user.user_id).exists()
         )
+
+
+class TestGenerateMobileUsername(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain('test-domain')
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+    def test_successfully_generated_username(self):
+        try:
+            username = generate_mobile_username('test-user-1', self.domain)
+        except ValidationError:
+            self.fail(f'Unexpected raised exception: {ValidationError}')
+
+        self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
+
+    def test_exception_raised_if_username_validation_fails(self):
+        with self.assertRaises(ValidationError):
+            generate_mobile_username('test%user', self.domain)
+
+
+class TestIsUsernameAvailable(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain('test-domain')
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None,
+                                       None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+    def test_returns_true_if_available(self):
+        self.assertTrue(is_username_available('unused-test-user@test-domain.commcarehq.org'))
+
+    def test_returns_false_if_actively_in_use(self):
+        self.assertFalse(is_username_available('test-user@test-domain.commcarehq.org'))
+
+    def test_returns_false_if_previously_used(self):
+        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None,
+                                           None)
+        self.addCleanup(retired_user.delete, self.domain, None)
+        retired_user.retire(self.domain, None)
+
+        self.assertFalse(is_username_available('retired@test-domain.commcarehq.org'))
+
+    def test_returns_false_if_reserved_username(self):
+        self.assertFalse(is_username_available('admin'))
+        self.assertFalse(is_username_available('demo_user@test-domain.commcarehq.org'))
+
+
+class TestGetCompleteMobileUsername(SimpleTestCase):
+
+    def test_returns_unchanged_username_if_already_complete(self):
+        username = get_complete_mobile_username('test@test-domain.commcarehq.org', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')
+
+    def test_returns_complete_username_if_incomplete(self):
+        username = get_complete_mobile_username('test', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')

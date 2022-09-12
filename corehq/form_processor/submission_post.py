@@ -25,6 +25,7 @@ from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
+from corehq.apps.es.client import BulkActionItem
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.permissions import has_permission_to_view_report
 from corehq.form_processor.exceptions import PostSaveError, XFormSaveError
@@ -46,7 +47,6 @@ from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
 
-from celery.task.control import revoke as revoke_celery_task
 
 CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
@@ -161,7 +161,8 @@ class SubmissionPost(object):
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
-        from corehq.apps.reports.views import CaseDataView, FormDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
+        from corehq.apps.reports.views import FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
         if has_permission_to_view_report(user, instance.domain, form_view):
@@ -394,7 +395,8 @@ class SubmissionPost(object):
         task_id = async_restore_task_id_cache.get_value()
 
         if task_id is not None:
-            revoke_celery_task(task_id)
+            from corehq.apps.celery import app
+            app.control.revoke(task_id)
             async_restore_task_id_cache.invalidate()
 
     @tracer.wrap(name='submission.save_models')
@@ -429,12 +431,15 @@ class SubmissionPost(object):
         try:
             case_stock_result.stock_result.finalize()
 
+            SubmissionPost.index_case_search(instance, case_stock_result.case_models)
+
             SubmissionPost._fire_post_save_signals(instance, case_stock_result.case_models)
 
             close_extension_cases(
                 case_db,
                 case_stock_result.case_models,
-                "SubmissionPost-%s-close_extensions" % instance.form_id
+                "SubmissionPost-%s-close_extensions" % instance.form_id,
+                instance.last_sync_token
             )
         except PostSaveError:
             raise
@@ -444,6 +449,34 @@ class SubmissionPost(object):
                 'form_id': instance.form_id,
             })
             raise PostSaveError
+
+    @staticmethod
+    def index_case_search(instance, case_models):
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+            return
+
+        from corehq.apps.case_search.models import case_search_synchronous_web_apps_for_domain
+        if not case_search_synchronous_web_apps_for_domain(instance.domain):
+            return
+
+        from corehq.pillows.case_search import transform_case_for_elasticsearch
+        from corehq.apps.es.case_search import ElasticCaseSearch
+        actions = [
+            BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
+            for case_model in case_models
+        ]
+        try:
+            _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
+        except Exception as e:
+            errors = [str(e)]
+
+        if errors:
+            # Notify but otherwise ignore all errors - the regular case search pillow is going to reprocess these
+            notify_exception(None, "Error updating case_search ES index during form processing", details={
+                'xml': instance,
+                'domain': instance.domain,
+                'errors': errors,
+            })
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')

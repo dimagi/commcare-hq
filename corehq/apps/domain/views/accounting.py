@@ -115,7 +115,7 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
@@ -183,7 +183,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 class DomainAccountingSettings(BaseProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -768,7 +768,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -798,7 +798,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -1781,7 +1781,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
 
 @require_POST
 @login_and_domain_required
-@require_permission(Permissions.edit_billing)
+@require_permission(HqPermissions.edit_billing)
 def pause_subscription(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):

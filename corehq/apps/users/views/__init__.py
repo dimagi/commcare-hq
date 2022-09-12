@@ -11,6 +11,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
+from corehq.apps.reports.models import TableauVisualization
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
 from django.contrib import messages
@@ -106,7 +107,7 @@ from corehq.apps.users.models import (
     Invitation,
     StaticRole,
     WebUser,
-    Permissions,
+    HqPermissions,
     UserRole,
 )
 from corehq.apps.users.util import log_user_change
@@ -331,14 +332,7 @@ class BaseEditUserView(BaseUserSettingsView):
 
     def update_user(self):
         if self.form_user_update.is_valid():
-            old_lang = self.request.couch_user.language
-            if self.form_user_update.update_user():
-                # if editing our own account we should also update the language in the session
-                if self.editable_user._id == self.request.couch_user._id:
-                    new_lang = self.request.couch_user.language
-                    if new_lang != old_lang:
-                        self.request.session['django_language'] = new_lang
-                return True
+            return self.form_user_update.update_user()
 
     def post(self, request, *args, **kwargs):
         saved = False
@@ -516,7 +510,7 @@ class BaseRoleAccessView(BaseUserSettingsView):
     @memoized
     def non_admin_roles(self):
         return list(sorted(
-            UserRole.objects.get_by_domain(self.domain),
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
             key=lambda role: role.name if role.name else '\uFFFF'
         ))
 
@@ -689,11 +683,20 @@ class ListRolesView(BaseRoleAccessView):
                 "Any users assigned to roles that are restricted in data access "
                 "by organization can no longer access this project.  Please "
                 "update the existing roles."))
+
+        tableau_list = []
+        if toggles.EMBEDDED_TABLEAU.enabled(self.domain):
+            tableau_list = [{
+                'id': viz.id,
+                'name': viz.name,
+            } for viz in TableauVisualization.objects.filter(domain=self.domain)]
+
         return {
             'user_roles': self.get_roles_for_display(),
             'non_admin_roles': self.non_admin_roles,
             'can_edit_roles': self.can_edit_roles,
             'default_role': StaticRole.domain_default(self.domain),
+            'tableau_list': tableau_list,
             'report_list': get_possible_reports(self.domain),
             'is_domain_admin': self.couch_user.is_domain_admin,
             'domain_object': self.domain_object,
@@ -927,7 +930,7 @@ def _update_role_from_view(domain, role_data):
     role.is_non_admin_editable = role_data["is_non_admin_editable"]
     role.save()
 
-    permissions = Permissions.wrap(role_data["permissions"])
+    permissions = HqPermissions.wrap(role_data["permissions"])
     permissions.normalize()
     role.set_permissions(permissions.to_list())
 
@@ -946,11 +949,13 @@ def delete_user_role(request, domain):
     if user_count:
         return JsonResponse({
             "message": ngettext(
-                "Unable to delete role '{role}'. It has one user still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has one user and/or invitation still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
+                "Unable to delete role '{role}'. "
+                "It has {user_count} users and/or invitations still assigned to it. "
                 "Remove all users assigned to the role before deleting it.",
-                user_count
+                user_count,
             ).format(role=role_data["name"], user_count=user_count)
         }, status=400)
     try:

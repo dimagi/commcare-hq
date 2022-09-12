@@ -66,6 +66,8 @@ from .exceptions import (
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -189,7 +191,6 @@ class CallCenterProperties(DocumentSchema):
         self.case_actions_datasource_enabled = config.cases_active.enabled
         post = (self.form_datasource_enabled, self.case_datasource_enabled, self.case_actions_datasource_enabled)
         return pre != post
-
 
 
 class LicenseAgreement(DocumentSchema):
@@ -394,7 +395,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     auto_case_update_hour = IntegerProperty()
 
     # Allowed number of max OData feeds that this domain can create.
-    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    # NOTE: This value is generally None. If you want the value the system will use,
+    # please use the `get_odata_feed_limit` method instead
     odata_feed_limit = IntegerProperty()
 
     # exchange/domain copying stuff
@@ -516,7 +518,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return None
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    @quickcache(['couch_user._id', 'is_active'], timeout=5 * 60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
@@ -598,7 +600,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain_has_submission_in_last_30_days(self.name)
 
     @classmethod
-    @quickcache(['name'], skip_arg='strict', timeout=30*60,
+    @quickcache(['name'], skip_arg='strict', timeout=30 * 60,
         session_function=icds_conditional_session_key())
     def get_by_name(cls, name, strict=False):
         if not name:
@@ -687,6 +689,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
+    def get_deleted_domain_names(cls):
+        domains = Domain.view("domain/deleted_domains", include_docs=False, reduce=False).all()
+        return {d['key'] for d in domains}
+
+    @classmethod
     def get_all_ids(cls):
         return [d['id'] for d in cls.get_all(include_docs=False)]
 
@@ -707,7 +714,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         ).all()]
 
     def case_sharing_included(self):
-        return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+        return self.case_sharing or reduce(
+            lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False
+        )
 
     def save(self, **params):
         from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
@@ -757,7 +766,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
 
     def copies_of_parent(self):
-        return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
+        return Domain.view(
+            'domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True
+        )
 
     def delete(self, leave_tombstone=False):
         if not leave_tombstone and not settings.UNIT_TESTING:
@@ -812,6 +823,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def get_odata_feed_limit(self):
+        return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
@@ -1091,3 +1105,44 @@ class ProjectLimit(models.Model):
     domain = models.CharField(max_length=256, db_index=True)
     limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
     limit_value = models.IntegerField(default=20)
+
+
+class OperatorCallLimitSettings(models.Model):
+    CALL_LIMIT_MINIMUM = 1
+    CALL_LIMIT_MAXIMUM = 1000
+    CALL_LIMIT_DEFAULT = 120
+
+    domain = models.CharField(max_length=256, db_index=True)
+    call_limit = models.IntegerField(
+        default=CALL_LIMIT_DEFAULT,
+        validators=[
+            MinValueValidator(CALL_LIMIT_MINIMUM),
+            MaxValueValidator(CALL_LIMIT_MAXIMUM)
+        ]
+    )
+
+
+class SMSAccountConfirmationSettings(models.Model):
+    PROJECT_NAME_DEFAULT = "CommCare HQ"
+    PROJECT_NAME_MAX_LENGTH = 30
+    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
+    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
+    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
+
+    domain = models.CharField(max_length=256, db_index=True)
+    project_name = models.CharField(
+        default=PROJECT_NAME_DEFAULT,
+        max_length=PROJECT_NAME_MAX_LENGTH,
+    )
+    confirmation_link_expiry_time = models.IntegerField(
+        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
+        validators=[
+            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
+            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
+        ]
+    )
+
+    @staticmethod
+    def get_settings(domain):
+        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
+        return domain_obj

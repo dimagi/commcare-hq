@@ -24,7 +24,7 @@ from ..dbaccessors import (
     get_users_location_ids,
     mobile_user_ids_at_locations,
     get_user_ids_from_assigned_location_ids,
-    get_user_ids_from_primary_location_ids
+    get_user_ids_from_primary_location_ids,
 )
 from .util import make_loc, delete_all_locations
 from ..dbaccessors import get_filtered_locations_count

@@ -1,26 +1,11 @@
 from django.conf import settings
-from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
-from django.dispatch import Signal, receiver
+from django.dispatch import Signal
 
 from corehq.elastic import send_to_elasticsearch
 
 commcare_user_post_save = Signal()  # providing args: couch_user
 couch_user_post_save = Signal()  # providing args: couch_user
-
-
-@receiver(user_logged_in)
-def set_language(sender, **kwargs):
-    """
-    Whenever a user logs in, attempt to set their browser session
-    to the right language.
-    HT: http://mirobetm.blogspot.com/2012/02/django-language-set-in-database-field.html
-    """
-    from corehq.apps.users.models import CouchUser
-    user = kwargs['user']
-    couch_user = CouchUser.from_django_user(user)
-    if couch_user and couch_user.language:
-        kwargs['request'].session['django_language'] = couch_user.language
 
 
 # Signal that syncs django_user => couch_user
@@ -49,6 +34,11 @@ def update_user_in_es(sender, couch_user, **kwargs):
     )
 
 
+def apply_correct_demo_mode(sender, couch_user, **kwargs):
+    from .tasks import apply_correct_demo_mode_to_loadtest_user
+    apply_correct_demo_mode_to_loadtest_user.delay(couch_user.get_id)
+
+
 def sync_user_phone_numbers(sender, couch_user, **kwargs):
     from corehq.apps.sms.tasks import sync_user_phone_numbers as sms_sync_user_phone_numbers
     sms_sync_user_phone_numbers.delay(couch_user.get_id)
@@ -61,3 +51,5 @@ def connect_user_signals():
                       dispatch_uid="django_user_post_save_signal")
     couch_user_post_save.connect(update_user_in_es, dispatch_uid="update_user_in_es")
     couch_user_post_save.connect(sync_user_phone_numbers, dispatch_uid="sync_user_phone_numbers")
+    commcare_user_post_save.connect(apply_correct_demo_mode,
+                                    dispatch_uid='apply_correct_demo_mode')

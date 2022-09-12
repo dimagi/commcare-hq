@@ -170,6 +170,7 @@ def _get_expected_changes_json(user):
         'is_account_confirmed': True,
         'is_active': True,
         'is_demo_user': False,
+        'is_loadtest_user': False,
         'is_staff': False,
         'is_superuser': False,
         'language': None,

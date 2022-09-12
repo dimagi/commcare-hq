@@ -46,7 +46,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     ```sh
     sudo apt install git
     ```
-    
+
 - [Python 3.9](https://www.python.org/downloads/)
 
   - **Linux**:
@@ -58,39 +58,30 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
+    
 
     ```sh
     brew install python@3.9
     ```
 
-- A Python virtual environment manager like `pyenv` or `virtualenvwrapper`. We recommend `pyenv` ([see installation guide](https://github.com/pyenv/pyenv#installation))
 
-    To install python 3.9 with `pyenv`:
-
-    ```sh
-    pyenv install 3.9.11
-    ```
-
-    To set Python 3.9 as the global `python`, run:
-    ```sh
-    pyenv global 3.9.11
-    ```
-    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
-
-
-- Requirements of Python libraries, if they aren't already installed.
+- Requirements of Python libraries, if they aren't already installed.  Some of this comes from
+  [pyenv's recommendations](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
 
   - **Linux**:
 
     ```sh
-    sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config
+    sudo apt-get update; sudo apt install libncurses-dev libxml2-dev libxmlsec1-dev \
+    libxmlsec1-openssl libxslt1-dev libpq-dev pkg-config gettext make build-essential \
+    libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev
     ```
 
   - **macOS**:
 
     ```sh
-    brew install libmagic libxmlsec1 libxml2 libxslt
+    brew install libmagic libxmlsec1 libxml2 libxslt openssl readline sqlite3 xz zlib tcl-tk
     ```
 
 - Java (JDK 8)
@@ -131,7 +122,7 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
     xcode-select --install
     export LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib"
     ```
-    
+
     If you have an M1 chip and are using a Rosetta-based install of Postgres and run into problems with psycopg2, see [this solution](https://github.com/psycopg/psycopg2/issues/1216#issuecomment-767892042).
 
 ##### A note on `xmlsec`
@@ -148,9 +139,40 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 #### Option A: With `pyenv` and `pyenv-virtualenv`
 
-1. Create the virtualenv `hq` with Python 3.9.11:
+1. Install `pyenv`
+
+  Full installation instructions are [here](https://github.com/pyenv/pyenv#installation)
+  and [here](https://github.com/pyenv/pyenv-installer#installation--update--uninstallation).
+  Check [here](https://github.com/pyenv/pyenv/wiki#troubleshooting--faq)
+  and [here](https://github.com/pyenv/pyenv/wiki/Common-build-problems) to troubleshoot.
+
+  - **Linux**:
+
+    ```sh
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+    exec $SHELL
+    ```
+
+  - **macOS**:
+
+    [see installation guide linked above](https://github.com/pyenv/pyenv#installation)
+
+  - Install python 3.9 with `pyenv`:
+
+    ```sh
+    pyenv install 3.9:latest
+    ```
+
+    To set Python 3.9 as the global `python`, run:
+    ```sh
+    pyenv global 3.9.xx  # or whatever version was just installed - it should tab complete
+    ```
+    Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
+
+
+2. Create the virtualenv `hq` with Python 3.9.xx:
    ```sh
-   pyenv virtualenv 3.9.11 hq
+   pyenv virtualenv 3.9.xx hq
    ```
    Then to enter the environment:
    ```sh
@@ -223,7 +245,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     cd commcare-hq
     git submodule update --init --recursive
     git-hooks/install.sh
-    setvirtualenvproject  # optional - sets this directory as the project root
+    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
     ```
 
 2. Next, install the appropriate requirements (**only one is necessary**).
@@ -244,27 +266,15 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
       cp requirements/local.in.sample requirements/local.in
       ```
       and follow the instructions in `local.in` to keep requirements in sync.
-    
+
     If you have problems installing pip dependencies related to a missing wheel package, try installing wheel and upgrade pip before attempting to install dependencies.
-    
+
     - If you have ARM64 architecture (Apple M1 chip) and you're having trouble installing ReportLab:
         ```sh
         CFLAGS="-Wno-error=implicit-function-declaration" pip install -r requirements/local.in
         ```
         [Source](https://stackoverflow.com/questions/64871133/reportlab-installation-failed-after-upgrading-to-macos-big-sur)
-        
 
-  - For production environments
-
-    ```sh
-    pip install -r requirements/prod-requirements.txt
-    ```
-
-  - Minimum required packages
-
-    ```sh
-    pip install -r requirements/requirements.txt
-    ```
 
 Note that once you're up and running, you'll want to periodically re-run these
 steps, and a few others, to keep your environment up to date. Some developers
@@ -509,7 +519,7 @@ manage `js` repositories.
 In order to download the required JavaScript packages, you'll need to install
 `yarn` and run `yarn install`. Follow these steps to install:
 
-1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install#mac-stable)
+1. Follow [these steps](https://classic.yarnpkg.com/en/docs/install)
    to install Yarn.
 
 2. Install dependencies with:
@@ -592,7 +602,18 @@ Preferences > Network** and check the following:
 - [x] Disable cache (while DevTools is open)
 
 
-### Step 10: Running CommCare HQ
+### Step 10: Create a superuser
+
+To be able to use CommCare, you'll want to create a superuser, which you can do by running:
+
+```sh
+./manage.py make_superuser <email>
+```
+
+This can also be used to promote a user created by signing up to a superuser.
+
+
+### Step 11: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
@@ -602,7 +623,8 @@ Elasticsearch).
 ```
 
 Some of the services listed there aren't necessary for very basic operation, but
-it can give you a good idea of what's broken.
+it can give you a good idea of what's broken. If you're not running formplayer
+in docker, it will of course fail. Don't worry about celery for now.
 
 Then run the django server with the following command:
 
@@ -622,17 +644,6 @@ yarn install --frozen-lockfile
 ./manage.py compilejsi18n
 ./manage.py fix_less_imports_collectstatic
 ```
-
-### Step 11: Create a superuser
-
-Once your application is online, you'll want to create a superuser, which you can do by running:
-
-```sh
-./manage.py make_superuser <email>
-```
-
-This can also be used to promote a user created by signing up to a superuser.
-
 
 ## Running Formplayer and submitting data with Web Apps
 
@@ -823,7 +834,7 @@ If you are on arm64 architecture using a non-Dimagi Docker Postgres image:
 USE_PARTITIONED_DATABASE = False
 ```
 
-        
+
 
 ### REUSE DB
 

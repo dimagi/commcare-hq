@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from corehq.apps.case_importer.tracking.models import CaseUploadRecord
 from corehq.form_processor.models import XFormInstance
+from corehq.apps.enterprise.models import EnterprisePermissions
 
 MAX_RECENT_UPLOADS = 10000
 
@@ -28,8 +29,12 @@ def get_case_upload_record_count(domain, user):
 
 
 def get_case_ids_for_case_upload(case_upload):
+    enterprise_perms = EnterprisePermissions.get_by_domain(case_upload.domain)
     for form_record in case_upload.form_records.order_by('pk').all():
-        form = XFormInstance.objects.get_form(form_record.form_id, case_upload.domain)
+        if enterprise_perms.is_enabled and enterprise_perms.source_domain == case_upload.domain:
+            form = XFormInstance.objects.get_form(form_record.form_id)
+        else:
+            form = XFormInstance.objects.get_form(form_record.form_id, case_upload.domain)
         for case_block in extract_case_blocks(form):
             yield case_block['@case_id']
 

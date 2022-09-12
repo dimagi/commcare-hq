@@ -331,7 +331,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
+            if (sessionStorage.selectedValues !== undefined) {
+                let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
+                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
+            } else {
+                this.selectedCaseIds = [];
+            }
             this.isMultiSelect = options.isMultiSelect;
         },
 
@@ -374,7 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-                sessionStorage.selectedValues = self.selectedCaseIds.join(",");
                 self.reconcileMultiSelectUI();
             });
             this.reconcileMultiSelectUI();
@@ -405,7 +409,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
-            FormplayerFrontend.trigger("menu:paginate", pageSelection);
+            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
@@ -419,7 +423,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
-            FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+            FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 

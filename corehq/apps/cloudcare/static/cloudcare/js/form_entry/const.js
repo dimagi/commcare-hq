@@ -17,6 +17,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         GEO: 'geo',
         INFO: 'info',
         BARCODE: 'barcode',
+        BINARY: 'binary',
 
         // Appearance attributes
         NUMERIC: 'numeric',
@@ -30,7 +31,9 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         COLLAPSIBLE: 'group-collapse',
         COLLAPSIBLE_OPEN: 'collapse-open',
         COLLAPSIBLE_CLOSED: 'collapse-closed',
+        TIME_12_HOUR: '12-hour',
         ETHIOPIAN: 'ethiopian',
+        SIGNATURE: 'signature',
 
         // Note it's important to differentiate these two
         NO_PENDING_ANSWER: undefined,
@@ -52,6 +55,7 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         // XForm Actions
         NEW_FORM: 'new-form',
         ANSWER: 'answer',
+        ANSWER_MEDIA: 'answer_media',
         CURRENT: 'current',
         EVALUATE_XPATH: 'evaluate-xpath',
         NEW_REPEAT: 'new-repeat',
@@ -81,11 +85,13 @@ hqDefine("cloudcare/js/form_entry/const", function () {
         //knockout timeouts
         KO_ENTRY_TIMEOUT: 500,
 
+        // Entry-specific constants
         INT_LENGTH_LIMIT: 10,
         INT_VALUE_LIMIT: Math.pow(2, 31) - 1,
         LONGINT_LENGTH_LIMIT: 15,
         LONGINT_VALUE_LIMIT: Math.pow(2, 63) - 1,
         FLOAT_LENGTH_LIMIT: 15,
         FLOAT_VALUE_LIMIT: +("9".repeat(14)),
+        FILE_PREFIX: "C:\\fakepath\\",
     };
 });

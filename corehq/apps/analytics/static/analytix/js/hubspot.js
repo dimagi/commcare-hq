@@ -136,6 +136,10 @@ hqDefine('analytix/js/hubspot', [
             hasInteractedWithForm = false,
             trialForm;
 
+        if ($form.length === 0) {
+            return;
+        }
+
         trialForm = ctaForms.hubspotCtaForm({
             hubspotFormId: '9c8ecc33-b088-474e-8f4c-1b10fae50c2f',
             showContactMethod: true,

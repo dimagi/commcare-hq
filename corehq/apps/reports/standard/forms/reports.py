@@ -142,6 +142,7 @@ class SubmissionErrorReport(DeploymentsReport):
                     self.domain,
                     xform_dict.get('xmlns'),
                     app_id=xform_dict.get('app_id'),
+                    form_name=xform_dict['form'].get('@name'),
                 )
                 form_username = xform_dict['form']['meta'].get('username', EMPTY_USER)
             else:

@@ -27,7 +27,7 @@ from corehq.apps.integration.forms import (
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.integration.util import get_dialer_settings, get_gaen_otp_server_settings
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 
@@ -37,7 +37,7 @@ class BiometricIntegrationView(BaseAdminProjectSettingsView):
     page_title = gettext_lazy("Biometric Integration")
     template_name = 'integration/biometric.html'
 
-    @method_decorator(require_permission(Permissions.edit_motech))
+    @method_decorator(require_permission(HqPermissions.edit_motech))
     @method_decorator(toggles.BIOMETRIC_INTEGRATION.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(BiometricIntegrationView, self).dispatch(request, *args, **kwargs)

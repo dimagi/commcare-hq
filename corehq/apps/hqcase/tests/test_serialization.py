@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import patch
 from datetime import datetime
 
 from django.test import TestCase
@@ -87,7 +88,9 @@ class TestAPISerialization(TestCase):
         ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
         super().tearDownClass()
 
-    def test_serialization(self):
+    @patch('corehq.apps.hqcase.api.core.datetime')
+    def test_serialization(self, datetime_mock):
+        datetime_mock.utcnow.return_value = datetime(2021, 2, 18, 11, 2)
         self.assertEqual(
             serialize_case(self.case),
             {
@@ -100,6 +103,7 @@ class TestAPISerialization(TestCase):
                 "date_opened": "2021-02-18T10:59:00.000000Z",
                 "last_modified": "2021-02-18T10:59:00.000000Z",
                 "server_last_modified": "2021-02-18T10:59:00.000000Z",
+                "indexed_on": "2021-02-18T11:02:00.000000Z",
                 "closed": False,
                 "date_closed": None,
                 "properties": {
@@ -118,4 +122,11 @@ class TestAPISerialization(TestCase):
 
     def test_es_serialization(self):
         es_case = CaseSearchES().doc_id(self.case.case_id).run().hits[0]
-        self.assertEqual(serialize_case(self.case), serialize_es_case(es_case))
+        sql_res = serialize_case(self.case)
+        es_res = serialize_es_case(es_case)
+
+        # Remove indexed on, as this will vary slightly, which is expected
+        sql_res.pop('indexed_on')
+        es_res.pop('indexed_on')
+
+        self.assertEqual(sql_res, es_res)

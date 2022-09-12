@@ -9,10 +9,10 @@
 /.github/ @orangejenny
 
 /corehq/blobs/ @millerdev
-/corehq/elastic.py @proteusvacuum @joxl
+/corehq/elastic.py @joxl
 /corehq/ex-submodules/casexml/apps/phone/data_providers/case/livequery.py @millerdev
 /corehq/form_processor/ @snopoke
-/corehq/messaging/ @millerdev @orangejenny @mkangia
+/corehq/messaging/ @orangejenny @mkangia
 /corehq/motech/ @kaapstorm
 /corehq/pillows/ @calellowitz @joxl
 /corehq/sql_accessors/ @snopoke
@@ -31,27 +31,30 @@
 /corehq/apps/analytics/ @biyeun
 /corehq/apps/app_manager/ @orangejenny
 /corehq/apps/callcenter/ @snopoke
-/corehq/apps/case_search/ @proteusvacuum
 /corehq/apps/change_feed/ @dannyroberts
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
-/corehq/apps/es/ @esoergel @proteusvacuum @joxl
+/corehq/apps/es/ @esoergel @joxl
 /corehq/apps/hqwebapp/ @orangejenny
 /corehq/apps/linked_domain/ @gherceg
 /corehq/apps/locations/ @esoergel
 /corehq/apps/locations/adjacencylist.py @esoergel @millerdev
+/corehq/apps/locations/resources/v0_6.py @AddisonDunn
 /corehq/apps/locations/static/ @esoergel @orangejenny
 /corehq/apps/locations/templates/ @esoergel @orangejenny
 /corehq/apps/ota/ @snopoke
-/corehq/apps/reports/standard/cases/ @proteusvacuum @esoergel
+/corehq/apps/reports/models.py @AddisonDunn
+/corehq/apps/reports/standard/cases/ @esoergel
+/corehq/apps/reports/standard/tableau.py @AddisonDunn
 /corehq/apps/receiverwrapper/ @snopoke
-/corehq/apps/sms*/ @millerdev @orangejenny @mkangia
+/corehq/apps/sms*/ @orangejenny @mkangia
 /corehq/apps/smsbillables/ @dannyroberts @biyeun
 /corehq/apps/styleguide/ @orangejenny
 /corehq/apps/translations/app_translations/ @orangejenny
+/corehq/apps/user_importer/ @stephherbers
 /corehq/apps/userreports/ @calellowitz
 /corehq/apps/userreports/static/ @orangejenny
 /corehq/apps/userreports/templates/ @orangejenny
@@ -62,9 +65,7 @@
 /corehq/ex-submodules/pillowtop @dannyroberts @calellowitz
 /corehq/util/es/ @joxl
 
-/custom/icds_reports/ @calellowitz
-/custom/icds_reports/templates/ @calellowitz
-/custom/icds_reports/static/ @calellowitz
+/custom/covid/management/commands/ @stephherbers @AddisonDunn
 
 /docs/js-guide/ @orangejenny @millerdev
 

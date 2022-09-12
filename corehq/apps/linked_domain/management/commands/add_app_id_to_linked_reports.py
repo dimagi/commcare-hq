@@ -4,7 +4,7 @@ from django.core.management import BaseCommand
 
 from corehq.apps.linked_domain.applications import get_downstream_app_id
 from corehq.apps.linked_domain.models import DomainLink
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 
 logger = logging.getLogger('linked_domains')
@@ -19,7 +19,7 @@ def migrate_linked_reports(upstream_domain=None):
 
     num_of_failed_attempts = 0
     for domain_link in domain_links:
-        reports = get_report_configs_for_domain(domain_link.linked_domain)
+        reports = get_report_and_registry_report_configs_for_domain(domain_link.linked_domain)
         for report in reports:
             if report.report_meta.master_id and not report.config.meta.build.app_id:
                 upstream_report = ReportConfiguration.get(report.report_meta.master_id)

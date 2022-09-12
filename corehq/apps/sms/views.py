@@ -27,6 +27,7 @@ from django.views.generic import View
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -125,7 +126,7 @@ from corehq.apps.smsforms.models import (
 )
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
+from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
@@ -174,7 +175,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
@@ -468,7 +469,7 @@ class TestSMSMessageView(BaseDomainView):
 
 
 @csrf_exempt
-@require_permission(Permissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
+@require_permission(HqPermissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -738,7 +739,7 @@ def format_contact_data(domain, data):
         row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
@@ -781,7 +782,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -825,7 +826,7 @@ def chat(request, domain, contact_id, vn_id=None):
 class ChatMessageHistory(View, DomainViewMixin):
     urlname = 'api_history'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
@@ -968,7 +969,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 class ChatLastReadMessage(View, DomainViewMixin):
     urlname = 'api_last_read_message'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
@@ -1387,6 +1388,13 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(
+                reverse(
+                    SMSAdminInterfaceDispatcher.name(),
+                    kwargs={'report_slug': 'sms_billables'}
+                )
+            )
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1437,7 +1445,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {
@@ -1534,6 +1542,8 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(reverse("no_permissions"))
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
 

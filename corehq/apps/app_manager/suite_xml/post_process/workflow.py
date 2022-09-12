@@ -1,3 +1,39 @@
+"""
+WorkflowHelper
+--------------
+
+This is primarily used for end of form navigation and form linking.
+It contains logic to determine the proper sequence of commands to navigate a particular place in an app, such as a
+specific case list. It also needs to provide any datums required to reach that place in the app.
+
+Because CommCare's UI logic is driven by the data currently in the user's session and the data
+needed by forms, rather than being directly configured, this means HQ needs to predict how CommCare's UI logic will
+behave, which is difficult and results in code that's easily disturbed by new features that influence
+navigation.
+
+Understanding stacks in the `CommCare Session <https://github.com/dimagi/commcare-core/wiki/SessionStack>`_ is
+useful for working with ``WorkflowHelper``.
+
+Some areas to be aware of:
+
+* Datums can either require manual selection (from a case list) or can be automatically selected (such as the
+  usercase id).
+* HQ names each datum, defaulting to ``case_id`` for datums selected from case lists.
+  When HQ determines that a form requires multiple datums, it creates a new id for the new datum, which will often
+  incorporate the case type. It also may need to rename datums that already exist - see
+  ``_replace_session_references_in_stack``.
+* To determine which datums are distinct and which represent the same piece of information, HQ has matching logic
+  in ``_find_best_match``.
+* ``get_frame_children`` generates the list of frame children that will navigate to a given form or module,
+  mimicking CommCare's navigation logic
+* Shadow modules complicate this entire area, because they use their source module's forms but their own module
+  configuration.
+* There are a bunch of advanced features with their own logic, such as advanced modules, but even the basic logic
+  is fairly complex.
+* Within end of form navigation and form linking, the "previous screen" option is the most fragile. Form linking
+  has simpler code, since it pushes the complexity of the feature onto app builders.
+
+"""
 import re
 from collections import defaultdict, namedtuple
 from functools import total_ordering
@@ -773,7 +809,7 @@ class WorkflowQueryMeta(WorkflowSessionMeta):
         url = self.query.url
         if self.is_case_search:
             # we don't need the full search results, just the case that's been selected
-            url = url.replace('/phone/search/', '/phone/registry_case/')
+            url = url.replace('/phone/search/', '/phone/case_fixture/')
         return StackQuery(id=self.query.storage_instance, value=url, data=data)
 
     def __repr__(self):

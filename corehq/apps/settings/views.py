@@ -30,6 +30,7 @@ from two_factor.views import (
 
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import clean_password
+from corehq.apps.domain.models import Domain
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.hqwebapp.views import not_found
@@ -44,7 +45,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq import toggles
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.utils import sign, update_session_language
+from corehq.apps.hqwebapp.utils import sign
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
@@ -248,10 +249,11 @@ class MyAccountSettingsView(BaseMyAccountView):
         if self.form_type and self.form_type in self.form_actions:
             return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
-            old_lang = self.request.couch_user.language
             self.settings_form.update_user()
-            new_lang = self.request.couch_user.language
-            update_session_language(request, old_lang, new_lang)
+
+            res = redirect(reverse(MyAccountSettingsView.urlname))
+            res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language)
+            return res
 
         return self.get(request, *args, **kwargs)
 
@@ -273,9 +275,11 @@ class MyProjectsList(BaseMyAccountView):
         return {
             'domains': [{
                 'name': d,
-                'is_admin': self.request.couch_user.is_domain_admin(d)
+                'is_admin': self.request.couch_user.is_domain_admin(d),
+                'session_timeout': Domain.secure_timeout(d) or "",
             } for d in self.request.couch_user.get_domains()],
-            'web_user': self.request.couch_user.is_web_user
+            'web_user': self.request.couch_user.is_web_user,
+            'show_session_timeout': self.request.user.is_superuser
         }
 
     @property
@@ -638,7 +642,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for api_key in self.base_query.order_by('-created').all():
+        for api_key in self.base_query.order_by('-created').all()[self.skip:self.skip + self.limit]:
             redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
             yield {
                 "itemData": {

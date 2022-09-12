@@ -41,12 +41,3 @@ class UCRExpressionForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)
-
-
-class UCRExpressionUpdateForm(UCRExpressionForm):
-    class Meta(UCRExpressionForm.Meta):
-        fields = UCRExpressionForm.Meta.fields + ['id']
-
-    def __init__(self, request, *args, **kwargs):
-        super().__init__(request, *args, **kwargs)
-        self.fields['id'] = forms.CharField(widget=forms.HiddenInput())

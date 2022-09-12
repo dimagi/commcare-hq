@@ -43,7 +43,7 @@ class IndicatorSpecBase(JsonObject):
             wrapped.display_name = wrapped.column_id
         return wrapped
 
-    def readable_output(self, context):
+    def readable_output(self, factory_context):
         return self.type
 
 
@@ -59,7 +59,7 @@ class PropertyReferenceIndicatorSpecBase(IndicatorSpecBase):
     def getter(self):
         return getter_from_property_reference(self)
 
-    def readable_output(self, context):
+    def readable_output(self, factory_context):
         return self.property_name or "/".join(self.property_path)
 
 
@@ -67,9 +67,9 @@ class BooleanIndicatorSpec(IndicatorSpecBase):
     type = TypeProperty('boolean')
     filter = DictProperty(required=True)
 
-    def readable_output(self, context):
+    def readable_output(self, factory_context):
         from corehq.apps.userreports.filters.factory import FilterFactory
-        filter_object = FilterFactory.from_spec(self.filter, context)
+        filter_object = FilterFactory.from_spec(self.filter, factory_context)
         return str(filter_object)
 
 
@@ -100,9 +100,9 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
     expression = DefaultProperty(required=True)
     transform = DictProperty(required=False)
 
-    def parsed_expression(self, context):
+    def parsed_expression(self, factory_context):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
-        expression = ExpressionFactory.from_spec(self.expression, context)
+        expression = ExpressionFactory.from_spec(self.expression, factory_context)
         datatype_transform = transform_for_datatype(self.datatype)
         if self.transform:
             generic_transform = TransformFactory.get_transform(self.transform).get_transform_function()
@@ -111,9 +111,9 @@ class ExpressionIndicatorSpec(IndicatorSpecBase):
             inner_getter = expression
         return TransformedGetter(inner_getter, datatype_transform)
 
-    def readable_output(self, context):
+    def readable_output(self, factory_context):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
-        expression_object = ExpressionFactory.from_spec(self.expression, context)
+        expression_object = ExpressionFactory.from_spec(self.expression, factory_context)
         return str(expression_object)
 
 
@@ -125,8 +125,8 @@ class ChoiceListIndicatorSpec(PropertyReferenceIndicatorSpecBase):
     def get_operator(self):
         return in_multiselect if self.select_style == 'multiple' else equal
 
-    def readable_output(self, context):
-        readable_output = super(ChoiceListIndicatorSpec, self).readable_output(context)
+    def readable_output(self, factory_context):
+        readable_output = super(ChoiceListIndicatorSpec, self).readable_output(factory_context)
         return "{} for choices:\n{}".format(readable_output,
                                             add_tabbed_text(str(self.choices)))
 
@@ -137,16 +137,16 @@ class LedgerBalancesIndicatorSpec(IndicatorSpecBase):
     ledger_section = StringProperty(required=True)
     case_id_expression = DictProperty(required=True)
 
-    def get_case_id_expression(self, context=None):
+    def get_case_id_expression(self, factory_context=None):
         from corehq.apps.userreports.expressions.factory import ExpressionFactory
-        return ExpressionFactory.from_spec(self.case_id_expression, context)
+        return ExpressionFactory.from_spec(self.case_id_expression, factory_context)
 
-    def readable_output(self, context):
-        return "Ledgers from {}".format(str(self.get_case_id_expression(context)))
+    def readable_output(self, factory_context):
+        return "Ledgers from {}".format(str(self.get_case_id_expression(factory_context)))
 
 
 class DueListDateIndicatorSpec(LedgerBalancesIndicatorSpec):
     type = TypeProperty('due_list_date')
 
-    def readable_output(self, context):
-        return "Due List Dates from {}".format(str(self.get_case_id_expression(context)))
+    def readable_output(self, factory_context):
+        return "Due List Dates from {}".format(str(self.get_case_id_expression(factory_context)))

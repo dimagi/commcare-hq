@@ -12,13 +12,13 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
 
 from couchdbkit import MultipleResultsFound, ResourceNotFound
 from couchdbkit.exceptions import BadValueError, ResourceConflict
@@ -27,7 +27,7 @@ from memoized import memoized
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.phone.models import OTARestoreCommCareUser, OTARestoreWebUser
-from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from casexml.apps.phone.restore_caching import get_loadtest_factor_for_restore_cache_key
 from corehq.form_processor.models import XFormInstance
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -81,6 +81,7 @@ from corehq.apps.users.util import (
     user_location_data,
     username_to_user_id,
     bulk_auto_deactivate_commcare_users,
+    is_dimagi_email,
 )
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -93,10 +94,13 @@ from corehq.util.view_utils import absolute_reverse
 from .models_role import (  # noqa
     RoleAssignableBy,
     RolePermission,
-    SQLPermission,
+    Permission,
     StaticRole,
     UserRole,
 )
+
+WEB_USER = 'web'
+COMMCARE_USER = 'commcare'
 
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
@@ -144,13 +148,14 @@ class PermissionInfo(namedtuple("Permission", "name, allow")):
 
 
 PARAMETERIZED_PERMISSIONS = {
-    'view_reports': 'view_report_list',
     'manage_data_registry': 'manage_data_registry_list',
     'view_data_registry_contents': 'view_data_registry_contents_list',
+    'view_reports': 'view_report_list',
+    'view_tableau': 'view_tableau_list',
 }
 
 
-class Permissions(DocumentSchema):
+class HqPermissions(DocumentSchema):
     edit_web_users = BooleanProperty(default=False)
     view_web_users = BooleanProperty(default=False)
 
@@ -184,6 +189,8 @@ class Permissions(DocumentSchema):
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
+    view_tableau = BooleanProperty(default=False)
+    view_tableau_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
@@ -205,7 +212,7 @@ class Permissions(DocumentSchema):
     @classmethod
     def from_permission_list(cls, permission_list):
         """Converts a list of Permission objects into a Permissions object"""
-        permissions = Permissions.min()
+        permissions = HqPermissions.min()
         for perm in permission_list:
             setattr(permissions, perm.name, perm.allow_all)
             if perm.name in PARAMETERIZED_PERMISSIONS:
@@ -249,7 +256,7 @@ class Permissions(DocumentSchema):
     def permission_names(cls):
         """Returns a list of permission names"""
         return {
-            name for name, value in Permissions.properties().items()
+            name for name, value in HqPermissions.properties().items()
             if isinstance(value, BooleanProperty)
         }
 
@@ -258,7 +265,7 @@ class Permissions(DocumentSchema):
         return list(self._yield_enabled())
 
     def _yield_enabled(self):
-        for name in Permissions.permission_names():
+        for name in HqPermissions.permission_names():
             value = getattr(self, name)
             list_value = None
             if name in PARAMETERIZED_PERMISSIONS:
@@ -269,6 +276,11 @@ class Permissions(DocumentSchema):
 
     def view_report(self, report):
         return self.view_reports or report in self.view_report_list
+
+    def view_tableau_viz(self, viz_id):
+        if not self.access_all_locations:
+            return False
+        return self.view_tableau or viz_id in self.view_tableau_list
 
     def has(self, permission, data=None):
         if data:
@@ -290,94 +302,18 @@ class Permissions(DocumentSchema):
 
     @classmethod
     def max(cls):
-        return Permissions._all(True)
+        return HqPermissions._all(True)
 
     @classmethod
     def min(cls):
-        return Permissions._all(False)
+        return HqPermissions._all(False)
 
     @classmethod
     def _all(cls, value: bool):
-        perms = Permissions()
-        for name in Permissions.permission_names():
+        perms = HqPermissions()
+        for name in HqPermissions.permission_names():
             setattr(perms, name, value)
         return perms
-
-
-class UserRolePresets(object):
-    # this is kind of messy, but we're only marking for translation (and not using gettext_lazy)
-    # because these are in JSON and cannot be serialized
-    # todo: apply translation to these in the UI
-    # note: these are also tricky to change because these are just some default names,
-    # that end up being stored in the database. Think about the consequences of changing these before you do.
-    READ_ONLY_NO_REPORTS = gettext_noop("Read Only (No Reports)")
-    APP_EDITOR = gettext_noop("App Editor")
-    READ_ONLY = gettext_noop("Read Only")
-    FIELD_IMPLEMENTER = gettext_noop("Field Implementer")
-    BILLING_ADMIN = gettext_noop("Billing Admin")
-    MOBILE_WORKER = gettext_noop("Mobile Worker")
-    INITIAL_ROLES = (
-        READ_ONLY,
-        APP_EDITOR,
-        FIELD_IMPLEMENTER,
-        BILLING_ADMIN
-    )
-
-    ID_NAME_MAP = {
-        'read-only-no-reports': READ_ONLY_NO_REPORTS,
-        'no-permissions': READ_ONLY,
-        'read-only': READ_ONLY,
-        'field-implementer': FIELD_IMPLEMENTER,
-        'edit-apps': APP_EDITOR,
-        'billing-admin': BILLING_ADMIN,
-        'mobile-worker': MOBILE_WORKER
-    }
-
-    # skip legacy duplicate ('no-permissions')
-    NAME_ID_MAP = {name: id for id, name in ID_NAME_MAP.items() if id != 'no-permissions'}
-
-    @classmethod
-    def get_preset_role_id(cls, name):
-        return cls.NAME_ID_MAP.get(name, None)
-
-    @classmethod
-    def get_preset_role_name(cls, role_id):
-        return cls.ID_NAME_MAP.get(role_id, None)
-
-    @classmethod
-    def get_preset_map(cls):
-        return {
-            cls.READ_ONLY_NO_REPORTS: lambda: Permissions(),
-            cls.READ_ONLY: lambda: Permissions(view_reports=True),
-            cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
-                                                       view_commcare_users=True,
-                                                       edit_groups=True,
-                                                       view_groups=True,
-                                                       edit_locations=True,
-                                                       view_locations=True,
-                                                       edit_shared_exports=True,
-                                                       view_reports=True),
-            cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_apps=True, view_reports=True),
-            cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True),
-            cls.MOBILE_WORKER: lambda: Permissions(access_mobile_endpoints=True,
-                                                   report_an_issue=True,
-                                                   access_all_locations=True,
-                                                   access_api=False,
-                                                   download_reports=False)
-        }
-
-    @classmethod
-    def get_permissions(cls, preset):
-        preset_map = cls.get_preset_map()
-        if preset not in preset_map:
-            return None
-        return preset_map[preset]()
-
-    @classmethod
-    def get_role_name_with_matching_permissions(cls, permissions):
-        for name, factory in UserRolePresets.get_preset_map().items():
-            if factory() == permissions:
-                return name
 
 
 class DomainMembershipError(Exception):
@@ -394,6 +330,7 @@ class DomainMembership(Membership):
     """
     Each user can have multiple accounts on individual domains
     """
+    _user_type = None
 
     domain = StringProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -410,7 +347,7 @@ class DomainMembership(Membership):
         if self.role:
             return self.role.permissions
         else:
-            return Permissions()
+            return HqPermissions()
 
     @classmethod
     def wrap(cls, data):
@@ -435,7 +372,12 @@ class DomainMembership(Membership):
                 })
                 return None
         else:
-            return None
+            return self.get_default_role()
+
+    def get_default_role(self):
+        if self._user_type == COMMCARE_USER:
+            return UserRole.commcare_user_default(self.domain)
+        return None
 
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
@@ -507,6 +449,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
+
+        if domain_membership:
+            # set user type on membership to support default roles for 'commcare' users
+            domain_membership._user_type = self._get_user_type()
         return domain_membership
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
@@ -997,7 +943,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     @property
     def is_dimagi(self):
-        return self.username.endswith('@dimagi.com')
+        return is_dimagi_email(self.username)
 
     def is_locked_out(self):
         return self.supports_lockout() and self.should_be_locked_out()
@@ -1044,16 +990,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.email
 
     def is_commcare_user(self):
-        return self._get_user_type() == 'commcare'
+        return self._get_user_type() == COMMCARE_USER
 
     def is_web_user(self):
-        return self._get_user_type() == 'web'
+        return self._get_user_type() == WEB_USER
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
-            return 'web'
+            return WEB_USER
         elif self.doc_type == 'CommCareUser':
-            return 'commcare'
+            return COMMCARE_USER
         else:
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
@@ -1531,6 +1477,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
             if permission_slug in EXPORT_PERMISSIONS
         ])
 
+    def can_view_some_tableau_viz(self, domain):
+        if not self.can_access_all_locations(domain):
+            return False
+
+        from corehq.apps.reports.models import TableauVisualization
+        return self.can_view_tableau(domain) or bool(TableauVisualization.for_user(domain, self))
+
     def can_login_as(self, domain):
         return (
             self.has_permission(domain, 'login_as_all_users')
@@ -1604,11 +1557,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
-
     domain = StringProperty()
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
     loadtest_factor = IntegerProperty()
+    is_loadtest_user = BooleanProperty(default=False)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
     # used by user provisioning workflow. defaults to true unless explicitly overridden during
@@ -1695,7 +1648,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def clear_quickcache_for_user(self):
         from corehq.apps.users.dbaccessors import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
-        get_loadtest_factor_for_user.clear(self.domain, self.user_id)
+        get_loadtest_factor_for_restore_cache_key.clear(self.domain, self.user_id)
 
         if self._is_demo_user_cached_value_is_stale():
             get_practice_mode_mobile_workers.clear(self.domain)
@@ -1954,10 +1907,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         desired = set(group_ids)
         current = set(self.get_group_ids())
         touched = []
+        faulty_groups = []
         for to_add in desired - current:
             group = Group.get(to_add)
+            if group.domain != self.domain:
+                faulty_groups.append(to_add)
+                continue
             group.add_user(self._id, save=False)
             touched.append(group)
+        if faulty_groups:
+            raise ValidationError("Unable to save groups. The following group_ids are not in the current domain: "
+                                  + ', '.join(faulty_groups))
         for to_remove in current - desired:
             group = Group.get(to_remove)
             group.remove_user(self._id)
@@ -2434,7 +2394,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
-            if user_doc['email'].endswith('@dimagi.com'):
+            if is_dimagi_email(user_doc['email']):
                 yield user_doc['email']
 
     def save(self, fire_signals=True, **params):
@@ -2636,6 +2596,9 @@ class Invitation(models.Model):
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
 
+    def __repr__(self):
+        return f"Invitation(domain='{self.domain}', email='{self.email})"
+
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):
         return Invitation.objects.filter(domain=domain, is_accepted=is_accepted, **filters)
@@ -2742,110 +2705,6 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
-
-
-class AnonymousCouchUser(object):
-
-    username = "public_user"
-    doc_type = "CommCareUser"
-    _id = 'anonymous_couch_user'
-
-    @property
-    def get_id(self):
-        return self._id
-
-    @property
-    def is_active(self):
-        return True
-
-    @property
-    def is_staff(self):
-        return False
-
-    def is_domain_admin(self):
-        return False
-
-    def is_member_of(self, domain):
-        return True
-
-    def has_permission(self, domain, perm=None, data=None):
-        return False
-
-    def can_view_report(self, domain, report):
-        return False
-
-    def can_view_some_reports(self, domain):
-        return False
-
-    @property
-    def analytics_enabled(self):
-        return False
-
-    def can_edit_data(self):
-        return False
-
-    def can_edit_messgaing(self):
-        return False
-
-    def can_edit_apps(self):
-        return False
-
-    def can_view_apps(self):
-        return False
-
-    def can_edit_reports(self):
-        return False
-
-    def can_download_reports(self):
-        return False
-
-    def is_eula_signed(self, version=None):
-        return True
-
-    def is_commcare_user(self):
-        return True
-
-    def is_web_user(self):
-        return False
-
-    def can_access_any_exports(self, domain):
-        return False
-
-    def can_edit_commcare_users(self):
-        return False
-
-    def can_view_commcare_users(self):
-        return False
-
-    def can_edit_groups(self):
-        return False
-
-    def can_view_groups(self):
-        return False
-
-    def can_edit_users_in_groups(self):
-        return False
-
-    def can_edit_locations(self):
-        return False
-
-    def can_view_locations(self):
-        return False
-
-    def can_edit_users_in_locations(self):
-        return False
-
-    def can_edit_web_users(self):
-        return False
-
-    def can_view_web_uers(self):
-        return False
-
-    def can_view_roles(self):
-        return False
-
-    def can_access_release_management(self):
-        return False
 
 
 class UserReportingMetadataStaging(models.Model):

@@ -2,14 +2,13 @@ import logging
 from functools import wraps
 
 from django.http import Http404
-from django.shortcuts import render
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.errors import OneLogin_Saml2_Error
 
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.configuration import get_saml2_config
 from corehq.apps.sso.utils.request_helpers import get_request_data
-from corehq.apps.sso.utils.url_helpers import get_documentation_url
+from corehq.apps.sso.utils.view_helpers import render_sso_error
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +49,7 @@ def use_saml2_auth(view_func):
                     f"error if an Enterprise Admin reaches out for support: "
                     f"error code {e.code}, {str(e)}"
                 )
-            return render(request, 'sso/config_errors.html', {
-                'idp_is_active': request.idp.is_active,
-                'idp_name': request.idp.name,
-                'error': e,
-                'docs_link': get_documentation_url(request.idp),
-            })
+            return render_sso_error(request, e)
 
         return view_func(request, idp_slug, *args, **kwargs)
     return _inner

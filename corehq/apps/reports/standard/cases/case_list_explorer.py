@@ -9,7 +9,7 @@ from corehq.apps.case_search.const import (
     SPECIAL_CASE_PROPERTIES_MAP,
 )
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import CaseSearchES, wrap_case_search_hit
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.exceptions import BadRequestError
@@ -156,12 +156,12 @@ class CaseListExplorer(CaseListReport):
     @property
     def rows(self):
         track_workflow(self.request.couch_user.username, f"{self.name}: Search Performed")
-        data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
+        data = (wrap_case_search_hit(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
 
     @property
     def get_all_rows(self):
-        data = (flatten_result(r) for r in iter_es_docs_from_query(self._build_query(sort=False)))
+        data = (wrap_case_search_hit(r) for r in iter_es_docs_from_query(self._build_query(sort=False)))
         return self._get_rows(data)
 
     def _get_rows(self, data):

@@ -91,7 +91,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
             currentFragment = Backbone.history.getFragment();
             urlObject = Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(currentFragment));
-            response.appId = urlObject.appId;
+            if (urlObject.appId) {
+                // will be undefined on urlObject when coming from an incomplete form
+                response.appId = urlObject.appId;
+            }
 
              if (response.notification) {
                 FormplayerFrontend.trigger("handleNotification", response.notification);
@@ -153,7 +156,10 @@ hqDefine("cloudcare/js/formplayer/router", function () {
         API.listMenus();
     });
 
-    FormplayerFrontend.on("menu:paginate", function (page) {
+    FormplayerFrontend.on("menu:paginate", function (page, selections) {
+        var selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+        selectedValues[sessionStorage.queryKey] = selections.join(',');
+        sessionStorage.selectedValues = JSON.stringify(selectedValues);
         var urlObject = Util.currentUrlToObject();
         urlObject.setPage(page);
         Util.setUrlToObject(urlObject);

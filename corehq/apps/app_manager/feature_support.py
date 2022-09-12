@@ -203,14 +203,7 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
-    def enable_exclude_from_search(self):
-        return (
-            toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
-            and self._require_minimum_version('2.53')
-        )
-
-    @property
-    def enable_required_search_fields(self):
+    def ush_case_claim_2_53(self):
         return (
             toggles.USH_CASE_CLAIM_UPDATES.enabled(self.domain)
             and self._require_minimum_version('2.53')

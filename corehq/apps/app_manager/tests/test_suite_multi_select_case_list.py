@@ -24,6 +24,7 @@ from corehq.apps.app_manager.models import (
     FormLink,
     UpdateCaseAction,
 )
+from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSIONS
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -111,9 +112,9 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
         suite = self.factory.app.create_suite()
 
         self.assertXmlPartialEqual(
-            """
+            f"""
             <partial>
-              <action auto_launch="true()" redo_last="false">
+              <action auto_launch="{AUTO_LAUNCH_EXPRESSIONS['multi-select']}" redo_last="false">
                 <display>
                   <text>
                     <locale id="case_search.m0"/>

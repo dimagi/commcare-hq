@@ -32,6 +32,7 @@ from soil import CachedDownload, DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth, login_and_domain_required
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -47,6 +48,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataItem,
     FixtureDataType,
     FixtureTypeField,
+    LookupTableRow,
 )
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
@@ -62,7 +64,8 @@ from corehq.apps.fixtures.utils import (
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.util import format_datatables_data
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
+from corehq.sql_db.jsonops import JsonDelete, JsonGet, JsonSet
 from corehq.toggles import SKIP_ORM_FIXTURE_UPLOAD
 from corehq.util.files import file_extention_from_filename
 from corehq import toggles
@@ -197,6 +200,11 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
                 properties=[]
             ))
     data_type.fields = new_fixture_fields
+
+    def update_sql_objects():
+        data_type._migration_do_sync()
+
+    transaction.set_sql_save_action(FixtureDataType, update_sql_objects)
     transaction.save(data_type)
     return data_type
 
@@ -225,6 +233,30 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
+
+    fields_json = "fields"
+    for field_name, patch in fields_patches.items():
+        if "update" in patch:
+            new_field_name = patch["update"]
+            fields_json = JsonSet(
+                JsonDelete(fields_json, field_name),
+                [new_field_name],
+                JsonGet("fields", field_name),
+            )
+        elif "remove" in patch:
+            fields_json = JsonDelete(fields_json, field_name)
+    for field_name, patch in fields_patches.items():
+        if "is_new" in patch:
+            fields_json = JsonSet(fields_json, [field_name], [])
+
+    def update_sql_objects():
+        if fields_json != "fields":
+            LookupTableRow.objects.filter(
+                domain=domain,
+                table_id=data_type_id,
+            ).update(fields=fields_json)
+
+    transaction.set_sql_save_action(FixtureDataItem, update_sql_objects)
     transaction.add_post_commit_action(
         lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
     )
@@ -430,6 +462,7 @@ class AsyncUploadFixtureAPIResponse(UploadFixtureAPIResponse):
 @require_POST
 @api_auth
 @require_can_edit_fixtures
+@api_throttle
 def upload_fixture_api(request, domain, **kwargs):
     """
         Use following curl-command to test.
@@ -567,7 +600,7 @@ def _get_fixture_upload_args_from_request(request, domain):
 
     is_async = request.POST.get("async", "").lower() == "true"
 
-    if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
+    if not request.couch_user.has_permission(domain, HqPermissions.edit_data.name):
         raise FixtureAPIRequestError(
             "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))

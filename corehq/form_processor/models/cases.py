@@ -250,7 +250,6 @@ class CommCareCaseManager(RequireDBManager):
             return None
 
     def soft_delete_cases(self, domain, case_ids, deletion_date=None, deletion_id=None):
-        from ..change_publishers import publish_case_deleted
         assert isinstance(case_ids, list), type(case_ids)
         utcnow = datetime.utcnow()
         deletion_date = deletion_date or utcnow
@@ -261,8 +260,7 @@ class CommCareCaseManager(RequireDBManager):
             )
             deleted_count = sum(row[0] for row in cursor)
 
-        for case_id in case_ids:
-            publish_case_deleted(domain, case_id)
+        self.publish_deleted_cases(domain, case_ids)
 
         return deleted_count
 
@@ -287,7 +285,17 @@ class CommCareCaseManager(RequireDBManager):
         assert isinstance(case_ids, list), type(case_ids)
         with self.model.get_plproxy_cursor() as cursor:
             cursor.execute('SELECT hard_delete_cases(%s, %s)', [domain, case_ids])
-            return sum(row[0] for row in cursor)
+            deleted_count = sum(row[0] for row in cursor)
+
+        self.publish_deleted_cases(domain, case_ids)
+
+        return deleted_count
+
+    @staticmethod
+    def publish_deleted_cases(domain, case_ids):
+        from ..change_publishers import publish_case_deleted
+        for case_id in case_ids:
+            publish_case_deleted(domain, case_id)
 
 
 class CommCareCase(PartitionedModel, models.Model, RedisLockableMixIn,
@@ -960,7 +968,8 @@ class CommCareCaseIndexManager(RequireDBManager):
         return list(query.filter(case_id=case_id, domain=domain))
 
     def get_related_indices(self, domain, case_ids, exclude_indices):
-        """Get indices (forward and reverse) for the given set of case ids
+        """Get indices (forward and reverse) for the given set of case ids. This will only return
+        'live' indices.
 
         :param case_ids: A list of case ids.
         :param exclude_indices: A set or dict of index id strings with
@@ -1116,6 +1125,10 @@ class CommCareCaseIndex(PartitionedModel, models.Model, SaveStateMixin):
     @staticmethod
     def relationship_id_to_name(relationship_id):
         return CommCareCaseIndex.RELATIONSHIP_INVERSE_MAP[relationship_id]
+
+    def to_json(self):
+        from ..serializers import CommCareCaseIndexSerializer
+        return CommCareCaseIndexSerializer(self).data
 
     def __eq__(self, other):
         return isinstance(other, CommCareCaseIndex) and (

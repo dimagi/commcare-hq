@@ -586,7 +586,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_id="a_case_id",
             create=True,
             case_type="planet",
-        ).as_xml()
+        ).as_text()
         CaseFactory(self.domain).post_case_blocks([white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 
@@ -594,7 +594,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             case_id="b_case_id",
             create=True,
             case_type="cat",
-        ).as_xml()
+        ).as_text()
         CaseFactory(self.domain).post_case_blocks([non_white_listed_case])
         self.assertEqual(1, len(self.repeat_records(self.domain).all()))
 

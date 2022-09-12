@@ -29,7 +29,7 @@ from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseDisplay
+from .data_sources import CaseDisplayES
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -157,7 +157,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             else:
                 return _('View Case')
 
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
         return [
             {
                 'title': _get_case_name,
@@ -228,7 +228,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
+            display = CaseDisplayES(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,

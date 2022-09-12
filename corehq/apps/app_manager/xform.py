@@ -871,10 +871,11 @@ class XForm(WrappedNode):
 
         if missing_unknown_instances:
             instance_ids = "', '".join(missing_unknown_instances)
+            module = form.get_module()
             raise XFormValidationError(_(
-                "The form is missing some instance declarations "
-                "that can't be automatically added: '%(instance_ids)s'"
-            ) % {'instance_ids': instance_ids})
+                "The form '{form}' in '{module}' is missing some instance declarations "
+                "that can't be automatically added: '{instance_ids}'"
+            ).format(form=form.default_name(), module=module.default_name(app), instance_ids=instance_ids))
 
         for instance in instances:
             if instance.id not in instance_declarations:
@@ -1028,7 +1029,12 @@ class XForm(WrappedNode):
           "country": "jr://fixture/item-list:country"
         }
         """
-        instance_nodes = self.model_node.findall('{f}instance')
+        def _get_instances():
+            return itertools.chain(
+                self.model_node.findall('{f}instance'),
+                self.model_node.findall('instance')
+            )
+        instance_nodes = _get_instances()
         instance_dict = {}
         for instance_node in instance_nodes:
             instance_id = instance_node.attrib.get('id')
@@ -1055,6 +1061,17 @@ class XForm(WrappedNode):
         :param exclude_select_with_itemsets: exclude select/multi-select with itemsets
         :param include_fixtures: add fixture data for questions that we can infer it from
         """
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         from corehq.apps.app_manager.models import ConditionalCaseUpdate
         from corehq.apps.app_manager.util import first_elem, extract_instance_id_from_nodeset_ref
 
@@ -1619,6 +1636,17 @@ class XForm(WrappedNode):
             return 'false()'
 
     def _create_casexml(self, form):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         actions = form.active_actions()
 
         form_opens_case = 'open_case' in actions

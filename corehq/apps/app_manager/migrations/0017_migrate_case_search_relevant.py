@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from corehq.util.django_migrations import block_upgrade_for_removed_migration
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -10,5 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        block_upgrade_for_removed_migration("8b87df0e4a504101645faa536bed7bc9ca58761c")
+        prompt_for_historical_migration(
+            "app_manager", get_migration_name(__file__), "8b87df0e4a504101645faa536bed7bc9ca58761c")
     ]

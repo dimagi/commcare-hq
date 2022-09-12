@@ -88,6 +88,7 @@ from corehq.apps.app_manager.util import (
     is_usercase_in_use,
     save_xform,
     module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -119,7 +120,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
 
 
@@ -265,12 +266,22 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 
 @no_conflict_require_POST
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
 
     ajax = json.loads(request.POST.get('ajax', 'true'))
     resp = {}
@@ -535,7 +546,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
@@ -653,6 +664,17 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
 
 
 def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     xform_questions = []
     xform = None
     form_errors = []
@@ -769,7 +791,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if not module.root_module_id or not module.root_module.is_multi_select():
         if not module.put_in_root:
             form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
-        if not module.is_multi_select():
+        if not (module.is_multi_select() or module_uses_inline_search(module)):
             form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
@@ -943,18 +965,11 @@ def get_form_datums(request, domain, app_id):
         return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
-    datums = []
-    root_module = form.get_module().root_module
-    if root_module:
-        datums.extend([
-            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
-            if datum.requires_selection
-        ])
-    datums.extend([
+    datums = [
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
-    ])
-    return json_response(datums)
+    ]
+    return JsonResponse(datums)
 
 
 @require_GET
