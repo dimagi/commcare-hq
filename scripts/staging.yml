@@ -88,5 +88,4 @@ branches:
     - bmb/okta-idp  # Biyeun Sep 7
     - ad/embed-tab-report-by-user # Addison Sep 7
     - ap/remove-celery-monkey-patching # Amit Sep 11
-    - em/rename-download-data-files # Dominic Sep 11
 submodules: { }
