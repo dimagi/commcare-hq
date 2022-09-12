@@ -1062,11 +1062,5 @@ class CommCareAnalyticsListView(BaseProjectDataView):
     @property
     def page_context(self):
         return {
-            "analytics_redirect_url": self.commcare_analytics_url
+            "analytics_redirect_url": settings.COMMCARE_ANALYTICS_HOST
         }
-
-    @property
-    def commcare_analytics_url(self):
-        url = "https://commcare-analytics.dimagi.com" \
-            if settings.SERVER_ENVIRONMENT == "production" else "http://commcare-analytics-demo.dimagi.com/"
-        return url
