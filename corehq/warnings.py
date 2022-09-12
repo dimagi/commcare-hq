@@ -37,6 +37,7 @@ WHITELIST = [
     ("tastypie", "django.conf.urls.url() is deprecated"),
     ("tastypie", "request.is_ajax() is deprecated"),
     ("nose.suite", "'collections.abc'"),
+    ("nose.plugins.collect", "'collections.abc'"),
 
     # warnings that can be resolved with HQ code changes
     ("", "json_response is deprecated.  Use django.http.JsonResponse instead."),
