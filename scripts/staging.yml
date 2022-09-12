@@ -68,7 +68,7 @@ branches:
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
-    - rc/es-phonetic-analyzer # Robert Aug 4
+    # - rc/es-phonetic-analyzer # Robert Aug 4
     - cs/missing-location-filter-definition # Charl Aug 5
     - do/web-user-restore # Dominic Aug 8
     - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
@@ -88,4 +88,5 @@ branches:
     - bmb/okta-idp  # Biyeun Sep 7
     - ad/embed-tab-report-by-user # Addison Sep 7
     - ap/remove-celery-monkey-patching # Amit Sep 11
+    - em/rename-download-data-files # Dominic Sep 12
 submodules: { }
