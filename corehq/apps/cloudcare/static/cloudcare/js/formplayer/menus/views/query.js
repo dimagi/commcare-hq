@@ -24,7 +24,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
-                return Util.joinMultiValue(["", value])
+                return Util.joinMultiValue(["", value]);
             } else if (queryProvided) {
                 return value;
             } else if (searchForBlank) {

@@ -314,7 +314,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
                 item = '"' + item.replaceAll('"', '\\"') + '"';
             }
             return item;
-        }).join(' ')
+        }).join(' ');
     };
 
     if (!String.prototype.startsWith) {
