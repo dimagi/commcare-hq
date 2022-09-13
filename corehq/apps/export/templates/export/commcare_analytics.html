@@ -5,8 +5,9 @@
 {% load hq_shared_tags %}
 
 {% block page_content %}
-  {% initial_page_data 'analytics_redirect_url' analytics_redirect_url %}
+  {% blocktrans %}
   <p>Click the button below to navigate to the CommCare Analytics tool.</p>
+  {% endblocktrans %}
   <button class="btn btn-primary" type="button" onclick="window.open('{{ analytics_redirect_url }}', '_blank')">
     {% trans "Navigate to Superset" %}
   </button>

@@ -1054,6 +1054,7 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
 
 
 @location_safe
+@method_decorator(toggles.SUPERSET_ANALYTICS.required_decorator(), name='dispatch')
 class CommCareAnalyticsListView(BaseProjectDataView):
     urlname = 'commcare_analytics'
     page_title = gettext_lazy("CommCare Analytics")

@@ -830,7 +830,7 @@ class ProjectDataTab(UITab):
             if toggles.SUPERSET_ANALYTICS.enabled(self.domain):
                 from corehq.apps.export.views.list import CommCareAnalyticsListView
                 export_data_views.append({
-                    'title': _(CommCareAnalyticsListView.page_title),
+                    'title': CommCareAnalyticsListView.page_title,
                     'url': reverse(CommCareAnalyticsListView.urlname, args=(self.domain,)),
                     'icon': 'fa fa-bar-chart',
                     'show_in_dropdown': False,

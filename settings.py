@@ -2061,5 +2061,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
-COMMCARE_ANALYTICS_HOST = "https://commcare-analytics.dimagi.com" \
-    if SERVER_ENVIRONMENT == "production" else "http://commcare-analytics-demo.dimagi.com/"
+COMMCARE_ANALYTICS_HOST = ""
