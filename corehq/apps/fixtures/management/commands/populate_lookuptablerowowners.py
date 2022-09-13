@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from .base import PopulateLookupTableCommand
 from ...models import OwnerType
 
 
-class Command(PopulateSQLCommand):
+class Command(PopulateLookupTableCommand):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)

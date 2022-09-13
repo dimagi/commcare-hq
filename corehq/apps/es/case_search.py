@@ -225,6 +225,18 @@ def sounds_like_text_query(case_property_name, value):
     return _base_property_query(
         case_property_name,
         queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
+
+def case_property_starts_with(case_property_name, value):
+    """Filter by case_properties.key and do a text search in case_properties.value that
+       matches starting substring.
+
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        filters.AND(
+            filters.term(PROPERTY_KEY, case_property_name),
+            filters.prefix(PROPERTY_VALUE_EXACT, value),
+        )
     )
 
 
