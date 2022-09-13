@@ -4,10 +4,10 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-from corehq.apps.celery import task
 from dropbox import Dropbox
 from dropbox.sharing import RequestedVisibility, SharedLinkSettings
 
+from corehq.apps.celery import task
 from corehq.apps.dropbox.utils import upload_to_dropbox
 from corehq.apps.users.models import CouchUser
 from corehq.util.log import send_HTML_email

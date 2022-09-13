@@ -15,7 +15,6 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
@@ -70,6 +69,7 @@ from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser

@@ -5,12 +5,12 @@ from uuid import uuid4
 from django.conf import settings
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from casexml.apps.case.mock import CaseBlock
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase

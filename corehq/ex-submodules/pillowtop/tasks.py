@@ -1,10 +1,10 @@
 from django.conf import settings
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
 
 from pillowtop.utils import get_all_pillows_json
 
+from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_gauge
 from corehq.util.metrics.const import MPM_MAX, MPM_MIN
 

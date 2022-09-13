@@ -1,5 +1,4 @@
 from corehq.apps.celery import task
-
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,

@@ -3,12 +3,12 @@ import functools
 from django.db import DEFAULT_DB_ALIAS
 
 from celery.exceptions import TimeoutError
-from corehq.apps.celery import task
 
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
+from corehq.apps.celery import task
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import WebUser
 

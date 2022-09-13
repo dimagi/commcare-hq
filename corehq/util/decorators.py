@@ -7,10 +7,10 @@ from functools import wraps
 from django.conf import settings
 
 import requests
-from corehq.apps.celery import task
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import task
 from corehq.util.global_request import get_request
 from corehq.util.metrics import metrics_counter
 

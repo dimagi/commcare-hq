@@ -1,10 +1,9 @@
 from django.conf import settings
 from django.utils.translation import gettext_noop
 
-from corehq.apps.celery import task
-
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import task
 from corehq.apps.ivr.api import log_call
 from corehq.apps.sms.api import incoming as incoming_sms
 from corehq.apps.sms.models import SMS

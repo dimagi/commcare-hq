@@ -6,10 +6,10 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 from psycopg2 import DatabaseError
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.motech.dhis2.models import (
     SQLDataSetMap,

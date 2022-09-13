@@ -4,13 +4,13 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.export.exceptions import RejectedStaleExport
 from corehq.apps.export.models.incremental import (

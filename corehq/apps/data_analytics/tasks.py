@@ -3,12 +3,12 @@ import datetime
 from django.conf import settings
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
 from corehq.apps.data_analytics.util import (

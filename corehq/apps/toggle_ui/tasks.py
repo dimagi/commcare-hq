@@ -6,7 +6,6 @@ from datetime import datetime
 from django.conf import settings
 
 import pytz
-from corehq.apps.celery import task
 from couchdbkit import ResourceNotFound
 
 from couchforms.analytics import domain_has_submission_in_last_30_days
@@ -14,6 +13,7 @@ from dimagi.utils.django.email import send_HTML_email
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.celery import task
 from corehq.apps.domain.calculations import last_form_submission
 from corehq.apps.domain.models import Domain
 from corehq.apps.toggle_ui.utils import get_subscription_info, has_dimagi_user

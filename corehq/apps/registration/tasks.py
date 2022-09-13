@@ -7,10 +7,10 @@ from django.urls import reverse
 from django.utils.translation import gettext
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.registration.models import (
     AsyncSignupRequest,

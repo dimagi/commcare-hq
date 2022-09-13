@@ -2,10 +2,10 @@ import datetime
 
 from django.conf import settings
 
-from corehq.apps.celery import task
 from freezegun import freeze_time
 from testil import assert_raises, eq
 
+from corehq.apps.celery import task
 from corehq.celery_monitoring.heartbeat import (
     HEARTBEAT_FREQUENCY,
     Heartbeat,

@@ -115,12 +115,12 @@ from typing import Callable, Dict, Iterable
 
 from django.conf import settings
 
-from corehq.apps.celery import periodic_task
 from sentry_sdk import add_breadcrumb
 
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 
+from corehq.apps.celery import periodic_task
 from corehq.util.timer import TimingContext
 
 from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL

@@ -4,12 +4,12 @@ from datetime import timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
 
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task

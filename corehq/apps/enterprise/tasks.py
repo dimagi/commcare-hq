@@ -6,11 +6,10 @@ import uuid
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from corehq.apps.celery import task
-
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.accounting.models import BillingAccount
+from corehq.apps.celery import task
 from corehq.apps.enterprise.enterprise import EnterpriseReport
 from corehq.apps.enterprise.models import (
     EnterpriseMobileWorkerSettings,

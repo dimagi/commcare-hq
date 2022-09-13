@@ -4,12 +4,12 @@ from django.conf import settings
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.formplayer_api.clear_user_data import clear_user_data
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException

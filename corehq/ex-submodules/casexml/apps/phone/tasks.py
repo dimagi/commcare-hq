@@ -8,11 +8,11 @@ from django.db.models import Min
 from celery import current_app, current_task
 from celery.schedules import crontab
 from celery.signals import after_task_publish
-from corehq.apps.celery import periodic_task, task
 
 from casexml.apps.phone.models import SyncLogSQL
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task, task
 from corehq.util.metrics import metrics_gauge
 
 log = logging.getLogger(__name__)

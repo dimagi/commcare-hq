@@ -13,14 +13,13 @@ from django.template.loader import render_to_string
 
 import attr
 from celery.schedules import crontab
-from corehq.apps.celery import task
-from corehq.apps.celery import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error
 from dimagi.utils.web import get_static_url_prefix
 from pillowtop.utils import get_couch_pillow_instances
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async

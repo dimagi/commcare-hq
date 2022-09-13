@@ -1,10 +1,9 @@
 import re
 from xml.etree import cElementTree as ElementTree
 
-from corehq.apps.celery import task
-
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.celery import task
 from corehq.blobs import get_blob_db
 
 BAD_SLUG_PATTERN = r"([/\\<>\s])"

@@ -4,13 +4,13 @@ from django.conf import settings
 from django.db import connection
 
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
 from phonelog.models import ForceCloseEntry, UserEntry, UserErrorEntry
 
+from corehq.apps.celery import periodic_task
 from corehq.util.celery_utils import no_result_task
 
 

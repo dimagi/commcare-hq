@@ -13,7 +13,6 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 
 from couchexport.models import Format
@@ -24,6 +23,7 @@ from pillowtop.dao.couch import ID_CHUNK_SIZE
 from soil.util import expose_download, get_download_file_path
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )

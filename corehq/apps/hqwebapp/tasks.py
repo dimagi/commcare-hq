@@ -8,7 +8,6 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task, task
 
 from dimagi.utils.django.email import (
     COMMCARE_MESSAGE_ID_HEADER,
@@ -16,6 +15,7 @@ from dimagi.utils.django.email import (
 )
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import periodic_task, task
 from corehq.util.bounced_email_manager import BouncedEmailManager
 from corehq.util.email_event_utils import get_bounced_system_emails
 from corehq.util.log import send_HTML_email

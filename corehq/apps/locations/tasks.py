@@ -2,12 +2,11 @@ import logging
 
 from django.conf import settings
 
-from corehq.apps.celery import task
-
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
+from corehq.apps.celery import task
 from corehq.apps.commtrack.models import close_supply_point_case
 from corehq.apps.data_interfaces.models import LocationFilterDefinition
 from corehq.apps.locations.bulk_management import (

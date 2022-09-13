@@ -10,8 +10,6 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from corehq.apps.celery import task
-from corehq.apps.celery import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict
 
@@ -24,6 +22,7 @@ from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
 from corehq import toggles
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import (
