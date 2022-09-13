@@ -36,8 +36,7 @@ from corehq.util.celery_utils import (
     deserialize_run_every_setting,
     run_periodic_task_again,
 )
-from corehq.util.metrics import metrics_counter, metrics_gauge
-from corehq.util.metrics.const import MPM_MAX
+from corehq.util.metrics import metrics_counter
 
 logger = get_task_logger(__name__)
 
