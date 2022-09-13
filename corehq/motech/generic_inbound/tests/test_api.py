@@ -62,6 +62,7 @@ class TestGenericInboundAPIView(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain_name)
+        super().tearDownClass()
 
     def test_post_denied(self):
         generic_api = self._make_api({})
