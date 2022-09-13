@@ -416,7 +416,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         onPerPageLimitChange: function (e) {
             e.preventDefault();
             var casesPerPage = this.ui.casesPerPageLimit.val();
-            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
+            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage, this.selectedCaseIds);
         },
 
         paginationGoAction: function (e) {

@@ -690,6 +690,42 @@ class TestFixtureUpload(TestCase):
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
 
+    def test_upload_should_not_be_impacted_by_stale_table_cache(self):
+        self.upload([(None, 'N', 'apple')])
+
+        # populate caches
+        couch_table, = FixtureDataType.by_domain(self.domain)
+        cache_patch = patch.object(
+            # simulate failed cache invalidation, which could be caused by
+            # BulkSaveError and probably for other things too
+            type(couch_table),
+            "clear_caches",
+            lambda self: None
+        )
+        with cache_patch, mod.CouchTransaction() as tx:
+            # stale caches
+            tx.save(couch_table)
+            tx.set_sql_save_action(type(couch_table), lambda: None)
+
+        data = [
+            ('types', [('N', 'things', 'yes', 'name', 'no')]),
+            ('things', [(None, 'N', 'peach')]),
+        ]
+        self.upload(self.get_workbook_from_data(self.headers, data), replace=True)
+
+    def test_upload_should_not_be_impacted_by_stale_row_cache(self):
+        self.upload([(None, 'N', 'apple')])
+
+        # populate caches
+        couch_rows = self.get_rows(None)
+        with mod.CouchTransaction() as tx:
+            # transaction does not clear caches -> stale caches
+            for row in couch_rows:
+                tx.save(row)
+            tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
+
+        self.upload([(None, 'N', 'peach')], replace=True)
+
     def test_upload_should_clear_cache_on_error(self):
         def error_tx():
             def error():

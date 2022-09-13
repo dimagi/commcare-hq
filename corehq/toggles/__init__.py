@@ -2190,6 +2190,15 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+GENERIC_INBOUND_API = StaticToggle(
+    'configurable_api',
+    'Generic inbound APIs',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Create inbound APIs that use UCR expressions to process data into case updates",
+    help_link="TODO",
+)
+
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
     'case_updates_ucr_filters',
     'Allow the use of UCR filters in Auto Case Update Rules',

@@ -221,6 +221,20 @@ def case_property_text_query(case_property_name, value, operator=None):
     )
 
 
+def case_property_starts_with(case_property_name, value):
+    """Filter by case_properties.key and do a text search in case_properties.value that
+       matches starting substring.
+
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        filters.AND(
+            filters.term(PROPERTY_KEY, case_property_name),
+            filters.prefix(PROPERTY_VALUE_EXACT, value),
+        )
+    )
+
+
 def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
