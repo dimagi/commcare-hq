@@ -1,6 +1,7 @@
+from django.apps import AppConfig
+
 from celery import Celery
 from celery.signals import setup_logging
-from django.apps import AppConfig
 
 
 class Config(AppConfig):
@@ -24,5 +25,6 @@ def _init_celery_app():
 @setup_logging.connect()
 def config_loggers(*args, **kwargs):
     from logging.config import dictConfig
+
     from django.conf import settings
     dictConfig(settings.LOGGING)
