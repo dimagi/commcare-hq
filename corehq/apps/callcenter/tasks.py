@@ -75,4 +75,6 @@ def sync_usercases_if_applicable(user, spawn_task):
 @task(queue='background_queue')
 def sync_usercases_task(user_id, domain):
     user = CouchUser.get_by_user_id(user_id)
-    sync_usercases(user, domain)
+    if sync_usercases(user, domain):
+        if user.is_commcare_user():
+            user.get_usercase_id.clear()

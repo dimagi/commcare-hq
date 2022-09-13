@@ -34,7 +34,7 @@ class _UserCaseHelper(object):
         case_blocks = list(chain.from_iterable([h.case_blocks for h in helpers]))
         if not case_blocks:
             assert not any(h.tasks for h in helpers), [h.tasks for h in helpers]
-            return
+            return False
         assert len({h.user_id for h in helpers}) == 1
         assert len({h.domain for h in helpers}) == 1
 
@@ -42,6 +42,8 @@ class _UserCaseHelper(object):
         submit_case_blocks(case_blocks, helpers[0].domain, device_id=cls.CASE_SOURCE_ID)
         for task, task_args in chain.from_iterable([h.tasks for h in helpers]):
             task.delay(*task_args)
+
+        return True
 
     @staticmethod
     def re_open_case(case):
@@ -262,4 +264,4 @@ def sync_usercases(user, domain):
             _iter_call_center_case_helpers(user),
         ))
         if helpers:
-            _UserCaseHelper.commit(helpers)
+            return _UserCaseHelper.commit(helpers)
