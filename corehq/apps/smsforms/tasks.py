@@ -13,7 +13,7 @@ from corehq.apps.sms.api import (
     send_sms,
     send_sms_to_verified_number,
 )
-from corehq.apps.sms.models import MessagingEvent, PhoneNumber
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.sms.util import format_message_list
 from corehq.apps.smsforms.app import (
     _responses_to_text,
