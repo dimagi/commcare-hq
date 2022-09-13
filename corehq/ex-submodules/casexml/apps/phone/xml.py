@@ -114,7 +114,7 @@ def get_registration_element(restore_user):
     root = safe_element("Registration")
     root.set("xmlns", USER_REGISTRATION_XMLNS)
     for key, value in get_registration_element_data(restore_user).items():
-        if isinstance(value, str):
+        if isinstance(value, str) or value is None:
             root.append(safe_element(key, value))
         elif isinstance(value, dict):
             root.append(get_data_element(key, value))
