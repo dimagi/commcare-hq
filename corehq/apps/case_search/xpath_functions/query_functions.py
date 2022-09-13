@@ -12,6 +12,7 @@ from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.es.case_search import (
     case_property_geo_distance,
     case_property_query,
+    sounds_like_text_query,
     case_property_starts_with,
 )
 
@@ -74,6 +75,14 @@ def within_distance(node, context):
         )
 
     return case_property_geo_distance(property_name, geo_point, **{unit: distance})
+
+
+def phonetic_match(node, context):
+    confirm_args_count(node, 2)
+    property_name, value = node.args
+    property_name = _property_name_to_string(property_name, node)
+
+    return sounds_like_text_query(property_name, value)
 
 
 def fuzzy_match(node, context):

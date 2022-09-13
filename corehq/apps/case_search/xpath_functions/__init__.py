@@ -4,6 +4,7 @@ from .query_functions import (
     selected_all,
     selected_any,
     within_distance,
+    phonetic_match,
     starts_with
 )
 from .subcase_functions import subcase
@@ -26,5 +27,6 @@ XPATH_QUERY_FUNCTIONS = {
     'selected-all': selected_all,
     'within-distance': within_distance,
     'fuzzy-match': fuzzy_match,
+    'phonetic-match': phonetic_match,
     'starts-with': starts_with,
 }
