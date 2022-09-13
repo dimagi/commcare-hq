@@ -15,7 +15,7 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode

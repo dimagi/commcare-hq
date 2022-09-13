@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils.translation import gettext
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 
 from dimagi.utils.web import get_site_domain, get_static_url_prefix
 

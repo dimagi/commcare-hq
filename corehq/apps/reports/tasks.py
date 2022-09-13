@@ -4,7 +4,7 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 

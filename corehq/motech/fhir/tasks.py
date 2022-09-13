@@ -5,7 +5,7 @@ from uuid import uuid4
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from casexml.apps.case.mock import CaseBlock

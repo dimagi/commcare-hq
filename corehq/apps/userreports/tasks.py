@@ -13,7 +13,7 @@ from botocore.vendored.requests.packages.urllib3.exceptions import (
     ProtocolError,
 )
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 
 from couchexport.models import Format

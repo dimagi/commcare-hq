@@ -7,7 +7,7 @@ from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 

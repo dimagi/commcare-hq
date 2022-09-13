@@ -12,7 +12,7 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from jinja2 import Template
 from requests import ReadTimeout, RequestException
 

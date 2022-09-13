@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 
 from dimagi.utils.django.email import (
     COMMCARE_MESSAGE_ID_HEADER,

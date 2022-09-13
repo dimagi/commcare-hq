@@ -6,7 +6,7 @@ from django.conf import settings
 from celery import Celery, current_app
 from celery.backends.base import DisabledBackend
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 
 
 def no_result_task(*args, **kwargs):

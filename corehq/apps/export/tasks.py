@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 
 from couchexport.models import Format
 from soil import DownloadBase

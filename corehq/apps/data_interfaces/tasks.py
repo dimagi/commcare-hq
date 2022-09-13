@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection

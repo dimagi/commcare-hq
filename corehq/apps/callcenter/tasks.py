@@ -1,7 +1,7 @@
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
