@@ -62,8 +62,7 @@ branches:
     # - bmb/sso/api/test-001  # Biyeun June 15
     - mjr/erm-overwrite # Matt June 24
     - gh/upgrade-twilio # Graham July 8
-   # - rp/fix-case-properties-modal-styling # Rynhard 20 July
-    - mjr/report-logging+celery-upgrade-patch # Matt July 20
+    # - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging-verification # Matt July 20
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
@@ -76,8 +75,6 @@ branches:
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     # - ad/remove-entered-wrap-functions # Addison Aug 22
     - ce/api-rate-limits # Cal Aug 23
-    - sk/expose-mobile-worker-default-role+mjr/erm-overwrite+mjr/report-logging-verification
-    - sk/expose-mobile-worker-default-role  # Simon Aug 24
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - do/migrate-apps # Dominic Sep 2
