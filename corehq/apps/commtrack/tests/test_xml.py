@@ -574,7 +574,7 @@ class CommTrackSyncTest(CommTrackSubmissionTest):
         self.group._id = self.sp.owner_id
         self.group.save()
 
-        self.restore_user = self.user.to_ota_restore_user()
+        self.restore_user = self.user.to_ota_restore_user(util.TEST_DOMAIN)
         self.sp_block = CaseBlock(
             case_id=self.sp.case_id,
         ).as_xml()
@@ -709,7 +709,7 @@ def _report_soh(soh_reports, case_id, domain):
 def _get_ota_balance_blocks(project, user):
     restore_config = RestoreConfig(
         project=project,
-        restore_user=user.to_ota_restore_user(),
+        restore_user=user.to_ota_restore_user(project.name),
         params=RestoreParams(version=V2),
     )
     return util.extract_balance_xml(restore_config.get_payload().as_string())
