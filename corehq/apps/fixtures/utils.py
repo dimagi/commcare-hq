@@ -1,7 +1,7 @@
 import re
 from xml.etree import cElementTree as ElementTree
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.chunked import chunked
 

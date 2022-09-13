@@ -10,7 +10,7 @@ from django.utils.translation import gettext as _
 
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import task
+from corehq.apps.celery import task
 from corehq.apps.celery import periodic_task
 from celery.utils.log import get_task_logger
 from couchdbkit import BulkSaveError, ResourceConflict

@@ -6,7 +6,7 @@ import uuid
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 

@@ -2,7 +2,7 @@ import uuid
 from collections import defaultdict
 from copy import copy
 
-from celery.task import task
+from corehq.apps.celery import task
 from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs

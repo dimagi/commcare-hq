@@ -5,7 +5,7 @@ from django.template.defaultfilters import linebreaksbr
 from django.utils.translation import gettext as _
 
 from celery import chord
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.logging import notify_exception
 

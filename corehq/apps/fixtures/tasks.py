@@ -3,7 +3,7 @@ import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase

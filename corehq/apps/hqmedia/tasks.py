@@ -9,7 +9,7 @@ from wsgiref.util import FileWrapper
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.logging import notify_exception

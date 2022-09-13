@@ -1,6 +1,6 @@
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.app_manager.dbaccessors import (

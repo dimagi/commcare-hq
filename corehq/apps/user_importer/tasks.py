@@ -3,7 +3,7 @@ import functools
 from django.db import DEFAULT_DB_ALIAS
 
 from celery.exceptions import TimeoutError
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase

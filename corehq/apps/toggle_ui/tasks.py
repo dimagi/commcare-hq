@@ -6,7 +6,7 @@ from datetime import datetime
 from django.conf import settings
 
 import pytz
-from celery.task import task
+from corehq.apps.celery import task
 from couchdbkit import ResourceNotFound
 
 from couchforms.analytics import domain_has_submission_in_last_30_days

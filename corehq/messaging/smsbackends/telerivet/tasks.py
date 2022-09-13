@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.translation import gettext_noop
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.logging import notify_exception
 

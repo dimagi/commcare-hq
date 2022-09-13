@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.couch import CriticalSection
 

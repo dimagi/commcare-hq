@@ -2,7 +2,7 @@ import datetime
 
 from django.conf import settings
 
-from celery.task import task
+from corehq.apps.celery import task
 from freezegun import freeze_time
 from testil import assert_raises, eq
 

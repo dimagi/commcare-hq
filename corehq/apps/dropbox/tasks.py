@@ -4,7 +4,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
-from celery.task import task
+from corehq.apps.celery import task
 from dropbox import Dropbox
 from dropbox.sharing import RequestedVisibility, SharedLinkSettings
 

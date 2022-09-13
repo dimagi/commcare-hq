@@ -7,7 +7,7 @@ from functools import wraps
 from django.conf import settings
 
 import requests
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.logging import notify_exception
 

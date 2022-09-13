@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.logging import notify_exception

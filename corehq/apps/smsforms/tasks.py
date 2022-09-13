@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from celery.task import task
+from corehq.apps.celery import task
 
 from dimagi.utils.logging import notify_error, notify_exception
 

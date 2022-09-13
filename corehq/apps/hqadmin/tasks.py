@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 
 import attr
 from celery.schedules import crontab
-from celery.task import task
+from corehq.apps.celery import task
 from corehq.apps.celery import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email

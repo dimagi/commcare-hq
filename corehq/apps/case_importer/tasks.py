@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from celery.task import task
+from corehq.apps.celery import task
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,

@@ -1,4 +1,4 @@
-from celery.task import task
+from corehq.apps.celery import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch.database import iter_docs
