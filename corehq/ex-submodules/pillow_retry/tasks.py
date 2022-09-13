@@ -1,11 +1,13 @@
-from celery.schedules import crontab
-from celery.task import periodic_task
 from django.conf import settings
 from django.db.models import Count
 
+from celery.schedules import crontab
+
+from pillow_retry.models import PillowError
+
+from corehq.apps.celery import periodic_task
 from corehq.util.metrics import metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
-from pillow_retry.models import PillowError
 
 
 @periodic_task(
