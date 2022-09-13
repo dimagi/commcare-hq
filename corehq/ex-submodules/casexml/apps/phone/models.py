@@ -190,8 +190,7 @@ class OTARestoreWebUser(OTARestoreUser):
         return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
     def get_usercase_id(self):
-        case = self._couch_user.get_usercase_by_domain(self.domain)
-        return case.case_id if case else None
+        return self._couch_user.get_usercase_id(self.domain)
 
 
 class OTARestoreCommCareUser(OTARestoreUser):
@@ -239,8 +238,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
 
     def get_usercase_id(self):
-        case = self._couch_user.get_usercase()
-        return case.case_id if case else None
+        return self._couch_user.get_usercase_id()
 
 
 class SyncLogAssertionError(AssertionError):
