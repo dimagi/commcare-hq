@@ -23,9 +23,7 @@ class UserRolePresets:
         BILLING_ADMIN: lambda: HqPermissions(edit_billing=True),
         MOBILE_WORKER: lambda: HqPermissions(access_mobile_endpoints=True,
                                              report_an_issue=True,
-                                             access_all_locations=True,
-                                             access_api=False,
-                                             download_reports=False)
+                                             access_all_locations=True)
     }
 
 
