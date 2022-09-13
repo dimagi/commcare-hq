@@ -365,6 +365,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.motech.generic_inbound',
     'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
