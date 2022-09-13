@@ -58,6 +58,7 @@ from corehq.apps.fixtures.upload import (
     upload_fixture_file,
     validate_fixture_file_format,
 )
+from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import (
     clear_fixture_cache,
     is_identifier_invalid,
@@ -107,6 +108,7 @@ def update_tables(request, domain, data_type_id=None):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
+    data_type = None
     if data_type_id:
         try:
             data_type = FixtureDataType.get(data_type_id)
@@ -120,9 +122,17 @@ def update_tables(request, domain, data_type_id=None):
             return json_response(strip_json(data_type))
 
         elif request.method == 'DELETE':
-            with CouchTransaction() as transaction:
-                data_type.recursive_delete(transaction)
-            clear_fixture_cache(domain)
+            # HACK ensure we get the latest version. Bypass Couch concurrency
+            # protection because caching is hard, and the client does
+            # not specify what version they are deleting anyway.
+            data_type.clear_caches()
+            data_type = FixtureDataType.get(data_type_id)
+            try:
+                with CouchTransaction() as transaction:
+                    data_type.recursive_delete(transaction)
+            finally:
+                clear_fixture_quickcache(domain, [data_type])
+                clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
             return HttpResponseBadRequest()
@@ -133,6 +143,9 @@ def update_tables(request, domain, data_type_id=None):
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
         description = fields_update["description"]
+
+        if not data_type_id and FixtureDataType.fixture_tag_exists(domain, data_tag):
+            return HttpResponseBadRequest("DuplicateFixture")
 
         # validate tag and fields
         validation_errors = []
@@ -159,18 +172,22 @@ def update_tables(request, domain, data_type_id=None):
                     "correctly formatted"),
             })
 
-        with CouchTransaction() as transaction:
-            if data_type_id:
-                data_type = _update_types(
-                    fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
-                _update_items(fields_patches, domain, data_type_id, transaction)
-            else:
-                if FixtureDataType.fixture_tag_exists(domain, data_tag):
-                    return HttpResponseBadRequest("DuplicateFixture")
+        try:
+            with CouchTransaction() as transaction:
+                if data_type_id:
+                    # HACK ensure we get the latest version. Bypass Couch concurrency
+                    # protection because caching is hard, and the client does
+                    # not specify what version they are updating anyway.
+                    data_type.clear_caches()
+                    data_type = _update_types(
+                        fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
+                    _update_items(fields_patches, domain, data_type_id, transaction)
                 else:
                     data_type = _create_types(
                         fields_patches, domain, data_tag, is_global, description, transaction)
-        clear_fixture_cache(domain)
+        finally:
+            clear_fixture_quickcache(domain, [data_type] if data_type is not None else [])
+            clear_fixture_cache(domain)
         return json_response(strip_json(data_type))
 
 
@@ -210,7 +227,7 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
 
 
 def _update_items(fields_patches, domain, data_type_id, transaction):
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
     for item in data_items:
         fields = item.fields
         updated_fields = {}
@@ -257,9 +274,6 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
             ).update(fields=fields_json)
 
     transaction.set_sql_save_action(FixtureDataItem, update_sql_objects)
-    transaction.add_post_commit_action(
-        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
-    )
 
 
 def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):

@@ -26,7 +26,6 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.es.elasticsearch import ConnectionError
 from corehq.util.test_utils import trap_extra_setup
 
-
 @es_test
 class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
 
@@ -106,6 +105,33 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(built_filter, expected_filter, is_raw_query=True)
 
+    def test_starts_with(self):
+        parsed = parse_xpath("starts-with(ssn, '100')")
+        expected_filter = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "bool": {
+                        "filter": (
+                            {
+                                "term": {
+                                    "case_properties.key.exact": "ssn"
+                                }
+                            },
+                            {
+                                "prefix": {
+                                    "case_properties.value.exact": "100"
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        built_filter = build_filter_from_ast(parsed, SearchFilterContext("domain"))
+        self.checkQuery(built_filter, expected_filter, is_raw_query=True)
+
     def test_date_comparison(self):
         parsed = parse_xpath("dob >= '2017-02-12'")
         expected_filter = {
@@ -133,6 +159,7 @@ class TestFilterDsl(ElasticTestMixin, SimpleTestCase):
         }
         query = build_filter_from_ast(parsed, SearchFilterContext("domain"))
         self.checkQuery(expected_filter, query, is_raw_query=True)
+
 
     @freeze_time('2021-08-02')
     def test_date_comparison__today(self):

@@ -185,6 +185,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, 'get_details');
     });
 
-    return 1;
+    return API;
 });
 

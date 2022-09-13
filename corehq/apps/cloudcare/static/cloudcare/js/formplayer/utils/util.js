@@ -126,6 +126,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
+    Util.setSelectedValues = function (selections) {
+        if (selections !== undefined) {
+            let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+            selectedValues[sessionStorage.queryKey] = selections.join(',');
+            sessionStorage.selectedValues = JSON.stringify(selectedValues);
+        }
+    };
+
     Util.CloudcareUrl = function (options) {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
@@ -151,9 +159,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             // Selections only deal with strings, because formplayer will send them back as strings
             if (_.isArray(selection)) {
-                var selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
-                selectedValues[sessionStorage.queryKey] = selection.join(',');
-                sessionStorage.selectedValues = JSON.stringify(selectedValues);
+                hqImport("cloudcare/js/formplayer/utils/util").setSelectedValues(selection);
                 this.selections.push(String('use_selected_values'));
             } else {
                 this.selections.push(String(selection));
@@ -186,6 +192,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setQueryData = function (inputs, execute, forceManualSearch) {
             var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
+            this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: inputs,
                 execute: execute,

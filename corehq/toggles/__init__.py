@@ -2328,9 +2328,28 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+SMS_USE_LATEST_DEV_APP = FeatureRelease(
+    'sms_use_latest_dev_app',
+    'Use latest development version of the app for SMS processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly',
+    description='This will revert the SMS processing to previous functionality of using the '
+                'development version of the app instead of the latest release. It should only'
+                'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
+)
+
 VIEW_FORM_ATTACHMENT = StaticToggle(
     'view_form_attachments',
     'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
+    'formplayer_include_state_hash',
+    'Make Formplayer include the state hash in sync and restore requests',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly'
 )

@@ -43,8 +43,7 @@ class TestXFormInstanceResource(APIResourceTest):
         reset_es_index(XFORM_INDEX_INFO)
         initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
-    def test_fetching_xform_cases(self):
-
+    def _submit_case_update_form(self):
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
         form = submit_case_blocks(
@@ -57,6 +56,10 @@ class TestXFormInstanceResource(APIResourceTest):
 
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        return form, case_id
+
+    def test_fetching_xform_cases(self):
+        form, case_id = self._submit_case_update_form()
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
@@ -66,6 +69,14 @@ class TestXFormInstanceResource(APIResourceTest):
         # Confirm that the case appears in the resource
         self.assertEqual(len(cases), 1)
         self.assertEqual(cases[0]['id'], case_id)
+
+    def test_filter_forms_by_cases_modified(self):
+        form, case_id = self._submit_case_update_form()
+        response = self._assert_auth_get_resource(f"{self.list_endpoint}?case_id={case_id}")
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+        self.assertEqual(api_forms[0]['form']['case']['@case_id'], case_id)
 
     def _send_forms(self, forms):
         # list of form tuples [(xmlns, received_on)]

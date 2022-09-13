@@ -286,6 +286,7 @@ Run the following commands to run the migration and get up to date:
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
+        self.log_path = log_path
         self.diff_count = 0
         self.ignored_count = 0
         doc_index = 0
@@ -490,10 +491,10 @@ Run the following commands to run the migration and get up to date:
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
 
     @staticmethod
-    def open_log(log_path):
+    def open_log(log_path, mode="w"):
         if log_path == "-":
             return nullcontext(sys.stdout)
-        return open(log_path, "w")
+        return open(log_path, mode)
 
 
 DIFF_HEADER = "Doc {} has differences:\n"
@@ -504,16 +505,17 @@ class DiffDocs:
     path = field()
     couch_db = field()
     chunk_size = field()
+    diff_template = field(default=DIFF_HEADER)
 
     def __iter__(self):
-        doc_ids = self._iter_doc_ids()
+        doc_ids = self.iter_doc_ids()
         yield from iter_docs(self.couch_db, doc_ids, self.chunk_size)
 
     def __len__(self):
-        return sum(1 for x in self._iter_doc_ids(quiet=True))
+        return sum(1 for x in self.iter_doc_ids(quiet=True))
 
-    def _iter_doc_ids(self, quiet=False):
-        prefix, suffix = DIFF_HEADER.split("{}")
+    def iter_doc_ids(self, quiet=False):
+        prefix, suffix = self.diff_template.split("{}")
         with open(self.path) as log:
             for line in log:
                 if line.startswith(prefix) and line.endswith(suffix):
