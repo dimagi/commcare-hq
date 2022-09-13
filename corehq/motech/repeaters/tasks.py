@@ -22,8 +22,8 @@ from corehq.util.soft_assert import soft_assert
 
 from .const import (
     CHECK_REPEATERS_INTERVAL,
-    CHECK_REPEATERS_PARTITION_COUNT,
     CHECK_REPEATERS_KEY,
+    CHECK_REPEATERS_PARTITION_COUNT,
     MAX_RETRY_WAIT,
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,

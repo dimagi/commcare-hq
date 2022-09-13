@@ -11,10 +11,13 @@ from dimagi.utils.dates import DateSpan
 
 from corehq.apps.data_analytics.gir_generator import GIRTableGenerator
 from corehq.apps.data_analytics.malt_generator import generate_malt
+from corehq.apps.data_analytics.util import (
+    last_month_datespan,
+    last_month_dict,
+)
 from corehq.apps.domain.models import Domain
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
-from corehq.apps.data_analytics.util import last_month_dict, last_month_datespan
 
 logger = get_task_logger(__name__)
 

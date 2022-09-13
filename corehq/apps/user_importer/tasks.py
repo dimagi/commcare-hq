@@ -1,18 +1,16 @@
 import functools
 
+from django.db import DEFAULT_DB_ALIAS
+
 from celery.exceptions import TimeoutError
 from celery.task import task
 
-from django.db import DEFAULT_DB_ALIAS
-
 from dimagi.utils.chunked import chunked
-
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
-from corehq.apps.users.models import WebUser
 from corehq.apps.user_importer.models import UserUploadRecord
-
+from corehq.apps.users.models import WebUser
 
 USER_UPLOAD_CHUNK_SIZE = 1000
 
@@ -86,8 +84,11 @@ def parallel_user_import(domain, user_specs, upload_user_id):
 
 
 def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_id, is_web_upload, task):
-    from corehq.apps.user_importer.importer import create_or_update_commcare_users_and_groups, \
-        create_or_update_groups, create_or_update_web_users
+    from corehq.apps.user_importer.importer import (
+        create_or_update_commcare_users_and_groups,
+        create_or_update_groups,
+        create_or_update_web_users,
+    )
     upload_user = WebUser.get_by_user_id(upload_user_id)
     DownloadBase.set_progress(task, 0, 100)
 

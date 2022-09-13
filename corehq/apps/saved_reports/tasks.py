@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 import six
 from celery.schedules import crontab
 from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
 
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
@@ -17,7 +18,6 @@ from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
     UnsupportedScheduledReportError,
 )
-from couchdbkit import ResourceNotFound
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.scheduled import (
     create_records_for_scheduled_reports,
@@ -27,8 +27,8 @@ from corehq.elastic import ESError
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
-from .models import ScheduledReportLog
 from .exceptions import ReportNotFound
+from .models import ScheduledReportLog
 
 
 def send_delayed_report(report_id):
@@ -124,7 +124,10 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     :Parameter cleaned_data:
             Dict containing cleaned data from the submitted form
     """
-    from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
+    from corehq.apps.reports.views import (
+        _render_report_configs,
+        render_full_report_notification,
+    )
 
     user_id = request_data['couch_user']
     couch_user = CouchUser.get_by_user_id(user_id)

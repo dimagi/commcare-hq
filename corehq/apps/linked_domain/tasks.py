@@ -6,8 +6,6 @@ from django.utils.translation import gettext as _
 
 from celery import chord
 from celery.task import task
-from corehq.apps.linked_domain.ucr_expressions import create_linked_ucr_expression, update_linked_ucr_expression
-from corehq.apps.userreports.models import UCRExpression
 
 from dimagi.utils.logging import notify_exception
 
@@ -39,9 +37,16 @@ from corehq.apps.linked_domain.ucr import (
     get_downstream_report,
     update_linked_ucr,
 )
+from corehq.apps.linked_domain.ucr_expressions import (
+    create_linked_ucr_expression,
+    update_linked_ucr_expression,
+)
 from corehq.apps.linked_domain.updates import update_model_type
-from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app_and_notify
+from corehq.apps.linked_domain.util import (
+    pull_missing_multimedia_for_app_and_notify,
+)
 from corehq.apps.sms.models import Keyword
+from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import CouchUser
 
 

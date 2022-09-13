@@ -17,8 +17,6 @@ from couchdbkit import BulkSaveError, ResourceConflict
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xform import get_case_ids_from_form
-from corehq.util.metrics import metrics_counter, metrics_gauge
-from corehq.util.metrics.const import MPM_MAX
 from couchforms.exceptions import UnexpectedDeletedXForm
 from dimagi.utils.couch import get_redis_lock
 from dimagi.utils.couch.bulk import BulkFetchException
@@ -28,8 +26,18 @@ from soil import DownloadBase
 from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, UserArchivedRebuild, XFormInstance
-from corehq.util.celery_utils import deserialize_run_every_setting, run_periodic_task_again
+from corehq.form_processor.models import (
+    CommCareCase,
+    CommCareCaseIndex,
+    UserArchivedRebuild,
+    XFormInstance,
+)
+from corehq.util.celery_utils import (
+    deserialize_run_every_setting,
+    run_periodic_task_again,
+)
+from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_MAX
 
 logger = get_task_logger(__name__)
 
@@ -42,7 +50,11 @@ def bulk_download_usernames_async(domain, download_id, user_filters, owner_id):
 
 @task(serializer='pickle')
 def bulk_download_users_async(domain, download_id, user_filters, is_web_download, owner_id):
-    from corehq.apps.users.bulk_download import dump_users_and_groups, dump_web_users, GroupNameError
+    from corehq.apps.users.bulk_download import (
+        GroupNameError,
+        dump_users_and_groups,
+        dump_web_users,
+    )
     errors = []
     try:
         args = [domain, download_id, user_filters, bulk_download_users_async, owner_id]
@@ -87,7 +99,9 @@ def bulk_download_users_async(domain, download_id, user_filters, is_web_download
 def tag_cases_as_deleted_and_remove_indices(domain, case_ids, deletion_id, deletion_date):
     from corehq.apps.data_interfaces.tasks import delete_duplicates_for_cases
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-    from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
+    from corehq.messaging.scheduling.tasks import (
+        delete_schedule_instances_for_cases,
+    )
     CommCareCase.objects.soft_delete_cases(domain, list(case_ids), deletion_date, deletion_id)
     _remove_indices_from_deleted_cases_task.delay(domain, case_ids)
     delete_phone_numbers_for_owners.delay(case_ids)
@@ -280,7 +294,9 @@ def reset_demo_user_restore_task(commcare_user_id, domain):
 
 @task(serializer='pickle')
 def remove_unused_custom_fields_from_users_task(domain):
-    from corehq.apps.users.custom_data import remove_unused_custom_fields_from_users
+    from corehq.apps.users.custom_data import (
+        remove_unused_custom_fields_from_users,
+    )
     remove_unused_custom_fields_from_users(domain)
 
 
@@ -310,7 +326,8 @@ process_reporting_metadata_staging_schedule = deserialize_run_every_setting(
 )
 def process_reporting_metadata_staging():
     from corehq.apps.users.models import (
-        CouchUser, UserReportingMetadataStaging
+        CouchUser,
+        UserReportingMetadataStaging,
     )
     lock_key = "PROCESS_REPORTING_METADATA_STAGING_TASK"
     process_reporting_metadata_lock = get_redis_lock(

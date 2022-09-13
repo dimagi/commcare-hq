@@ -6,8 +6,9 @@ from celery.task import periodic_task
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
-from corehq.apps.sso.utils.context_helpers import get_idp_cert_expiration_email_context
-
+from corehq.apps.sso.utils.context_helpers import (
+    get_idp_cert_expiration_email_context,
+)
 
 log = logging.getLogger(__name__)
 

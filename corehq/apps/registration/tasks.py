@@ -13,8 +13,8 @@ from dimagi.utils.web import get_site_domain, get_static_url_prefix
 
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.registration.models import (
-    RegistrationRequest,
     AsyncSignupRequest,
+    RegistrationRequest,
 )
 from corehq.apps.users.models import WebUser
 

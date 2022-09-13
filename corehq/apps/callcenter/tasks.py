@@ -5,9 +5,7 @@ from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.callcenter.sync_usercase import (
-    sync_usercases
-)
+from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.utils import (
     get_call_center_cases,
     get_call_center_domains,

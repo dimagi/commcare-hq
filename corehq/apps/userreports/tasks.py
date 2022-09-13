@@ -16,11 +16,6 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict, ResourceNotFound
 
-from corehq.util.es.elasticsearch import ConnectionTimeout
-from corehq.util.metrics import metrics_counter, metrics_gauge, metrics_histogram_timer
-from corehq.util.metrics.const import MPM_MAX, MPM_MIN, MPM_LIVESUM
-from corehq.util.queries import paginated_queryset
-
 from couchexport.models import Format
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
@@ -38,16 +33,19 @@ from corehq.apps.reports.util import (
 )
 from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_CHUNK_SIZE,
-    ASYNC_INDICATOR_QUEUE_TIME,
     ASYNC_INDICATOR_MAX_RETRIES,
+    ASYNC_INDICATOR_QUEUE_TIME,
     UCR_CELERY_QUEUE,
     UCR_INDICATOR_CELERY_QUEUE,
 )
-from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
+from corehq.apps.userreports.exceptions import (
+    DataSourceConfigurationNotFoundError,
+)
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     get_report_config,
-    id_is_static, )
+    id_is_static,
+)
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.reports.data_source import (
     ConfigurableReportDataSource,
@@ -55,11 +53,20 @@ from corehq.apps.userreports.reports.data_source import (
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
-    get_indicator_adapter, get_ucr_datasource_config_by_id,
+    get_indicator_adapter,
+    get_ucr_datasource_config_by_id,
 )
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
 from corehq.util.decorators import serial_task
+from corehq.util.es.elasticsearch import ConnectionTimeout
+from corehq.util.metrics import (
+    metrics_counter,
+    metrics_gauge,
+    metrics_histogram_timer,
+)
+from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX, MPM_MIN
+from corehq.util.queries import paginated_queryset
 from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 

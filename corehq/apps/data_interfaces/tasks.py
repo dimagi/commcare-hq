@@ -26,7 +26,7 @@ from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 
-from .deduplication import reset_deduplicate_rule, backfill_deduplicate_rule
+from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
     AutomaticUpdateRule,

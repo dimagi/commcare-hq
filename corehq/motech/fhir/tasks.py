@@ -2,9 +2,10 @@ from collections import namedtuple
 from typing import Generator, List
 from uuid import uuid4
 
+from django.conf import settings
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task
-from django.conf import settings
 from jsonpath_ng.ext.parser import parse as jsonpath_parse
 
 from casexml.apps.case.mock import CaseBlock
@@ -25,7 +26,6 @@ from corehq.motech.utils import simplify_list
 from .bundle import get_bundle, get_next_url, iter_bundle
 from .const import SYSTEM_URI_CASE_ID, XMLNS_FHIR
 from .models import FHIRImportConfig, FHIRImportResourceType
-
 
 ParentInfo = namedtuple(
     'ParentInfo',

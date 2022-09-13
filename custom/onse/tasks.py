@@ -1,5 +1,4 @@
 import sys
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
@@ -26,7 +25,7 @@ from custom.onse.const import (
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
     MAX_RETRY_ATTEMPTS,
-    TASK_RETRY_FACTOR
+    TASK_RETRY_FACTOR,
 )
 from custom.onse.models import iter_mappings
 

@@ -9,10 +9,10 @@ from django.conf import settings
 import requests
 from celery.task import task
 
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 
 from corehq.util.global_request import get_request
+from corehq.util.metrics import metrics_counter
 
 
 def handle_uncaught_exceptions(mail_admins=True):
