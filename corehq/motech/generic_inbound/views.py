@@ -10,6 +10,8 @@ from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
+from corehq.apps.hqcase.api.core import UserError, SubmissionError, serialize_case
+from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
@@ -146,15 +148,47 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        data = api.parsed_expression(context.root_doc, context)
+        response = _execute_case_api(
+            request.domain,
+            request.couch_user,
+            request.META.get('HTTP_USER_AGENT'),
+            context,
+            api
+        )
     except BadSpecError as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-    response = _execute_case_api(data)
+    except UserError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except SubmissionError as e:
+        return JsonResponse({
+            'error': str(e),
+            'form_id': e.form_id,
+        }, status=400)
 
     return JsonResponse(response)
 
 
-def _execute_case_api(data):
-    # TODO: call hqcase API
-    return data
+def _execute_case_api(domain, couch_user, device_id, context, api_model):
+    data = api_model.parsed_expression(context.root_doc, context)
+
+    if not isinstance(data, list):
+        # the bulk API always requires a list
+        data = [data]
+
+    xform, case_or_cases = handle_case_update(
+        domain=domain,
+        data=data,
+        user=couch_user,
+        device_id=device_id,
+        is_creation=None,
+    )
+
+    if isinstance(case_or_cases, list):
+        return {
+            'form_id': xform.form_id,
+            'cases': [serialize_case(case) for case in case_or_cases],
+        }
+    return {
+        'form_id': xform.form_id,
+        'case': serialize_case(case_or_cases),
+    }
