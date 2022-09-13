@@ -2,26 +2,28 @@ import json
 import uuid
 from datetime import datetime, timedelta
 
-from django.conf import settings
 from django.test import TestCase
 from django.utils.http import urlencode
+from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
-
-from corehq.apps.api.resources import v0_4
-from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.reportxform import transform_xform_for_report_forms_index
-from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import reset_es_index
 from pillowtop.es_utils import initialize_index_and_mapping
 
+from corehq.apps.api.resources import v0_4
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
+from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.form_processor.tests.utils import create_form_for_test
+from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.util.elastic import reset_es_index
+from corehq.apps.users.models import WebUser
+from corehq.apps.domain.models import Domain
+from django_prbac.models import Role
+
 from .utils import APIResourceTest, FakeFormESView
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
@@ -41,8 +43,7 @@ class TestXFormInstanceResource(APIResourceTest):
         reset_es_index(XFORM_INDEX_INFO)
         initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
 
-    def test_fetching_xform_cases(self):
-
+    def _submit_case_update_form(self):
         # Create an xform that touches a case
         case_id = uuid.uuid4().hex
         form = submit_case_blocks(
@@ -55,6 +56,10 @@ class TestXFormInstanceResource(APIResourceTest):
 
         send_to_elasticsearch('forms', transform_xform_for_elasticsearch(form.to_json()))
         self.es.indices.refresh(XFORM_INDEX_INFO.index)
+        return form, case_id
+
+    def test_fetching_xform_cases(self):
+        form, case_id = self._submit_case_update_form()
 
         # Fetch the xform through the API
         response = self._assert_auth_get_resource(self.single_endpoint(form.form_id) + "?cases__full=true")
@@ -64,6 +69,14 @@ class TestXFormInstanceResource(APIResourceTest):
         # Confirm that the case appears in the resource
         self.assertEqual(len(cases), 1)
         self.assertEqual(cases[0]['id'], case_id)
+
+    def test_filter_forms_by_cases_modified(self):
+        form, case_id = self._submit_case_update_form()
+        response = self._assert_auth_get_resource(f"{self.list_endpoint}?case_id={case_id}")
+        self.assertEqual(response.status_code, 200)
+        api_forms = json.loads(response.content)['objects']
+        self.assertEqual(len(api_forms), 1)
+        self.assertEqual(api_forms[0]['form']['case']['@case_id'], case_id)
 
     def _send_forms(self, forms):
         # list of form tuples [(xmlns, received_on)]
@@ -337,17 +350,15 @@ class TestXFormInstanceResourceQueries(APIResourceTest, ElasticTestMixin):
         self._test_es_query({'include_archived': 'true'}, expected)
 
 
-class TestReportPillow(TestCase):
+class TestXFormPillow(TestCase):
 
     def test_xformPillowTransform(self):
         """
-        Test to make sure report xform and reportxform pillows strip the appVersion dict to match the
-        mappings
+        Test to make sure xform pillow strips the appVersion dict to match the mappings
         """
-        transform_functions = [transform_xform_for_report_forms_index, transform_xform_for_elasticsearch]
         bad_appVersion = {
             "_id": "foo",
-            "domain": settings.ES_XFORM_FULL_INDEX_DOMAINS[0],
+            "domain": 'TestXFormPillow-domain',
             'received_on': "2013-09-20T01:33:12Z",
             "form": {
                 "meta": {
@@ -365,8 +376,65 @@ class TestReportPillow(TestCase):
                 }
             }
         }
-        for fn in transform_functions:
-            cleaned = fn(bad_appVersion)
-            self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
-            self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
-            self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+        cleaned = transform_xform_for_elasticsearch(bad_appVersion)
+        self.assertFalse(isinstance(cleaned['form']['meta']['appVersion'], dict))
+        self.assertTrue(isinstance(cleaned['form']['meta']['appVersion'], str))
+        self.assertTrue(cleaned['form']['meta']['appVersion'], "CCODK:\"2.5.1\"(11126). v236 CC2.5b[11126] on April-15-2013")
+
+
+class TestViewFormAttachment(TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        Role.get_cache().clear()
+        self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
+        self.view_form_endpoint = self._get_view_form_endpoint()
+        self.username = 'rudolph@qwerty.commcarehq.org'
+        self.password = '***'
+        self.user = WebUser.create(self.domain.name, self.username, self.password, None, None,
+                                  email='rudoph@example.com', first_name='rudolph', last_name='commcare')
+        self.user.save()
+
+    def tearDown(self):
+        self.user.delete(deleted_by_domain=self.domain.name, deleted_by=None)
+        self.domain.delete()
+        super(TestViewFormAttachment, self).tearDown()
+
+    def _get_view_form_endpoint(self):
+        return reverse(
+            'api_form_attachment',
+            kwargs=dict(
+                domain=self.domain.name,
+                instance_id='5321',
+                attachment_id='1234',
+            )
+        )
+
+    @flag_enabled('VIEW_FORM_ATTACHMENT')
+    def test_domain_has_feature_flag_enabled(self):
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+        # 404 status code means the request is successful, but resource is
+        # not found which is OK for the purposes of this test
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_has_permission(self):
+        self.user.set_role(self.domain.name, 'admin')
+        self.user.save()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+
+        # 404 status code means the request is successful, but resource is
+        # not found which is OK for the purposes of this test
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_has_no_permission(self):
+        self.user.set_role(self.domain.name, 'none')
+        self.user.save()
+
+        self.client.login(username=self.username, password=self.password)
+        response = self.client.get(self.view_form_endpoint)
+
+        self.assertEqual(response.status_code, 403)

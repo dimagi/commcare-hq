@@ -29,10 +29,10 @@ class _InvalidateCacheMixin(object):
 
     bulk_save = save_docs
 
-    def delete(self):
+    def delete(self, *args, **kw):
         id = self._id
         try:
-            super(_InvalidateCacheMixin, self).delete()
+            super(_InvalidateCacheMixin, self).delete(*args, **kw)
         except ResourceNotFound:
             # it was already deleted. this isn't a problem, but might be a caching bug
             logging.exception('Tried to delete cached doc %s but it was already deleted', id)

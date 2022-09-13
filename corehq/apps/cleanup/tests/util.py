@@ -1,4 +1,5 @@
 import inspect
+from datetime import datetime
 
 from django.db import models
 from django.test import SimpleTestCase
@@ -42,3 +43,7 @@ class ModelAttrEqualityHelper(SimpleTestCase):
         extra_attrs = cls.couch_only_attrs
         new_attrs = cls.sql_only_attrs
         return (couch_attrs - extra_attrs).union(new_attrs)
+
+
+def is_monday():
+    return datetime.utcnow().isoweekday() == 1

@@ -13,14 +13,8 @@ We have indexes for each of the following doc types:
  * Forms - ``xforms``
  * Groups - ``hqgroups``
  * Users - ``hqusers``
- * Report Cases - ``report_cases``
- * Report Forms - ``report_xforms``
  * SMS logs - ``smslogs``
  * Case Search - ``case_search``
-
-The *Report* cases and forms indexes are only configured to run for a few
-domains, and they store additional mappings allowing you to query on form
-and case properties (not just metadata).
 
 Each index has a corresponding mapping file in ``corehq/pillows/mappings/``.
 Each mapping has a hash that reflects the current state of the mapping. This

@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
         with opener(filename, "wt") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Path'])
+            writer.writerow(['Date', 'User', 'Domain', 'IP Address', 'Request Method', 'Request Path'])
             for user in users:
                 write_log_events(writer, user, domain, start_date=options['start'], end_date=options['end'])
             if username:

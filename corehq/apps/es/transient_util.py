@@ -56,17 +56,16 @@ def populate_doc_adapter_map():
     from django.conf import settings
     from .apps import ElasticApp
     from .case_search import ElasticCaseSearch
-    from .cases import ElasticCase, ElasticReportCase
+    from .cases import ElasticCase
     from .domains import ElasticDomain
-    from .forms import ElasticForm, ElasticReportForm
+    from .forms import ElasticForm
     from .groups import ElasticGroup
     from .sms import ElasticSMS
     from .users import ElasticUser
 
     # by index
     for DocAdapter in [ElasticApp, ElasticCaseSearch, ElasticCase,
-                       ElasticReportCase, ElasticDomain, ElasticForm,
-                       ElasticReportForm, ElasticGroup, ElasticSMS,
+                       ElasticDomain, ElasticForm, ElasticGroup, ElasticSMS,
                        ElasticUser]:
         assert DocAdapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
             (DocAdapter.index_name, _DOC_ADAPTERS_BY_INDEX)

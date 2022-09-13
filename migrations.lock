@@ -124,6 +124,7 @@ app_manager
  0019_exchangeapplication_required_privileges
  0020_exchangeapplication_allow_blank_privilege
  0021_migrate_case_search_itemset_ids
+ 0022_migrate_to_conditional_case_update
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -282,6 +283,8 @@ data_interfaces
  0025_domaincaserulerun_num_errors
  0026_automaticupdaterule_criteria_operator
  0027_auto_20220511_2017
+ 0028_auto_20220420_1301
+ 0029_locationfilterdefinition_include_child_locations
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -299,6 +302,14 @@ django_celery_results
  0001_initial
  0002_add_task_name_args_kwargs
  0003_auto_20181106_1101
+ 0004_auto_20190516_0412
+ 0005_taskresult_worker
+ 0006_taskresult_date_created
+ 0007_remove_taskresult_hidden
+ 0008_chordcounter
+ 0009_groupresult
+ 0010_remove_duplicate_indices
+ 0011_taskresult_periodic_task_name
 django_digest
  0001_initial
 django_prbac
@@ -358,6 +369,7 @@ fixtures
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
  0004_userlookuptablestatus
+ 0005_lookuptablemodels
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -457,6 +469,8 @@ form_processor
  0093_rename_models (5 squashed migrations)
 formplayer_api
  0001_drop_old_tables
+generic_inbound
+ 0001_initial
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -487,6 +501,7 @@ hqwebapp
  0006_create_user_access_log
  0007_user_access_agent
  0008_hqoauthapplication
+ 0009_truncate_authtoken_table
 integration
  0001_initial
  0002_dialersettings
@@ -635,6 +650,7 @@ pillowtop
  0004_offset_to_big_int
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
+ 0007_copy_xforms_checkpoint
 products
  0001_initial
 project_limits
@@ -673,6 +689,8 @@ reports
  0006_remove_tableauserver_allow_domain_username_override
  0007_tableauvisualization_upstream_id
  0008_tableauvisualization_title
+ 0009_remove_tableauserver_domain_username
+ 0010_delete_reportssidebarordering
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -866,6 +884,7 @@ sql_accessors
  0064_remove_get_case_models_functions
  0065_get_ledger_values_for_cases_3
  0066_drop_unused_function
+ 0067_livequery_sql
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions

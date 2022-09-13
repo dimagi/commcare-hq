@@ -3,6 +3,8 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # Translators:
+# Aathithya Sidtharthan B, 2022
+# Aathithya Sidtharthan B, 2022
 # Abdel Nasser Iro <abdel.nasser.iro.gigo@millenniumpromise.org>, 2014-2015
 # Aissetou Sawadogo <ais107@hotmail.com>, 2016-2017
 # Alexandra Guibal <guibal.alexandra@gmail.com>, 2015
@@ -1215,6 +1217,10 @@ msgid ""
 "    www.commcarehq.org\n"
 "  "
 msgstr ""
+"\n"
+"Merci,\n"
+"- l'équipe CommCareHQ Team\n"
+"www.commcarehq.org"
 
 #: corehq/apps/accounting/templates/accounting/email/30_days.txt
 #, python-format
@@ -4418,6 +4424,10 @@ msgstr ""
 "accessible dans l'application CommCare."
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Android app dependencies"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr "Paramètres Android"
 
@@ -5047,6 +5057,12 @@ msgid "Practice Mobile Worker"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Prevents mobile workers from using a CommCare app until the Android apps "
+"that it needs have been installed on the device.\n"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Profile URL"
 msgstr "Profile URL "
 
@@ -5257,8 +5273,8 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 msgid ""
 "Use a different base URL for all app URLs. This makes the phone send forms, "
-"sync and look for updates from a differnent URL. Main use case is to allow "
-"migrating ICDS to a new cluster."
+"sync, and look for updates from a different URL. The main use case is to "
+"allow migrating project spaces to a new environment.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -8982,6 +8998,19 @@ msgid "Exclude From Search Filters"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Required Message"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+msgid "Validation Condition"
+msgstr "Condition de validation"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+msgid "Validation Message"
+msgstr "Message de validation"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "Instance URI"
 msgstr ""
 
@@ -12688,10 +12717,6 @@ msgstr "Ajouter Choix"
 msgid "Regular Expression"
 msgstr ""
 
-#: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
-msgid "Validation Message"
-msgstr "Message de validation"
-
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #, python-format
 msgid ""
@@ -13194,6 +13219,15 @@ msgstr ""
 msgid "Please specify at least one action."
 msgstr "Veuillez spécifier au moins une action."
 
+#: corehq/apps/data_interfaces/forms.py
+msgid ""
+"The rule will be applied to all cases that match all filter criteria below."
+msgstr ""
+
+#: corehq/apps/data_interfaces/forms.py
+msgid "Cases Filter"
+msgstr ""
+
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
 msgstr "Transférer les dossiers"
@@ -13374,12 +13408,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 msgid "Add Update Case Property"
 msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-msgid "case property name"
-msgstr "Nom de la propriété de dossier"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
@@ -13813,6 +13841,21 @@ msgid "Date case property (advanced)"
 msgstr "Date de la propriété de dossier (avancé)"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
+#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
+#: corehq/apps/locations/templates/locations/manage/location.html
+#: corehq/apps/locations/templates/locations/manage/locations.html
+#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
+#: corehq/apps/reports/filters/fixtures.py
+#: corehq/apps/reports/templates/reports/project_health/user_details.html
+#: corehq/apps/sms/models.py corehq/apps/users/forms.py
+#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
+#: corehq/motech/openmrs/forms.py
+msgid "Location"
+msgstr "Site"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Parent case is closed"
 msgstr "Le dossier parent est fermé"
 
@@ -13887,6 +13930,14 @@ msgstr "Le dossier parent est fermé"
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Custom filter ID"
 msgstr "Identifiant du filtre personnalisé"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Case belongs to location"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
+msgid "Include cases from child locations"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14168,7 +14219,8 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-msgid "Deduplication rule not saved. "
+#, python-format
+msgid "Deduplication rule not saved due to the following issues: %s"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
@@ -14239,6 +14291,11 @@ msgstr ""
 #: corehq/apps/domain/decorators.py
 msgid "maximum password attempts exceeded"
 msgstr "Nombre de tentatives de saisie du mot de passe dépassé"
+
+#: corehq/apps/domain/extension_points.py corehq/apps/users/forms.py
+#, python-brace-format
+msgid "Password must have at least {password_length} characters."
+msgstr ""
 
 #: corehq/apps/domain/extension_points.py
 msgid "Password is not strong enough. Try making your password more complex."
@@ -14921,20 +14978,6 @@ msgstr "Sélectionnez un type de suscription..."
 #: corehq/apps/domain/forms.py
 msgid "Subscription Type"
 msgstr "Type d'abonnement "
-
-#: corehq/apps/domain/forms.py
-#: corehq/apps/domain/templates/domain/manage_releases_by_location.html
-#: corehq/apps/hqwebapp/doc_info.py corehq/apps/locations/forms.py
-#: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/locations/templates/locations/manage/locations.html
-#: corehq/apps/locations/views.py corehq/apps/reports/commtrack/standard.py
-#: corehq/apps/reports/filters/fixtures.py
-#: corehq/apps/reports/templates/reports/project_health/user_details.html
-#: corehq/apps/sms/models.py corehq/apps/users/forms.py
-#: corehq/ex-submodules/casexml/apps/case/views.py corehq/motech/fhir/const.py
-#: corehq/motech/openmrs/forms.py
-msgid "Location"
-msgstr "Site"
 
 #: corehq/apps/domain/forms.py
 msgid "Select Status"
@@ -16070,6 +16113,8 @@ msgid ""
 "    Hello,\n"
 "  "
 msgstr ""
+"\n"
+"Bonjour"
 
 #: corehq/apps/domain/templates/domain/email/domain_transfer_from_request.html
 #, python-format
@@ -17556,6 +17601,9 @@ msgid ""
 "    CommCareHQ Team\n"
 "  "
 msgstr ""
+"\n"
+"Merci,\n"
+"l'équipe CommCareHQ Team"
 
 #: corehq/apps/dropbox/templates/dropbox/emails/upload_error.txt
 #, python-format
@@ -21063,15 +21111,13 @@ msgstr ""
 "numéros de téléphone du dossier seront synchronisés."
 
 #: corehq/apps/hqadmin/forms.py
-#, fuzzy
-#| msgid "Please enter a valid email address."
-msgid "Email address '{}' is not a dimagi email address"
-msgstr "Veuillez entrer une adresse mail valide."
+msgid "The following email addresses are not dimagi email addresses:"
+msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
-"User with email address '{}' does not exist on this site, please have the "
-"user registered first"
+"The following users do not exist on this site, please have the user "
+"registered first:"
 msgstr ""
 
 #: corehq/apps/hqadmin/forms.py
@@ -21132,6 +21178,10 @@ msgstr "Domaine"
 
 #: corehq/apps/hqadmin/reports.py
 msgid "IP Address"
+msgstr ""
+
+#: corehq/apps/hqadmin/reports.py corehq/motech/views.py
+msgid "Request Method"
 msgstr ""
 
 #: corehq/apps/hqadmin/reports.py
@@ -21290,6 +21340,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
@@ -21299,10 +21355,8 @@ msgid "Developer"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "SuperUser?"
 msgid "Superuser"
-msgstr "SuperUser ?"
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/reports.py
@@ -21310,10 +21364,8 @@ msgid "Accounting Admin"
 msgstr "Administrateur de Compte"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "Two Factor Authentication"
 msgid "Two Factor Enabled"
-msgstr "Authentification à deux facteurs "
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
 msgid "See a user's projects by entering their email address below."
@@ -21434,6 +21486,10 @@ msgstr ""
 msgid "Get users to offboard"
 msgstr ""
 
+#: corehq/apps/hqadmin/views/users.py
+msgid "Successfully retrieved users to offboard."
+msgstr ""
+
 #: corehq/apps/hqadmin/views/utils.py corehq/apps/users/bulk_download.py
 #: corehq/apps/users/models.py corehq/tabs/tabclasses.py
 msgid "Admin"
@@ -21445,6 +21501,10 @@ msgstr ""
 
 #: corehq/apps/hqcase/utils.py
 msgid "Data Cleaning Form"
+msgstr ""
+
+#: corehq/apps/hqcase/utils.py
+msgid "Automatic Case Update Rule"
 msgstr ""
 
 #: corehq/apps/hqmedia/cache.py
@@ -26035,6 +26095,8 @@ msgid ""
 "    You have been added to the %(domain)s project on %(hq_name)s.\n"
 "  "
 msgstr ""
+"\n"
+"Vous avez été ajouté au %(domain)s projet sur %(hq_name)s."
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.html
 #, python-format
@@ -26060,6 +26122,11 @@ msgid ""
 "    Your username to login is <strong>%(username)s</strong>\n"
 "  "
 msgstr ""
+"\n"
+"Une fois que vous avez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le %(domain)s projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter c'est <strong>%(username)s</"
+"strong>."
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.html
 #, python-format
@@ -26102,6 +26169,10 @@ msgid ""
 "\n"
 "Your username to login is %(username)s\n"
 msgstr ""
+"\n"
+"Une fois que vous avez confirmé votre compte, vous pourrez accéder et "
+"soumettre des données dans le %(domain)s projet sur %(hq_name)s.\n"
+"Votre nom d'utilisateur pour vous connecter c'est %(username)s.\n"
 
 #: corehq/apps/registration/templates/registration/email/mobile_worker_confirm_account.txt
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
@@ -26173,6 +26244,16 @@ msgid ""
 "Thanks,\n"
 "-The %(hq_name)s team\n"
 msgstr ""
+"\n"
+"Bonjour %(name)s,\n"
+"\n"
+"Votre compte avec le nom d'utilisateur %(username)s est confirmé avec "
+"succès.\n"
+"Vous pouvez maintenant vous connecter et soumettre des données dans le "
+"\"%(domain)s\" projet sur %(hq_name)s.\n"
+"\n"
+"Merci,\n"
+"-L'équipe %(hq_name)s\n"
 
 #: corehq/apps/registration/templates/registration/mobile/mobile_worker_confirm_account_sms.txt
 #, python-format
@@ -26210,7 +26291,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Get Free Trial\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
@@ -26415,6 +26496,7 @@ msgstr "Créer un compte"
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
 #: corehq/apps/users/templates/users/accept_invite.html
+#: corehq/apps/users/views/web.py
 msgid "Create Account"
 msgstr "Créer compte"
 
@@ -26496,8 +26578,8 @@ msgid "5 mobile users"
 msgstr ""
 
 #: corehq/apps/registration/views.py
-#: corehq/apps/users/templates/users/commcare_user_confirm_account.html
 #: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/apps/users/views/mobile/users.py
 msgid "Confirm Account"
 msgstr "Confirmer le compte"
 
@@ -27977,10 +28059,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -28000,10 +28078,6 @@ msgstr "admin"
 #: corehq/apps/reports/models.py
 msgid "Deactivated Mobile Workers"
 msgstr ""
-
-#: corehq/apps/reports/models.py
-msgid "The config format is invalid"
-msgstr "Le format de configuration n'est pas valide"
 
 #: corehq/apps/reports/standard/__init__.py
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/reports/views.py
@@ -28618,52 +28692,6 @@ msgid "same"
 msgstr "pareil"
 
 #: corehq/apps/reports/standard/monitoring.py
-msgid "Worker Activity Times"
-msgstr "Temps d'activité d'utilisateur"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Graphical representation of when forms are completed or submitted."
-msgstr ""
-"Représentation graphique des dates des formulaires complétés ou soumis."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Note: No submissions matched your filters."
-msgstr "Remarque : Aucune soumission ne correspond à vos filtres."
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Mon"
-msgstr "Lun"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Tue"
-msgstr "Mar"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Wed"
-msgstr "Mer"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Thu"
-msgstr "Jeu"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Fri"
-msgstr "Ven"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sat"
-msgstr "Sam"
-
-#: corehq/apps/reports/standard/monitoring.py
-msgid "Sun"
-msgstr "Dim"
-
-#: corehq/apps/reports/standard/monitoring.py
-#, python-brace-format
-msgid "Time ({timezone})"
-msgstr "Heure ({timezone})"
-
-#: corehq/apps/reports/standard/monitoring.py
 msgid "Worker Activity"
 msgstr "Activité d'utilisateur"
 
@@ -28949,7 +28977,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -30722,6 +30752,10 @@ msgid ""
 "You can scan this QR code in CommCare by going to the app manager options "
 "menu and\n"
 "          selecting 'Advanced', and then 'Enable Mobile Privileges'."
+msgstr ""
+
+#: corehq/apps/settings/templates/settings/my_projects.html
+msgid "Inactivity Timeout (minutes)"
 msgstr ""
 
 #: corehq/apps/settings/templates/settings/my_projects.html
@@ -34211,6 +34245,10 @@ msgstr ""
 msgid "You cannot remove yourself from a domain via bulk upload"
 msgstr ""
 
+#: corehq/apps/user_importer/tests/test_importer.py
+msgid "Password must have at least 8 characters."
+msgstr ""
+
 #: corehq/apps/user_importer/validation.py
 msgid "username cannot contain spaces or symbols"
 msgstr "Le nom d'utilisateur ne peut contenir des espaces ou des symboles"
@@ -36246,10 +36284,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/templates/users/accept_invite.html
-msgid "Continue to Single Sign-On"
-msgstr ""
-
-#: corehq/apps/users/templates/users/accept_invite.html
 msgid "Already have an account?"
 msgstr "Vous avez déjà un compte?"
 
@@ -37369,6 +37403,10 @@ msgstr ""
 "Les numéros de téléphone ne peuvent contenir que des chiffres et nous "
 "n'avons pas été en mesure de convertir le vôtre automatiquement."
 
+#: corehq/apps/users/templates/users/partials/register_user_form_fields.html
+msgid "Continue to Single Sign-On"
+msgstr ""
+
 #: corehq/apps/users/templates/users/partials/waiting_to_verify_email_message.html
 msgid "Checking Email Address"
 msgstr ""
@@ -37684,11 +37722,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
@@ -40527,10 +40566,8 @@ msgid "Update DHIS2 Tracked Entity configuration"
 msgstr ""
 
 #: corehq/motech/dhis2/templates/dhis2/dhis2_events_config.html
-#, fuzzy
-#| msgid "Form Changes"
 msgid "Form config"
-msgstr "Modifications de formulaire"
+msgstr ""
 
 #: corehq/motech/dhis2/views.py
 msgid "DataSet Maps per page"
@@ -41344,10 +41381,6 @@ msgid "No API requests have been logged."
 msgstr ""
 
 #: corehq/motech/views.py
-msgid "Request Method"
-msgstr ""
-
-#: corehq/motech/views.py
 msgid "Request URL"
 msgstr ""
 
@@ -41954,16 +41987,6 @@ msgstr ""
 
 #: custom/inddex/filters.py
 msgid "FAO/WHO GIFT Food Group Description"
-msgstr ""
-
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can not be same as last {restricted} passwords."
-msgstr ""
-
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can't be same as last {restricted} passwords."
 msgstr ""
 
 #: custom/reports/mc/reports/definitions.py

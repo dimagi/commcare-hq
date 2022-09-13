@@ -22,6 +22,7 @@ from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
+from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.test_utils import create_test_case
 
 
@@ -106,6 +107,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
 
     def set_case_property(self, case, property_name, value):
         update_case(self.domain, case.case_id, case_properties={property_name: value})
+        sync_case_for_messaging(self.domain, case.case_id)
         return CommCareCase.objects.get_case(case.case_id, self.domain)
 
     def get_case_phone_number(self, case):
@@ -197,6 +199,7 @@ class CaseContactPhoneNumberTestCase(TestCase):
             self.assertEqual(PhoneNumber.count_by_domain(self.domain), 2)
 
             update_case(self.domain, case.case_id, close=True)
+            sync_case_for_messaging(self.domain, case.case_id)
             self.assertIsNone(self.get_case_phone_number(case))
             self.assertEqual(PhoneNumber.count_by_domain(self.domain), 1)
 
@@ -636,6 +639,8 @@ class SQLPhoneNumberTestCase(TestCase):
                 self.create_case_contact('9990002') as case2, \
                 self.create_case_contact('9990003') as case3:
 
+            for case in (case1, case2, case3):
+                sync_case_for_messaging(self.domain, case.case_id)
             self.assertEqual(len(PhoneNumber.by_owner_id(case1.case_id)), 1)
             self.assertEqual(len(PhoneNumber.by_owner_id(case2.case_id)), 1)
             self.assertEqual(len(PhoneNumber.by_owner_id(case3.case_id)), 1)

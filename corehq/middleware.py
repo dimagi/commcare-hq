@@ -298,6 +298,7 @@ class SelectiveSessionMiddleware(SessionMiddleware):
             '/downloads/temp/heartbeat/',  # soil status
             '/a/{domain}/apps/view/[A-Za-z0-9-]+/current_version/$'  # app manager new changes polling
             '/hq/notifications/service/$',  # background request for notification (bell menu in top nav)
+            '/a/{domain}/messaging/conditional/refresh/$'  # conditional alerts list refresh polling
         ]
         if settings.BYPASS_SESSIONS_FOR_MOBILE:
             regexes.extend(getattr(settings, 'SESSION_BYPASS_URLS', []))
@@ -336,3 +337,12 @@ def get_view_func(view_fn, view_kwargs):
         return view_fn.view_class
 
     return view_fn
+
+
+class SecureCookiesMiddleware(MiddlewareMixin):
+
+    def process_response(self, request, response):
+        if hasattr(response, 'cookies') and response.cookies:
+            for cookie in response.cookies:
+                response.cookies[cookie]['secure'] = settings.SECURE_COOKIES or response.cookies[cookie]['secure']
+        return response

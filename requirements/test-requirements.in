@@ -9,7 +9,9 @@ pip-tools>6.4.0
 testil
 requests-mock
 sqlalchemy-postgres-copy
+Faker
 flaky
 freezegun
 radon>=5.0  # v5 no longer depends on flake8-polyfill
 coverage
+uWSGI

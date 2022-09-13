@@ -901,6 +901,14 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
+WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
+    'web_apps_upload_questions',
+    'USH: Support signature, image, audio, and video questions in Web Apps',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Jenny Schweers',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -2182,6 +2190,15 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+GENERIC_INBOUND_API = StaticToggle(
+    'configurable_api',
+    'Generic inbound APIs',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Create inbound APIs that use UCR expressions to process data into case updates",
+    help_link="TODO",
+)
+
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
     'case_updates_ucr_filters',
     'Allow the use of UCR filters in Auto Case Update Rules',
@@ -2285,6 +2302,18 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     """
 )
 
+APP_DEPENDENCIES = StaticToggle(
+    'app-dependencies',
+    'Set Android app dependencies that must be installed before using a '
+    'CommCare app',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Prevents mobile workers from using a CommCare app until the Android apps
+    that it needs have been installed on the device.
+    """,
+)
+
 SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
@@ -2297,4 +2326,30 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+SMS_USE_LATEST_DEV_APP = FeatureRelease(
+    'sms_use_latest_dev_app',
+    'Use latest development version of the app for SMS processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly',
+    description='This will revert the SMS processing to previous functionality of using the '
+                'development version of the app instead of the latest release. It should only'
+                'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
+)
+
+VIEW_FORM_ATTACHMENT = StaticToggle(
+    'view_form_attachments',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
+    'formplayer_include_state_hash',
+    'Make Formplayer include the state hash in sync and restore requests',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly'
 )

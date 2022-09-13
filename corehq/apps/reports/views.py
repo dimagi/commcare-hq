@@ -18,6 +18,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
+    HttpResponseForbidden,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -40,6 +41,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
+from functools import wraps
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -59,7 +61,7 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
-from corehq.apps.domain.decorators import login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.groups.models import Group
@@ -123,6 +125,7 @@ from corehq.util.timezones.utils import (
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
+from corehq.toggles import VIEW_FORM_ATTACHMENT
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
@@ -133,6 +136,7 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
+from corehq.apps.domain.decorators import api_auth
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
 
@@ -160,6 +164,26 @@ require_form_view_permission = require_permission(
 )
 
 require_can_view_all_reports = require_permission(HqPermissions.view_reports)
+
+
+def _can_view_form_attachment():
+    def decorator(view_func):
+        @wraps(view_func)
+        def _inner(request, domain, *args, **kwargs):
+            if VIEW_FORM_ATTACHMENT.enabled(domain):
+                return view_func(request, domain, *args, **kwargs)
+
+            try:
+                response = require_form_view_permission(view_func)(request, domain, *args, **kwargs)
+            except PermissionDenied:
+                response = HttpResponseForbidden()
+            return response
+
+        return api_auth(_inner)
+    return decorator
+
+
+can_view_form_attachment = _can_view_form_attachment()
 
 
 @login_and_domain_required
@@ -1856,6 +1880,7 @@ class TableauServerView(BaseProjectReportSectionView):
     page_title = gettext_lazy('Tableau Server Config')
     template_name = 'hqwebapp/crispy/single_crispy_form.html'
 
+    @method_decorator(require_superuser)
     @method_decorator(toggles.EMBEDDED_TABLEAU.required_decorator())
     def dispatch(self, request, *args, **kwargs):
         return super(TableauServerView, self).dispatch(request, *args, **kwargs)

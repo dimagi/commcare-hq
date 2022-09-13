@@ -3,7 +3,6 @@ import os
 import uuid
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
@@ -12,6 +11,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureTypeField,
 )
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import CommCareUser
@@ -76,10 +76,10 @@ def _update_case_id_properties(domain, user):
                     case_id=case.case_id,
                     user_id=user._id,
                     update=update,
-                ).as_xml()
+                ).as_text()
             )
 
-    post_case_blocks(case_blocks, domain=domain, user_id=user._id)
+    submit_case_blocks(case_blocks, domain=domain, user_id=user._id)
 
 
 def _read_csv(filename):

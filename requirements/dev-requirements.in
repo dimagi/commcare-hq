@@ -18,3 +18,4 @@ sphinxcontrib-django
 # linting/formatting
 flake8
 yapf
+isort

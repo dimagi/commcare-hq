@@ -62,20 +62,6 @@ class ElasticForm(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-class ElasticReportForm(ElasticDocumentAdapter):
-
-    _index_name = "report_xforms_20160824_1708"
-    type = "report_xform"
-
-    @property
-    def mapping(self):
-        return get_adapter_mapping(self)
-
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
-
-
 def form_ids(form_ids):
     return filters.term('_id', form_ids)
 

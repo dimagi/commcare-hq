@@ -99,9 +99,13 @@ from corehq.elastic import (
 )
 
 from . import aggregations, filters, queries
-from .const import SIZE_LIMIT
+from .const import SCROLL_SIZE, SIZE_LIMIT
 from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
+
+
+class InvalidQueryError(Exception):
+    """Query parameters cannot be assembled into a valid search."""
 
 
 class ESQuery(object):
@@ -210,7 +214,17 @@ class ESQuery(object):
         Run the query against the scroll api. Returns an iterator yielding each
         document that matches the query.
         """
-        result = scroll_query(self.index, self.raw_query, for_export=self.for_export)
+        if self.uses_aggregations():
+            raise InvalidQueryError(
+                "aggregation scroll queries will yield invalid hits if the "
+                "scroll requires more than one request."
+            )
+        raw_query = self.raw_query
+        raw_query["size"] = SCROLL_SIZE if self._size is None else self._size
+        # The '_assemble()' method sets size=SIZE_LIMIT when no query size is
+        # configured, and overrides that with size=0 for aggregation queries,
+        # neither of which are acceptable for a scroll query.
+        result = scroll_query(self.index, raw_query, for_export=self.for_export)
         for r in result:
             yield ESQuerySet.normalize_result(self, r)
 
@@ -346,7 +360,10 @@ class ESQuery(object):
         return query
 
     def size(self, size):
-        """Restrict number of results returned.  Analagous to SQL limit."""
+        """Restrict number of results returned. Analagous to SQL limit, except
+        when performing a scroll, in which case this value becomes the number of
+        results to fetch per scroll request.
+        """
         query = deepcopy(self)
         query._size = size
         return query
@@ -459,7 +476,7 @@ class ESQuery(object):
 
     def scroll_ids(self):
         """Returns a generator of all matching ids"""
-        return self.exclude_source().size(5000).scroll()
+        return self.exclude_source().scroll()
 
 
 class ESQuerySet(object):

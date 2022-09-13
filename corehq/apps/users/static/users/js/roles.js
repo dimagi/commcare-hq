@@ -157,7 +157,7 @@ hqDefine('users/js/roles',[
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
-                self.hasUsersAssigned = data.hasUsersAssigned;
+                self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
@@ -550,7 +550,7 @@ hqDefine('users/js/roles',[
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
-            if (!role._id || !role.hasUsersAssigned) {
+            if (!role._id || !role.preventRoleDelete) {
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(

@@ -1,5 +1,5 @@
 from corehq.apps.es import UserES, users, queries
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, Invitation
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.toggles import RESTRICT_LOGIN_AS
@@ -84,4 +84,6 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
 
 def get_role_user_count(domain, role_id):
     from corehq.apps.es.users import UserES
-    return UserES().is_active().domain(domain).role_id(role_id).count()
+    users_count = UserES().is_active().domain(domain).role_id(role_id).count()
+    users_count += Invitation.objects.filter(role="user-role:" + role_id, is_accepted=False).count()
+    return users_count

@@ -133,11 +133,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         $("#cloudcare-notifications").empty();
     });
 
-    FormplayerFrontend.on('showError', function (errorMessage, isHTML) {
+    FormplayerFrontend.on('showError', function (errorMessage, isHTML, reportToHq) {
         if (isHTML) {
-            showHTMLError(errorMessage, $("#cloudcare-notifications"));
+            showHTMLError(errorMessage, $("#cloudcare-notifications"), null, reportToHq);
         } else {
-            showError(errorMessage, $("#cloudcare-notifications"));
+            showError(errorMessage, $("#cloudcare-notifications"), reportToHq);
         }
     });
 
@@ -178,11 +178,14 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         data.formplayerEnabled = true;
         data.displayOptions = $.extend(true, {}, user.displayOptions);
         data.onerror = function (resp) {
-            var message = resp.human_readable_message || resp.exception || "Unexpected Error";
+            var message = resp.human_readable_message || resp.exception;
+            if (!message && resp.notification && resp.notification.message) {
+                message = resp.notification.message;
+            }
             if (resp.is_html) {
-                showHTMLError(message, $("#cloudcare-notifications"));
+                showHTMLError(message, $("#cloudcare-notifications"), null, resp.reportToHq);
             } else {
-                showError(message, $("#cloudcare-notifications"));
+                showError(message, $("#cloudcare-notifications"), resp.reportToHq);
             }
         };
         if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
@@ -343,20 +346,31 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 false
             );
         }
+
+        const reconnectTimingWindow = 2000;
+        let offlineTime;
+
         window.addEventListener(
-            'offline', function () {
-                showError(gettext("You are now offline. Web Apps is not optimized " +
-                    "for offline use. Please reconnect to the Internet before " +
-                    "continuing."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', 'disabled');
-                $('.form-control').prop('disabled', 'disabled');
-            }
-        );
+            'offline',function () {
+                offlineTime = new Date();
+                _.delay(function () {
+                    if (!this.navigator.onLine && (new Date() - offlineTime) > reconnectTimingWindow) {
+                        showError(gettext("You are now offline. Web Apps is not optimized " +
+                            "for offline use. Please reconnect to the Internet before " +
+                            "continuing."), $("#cloudcare-notifications"));
+                        $('.submit').prop('disabled', 'disabled');
+                        $('.form-control').prop('disabled', 'disabled');
+                    }
+                },reconnectTimingWindow);
+            });
+
         window.addEventListener(
             'online', function () {
-                showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
-                $('.submit').prop('disabled', false);
-                $('.form-control').prop('disabled', false);
+                if ((new Date() - offlineTime) > reconnectTimingWindow) {
+                    showSuccess(gettext("You are are back online."), $("#cloudcare-notifications"));
+                    $('.submit').prop('disabled', false);
+                    $('.form-control').prop('disabled', false);
+                }
             }
         );
     });

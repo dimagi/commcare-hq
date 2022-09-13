@@ -4,6 +4,7 @@ describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Controls = hqImport("cloudcare/js/form_entry/entries"),
         UI = hqImport("cloudcare/js/form_entry/form_ui"),
+        Util = hqImport("cloudcare/js/util"),
         questionJSON,
         spy;
 
@@ -11,6 +12,12 @@ describe('Entries', function () {
         hqImport("hqwebapp/js/initial_page_data").register(
             "has_geocoder_privs",
             true
+        );
+        hqImport("hqwebapp/js/initial_page_data").register(
+            "toggles_dict",
+            {
+                WEB_APPS_UPLOAD_QUESTIONS: true,
+            }
         );
     });
 
@@ -34,7 +41,7 @@ describe('Entries', function () {
         };
         spy = sinon.spy();
         $.subscribe('formplayer.' + Const.ANSWER, spy);
-        this.clock = sinon.useFakeTimers();
+        this.clock = sinon.useFakeTimers(new Date("2020-03-15 15:41").getTime());
     });
 
     afterEach(function () {
@@ -325,6 +332,13 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
     });
 
+    it('Should convert two-digit dates to four-digit dates', function () {
+        assert.equal(Util.convertTwoDigitYear("03-04-50"), "03-04-1950");
+        assert.equal(Util.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(Util.convertTwoDigitYear("3/4/1928"), "3/4/1928");
+        assert.equal(Util.convertTwoDigitYear("not-a-date"), "not-a-date");
+    });
+
     it('Should return TimeEntry', function () {
         questionJSON.datatype = Const.TIME;
         questionJSON.answer = '12:30';
@@ -430,5 +444,50 @@ describe('Entries', function () {
 
         entry.rawAnswer('...123');
         assert.isOk(entry.question.error());
+    });
+
+    it('Should return ImageEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_IMAGE_CHOOSE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.ImageEntry);
+    });
+
+    it('Should return AudioEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_AUDIO_CAPTURE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.AudioEntry);
+    });
+
+    it('Should return VideoEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_VIDEO_CAPTURE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.VideoEntry);
+    });
+
+    it('Should return SignatureEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.style = { raw: Const.SIGNATURE };
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.SignatureEntry);
+    });
+
+    it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_UPLOAD;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.UnsupportedEntry);
     });
 });

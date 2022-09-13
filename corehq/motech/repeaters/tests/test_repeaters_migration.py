@@ -123,7 +123,9 @@ class TestMigrationCommand(TestCase):
         for obj in openmrs_objects:
             sql_obj = SQLOpenmrsRepeater.objects.get(repeater_id=obj._id)
             self.assertEqual(sql_obj.openmrs_config, obj.openmrs_config.to_json())
-            self.assertEqual(sql_obj.atom_feed_status, obj.atom_feed_status)
+            self.assertEqual(sql_obj.atom_feed_status.keys(), obj.atom_feed_status.keys())
+            for feed_name, feed in obj.atom_feed_status.items():
+                self.assertEqual(sql_obj.atom_feed_status[feed_name], feed.to_json())
 
         for obj in caseexpression_objects:
             sql_obj = SQLCaseExpressionRepeater.objects.get(repeater_id=obj._id)
@@ -171,7 +173,24 @@ class RepeaterSyncTestsBase(TestCase):
         return [couch_cls.wrap(r) for r in self.test_data if r['doc_type'] == couch_cls.__name__]
 
     def get_sql_objects(self, sql_cls):
-        return [sql_cls(**r) for r in self.test_data if r['doc_type'] == sql_cls._repeater_type]
+        all_objects = []
+        for r_obj in deepcopy(self.test_data):
+
+            r_obj.pop('base_doc')
+            r_obj.pop('started_at', None)
+            r_obj.pop('last_success_at', None)
+            r_obj.pop('failure_streak', None)
+
+            r_obj['is_paused'] = r_obj.pop('paused', False)
+            repeater_type = r_obj.pop('doc_type')
+
+            if 'include_app_id_param' not in set(sql_cls()._optionvalue_fields):
+                r_obj.pop('include_app_id_param', None)
+            if repeater_type == sql_cls()._repeater_type:
+                all_objects.append(
+                    sql_cls(**r_obj)
+                )
+        return all_objects
 
 
 class TestSQLCaseRepeater(RepeaterSyncTestsBase):
@@ -565,8 +584,13 @@ class TestSQLOpenmrsRepeater(RepeaterSyncTestsBase):
         self._assert_common_attrs_are_equal(sql_repeater, couch_repeater)
         self.assertEqual(sql_repeater.location_id, couch_repeater.location_id)
         self.assertEqual(sql_repeater.atom_feed_enabled, couch_repeater.atom_feed_enabled)
-        self.assertEqual(sql_repeater.atom_feed_status, couch_repeater.atom_feed_status)
-        # self.assertEqual(sql_repeater.openmrs_config, couch_repeater.openmrs_config.to_json())
+        self.assertEqual(sql_repeater.atom_feed_status.keys(), couch_repeater.atom_feed_status.keys())
+        for feed in sql_repeater.atom_feed_status:
+            self.assertEqual(
+                sql_repeater.atom_feed_status[feed],
+                couch_repeater.atom_feed_status[feed].to_json()
+            )
+        self.assertEqual(sql_repeater.openmrs_config, couch_repeater.openmrs_config.to_json())
         self.assertEqual(sql_repeater.white_listed_case_types, couch_repeater.white_listed_case_types)
         self.assertEqual(sql_repeater.black_listed_users, couch_repeater.black_listed_users)
 

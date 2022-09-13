@@ -689,6 +689,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
+    def get_deleted_domain_names(cls):
+        domains = Domain.view("domain/deleted_domains", include_docs=False, reduce=False).all()
+        return {d['key'] for d in domains}
+
+    @classmethod
     def get_all_ids(cls):
         return [d['id'] for d in cls.get_all(include_docs=False)]
 

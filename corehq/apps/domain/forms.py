@@ -311,7 +311,7 @@ class DomainGlobalSettingsForm(forms.Form):
     )
     project_description = forms.CharField(
         label=gettext_lazy("Project Description"),
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
         max_length=1000,
         help_text=gettext_lazy(
@@ -855,7 +855,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         required=False,
         help_text="Quick 1-2 sentence summary of the project.",
     )
-    notes = CharField(label="Notes*", required=False, widget=forms.Textarea)
+    notes = CharField(label="Notes*", required=False, widget=forms.Textarea(attrs={"class": "vertical-resize"}))
     phone_model = CharField(
         label="Device Model",
         help_text="Add Web Apps, if this project is using Web Apps as well",
@@ -969,7 +969,7 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
     )
     app_design_comments = CharField(
         label="App Design Comments",
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
         help_text=(
             "Unusual workflows or design decisions for others to watch out for."
@@ -1776,10 +1776,14 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
 class ProBonoForm(forms.Form):
     contact_email = MultiCharField(label=gettext_lazy("Email To"), widget=forms.Select(choices=[]))
     organization = forms.CharField(label=gettext_lazy("Organization"))
-    project_overview = forms.CharField(widget=forms.Textarea, label="Project overview")
+    project_overview = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Project overview"
+    )
     airtime_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on airtime:"))
     device_expense = forms.CharField(label=gettext_lazy("Estimated annual expenditures on devices:"))
-    pay_only_features_needed = forms.CharField(widget=forms.Textarea, label="Pay only features needed")
+    pay_only_features_needed = forms.CharField(
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}), label="Pay only features needed"
+    )
     duration_of_project = forms.CharField(help_text=gettext_lazy(
         "We grant pro-bono subscriptions to match the duration of your "
         "project, up to a maximum of 12 months at a time (at which point "

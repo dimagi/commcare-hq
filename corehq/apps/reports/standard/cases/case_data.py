@@ -268,6 +268,7 @@ def form_to_json(domain, form, timezone):
         form.xmlns,
         app_id=form.app_id,
         lang=get_language(),
+        form_name=form.form_data.get('@name')
     )
     received_on = ServerTime(form.received_on).user_time(timezone).done().strftime(DATE_FORMAT)
 

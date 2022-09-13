@@ -8,6 +8,14 @@ updates:
   open-pull-requests-limit: 7
   labels:
   - product/invisible
+  # Focus on major versions only
+  # Todo: remove once we're in steady-state on major versions
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-minor"
+
 - package-ecosystem: npm
   directory: "/"
   schedule:
@@ -17,3 +25,10 @@ updates:
   labels:
   - product/invisible
   - dependencies/javascript
+  # Focus on major versions only
+  # Todo: remove once we're in steady-state on major versions
+  ignore:
+    - dependency-name: "*"
+      update-types:
+        - "version-update:semver-patch"
+        - "version-update:semver-minor"

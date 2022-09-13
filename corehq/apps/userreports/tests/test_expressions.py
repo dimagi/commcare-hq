@@ -17,6 +17,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.userreports.decorators import ucr_context_cache
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.expressions.getters import transform_datetime
 from corehq.apps.userreports.expressions.specs import (
     PropertyNameGetterSpec,
     PropertyPathGetterSpec,
@@ -76,9 +77,11 @@ class ConstantExpressionTest(SimpleTestCase):
             self.assertEqual(valid_constant, getter({'some': 'random stuff'}))
 
     def test_constant_date_conversion(self):
+        # this is due to the type conversion in JsonObject
         self.assertEqual(date(2015, 2, 4), ExpressionFactory.from_spec('2015-02-04')({}))
 
     def test_constant_datetime_conversion(self):
+        # this is due to the type conversion in JsonObject
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
     def test_legacy_constant_no_type_casting(self):
@@ -1096,6 +1099,17 @@ class RelatedDocExpressionDbTest(TestCase):
     ({}, "a + b", {"a": Decimal(2), "b": Decimal(3)}, Decimal(5)),
     ({}, "a + b", {"a": Decimal(2.2), "b": Decimal(3.1)}, Decimal(5.3)),
     ({}, "range(3)", {}, [0, 1, 2]),
+    (
+        {'dob': "2022-01-01T14:44:23.001567Z"},
+        "f'{d}'[:-6] + '%03d' % round(int(f'{d:%f}')/1000) + 'Z'",
+        {
+            "d": {
+                "type": "property_name",
+                "property_name": "dob",
+                "datatype": "datetime",
+            },
+        },
+        '2022-01-01 14:44:23.002Z'),
 ])
 def test_valid_eval_expression(self, source_doc, statement, context, expected_value):
     expression = ExpressionFactory.from_spec({
@@ -1103,8 +1117,11 @@ def test_valid_eval_expression(self, source_doc, statement, context, expected_va
         "statement": statement,
         "context_variables": context
     })
-    # almostEqual handles decimal (im)precision - it means "equal to 7 places"
-    self.assertAlmostEqual(expression(source_doc), expected_value)
+    if isinstance(expected_value, str):
+        self.assertEqual(expression(source_doc), expected_value)
+    else:
+        # almostEqual handles decimal (im)precision - it means "equal to 7 places"
+        self.assertAlmostEqual(expression(source_doc), expected_value)
 
 
 @generate_cases([
@@ -1139,15 +1156,18 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
+    ("f'{a}'[1:3]", {"a": 1234}, "23"),
     ("a and not b", {"a": 1, "b": 0}, True),
+    ("int(a)", {"a": 1.23}, 1),
+    ("round(a)", {"a": 1.23}, 1),
+    ("f'{a:%Y-%m-%d %H:%M}'", {"a": transform_datetime("2022-01-01T14:44:23.123123Z")}, '2022-01-01 14:44'),
+    ("a + b", {"a": 'this is ', "b": 'text'}, 'this is text'),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
 
 
 @generate_cases([
-    # variables can't be strings
-    ("a + b", {"a": 2, "b": 'text'}),
     # missing context, b not defined
     ("a + (a*b)", {"a": 2}),
     # power function not supported
@@ -1158,6 +1178,7 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     ("max(a, b)", {"a": 3, "b": 5}),
     # method calls not allowed
     ('"WORD".lower()', {"a": 5}),
+    ('f"{a.lower()}"', {"a": "b"}),
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):

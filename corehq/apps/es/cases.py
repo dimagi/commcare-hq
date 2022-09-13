@@ -58,20 +58,6 @@ class ElasticCase(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-class ElasticReportCase(ElasticDocumentAdapter):
-
-    _index_name = "report_cases_czei39du507m9mmpqk3y01x72a3ux4p0"
-    type = "report_case"
-
-    @property
-    def mapping(self):
-        return get_adapter_mapping(self)
-
-    @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
-
-
 def opened_range(gt=None, gte=None, lt=None, lte=None):
     return filters.date_range('opened_on', gt, gte, lt, lte)
 

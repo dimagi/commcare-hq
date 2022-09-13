@@ -13,8 +13,6 @@ from corehq.pillows.case_search import (
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.reportcase import ReportCaseReindexerFactory
-from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
@@ -39,8 +37,6 @@ FACTORIES = [
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
     SmsReindexerFactory,
-    ReportCaseReindexerFactory,
-    ReportFormReindexerFactory,
     AppReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UpdateUserSyncHistoryReindexerFactory,

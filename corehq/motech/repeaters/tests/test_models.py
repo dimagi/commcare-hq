@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from copy import deepcopy
 from datetime import timedelta
 from uuid import uuid4
 
@@ -11,7 +12,10 @@ from nose.tools import assert_in, assert_raises
 
 from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters, get_all_repeater_docs
+from corehq.motech.repeaters.dbaccessors import (
+    delete_all_repeaters,
+    get_all_repeater_docs,
+)
 from corehq.motech.utils import b64_aes_encrypt
 
 from ..const import (
@@ -25,16 +29,36 @@ from ..const import (
 )
 from ..models import (
     FormRepeater,
-    SQLFormRepeater,
     RepeatRecord,
+    Repeater,
+    SQLFormRepeater,
     SQLRepeater,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
     is_response,
 )
+from .data.repeaters import repeater_test_data
 
 DOMAIN = 'test-domain'
+
+ALL_REPEATERS = [
+    'FormRepeater',
+    'CaseRepeater',
+    'CreateCaseRepeater',
+    'UpdateCaseRepeater',
+    'ReferCaseRepeater',
+    'DataRegistryCaseUpdateRepeater',
+    'ShortFormRepeater',
+    'AppStructureRepeater',
+    'UserRepeater',
+    'LocationRepeater',
+    'FHIRRepeater',
+    'OpenmrsRepeater',
+    'Dhis2Repeater',
+    'Dhis2EntityRepeater',
+    'CaseExpressionRepeater'
+]
 
 
 def test_get_all_repeater_types():
@@ -513,3 +537,54 @@ def test_attempt_forward_now_kwargs():
     rr = RepeatRecord()
     with assert_raises(TypeError):
         rr.attempt_forward_now(True)
+
+
+def _create_repeater_data_map():
+    repeater_map = {}
+    for r in deepcopy(repeater_test_data):
+        doc_type = r['doc_type']
+        if not repeater_map.get(doc_type):
+            couch_repeater = Repeater.wrap(r)
+            couch_repeater.save()
+            repeater_map[doc_type] = {
+                'couch': couch_repeater,
+                'sql': couch_repeater.sql_repeater
+            }
+    return repeater_map
+
+
+class TestSQLRepeaterToJSON(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.conn = ConnectionSettings.objects.create(id=1, url='http://fake.com')
+        cls.repeater_map = _create_repeater_data_map()
+
+    @classmethod
+    def tearDownClass(cls):
+        for type, rep in cls.repeater_map.items():
+            rep['couch'].delete()
+        return super().tearDownClass()
+
+    @classmethod
+    def _clean_couch_json(cls, couch_json):
+        couch_json['repeater_type'] = couch_json.pop('doc_type')
+        couch_json['repeater_id'] = couch_json.pop('_id')
+        couch_json['is_paused'] = couch_json.pop('paused')
+        props_to_be_removed = [
+            'base_doc', '_rev', 'url', 'auth_type', 'username', 'password', 'skip_cert_verify',
+            'notify_addresses_str', 'last_success_at', 'failure_streak', 'started_at'
+        ]
+        for prop in props_to_be_removed:
+            couch_json.pop(prop, None)
+        return couch_json
+
+    def test_repeater_config(self):
+        for repeater_type in ALL_REPEATERS:
+            couch_repeater = self.repeater_map[repeater_type]['couch']
+            sql_repeater = self.repeater_map[repeater_type]['sql']
+            sql_data = sql_repeater.to_json()
+            couch_data = self._clean_couch_json(couch_repeater.to_json())
+
+            self.assertEqual(sql_data, couch_data)

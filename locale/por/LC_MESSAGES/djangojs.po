@@ -2659,6 +2659,22 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload image"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload audio file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload video file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload signature file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2670,6 +2686,12 @@ msgstr ""
 msgid ""
 "Something unexpected went wrong on that request. If you have problems "
 "filling in the rest of your form please submit an issue. Technical Details: "
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid ""
+"An unknown error occurred. If you have problems filling in the rest of your "
+"form please submit an issue. Technical Details: "
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
@@ -2763,8 +2785,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js
 msgid ""
-"Formplayer encountered an error. Please report an issue if you continue to "
-"see this message."
+"An unexpected error occurred. Please report an issue if you continue to see "
+"this message."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
@@ -2807,6 +2829,10 @@ msgstr ""
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
 "Geocoder privilege"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
+msgid "Please check the following fields:"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/sessions/views.js
@@ -2859,10 +2885,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
 msgid "An unexpected error occurred!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
-msgid "Sorry, an error occurred while processing that request."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js
@@ -3055,6 +3077,10 @@ msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js
 msgid "Search for users or groups"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_property_input.js
+msgid "case property name"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
@@ -3638,6 +3664,11 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js
 msgid "Please specify a password."
+msgstr ""
+
+#: corehq/apps/registration/static/registration/js/new_user.ko.js
+#: corehq/apps/registration/static/registration/js/password.js
+msgid "Password must have at least <%- passwordLength %> characters."
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js

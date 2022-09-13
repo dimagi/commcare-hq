@@ -5,7 +5,7 @@ from django.test import SimpleTestCase, TestCase
 from sqlagg import SumWhen
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 
 from corehq.apps.userreports import tasks
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
@@ -173,8 +173,8 @@ class TestExpandedColumn(TestCase):
             case_id=id,
             case_type=self.case_type,
             update=properties,
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        ).as_text()
+        submit_case_blocks(case_block, domain=self.domain)
         return CommCareCase.objects.get_case(id, self.domain)
 
     def _build_report(self, vals, field='my_field', build_data_source=True):

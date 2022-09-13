@@ -22,6 +22,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.toggles import LOCATIONS_IN_UCR
 from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
+from corehq.apps.data_interfaces.models import LocationFilterDefinition
 
 
 @serial_task("{location_type.domain}-{location_type.pk}",
@@ -122,6 +123,17 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserLookupTableType.LOCATION)
+
+
+@task
+def delete_locations_related_rules(location_ids):
+    for location_definition in LocationFilterDefinition.objects.filter(location_id__in=location_ids):
+        for criteria in location_definition.caserulecriteria_set.all():
+            rule = criteria.rule
+            rule.delete_criteria()
+            rule.delete_actions()
+            rule.delete()
+        location_definition.delete()
 
 
 def deactivate_users_at_location(location_id):
