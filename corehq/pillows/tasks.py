@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import CardinalityAggregation

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import Count
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from pillow_retry.models import PillowError
 

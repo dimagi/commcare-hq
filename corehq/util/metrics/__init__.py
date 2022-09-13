@@ -115,7 +115,7 @@ from typing import Callable, Dict, Iterable
 
 from django.conf import settings
 
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from sentry_sdk import add_breadcrumb
 
 from dimagi.utils.logging import notify_exception

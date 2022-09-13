@@ -14,7 +14,7 @@ from django.template.loader import render_to_string
 import attr
 from celery.schedules import crontab
 from celery.task import task
-from celery.task.base import periodic_task
+from corehq.apps.celery import periodic_task
 
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.logging import notify_error

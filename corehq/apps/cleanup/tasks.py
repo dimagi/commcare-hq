@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.management import call_command
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from corehq.apps.cleanup.dbaccessors import (
     find_es_docs_for_deleted_domains,

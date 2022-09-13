@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from couchforms.models import UnfinishedSubmissionStub
 from dimagi.utils.couch import CriticalSection

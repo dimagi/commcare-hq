@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import connection
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from celery.schedules import crontab
-from celery.task import periodic_task
+from corehq.apps.celery import periodic_task
 
 from corehq.blobs import get_blob_db
 from corehq.blobs.models import BlobMeta
