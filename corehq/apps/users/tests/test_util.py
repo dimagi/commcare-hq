@@ -11,6 +11,8 @@ from corehq.apps.users.util import (
     bulk_auto_deactivate_commcare_users,
     cached_user_id_to_user_display,
     generate_mobile_username,
+    get_complete_mobile_username,
+    is_username_available,
     user_display_string,
     user_id_to_username,
     username_to_user_id,
@@ -212,49 +214,49 @@ class TestGenerateMobileUsername(TestCase):
 
         self.assertEqual(username, 'test-user-1@test-domain.commcarehq.org')
 
-    def test_invalid_username_double_period_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test..user', self.domain)
-
-        self.assertEqual(cm.exception.message, "Username 'test..user' may not contain consecutive '.' (period).")
-
-    def test_invalid_username_trailing_period_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test.user.', self.domain)
-
-        self.assertEqual(cm.exception.message, "Username 'test.user.' may not end with a '.' (period).")
-
-    def test_invalid_username_generic_message(self):
-        with self.assertRaises(ValidationError) as cm:
+    def test_exception_raised_if_username_validation_fails(self):
+        with self.assertRaises(ValidationError):
             generate_mobile_username('test%user', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'test%user' may not contain special characters.")
 
-    def test_username_actively_in_use_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('test-user', self.domain)
+class TestIsUsernameAvailable(TestCase):
 
-        self.assertEqual(cm.exception.message, "Username 'test-user' is already taken.")
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'test-domain'
+        cls.domain_obj = create_domain('test-domain')
+        cls.addClassCleanup(cls.domain_obj.delete)
 
-    def test_username_was_previously_in_use_message(self):
-        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None, None)
+        cls.user = CommCareUser.create(cls.domain, 'test-user@test-domain.commcarehq.org', 'abc123', None,
+                                       None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, None)
+
+    def test_returns_true_if_available(self):
+        self.assertTrue(is_username_available('unused-test-user@test-domain.commcarehq.org'))
+
+    def test_returns_false_if_actively_in_use(self):
+        self.assertFalse(is_username_available('test-user@test-domain.commcarehq.org'))
+
+    def test_returns_false_if_previously_used(self):
+        retired_user = CommCareUser.create(self.domain, 'retired@test-domain.commcarehq.org', 'abc123', None,
+                                           None)
         self.addCleanup(retired_user.delete, self.domain, None)
         retired_user.retire(self.domain, None)
 
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('retired', self.domain)
+        self.assertFalse(is_username_available('retired@test-domain.commcarehq.org'))
 
-        self.assertEqual(cm.exception.message, "Username 'retired' belonged to a user that was deleted and "
-                                               "cannot be reused.")
+    def test_returns_false_if_reserved_username(self):
+        self.assertFalse(is_username_available('admin'))
+        self.assertFalse(is_username_available('demo_user@test-domain.commcarehq.org'))
 
-    def test_username_is_reserved_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username('admin', self.domain)
 
-        self.assertEqual(cm.exception.message, "Username 'admin' is reserved.")
+class TestGetCompleteMobileUsername(SimpleTestCase):
 
-    def test_username_is_none_message(self):
-        with self.assertRaises(ValidationError) as cm:
-            generate_mobile_username(None, self.domain)
+    def test_returns_unchanged_username_if_already_complete(self):
+        username = get_complete_mobile_username('test@test-domain.commcarehq.org', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')
 
-        self.assertEqual(cm.exception.message, "Username is required.")
+    def test_returns_complete_username_if_incomplete(self):
+        username = get_complete_mobile_username('test', 'test-domain')
+        self.assertEqual(username, 'test@test-domain.commcarehq.org')

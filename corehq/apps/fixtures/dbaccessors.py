@@ -17,8 +17,8 @@ def count_fixture_data_types(domain):
     return num_fixtures['value'] if num_fixtures is not None else 0
 
 
-@quickcache(['domain'], timeout=30 * 60)
-def get_fixture_data_types(domain):
+@quickcache(['domain'], timeout=30 * 60, skip_arg='bypass_cache')
+def get_fixture_data_types(domain, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataType
     return list(FixtureDataType.view(
         'by_domain_doc_type_date/view',
@@ -108,3 +108,32 @@ def delete_all_fixture_data_types():
             pass
         else:
             fixture_data_type.delete()
+
+
+@unit_testing_only
+def delete_all_fixture_data(domain_name=None):
+    from .couchmodels import FixtureDataType, FixtureDataItem, FixtureOwnership
+
+    def delete_all(doc_class):
+        view, key = get_view_and_key(doc_class)
+        db = doc_class.get_db()
+        docs = [r["doc"] for r in db.view(
+            view,
+            startkey=key,
+            endkey=key + [{}],
+            include_docs=True,
+            reduce=False
+        ).all()]
+        if docs:
+            db.bulk_delete(docs, empty_on_delete=False)
+
+    if domain_name:
+        def get_view_and_key(doc_class):
+            return "by_domain_doc_type_date/view", [domain_name, doc_class.__name__]
+    else:
+        def get_view_and_key(doc_class):
+            return "all_docs/by_doc_type", [doc_class.__name__]
+
+    delete_all(FixtureOwnership),
+    delete_all(FixtureDataItem),
+    delete_all(FixtureDataType),

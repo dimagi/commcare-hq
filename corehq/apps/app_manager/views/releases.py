@@ -214,7 +214,7 @@ def get_releases_context(request, domain, app_id):
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
         })
-        if len(app.modules) == 0:
+        if app.version == 1:
             context.update({'intro_only': True})
 
         # Multimedia is not supported for remote applications at this time.
@@ -386,11 +386,18 @@ def revert_to_copy(request, domain, app_id):
     else:
         copy_build_comment_template = _("Reverted to version {old_version}")
 
-    copy = app.make_build(
-        comment=copy_build_comment_template.format(**copy_build_comment_params),
-        user_id=request.couch_user.get_id,
-    )
-    copy.save(increment_version=False)
+    try:
+        copy = app.make_build(
+            comment=copy_build_comment_template.format(**copy_build_comment_params),
+            user_id=request.couch_user.get_id,
+        )
+        copy.save(increment_version=False)
+    except AppValidationError:
+        messages.error(
+            request,
+            _("Unable to create new build. Please click 'Make New Version' to see errors.")
+        )
+
     return back_to_main(request, domain, app_id=app_id)
 
 

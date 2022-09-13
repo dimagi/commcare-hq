@@ -12,6 +12,7 @@ from xml.etree import cElementTree as ElementTree
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
@@ -97,6 +98,9 @@ from .models_role import (  # noqa
     StaticRole,
     UserRole,
 )
+
+WEB_USER = 'web'
+COMMCARE_USER = 'commcare'
 
 MAX_WEB_USER_LOGIN_ATTEMPTS = 5
 MAX_COMMCARE_USER_LOGIN_ATTEMPTS = 500
@@ -326,6 +330,7 @@ class DomainMembership(Membership):
     """
     Each user can have multiple accounts on individual domains
     """
+    _user_type = None
 
     domain = StringProperty()
     timezone = StringProperty(default=getattr(settings, "TIME_ZONE", "UTC"))
@@ -367,7 +372,12 @@ class DomainMembership(Membership):
                 })
                 return None
         else:
-            return None
+            return self.get_default_role()
+
+    def get_default_role(self):
+        if self._user_type == COMMCARE_USER:
+            return UserRole.commcare_user_default(self.domain)
+        return None
 
     def has_permission(self, permission, data=None):
         return self.is_admin or self.permissions.has(permission, data)
@@ -439,6 +449,10 @@ class _AuthorizableMixin(IsMemberOfMixin):
         except self.Inconsistent as e:
             logging.warning(e)
             self.domains = [d.domain for d in self.domain_memberships]
+
+        if domain_membership:
+            # set user type on membership to support default roles for 'commcare' users
+            domain_membership._user_type = self._get_user_type()
         return domain_membership
 
     def add_domain_membership(self, domain, timezone=None, **kwargs):
@@ -976,16 +990,16 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return self.email
 
     def is_commcare_user(self):
-        return self._get_user_type() == 'commcare'
+        return self._get_user_type() == COMMCARE_USER
 
     def is_web_user(self):
-        return self._get_user_type() == 'web'
+        return self._get_user_type() == WEB_USER
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
-            return 'web'
+            return WEB_USER
         elif self.doc_type == 'CommCareUser':
-            return 'commcare'
+            return COMMCARE_USER
         else:
             raise NotImplementedError(f'Unrecognized user type {self.doc_type!r}')
 
@@ -1543,7 +1557,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
-
     domain = StringProperty()
     registering_device_id = StringProperty()
     # used by loadtesting framework - should typically be empty
@@ -1894,10 +1907,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         desired = set(group_ids)
         current = set(self.get_group_ids())
         touched = []
+        faulty_groups = []
         for to_add in desired - current:
             group = Group.get(to_add)
+            if group.domain != self.domain:
+                faulty_groups.append(to_add)
+                continue
             group.add_user(self._id, save=False)
             touched.append(group)
+        if faulty_groups:
+            raise ValidationError("Unable to save groups. The following group_ids are not in the current domain: "
+                                  + ', '.join(faulty_groups))
         for to_remove in current - desired:
             group = Group.get(to_remove)
             group.remove_user(self._id)
@@ -2575,6 +2595,9 @@ class Invitation(models.Model):
     role = models.CharField(max_length=100, null=True)  # role qualified ID
     program = models.CharField(max_length=126, null=True)   # couch id of a Program
     supply_point = models.CharField(max_length=126, null=True)  # couch id of a Location
+
+    def __repr__(self):
+        return f"Invitation(domain='{self.domain}', email='{self.email})"
 
     @classmethod
     def by_domain(cls, domain, is_accepted=False, **filters):

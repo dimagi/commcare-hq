@@ -20,7 +20,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_noop
+from django.utils.translation import gettext_noop, override
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView, View
 from django_prbac.exceptions import PermissionDenied
@@ -43,6 +43,9 @@ from corehq.apps.custom_data_fields.models import (
     CUSTOM_DATA_FIELD_PREFIX,
     PROFILE_SLUG,
 )
+from corehq.apps.domain.models import SMSAccountConfirmationSettings
+from corehq.apps.sms.api import send_sms
+from corehq.apps.domain.utils import guess_domain_language_for_sms
 from corehq.apps.domain.decorators import domain_admin_required, login_and_domain_required
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.views.base import DomainViewMixin
@@ -59,7 +62,9 @@ from corehq.apps.locations.permissions import (
     user_can_access_location_id,
 )
 from corehq.apps.ota.utils import demo_restore_date_created, turn_off_demo_mode
-from corehq.apps.registration.forms import MobileWorkerAccountConfirmationForm
+from corehq.apps.registration.forms import (
+    MobileWorkerAccountConfirmationBySMSForm, MobileWorkerAccountConfirmationForm
+)
 from corehq.apps.sms.verify import initiate_sms_verification_workflow
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary, send_account_confirmation_sms_if_necessary,
@@ -74,7 +79,7 @@ from corehq.apps.users.decorators import (
     require_can_edit_web_users,
     require_can_use_filtered_user_download,
 )
-from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
+from corehq.apps.users.exceptions import InvalidRequestException
 from corehq.apps.users.forms import (
     CommCareAccountForm,
     CommCareUserFormSet,
@@ -90,6 +95,7 @@ from corehq.apps.users.models import (
     CouchUser,
     DeactivateMobileWorkerTrigger,
 )
+from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
     bulk_download_usernames_async,
     bulk_download_users_async,
@@ -306,7 +312,9 @@ class EditCommCareUserView(BaseEditUserView):
 
     @property
     def user_role_choices(self):
-        return [('none', _('(none)'))] + self.editable_role_choices
+        role_choices = self.editable_role_choices
+        default_role = UserRole.commcare_user_default(self.domain)
+        return [(default_role.get_qualified_id(), default_role.name)] + role_choices
 
     @property
     @memoized
@@ -728,7 +736,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         try:
             self._ensure_proper_request(in_data)
             form_data = self._construct_form_data(in_data)
-        except InvalidMobileWorkerRequest as e:
+        except InvalidRequestException as e:
             return {
                 'error': str(e)
             }
@@ -764,6 +772,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             self.new_mobile_worker_form.cleaned_data['force_account_confirmation']
             or self.new_mobile_worker_form.cleaned_data['force_account_confirmation_by_sms'])
 
+        role_id = UserRole.commcare_user_default(self.domain).get_id
         commcare_user = CommCareUser.create(
             self.domain,
             username,
@@ -777,6 +786,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             metadata=self.custom_data.get_data_to_save(),
             is_account_confirmed=is_account_confirmed,
             location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
+            role_id=role_id
         )
 
         if self.new_mobile_worker_form.show_deactivate_after_date:
@@ -790,10 +800,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
 
     def _ensure_proper_request(self, in_data):
         if not self.can_add_extra_users:
-            raise InvalidMobileWorkerRequest(_("No Permission."))
+            raise InvalidRequestException(_("No Permission."))
 
         if 'user' not in in_data:
-            raise InvalidMobileWorkerRequest(_("Please provide mobile worker data."))
+            raise InvalidRequestException(_("Please provide mobile worker data."))
 
         return None
 
@@ -818,7 +828,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 form_data["{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k)] = v
             return form_data
         except Exception as e:
-            raise InvalidMobileWorkerRequest(_("Check your request: {}".format(e)))
+            raise InvalidRequestException(_("Check your request: {}").format(e))
 
 
 @require_can_edit_commcare_users
@@ -1454,6 +1464,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
             'domain_name': self.domain_object.display_name(),
             'user': self.user,
             'form': self.form,
+            'button_label': _('Confirm Account')
         })
         return context
 
@@ -1470,6 +1481,8 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
                 f'You have successfully confirmed the {user.raw_username} account. '
                 'You can now login'
             ))
+            if hasattr(self, 'send_success_sms'):
+                self.send_success_sms()
             return HttpResponseRedirect('{}?username={}'.format(
                 reverse('domain_login', args=[self.domain]),
                 user.raw_username,
@@ -1482,6 +1495,7 @@ class CommCareUserConfirmAccountView(TemplateView, DomainViewMixin):
 @location_safe
 class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     urlname = "commcare_user_confirm_account_sms"
+    one_day_in_seconds = 60 * 60 * 24
 
     @property
     @memoized
@@ -1497,18 +1511,41 @@ class CommCareUserConfirmAccountBySMSView(CommCareUserConfirmAccountView):
     @memoized
     def form(self):
         if self.request.method == 'POST':
-            return MobileWorkerAccountConfirmationForm(self.request.POST)
+            return MobileWorkerAccountConfirmationBySMSForm(self.request.POST)
         else:
-            if not self.is_invite_valid():
-                raise ValidationError("Invite has expired.")
-            return MobileWorkerAccountConfirmationForm(initial={
+            return MobileWorkerAccountConfirmationBySMSForm(initial={
                 'username': self.user.raw_username,
                 'full_name': self.user.full_name,
-                'email': self.user.email,
+                'email': "",
             })
 
+    def get_context_data(self, **kwargs):
+        context = super(CommCareUserConfirmAccountBySMSView, self).get_context_data(**kwargs)
+        context.update({
+            'invite_expired': self.is_invite_valid() is False,
+        })
+        return context
+
+    def send_success_sms(self):
+        settings = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        template_params = {
+            'name': self.user.full_name,
+            'domain': self.user.domain,
+            'username': self.user.raw_username,
+            'hq_name': settings.project_name
+        }
+        lang = guess_domain_language_for_sms(self.user.domain)
+        with override(lang):
+            text_content = render_to_string(
+                "registration/mobile/mobile_worker_account_confirmation_success_sms.txt", template_params
+            )
+        send_sms(
+            domain=self.user.domain, contact=None, phone_number=self.user.default_phone_number, text=text_content
+        )
+
     def is_invite_valid(self):
-        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / (60 * 60)
-        if hours_elapsed <= self.domain_object.confirmation_link_expiry_time:
+        hours_elapsed = float(int(time.time()) - self.user_invite_hash.get('time')) / self.one_day_in_seconds
+        settings_obj = SMSAccountConfirmationSettings.get_settings(self.user.domain)
+        if hours_elapsed <= settings_obj.confirmation_link_expiry_time:
             return True
         return False

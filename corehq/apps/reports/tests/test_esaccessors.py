@@ -7,6 +7,7 @@ import pytz
 from unittest.mock import MagicMock, patch
 
 from corehq.apps.commtrack.tests.util import bootstrap_domain
+from corehq.apps.export.models.new import FormExportInstance
 from dimagi.utils.dates import DateSpan
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -27,13 +28,13 @@ from corehq.apps.locations.tests.util import setup_locations_and_types, restrict
 from corehq.apps.reports.analytics.esaccessors import (
     get_active_case_counts_by_owner,
     get_all_user_ids_submitted,
+    get_attachments_size,
     get_case_counts_closed_by_user,
     get_case_counts_opened_by_user,
     get_case_types_for_domain_es,
     get_case_and_action_counts_for_domains,
     get_completed_counts_by_user,
     get_form_counts_by_user_xmlns,
-    get_form_counts_for_domains,
     get_form_duration_stats_by_user,
     get_form_duration_stats_for_users,
     get_form_ids_having_multimedia,
@@ -49,6 +50,7 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_groups_by_querystring,
     get_username_in_last_form_user_id_submitted,
     guess_form_name_from_submissions_using_xmlns,
+    media_export_is_too_big,
     scroll_case_names,
 )
 from corehq.apps.reports.standard.cases.utils import query_location_restricted_cases
@@ -99,6 +101,26 @@ class TestFormESAccessors(BaseESAccessorsTest):
 
     es_index_infos = [XFORM_INDEX_INFO, GROUP_INDEX_INFO]
 
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'test_domain'
+        cls.domain_obj = create_domain(cls.domain)
+
+        cls.user = CommCareUser.create(
+            cls.domain,
+            'test_user',
+            '*****',
+            None,
+            None,
+            is_active=True,
+        )
+        cls.user.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user.delete(False, None)
+        cls.domain_obj.delete()
+
     def _send_form_to_es(
             self,
             domain=None,
@@ -139,6 +161,91 @@ class TestFormESAccessors(BaseESAccessorsTest):
         self.es.indices.refresh(GROUP_INDEX_INFO.index)
         return group
 
+    def test_media_export_is_too_big(self):
+        xmlns = 'http://test.org'
+        app_id = 'test_app'
+        user_id = self.user.username
+
+        export_instance = FormExportInstance(
+            name='test_export',
+            domain=self.domain,
+            app_id=app_id,
+            xmlns=xmlns
+        )
+
+        export_instance.save()
+
+        es_query = export_instance.get_query(include_filters=False)
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2021, 12, 30),
+            user_id=user_id,
+            attachment_dict={
+                'test_image1': {'content_type': 'image/jpg', 'content_length': 1000, 'id': 1},
+                'test_image2': {'content_type': 'image/jpg', 'content_legth': 5000, 'id': 2},
+                'test_image3': {'content_type': 'image/jpg', 'content_length': 33333, 'id': 3}
+            }
+        )
+
+        output = media_export_is_too_big(es_query)
+        self.assertFalse(output)
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2022, 6, 15),
+            user_id=user_id,
+            attachment_dict={
+                'test_image2': {'content_type': 'image/jpg', 'content_length': 999999999999, 'id': 4}
+            }
+        )
+
+        output = media_export_is_too_big(es_query)
+        self.assertTrue(output)
+
+        export_instance.delete()
+
+    def test_get_attachments_size(self):
+        attachment_sizes = [1000, 2000, 3000]
+        expected_total = 0
+
+        for size in range(0, len(attachment_sizes)):
+            expected_total += attachment_sizes[size]
+
+        xmlns = 'http://test.org'
+        app_id = 'test_app'
+        user_id = self.user.username
+
+        export_instance = FormExportInstance(
+            name='test_export',
+            domain=self.domain,
+            app_id=app_id,
+            xmlns=xmlns
+        )
+
+        export_instance.save()
+
+        es_query = export_instance.get_query(include_filters=False)
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2021, 12, 30),
+            user_id=user_id,
+            attachment_dict={
+                'test_image1': {'content_type': 'image/jpg', 'content_length': attachment_sizes[0], 'id': 1},
+                'test_image2': {'content_type': 'image/jpg', 'content_legth': attachment_sizes[1], 'id': 2},
+                'test_image3': {'content_type': 'image/jpg', 'content_length': attachment_sizes[2], 'id': 3},
+                'test_image4': {'content_type': 'image/jpg', 'content_length': attachment_sizes[1], 'id': 2}
+            }
+        )
+
+        self.assertEqual(expected_total, get_attachments_size(es_query))
+
+        export_instance.delete()
+
     def test_get_forms(self):
         start = datetime(2013, 7, 1)
         end = datetime(2013, 7, 30)
@@ -159,6 +266,33 @@ class TestFormESAccessors(BaseESAccessorsTest):
             end,
             user_ids=[user_id],
             app_ids=app_id,
+            xmlnss=xmlns,
+        )
+        self.assertEqual(paged_result.total, 1)
+        self.assertEqual(paged_result.hits[0]['xmlns'], xmlns)
+        self.assertEqual(paged_result.hits[0]['form']['meta']['userID'], user_id)
+        self.assertEqual(paged_result.hits[0]['received_on'], '2013-07-02T00:00:00.000000Z')
+
+    def test_get_forms_with_empty_appid(self):
+        start = datetime(2013, 7, 1)
+        end = datetime(2013, 7, 30)
+        xmlns = 'http://a.b.org'
+        app_id = 'randmoappid'
+        user_id = 'abcd'
+
+        self._send_form_to_es(
+            app_id=app_id,
+            xmlns=xmlns,
+            received_on=datetime(2013, 7, 2),
+            user_id=user_id,
+        )
+
+        paged_result = get_forms(
+            self.domain,
+            start,
+            end,
+            user_ids=[user_id],
+            app_ids=[],
             xmlnss=xmlns,
         )
         self.assertEqual(paged_result.total, 1)
@@ -917,6 +1051,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(results[0], {
             '_id': self.user._id,
             '__group_ids': [],
+            'domain': self.user.domain,
             'username': self.user.username,
             'is_active': True,
             'first_name': self.user.first_name,
@@ -933,6 +1068,7 @@ class TestUserESAccessors(TestCase):
         self.assertEqual(results[0], {
             '_id': self.user._id,
             '__group_ids': [],
+            'domain': self.user.domain,
             'username': self.user.username,
             'is_active': False,
             'first_name': self.user.first_name,

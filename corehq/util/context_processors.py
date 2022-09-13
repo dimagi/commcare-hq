@@ -25,6 +25,7 @@ def base_template(request):
         'env': get_environment_friendly_name(),
         'secure_cookies': settings.SECURE_COOKIES,
         'MINIMUM_ZXCVBN_SCORE': settings.MINIMUM_ZXCVBN_SCORE,
+        'MINIMUM_PASSWORD_LENGTH': settings.MINIMUM_PASSWORD_LENGTH,
     }
 
 

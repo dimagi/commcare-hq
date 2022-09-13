@@ -8,6 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser, DomainMembershipError, HqPermissions
 from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.role_utils import UserRolePresets
 
 
 @nottest
@@ -21,6 +22,11 @@ class BaseAuthorizationTest(TestCase):
         cls.test_role = UserRole.create(cls.domain, 'test role', permissions=HqPermissions(
             edit_web_users=True
         ))
+        cls.mobile_worker_default_role = UserRole.create(
+            cls.domain,
+            UserRolePresets.MOBILE_WORKER,
+            is_commcare_user_default=True,
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -146,6 +152,11 @@ class TestMobileUserAuthorizationFunctions(BaseAuthorizationTest):
             created_by=None,
             created_via=None,
         )
+
+    def test_get_role__not_set(self):
+        """Mobile workers have a default role"""
+        role = self.user.get_role(self.domain)
+        self.assertEqual(role.name, UserRolePresets.MOBILE_WORKER)
 
     def test_is_domain_admin__admin_role(self):
         with self._set_role(self.domain, self.user, is_admin=True):

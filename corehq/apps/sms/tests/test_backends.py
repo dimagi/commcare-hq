@@ -64,6 +64,7 @@ from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.messaging.smsbackends.infobip.models import InfobipBackend
 from corehq.messaging.smsbackends.amazon_pinpoint.models import PinpointBackend
+from corehq.messaging.tasks import sync_case_for_messaging
 from corehq.util.test_utils import create_test_case
 
 
@@ -296,7 +297,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number': self.test_phone_number,
                     'contact_phone_number_is_verified': '1',
                 },
-                drop_signals=False):
+                drop_signals=False) as case:
+            sync_case_for_messaging(case.domain, case.case_id)
             response = Client().post(url, payload, content_type=content_type)
 
         self.assertEqual(response.status_code, 200)
@@ -323,7 +325,8 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number': contact_phone_prefix + self.test_phone_number,
                     'contact_phone_number_is_verified': '1',
                 },
-                drop_signals=False):
+                drop_signals=False) as case:
+            sync_case_for_messaging(case.domain, case.case_id)
             response = fcn(url, payload)
 
         self.assertEqual(response.status_code, expected_response_code)
@@ -852,6 +855,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
     def __test_contact_level_backend(self, contact):
         # Test sending to verified number with a contact-level backend owned by the domain
         update_case(self.domain, contact.case_id, case_properties={'contact_backend_id': 'BACKEND'})
+        sync_case_for_messaging(self.domain, contact.case_id)
         contact = CommCareCase.objects.get_case(contact.case_id, self.domain)
         verified_number = contact.get_phone_number()
         self.assertTrue(verified_number is not None)
@@ -929,6 +933,7 @@ class OutgoingFrameworkTestCase(DomainSubscriptionMixin, TestCase):
                     'contact_phone_number_is_verified': '1',
                 },
                 drop_signals=False) as contact:
+            sync_case_for_messaging(self.domain, contact.case_id)
             self.__test_global_backend_map()
             self.__test_domain_default()
             self.__test_shared_backend()

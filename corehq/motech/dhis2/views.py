@@ -380,20 +380,18 @@ def config_dhis2_repeater(request, domain, repeater_id):
             data = form.cleaned_data
             repeater.dhis2_config.form_configs = list(map(Dhis2FormConfig.wrap, data['form_configs']))
             repeater.save()
-
+            return JsonResponse({'success': _('DHIS2 Anonymous Events configuration saved')})
+        else:
+            errors = [err for errlist in form.errors.values() for err in errlist]
+            return JsonResponse({'errors': errors}, status=400)
     else:
         form_configs = json.dumps([
             form_config.to_json() for form_config in repeater.dhis2_config.form_configs
         ])
-        form = Dhis2ConfigForm(
-            data={
-                'form_configs': form_configs,
-            }
-        )
-    return render(request, 'dhis2/edit_config.html', {
+    return render(request, 'dhis2/dhis2_events_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,
-        'form': form
+        'form_configs': form_configs
     })
 
 

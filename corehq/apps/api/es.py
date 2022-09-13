@@ -11,7 +11,6 @@ from no_exceptions.exceptions import Http400
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
-from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
@@ -25,7 +24,6 @@ from corehq.elastic import (
     report_and_fail_on_shard_failures,
 )
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS, CASE_ES_TYPE
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS, REPORT_CASE_ES_TYPE
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS, XFORM_ES_TYPE
 from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
 from corehq.util.es.interface import ElasticsearchInterface
@@ -200,13 +198,6 @@ class CaseESView(ESView):
     model = ESCase
 
 
-class ReportCaseESView(ESView):
-    es_alias = REPORT_CASE_ES_ALIAS
-    es_type = REPORT_CASE_ES_TYPE
-    doc_type = "CommCareCase"
-    model = ESCase
-
-
 class FormESView(ESView):
     es_alias = XFORM_ALIAS
     es_type = XFORM_ES_TYPE
@@ -377,7 +368,8 @@ def validate_date(date):
     raise DateTimeError("Unknown date format: {}".format(date))
 
 
-RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q'] + TASTYPIE_RESERVED_GET_PARAMS)
 
 
 class DateRangeParams(object):
@@ -400,6 +392,11 @@ class DateRangeParams(object):
 
 
 class TermParam(object):
+    """Allows for use of params that differ between the API and the ES mapping
+
+    It's also used without the `term` argument for non-analyzed values, to
+    prevent them from being coerced to lowercase
+    """
     def __init__(self, param, term=None, analyzed=False):
         self.param = param
         self.term = term or param
@@ -429,19 +426,23 @@ class XFormServerModifiedParams:
             )
 
 
-query_param_consumers = [
+xform_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
+    TermParam('case_id', '__retrieved_case_ids'),
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
+    DateRangeParams('indexed_on', 'inserted_at'),
+]
+
+case_param_consumers = [
     TermParam('case_name', 'name', analyzed=True),
     TermParam('case_type', 'type', analyzed=True),
-    # terms listed here to prevent conversion of their values to lower case since
-    # since they are indexed as `not_analyzed` in ES
     TermParam('type.exact'),
     TermParam('name.exact'),
     TermParam('external_id.exact'),
     TermParam('contact_phone_number'),
-
-    DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
     DateRangeParams('server_date_modified', 'server_modified_on'),
@@ -481,33 +482,35 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
-    # doc_type can be form or case
-    assert doc_type in ['form', 'case']
-    es = FormES() if doc_type == 'form' else CaseES()
-
-    query = es.remove_default_filters().domain(domain)
-
-    if doc_type == 'form':
-        if 'include_archived' in search_params:
-            query = query.filter(
-                filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
-        else:
-            query = query.filter(filters.term('doc_type', 'xforminstance'))
-
-    if '_search' in search_params:
-        # This is undocumented usecase by Data export tool and one custom project
-        #   Validate that the passed in param is one of these two expected
-        _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
-        query = query.filter(_filter)
-
-    # filters are actually going to be a more common case
-    reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
+def es_query_from_get_params(search_params, domain, doc_type='form'):
     query_params = {
         param: value
         for param, value in search_params.items()
-        if param not in reserved_query_params and not param.endswith('__full')
+        if param not in RESERVED_QUERY_PARAMS and not param.endswith('__full')
     }
+
+    if doc_type == 'form':
+        query = FormES().remove_default_filters().domain(domain)
+        if query_params.pop('include_archived', None) is not None:
+            query = query.filter(filters.OR(
+                filters.term('doc_type', 'xforminstance'),
+                filters.term('doc_type', 'xformarchived'),
+            ))
+        else:
+            query = query.filter(filters.term('doc_type', 'xforminstance'))
+        query_param_consumers = xform_param_consumers
+    elif doc_type == 'case':
+        query = CaseES().domain(domain)
+        query_param_consumers = case_param_consumers
+    else:
+        raise AssertionError("unknown doc type")
+
+    if '_search' in query_params:
+        # This is undocumented usecase by Data export tool and one custom project
+        #   Validate that the passed in param is one of these two expected
+        _filter = _validate_and_get_es_filter(json.loads(query_params.pop('_search')))
+        query = query.filter(_filter)
+
     for consumer in query_param_consumers:
         try:
             payload_filter = consumer.consume_params(query_params)

@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 
 from corehq.apps.api.exceptions import UpdateUserException
 from corehq.apps.api.user_updates import update
@@ -117,11 +118,18 @@ class TestUpdateUserMethods(TestCase):
         self.assertEqual(cm.exception.message, 'metadata properties conflict with profile: conflicting_field')
 
     def test_update_groups_succeeds(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id])
         self.assertEqual(self.user.get_group_ids()[0], group._id)
+
+    def test_update_groups_fails(self):
+        group = Group({"name": "test", "domain": "not-same-domain"})
+        group.save()
+        self.addCleanup(group.delete)
+        with self.assertRaises(ValidationError):
+            update(self.user, 'groups', [group._id])
 
     def test_update_unknown_field_raises_exception(self):
         with self.assertRaises(UpdateUserException) as cm:
@@ -290,14 +298,14 @@ class TestUpdateUserMethodsLogChanges(TestCase):
         self.assertNotIn('user_data', self.user_change_logger.fields_changed.keys())
 
     def test_update_groups_logs_change(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.addCleanup(group.delete)
         update(self.user, 'groups', [group._id], user_change_logger=self.user_change_logger)
         self.assertIn(GROUPS_FIELD, self.user_change_logger.change_messages.keys())
 
     def test_update_groups_does_not_log_no_change(self):
-        group = Group({"name": "test"})
+        group = Group({"name": "test", "domain": self.user.domain})
         group.save()
         self.user.set_groups([group._id])
         self.addCleanup(group.delete)

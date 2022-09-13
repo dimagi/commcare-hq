@@ -33,7 +33,14 @@ def write_log_events(writer, user, domain=None, override_user=None, start_date=N
 def write_log_event(writer, event, override_user=None):
     if override_user:
         event.user = override_user
-    writer.writerow([event.event_date, event.user, event.domain, event.ip_address, event.request_path])
+    writer.writerow([
+        event.event_date,
+        event.user,
+        event.domain,
+        event.ip_address,
+        event.request_method,
+        event.request_path
+    ])
 
 
 def get_users_for_domain(domain):
@@ -101,7 +108,7 @@ def write_generic_log_event(writer, event):
     action = ''
     resource = ''
     if event.doc_type == 'NavigationEventAudit':
-        action = event.headers['REQUEST_METHOD']
+        action = event.request_method
         resource = event.request_path
     else:
         assert event.doc_type == 'AccessAudit'

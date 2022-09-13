@@ -8,6 +8,10 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
     };
 
+    module.jsError = function (message) {
+        return hqImport("cloudcare/js/form_entry/errors").JS_ERROR + message;
+    };
+
     module.isWebApps = function () {
         var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             environment = FormplayerFrontend.getChannel().request('currentUser').environment;
@@ -143,6 +147,43 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             broadcastObj.street = mapboxResult.address || mapboxResult.text;
         }
         return broadcastObj;
+    };
+
+    var getRoot = (question, stopCallback) => {
+        if (question.parent === undefined) {
+            return undefined;
+        }
+
+        // logic in case the question is in a group or repeat or nested group, etc.
+        let curr = question.parent;
+        while (curr.parent && !stopCallback(curr)) {
+            curr = curr.parent;
+        }
+        return curr;
+    };
+
+    /**
+     * Gets a question's form, which will be the root of the question's tree.
+    **/
+    module.getRootForm = (question) => {
+        return getRoot(question, function () {
+            // Don't stop for any reason, just return topmost container
+            return false;
+        });
+    };
+
+    /**
+     * Get the appropriate Container to which a question can broadcast messages.
+     * This is typically the root form, but for questions inside of repeats, it's
+     * the current group (a child of the repeat juncture).
+    **/
+    module.getBroadcastContainer = (question) => {
+        var Const = hqImport("cloudcare/js/form_entry/const");
+        return getRoot(question, function (container) {
+            // Return first containing repeat group, or form if there are no ancestor repeats
+            var parent = container.parent;
+            return parent && parent.type && parent.type() === Const.REPEAT_TYPE;
+        });
     };
 
     return module;

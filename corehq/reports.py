@@ -93,7 +93,6 @@ def REPORTS(project):
         monitoring.FormCompletionTimeReport,
         monitoring.CaseActivityReport,
         monitoring.FormCompletionVsSubmissionTrendsReport,
-        monitoring.WorkerActivityTimes,
         ProjectHealthDashboard,
     )
     inspect_reports = [

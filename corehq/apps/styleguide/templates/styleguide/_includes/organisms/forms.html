@@ -34,9 +34,18 @@
       <a href='{% url 'styleguide_molecules' %}#molecules-selections' target='_blank'>selections</a>.
     </li>
     <li>
+      The textarea uses the <code>vertical-resize</code> class to allow for long input.
+      Inputs that accept XPath expressions are especially likely to have very long input.
+      The text area does not support horizontal resizing, which can allow the user to expand a
+      textarea so that it overlaps with other elements or otherwise disrupts the page's layout.
+    </li>
+    <li>
       The <code>autocomplete</code> attribute controls the browser's form autofill. Most forms in HQ
       are unique to HQ and should set turn off autocomplete to prevent unexpected automatic input.
       Exceptions would be forms that include information like a user's name and address.
+    </li>
+    <li>
+      This example does not show translations, but all user-facing text should be translated.
     </li>
   </ul>
   </p>

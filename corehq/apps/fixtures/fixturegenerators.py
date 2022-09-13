@@ -93,6 +93,16 @@ def item_lists_by_app(app, module):
     return lookup_lists + ret
 
 
+def get_global_items_by_domain(domain, case_id):
+    global_types = {}
+    for data_type in FixtureDataType.by_domain(domain):
+        if data_type.is_global:
+            global_types[data_type._id] = data_type
+    if global_types:
+        data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
+        return get_or_cache_global_fixture(domain, case_id, FIXTURE_BUCKET, '', data_fn)
+
+
 class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 
@@ -129,7 +139,12 @@ class ItemListsProvider(FixtureProvider):
     def get_global_items(self, global_types, restore_state):
         domain = restore_state.restore_user.domain
         data_fn = partial(self._get_global_items, global_types, domain)
-        return get_or_cache_global_fixture(restore_state, FIXTURE_BUCKET, '', data_fn)
+        return get_or_cache_global_fixture(restore_state.restore_user.domain,
+                                           restore_state.restore_user.user_id,
+                                           FIXTURE_BUCKET,
+                                           '',
+                                           data_fn,
+                                           restore_state.overwrite_cache)
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
@@ -199,12 +214,13 @@ class ItemListsProvider(FixtureProvider):
         for attribute in item['_data_type'].item_attributes:
             try:
                 xData.attrib[attribute] = serialize(item['item_attributes'][attribute])
-            except KeyError as e:
+            except KeyError:
                 # This should never occur, buf if it does, the OTA restore on mobile will fail and
                 # this error would have been raised and email-logged.
                 raise FixtureTypeCheckError(
-                    "Table with tag %s has an item with id %s that doesn't have an attribute as defined in its types definition"
-                    % (item['_data_type'].tag, item['_id'])
+                    f"Table with tag {item['_data_type'].tag} has an item with "
+                    f"id {item['_id']} that doesn't have an attribute as "
+                    "defined in its types definition"
                 )
         for field in item['_data_type'].fields:
             escaped_field_name = clean_fixture_field_name(field.field_name)

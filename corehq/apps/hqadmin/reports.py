@@ -179,6 +179,7 @@ class UserAuditReport(AdminReport, DatespanMixin):
             DataTablesColumn(gettext_lazy("Username")),
             DataTablesColumn(gettext_lazy("Domain")),
             DataTablesColumn(gettext_lazy("IP Address")),
+            DataTablesColumn(gettext_lazy("Request Method")),
             DataTablesColumn(gettext_lazy("Request Path")),
         )
 
@@ -191,7 +192,12 @@ class UserAuditReport(AdminReport, DatespanMixin):
         for event in events:
             if not self.selected_domain or self.selected_domain == event.domain:
                 rows.append([
-                    event.event_date, event.user, event.domain or '', event.ip_address, event.request_path
+                    event.event_date,
+                    event.user,
+                    event.domain or '',
+                    event.ip_address,
+                    event.request_method,
+                    event.request_path
                 ])
         return rows
 

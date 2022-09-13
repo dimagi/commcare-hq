@@ -1,3 +1,27 @@
+"""
+RemoteRequestsHelper
+--------------------
+
+The ``<remote-request>`` descends from the ``<entry>``. Remote requests provide support for CommCare to request data from the server
+and then allow the user to select
+an item from that data and use it as a datum for a form. In practice, remote requests are only used for case
+search and claim workflows.
+
+This case search config UI in app manager is a thin wrapper around the various elements that are part of
+``<remote-request>``, which means ``RemoteRequestsHelper`` is not especially complicated, although it is rather
+long.
+
+Case search and claim is typically an optional part of a workflow. In this use case, the remote request is accessed
+via an action, and the
+`rewind <https://github.com/dimagi/commcare-core/wiki/SessionStack#mark-and-rewind>`_ construct is used to go back to the main flow.
+However, the flag ``USH_INLINE_SEARCH`` supports remote requests being made in the main flow of a session. When
+using this flag, a ``<post>`` and query datums are added to a normal form ``<entry>``. This makes search inputs
+available after the search, rather than having them destroyed by rewinding.
+
+This module includes ``SessionEndpointRemoteRequestFactory``, which generates remote requests for use by session
+endpoints. This functionality exists for the sake of smart links: whenever a user clicks a smart link, any cases that are part
+of the smart link need to be claimed so the user can access them.
+"""
 from django.utils.functional import cached_property
 
 from corehq import toggles
@@ -27,11 +51,13 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     RemoteRequestPost,
     RemoteRequestQuery,
     RemoteRequestSession,
+    Required,
     SessionDatum,
     Stack,
     StackJump,
     Text,
     TextXPath,
+    Validation,
     XPathVariable,
 )
 from corehq.apps.app_manager.util import (
@@ -272,8 +298,21 @@ class RemoteRequestFactory(object):
                 kwargs['allow_blank_value'] = prop.allow_blank_value
             if prop.exclude:
                 kwargs['exclude'] = "true()"
-            if prop.required:
-                kwargs['required'] = interpolate_xpath(prop.required)
+            if prop.required.test:
+                kwargs['required'] = Required(
+                    test=interpolate_xpath(prop.required.test),
+                    text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
+                )
+            if prop.validations:
+                kwargs['validations'] = [
+                    Validation(
+                        test=interpolate_xpath(validation.test),
+                        text=[Text(
+                            locale_id=id_strings.search_property_validation_text(self.module, prop.name, i)
+                        )] if validation.has_text else [],
+                    )
+                    for i, validation in enumerate(prop.validations)
+                ]
             prompts.append(QueryPrompt(**kwargs))
         return prompts
 

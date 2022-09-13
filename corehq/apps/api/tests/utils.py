@@ -2,7 +2,6 @@ from collections import OrderedDict
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.http import urlencode
 
 from django_prbac.models import Role
 

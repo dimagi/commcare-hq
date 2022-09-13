@@ -1,3 +1,9 @@
+"""
+GridMenuHelper
+-----------------
+
+This is pretty simple: it just adds a root menu if one isn't already present.
+"""
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.xml_models import Menu, Text

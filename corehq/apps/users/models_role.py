@@ -7,6 +7,8 @@ from django.db import models, transaction
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
+from corehq.util.quickcache import quickcache
+from dimagi.utils.logging import notify_error
 
 
 @attr.s(frozen=True)
@@ -20,6 +22,7 @@ class StaticRole:
     upstream_id = None
     couch_id = None
     assignable_by = []
+    is_commcare_user_default = False
 
     @classmethod
     def domain_admin(cls, domain):
@@ -109,6 +112,25 @@ class UserRole(models.Model):
                     assignable_by = [assignable_by]
                 role.set_assignable_by(assignable_by)
 
+        return role
+
+    @classmethod
+    def commcare_user_default(cls, domain):
+        """This will get the default mobile worker role for the domain. If one does not exist it
+        will create a new role.
+
+        Note: the role should exist for all domains but errors during domain registration can leave
+        domains improperly configured."""
+        from corehq.apps.users.role_utils import UserRolePresets
+        role, created = UserRole.objects.get_or_create(domain=domain, is_commcare_user_default=True, defaults={
+            "name": UserRolePresets.MOBILE_WORKER
+        })
+        if created:
+            notify_error("Domain was missing default commcare user role", {
+                "domain": domain
+            })
+            permissions = UserRolePresets.INITIAL_ROLES[UserRolePresets.MOBILE_WORKER]()
+            role.set_permissions(permissions.to_list())
         return role
 
     @property
@@ -285,6 +307,7 @@ def role_to_dict(role):
         "is_non_admin_editable",
         "is_archived",
         "upstream_id",
+        "is_commcare_user_default"
     ]
     data = {}
     for field in simple_fields:

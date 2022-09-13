@@ -101,35 +101,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         ].join(':');
     };
 
-    Util.pagesToShow = function (selectedPage, totalPages, limit) {
-        var limitHalf = Math.floor(limit / 2);
-        if (totalPages < limit) {
-            return {
-                start: 0,
-                end: totalPages,
-            };
-        }
-
-        if (selectedPage < limitHalf) {
-            return {
-                start: 0,
-                end: limit,
-            };
-        }
-
-        if (selectedPage > totalPages - limitHalf) {
-            return {
-                start: totalPages - limit,
-                end: totalPages,
-            };
-        }
-
-        return {
-            start: selectedPage - limitHalf,
-            end: selectedPage + limitHalf,
-        };
-    };
-
     Util.getCurrentQueryInputs = function () {
         var queryData = Util.currentUrlToObject().queryData[sessionStorage.queryKey];
         if (queryData) {
@@ -153,6 +124,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.stickyQueryInputs = {};
         }
         this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
+    };
+
+    Util.setSelectedValues = function (selections) {
+        if (selections !== undefined) {
+            let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
+            selectedValues[sessionStorage.queryKey] = selections.join(',');
+            sessionStorage.selectedValues = JSON.stringify(selectedValues);
+        }
     };
 
     Util.CloudcareUrl = function (options) {
@@ -180,6 +159,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             }
             // Selections only deal with strings, because formplayer will send them back as strings
             if (_.isArray(selection)) {
+                hqImport("cloudcare/js/formplayer/utils/util").setSelectedValues(selection);
                 this.selections.push(String('use_selected_values'));
             } else {
                 this.selections.push(String(selection));
@@ -212,6 +192,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
 
         this.setQueryData = function (inputs, execute, forceManualSearch) {
             var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
+            this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: inputs,
                 execute: execute,
@@ -251,6 +232,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             if (index === 0) {
                 this.selections = null;
                 this.sessionId = null;
+                this.queryData = null;
             } else {
                 this.selections = this.selections.splice(0, index);
                 var key = this.selections.join(",");
@@ -264,7 +246,6 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             this.page = null;
             this.search = null;
             this.sortIndex = null;
-            this.queryData = null;
             sessionStorage.removeItem('selectedValues');
         };
     };

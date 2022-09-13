@@ -128,6 +128,10 @@
           <th>
             <span data-bind="visible: name, text: name"></span>
             <h6 data-bind="visible: !name()">({% trans "No Name" %})</h6>
+            <span data-bind="visible: is_commcare_user_default, makeHqHelp: {}"
+                data-title="{% trans "Mobile Worker Default Role" %}"
+                data-content="{% trans "This is the default role for all Mobile Workers that do not have a role assigned." %}">
+            </span>
           </th>
           <td class="text-center">
             <div data-bind="visible: permissions.access_all_locations,
@@ -233,7 +237,7 @@
                                     {% trans "View Details" %}
                                 </span>
             </button>
-            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.hasUsersAssigned && $root.allowEdit && !upstream_id(), click: $data._id ? $root.setRoleBeingDeleted : null">
+            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && !upstream_id(), click: $data._id ? $root.setRoleBeingDeleted : null">
               <i class="fa fa-trash"></i>
               {% trans "Delete Role" %}
             </button>

@@ -1,28 +1,38 @@
 import json
 from unittest.mock import patch
-from django.http import Http404
 
+from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from corehq.apps.es.tests.utils import populate_user_index
-from corehq.util.elastic import ensure_index_deleted
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import populate_user_index
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import delete_all_locations, make_loc
+from corehq.apps.users import views
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, HqPermissions, CommCareUser, UserHistory
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.views import _update_role_from_view, delete_user_role
+from corehq.apps.users.exceptions import InvalidRequestException
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    HqPermissions,
+    UserHistory,
+    UserRole,
+    WebUser,
+)
+from corehq.apps.users.views import (
+    _delete_user_role,
+    _update_role_from_view,
+    delete_user_role,
+)
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
-from corehq.util.test_utils import generate_cases
-from corehq.apps.locations.tests.util import make_loc, delete_all_locations
-from corehq.apps.locations.models import LocationType
+from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle
-from corehq.apps.users import views
+from corehq.util.elastic import ensure_index_deleted
+from corehq.util.test_utils import generate_cases
 
 
 class TestMobileWorkerListView(TestCase):
@@ -38,6 +48,8 @@ class TestMobileWorkerListView(TestCase):
         # We aren't testing permissions for this test
         self.web_user.is_superuser = True
         self.web_user.save()
+
+        self.role = UserRole.create(self.domain, 'default mobile use role', is_commcare_user_default=True)
 
     def tearDown(self):
         self.project.delete()
@@ -71,6 +83,8 @@ class TestMobileWorkerListView(TestCase):
                 self.domain,
             )
         )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.get_role(self.domain).id, self.role.id)
 
 
 @generate_cases((
@@ -265,6 +279,36 @@ class DeleteRoleTests(TestCase):
         request.user = request.couch_user = self.user
 
         return request
+
+
+class TestDeleteRole(TestCase):
+    domain = 'test-role-delete'
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=0)
+    def test_delete_role(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        _delete_user_role(self.domain, {"_id": role.get_id})
+        self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
+
+    def test_delete_role_not_exist(self):
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": "mising"})
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
+    def test_delete_role_with_users(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
+    def test_delete_commcare_user_default_role(self):
+        role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
+        with self.assertRaisesRegex(InvalidRequestException, "default role for Mobile Users"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
+    def test_delete_role_wrong_domain(self):
+        role = UserRole.create("other-domain", 'test-role')
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": role.get_id})
 
 
 class TestDeletePhoneNumberView(TestCase):

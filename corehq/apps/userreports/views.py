@@ -50,6 +50,7 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     update_hubspot_properties,
 )
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
@@ -872,7 +873,7 @@ def delete_report(request, domain, report_id):
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
     redirect = request.GET.get("redirect", None)
     if not redirect:
-        redirect = reverse('configurable_reports_home', args=[domain])
+        redirect = reverse('saved_reports', args=[domain])
     return HttpResponseRedirect(redirect)
 
 
@@ -1482,6 +1483,7 @@ def process_url_params(params, columns):
 @api_auth_with_scope(['reports:view'])
 @require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
+@api_throttle
 def export_data_source(request, domain, config_id):
     """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)

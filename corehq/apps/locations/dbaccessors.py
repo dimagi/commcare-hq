@@ -90,9 +90,13 @@ def get_users_location_ids(domain, user_ids):
     return list(chain(*location_ids))
 
 
+def user_ids_at_locations(location_ids):
+    return UserES().location(location_ids).get_ids()
+
+
 def mobile_user_ids_at_locations(location_ids):
     # this doesn't include web users
-    return UserES().location(location_ids).get_ids()
+    return UserES().location(location_ids).mobile_users().get_ids()
 
 
 def user_ids_at_locations_and_descendants(location_ids):

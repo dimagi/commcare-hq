@@ -68,7 +68,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -105,7 +104,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
-    regroup_sidebar_items,
     sidebar_to_dropdown,
 )
 
@@ -141,16 +139,8 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
@@ -579,6 +569,17 @@ class ProjectDataTab(UITab):
 
     @property
     def sidebar_items(self):
+        # HELPME
+        #
+        # This method has been flagged for refactoring due to its complexity and
+        # frequency of touches in changesets
+        #
+        # If you are writing code that touches this method, your changeset
+        # should leave the method better than you found it.
+        #
+        # Please remove this flag when this method no longer triggers an 'E' or 'F'
+        # classification from the radon code static analysis
+
         items = []
 
         export_data_views = []
@@ -1798,7 +1799,7 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Administration'), _get_administration_section(self.domain)))
 
         if self.couch_user.can_edit_motech() and has_project_access:
-            integration_nav = _get_integration_section(self.domain)
+            integration_nav = _get_integration_section(self.domain, self.couch_user)
             if integration_nav:
                 items.append((_('Integration'), integration_nav))
 
@@ -1940,7 +1941,7 @@ def _get_administration_section(domain):
     return administration
 
 
-def _get_integration_section(domain):
+def _get_integration_section(domain, couch_user):
 
     def _get_forward_name(repeater_type=None, **context):
         if repeater_type == 'FormRepeater':
@@ -2033,16 +2034,24 @@ def _get_integration_section(domain):
         })
 
     if toggles.EMBEDDED_TABLEAU.enabled(domain):
-        from corehq.apps.reports.views import TableauServerView
-        integration.append({
-            'title': _(TableauServerView.page_title),
-            'url': reverse(TableauServerView.urlname, args=[domain])
-        })
+        if couch_user.is_superuser:
+            from corehq.apps.reports.views import TableauServerView
+            integration.append({
+                'title': _(TableauServerView.page_title),
+                'url': reverse(TableauServerView.urlname, args=[domain])
+            })
 
         from corehq.apps.reports.views import TableauVisualizationListView
         integration.append({
             'title': _(TableauVisualizationListView.page_title),
             'url': reverse(TableauVisualizationListView.urlname, args=[domain])
+        })
+
+    if toggles.GENERIC_INBOUND_API.enabled(domain):
+        from corehq.motech.generic_inbound.views import ConfigurableAPIListView
+        integration.append({
+            'title': ConfigurableAPIListView.page_title,
+            'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
         })
 
     return integration
@@ -2231,7 +2240,7 @@ class SMSAdminTab(UITab):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        if self.couch_user.is_staff:
+        if has_privilege(self._request, privileges.GLOBAL_SMS_GATEWAY):
             items.append((_('SMS Connectivity'), [
                 {'title': _('Gateways'),
                 'url': reverse(GlobalSmsGatewayListView.urlname),
@@ -2283,9 +2292,10 @@ class AdminTab(UITab):
             dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
             dropdown_dict(_("SMS Connectivity & Billing"), url=reverse("default_sms_admin_interface")),
             self.divider,
-            dropdown_dict(_("Django Admin"), url="/admin"),
-            dropdown_dict(_("View All"), url=self.url),
         ])
+        if self.couch_user.is_staff:
+            submenu_context.append(dropdown_dict(_("Django Admin"), url="/admin"))
+        submenu_context.append(dropdown_dict(_("View All"), url=self.url))
         return submenu_context
 
     @property
@@ -2337,6 +2347,9 @@ class AdminTab(UITab):
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management'),
                  'icon': 'fa fa-magic'},
+                {'title': _('Get users for offboarding'),
+                 'url': reverse('get_offboarding_list'),
+                 'icon': 'fa fa-sign-out'},
                 {'title': _('Manage deleted domains'),
                  'url': reverse('tombstone_management'),
                  'icon': 'fa fa-minus-circle'},

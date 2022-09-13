@@ -90,7 +90,7 @@ from corehq.apps.users.decorators import (
     require_can_view_roles,
     require_permission_to_edit_user,
 )
-from corehq.apps.users.exceptions import MissingRoleException
+from corehq.apps.users.exceptions import MissingRoleException, InvalidRequestException
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
@@ -506,46 +506,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
             not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
 
-    @property
-    @memoized
-    def non_admin_roles(self):
-        return list(sorted(
-            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
-            key=lambda role: role.name if role.name else '\uFFFF'
-        ))
-
-    def get_roles_for_display(self):
-        show_es_issue = False
-        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
-        for role in self.non_admin_roles:
-            role_data = role.to_json()
-            role_view_data.append(role_data)
-
-            try:
-                user_count = get_role_user_count(role.domain, role.couch_id)
-                role_data["hasUsersAssigned"] = bool(user_count)
-            except TypeError:
-                # when query_result['hits'] returns None due to an ES issue
-                show_es_issue = True
-
-            role_data["has_unpermitted_location_restriction"] = (
-                not self.can_restrict_access_by_location
-                and not role.permissions.access_all_locations
-            )
-
-        if show_es_issue:
-            messages.error(
-                self.request,
-                mark_safe(_(  # nosec: no user input
-                    "We might be experiencing issues fetching the entire list "
-                    "of user roles right now. This issue is likely temporary and "
-                    "nothing to worry about, but if you keep seeing this for "
-                    "more than a day, please <a href='#modalReportIssue' "
-                    "data-toggle='modal'>Report an Issue</a>."
-                ))
-            )
-        return role_view_data
-
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
@@ -574,7 +534,7 @@ class ListWebUsersView(BaseRoleAccessView):
     def role_labels(self):
         return {
             r.get_qualified_id(): r.name
-            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+            for r in [StaticRole.domain_admin(self.domain)] + UserRole.objects.get_by_domain(self.domain)
         }
 
     @property
@@ -671,6 +631,49 @@ class ListRolesView(BaseRoleAccessView):
             {'id': page.id, 'name': _(page.name)}
             for page in get_allowed_landing_pages(self.domain)
         ]
+
+    @property
+    @memoized
+    def non_admin_roles(self):
+        return list(sorted(
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
+            key=lambda role: role.name if role.name else '\uFFFF'
+        )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
+
+    def get_roles_for_display(self):
+        show_es_issue = False
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
+            if role.is_commcare_user_default:
+                role_data["preventRoleDelete"] = True
+            else:
+                try:
+                    user_count = get_role_user_count(role.domain, role.couch_id)
+                    role_data["preventRoleDelete"] = bool(user_count)
+                except TypeError:
+                    # when query_result['hits'] returns None due to an ES issue
+                    show_es_issue = True
+
+            role_data["has_unpermitted_location_restriction"] = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
+
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(  # nosec: no user input
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
+            )
+        return role_view_data
 
     @property
     def page_context(self):
@@ -893,8 +896,11 @@ def post_user_role(request, domain):
         }, status=400)
 
     response_data = role.to_json()
-    user_count = get_role_user_count(domain, role.couch_id)
-    response_data['hasUsersAssigned'] = user_count > 0
+    if role.is_commcare_user_default:
+        response_data["preventRoleDelete"] = True
+    else:
+        user_count = get_role_user_count(domain, role.couch_id)
+        response_data['preventRoleDelete'] = user_count > 0
     return JsonResponse(response_data)
 
 
@@ -950,21 +956,38 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    user_count = get_role_user_count(domain, role_data["_id"])
-    if user_count:
-        return JsonResponse({
-            "message": ngettext(
-                "Unable to delete role '{role}'. It has one user still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. It has {user_count} users still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                user_count
-            ).format(role=role_data["name"], user_count=user_count)
-        }, status=400)
+
+    try:
+        response_data = _delete_user_role(domain, role_data)
+    except InvalidRequestException as e:
+        return JsonResponse({"message": str(e)}, status=400)
+
+    return JsonResponse(response_data)
+
+
+def _delete_user_role(domain, role_data):
     try:
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except UserRole.DoesNotExist:
-        return JsonResponse({})
+        raise Http404
+
+    if role.is_commcare_user_default:
+        raise InvalidRequestException(_(
+            "Unable to delete role '{role}'. "
+            "This role is the default role for Mobile Users and can not be deleted.",
+        ).format(role=role_data["name"]))
+
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        raise InvalidRequestException(ngettext(
+            "Unable to delete role '{role}'. "
+            "It has one user and/or invitation still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            "Unable to delete role '{role}'. "
+            "It has {user_count} users and/or invitations still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            user_count,
+        ).format(role=role_data["name"], user_count=user_count))
 
     if role.upstream_id:
         # Do not delete user roles that are controlled by an upstream domain
@@ -973,7 +996,7 @@ def delete_user_role(request, domain):
     copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
-    return JsonResponse({"_id": copy_id})
+    return {"_id": copy_id}
 
 
 @always_allow_project_access

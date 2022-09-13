@@ -5,6 +5,7 @@ import os
 import time
 from datetime import date, datetime, timedelta
 
+import boto3
 from django.conf import settings
 
 import csv
@@ -13,7 +14,6 @@ import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-import tinys3
 from celery.schedules import crontab
 from celery.task import periodic_task
 from email_validator import EmailNotValidError, validate_email
@@ -737,15 +737,16 @@ def _track_periodic_data_on_kiss(submit_json):
             ] + [prop['value'] for prop in webuser['properties']]
             csvwriter.writerow(row)
 
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
-        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
-        f = open(filename, 'rb')
-        s3_connection.upload(filename, f, 'kiss-uploads')
+    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.S3_ACCESS_KEY,
+            aws_secret_access_key=settings.S3_SECRET_KEY,
+        )
+        with open(filename, 'rb') as f:
+            s3.upload_fileobj(f, 'kiss-uploads', filename)
 
     os.remove(filename)
-
-
-
 
 
 def get_ab_test_properties(user):

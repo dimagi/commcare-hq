@@ -899,7 +899,7 @@ class BackendForm(Form):
     )
     description = CharField(
         label=gettext_noop("Description"),
-        widget=forms.Textarea,
+        widget=forms.Textarea(attrs={"class": "vertical-resize"}),
         required=False,
     )
     give_other_domains_access = BooleanField(
@@ -1297,9 +1297,10 @@ class SubscribeSMSForm(Form):
 
 class ComposeMessageForm(forms.Form):
 
-    recipients = forms.CharField(widget=forms.Textarea,
+    recipients = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
                                  help_text=gettext_lazy("Type a username, group name or 'send to all'"))
-    message = forms.CharField(widget=forms.Textarea, help_text=gettext_lazy('0 characters (160 max)'))
+    message = forms.CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}),
+    help_text=gettext_lazy('0 characters (160 max)'))
 
     def __init__(self, *args, **kwargs):
         domain = kwargs.pop('domain')
@@ -1322,7 +1323,7 @@ class ComposeMessageForm(forms.Form):
 class SentTestSmsForm(Form):
     phone_number = CharField(
         required=True, help_text=gettext_lazy("Phone number with country code"))
-    message = CharField(widget=forms.Textarea, required=True)
+    message = CharField(widget=forms.Textarea(attrs={"class": "vertical-resize"}), required=True)
     backend_id = ChoiceField(
         label=gettext_lazy("Gateway"),
         required=False

@@ -2,7 +2,8 @@ import datetime
 from copy import deepcopy
 
 from django.contrib.admin.models import LogEntry
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
+from django.utils.translation import gettext as _
 
 from unittest.mock import patch
 
@@ -49,7 +50,6 @@ from corehq.extensions.interface import disable_extensions
 
 from corehq.apps.groups.models import Group
 from dimagi.utils.dates import add_months_to_date
-
 
 
 class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
@@ -882,6 +882,17 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         )
         self.assertTrue(self.user.is_active)
 
+    def test_password_is_not_string(self):
+        rows = import_users_and_groups(
+            self.domain.name,
+            [self._get_spec(password=123)],
+            [],
+            self.uploading_user.get_id,
+            self.upload_record.pk,
+            False
+        )['messages']['rows']
+        self.assertEqual(rows[0]['row']['password'], "123")
+
     def test_update_user_no_username(self):
         import_users_and_groups(
             self.domain.name,
@@ -1477,6 +1488,7 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
         self.assertEqual(rows[0]['flag'], "'password' values must be unique")
 
     @disable_extensions('corehq.apps.domain.extension_points.validate_password_rules')
+    @override_settings(MINIMUM_PASSWORD_LENGTH=8)
     def test_weak_password(self):
         updated_user_spec = deepcopy(self.user_specs[0])
         updated_user_spec["password"] = '123'
@@ -1489,7 +1501,8 @@ class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
             self.upload_record.pk,
             False
         )['messages']['rows']
-        self.assertEqual(rows[0]['flag'], 'Password is not strong enough. Try making your password more complex.')
+        self.assertEqual(rows[0]['flag'],
+        _("Password must have at least 8 characters."))
 
 
 class TestUserUploadRecord(TestCase):

@@ -154,35 +154,3 @@ def path_starts_with_url(path, url):
     """
     url = six.moves.urllib.parse.urlparse(url).path
     return path.startswith(url)
-
-
-SidebarPosition = namedtuple("SidebarPosition", ["heading", "index"])
-
-
-def regroup_sidebar_items(ordering, sidebar_items):
-    reports_to_move = {}  # report class name to SidebarPosition mapping
-    for heading, reports in ordering:
-        for i, report_class_name in enumerate(reports):
-            reports_to_move[report_class_name] = SidebarPosition(heading, i)
-
-    # A mapping of headings to lists of 2-tuples. The tuples are index (under the heading) and the item itself.
-    new_sections = {heading: [] for heading, _ in ordering}
-    # A mapping of headings to lists of sidebar items.
-    old_sections = {heading: [] for heading, _ in sidebar_items}
-
-    # extract the sidebar items that to their new heading sections (or their old sections)
-    for heading, items in sidebar_items:
-        for item in items:
-            new_position = reports_to_move.get(item['class_name'], None)
-            if new_position:
-                new_sections[new_position.heading].append((new_position.index, item))
-            else:
-                old_sections[heading].append(item)
-
-    # Flatten the intermediary data structures
-    flat_new_sections = [
-        (heading, [item for index, item in sorted(new_sections[heading])])
-        for heading, _ in ordering
-    ]
-    flat_old_sections = [(heading, old_sections[heading]) for heading, _ in sidebar_items]
-    return flat_new_sections + flat_old_sections

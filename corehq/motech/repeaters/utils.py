@@ -125,7 +125,8 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
         return sanitized_docs
 
     @memoized
-    def _get_all_couch_docs_for_model(self):
+    def _get_all_couch_docs_for_model(self, chunk_size=None):
+        # NOTE chunk_size is ignored
         repeater_docs = [
             repeater for repeater in get_all_repeater_docs()
             if repeater['doc_type'] == self.couch_doc_type()
@@ -138,7 +139,8 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
     def _get_couch_doc_count_for_domains(self, domains):
         return get_repeater_count_for_domains(domains)
 
-    def _iter_couch_docs_for_domains(self, domains):
+    def _iter_couch_docs_for_domains(self, domains, chunk_size=None):
+        # NOTE chunk_size is ignored
         for domain in domains:
             for repeater in get_repeaters_by_domain(domain):
                 yield repeater.to_json()
