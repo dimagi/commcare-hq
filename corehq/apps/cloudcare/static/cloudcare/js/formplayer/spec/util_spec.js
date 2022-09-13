@@ -33,7 +33,7 @@ describe('Util', function () {
     describe('Multi-Values for Query Screen', function () {
         it('should split a multi-value string', function () {
             assert.deepEqual(Util.splitMultiValue("a b c"), ["a", "b", "c"]);
-            assert.deepEqual(Util.splitMultiValue(""), []);
+            assert.deepEqual(Util.splitMultiValue(""), [""]);
             assert.deepEqual(Util.splitMultiValue('texas "new mexico" utah'), ["texas", "new mexico", "utah"]);
             assert.deepEqual(Util.splitMultiValue("'things' 'other things'"), ["things", "other things"]);
             assert.deepEqual(Util.splitMultiValue('"Jenny\'s teapot" "Ethan\'s mug"'), ["Jenny's teapot", "Ethan's mug"]);

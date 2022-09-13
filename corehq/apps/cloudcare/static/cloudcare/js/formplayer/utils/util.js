@@ -283,6 +283,10 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
     };
 
     Util.splitMultiValue = function (str) {
+        if (str === "") {
+            return [""];
+        }
+
         let items = [],
             item = "",
             quote;
