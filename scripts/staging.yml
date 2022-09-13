@@ -60,6 +60,8 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     # - bmb/sso/api/test-001  # Biyeun June 15
+    - es/dmw-role+mjr/erm-overwrite  # Ethan Sep 13
+    - es/dmw-role  # Ethan Sep 13
     - mjr/erm-overwrite # Matt June 24
     - gh/upgrade-twilio # Graham July 8
     # - rp/fix-case-properties-modal-styling # Rynhard 20 July
@@ -84,5 +86,4 @@ branches:
     - ap/remove-celery-monkey-patching # Amit Sep 11
     - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
     - sk/webapps-update-url # Simon Sep 13
-    - es/dmw-role  # Ethan Sep 13
 submodules: { }
