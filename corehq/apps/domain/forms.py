@@ -730,19 +730,6 @@ class PrivacySecurityForm(forms.Form):
         label=gettext_lazy("Disable Google Analytics"),
         required=False,
     )
-    # Enabled by a specific feature flag:
-    # https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints
-    restrict_mobile_access = BooleanField(
-        label=gettext_lazy("Restrict Mobile Endpoint Access"),
-        required=False,
-        help_text=mark_safe_lazy(gettext_lazy(
-            "When this setting is turned on, the Roles and Permissions page will display a new "
-            "\"Mobile App Access\" option under \"Other Settings.\" With this permission disabled, "
-            "the user account will be unable to login or sync from a mobile application, and will only "
-            "be able to use apps via the Web Apps interface."
-            "<a href='https://help.commcarehq.org/display/commcarepublic/Project+Space+Settings'> "
-            "Read more about restricting mobile endpoint access here.</a>")),
-    )
     disable_mobile_login_lockout = BooleanField(
         label=gettext_lazy("Disable Mobile Worker Lockout"),
         required=False,
@@ -805,8 +792,6 @@ class PrivacySecurityForm(forms.Form):
         domain_obj.secure_submissions = secure_submissions
         domain_obj.hipaa_compliant = self.cleaned_data.get('hipaa_compliant', False)
         domain_obj.ga_opt_out = self.cleaned_data.get('ga_opt_out', False)
-        domain_obj.restrict_mobile_access = self.cleaned_data.get('restrict_mobile_access', False)
-
         domain_obj.disable_mobile_login_lockout = self.cleaned_data.get('disable_mobile_login_lockout', False)
 
         domain_obj.save()

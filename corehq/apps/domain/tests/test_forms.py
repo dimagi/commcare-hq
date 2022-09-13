@@ -24,7 +24,6 @@ class PrivacySecurityFormTests(SimpleTestCase):
             'restrict_superusers',
             'secure_submissions',
             'allow_domain_requests',
-            'restrict_mobile_access',
             'disable_mobile_login_lockout'
         ])
 

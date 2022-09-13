@@ -22,9 +22,6 @@ class TestMobileEndpointAccess(TestCase):
         super().setUpClass()
         cls.request_factory = RequestFactory()
         cls.domain_obj = create_domain(cls.domain)
-        cls.domain_obj.restrict_mobile_access = True
-        cls.domain_obj.save()
-
         initialize_domain_with_default_roles(cls.domain)
         app_editor_role = UserRole.objects.get(name=UserRolePresets.APP_EDITOR)
 
