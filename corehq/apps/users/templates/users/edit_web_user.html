@@ -39,7 +39,7 @@
       <legend>{% blocktrans with couch_user.human_friendly_name as friendly_name %}Information for {{ friendly_name }}{% endblocktrans %}</legend>
       <dl class="dl-horizontal hq-dl-userinfo">
         <dt>{% trans 'Username' %}</dt>
-        <dd>{{ couch_user.html_username|safe }}</dd>
+        <dd>{{ couch_user.html_username }}</dd>
         {% for field in form_uneditable.visible_fields %}
           {% if couch_user|getattr:field.name %}
             <dt>{{ field.label }}</dt>
