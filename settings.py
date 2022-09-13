@@ -1195,6 +1195,8 @@ IS_SAAS_ENVIRONMENT = SERVER_ENVIRONMENT in ('production', 'staging')
 
 ALLOW_MAKE_SUPERUSER_COMMAND = True
 
+ALLOW_SUPERUSER_MANAGEMENT = True
+
 if 'KAFKA_URL' in globals():
     import warnings
     warnings.warn(inspect.cleandoc("""KAFKA_URL is deprecated
