@@ -14,6 +14,8 @@ from corehq.blobs import get_blob_db
 from corehq.apps.reports.views import (
     MySavedReportsView,
     AddSavedReportConfigView,
+    soft_shift_to_domain_timezone,
+    soft_shift_to_server_timezone,
 )
 from django.urls.base import reverse
 from .. import views
@@ -921,3 +923,55 @@ class TestAddSavedReportConfigView(TestReportsBase):
         # Validate that config1 is untouched
         original_config = ReportConfig.get(config1._id)
         self.assertEqual(original_config.description, '')
+
+
+class TestTimezoneConversion(TestCase):
+    DOMAIN = "test-domain"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.domain_obj = create_domain(cls.DOMAIN)
+        cls.domain_obj.default_timezone = "Pacific/Kiritimati"
+        cls.domain_obj.save()
+        super()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.domain_obj.delete()
+        super()
+
+    def convert_to_server_timezone(self):
+        report_notification = ReportNotification(
+            domain=self.DOMAIN,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            stop_hour=16,
+            stop_minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+            interval="hourly",
+        )
+        soft_shift_to_server_timezone(report_notification)
+
+        self.assertEqual(report_notification.hour, 18)
+        self.assertEqual(report_notification.stop_hour, 2)
+
+    def convert_to_domain_timezone(self):
+        report_notification = ReportNotification(
+            domain=self.DOMAIN,
+            config_ids=[],
+            hour=8,
+            minute=0,
+            stop_hour=16,
+            stop_minute=0,
+            send_to_owner=True,
+            recipient_emails=[],
+            language=None,
+            interval="hourly",
+        )
+        soft_shift_to_domain_timezone(report_notification)
+
+        self.assertEqual(report_notification.hour, 22)
+        self.assertEqual(report_notification.stop_hour, 6)
