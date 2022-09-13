@@ -22,6 +22,11 @@
              default_search="false"
              storage-instance="results"
              template="case">
+        <title>
+          <text>
+            <locale id="case_search.m0.inputs"/>
+          </text>
+        </title>
         <data key="case_type" ref="'case'"/>
         <data key="&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;" ref="instance('casedb')/case[@case_id='instance('commcaresession')/session/data/case_id']/&#616;&#359;s&#570;&#359;&#589;&#570;&#7549;"/>
         <data key="name" ref="instance('locations')/locations/location[@id=123]/@type"/>

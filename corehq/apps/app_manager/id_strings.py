@@ -431,6 +431,11 @@ def case_list_audio_locale(module):
     return "case_lists.m{module.id}.audio".format(module=module)
 
 
+@pattern('case_search.m%d.inputs')
+def case_search_title_translation(module):
+    return "case_search.m{module.id}.inputs".format(module=module)
+
+
 def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
