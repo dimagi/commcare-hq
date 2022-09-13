@@ -353,7 +353,7 @@ class DomainAdminRestoreView(AdminRestoreView):
         return super(DomainAdminRestoreView, self).get(request, **kwargs)
 
     def _validate_user_access(self, user):
-        return user.is_member_of(self.domain) if user.is_web_user() else self.domain == user.domain
+        return user.is_member_of(self.domain)
 
 
 @require_superuser
