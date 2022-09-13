@@ -118,6 +118,9 @@
           </th>
           {% endif %}
           <th>{% trans "Actions" %}</th>
+          {% if is_managed_by_upstream_domain %}
+          <th>{% trans "Local App Config" %}</th>
+          {% endif %}
         </tr>
         </thead>
         <tbody data-bind="foreach: userRoles">
@@ -226,19 +229,24 @@
           {% endif %}
           <td>
             <button class="btn btn-default" data-bind="visible: $data._id, click: $data._id ? $root.setRoleBeingEdited : null">
-                                <span data-bind="visible: !$root.allowEdit">
-                                    {% trans "View Details" %}
-                                </span>
-              <span data-bind="visible: $root.allowEdit">
+                                <span data-bind="if: isEditable">
                                     <i class="fa fa-edit"></i>
                                     {% trans "Edit Role" %}
                                 </span>
+                                <span data-bind="ifnot: isEditable">
+                                    {% trans "View Details" %}
+                                </span>
             </button>
-            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit, click: $data._id ? $root.setRoleBeingDeleted : null">
+            <button class="btn btn-danger" data-bind="visible: $data._id && !$data.preventRoleDelete && $root.allowEdit && !upstream_id(), click: $data._id ? $root.setRoleBeingDeleted : null">
               <i class="fa fa-trash"></i>
               {% trans "Delete Role" %}
             </button>
           </td>
+          {% if is_managed_by_upstream_domain %}
+          <td class="text-center">
+            <div data-bind="permissionIcon: { manage: !upstream_id() }"></div>
+          </td>
+          {% endif %}
         </tr>
         </tbody>
       </table>
