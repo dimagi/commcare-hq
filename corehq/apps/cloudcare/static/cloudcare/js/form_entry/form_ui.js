@@ -565,9 +565,9 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         var self = this;
         self.fromJS(json);
         self.parent = parent;
-        // Grab the parent pubsub so questions can interact with other questions on the same form.
-        const form = Utils.getRootForm(self);
-        self.formPubSub = (form) ? form.pubsub : new ko.subscribable();
+        // Grab the containing pubsub so questions can interact with other questions on the same form.
+        const container = Utils.getBroadcastContainer(self);
+        self.broadcastPubSub = (container) ? container.pubsub : new ko.subscribable();
         self.error = ko.observable(null);
         self.serverError = ko.observable(null);
         self.rel_ix = ko.observable(relativeIndex(self.ix()));

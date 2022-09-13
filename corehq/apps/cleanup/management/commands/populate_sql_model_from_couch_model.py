@@ -8,10 +8,13 @@ from functools import partial
 
 from attrs import define, field
 
+from couchdbkit.exceptions import ResourceNotFound
+
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils.functional import classproperty
 
 from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
 from corehq.dbaccessors.couchapps.all_docs import (
@@ -66,9 +69,18 @@ class PopulateSQLCommand(BaseCommand):
     def _should_migrate_in_bulk(self):
         return not hasattr(self, "update_or_create_sql_object")
 
-    def should_ignore(self, doc):
-        """Return true if the document should not be synced to SQL"""
-        return False
+    def get_ids_to_ignore(self, docs):
+        """Return a set of document ids that should be ignored by the migration
+
+        One example of how this might be used is when there are
+        documents in Couch that have been orphaned from their parent
+        (the parent doc has been deleted), and they cannot be inserted
+        into SQL because a foreign key constraint would fail.
+
+        The default implementation returns an empty set, which means no
+        documents will be ignored unless this method is overridden.
+        """
+        return set()
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
@@ -128,8 +140,27 @@ class PopulateSQLCommand(BaseCommand):
     @classmethod
     def count_items_to_be_migrated(cls):
         couch_count = get_doc_count_by_type(cls.couch_db(), cls.couch_doc_type())
+        ignored_count = cls.get_migration_status().get("ignored_count", 0)
         sql_count = cls.sql_class().objects.count()
-        return couch_count - sql_count
+        return couch_count - ignored_count - sql_count
+
+    @classproperty
+    def _migration_status_slug(cls):
+        return f"{cls.couch_doc_type()}-sql-migration-status"
+
+    def save_migration_status(self):
+        self.couch_db().save_doc({
+            "_id": self._migration_status_slug,
+            "doc_type": "PopulateSQLCommandStatus",
+            "ignored_count": self.ignored_count,
+        }, force_update=True)
+
+    @classmethod
+    def get_migration_status(cls):
+        try:
+            return cls.couch_db().get(cls._migration_status_slug)
+        except ResourceNotFound:
+            return {}
 
     @classmethod
     def commit_adding_migration(cls):
@@ -229,37 +260,33 @@ Run the following commands to run the migration and get up to date:
         parser.add_argument(
             '--chunk-size',
             type=int,
-            default=100,
+            default=1000,
             help="Number of docs to fetch at once (default: 100).",
         )
         parser.add_argument(
             '--log-path',
             default="-" if settings.UNIT_TESTING else None,
-            help="File path to write logs to. If not provided a default will be used."
-        )
-        parser.add_argument(
-            '--append-log',
-            action="store_true",
-            help="Append to log file if it already exists."
+            help="File or directory path to write logs to. If not provided a default will be used."
         )
 
     def handle(self, chunk_size, fixup_diffs, **options):
         log_path = options.get("log_path")
-        append_log = options.get("append_log", False)
         verify_only = options.get("verify_only", False)
         skip_verify = options.get("skip_verify", False)
 
-        if not log_path:
+        if not log_path or os.path.isdir(log_path):
             date = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S.%f')
             command_name = self.__class__.__module__.split('.')[-1]
-            log_path = f"{command_name}_{date}.log"
+            filename = f"{command_name}_{date}.log"
+            log_path = os.path.join(log_path, filename) if log_path else filename
 
-        if log_path != "-" and os.path.exists(log_path) and not append_log:
+        if log_path != "-" and os.path.exists(log_path):
             raise CommandError(f"Log file already exists: {log_path}")
 
         if verify_only and skip_verify:
             raise CommandError("verify_only and skip_verify are mutually exclusive")
 
+        self.log_path = log_path
         self.diff_count = 0
         self.ignored_count = 0
         doc_index = 0
@@ -304,16 +331,23 @@ Run the following commands to run the migration and get up to date:
             migrate = self._migrate_doc
             verify = self._verify_doc
 
-        with self.open_log(log_path, append_log) as logfile:
-            for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
-                if not verify_only:
-                    migrate(item, logfile)
-                if not skip_verify:
-                    verify(item, logfile, verify_only)
-                if not is_bulk:
-                    doc_index += 1
-                    if doc_index % 1000 == 0:
-                        print(f"Diff count: {self.diff_count}")
+        aborted = False
+        with self.open_log(log_path) as logfile:
+            try:
+                for item in iter_items(with_progress_bar(docs, length=doc_count, oneline=False)):
+                    if not verify_only:
+                        migrate(item, logfile)
+                    if not skip_verify:
+                        verify(item, logfile, verify_only)
+                    if not is_bulk:
+                        doc_index += 1
+                        if doc_index % 1000 == 0:
+                            print(f"Diff count: {self.diff_count}")
+                self.save_migration_status()
+            except KeyboardInterrupt:
+                traceback.print_exc(file=logfile)
+                aborted = True
+                print("Aborted.")
 
         if not is_bulk:
             print(f"Processed {doc_index} documents")
@@ -321,6 +355,8 @@ Run the following commands to run the migration and get up to date:
             print(f"Ignored {self.ignored_count} Couch documents")
         if not skip_verify:
             print(f"Found {self.diff_count} differences")
+        if aborted:
+            sys.exit(1)
 
     def _migrate_docs(self, docs, logfile, fixup_diffs):
         def update_log(action, doc_ids):
@@ -338,10 +374,12 @@ Run the following commands to run the migration and get up to date:
             objs_by_couch_id = {obj._migration_couch_id for obj in objs.only(couch_id_name)}
         creates = []
         updates = []
-        ignored = []
+        # cache ignored ids in instance variable so _verify_docs does not need to recalculate
+        self._ignored_ids_cache = ignored = self.get_ids_to_ignore(
+            [d for d in docs if d["_id"] not in objs_by_couch_id])
+        self.ignored_count += len(ignored)
         for doc in docs:
-            if self.should_ignore(doc):
-                ignored.append(doc)
+            if doc["_id"] in ignored:
                 continue
             if doc["_id"] in objs_by_couch_id:
                 if fixup_diffs:
@@ -364,8 +402,7 @@ Run the following commands to run the migration and get up to date:
                     obj.save()
         update_log("Created", [obj._migration_couch_id for obj in creates])
         update_log("Updated", [obj._migration_couch_id for obj in updates])
-        update_log("Ignored", [doc["_id"] for doc in ignored])
-        self.ignored_count += len(ignored)
+        update_log("Ignored", ignored)
 
     def _verify_docs(self, docs, logfile, verify_only):
         sql_class = self.sql_class()
@@ -374,9 +411,14 @@ Run the following commands to run the migration and get up to date:
         objs = sql_class.objects.filter(**{couch_id_name + "__in": couch_ids})
         objs_by_couch_id = {obj._migration_couch_id: obj for obj in objs}
         diff_count = self.diff_count
+        if verify_only:
+            ignored = self.get_ids_to_ignore(
+                [d for d in docs if d["_id"] not in objs_by_couch_id])
+            self.ignored_count += len(ignored)
+        else:
+            ignored = self._ignored_ids_cache
         for doc in docs:
-            if verify_only and self.should_ignore(doc):
-                self.ignored_count += 1
+            if doc["_id"] in ignored:
                 continue
             self._do_diff(doc, objs_by_couch_id.get(doc["_id"]), logfile)
         if diff_count != self.diff_count:
@@ -384,6 +426,9 @@ Run the following commands to run the migration and get up to date:
 
     def _do_diff(self, doc, obj, logfile, exit=False):
         if obj is None:
+            couch_class = self.sql_class()._migration_get_couch_model_class()
+            if not couch_class.get_db().doc_exist(doc["_id"]):
+                return  # ignore if also missing in Couch (deleted)
             diff = "Missing in SQL - unique constraint violation?"
         else:
             diff = self.get_diff_as_string(doc, obj)
@@ -396,8 +441,10 @@ Run the following commands to run the migration and get up to date:
                 raise CommandError(f"Doc verification failed for {doc['_id']!r}. Exiting.")
 
     def _verify_doc(self, doc, logfile, verify_only):
-        if verify_only and self.should_ignore(doc):
-            self.ignored_count += 1
+        ignored = self.get_ids_to_ignore([doc]) if verify_only else self._ignored_ids_cache
+        if doc["_id"] in ignored:
+            if verify_only:
+                self.ignored_count += 1
             return
         try:
             couch_id_name = getattr(self.sql_class(), '_migration_couch_id_name', 'couch_id')
@@ -407,7 +454,9 @@ Run the following commands to run the migration and get up to date:
         self._do_diff(doc, obj, logfile, exit=not verify_only)
 
     def _migrate_doc(self, doc, logfile):
-        if self.should_ignore(doc):
+        # cache ignored ids in instance variable so _verify_doc does not need to recalculate
+        self._ignored_ids_cache = ignored = self.get_ids_to_ignore([doc])
+        if doc["_id"] in ignored:
             self.ignored_count += 1
             logfile.write(f"Ignored model for {self.couch_doc_type()} with id {doc['_id']}\n")
             return
@@ -442,10 +491,9 @@ Run the following commands to run the migration and get up to date:
         return get_doc_count_by_type(self.couch_db(), self.couch_doc_type())
 
     @staticmethod
-    def open_log(log_path, append_log):
+    def open_log(log_path, mode="w"):
         if log_path == "-":
             return nullcontext(sys.stdout)
-        mode = "a" if append_log else "w"
         return open(log_path, mode)
 
 
@@ -457,16 +505,17 @@ class DiffDocs:
     path = field()
     couch_db = field()
     chunk_size = field()
+    diff_template = field(default=DIFF_HEADER)
 
     def __iter__(self):
-        doc_ids = self._iter_doc_ids()
+        doc_ids = self.iter_doc_ids()
         yield from iter_docs(self.couch_db, doc_ids, self.chunk_size)
 
     def __len__(self):
-        return sum(1 for x in self._iter_doc_ids(quiet=True))
+        return sum(1 for x in self.iter_doc_ids(quiet=True))
 
-    def _iter_doc_ids(self, quiet=False):
-        prefix, suffix = DIFF_HEADER.split("{}")
+    def iter_doc_ids(self, quiet=False):
+        prefix, suffix = self.diff_template.split("{}")
         with open(self.path) as log:
             for line in log:
                 if line.startswith(prefix) and line.endswith(suffix):

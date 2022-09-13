@@ -4097,6 +4097,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
+msgid "Android app dependencies"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
 msgid "Android Settings"
 msgstr ""
 
@@ -4706,6 +4710,12 @@ msgstr ""
 #: corehq/apps/app_manager/static_strings.py
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Practice Mobile Worker"
+msgstr ""
+
+#: corehq/apps/app_manager/static_strings.py
+msgid ""
+"Prevents mobile workers from using a CommCare app until the Android apps "
+"that it needs have been installed on the device.\n"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -26926,10 +26936,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -26948,10 +26954,6 @@ msgstr ""
 
 #: corehq/apps/reports/models.py
 msgid "Deactivated Mobile Workers"
-msgstr ""
-
-#: corehq/apps/reports/models.py
-msgid "The config format is invalid"
 msgstr ""
 
 #: corehq/apps/reports/standard/__init__.py
@@ -27802,7 +27804,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -36253,11 +36257,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -40442,16 +40447,6 @@ msgstr ""
 
 #: custom/inddex/filters.py
 msgid "FAO/WHO GIFT Food Group Description"
-msgstr ""
-
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can not be same as last {restricted} passwords."
-msgstr ""
-
-#: custom/nic_compliance/password_validation.py
-#, python-brace-format
-msgid "Your password can't be same as last {restricted} passwords."
 msgstr ""
 
 #: custom/reports/mc/reports/definitions.py

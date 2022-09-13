@@ -53,7 +53,7 @@ def reentrant_redis_locks():
             yield
     finally:
         _LOCK.release()
-        assert not locks, f"unreleased {locks.values()}"
+    assert not locks, f"unreleased {locks.values()}"
 
 
 @attr.s
@@ -72,9 +72,16 @@ class ReentrantTestLock:
     lock = attr.ib(factory=RLock, init=False, repr=False)
 
     def acquire(self, **kw):
+        timeout_added = kw.get("blocking", True) and "timeout" not in kw
+        if timeout_added:
+            kw["timeout"] = 10
         self.level += 1
         try:
-            return self.lock.acquire(**kw)
+            acquired = self.lock.acquire(**kw)
+            if not acquired and timeout_added:
+                # caller expected to block indefinitely,
+                raise RuntimeError(f"could not acquire lock: {self.name}")
+            return acquired
         finally:
             log.debug("acquire %s [%s]", self.name, self.level)
 

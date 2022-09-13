@@ -43,7 +43,6 @@ elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
 email_validator
 ethiopian-date-converter
 eulxml
-Faker
 gevent
 ghdiff
 google-api-python-client==2.32.0
@@ -105,7 +104,6 @@ SQLAlchemy
 stripe
 suds-py3
 text-unidecode
-tinys3
 toposort
 tropo-webapi-python
 turn-python

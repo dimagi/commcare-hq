@@ -1,12 +1,14 @@
-/* global NProgress */
+/* global moment, NProgress */
 hqDefine('cloudcare/js/util', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
+    "cloudcare/js/formplayer/constants",
 ], function (
     $,
     initialPageData,
-    HMACCallout
+    HMACCallout,
+    constants
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
@@ -36,9 +38,7 @@ hqDefine('cloudcare/js/util', [
     };
 
     var showError = function (message, $el, reportToHq) {
-        if (message === undefined) {
-            message = gettext("Sorry, an error occurred while processing that request.");
-        }
+        message = getErrorMessage(message);
         _show(message, $el, null, "alert alert-danger");
         if (reportToHq === undefined || reportToHq) {
             reportFormplayerErrorToHQ({
@@ -56,7 +56,7 @@ hqDefine('cloudcare/js/util', [
     };
 
     var showHTMLError = function (message, $el, autoHideTime, reportToHq) {
-        var htmlMessage = message = message || gettext("Sorry, an error occurred while processing that request.");
+        var htmlMessage = message = getErrorMessage(message);
         var $container = _show(message, $el, autoHideTime, "alert alert-danger", true);
         try {
             message = $container.text();  // pull out just the text the user sees
@@ -71,6 +71,16 @@ hqDefine('cloudcare/js/util', [
                 htmlMessage: htmlMessage,
             });
         }
+    };
+
+    var getErrorMessage = function (message) {
+        message = message || constants.GENERIC_ERROR;
+        const originalLen = message.length;
+        message = message.substr(0, 500);
+        if (message.length < originalLen) {
+            message += " ...";
+        }
+        return message;
     };
 
     var showSuccess = function (message, $el, autoHideTime, isHTML) {
@@ -282,14 +292,44 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
-    var dateTimePickerOptions = function () {
-        return {
+    /**
+     *  Convert two-digit year to four-digit year.
+     *  Differs from JavaScript's two-year parsing to better match CommCare,
+     *  where most dates are either DOBs or EDDs.
+     *
+     *  Input is a string. If input looks like it has a two-digit year (MM.DD.YY, D/M/YY, etc.),
+     *  replace the year with a four-digit year that is within the range:
+     *    currentYear - 90 <= inputYear <= currentYear + 10
+     *  Otherwise, return the input string.
+     */
+    var convertTwoDigitYear = function (inputDate) {
+        var parts = inputDate.split(/\D/);
+        if (parts.length === 3 && parts.join("").length <= 6) {
+            var inputYear = parts[2];
+            if (inputYear.length === 2) {
+                inputYear = Math.floor(new Date().getFullYear() / 100) + inputYear;
+                if (inputYear > new Date().getFullYear() + 10) {
+                    inputYear -= 100;
+                }
+                inputDate = [parts[0], parts[1], inputYear].join("-");
+            }
+        }
+        return inputDate;
+    };
+
+    var initDateTimePicker = function ($el, extraOptions) {
+        if (!$el.length) {
+            return;
+        }
+
+        extraOptions = extraOptions || {};
+        $el.datetimepicker(_.extend({
             useCurrent: false,
             showClear: true,
             showClose: true,
             showTodayButton: true,
             debug: true,
-            extraFormats: ["MM/DD/YYYY"],
+            extraFormats: ["MM/DD/YYYY", "MM/DD/YY"],
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
@@ -320,11 +360,28 @@ hqDefine('cloudcare/js/util', [
                 togglePeriod: gettext('Toggle Period'),
                 selectTime: gettext('Select Time'),
             },
-        };
+        }, extraOptions));
+
+        var picker = $el.data("DateTimePicker");
+        picker.parseInputDate(function (dateString) {
+            if (!moment.isMoment(dateString) || dateString instanceof Date) {
+                dateString = convertTwoDigitYear(dateString);
+            }
+            if (extraOptions.parseInputDate) {
+                return extraOptions.parseInputDate(dateString);
+            }
+            let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
+            return dateObj.isValid() ? dateObj : "";
+        });
+
+        $el.on("focusout", function () {
+            picker.hide();
+        });
     };
 
     return {
-        dateTimePickerOptions: dateTimePickerOptions,
+        convertTwoDigitYear: convertTwoDigitYear,
+        initDateTimePicker: initDateTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,

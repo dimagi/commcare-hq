@@ -411,7 +411,7 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             concurrent_save.set()
             if not allow_migration.wait(timeout=10):
                 raise RuntimeError("allow_migration timeout")
-            return False
+            return set()
 
         def diff(doc):
             return self.diff(doc.to_json(), LookupTable.objects.get(id=doc._id))
@@ -432,9 +432,9 @@ class TestLookupTableCouchToSQLMigration(TestCase):
             color.save(sync_to_sql=False)
             shape.save(sync_to_sql=False)
 
-            with patch.object(LookupTableCommand, "should_ignore", migration_blocker):
+            with patch.object(LookupTableCommand, "get_ids_to_ignore", migration_blocker):
                 migration = Thread(target=migration_runner)
-                migration.start()  # loads Couch docs, blocks on should_ignore
+                migration.start()  # loads Couch docs, blocks on get_ids_to_ignore
 
                 if not concurrent_save.wait(timeout=10):
                     raise RuntimeError("concurrent_save timeout")
@@ -451,6 +451,82 @@ class TestLookupTableCouchToSQLMigration(TestCase):
                 self.assertEqual(diff(shape), [])
         finally:
             test_connection.dec_thread_sharing()
+
+    def test_migration_race_to_orphaned_sql_doc(self):
+        # Race condition:
+        # - Couch & SQL objects both exist, in sync
+        # - migration reads Couch object
+        # - Couch object deleted by another process -> SQL object also deleted
+        # - migration reads SQL to get list of objects to be created.
+        #   SQL object is missing because it has been deleted.
+        # - migration (re)creates SQL object with old/wrong Couch doc id
+        # - other process attempts to create new lookup table with same
+        #   (domain, tag), creates object in Couch, fails on save to SQL
+
+        # setup: couch doc has different ID from sql doc with same domain, tag pair
+        doc, obj = create_lookup_table(unwrap_doc=False)
+        doc.save(sync_to_sql=False)
+        assert obj._migration_couch_id != doc._id
+        obj.save(sync_to_couch=False)
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptables', log_path=log.path)
+            call_command('populate_lookuptables', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed orphaned LookupTable row: {obj.id}", log2.content)
+            self.assertIn(f"Recreated model for FixtureDataType with id {doc._id}", log2.content)
+
+    def test_migration_deletes_duplicate_couch_docs(self):
+        # Not sure how this scenario occurs, but --fixup-diffs should fix it
+
+        # setup: multiple couch docs with same (domain, tag) pair
+        dup_ids = set()
+        for i in range(3):
+            doc, obj = create_lookup_table(unwrap_doc=False)
+            doc.save(sync_to_sql=False)
+            dup_ids.add(doc._id)
+        assert len(dup_ids) == 3, dup_ids
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptables', log_path=log.path)
+            diffs = 0
+            for dup_id in dup_ids:
+                if f'Doc "{dup_id}" has differences:\n' in log.content:
+                    diffs += 1
+            self.assertEqual(diffs, 2, log.content)
+
+            call_command('populate_lookuptables', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed duplicate FixtureDataTypes: {sorted(dup_ids)[1:]}", log2.content)
+            for dup_id in dup_ids:
+                self.assertNotIn(f'Doc "{dup_id}" has differences:', log2.content)
+
+    def test_migration_deletes_orphaned_tables_in_sql(self):
+        # SQL rows became orphaned when bulk_delete() raised BulkSaveError (unhandled)
+        docs = []
+        for i in range(9):
+            doc, obj = create_lookup_table(tag=f"price{i}", unwrap_doc=False)
+            doc.save()
+            docs.append(doc)
+        docs.sort(key=lambda d: d._id)
+        deleted = [docs[0], docs[-1]]
+        deleted_ids = [d._id for d in deleted]
+        FixtureDataType.bulk_delete(deleted)
+        _, not_deleted = create_lookup_table(tag="price", unwrap_doc=False)
+        not_deleted.save(sync_to_couch=False)
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptables', chunk_size=3, log_path=log.path)
+            missing = 0
+            for doc_id in deleted_ids + [not_deleted.id.hex]:
+                if f'SQL row "{doc_id}" is missing in Couch\n' in log.content:
+                    missing += 1
+            self.assertEqual(missing, 3, log.content)
+            self.assertEqual(log.content.count("missing in Couch"), 3, log.content)
+
+            call_command('populate_lookuptables', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed orphaned SQL rows: {deleted_ids}", log2.content)
+            res = {'key': not_deleted.id.hex, 'error': 'not_found'}
+            self.assertIn(f"not deleted in Couch: {res}", log2.content)
+        self.assertFalse(LookupTable.objects.filter(id__in=deleted_ids).exists())
 
     def diff(self, doc, obj):
         return do_diff(LookupTableCommand, doc, obj)
@@ -469,6 +545,7 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
 
     def tearDown(self):
         docs = list(get_all_docs_with_doc_types(self.db, ['FixtureDataItem']))
+        docs.append(LookupTableRowCommand.get_migration_status())
         self.db.bulk_delete(docs)
         super().tearDown()
 
@@ -570,6 +647,37 @@ class TestLookupTableRowCouchToSQLMigration(TestCase):
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_lookuptablerows', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureDataItem with id {doc_id}\n", log.content)
+            self.assertNotIn(f'Doc "{doc_id}" has diff', log.content)
+        self.assertEqual(LookupTableRowCommand.count_items_to_be_migrated(), 0)
+
+    def test_migration_deletes_orphaned_rows_in_sql(self):
+        # SQL rows became orphaned when bulk_delete() raised BulkSaveError (unhandled)
+        docs = []
+        for i in range(9):
+            doc, obj = self.create_row()
+            doc.save()
+            docs.append(doc)
+        docs.sort(key=lambda d: d._id)
+        deleted = [docs[0], docs[-1]]
+        deleted_ids = [d._id for d in deleted]
+        FixtureDataItem.bulk_delete(deleted)
+        _, not_deleted = self.create_row()
+        not_deleted.save(sync_to_couch=False)
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptablerows', chunk_size=3, log_path=log.path)
+            missing = 0
+            for doc_id in deleted_ids + [not_deleted.id.hex]:
+                if f'SQL row "{doc_id}" is missing in Couch\n' in log.content:
+                    missing += 1
+            self.assertEqual(missing, 3, log.content)
+            self.assertEqual(log.content.count("missing in Couch"), 3, log.content)
+
+            call_command('populate_lookuptablerows', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed orphaned SQL rows: {deleted_ids}", log2.content)
+            res = {'key': not_deleted.id.hex, 'error': 'not_found'}
+            self.assertIn(f"not deleted in Couch: {res}", log2.content)
+        self.assertFalse(LookupTable.objects.filter(id__in=deleted_ids).exists())
 
     def create_row(self):
         doc, obj = create_lookup_table_row(unwrap_doc=False)
@@ -678,6 +786,46 @@ class TestLookupTableRowOwnerCouchToSQLMigration(TestCase):
         with templog() as log, patch.object(transaction, "atomic", atomic_check):
             call_command('populate_lookuptablerowowners', log_path=log.path)
             self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", log.content)
+
+    def test_migration_with_deleted_table(self):
+        doc, obj = self.create_owner()
+        TestLookupTableRowCouchToSQLMigration.temporarily_delete_table(self)
+        doc_id = self.db.save_doc(doc.to_json())["id"]
+        assert FixtureDataItem.get(doc.data_item_id) is not None, "missing row"
+        with templog() as log, patch.object(transaction, "atomic", atomic_check):
+            call_command('populate_lookuptablerowowners', log_path=log.path)
+            self.assertIn(f"Ignored model for FixtureOwnership with id {doc_id}\n", log.content)
+
+    def test_migration_deletes_orphaned_owners_in_sql(self):
+        # SQL rows became orphaned when bulk_delete() raised BulkSaveError (unhandled)
+        docs = []
+        for i in range(9):
+            doc, obj = self.create_owner()
+            doc.save()
+            docs.append(doc)
+        docs.sort(key=lambda d: d._id)
+        deleted = [docs[0], docs[-1]]
+        deleted_ids = [d._id for d in deleted]
+        FixtureOwnership.bulk_delete(deleted)
+        _, not_deleted = self.create_owner()
+        # unlikely scenario: Couch corruption causes document to be missing, but not deleted
+        not_deleted.couch_id = "6e477e6f73934be5a0f47710d240e3db"
+        not_deleted.save(sync_to_couch=False)
+
+        with templog() as log, templog() as log2:
+            call_command('populate_lookuptablerowowners', chunk_size=3, log_path=log.path)
+            missing = 0
+            for doc_id in deleted_ids + [not_deleted.couch_id]:
+                if f'SQL row "{doc_id}" is missing in Couch\n' in log.content:
+                    missing += 1
+            self.assertEqual(missing, 3, log.content)
+            self.assertEqual(log.content.count("missing in Couch"), 3, log.content)
+
+            call_command('populate_lookuptablerowowners', fixup_diffs=log.path, log_path=log2.path)
+            self.assertIn(f"Removed orphaned SQL rows: {deleted_ids}", log2.content)
+            res = {'key': not_deleted.couch_id, 'error': 'not_found'}
+            self.assertIn(f"not deleted in Couch: {res}", log2.content)
+        self.assertFalse(LookupTable.objects.filter(id__in=deleted_ids).exists())
 
     def create_owner(self):
         doc, obj = create_lookup_table_row_owner(unwrap_doc=False)
@@ -809,7 +957,7 @@ def jsonattrify(model_type, data):
 
 
 @contextmanager
-def atomic_check(using=None):
+def atomic_check(using=None, savepoint='ignored'):
     with _atomic(using=using):
         yield
         connection.check_constraints()

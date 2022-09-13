@@ -2659,6 +2659,22 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload image"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload audio file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload video file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload signature file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2741,10 +2757,6 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
-msgid "Unexpected Error"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2773,8 +2785,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js
 msgid ""
-"Formplayer encountered an error. Please report an issue if you continue to "
-"see this message."
+"An unexpected error occurred. Please report an issue if you continue to see "
+"this message."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
@@ -2873,10 +2885,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
 msgid "An unexpected error occurred!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
-msgid "Sorry, an error occurred while processing that request."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/util.js

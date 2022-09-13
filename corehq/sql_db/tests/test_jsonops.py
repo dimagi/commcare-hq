@@ -67,6 +67,11 @@ def test_nested_operations():
     eq(as_sql(expr), "jsonb_set(data::jsonb - '{things}'::text[], ('{items}'), data->'things', true)")
 
 
+def test_nested_delete():
+    expr = ops.JsonDelete(ops.JsonDelete(data_ref, "one"), "two", "three")
+    eq(as_sql(expr), "data::jsonb - '{one,two,three}'::text[]")
+
+
 class TestJsonOpsEvaluation(TestCase):
 
     def test_JsonDelete(self):

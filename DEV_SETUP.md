@@ -58,7 +58,8 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
+    
 
     ```sh
     brew install python@3.9
@@ -164,14 +165,14 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
     To set Python 3.9 as the global `python`, run:
     ```sh
-    pyenv global 3.9.13  # or whatever version was just installed - it should tab complete
+    pyenv global 3.9.xx  # or whatever version was just installed - it should tab complete
     ```
     Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
 
 
-2. Create the virtualenv `hq` with Python 3.9.11:
+2. Create the virtualenv `hq` with Python 3.9.xx:
    ```sh
-   pyenv virtualenv 3.9.11 hq
+   pyenv virtualenv 3.9.xx hq
    ```
    Then to enter the environment:
    ```sh

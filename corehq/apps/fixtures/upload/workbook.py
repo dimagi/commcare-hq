@@ -132,10 +132,12 @@ class _FixtureWorkbook(object):
         type_fields = data_type.fields
         sort_key = -1
         for i, di in enumerate(self.get_data_sheet(data_type.tag)):
+            uid = di.get('UID')
             if _is_deleted(di):
-                yield Deleted(di['UID'])
+                if uid:
+                    yield Deleted(uid)
                 continue
-            sort_key = max(sort_keys.get(di['UID'], i), sort_key + 1)
+            sort_key = max(sort_keys.get(uid, i), sort_key + 1)
             item = FixtureDataItem(
                 _id=uuid4().hex,
                 domain=data_type.domain,
@@ -147,7 +149,8 @@ class _FixtureWorkbook(object):
                 item_attributes=di.get('property', {}),
                 sort_key=sort_key,
             )
-            self.item_keys[item] = di['UID']
+            if uid:
+                self.item_keys[item] = uid
             self.ownership[item] = ownership = {}
             for owner_type in ["user", "group", "location"]:
                 owner_names = di.get(owner_type)

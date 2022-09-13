@@ -4032,7 +4032,7 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+    def __set_cached_attachment(self, name, content, timeout=60*10):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 

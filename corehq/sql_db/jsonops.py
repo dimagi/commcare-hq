@@ -45,6 +45,9 @@ class JsonDelete(Func):
     arity = 1
 
     def __init__(self, expression, *items):
+        if isinstance(expression, JsonDelete):
+            items = (expression.extra["items"],) + items
+            expression, = expression.source_expressions
         items = ",".join(items)
         if "'" in items:
             raise ValueError(f"invalid items: {items!r}")

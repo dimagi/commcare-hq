@@ -68,7 +68,6 @@ from corehq.apps.reports.dispatcher import (
     CustomProjectReportDispatcher,
     ProjectReportDispatcher,
 )
-from corehq.apps.reports.models import ReportsSidebarOrdering
 from corehq.apps.reports.standard.users.reports import UserHistoryReport
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
@@ -105,7 +104,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import (
     dropdown_dict,
-    regroup_sidebar_items,
     sidebar_to_dropdown,
 )
 
@@ -141,16 +139,8 @@ class ProjectReportsTab(UITab):
             request=self._request, domain=self.domain)
         custom_reports = CustomProjectReportDispatcher.navigation_sections(
             request=self._request, domain=self.domain)
-        sidebar_items = (tools + tableau + report_builder_nav
-                         + self._regroup_sidebar_items(custom_reports + project_reports))
+        sidebar_items = (tools + tableau + report_builder_nav + custom_reports + project_reports)
         return self._filter_sidebar_items(sidebar_items)
-
-    def _regroup_sidebar_items(self, sidebar_items):
-        try:
-            ordering = ReportsSidebarOrdering.objects.get(domain=self.domain)
-        except ReportsSidebarOrdering.DoesNotExist:
-            return sidebar_items
-        return regroup_sidebar_items(ordering.config, sidebar_items)
 
     def _get_tools_items(self):
         from corehq.apps.reports.views import MySavedReportsView
@@ -2243,7 +2233,7 @@ class SMSAdminTab(UITab):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        if self.couch_user.is_staff:
+        if has_privilege(self._request, privileges.GLOBAL_SMS_GATEWAY):
             items.append((_('SMS Connectivity'), [
                 {'title': _('Gateways'),
                 'url': reverse(GlobalSmsGatewayListView.urlname),

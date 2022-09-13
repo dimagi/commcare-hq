@@ -17,8 +17,8 @@ def count_fixture_data_types(domain):
     return num_fixtures['value'] if num_fixtures is not None else 0
 
 
-@quickcache(['domain'], timeout=30 * 60)
-def get_fixture_data_types(domain):
+@quickcache(['domain'], timeout=30 * 60, skip_arg='bypass_cache')
+def get_fixture_data_types(domain, bypass_cache=False):
     from corehq.apps.fixtures.models import FixtureDataType
     return list(FixtureDataType.view(
         'by_domain_doc_type_date/view',

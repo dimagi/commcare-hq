@@ -1,12 +1,10 @@
 from uuid import UUID
 
-from couchdbkit import ResourceNotFound
-
-from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model import PopulateSQLCommand
+from .base import PopulateLookupTableCommand
 from ...models import OwnerType
 
 
-class Command(PopulateSQLCommand):
+class Command(PopulateLookupTableCommand):
 
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
@@ -54,16 +52,20 @@ class Command(PopulateSQLCommand):
         ))
         return diffs
 
-    def should_ignore(self, doc):
-        data_item_id = doc["data_item_id"]
-        try:
-            exists = self.data_item_existence[data_item_id]
-        except KeyError:
-            try:
-                data_type_id = self.couch_db().get(data_item_id)["data_type_id"]
-            except ResourceNotFound:
-                exists = False
-            else:
-                exists = self.couch_db().doc_exist(data_type_id)
-            self.data_item_existence[data_item_id] = exists
-        return not exists
+    def get_ids_to_ignore(self, docs):
+        existence_map = self.data_item_existence
+        data_item_ids = {d["data_item_id"] for d in docs}
+        new_ids = data_item_ids - existence_map.keys()
+        if new_ids:
+            results = self.couch_db().view(
+                "_all_docs", keys=list(new_ids), include_docs=True, reduce=False)
+            items = (r["doc"] for r in results if r.get("doc"))
+            item_type_map = {i["_id"]: i["data_type_id"] for i in items}
+            type_ids = set(item_type_map.values())
+            types = self.couch_db().view("_all_docs", keys=list(type_ids), reduce=False)
+            existing_type_ids = {t["id"] for t in types if not (t.get("error") or t["value"].get("deleted"))}
+            NOMATCH = object()
+            for data_item_id in new_ids:
+                existence_map[data_item_id] = \
+                    item_type_map.get(data_item_id, NOMATCH) in existing_type_ids
+        return {d["_id"] for d in docs if not existence_map[d["data_item_id"]]}
