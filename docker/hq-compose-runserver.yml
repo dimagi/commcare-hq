@@ -1,34 +1,46 @@
 version: '2.3'
 
+# x-anchors are ignored by Docker, are used for DRYness here
+x-commcarehq_base: &commcarehq_base
+  build:
+    context: .
+    dockerfile: "${DOCKERFILE}"
+  environment:
+    COMMCAREHQ_BOOTSTRAP: "yes"
+    DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
+    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
+    DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
+    DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
+  privileged: true  # allows mount inside container
+  depends_on:
+    - postgres
+    - couch
+    - redis
+    - elasticsearch2
+    - elasticsearch5
+    - kafka
+    - zookeeper
+    - minio
+  volumes:
+    - ..:/mnt/commcare-hq-ro:ro
+    - ${VOLUME_PREFIX}lib:/mnt/lib
+
 services:
   web:
-    build:
-      context: .
-      dockerfile: "${DOCKERFILE}"
-    environment:
-      COMMCAREHQ_BOOTSTRAP: "yes"
-      DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
-      DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-      DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
-      DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
-    privileged: true  # allows mount inside container
+    <<: *commcarehq_base
     command: [runserver]
-    depends_on:
-      - postgres
-      - couch
-      - redis
-      - elasticsearch2
-      - elasticsearch5
-      - kafka
-      - zookeeper
-      - minio
     expose:
       - 8000
     ports:
       - "8000:8000"
-    volumes:
-      - ..:/mnt/commcare-hq-ro:ro
-      - ${VOLUME_PREFIX}lib:/mnt/lib
+
+  celery:
+    <<: *commcarehq_base
+    command: [runcelery]
+
+  pillowtop:
+    <<: *commcarehq_base
+    command: [runpillowtop]
 
   formplayer:
     extends:
