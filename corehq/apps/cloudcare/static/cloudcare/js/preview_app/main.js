@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/preview_app/main", function () {
             debuggerEnabled: initialPageData('debugger_enabled'),
         });
 
-        hqImport("cloudcare/js/util").injectMarkdownAnchorTransforms();
+        hqImport("cloudcare/js/utils").injectMarkdownAnchorTransforms();
 
         $('.dragscroll').on('scroll', function () {
             $('.form-control').blur();

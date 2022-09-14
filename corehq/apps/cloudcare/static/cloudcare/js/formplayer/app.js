@@ -7,15 +7,15 @@
 hqDefine("cloudcare/js/formplayer/app", function () {
     Marionette.setRenderer(Marionette.TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
-    var showError = hqImport('cloudcare/js/util').showError;
-    var showHTMLError = hqImport('cloudcare/js/util').showHTMLError;
-    var showSuccess = hqImport('cloudcare/js/util').showSuccess;
-    var showWarning = hqImport('cloudcare/js/util').showWarning;
-    var formplayerLoading = hqImport('cloudcare/js/util').formplayerLoading;
-    var formplayerLoadingComplete = hqImport('cloudcare/js/util').formplayerLoadingComplete;
-    var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
-    var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
-    var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
+    var showError = hqImport('cloudcare/js/utils').showError;
+    var showHTMLError = hqImport('cloudcare/js/utils').showHTMLError;
+    var showSuccess = hqImport('cloudcare/js/utils').showSuccess;
+    var showWarning = hqImport('cloudcare/js/utils').showWarning;
+    var formplayerLoading = hqImport('cloudcare/js/utils').formplayerLoading;
+    var formplayerLoadingComplete = hqImport('cloudcare/js/utils').formplayerLoadingComplete;
+    var formplayerSyncComplete = hqImport('cloudcare/js/utils').formplayerSyncComplete;
+    var clearUserDataComplete = hqImport('cloudcare/js/utils').clearUserDataComplete;
+    var breakLocksComplete = hqImport('cloudcare/js/utils').breakLocksComplete;
     var Util = hqImport("cloudcare/js/formplayer/utils/utils");
     var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');

@@ -760,7 +760,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            hqImport("cloudcare/js/util").initDateTimePicker(self.$picker, _.extend({
+            hqImport("cloudcare/js/utils").initDateTimePicker(self.$picker, _.extend({
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
