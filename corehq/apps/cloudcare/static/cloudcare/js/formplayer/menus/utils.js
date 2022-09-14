@@ -1,6 +1,6 @@
 /*global Backbone */
 
-hqDefine("cloudcare/js/formplayer/menus/util", function () {
+hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var recordPosition = function (position) {

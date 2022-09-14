@@ -26,7 +26,7 @@ describe('Render a case list', function () {
             Backbone.history.getFragment.restore();
         });
 
-        let getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
+        let getMenuView = hqImport("cloudcare/js/formplayer/menus/utils").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
             let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_list"));
             assert.isFalse(view.templateContext().useTiles);

@@ -166,7 +166,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on('startForm', function (data) {
         FormplayerFrontend.getChannel().request("clearMenu");
-        hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(data.breadcrumbs);
+        hqImport("cloudcare/js/formplayer/menus/utils").showBreadcrumbs(data.breadcrumbs);
 
         data.onLoading = formplayerLoading;
         data.onLoadingComplete = formplayerLoadingComplete;
