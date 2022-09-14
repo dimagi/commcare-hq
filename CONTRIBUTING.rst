@@ -1,8 +1,8 @@
-==========================
-Contributing to CommCareHQ
-==========================
+===========================
+Contributing to CommCare HQ
+===========================
 
-CommCareHQ is primarily developed by `Dimagi`_, but we welcome contributions.
+CommCare HQ is primarily developed by `Dimagi`_, but we welcome contributions.
 
 Code Contributions
 ------------------
