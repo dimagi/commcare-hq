@@ -2047,6 +2047,13 @@ def _get_integration_section(domain, couch_user):
             'url': reverse(TableauVisualizationListView.urlname, args=[domain])
         })
 
+    if toggles.GENERIC_INBOUND_API.enabled(domain):
+        from corehq.motech.generic_inbound.views import ConfigurableAPIListView
+        integration.append({
+            'title': ConfigurableAPIListView.page_title,
+            'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
+        })
+
     return integration
 
 

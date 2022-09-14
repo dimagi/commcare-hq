@@ -103,6 +103,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                  <title>
+                    <text>
+                      <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -140,6 +145,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                  <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -188,6 +198,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                     storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
+                  <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                  </title>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -376,6 +391,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                 value="./@case_id" detail-select="m2_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <title>
+                  <text>
+                      <locale id="case_search.m0.inputs"/>
+                  </text>
+                </title>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
@@ -539,6 +559,11 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                 value="./@case_id" detail-select="m0_case_short"/>
               <query url="http://localhost:8000/a/test_domain/phone/search/123/"
                 storage-instance="{RESULTS_INSTANCE_INLINE}" template="case" default_search="false">
+                <title>
+                  <text>
+                      <locale id="case_search.m1.inputs"/>
+                  </text>
+                </title>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
