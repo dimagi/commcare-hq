@@ -8,7 +8,6 @@ from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
 from corehq.apps.data_dictionary.util import (
     generate_data_dictionary,
-    get_data_dict_props_by_group,
     get_values_hints_dict,
 )
 
@@ -127,24 +126,3 @@ class MiscUtilTest(TestCase):
         for prop_name, _ in prop_list:
             self.assertTrue(prop_name in values_hints)
             self.assertEqual(sorted(values_hints[prop_name]), sorted(av_dict[prop_name]))
-
-    def test_get_data_dict_props_by_group(self):
-        case_type = CaseType.objects.create(domain=self.domain, name='beneficiary')
-        for group, prop in [
-                ('Demographics', 'age'),
-                ('Clinical Info', 'fever'),
-                ('Clinical Info', 'runny_nose'),
-                ('Demographics', 'favorite_color'),
-        ]:
-            CaseProperty.objects.create(
-                case_type=case_type,
-                name=prop,
-                group=group,
-            )
-        self.assertEqual(
-            get_data_dict_props_by_group(self.domain, case_type.name),
-            [
-                ('Clinical Info', ['runny_nose', 'fever']),
-                ('Demographics', ['favorite_color', 'age']),
-            ]
-        )

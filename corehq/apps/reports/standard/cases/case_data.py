@@ -1,6 +1,7 @@
 import copy
 import csv
 import io
+from collections import defaultdict
 from datetime import datetime
 from functools import partial
 
@@ -41,7 +42,7 @@ from corehq import privileges, toggles
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
-from corehq.apps.data_dictionary.util import get_data_dict_props_by_group
+from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.export.const import KNOWN_CASE_PROPERTIES
 from corehq.apps.export.models import CaseExportDataSchema
@@ -256,23 +257,37 @@ class CaseDataView(BaseProjectReportSectionView):
             return None
         dynamic_keys = sorted(dynamic_data.keys())
         if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-            definition = self._get_dd_table_definition()
+            definition = _get_dd_table_definition(self.domain, self.case_instance.type)
         else:
             definition = get_default_definition(
                 dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
         return get_tables_as_rows(dynamic_data, definition, timezone)
 
-    def _get_dd_table_definition(self):
-        return [
-            {
-                "name": group,
-                "layout": list(chunked([
-                    DisplayConfig(expr=prop, has_history=True) for prop in props
-                ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
-            }
-            for group, props in get_data_dict_props_by_group(self.domain, self.case_instance.type)
-        ]
+
+def _get_dd_table_definition(domain, case_type):
+    return [
+        {
+            "name": group or _('Uncategorized'),
+            "layout": list(chunked([
+                DisplayConfig(
+                    expr=prop.name,
+                    has_history=True
+                ) for prop in props
+            ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+        }
+        for group, props in _get_dd_props_by_group(domain, case_type)
+    ]
+
+
+def _get_dd_props_by_group(domain, case_type):
+    ret = defaultdict(list)
+    for prop in CaseProperty.objects.filter(
+            case_type__domain=domain,
+            case_type__name=case_type,
+    ):
+        ret[prop.group].append(prop)
+    return sorted(ret.items())
 
 
 def form_to_json(domain, form, timezone):
