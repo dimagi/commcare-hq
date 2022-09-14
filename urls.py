@@ -96,8 +96,7 @@ for url_module in extension_points.domain_specific_urls():
 
 
 urlpatterns = [
-    url(r'^favicon\.ico$', RedirectView.as_view(
-        url=static('hqwebapp/images/favicon2.png'), permanent=True)),
+    url(r'^favicon\.ico$', RedirectView.as_view(url=static('hqwebapp/images/favicon2.png'), permanent=True)),
     url(r'^auditcare/', include('corehq.apps.auditcare.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^analytics/', include('corehq.apps.analytics.urls')),
@@ -142,7 +141,11 @@ urlpatterns = [
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^eula/$', redirect_to_dimagi('terms/')),
     url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
-    url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
+    url(
+        r'^apache_license_basic/$',
+        TemplateView.as_view(template_name='apache_license.html'),
+        name='apache_license_basic'
+    ),
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
@@ -151,9 +154,12 @@ urlpatterns = [
     url(r'^ping/$', ping, name='ping'),
     url(r'^robots.txt$', TemplateView.as_view(template_name='robots.txt', content_type='text/plain')),
     url(r'^software-plans/$', RedirectView.as_view(url=PRICING_LINK, permanent=True), name='go_to_pricing'),
-    url(r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
+    url(
+        r'^unsubscribe_report/(?P<scheduled_report_id>[\w-]+)/'
         r'(?P<user_email>[\w.%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/(?P<scheduled_report_secret>[\w-]+)/',
-        ReportNotificationUnsubscribeView.as_view(), name=ReportNotificationUnsubscribeView.urlname),
+        ReportNotificationUnsubscribeView.as_view(),
+        name=ReportNotificationUnsubscribeView.urlname
+    ),
     url(r'^phone/list_apps', list_apps, name="list_accessible_apps"),
     url(r'^oauth/', include('corehq.apps.oauth_integrations.urls')),
     url(r'^abdm/', include('custom.abdm.urls')),

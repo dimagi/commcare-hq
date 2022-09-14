@@ -49,7 +49,6 @@ def confirm_with_aadhaar_otp(otp, txn_id):
         return resp.json()
 
 
-
 def get_account_information(x_token):
     url = "https://healthidsbx.abdm.gov.in/api/v1/account/profile"
     headers = {"Content-Type": "application/json; charset=UTF-8"}
