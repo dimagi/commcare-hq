@@ -1217,8 +1217,8 @@ def _get_cases_changed_context(domain, form, case_id=None):
         """Put common @ attributes at the bottom"""
         return sorted(keys, key=lambda k: (k[0] == '@', k))
 
-    for b in case_blocks:
-        this_case_id = b.get(const.CASE_ATTR_ID)
+    for case_block in case_blocks:
+        this_case_id = case_block.get(const.CASE_ATTR_ID)
         try:
             this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
@@ -1231,7 +1231,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
         else:
             url = "#"
 
-        keys = _sorted_case_update_keys(list(b))
+        keys = _sorted_case_update_keys(list(case_block))
         assume_phonetimes = not form.metadata or form.metadata.deviceID != CLOUDCARE_DEVICE_ID
         definition = get_default_definition(
             keys,
@@ -1240,7 +1240,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": get_tables_as_columns(b, definition, timezone=get_timezone_for_request()),
+            "table": get_tables_as_columns(case_block, definition, timezone=get_timezone_for_request()),
             "url": url,
             "valid_case": valid_case,
             "case_type": this_case.type if this_case and valid_case else None,
