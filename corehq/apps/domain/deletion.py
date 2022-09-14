@@ -191,13 +191,14 @@ def iter_ids(model_class, field, domain, chunk_size=1000):
         load_source='delete_domain',
         query_size=chunk_size,
     )
-    yield from with_progress_bar(
-        (r[0] for r in rows),
-        estimate_partitioned_row_count(model_class, where),
-        prefix="",
-        oneline="concise",
-        stream=silence_during_tests(),
-    )
+    with silence_during_tests() as stream:
+        yield from with_progress_bar(
+            (r[0] for r in rows),
+            estimate_partitioned_row_count(model_class, where),
+            prefix="",
+            oneline="concise",
+            stream=stream,
+        )
 
 
 def _delete_data_files(domain_name):
