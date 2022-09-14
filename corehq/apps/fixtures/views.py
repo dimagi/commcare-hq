@@ -45,8 +45,6 @@ from corehq.apps.fixtures.exceptions import (
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
     LookupTableRow,
     LookupTable,
     TypeField,
@@ -212,30 +210,6 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
 
 
 def _update_items(fields_patches, domain, data_type_id, transaction):
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
-    for item in data_items:
-        fields = item.fields
-        updated_fields = {}
-        patches = deepcopy(fields_patches)
-        for old_field in list(fields):
-            patch = patches.pop(old_field, {})
-            if not any(patch):
-                updated_fields[old_field] = fields.pop(old_field)
-            if "update" in patch:
-                new_field_name = patch["update"]
-                updated_fields[new_field_name] = fields.pop(old_field)
-            if "remove" in patch:
-                continue
-                # destroy_field(field_to_delete, transaction)
-        for new_field_name in list(patches):
-            patch = patches.pop(new_field_name, {})
-            if "is_new" in patch:
-                updated_fields[new_field_name] = FieldList(
-                    field_list=[]
-                )
-        setattr(item, "fields", updated_fields)
-        transaction.save(item)
-
     fields_json = "fields"
     for field_name, patch in fields_patches.items():
         if "update" in patch:
@@ -251,14 +225,16 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
         if "is_new" in patch:
             fields_json = JsonSet(fields_json, [field_name], [])
 
-    def update_sql_objects():
-        if fields_json != "fields":
-            LookupTableRow.objects.filter(
+    if fields_json != "fields":
+        def update_sql_objects():
+            query = LookupTableRow.objects.filter(
                 domain=domain,
                 table_id=data_type_id,
-            ).update(fields=fields_json)
+            )
+            query.update(fields=fields_json)
+            return query
 
-    transaction.set_sql_save_action(FixtureDataItem, update_sql_objects)
+        transaction.set_sql_save_action(LookupTableRow, update_sql_objects)
 
 
 def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):

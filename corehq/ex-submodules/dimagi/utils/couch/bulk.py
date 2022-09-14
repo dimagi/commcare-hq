@@ -191,8 +191,13 @@ class CouchTransaction(object):
 
 def iter_couch_docs(cls, sql_objects):
     couch_class = cls._migration_get_couch_model_class()
+    db = couch_class.get_db()
+    ids = [x._migration_couch_id for x in sql_objects]
+    couch_docs = {d["_id"]: couch_class.wrap(d) for d in get_docs(db, ids)}
     for obj in sql_objects:
-        doc = couch_class(_id=obj._migration_couch_id)
+        doc = couch_docs.get(obj._migration_couch_id)
+        if doc is None:
+            doc = couch_class(_id=obj._migration_couch_id)
         assert doc._id is not None, obj
         obj._migration_sync_to_couch(doc, save=False)
         yield doc
