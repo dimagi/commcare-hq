@@ -9,14 +9,17 @@
 <div id="edit-test">
   <div class="row">
     <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8">
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-4 col-md-4 col-lg-2"></label>
-        <div class="controls col-xs-12 col-sm-8 col-md-8 col-lg-6">
-          <a class="btn btn-default">
-            <i class="fa fa-play"></i> {% trans "Run Test" %}
-          </a>
+      <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="execute" value="1"/>
+        <div class="form-group">
+          <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
+            <button class="btn btn-default" type="submit">
+              <i class="fa fa-play"></i> {% trans "Run Test" %}
+            </button>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   </div>
   <div class="spacer"></div>

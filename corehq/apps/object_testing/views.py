@@ -123,9 +123,13 @@ class ObjectTestEditView(BaseProjectDataView):
         return main_context
 
     def post(self, request, domain, **kwargs):
-        form = self.get_form()
-        if form.is_valid():
-            form.save()
-            messages.success(request, _("Test updated successfully."))
+        if "execute" in self.request.POST:
+            messages.info(request, "Test execution not implemented yet.")
             return redirect(self.urlname, self.domain, self.test_id)
-        return self.get(request, self.domain, **kwargs)
+        else:
+            form = self.get_form()
+            if form.is_valid():
+                form.save()
+                messages.success(request, _("Test updated successfully."))
+                return redirect(self.urlname, self.domain, self.test_id)
+            return self.get(request, self.domain, **kwargs)
