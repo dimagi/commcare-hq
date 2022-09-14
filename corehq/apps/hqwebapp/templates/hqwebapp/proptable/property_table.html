@@ -21,6 +21,9 @@
                   {% else %}
                     {{ cell.name }}
                   {% endif %}
+                  {% if cell.description %}
+                    <i class="fa fa-info-circle" title="{{ cell.description }}"></i>
+                  {% endif %}
                 </th>
                 <td>
                   {{ cell.value }}

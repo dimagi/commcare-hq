@@ -272,6 +272,7 @@ def _get_dd_table_definition(domain, case_type):
             "layout": list(chunked([
                 DisplayConfig(
                     expr=prop.name,
+                    description=prop.description,
                     has_history=True
                 ) for prop in props
             ], DYNAMIC_CASE_PROPERTIES_COLUMNS))

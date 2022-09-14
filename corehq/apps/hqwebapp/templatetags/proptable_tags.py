@@ -148,6 +148,8 @@ class DisplayConfig:
     # name of the field. Defaults to the value `expr` if not given.
     name = attr.ib(default=None)
 
+    description = attr.ib(default=None)
+
     # processor to apply. Available processors are:
     # - 'yesno': convert boolean values to yes / no / maybe
     # - 'doc_info': render a DocInfo
@@ -201,6 +203,7 @@ def get_display_data(data: dict, prop_def: DisplayConfig, timezone=pytz.utc):
     return {
         "expr": expr_name,
         "name": name,
+        "description": prop_def.description,
         "value": val,
         "has_history": prop_def.has_history,
     }
