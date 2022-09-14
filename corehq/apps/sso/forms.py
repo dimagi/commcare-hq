@@ -208,21 +208,26 @@ class RelyingPartyDetailsForm(forms.Form):
         self.idp = identity_provider
         super().__init__(*args, **kwargs)
 
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['redirect_uris'].label = gettext("Sign-in redirect URIs ")
+            self.fields['logout_redirect_uris'].label = gettext("Sign-out redirect URIs")
+            self.fields['login_url'].label = gettext("Initiate login URI")
+
     @property
     def application_details_fields(self):
+        login_url = url_helpers.get_oidc_login_url(self.idp)
+        auth_url = url_helpers.get_oidc_auth_url(self.idp)
+        logout_url = url_helpers.get_oidc_logout_url(self.idp)
+        if self.idp.idp_type == IdentityProviderType.OKTA:
+            return [
+                hqcrispy.B3TextField('redirect_uris', auth_url),
+                hqcrispy.B3TextField('logout_redirect_uris', logout_url),
+                hqcrispy.B3TextField('login_url', login_url),
+            ]
         return [
-            hqcrispy.B3TextField(
-                'login_url',
-                url_helpers.get_oidc_login_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'redirect_uris',
-                url_helpers.get_oidc_auth_url(self.idp),
-            ),
-            hqcrispy.B3TextField(
-                'logout_redirect_uris',
-                url_helpers.get_oidc_logout_url(self.idp),
-            ),
+            hqcrispy.B3TextField('login_url', login_url),
+            hqcrispy.B3TextField('redirect_uris', auth_url),
+            hqcrispy.B3TextField('logout_redirect_uris', logout_url),
         ]
 
 
@@ -823,7 +828,10 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         rp_details_form = RelyingPartyDetailsForm(identity_provider)
         self.fields.update(rp_details_form.fields)
 
-        self.fields['entity_id'].label = _("Issuer URL")
+        if self.idp.idp_type == IdentityProviderType.ONE_LOGIN:
+            self.fields['entity_id'].label = _("Issuer URL")
+        elif self.idp.idp_type == IdentityProviderType.OKTA:
+            self.fields['entity_id'].label = _("Issuer URI")
 
         if self.idp.client_secret:
             client_secret_toggles = crispy.Div(
