@@ -238,6 +238,16 @@ function runserver {
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
+function runcelery {
+    JS_SETUP=yes setup python
+    su cchq -c "celery -A corehq worker -l info"
+}
+
+function runpillowtop {
+    setup python
+    su cchq -c "./manage.py run_ptop --all --processor-chunk-size=1"
+}
+
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
