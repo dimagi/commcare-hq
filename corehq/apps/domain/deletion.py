@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Q
+from field_audit.models import AuditAction
 
 from dimagi.utils.chunked import chunked
 
@@ -68,12 +69,30 @@ class CustomDeletion(BaseDeletion):
 
 class ModelDeletion(BaseDeletion):
 
-    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None):
+    def __init__(self, app_label, model_name, domain_filter_kwarg, extra_models=None, audit_action=None):
+        """Deletes all records of an app model matching the provided domain
+        filter.
+
+        :param app_label: label of the app containing the model(s)
+        :param model_name: name of the model in the app
+        :param domain_filter_kwarg: name of the model field to filter by domain
+        :param extra_models: (optional) a collection of other models in the same
+            app to be filtered and deleted in the same way as ``model_name``.
+            The default (``None``) results in only instances of ``model_name``
+            being deleted.
+        :param audit_action: (optional) an audit action to be provided as a
+            keyword argument when deleting records (e.g.
+            ``<QuerySet>.delete(audit_action=audit_action)``). Necessary for
+            models whose manager is an instance of
+            ``field_audit.models.AuditingManager``. The default (``None``)
+            results in ``<QuerySet>.delete()`` being called without parameters.
+        """
         models = extra_models or []
         models.append(model_name)
         super(ModelDeletion, self).__init__(app_label, models)
         self.domain_filter_kwarg = domain_filter_kwarg
         self.model_name = model_name
+        self.delete_kwargs = {} if audit_action is None else {"audit_action": audit_action}
 
     def get_model_class(self):
         return apps.get_model(self.app_label, self.model_name)
@@ -87,7 +106,7 @@ class ModelDeletion(BaseDeletion):
             raise RuntimeError("Expected a valid domain name")
         if self.is_app_installed():
             model = self.get_model_class()
-            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete()
+            model.objects.filter(**{self.domain_filter_kwarg: domain_name}).delete(**self.delete_kwargs)
 
 
 class PartitionedModelDeletion(ModelDeletion):
@@ -191,13 +210,14 @@ def iter_ids(model_class, field, domain, chunk_size=1000):
         load_source='delete_domain',
         query_size=chunk_size,
     )
-    yield from with_progress_bar(
-        (r[0] for r in rows),
-        estimate_partitioned_row_count(model_class, where),
-        prefix="",
-        oneline="concise",
-        stream=silence_during_tests(),
-    )
+    with silence_during_tests() as stream:
+        yield from with_progress_bar(
+            (r[0] for r in rows),
+            estimate_partitioned_row_count(model_class, where),
+            prefix="",
+            oneline="concise",
+            stream=stream,
+        )
 
 
 def _delete_data_files(domain_name):
@@ -397,7 +417,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('users', 'UserReportingMetadataStaging', 'domain'),
     ModelDeletion('users', 'UserRole', 'domain', [
         'RolePermission', 'RoleAssignableBy', 'Permission'
-    ]),
+    ], audit_action=AuditAction.AUDIT),
     ModelDeletion('user_importer', 'UserUploadRecord', 'domain'),
     ModelDeletion('zapier', 'ZapierSubscription', 'domain'),
     ModelDeletion('dhis2', 'SQLDataValueMap', 'dataset_map__domain'),
