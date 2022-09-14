@@ -130,7 +130,7 @@ def get_registration_element_data(restore_user):
         "password": restore_user.password,
         "uuid": restore_user.user_id,
         "date": date_to_xml_string(restore_user.date_joined),
-        "user_data": get_session_data_with_abdm_token(restore_user.user_session_data)
+        "user_data": get_session_data_with_abdm_token(restore_user)
     }
 
 
