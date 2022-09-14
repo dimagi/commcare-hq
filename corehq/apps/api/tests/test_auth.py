@@ -20,7 +20,11 @@ class AuthenticationTestBase(TestCase):
         cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
         cls.username = 'alice@example.com'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None)
+        cls.api_user_role = UserRole.create(
+            cls.domain, 'api-user', permissions=HqPermissions(access_api=True)
+        )
+        cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None,
+                                  role_id=cls.api_user_role.get_id)
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
         cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
                                                                name='domain-scoped',
@@ -160,10 +164,10 @@ class RequirePermissionAuthenticationTest(AuthenticationTestBase):
     def setUpClass(cls):
         super().setUpClass()
         cls.role_with_permission = UserRole.create(
-            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True)
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
         )
         cls.role_without_permission = UserRole.create(
-            cls.domain, 'no-edit-data', permissions=HqPermissions(edit_data=False)
+            cls.domain, 'no-edit-data', permissions=HqPermissions(edit_data=False, access_api=True)
         )
         cls.role_with_permission_but_no_api_access = UserRole.create(
             cls.domain, 'no-api-access', permissions=HqPermissions(edit_data=True, access_api=False)
