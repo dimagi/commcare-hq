@@ -405,7 +405,7 @@ ply==3.11
     #   jsonpath-ng
 polib==1.1.1
     # via -r base-requirements.in
-prometheus-client==0.7.1
+prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via
