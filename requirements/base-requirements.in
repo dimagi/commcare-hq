@@ -19,6 +19,7 @@ django-compressor
 django-countries
 django-crispy-forms
 django-cte
+django-field-audit
 django-formtools
 django-logentry-admin
 django-oauth-toolkit
