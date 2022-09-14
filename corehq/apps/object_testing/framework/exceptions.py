@@ -1,0 +1,2 @@
+class ObjectTestAssertionError(Exception):
+    pass
