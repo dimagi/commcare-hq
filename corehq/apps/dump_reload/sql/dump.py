@@ -12,6 +12,7 @@ from corehq.apps.dump_reload.sql.filters import (
     ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
+    UnfilteredModelIteratorBuilder,
     UserIDFilter,
     UsernameFilter,
 )
@@ -172,6 +173,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
     FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
+    UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder(

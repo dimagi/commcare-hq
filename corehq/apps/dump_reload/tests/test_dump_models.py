@@ -87,7 +87,6 @@ IGNORE_MODELS = {
     "registry.RegistryGrant",
     "registry.RegistryInvitation",
 
-    "saved_reports.ScheduledReportsCheckpoint",
     "sessions.Session",
     "sites.Site",
     "tastypie.ApiAccess",
