@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     # - bmb/sso/api/test-001  # Biyeun June 15
-    - gh/upgrade-twilio # Graham July 8
     # - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging-verification # Matt July 20
     - dm/sql-lookup-tables-pr1  # Daniel July 21
