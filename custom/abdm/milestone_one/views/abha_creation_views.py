@@ -1,5 +1,3 @@
-from django.contrib.auth import authenticate
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_200_OK
@@ -8,6 +6,7 @@ from rest_framework.response import Response
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.milestone_one.utils.response_handler import get_response
+from custom.abdm.milestone_one.utils.user_util import get_abdm_api_token
 
 
 @api_view(["POST"])
@@ -16,11 +15,10 @@ from custom.abdm.milestone_one.utils.response_handler import get_response
 def login(request):
     username = request.data.get("username")
     password = request.data.get("password")
-    user = authenticate(username=username, password=password)
-    if not user:
+    token = get_abdm_api_token(username, password)
+    if not token:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_404_NOT_FOUND)
-    token, _ = Token.objects.get_or_create(user=user)
-    return Response({'token': token.key}, status=HTTP_200_OK)
+    return Response({'token': token}, status=HTTP_200_OK)
 
 
 @api_view(["POST"])

@@ -8,6 +8,7 @@ from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
 import six
 
 from casexml.apps.phone.exceptions import RestoreException
+from custom.abdm.milestone_one.utils.user_util import get_abdm_api_token
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -129,8 +130,14 @@ def get_registration_element_data(restore_user):
         "password": restore_user.password,
         "uuid": restore_user.user_id,
         "date": date_to_xml_string(restore_user.date_joined),
-        "user_data": restore_user.user_session_data
+        "user_data": get_session_data_with_abdm_token(restore_user.user_session_data)
     }
+
+
+def get_session_data_with_abdm_token(restore_user):
+    user_data = {"abdm_api_token": get_abdm_api_token(restore_user.username, restore_user.password)}
+    user_data.update(restore_user.user_session_data)
+    return user_data
 
 
 # Case registration blocks do not have a password
