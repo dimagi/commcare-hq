@@ -27,7 +27,7 @@ def login(request):
 @authentication_classes((UserAuthentication,))
 @required_request_params(["aadhaar"])
 def generate_aadhaar_otp(request):
-    aadhaar_number = request.data.get("aadhaar_number")
+    aadhaar_number = request.data.get("aadhaar")
     resp = abdm_util.generate_aadhar_otp(aadhaar_number)
     return get_response(resp)
 

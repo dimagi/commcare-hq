@@ -29,7 +29,7 @@ def generate_aadhar_otp(aadhaar_number):
     print(f"url {url}")
     print(data)
     print(headers)
-    resp = requests.post(url=url, data=data, headers=headers)
+    resp = requests.post(url=url, data=json.dumps(data), headers=headers)
     print(resp.content)
     return resp.json()
 

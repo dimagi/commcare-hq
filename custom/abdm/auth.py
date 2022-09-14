@@ -6,10 +6,9 @@ from custom.abdm.models import ABDMUser
 class UserAuthentication(TokenAuthentication):
 
     def authenticate(self, request):
-        print("\n".join(request.META.keys()))
         access_token = request.META.get('HTTP_AUTHORIZATION', "")
         print(access_token)
-        token = access_token.split()[-1]
+        token = access_token.split(" ")[-1]
         if not token:
             return None
         try:
