@@ -111,25 +111,31 @@ Other Notes
 """
 from contextlib import ContextDecorator
 from functools import wraps
-from typing import Iterable, Callable, Dict
-
-from celery.task import periodic_task
+from typing import Callable, Dict, Iterable
 
 from django.conf import settings
+
 from sentry_sdk import add_breadcrumb
 
-from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
-from .const import COMMON_TAGS, ALERT_INFO, MPM_ALL
+
+from corehq.apps.celery import periodic_task
+from corehq.util.timer import TimingContext
+
+from .const import ALERT_INFO, COMMON_TAGS, MPM_ALL
 from .metrics import (
+    DEFAULT_BUCKETS,
     DebugMetrics,
     DelegatedMetrics,
-    DEFAULT_BUCKETS,
     _enforce_prefix,
-    metrics_logger
+    metrics_logger,
 )
-from .utils import make_buckets_from_timedeltas, DAY_SCALE_TIME_BUCKETS, bucket_value
+from .utils import (
+    DAY_SCALE_TIME_BUCKETS,
+    bucket_value,
+    make_buckets_from_timedeltas,
+)
 
 __all__ = [
     'metrics_counter',

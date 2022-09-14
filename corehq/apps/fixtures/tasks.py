@@ -3,11 +3,10 @@ import datetime
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from celery.task import task
-
 from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 
+from corehq.apps.celery import task
 from corehq.apps.fixtures.download import prepare_fixture_download
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureOwnership
 from corehq.apps.fixtures.upload import upload_fixture_file
