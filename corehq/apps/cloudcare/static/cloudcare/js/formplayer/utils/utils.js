@@ -159,7 +159,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             }
             // Selections only deal with strings, because formplayer will send them back as strings
             if (_.isArray(selection)) {
-                hqImport("cloudcare/js/formplayer/utils/util").setSelectedValues(selection);
+                hqImport("cloudcare/js/formplayer/utils/utils").setSelectedValues(selection);
                 this.selections.push(String('use_selected_values'));
             } else {
                 this.selections.push(String(selection));
@@ -191,7 +191,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         };
 
         this.setQueryData = function (inputs, execute, forceManualSearch) {
-            var selections = hqImport("cloudcare/js/formplayer/utils/util").currentUrlToObject().selections;
+            var selections = hqImport("cloudcare/js/formplayer/utils/utils").currentUrlToObject().selections;
             this.queryData = this.queryData || {};
             this.queryData[sessionStorage.queryKey] = _.defaults({
                 inputs: inputs,
