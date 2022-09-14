@@ -5,6 +5,7 @@ import logging
 from django.conf import settings
 
 base_url = "https://healthidsbx.abdm.gov.in/api/"
+gateway_url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
 logger = logging.getLogger(__name__)
 
 
@@ -23,12 +24,10 @@ def generate_aadhar_otp(aadhaar_number):
     payload = {"aadhaar": str(aadhaar_number)}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
+    logging.info("Received access token")
     headers.update({"Authorization": "Bearer {}".format(token)})
-    print(token)
-    resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
-    print(resp)
-    logger.info(resp.content)
-    print(resp.json())
+    url = base_url + generate_aadhar_otp
+    resp = requests.post(url=url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     return resp.json()
 
 
@@ -38,10 +37,7 @@ def generate_mobile_otp(mobile_number, txnid):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token)})
-    print(token)
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
-    print(resp)
-    print(resp.content)
     return resp.json()
 
 
@@ -51,10 +47,7 @@ def verify_aadhar_otp(otp, txnid):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token)})
-    print(token)
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
-    print(resp)
-    print(resp.content)
     return resp.json()
 
 
@@ -64,10 +57,7 @@ def verify_mobile_otp(otp, txnid):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token)})
-    print(token)
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
-    print(resp)
-    print(resp.content)
     return resp.json()
 
 
@@ -86,6 +76,5 @@ def create_health_id(txnid):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token)})
-    print(token)
     resp = requests.post(url=base_url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
     return resp.json()
