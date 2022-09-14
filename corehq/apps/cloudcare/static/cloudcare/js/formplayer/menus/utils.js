@@ -120,8 +120,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
         };
-        var Util = hqImport("cloudcare/js/formplayer/utils/utils");
-        var urlObject = Util.currentUrlToObject();
+        var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        var urlObject = Utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
@@ -149,7 +149,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                     name: menuResponse.title,
                 };
-                var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
+                var fields = _.pick(Utils.getCurrentQueryInputs(), function (v) { return !!v; });
                 if (!_.isEmpty(fields)) {
                     eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }

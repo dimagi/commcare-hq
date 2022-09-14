@@ -2,7 +2,7 @@
 /* eslint-env mocha */
 describe('Render a case list', function () {
     let MenuListFixture = hqImport("cloudcare/js/formplayer/spec/fixtures/menu_list"),
-        Util = hqImport("cloudcare/js/formplayer/utils/utils");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     before(function () {
         hqImport("hqwebapp/js/initial_page_data").register(
@@ -11,7 +11,7 @@ describe('Render a case list', function () {
                 APP_ANALYTICS: true,
             }
         );
-        sinon.stub(Util, 'getCurrentQueryInputs').callsFake(function () { return {}; });
+        sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
     });
 
     describe('#getMenuView', function () {

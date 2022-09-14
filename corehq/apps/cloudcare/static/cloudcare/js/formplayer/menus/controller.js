@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/utils"),
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -36,11 +36,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 return;
             }
 
-            var urlObject = Util.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
 
             if (urlObject.endpointId) {
                 urlObject.replaceEndpoint(menuResponse.selections);
-                Util.setUrlToObject(urlObject);
+                Utils.setUrlToObject(urlObject);
             }
 
             // If we don't have an appId in the URL (usually due to form preview)
@@ -53,7 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
-                Util.setUrlToObject(urlObject);
+                Utils.setUrlToObject(urlObject);
             }
 
             showMenu(menuResponse);
@@ -73,7 +73,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
-        var urlObject = Util.currentUrlToObject();
+        var urlObject = Utils.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }

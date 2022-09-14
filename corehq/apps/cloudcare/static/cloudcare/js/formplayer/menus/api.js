@@ -4,7 +4,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/utils");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -67,9 +67,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 }
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
-                                var urlObject = Util.currentUrlToObject();
+                                var urlObject = Utils.currentUrlToObject();
                                 urlObject.setSelections(_.initial(urlObject.selections || []));
-                                Util.setUrlToObject(urlObject, true);
+                                Utils.setUrlToObject(urlObject, true);
 
                                 console.log("Redirecting to " + response.smartLinkRedirect);
                                 document.location = response.smartLinkRedirect;
@@ -103,10 +103,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        var urlObject = Util.currentUrlToObject();
+                        var urlObject = Utils.currentUrlToObject();
                         if (urlObject.selections) {
                             urlObject.selections.pop();
-                            Util.setUrlToObject(urlObject);
+                            Utils.setUrlToObject(urlObject);
                         }
                         defer.reject();
                     },

@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var formplayerSyncComplete = hqImport('cloudcare/js/utils').formplayerSyncComplete;
     var clearUserDataComplete = hqImport('cloudcare/js/utils').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/utils').breakLocksComplete;
-    var Util = hqImport("cloudcare/js/formplayer/utils/utils");
+    var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
     var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 
@@ -247,9 +247,9 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
-                var urlObject = Util.currentUrlToObject();
+                var urlObject = Utils.currentUrlToObject();
                 urlObject.onSubmit();
-                Util.setUrlToObject(urlObject);
+                Utils.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
@@ -267,7 +267,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         data.debuggerEnabled = user.debuggerEnabled;
         data.resourceMap = function (resourcePath) {
-            var urlObject = Util.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
             var appId = urlObject.appId;
             return FormplayerFrontend.getChannel().request('resourceMap', resourcePath, appId);
         };
@@ -295,7 +295,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         hqImport("cloudcare/js/formplayer/apps/api").primeApps(user.restoreAs, options.apps);
 
         savedDisplayOptions = _.pick(
-            Util.getSavedDisplayOptions(),
+            Utils.getSavedDisplayOptions(),
             hqImport("cloudcare/js/formplayer/constants").ALLOWED_SAVED_OPTIONS
         );
         user.displayOptions = _.defaults(savedDisplayOptions, {
@@ -386,7 +386,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             return;
         }
 
-        var urlObject = Util.currentUrlToObject();
+        var urlObject = Utils.currentUrlToObject();
 
         $debug.html('');
         cloudCareDebugger = new CloudCareDebugger({
@@ -407,7 +407,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('getCurrentAppId', function () {
         // First attempt to grab app id from URL
-        var urlObject = Util.currentUrlToObject(),
+        var urlObject = Utils.currentUrlToObject(),
             user = FormplayerFrontend.getChannel().request('currentUser'),
             appId;
 
@@ -528,7 +528,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             data: JSON.stringify(data),
             complete: complete,
         };
-        Util.setCrossDomainAjaxOptions(options);
+        Utils.setCrossDomainAjaxOptions(options);
         $.ajax(options);
     });
 
@@ -620,7 +620,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Util.setCrossDomainAjaxOptions(options);
+        Utils.setCrossDomainAjaxOptions(options);
         formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
@@ -655,7 +655,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Util.setCrossDomainAjaxOptions(options);
+        Utils.setCrossDomainAjaxOptions(options);
         formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
@@ -684,7 +684,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                     restoreAs: user.restoreAs,
                 }),
             };
-        Util.setCrossDomainAjaxOptions(options);
+        Utils.setCrossDomainAjaxOptions(options);
         formplayerLoading();
         resp = $.ajax(options);
         resp.fail(function () {
@@ -699,7 +699,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         // switches tab back from the application name
         document.title = gettext("Web Apps - CommCare HQ");
 
-        var urlObject = Util.currentUrlToObject(),
+        var urlObject = Utils.currentUrlToObject(),
             appId,
             currentUser = FormplayerFrontend.getChannel().request('currentUser');
         urlObject.clearExceptApp();

@@ -4,7 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/utils");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -86,7 +86,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -278,7 +278,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -714,7 +714,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);

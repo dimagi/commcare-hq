@@ -453,10 +453,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
          *  Returns a promise that contains the formplayer response.
          */
         validateFields: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/utils"),
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
                 self = this;
 
-            var urlObject = Util.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
@@ -499,8 +499,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         setStickyQueryInputs: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/utils");
-            Util.setStickyQueryInputs(this.getAnswers());
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+            Utils.setStickyQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {

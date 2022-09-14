@@ -1,6 +1,6 @@
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/util", function () {
-    var Util = {};
+    var Utils = {};
 
     /**
      * confirmationModal
@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
      *          'onConfirm': function() {},
      *      }
      */
-    Util.confirmationModal = function (options) {
+    Utils.confirmationModal = function (options) {
         options = _.defaults(options, {
             title: gettext('Confirm?'),
             message: '',
@@ -38,37 +38,37 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         $modal.modal('show');
     };
 
-    Util.encodedUrlToObject = function (encodedUrl) {
+    Utils.encodedUrlToObject = function (encodedUrl) {
         return decodeURIComponent(encodedUrl);
     };
 
-    Util.objectToEncodedUrl = function (object) {
+    Utils.objectToEncodedUrl = function (object) {
         return encodeURIComponent(object);
     };
 
-    Util.currentUrlToObject = function () {
+    Utils.currentUrlToObject = function () {
         var url = Backbone.history.getFragment();
         try {
-            return Util.CloudcareUrl.fromJson(Util.encodedUrlToObject(url));
+            return Utils.CloudcareUrl.fromJson(Utils.encodedUrlToObject(url));
         } catch (e) {
             // This means that we're on the homepage
-            return new Util.CloudcareUrl({});
+            return new Utils.CloudcareUrl({});
         }
     };
 
-    Util.setUrlToObject = function (urlObject, replace) {
+    Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
-        var encodedUrl = Util.objectToEncodedUrl(urlObject.toJson());
+        var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
         hqImport("cloudcare/js/formplayer/app").navigate(encodedUrl, { replace: replace });
     };
 
-    Util.doUrlAction = function (actionCallback) {
-        var currentObject = Util.CurrentUrlToObject();
+    Utils.doUrlAction = function (actionCallback) {
+        var currentObject = Utils.CurrentUrlToObject();
         actionCallback(currentObject);
-        Util.setUrlToObject(currentObject);
+        Utils.setUrlToObject(currentObject);
     };
 
-    Util.setCrossDomainAjaxOptions = function (options) {
+    Utils.setCrossDomainAjaxOptions = function (options) {
         options.type = 'POST';
         options.dataType = "json";
         options.crossDomain = {crossDomain: true};
@@ -76,13 +76,13 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         options.contentType = "application/json;charset=UTF-8";
     };
 
-    Util.saveDisplayOptions = function (displayOptions) {
-        var displayOptionsKey = Util.getDisplayOptionsKey();
+    Utils.saveDisplayOptions = function (displayOptions) {
+        var displayOptionsKey = Utils.getDisplayOptionsKey();
         localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
     };
 
-    Util.getSavedDisplayOptions = function () {
-        var displayOptionsKey = Util.getDisplayOptionsKey();
+    Utils.getSavedDisplayOptions = function () {
+        var displayOptionsKey = Utils.getDisplayOptionsKey();
         try {
             return JSON.parse(localStorage.getItem(displayOptionsKey));
         } catch (e) {
@@ -91,7 +91,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         }
     };
 
-    Util.getDisplayOptionsKey = function () {
+    Utils.getDisplayOptionsKey = function () {
         var user = hqImport("cloudcare/js/formplayer/app").getChannel().request('currentUser');
         return [
             user.environment,
@@ -101,15 +101,15 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         ].join(':');
     };
 
-    Util.getCurrentQueryInputs = function () {
-        var queryData = Util.currentUrlToObject().queryData[sessionStorage.queryKey];
+    Utils.getCurrentQueryInputs = function () {
+        var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
         if (queryData) {
             return queryData.inputs || {};
         }
         return {};
     };
 
-    Util.getStickyQueryInputs = function () {
+    Utils.getStickyQueryInputs = function () {
         if (!hqImport("hqwebapp/js/toggles").toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
             return {};
         }
@@ -119,14 +119,14 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return this.stickyQueryInputs[sessionStorage.queryKey] || {};
     };
 
-    Util.setStickyQueryInputs = function (inputs) {
+    Utils.setStickyQueryInputs = function (inputs) {
         if (!this.stickyQueryInputs) {
             this.stickyQueryInputs = {};
         }
         this.stickyQueryInputs[sessionStorage.queryKey] = inputs;
     };
 
-    Util.setSelectedValues = function (selections) {
+    Utils.setSelectedValues = function (selections) {
         if (selections !== undefined) {
             let selectedValues = (sessionStorage.selectedValues !== undefined) ? JSON.parse(sessionStorage.selectedValues) : {};
             selectedValues[sessionStorage.queryKey] = selections.join(',');
@@ -134,7 +134,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         }
     };
 
-    Util.CloudcareUrl = function (options) {
+    Utils.CloudcareUrl = function (options) {
         this.appId = options.appId;
         this.copyOf = options.copyOf;
         this.sessionId = options.sessionId;
@@ -250,7 +250,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     };
 
-    Util.CloudcareUrl.prototype.toJson = function () {
+    Utils.CloudcareUrl.prototype.toJson = function () {
         var self = this;
         var dict = {
             appId: self.appId,
@@ -269,7 +269,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return JSON.stringify(dict);
     };
 
-    Util.CloudcareUrl.fromJson = function (json) {
+    Utils.CloudcareUrl.fromJson = function (json) {
         var data = JSON.parse(json);
         var options = {
             'appId': data.appId,
@@ -285,7 +285,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
             'sortIndex': data.sortIndex,
             'forceLoginAs': data.forceLoginAs,
         };
-        return new Util.CloudcareUrl(options);
+        return new Utils.CloudcareUrl(options);
     };
 
     if (!String.prototype.startsWith) {
@@ -333,7 +333,7 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         };
     }
 
-    Util.savePerPageLimitCookie = function (name, perPageLimit) {
+    Utils.savePerPageLimitCookie = function (name, perPageLimit) {
         var savedPath = window.location.pathname;
         var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         $.cookie(name + '-per-page-limit', perPageLimit, {
@@ -343,5 +343,5 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         });
     };
 
-    return Util;
+    return Utils;
 });
