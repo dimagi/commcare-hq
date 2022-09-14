@@ -15,17 +15,6 @@ from corehq.apps.app_manager.xpath import (
 )
 from corehq.apps.hqmedia.models import CommCareMultimedia
 
-CASE_PROPERTY_MAP = {
-    # IMPORTANT: if you edit this you probably want to also edit
-    # the corresponding map in cloudcare
-    # (corehq/apps/cloudcare/static/cloudcare/js/backbone/cases.js)
-    'external-id': 'external_id',
-    'date-opened': 'date_opened',
-    'status': '@status',
-    'name': 'case_name',
-    'owner_id': '@owner_id',
-}
-
 
 def get_column_generator(app, module, detail, column, sort_element=None,
                          order=None, detail_type=None, parent_tab_nodeset=None):
@@ -570,53 +559,6 @@ class AttachmentXpathGenerator(BaseXpathGenerator):
     @property
     def xpath(self):
         return const.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
-
-
-@register_type_processor(const.FIELD_TYPE_PROPERTY)
-class PropertyXpathGenerator(BaseXpathGenerator):
-
-    @property
-    def xpath(self):
-        if self.column.model == 'product':
-            return self.column.field
-
-        parts = self.column.field.split('/')
-        if self.column.model == 'case':
-            parts[-1] = CASE_PROPERTY_MAP.get(parts[-1], parts[-1])
-        property = parts.pop()
-        indexes = parts
-
-        use_absolute = indexes or property == '#owner_name'
-        if use_absolute:
-            case = CaseXPath('current()')
-        else:
-            case = CaseXPath('')
-
-        if indexes and indexes[0] == 'user':
-            case = CaseXPath(UsercaseXPath().case())
-        elif indexes:
-            instance_name = self.detail.get_instance_name(self.module)
-            for index in indexes:
-                case = case.index_id(index).case(instance_name=instance_name)
-
-        if property == '#owner_name':
-            return self.owner_name(case.property('@owner_id'))
-        else:
-            return case.property(property)
-
-    @staticmethod
-    def owner_name(owner_id):
-        groups = XPath("instance('groups')/groups/group")
-        group = groups.select('@id', owner_id)
-        return XPath.if_(
-            group.count().neq(0),
-            group.slash('name'),
-            XPath.if_(
-                CommCareSession.userid.eq(owner_id),
-                CommCareSession.username,
-                XPath.string('')
-            )
-        )
 
 
 @register_type_processor(const.FIELD_TYPE_INDICATOR)
