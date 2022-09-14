@@ -1,5 +1,5 @@
 /*global Backbone, DOMPurify */
-hqDefine("cloudcare/js/formplayer/utils/util", function () {
+hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var Utils = {};
 
     /**
