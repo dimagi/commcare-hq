@@ -1,4 +1,5 @@
 from django.conf.urls import include, re_path as url
+from django.urls import path
 
 from corehq.apps.data_interfaces.dispatcher import EditDataInterfaceDispatcher
 from corehq.apps.data_interfaces.views import (
@@ -58,4 +59,5 @@ urlpatterns = [
     url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
     url(r'^ucr_expressions/(?P<expression_id>\d+)/$', UCRExpressionEditView.as_view(),
         name=UCRExpressionEditView.urlname),
+    path('testing/', include('corehq.apps.object_testing.urls'))
 ]

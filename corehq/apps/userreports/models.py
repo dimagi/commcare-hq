@@ -1392,6 +1392,7 @@ class UCRExpression(models.Model):
     class Meta:
         app_label = 'userreports'
         unique_together = ('name', 'domain')
+        verbose_name = 'UCR Expression'
 
     def wrapped_definition(self, factory_context):
         if self.expression_type == UCR_NAMED_EXPRESSION:
