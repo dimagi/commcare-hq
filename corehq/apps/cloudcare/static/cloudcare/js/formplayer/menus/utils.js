@@ -120,7 +120,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
         };
-        var Util = hqImport("cloudcare/js/formplayer/utils/util");
+        var Util = hqImport("cloudcare/js/formplayer/utils/utils");
         var urlObject = Util.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;

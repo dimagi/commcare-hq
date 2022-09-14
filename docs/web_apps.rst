@@ -334,7 +334,7 @@ Routes **inside** an application serialize the ``CloudcareURL`` object.
 
 Most app-related data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's `SessionNavigationBean <https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java>`_.
 
-CloudcareURL is defined in `formplayer/utils/util.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js>`_ although it probably justifies its own file.
+CloudcareURL is defined in `formplayer/utils/util.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js>`_ although it probably justifies its own file.
 
 URLs using ``CloudcareURL`` are not especially human-legible due to JSON serialization, URL encoding, and the obscurity of the attributes. Example URL for form entry:
 

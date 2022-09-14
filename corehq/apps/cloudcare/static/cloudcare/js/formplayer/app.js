@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var formplayerSyncComplete = hqImport('cloudcare/js/util').formplayerSyncComplete;
     var clearUserDataComplete = hqImport('cloudcare/js/util').clearUserDataComplete;
     var breakLocksComplete = hqImport('cloudcare/js/util').breakLocksComplete;
-    var Util = hqImport("cloudcare/js/formplayer/utils/util");
+    var Util = hqImport("cloudcare/js/formplayer/utils/utils");
     var WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession;
     var appcues = hqImport('analytix/js/appcues');
 

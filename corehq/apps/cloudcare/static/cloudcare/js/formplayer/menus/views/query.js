@@ -175,7 +175,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.errorMessage = null;
 
             var value = this.model.get('value'),
-                allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+                allStickyValues = hqImport("cloudcare/js/formplayer/utils/utils").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
@@ -453,7 +453,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
          *  Returns a promise that contains the formplayer response.
          */
         validateFields: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/util"),
+            var Util = hqImport("cloudcare/js/formplayer/utils/utils"),
                 self = this;
 
             var urlObject = Util.currentUrlToObject();
@@ -499,7 +499,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         setStickyQueryInputs: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
+            var Util = hqImport("cloudcare/js/formplayer/utils/utils");
             Util.setStickyQueryInputs(this.getAnswers());
         },
 

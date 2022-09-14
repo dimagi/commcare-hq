@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Util = hqImport("cloudcare/js/formplayer/utils/utils");
 
     /**
      * RestoreAsBanner
