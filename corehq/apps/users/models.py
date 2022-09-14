@@ -180,13 +180,13 @@ class HqPermissions(DocumentSchema):
     view_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
-    access_api = BooleanProperty(default=True)
+    access_api = BooleanProperty(default=False)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
-    download_reports = BooleanProperty(default=True)
+    download_reports = BooleanProperty(default=False)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
@@ -196,7 +196,7 @@ class HqPermissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    access_mobile_endpoints = BooleanProperty(default=True)
+    access_mobile_endpoints = BooleanProperty(default=False)
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
