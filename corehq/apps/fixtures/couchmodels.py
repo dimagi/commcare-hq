@@ -140,21 +140,12 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
         return any(f.is_indexed for f in self.fields)
 
     @classmethod
-    def by_domain(cls, domain, **kw):
-        from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-        return get_fixture_data_types(domain, **kw)
+    def by_domain(cls, domain):
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
         raise NotImplementedError("no longer used")
-
-    @classmethod
-    def fixture_tag_exists(cls, domain, tag):
-        fdts = FixtureDataType.by_domain(domain)
-        for fdt in fdts:
-            if tag == fdt.tag:
-                return fdt
-        return False
 
     def recursive_delete(self, transaction):
         item_ids = []
@@ -165,11 +156,6 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
         # NOTE cache must be invalidated after transaction commit
-
-    @classmethod
-    def delete_fixtures_by_domain(cls, domain, transaction):
-        for type in FixtureDataType.by_domain(domain):
-            type.recursive_delete(transaction)
 
     def clear_caches(self):
         super(FixtureDataType, self).clear_caches()

@@ -131,6 +131,10 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
             obj.save(sync_to_sql=False)
         return obj
 
+    @property
+    def is_indexed(self):
+        return any(f.is_indexed for f in self.fields)
+
     def clear_caches(self):
         pass
 

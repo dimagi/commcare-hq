@@ -10,11 +10,11 @@ from couchexport.export import export_raw
 from couchexport.models import Format
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import (
     FieldList,
     FixtureDataItem,
-    FixtureDataType,
     FixtureOwnership,
     FixtureItemField,
     LookupTable,
@@ -22,10 +22,7 @@ from corehq.apps.fixtures.models import (
 )
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
-from corehq.apps.fixtures.upload.run_upload import (
-    _run_upload,
-    clear_fixture_quickcache,
-)
+from corehq.apps.fixtures.upload.run_upload import _run_upload
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType, SQLLocation
@@ -406,18 +403,8 @@ class TestFixtureUpload(TestCase):
         self.upload_domains = {self.domain}
 
     def tearDown(self):
-        from dimagi.utils.couch.bulk import CouchTransaction
-        types = [
-            dt
-            for domain in self.upload_domains
-            for dt in FixtureDataType.by_domain(domain)
-        ]
-        try:
-            with CouchTransaction() as tx:
-                for dt in types:
-                    dt.recursive_delete(tx)
-        finally:
-            clear_fixture_quickcache(self.domain, types)
+        for domain_name in self.upload_domains:
+            delete_all_fixture_data(domain_name)
 
     @staticmethod
     def get_workbook_from_data(headers, rows):
@@ -690,29 +677,6 @@ class TestFixtureUpload(TestCase):
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
 
-    def test_upload_should_not_be_impacted_by_stale_table_cache(self):
-        self.upload([(None, 'N', 'apple')])
-
-        # populate caches
-        couch_table, = FixtureDataType.by_domain(self.domain)
-        cache_patch = patch.object(
-            # simulate failed cache invalidation, which could be caused by
-            # BulkSaveError and probably for other things too
-            type(couch_table),
-            "clear_caches",
-            lambda self: None
-        )
-        with cache_patch, mod.CouchTransaction() as tx:
-            # stale caches
-            tx.save(couch_table)
-            tx.set_sql_save_action(type(couch_table), lambda: None)
-
-        data = [
-            ('types', [('N', 'things', 'yes', 'name', 'no')]),
-            ('things', [(None, 'N', 'peach')]),
-        ]
-        self.upload(self.get_workbook_from_data(self.headers, data), replace=True)
-
     def test_upload_should_not_be_impacted_by_stale_row_cache(self):
         self.upload([(None, 'N', 'apple')])
 
@@ -794,14 +758,7 @@ class TestFixtureOwnershipUpload(TestCase):
         cls.loc3.save()
 
     def tearDown(self):
-        from dimagi.utils.couch.bulk import CouchTransaction
-        types = FixtureDataType.by_domain(self.domain)
-        try:
-            with CouchTransaction() as tx:
-                for dt in types:
-                    dt.recursive_delete(tx)
-        finally:
-            clear_fixture_quickcache(self.domain, types)
+        delete_all_fixture_data(self.domain)
 
     def test_row_ownership(self):
         self.upload([(None, 'N', 'apple', 'user1', 'G1', 'loc1')])

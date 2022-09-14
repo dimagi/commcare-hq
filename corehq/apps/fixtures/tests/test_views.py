@@ -157,13 +157,6 @@ class LookupTableViewsTest(TestCase):
             response = client.put(self.url(data_type_id=table.id.hex), data)
         self.assertEqual(response.status_code, 200)
 
-        # verify FixtureDataType caches have been reset
-        FixtureDataType = LookupTable._migration_get_couch_model_class()
-        data_types = FixtureDataType.by_domain(self.domain.name)
-        data_types.append(FixtureDataType.get(table._migration_couch_id))
-        for data_type in data_types:
-            self.assertEqual(data_type.tag, "a_modified_table")
-
         # verify FixtureDataItem caches have been reset
         FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
         rows = [

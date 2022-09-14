@@ -5,8 +5,6 @@ from itertools import zip_longest
 from django.template.defaultfilters import yesno
 from django.utils.translation import gettext as _
 
-from couchdbkit import ResourceNotFound
-
 from couchexport.export import export_raw
 from couchexport.models import Format
 from soil import DownloadBase
@@ -15,7 +13,7 @@ from soil.util import expose_cached_download
 from corehq.apps.fixtures.exceptions import FixtureDownloadError
 from corehq.apps.fixtures.models import (
     FixtureDataItem,
-    FixtureDataType,
+    LookupTable,
     _id_from_doc,
 )
 from corehq.apps.fixtures.upload import DELETE_HEADER
@@ -66,18 +64,20 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     if table_ids and table_ids[0]:
         try:
-            data_types_view = [FixtureDataType.get(id) for id in table_ids]
-        except ResourceNotFound:
+            data_types_view = [LookupTable.objects.get(id=id) for id in table_ids]
+        except LookupTable.DoesNotExist:
             if html_response:
                 raise FixtureDownloadError(
                     _("Sorry, we couldn't find that table. If you think this "
                       "is a mistake please report an issue."))
-            data_types_view = FixtureDataType.by_domain(domain)
+            data_types_view = LookupTable.objects.by_domain(domain)
     else:
-        data_types_view = FixtureDataType.by_domain(domain)
+        data_types_view = LookupTable.objects.by_domain(domain)
 
     if html_response:
         data_types_view = list(data_types_view)[0:1]
+    else:
+        data_types_view = list(data_types_view)
 
     total_tables = len(data_types_view)
     # when total_tables < 4 the final percentage can be >= 100%, but for

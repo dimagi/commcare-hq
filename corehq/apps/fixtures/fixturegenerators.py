@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import partial
-from operator import itemgetter
+from operator import attrgetter, itemgetter
 from xml.etree import cElementTree as ElementTree
 
 from casexml.apps.phone.fixtures import FixtureProvider
@@ -10,7 +10,7 @@ from casexml.apps.phone.utils import (
 )
 from corehq.apps.fixtures.dbaccessors import iter_fixture_items_for_data_type
 from corehq.apps.fixtures.exceptions import FixtureTypeCheckError
-from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataItem, FixtureDataType
+from corehq.apps.fixtures.models import FIXTURE_BUCKET, FixtureDataItem, LookupTable
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 from corehq.util.metrics import metrics_histogram
@@ -23,7 +23,7 @@ REPORT_FIXTURE = 'report_fixture'
 
 def item_lists_by_domain(domain, namespace_ids=False):
     ret = list()
-    for data_type in FixtureDataType.by_domain(domain):
+    for data_type in LookupTable.objects.by_domain(domain):
         structure = {
             f.field_name: {
                 'name': f.field_name,
@@ -95,9 +95,9 @@ def item_lists_by_app(app, module):
 
 def get_global_items_by_domain(domain, case_id):
     global_types = {}
-    for data_type in FixtureDataType.by_domain(domain):
+    for data_type in LookupTable.objects.by_domain(domain):
         if data_type.is_global:
-            global_types[data_type._id] = data_type
+            global_types[data_type._migration_couch_id] = data_type
     if global_types:
         data_fn = partial(ItemListsProvider()._get_global_items, global_types, domain)
         return get_or_cache_global_fixture(domain, case_id, FIXTURE_BUCKET, '', data_fn)
@@ -110,11 +110,11 @@ class ItemListsProvider(FixtureProvider):
         restore_user = restore_state.restore_user
         global_types = {}
         user_types = {}
-        for data_type in FixtureDataType.by_domain(restore_user.domain):
+        for data_type in LookupTable.objects.by_domain(restore_user.domain):
             if data_type.is_global:
-                global_types[data_type._id] = data_type
+                global_types[data_type._migration_couch_id] = data_type
             else:
-                user_types[data_type._id] = data_type
+                user_types[data_type._migration_couch_id] = data_type
         items = []
         user_items_count = 0
         if global_types:
@@ -148,7 +148,7 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_global_items(self, global_types, domain):
         def get_items_by_type(data_type):
-            for item in iter_fixture_items_for_data_type(domain, data_type._id, wrap=False):
+            for item in iter_fixture_items_for_data_type(domain, data_type._migration_couch_id, wrap=False):
                 self._set_cached_type(item, data_type)
                 yield item
 
@@ -177,7 +177,7 @@ class ItemListsProvider(FixtureProvider):
 
     def _get_fixtures(self, data_types, get_items_by_type, user_id):
         fixtures = []
-        for data_type in sorted(data_types.values(), key=itemgetter('tag')):
+        for data_type in sorted(data_types.values(), key=attrgetter('tag')):
             if data_type.is_indexed:
                 fixtures.append(self._get_schema_element(data_type))
             items = get_items_by_type(data_type)
