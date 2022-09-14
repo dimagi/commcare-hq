@@ -135,7 +135,7 @@ def get_registration_element_data(restore_user):
 
 
 def get_session_data_with_abdm_token(restore_user):
-    user_data = {"abdm_api_token": get_abdm_api_token(restore_user.username, restore_user.password, restore=True)}
+    user_data = {"abdm_api_token": get_abdm_api_token(restore_user.username)}
     user_data.update(restore_user.user_session_data)
     return user_data
 

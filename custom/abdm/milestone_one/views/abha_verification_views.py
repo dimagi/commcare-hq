@@ -1,13 +1,15 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.status import HTTP_200_OK
 from rest_framework.response import Response
+from custom.abdm.auth import UserAuthentication
 
 from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
 
 
 @api_view(["GET"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 def get_auth_methods(request):
     aadhaar_number = request.data.get("health_id")
     resp = abdm_util.search_by_health_id(aadhaar_number)
@@ -18,6 +20,7 @@ def get_auth_methods(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 def generate_auth_otp(request):
     health_id = request.data.get("health_id")
     auth_method = request.data.get("auth_method")
@@ -27,6 +30,7 @@ def generate_auth_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 def confirm_with_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
@@ -40,6 +44,7 @@ def confirm_with_mobile_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 def confirm_with_aadhaar_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
@@ -53,6 +58,7 @@ def confirm_with_aadhaar_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 def search_health_id(request):
     health_id = request.data.get("health_id")
     resp = abdm_util.search_by_health_id(health_id)

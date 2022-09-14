@@ -10,10 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_access_token():
-    url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
     payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
+    resp = requests.post(url=gateway_url, data=json.dumps(payload), headers=headers)
     if resp.status_code == 200:
         logger.info("Received token info from abdm")
         return resp.json().get("accessToken")
@@ -21,13 +20,17 @@ def get_access_token():
 
 def generate_aadhar_otp(aadhaar_number):
     generate_aadhar_otp = "v1/registration/aadhaar/generateOtp"
-    payload = {"aadhaar": str(aadhaar_number)}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
+    data = {"aadhaar": str(aadhaar_number)}
+    headers = {"Content-Type": "application/json"}
     token = get_access_token()
-    logging.info("Received access token")
+    logging.info(f"Received access token {token}")
     headers.update({"Authorization": "Bearer {}".format(token)})
     url = base_url + generate_aadhar_otp
-    resp = requests.post(url=url + generate_aadhar_otp, data=json.dumps(payload), headers=headers)
+    print(f"url {url}")
+    print(data)
+    print(headers)
+    resp = requests.post(url=url, data=data, headers=headers)
+    print(resp.content)
     return resp.json()
 
 

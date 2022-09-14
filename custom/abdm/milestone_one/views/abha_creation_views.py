@@ -1,7 +1,8 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_200_OK
 from rest_framework.response import Response
+from custom.abdm.auth import UserAuthentication
 
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
@@ -15,7 +16,7 @@ from custom.abdm.milestone_one.utils.user_util import get_abdm_api_token
 def login(request):
     username = request.data.get("username")
     password = request.data.get("password")
-    token = get_abdm_api_token(username, password)
+    token = get_abdm_api_token(username)
     if not token:
         return Response({'error': 'Invalid Credentials'}, status=HTTP_404_NOT_FOUND)
     return Response({'token': token}, status=HTTP_200_OK)
@@ -23,6 +24,7 @@ def login(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 @required_request_params(["aadhaar"])
 def generate_aadhaar_otp(request):
     aadhaar_number = request.data.get("aadhaar_number")
@@ -32,6 +34,7 @@ def generate_aadhaar_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 @required_request_params(["txn_id", "mobile_number"])
 def generate_mobile_otp(request):
     txn_id = request.data.get("txn_id")
@@ -42,6 +45,7 @@ def generate_mobile_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 @required_request_params(["txn_id", "otp"])
 def verify_aadhaar_otp(request):
     txn_id = request.data.get("txn_id")
@@ -52,6 +56,7 @@ def verify_aadhaar_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
+@authentication_classes((UserAuthentication,))
 @required_request_params(["txn_id", "otp"])
 def verify_mobile_otp(request):
     txn_id = request.data.get("txn_id")
