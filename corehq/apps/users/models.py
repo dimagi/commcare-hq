@@ -879,6 +879,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
 
     _user = None
 
+    can_assign_superuser = BooleanProperty(default=False)
+
     @classmethod
     def wrap(cls, data, should_save=False):
         if "organizations" in data:
