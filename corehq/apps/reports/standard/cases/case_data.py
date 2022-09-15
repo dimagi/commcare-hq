@@ -257,7 +257,7 @@ class CaseDataView(BaseProjectReportSectionView):
             return None
         dynamic_keys = sorted(dynamic_data.keys())
         if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-            definition = _get_dd_table_definition(self.domain, self.case_instance.type)
+            definition = _get_dd_table_definition(self.domain, self.case_instance.type, dynamic_keys)
         else:
             definition = get_default_definition(
                 dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
@@ -265,20 +265,23 @@ class CaseDataView(BaseProjectReportSectionView):
         return get_tables_as_rows(dynamic_data, definition, timezone)
 
 
-def _get_dd_table_definition(domain, case_type):
-    return [
-        {
-            "name": group or _('Uncategorized'),
-            "layout": list(chunked([
-                DisplayConfig(
-                    expr=prop.name,
-                    description=prop.description,
-                    has_history=True
-                ) for prop in props
-            ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
-        }
-        for group, props in _get_dd_props_by_group(domain, case_type)
+def _get_dd_table_definition(domain, case_type, dynamic_keys):
+    dd_props_by_group = _get_dd_props_by_group(domain, case_type)
+    definitions = [
+        _table_definition(group or _('Uncategorized'), [
+            (p.name, p.description) for p in props
+        ])
+        for group, props in sorted(dd_props_by_group.items())
     ]
+
+    props_in_dd = set(prop.name for prop_group in dd_props_by_group.values()
+                      for prop in prop_group)
+    unrecognized = set(dynamic_keys) - props_in_dd
+    if unrecognized:
+        definitions.append(_table_definition(_('Unrecognized'), [
+            (p, None) for p in unrecognized
+        ]))
+    return definitions
 
 
 def _get_dd_props_by_group(domain, case_type):
@@ -286,9 +289,23 @@ def _get_dd_props_by_group(domain, case_type):
     for prop in CaseProperty.objects.filter(
             case_type__domain=domain,
             case_type__name=case_type,
+            deprecated=False,
     ):
         ret[prop.group].append(prop)
-    return sorted(ret.items())
+    return ret
+
+
+def _table_definition(name, props):
+    return {
+        "name": name,
+        "layout": list(chunked([
+            DisplayConfig(
+                expr=name,
+                description=description,
+                has_history=True
+            ) for name, description in sorted(props)
+        ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+    }
 
 
 def form_to_json(domain, form, timezone):
