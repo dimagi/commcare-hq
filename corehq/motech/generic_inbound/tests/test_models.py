@@ -42,6 +42,8 @@ class TestConfigurableApiAuditing(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        AuditEvent.objects.all().delete()
+
         cls.expression1 = UCRExpression.objects.create(
             name='create_sport',
             domain=cls.domain,
@@ -77,7 +79,7 @@ class TestConfigurableApiAuditing(TestCase):
         return AuditEvent.objects.exclude(id__in=self.setup_event_ids)
 
     def test_audit_fields_for_api_create(self):
-        setup_event, = self.setup_audit_events
+        setup_event = self.setup_audit_events[0]
         self.assertEqual(self.qualified_model_name, setup_event.object_class_path)
         self.assertEqual(self.api_config.pk, setup_event.object_pk)
         self.assertTrue(setup_event.is_create)
