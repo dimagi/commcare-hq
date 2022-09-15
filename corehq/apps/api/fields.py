@@ -240,4 +240,20 @@ class ToOneDocumentField(ApiField):
         if hydrated is None:
             return None
         else:
-            return self.related_resource.full_dehydrate(self.related_resource.build_bundle(obj=hydrated, request=bundle.request)).data
+            bundle_ = self.related_resource.build_bundle(obj=hydrated, request=bundle.request)
+            return self.related_resource.full_dehydrate(bundle_).data
+
+
+class UUIDField(ApiField):
+    """
+    A UUID field.
+
+    Covers ``models.UUIDField``
+    """
+    dehydrated_type = 'string'
+    help_text = 'A UUID object'
+
+    def convert(self, value):
+        if value is None:
+            return None
+        return value.hex
