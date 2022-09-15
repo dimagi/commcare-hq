@@ -282,6 +282,8 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     objects = RepeaterManager()
     all_objects = models.Manager()
