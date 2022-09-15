@@ -1,18 +1,20 @@
 import time
 from datetime import timedelta
 
-from celery.schedules import crontab
-from celery.task import periodic_task
 from django.conf import settings
 
+from celery.schedules import crontab
+
+from couchforms.models import UnfinishedSubmissionStub
+from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.celery import periodic_task
 from corehq.form_processor.reprocess import reprocess_unfinished_stub
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from corehq.util.metrics import metrics_counter, metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
-from couchforms.models import UnfinishedSubmissionStub
-from dimagi.utils.couch import CriticalSection
-from dimagi.utils.logging import notify_exception
 
 SUBMISSION_REPROCESS_CELERY_QUEUE = 'submission_reprocessing_queue'
 
@@ -41,8 +43,9 @@ def _reprocess_archive_stubs():
 @serial_task("reprocess_archive_stubs", queue=settings.CELERY_PERIODIC_QUEUE)
 def reprocess_archive_stubs():
     # Check for archive stubs
-    from corehq.form_processor.models import XFormInstance
     from couchforms.models import UnfinishedArchiveStub
+
+    from corehq.form_processor.models import XFormInstance
     stubs = UnfinishedArchiveStub.objects.filter(attempts__lt=3)
     metrics_gauge('commcare.unfinished_archive_stubs', len(stubs),
         multiprocess_mode=MPM_MAX)
