@@ -77,9 +77,8 @@ class ModelDeletion(BaseDeletion):
         :param model_name: name of the model in the app
         :param domain_filter_kwarg: name of the model field to filter by domain
         :param extra_models: (optional) a collection of other models in the same
-            app to be filtered and deleted in the same way as ``model_name``.
-            The default (``None``) results in only instances of ``model_name``
-            being deleted.
+            app which will be deleted along with ``model_name`` via cascaded deletion.
+            The ``extra_models`` is used only for auditing purposes.
         :param audit_action: (optional) an audit action to be provided as a
             keyword argument when deleting records (e.g.
             ``<QuerySet>.delete(audit_action=audit_action)``). Necessary for
