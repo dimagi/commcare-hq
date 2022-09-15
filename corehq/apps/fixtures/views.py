@@ -106,11 +106,7 @@ def update_tables(request, domain, data_type_id=None):
             return json_response(_table_json(data_type))
 
         elif request.method == 'DELETE':
-            # HACK ensure we get the latest version. Bypass Couch concurrency
-            # protection because caching is hard, and the client does
-            # not specify what version they are deleting anyway.
-            couch_type = data_type._migration_get_couch_object(dont_cache_docs=True)
-            couch_type.clear_caches()
+            couch_type = data_type._migration_get_couch_object()
             try:
                 with CouchTransaction() as transaction:
                     couch_type.recursive_delete(transaction)
@@ -208,10 +204,6 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
     data_type.fields = new_fixture_fields
 
     def update_sql_objects():
-        # HACK ensure we update the latest version. Bypass Couch concurrency
-        # protection because caching is hard, and the client does
-        # not specify what version they are updating anyway.
-        data_type._migration_get_couch_object().clear_caches()
         data_type.save()
         return []
 

@@ -304,10 +304,5 @@ def clear_fixture_quickcache(domain, data_types):
     if not data_types:
         return
 
-    type_ids = set()
-    for data_type in data_types:
-        type_ids.add(data_type._migration_couch_id)
-        data_type.clear_caches()
-
-    for type_id in type_ids:
+    for type_id in {t._migration_couch_id for t in data_types}:
         get_fixture_items_for_data_type.clear(domain, type_id)

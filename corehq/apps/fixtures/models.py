@@ -135,9 +135,6 @@ class LookupTable(SyncSQLToCouchMixin, models.Model):
     def is_indexed(self):
         return any(f.is_indexed for f in self.fields)
 
-    def clear_caches(self):
-        pass
-
 
 @define
 class Field:

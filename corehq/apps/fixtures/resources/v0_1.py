@@ -218,7 +218,8 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             with CouchTransaction() as transaction:
                 data_item.recursive_delete(transaction)
         finally:
-            data_type = LookupTable._migration_get_couch_model_class().get(data_item.data_type_id)
+            class data_type:
+                _migration_couch_id = data_item.data_type_id
             clear_fixture_quickcache(data_item.domain, [data_type])
             clear_fixture_cache(data_item.domain)
         return ImmediateHttpResponse(response=HttpAccepted())
@@ -239,7 +240,8 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         try:
             bundle.obj.save()
         finally:
-            data_type = LookupTable._migration_get_couch_model_class().get(data_type_id)
+            class data_type:
+                _migration_couch_id = data_type_id
             clear_fixture_quickcache(kwargs['domain'], [data_type])
             clear_fixture_cache(kwargs['domain'])
         return bundle
@@ -273,7 +275,9 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
                 bundle.obj.save()
             finally:
                 data_item = bundle.obj
-                data_type = LookupTable._migration_get_couch_model_class().get(data_item.data_type_id)
+
+                class data_type:
+                    _migration_couch_id = data_item.data_type_id
                 clear_fixture_quickcache(data_item.domain, [data_type])
                 clear_fixture_cache(data_item.domain)
 

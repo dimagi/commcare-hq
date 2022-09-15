@@ -337,21 +337,11 @@ class LookupTableViewsTest(TestCase):
         # to and from the client.
 
         # populate caches
-        couch_table = LookupTable._migration_get_couch_model_class().get(table._migration_couch_id)
         couch_rows = LookupTableRow._migration_get_couch_model_class().get_item_list(table.domain, table.tag)
-        cache_patch = patch.object(
-            # simulate failed cache invalidation, which could be caused by
-            # BulkSaveError and probably for other things too
-            LookupTable._migration_get_couch_model_class(),
-            "clear_caches",
-            lambda self: None
-        )
-        with cache_patch, CouchTransaction() as tx:
+        with CouchTransaction() as tx:
             # transaction does not clear caches -> stale caches
-            tx.save(couch_table)
             for row in couch_rows:
                 tx.save(row)
-            tx.set_sql_save_action(type(couch_table), lambda: None)
             tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
 
     def assert_deleted(self, table, rows):

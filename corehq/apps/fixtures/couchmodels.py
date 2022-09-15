@@ -18,7 +18,6 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
     get_fixture_items_for_data_type,
     get_owner_ids_by_type,
@@ -75,7 +74,7 @@ class FixtureTypeField(DocumentSchema):
         )
 
 
-class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
+class FixtureDataType(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
