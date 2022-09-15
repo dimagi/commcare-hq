@@ -98,6 +98,9 @@ class UserRole(models.Model):
             models.Index(fields=("couch_id",)),
         )
 
+    def __repr__(self):
+        return f"UserRole(domain='{self.domain}', name='{self.name}')"
+
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import HqPermissions
@@ -267,6 +270,9 @@ class RolePermission(models.Model):
             ),
         ]
 
+    def __repr__(self):
+        return f"RolePermission(role={self.role}, permission='{self.permission}')"
+
     @staticmethod
     def from_permission_info(role, info):
         return RolePermission(
@@ -284,6 +290,9 @@ class Permission(models.Model):
 
     class Meta:
         db_table = "users_permission"
+
+    def __repr__(self):
+        return f"Permission('{self.value}')"
 
     @classmethod
     def create_all(cls):
