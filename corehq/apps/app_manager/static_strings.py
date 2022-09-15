@@ -133,6 +133,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     gettext_noop('Mobile Reports Update Frequency'),
     gettext_noop('Mobile UCR Restore Version'),
     gettext_noop('Modules Menu Display'),
+    gettext_noop('Multi-Word Handling for Selection Functions'),
     gettext_noop('Multimedia Validation'),
     gettext_noop('Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features'),
     gettext_noop('Multiple Questions per Screen'),
