@@ -5,7 +5,7 @@ x-commcarehq_base: &commcarehq_base
   build:
     context: .
     dockerfile: "${DOCKERFILE}"
-  environment:
+  environment: &environment_base
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
     DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
@@ -39,6 +39,9 @@ services:
     command: [runcelery]
 
   pillowtop:
+    environment:
+      <<: *environment_base
+      KAFKA_ADVERTISED_HOST_NAME: kafka
     <<: *commcarehq_base
     command: [runpillowtop]
 
