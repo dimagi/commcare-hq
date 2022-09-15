@@ -96,6 +96,7 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
+                data.permissions.download_reports = true;  // the user must explicitly disable this when visible
 
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
@@ -154,6 +155,10 @@ hqDefine('users/js/roles',[
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.canSeeAnyReports = ko.computed(function () {
+                    return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
+                });
+
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
@@ -484,6 +489,11 @@ hqDefine('users/js/roles',[
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
+
+                // Set download_reports to true only if the user can see reports
+                data.permissions.download_reports = data.permissions.download_reports && (
+                    data.permissions.view_reports || data.permissions.view_report_list.length !== 0
+                );
 
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
