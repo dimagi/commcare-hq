@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util"),
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
         md = window.markdownit();
     var selectMenu = function (options) {
 
@@ -36,11 +36,11 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 return;
             }
 
-            var urlObject = Util.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
 
             if (urlObject.endpointId) {
                 urlObject.replaceEndpoint(menuResponse.selections);
-                Util.setUrlToObject(urlObject);
+                Utils.setUrlToObject(urlObject);
             }
 
             // If we don't have an appId in the URL (usually due to form preview)
@@ -53,7 +53,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                     return;
                 }
                 urlObject.appId = menuResponse.appId;
-                Util.setUrlToObject(urlObject);
+                Utils.setUrlToObject(urlObject);
             }
 
             showMenu(menuResponse);
@@ -63,9 +63,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
 
             if (menuResponse.shouldRequestLocation) {
-                hqImport("cloudcare/js/formplayer/menus/util").handleLocationRequest(options);
+                hqImport("cloudcare/js/formplayer/menus/utils").handleLocationRequest(options);
             }
-            hqImport("cloudcare/js/formplayer/menus/util").startOrStopLocationWatching(menuResponse.shouldWatchLocation);
+            hqImport("cloudcare/js/formplayer/menus/utils").startOrStopLocationWatching(menuResponse.shouldWatchLocation);
         }).fail(function () {
             //  if it didn't go through, then it displayed an error message.
             // the right thing to do is then to just stay in the same place.
@@ -73,7 +73,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var selectDetail = function (caseId, detailIndex, isPersistent, isMultiSelect) {
-        var urlObject = Util.currentUrlToObject();
+        var urlObject = Utils.currentUrlToObject();
         if (!isPersistent) {
             urlObject.addSelection(caseId);
         }
@@ -86,7 +86,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     };
 
     var showMenu = function (menuResponse) {
-        var menuListView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView(menuResponse);
+        var menuListView = hqImport("cloudcare/js/formplayer/menus/utils").getMenuView(menuResponse);
         var appPreview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         var changeFormLanguage = FormplayerFrontend.currentUser.changeFormLanguage;
 
@@ -100,9 +100,9 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         }
 
         if (menuResponse.breadcrumbs) {
-            hqImport("cloudcare/js/formplayer/menus/util").showBreadcrumbs(menuResponse.breadcrumbs);
+            hqImport("cloudcare/js/formplayer/menus/utils").showBreadcrumbs(menuResponse.breadcrumbs);
             if (menuResponse.langs && menuResponse.langs.length > 1 && !appPreview && changeFormLanguage) {
-                hqImport("cloudcare/js/formplayer/menus/util").showLanguageMenu(menuResponse.langs);
+                hqImport("cloudcare/js/formplayer/menus/utils").showLanguageMenu(menuResponse.langs);
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
