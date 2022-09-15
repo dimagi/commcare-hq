@@ -482,13 +482,3 @@
   default: []  # multiSelect default takes a list
   since: '2.53'
   force: true
-
-- name: Multi-Word Handling for Selection Functions
-  description: TODO
-  id: "cc-selected-functions-csv"
-  since: '2.53'
-  values:
-    - ['yes', 'Yes']
-    - ['no', 'No']
-  default: 'no'
-  force: true
