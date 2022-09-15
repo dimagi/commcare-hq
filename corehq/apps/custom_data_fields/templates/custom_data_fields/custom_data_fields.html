@@ -33,7 +33,7 @@
       {% for field, errors in custom_fields_form.errors.items %}
         {% for error in errors %}
           <div class="alert alert-danger">
-            {{ error|safe }}
+            {{ error }}
             <button type="button" class="close" data-dismiss="alert">&times;</button>
           </div>
         {% endfor %}
