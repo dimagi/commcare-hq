@@ -1251,7 +1251,7 @@ def _get_properties_display(case_block, assume_phonetimes, timezone):
     definitions = [
         DisplayConfig(expr=k, is_phone_time=assume_phonetimes)
         # Sort with common @ attributes at the bottom
-        for k in sorted(case_block.keys(), key=lambda k: (k[0]=='@', k))
+        for k in sorted(case_block.keys(), key=lambda k: (k[0] == '@', k))
     ]
     return [get_display_data(case_block, definition, timezone=timezone) for definition in definitions]
 
