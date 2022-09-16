@@ -82,4 +82,5 @@ branches:
     - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
     - sk/webapps-update-url # Simon Sep 13
     - ap/sql-repeater/phase-2 # Amit Sep 16
+    - jls/change-delimiter # Jenny Sept 16
 submodules: { }
