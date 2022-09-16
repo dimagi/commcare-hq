@@ -341,7 +341,7 @@ lxml==4.9.1
     #   eulxml
     #   python3-saml
     #   xmlsec
-mako==1.1.3
+mako==1.2.2
     # via
     #   alembic
     #   oic
