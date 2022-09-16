@@ -55,7 +55,6 @@ from corehq.apps.hqcase.utils import (
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
-    get_default_definition,
     get_table_as_rows,
 )
 from corehq.apps.locations.permissions import (
@@ -252,8 +251,12 @@ class CaseDataView(BaseProjectReportSectionView):
                 context['dd_properties_tables'] = _get_dd_tables(
                     self.domain, self.case_instance.type, dynamic_data, timezone)
             else:
-                definition = get_default_definition(
-                    sorted(dynamic_data.keys()), num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+                definition = {
+                    "layout": list(chunked([
+                        DisplayConfig(expr=prop, has_history=True)
+                        for prop in sorted(dynamic_data.keys())
+                    ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
+                }
                 context['dynamic_properties_table'] = get_table_as_rows(dynamic_data, definition, timezone)
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context

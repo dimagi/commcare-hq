@@ -255,27 +255,3 @@ def get_table_as_rows(data, definition, timezone=pytz.utc):
         "name": definition.get('name') or '',
         "rows": rows
     }
-
-
-def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
-    """
-    Get a default single table layout definition for `keys` split across
-    `num_columns` columns.
-
-    All datetimes will be treated as "phone times".
-    (See corehq.util.timezones.conversions.PhoneTime for more context.)
-
-    """
-    phonetime_fields = phonetime_fields or set()
-    date_fields = date_fields or set()
-    return {
-        "name": name,
-        "layout": list(chunked([
-            DisplayConfig(
-                expr=prop, is_phone_time=prop in phonetime_fields, has_history=True,
-                process="date" if prop in date_fields else None
-            )
-            for prop in keys
-        ], num_columns))
-
-    }
