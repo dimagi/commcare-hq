@@ -35,7 +35,8 @@ def _on_starting(server, path=None):
 
 def _remove_prometheus_metric_files(path, worker=None):
     if path is None:
-        path = os.environ.get('prometheus_multiproc_dir')
+        # DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
+        path = os.environ.get('PROMETHEUS_MULTIPROC_DIR') or os.environ.get('prometheus_multiproc_dir')
     if not path:
         return
 

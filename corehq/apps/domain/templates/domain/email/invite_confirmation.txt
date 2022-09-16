@@ -1,7 +1,7 @@
 This is a confirmation that {{ invited_user }} accepted your invitation.
 
-If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCareHQ visit http://www.commcarehq.org/.
+If you think you have received this by mistake, you can go ahead and ignore this email. To find out more about CommCare HQ visit http://www.commcarehq.org/.
 
 Thanks for using our site!
 
--The CommCareHQ team
+-The CommCare HQ team

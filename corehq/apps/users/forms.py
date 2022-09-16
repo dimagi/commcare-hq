@@ -428,13 +428,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
-        self.fields['role'].help_text = _(
-            '<i class="fa fa-info-circle"></i> '
-            'Only applies to mobile workers who will be entering data using '
-            '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
-            'Web Apps</a>'
-        )
-
         self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
             self.domain
         )

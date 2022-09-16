@@ -2914,16 +2914,10 @@ msgid "Web Apps - CommCare HQ"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js
-#, fuzzy
-#| msgid ""
-#| "Formplayer encountered an error. Please report an issue if you continue "
-#| "to see this message."
 msgid ""
 "An unexpected error occurred. Please report an issue if you continue to see "
 "this message."
 msgstr ""
-"El ejecutor del formulario encontró un error. Por favor reporte un problema "
-"si continúa apareciendo este mensaje."
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
 msgid "Completed: "
@@ -4891,6 +4885,12 @@ msgstr ""
 msgid "Unable to save form configs"
 msgstr ""
 
+#: corehq/motech/generic_inbound/static/generic_inbound/js/api_edit.js
+#, fuzzy
+#| msgid "Copied!"
+msgid "URL Copied"
+msgstr "¡Copiado!"
+
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js
 msgid "Daily"
 msgstr "Diariamente"
@@ -4942,6 +4942,3 @@ msgstr "¡Incorrecto! La respuesta es:"
 #: corehq/motech/static/motech/js/connection_settings_detail.js
 msgid "CommCare HQ was unable to make the request: "
 msgstr ""
-
-#~ msgid "Sorry, an error occurred while processing that request."
-#~ msgstr "Lo sentimos, ocurrió un error al procesar esa solicitud."

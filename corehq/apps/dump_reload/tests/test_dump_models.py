@@ -1,7 +1,6 @@
 import itertools
 
 from django.apps import apps
-from testil import eq
 
 from corehq.apps.dump_reload.sql.dump import _get_app_list
 from corehq.apps.dump_reload.util import get_model_label
@@ -71,6 +70,9 @@ IGNORE_MODELS = {
     "notifications.DismissedUINotify",
     "notifications.LastSeenNotification",
     "notifications.Notification",
+    "otp_static.StaticDevice",
+    "otp_static.StaticToken",
+    "otp_totp.TOTPDevice",
     "phone.SyncLogSQL",  # not required and can be a lot of data
     "pillow_retry.PillowError",
     "pillowtop.DjangoPillowCheckpoint",
@@ -127,11 +129,8 @@ UNKNOWN_MODELS = {
     "fhir.FHIRImportResourceProperty",
     "fhir.FHIRImportResourceType",
     "fhir.ResourceTypeRelationship",
+    "field_audit.AuditEvent",
     "fixtures.UserLookupTableStatus",
-    "integration.DialerSettings",
-    "integration.GaenOtpServerSettings",
-    "integration.HmacCalloutSettings",
-    "integration.SimprintsIntegration",
     "ivr.Call",
     "oauth2_provider.AccessToken",
     "oauth2_provider.Application",
@@ -141,16 +140,9 @@ UNKNOWN_MODELS = {
     "oauth_integrations.GoogleApiToken",
     "oauth_integrations.LiveGoogleSheetRefreshStatus",
     "oauth_integrations.LiveGoogleSheetSchedule",
-    "otp_static.StaticDevice",
-    "otp_static.StaticToken",
-    "otp_totp.TOTPDevice",
     "registration.AsyncSignupRequest",
     "registration.RegistrationRequest",
     "reminders.EmailUsage",
-    "reports.TableauServer",
-    "reports.TableauVisualization",
-    "saved_reports.ScheduledReportLog",
-    "saved_reports.ScheduledReportsCheckpoint",
     "scheduling.MigratedReminder",
     "scheduling.SMSCallbackContent",
     "sms.DailyOutboundSMSLimitReached",

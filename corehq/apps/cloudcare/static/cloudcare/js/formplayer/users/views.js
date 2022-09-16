@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     /**
      * RestoreAsBanner
@@ -64,7 +64,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             };
         },
         onClickUser: function () {
-            Util.confirmationModal({
+            Utils.confirmationModal({
                 title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
@@ -211,7 +211,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);
-            Util.savePerPageLimitCookie('users', this.limit);
+            Utils.savePerPageLimitCookie('users', this.limit);
         },
     });
 

@@ -189,6 +189,9 @@ class OTARestoreWebUser(OTARestoreUser):
 
         return UserLookupTableStatus.DEFAULT_LAST_MODIFIED
 
+    def get_usercase_id(self):
+        return self._couch_user.get_usercase_id(self.domain)
+
 
 class OTARestoreCommCareUser(OTARestoreUser):
 
@@ -233,6 +236,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
         from corehq.apps.fixtures.models import UserLookupTableType
 
         return self._couch_user.fixture_status(UserLookupTableType.LOCATION)
+
+    def get_usercase_id(self):
+        return self._couch_user.get_usercase_id()
 
 
 class SyncLogAssertionError(AssertionError):

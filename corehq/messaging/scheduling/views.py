@@ -605,6 +605,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
 
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
+    refresh_urlname = 'conditional_alert_list_refresh'
     page_title = gettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'

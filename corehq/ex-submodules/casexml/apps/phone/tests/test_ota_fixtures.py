@@ -37,7 +37,7 @@ class OtaFixtureTest(TestCase):
             FR_PROVINCES: make_item_lists(FR_PROVINCES, 'burgundy'),
         }
 
-        cls.restore_user = cls.user.to_ota_restore_user()
+        cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
 
     @classmethod
     def tearDownClass(cls):
