@@ -56,7 +56,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     DisplayConfig,
     get_default_definition,
-    get_tables_as_rows,
+    get_table_as_rows,
 )
 from corehq.apps.locations.permissions import (
     location_restricted_exception,
@@ -195,13 +195,12 @@ class CaseDataView(BaseProjectReportSectionView):
 
         data = copy.deepcopy(wrapped_case.to_full_dict())
         display = wrapped_case.get_display_config()
-        default_properties = get_tables_as_rows(data, display, timezone)
+        default_properties = get_table_as_rows(data, display, timezone)
         dynamic_data = wrapped_case.dynamic_properties()
 
-        for section in display:
-            for row in section['layout']:
-                for item in row:
-                    dynamic_data.pop(item.expr, None)
+        for row in display['layout']:
+            for item in row:
+                dynamic_data.pop(item.expr, None)
 
         product_name_by_id = {
             product['product_id']: product['name']
@@ -240,7 +239,6 @@ class CaseDataView(BaseProjectReportSectionView):
 
             "default_properties_as_table": default_properties,
             "dynamic_properties": dynamic_data,
-            "dynamic_properties_as_table": self._get_dynamic_properties_as_table(dynamic_data, timezone),
             "show_properties_edit": show_properties_edit,
             "timezone": timezone,
             "tz_abbrev": timezone.zone,
@@ -249,23 +247,19 @@ class CaseDataView(BaseProjectReportSectionView):
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        if dynamic_data:
+            if toggles.DD_CASE_DATA.enabled_for_request(self.request):
+                context['dd_properties_tables'] = _get_dd_tables(
+                    self.domain, self.case_instance.type, dynamic_data, timezone)
+            else:
+                definition = get_default_definition(
+                    sorted(dynamic_data.keys()), num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
+                context['dynamic_properties_table'] = get_table_as_rows(dynamic_data, definition, timezone)
         context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
 
-    def _get_dynamic_properties_as_table(self, dynamic_data, timezone):
-        if not dynamic_data:
-            return None
-        dynamic_keys = sorted(dynamic_data.keys())
-        if toggles.DD_CASE_DATA.enabled_for_request(self.request):
-            definition = _get_dd_table_definition(self.domain, self.case_instance.type, dynamic_keys)
-        else:
-            definition = get_default_definition(
-                dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-        return get_tables_as_rows(dynamic_data, definition, timezone)
-
-
-def _get_dd_table_definition(domain, case_type, dynamic_keys):
+def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     dd_props_by_group = _get_dd_props_by_group(domain, case_type)
     definitions = [
         _table_definition(group or _('Uncategorized'), [
@@ -276,12 +270,14 @@ def _get_dd_table_definition(domain, case_type, dynamic_keys):
 
     props_in_dd = set(prop.name for prop_group in dd_props_by_group.values()
                       for prop in prop_group)
-    unrecognized = set(dynamic_keys) - props_in_dd
+    unrecognized = set(dynamic_data.keys()) - props_in_dd
     if unrecognized:
         definitions.append(_table_definition(_('Unrecognized'), [
             (p, None) for p in unrecognized
         ]))
-    return definitions
+
+    return [get_table_as_rows(dynamic_data, definition, timezone)
+            for definition in definitions]
 
 
 def _get_dd_props_by_group(domain, case_type):

@@ -31,7 +31,7 @@
       <div id="tabbed-content-container">
         <div class="row">
           <div class="col-sm-12">
-            {% include "reports/partials/case_property_table.html" with tables=default_properties_as_table %}
+            {% include "reports/partials/case_property_table.html" with table=default_properties_as_table %}
           </div>
         </div>
         <div class="row">
@@ -60,8 +60,12 @@
             <div class="tab-content">
               <div class="tab-pane" id="properties">
                 <div class="row-fluid">
-                  {% if dynamic_properties_as_table %}
-                    {% include "reports/partials/case_property_table.html" with tables=dynamic_properties_as_table %}
+                  {% if dynamic_properties_table %}
+                    {% include "reports/partials/case_property_table.html" with table=dynamic_properties_table %}
+                  {% elif dd_properties_tables %}
+                    {% for table in dd_properties_tables %}
+                      {% include "reports/partials/case_property_table.html" with table=table %}
+                    {% endfor %}
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
                       <a target="_blank" class="pull-right"

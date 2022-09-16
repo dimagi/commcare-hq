@@ -228,9 +228,9 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, timezone=pytz.utc):
+def get_table_as_rows(data, definition, timezone=pytz.utc):
     """
-    Return a low-level definition of a group of tables, given a data object and
+    Return a low-level definition of a table, given a data object and
     a high-level declarative definition of the table rows and value
     calculations.
 
@@ -239,39 +239,29 @@ def get_tables_as_rows(data, definition, timezone=pytz.utc):
        "layout": list of rows to display. Each row must be a list of `DisplayConfig` classes
             that represent the cells of the row.
     """
+    rows = [
+        [get_display_data(data, prop, timezone=timezone) for prop in row]
+        for row in definition['layout']
+    ]
 
-    sections = []
+    max_row_len = max(list(map(len, rows))) if rows else 0
+    for row in rows:
+        if len(row) < max_row_len:
+            row.append({
+                "colspan": 2 * (max_row_len - len(row))
+            })
 
-    for section in definition:
-        rows = [
-            [get_display_data(
-                data,
-                prop,
-                timezone=timezone) for prop in row]
-            for row in section['layout']]
-
-        max_row_len = max(list(map(len, rows))) if rows else 0
-        for row in rows:
-            if len(row) < max_row_len:
-                row.append({
-                    "colspan": 2 * (max_row_len - len(row))
-                })
-
-        sections.append({
-            "name": section.get('name') or '',
-            "rows": rows
-        })
-
-    return sections
+    return {
+        "name": definition.get('name') or '',
+        "rows": rows
+    }
 
 
-def get_tables_as_columns(*args, **kwargs):
-    sections = get_tables_as_rows(*args, **kwargs)
-    for section in sections:
-        section['columns'] = list(zip_longest(*section['rows']))
-        del section['rows']
-
-    return sections
+def get_table_as_columns(*args, **kwargs):
+    table = get_table_as_rows(*args, **kwargs)
+    table['columns'] = list(zip_longest(*table['rows']))
+    del table['rows']
+    return table
 
 
 def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
@@ -285,20 +275,14 @@ def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None
     """
     phonetime_fields = phonetime_fields or set()
     date_fields = date_fields or set()
-    layout = chunked(
-        [
+    return {
+        "name": name,
+        "layout": list(chunked([
             DisplayConfig(
                 expr=prop, is_phone_time=prop in phonetime_fields, has_history=True,
                 process="date" if prop in date_fields else None
             )
             for prop in keys
-        ],
-        num_columns
-    )
+        ], num_columns))
 
-    return [
-        {
-            "name": name,
-            "layout": list(layout)
-        }
-    ]
+    }

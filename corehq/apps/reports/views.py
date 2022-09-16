@@ -78,7 +78,7 @@ from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
     get_default_definition,
-    get_tables_as_columns,
+    get_table_as_columns,
 )
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -1245,7 +1245,7 @@ def _get_cases_changed_context(domain, form, case_id=None):
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": get_tables_as_columns(case_block, definition, timezone=get_timezone_for_request()),
+            "table": get_table_as_columns(case_block, definition, timezone=get_timezone_for_request()),
             "url": url,
             "valid_case": valid_case,
             "case_type": this_case.type if this_case and valid_case else None,
@@ -1269,7 +1269,7 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     definition = get_default_definition(
         _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_fields, date_fields=date_fields
     )
-    form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
+    form_meta_data = get_table_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
