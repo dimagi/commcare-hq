@@ -1641,10 +1641,10 @@ def get_all_sqlrepeater_types():
     # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
     return OrderedDict([
         (
-            to_function(cls, failhard=True).__name__,
-            to_function(cls, failhard=True)._migration_get_sql_model_class()
+            to_function(class_path, failhard=True).__name__,
+            to_function(class_path, failhard=True)._migration_get_sql_model_class()
         )
-        for cls in settings.REPEATER_CLASSES
+        for class_path in settings.REPEATER_CLASSES
     ])
 
 
