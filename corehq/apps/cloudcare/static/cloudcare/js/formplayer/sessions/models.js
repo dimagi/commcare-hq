@@ -6,7 +6,7 @@ hqDefine("cloudcare/js/formplayer/sessions/models", function () {
             return !this.get('sessionId');
         },
         sync: function (method, model, options) {
-            hqImport("cloudcare/js/formplayer/utils/util").setCrossDomainAjaxOptions(options);
+            hqImport("cloudcare/js/formplayer/utils/utils").setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });

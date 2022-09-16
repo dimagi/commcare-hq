@@ -49,7 +49,7 @@ and change the "Real Project" setting to "Test" and I'll
 stop bothering you.
 
 Thanks!
-CommCareHQ
+CommCare HQ
 
 --===============8059403940475160788==
 Content-Type: text/html; charset="utf-8"
@@ -74,7 +74,7 @@ Content-Transfer-Encoding: 7bit
 
 <p>
   Thanks! <br />
-  CommCareHQ
+  CommCare HQ
 </p>
 
 --===============8059403940475160788==--

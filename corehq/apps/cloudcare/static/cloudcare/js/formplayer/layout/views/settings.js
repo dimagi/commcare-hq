@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var slugs = {
         SET_LANG: 'lang',
@@ -28,7 +28,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
         onLanguageChange: function (e) {
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
-            Util.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
         templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
@@ -64,7 +64,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
-            Util.saveDisplayOptions(this.currentUser.displayOptions);
+            Utils.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
 

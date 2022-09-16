@@ -1,6 +1,6 @@
 /*global Backbone */
 
-hqDefine("cloudcare/js/formplayer/menus/util", function () {
+hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     var recordPosition = function (position) {
@@ -121,8 +121,8 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
             isMultiSelect: menuResponse.multiSelect,
             multi_select_csv_support: menuResponse.multi_select_csv_support === "yes",
         };
-        var Util = hqImport("cloudcare/js/formplayer/utils/util");
-        var urlObject = Util.currentUrlToObject();
+        var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        var urlObject = Utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
@@ -150,7 +150,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                     name: menuResponse.title,
                 };
-                var fields = _.pick(Util.getCurrentQueryInputs(), function (v) { return !!v; });
+                var fields = _.pick(Utils.getCurrentQueryInputs(), function (v) { return !!v; });
                 if (!_.isEmpty(fields)) {
                     eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }

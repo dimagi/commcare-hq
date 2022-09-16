@@ -16,6 +16,8 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureTypeField,
 )
+from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import HqPermissions
 
 
@@ -114,8 +116,12 @@ class LookupTableResource(CouchResourceMixin, HqBaseResource):
         except ResourceNotFound:
             raise NotFound('Lookup table not found')
 
-        with CouchTransaction() as transaction:
-            data_type.recursive_delete(transaction)
+        try:
+            with CouchTransaction() as transaction:
+                data_type.recursive_delete(transaction)
+        finally:
+            clear_fixture_quickcache(kwargs['domain'], [data_type])
+            clear_fixture_cache(kwargs['domain'])
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -197,8 +203,17 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             data_item = FixtureDataItem.get(kwargs['pk'])
         except ResourceNotFound:
             raise NotFound('Lookup table item not found')
-        with CouchTransaction() as transaction:
-            data_item.recursive_delete(transaction)
+        try:
+            with CouchTransaction() as transaction:
+                data_item.recursive_delete(transaction)
+        finally:
+            try:
+                data_type = FixtureDataType.get(data_item.data_type_id)
+            except ResourceNotFound:
+                pass
+            else:
+                clear_fixture_quickcache(data_item.domain, [data_type])
+                clear_fixture_cache(data_item.domain)
         return ImmediateHttpResponse(response=HttpAccepted())
 
     def obj_create(self, bundle, request=None, **kwargs):
@@ -208,7 +223,7 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             raise BadRequest("data_type_id must be specified")
 
         try:
-            FixtureDataType.get(data_type_id)
+            data_type = FixtureDataType.get(data_type_id)
         except ResourceNotFound:
             raise NotFound('Lookup table not found')
 
@@ -216,7 +231,11 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
         bundle.obj = FixtureDataItem(bundle.data)
         bundle.obj.domain = kwargs['domain']
         bundle.obj.sort_key = number_items + 1
-        bundle.obj.save()
+        try:
+            bundle.obj.save()
+        finally:
+            clear_fixture_quickcache(kwargs['domain'], [data_type])
+            clear_fixture_cache(kwargs['domain'])
         return bundle
 
     def obj_update(self, bundle, **kwargs):
@@ -244,7 +263,17 @@ class LookupTableItemResource(CouchResourceMixin, HqBaseResource):
             bundle.obj.item_attributes = bundle.data['item_attributes']
 
         if save:
-            bundle.obj.save()
+            try:
+                bundle.obj.save()
+            finally:
+                data_item = bundle.obj
+                try:
+                    data_type = FixtureDataType.get(data_item.data_type_id)
+                except ResourceNotFound:
+                    pass
+                else:
+                    clear_fixture_quickcache(data_item.domain, [data_type])
+                    clear_fixture_cache(data_item.domain)
 
         return bundle
 

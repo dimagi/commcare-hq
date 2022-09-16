@@ -2047,6 +2047,13 @@ def _get_integration_section(domain, couch_user):
             'url': reverse(TableauVisualizationListView.urlname, args=[domain])
         })
 
+    if toggles.GENERIC_INBOUND_API.enabled(domain):
+        from corehq.motech.generic_inbound.views import ConfigurableAPIListView
+        integration.append({
+            'title': ConfigurableAPIListView.page_title,
+            'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
+        })
+
     return integration
 
 
@@ -2233,7 +2240,7 @@ class SMSAdminTab(UITab):
         from corehq.apps.sms.views import (GlobalSmsGatewayListView,
             AddGlobalGatewayView, EditGlobalGatewayView)
         items = SMSAdminInterfaceDispatcher.navigation_sections(request=self._request, domain=self.domain)
-        if has_privilege(self._request, privileges.DEV_SUPPORT_TEAM):
+        if has_privilege(self._request, privileges.GLOBAL_SMS_GATEWAY):
             items.append((_('SMS Connectivity'), [
                 {'title': _('Gateways'),
                 'url': reverse(GlobalSmsGatewayListView.urlname),

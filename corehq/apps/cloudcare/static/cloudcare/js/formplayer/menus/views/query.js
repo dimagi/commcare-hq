@@ -175,7 +175,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.errorMessage = null;
 
             var value = this.model.get('value'),
-                allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
+                allStickyValues = hqImport("cloudcare/js/formplayer/utils/utils").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue, this.multi_select_csv_support);
             this.model.set('searchForBlank', searchForBlank);
@@ -317,9 +317,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            this.ui.date.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+            hqImport("cloudcare/js/utils").initDateTimePicker(this.ui.date, {
                 format: dateFormat,
-            }));
+            });
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,
@@ -454,10 +454,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
          *  Returns a promise that contains the formplayer response.
          */
         validateFields: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/util"),
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
                 self = this;
 
-            var urlObject = Util.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
@@ -500,8 +500,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         setStickyQueryInputs: function () {
-            var Util = hqImport("cloudcare/js/formplayer/utils/util");
-            Util.setStickyQueryInputs(this.getAnswers());
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+            Utils.setStickyQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {

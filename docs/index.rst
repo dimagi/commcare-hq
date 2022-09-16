@@ -100,6 +100,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     sso/overview
     sso/architecture
     sso/local_setup
+    sso/adding_idp
 
 .. toctree::
     :caption: UI and Front End

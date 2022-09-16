@@ -19,6 +19,7 @@ django-compressor
 django-countries
 django-crispy-forms
 django-cte
+django-field-audit
 django-formtools
 django-logentry-admin
 django-oauth-toolkit
@@ -43,7 +44,6 @@ elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
 email_validator
 ethiopian-date-converter
 eulxml
-Faker
 gevent
 ghdiff
 google-api-python-client==2.32.0
