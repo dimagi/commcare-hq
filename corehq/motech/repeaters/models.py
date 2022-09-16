@@ -282,6 +282,8 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     objects = RepeaterManager()
     all_objects = models.Manager()
@@ -364,6 +366,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def repeat_records_ready(self):
         return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
                                                      RECORD_FAILURE_STATE))
+
+    @property
+    def name(self):
+        return self.connection_settings.name
 
     @property
     def is_ready(self):
@@ -1628,6 +1634,17 @@ def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
         for cls in settings.REPEATER_CLASSES
+    ])
+
+
+def get_all_sqlrepeater_types():
+    # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
+    return OrderedDict([
+        (
+            to_function(class_path, failhard=True).__name__,
+            to_function(class_path, failhard=True)._migration_get_sql_model_class()
+        )
+        for class_path in settings.REPEATER_CLASSES
     ])
 
 

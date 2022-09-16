@@ -9,7 +9,7 @@ from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.tests.test_utils import bootrap_domain_for_zapier
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
-from corehq.motech.repeaters.models import CreateCaseRepeater, FormRepeater
+from corehq.motech.repeaters.models import SQLCreateCaseRepeater, SQLFormRepeater
 
 ZAPIER_URL = "https://zapier.com/hooks/standard/1387607/5ccf35a5a1944fc9bfdd2c94c28c9885/"
 TEST_DOMAIN = 'test-domain'
@@ -167,7 +167,7 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             form_xmlns=FORM_XMLNS
         )
-        self.assertNotEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertNotEqual(len(SQLFormRepeater.objects.by_domain(TEST_DOMAIN)), 0)
         data = {
             "target_url": ZAPIER_URL
         }
@@ -177,7 +177,7 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ZapierSubscription.objects.all().count(), 0)
-        self.assertEqual(len(FormRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertEqual(len(SQLFormRepeater.objects.by_domain(TEST_DOMAIN)), 0)
 
     def test_unsubscribe_case(self):
         ZapierSubscription.objects.create(
@@ -188,7 +188,7 @@ class TestZapierIntegration(TestCase):
             application_id=self.application.get_id,
             case_type=CASE_TYPE,
         )
-        self.assertNotEqual(len(CreateCaseRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertNotEqual(len(SQLCreateCaseRepeater.objects.by_domain(TEST_DOMAIN)), 0)
         data = {
             "target_url": ZAPIER_URL
         }
@@ -198,7 +198,7 @@ class TestZapierIntegration(TestCase):
                                     HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ZapierSubscription.objects.all().count(), 0)
-        self.assertEqual(len(CreateCaseRepeater.by_domain(TEST_DOMAIN)), 0)
+        self.assertEqual(len(SQLCreateCaseRepeater.objects.by_domain(TEST_DOMAIN)), 0)
 
     def test_urls_conflict(self):
         data = {

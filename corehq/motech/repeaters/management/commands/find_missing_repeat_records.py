@@ -11,15 +11,13 @@ from corehq.apps.es import CaseES, FormES, UserES, AppES
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.dhis2.repeaters import Dhis2EntityRepeater
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
+from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.utils import get_repeaters_by_domain
-from corehq.motech.repeaters.models import FormRepeater, ShortFormRepeater, CaseRepeater, CreateCaseRepeater, \
-    UpdateCaseRepeater, RepeatRecord, LocationRepeater, UserRepeater, AppStructureRepeater
+from corehq.motech.repeaters.models import SQLCreateCaseRepeater, SQLRepeater, SQLUpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -113,19 +111,15 @@ def find_missing_form_repeat_records_for_form(form, domain, repeaters, enddate, 
         if not repeater.allowed_to_forward(form):
             continue
 
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the window we care about
-            continue
-
-        if repeater.get_id in triggered_repeater_ids:
+        if repeater.repeater_id in triggered_repeater_ids:
             successful_count += 1
         else:
             missing_count += 1
             if should_create:
-                logger.info(f"Registering form {form.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Registering form {form.get_id} for repeater {repeater.repeater_id}")
                 repeater.register(form)
             else:
-                logger.info(f"Missing form {form.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Missing form {form.get_id} for repeater {repeater.repeater_id}")
 
     return missing_count, successful_count
 
@@ -214,23 +208,23 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
         fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
 
     for repeater in repeaters:
-        repeaters_to_ignore = (Dhis2EntityRepeater, OpenmrsRepeater)
+        repeaters_to_ignore = (SQLDhis2EntityRepeater, SQLOpenmrsRepeater)
         if isinstance(repeater, repeaters_to_ignore):
             # not dealing with these right now because their expected payload appears to be a form?
             continue
 
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the outage
-            continue
+        # if repeater.started_at.date() >= enddate:
+        #     # don't count a repeater that was created after the outage
+        #     continue
 
-        if fired_repeater_ids_and_counts_after_enddate.get(repeater.get_id, 0) > 0:
+        if fired_repeater_ids_and_counts_after_enddate.get(repeater.repeater_id, 0) > 0:
             # no need to trigger a repeater if it has fired since the outage ended
             continue
 
         expected_record_count = expected_number_of_repeat_records_fired_for_case(
             case, repeater, startdate, enddate
         )
-        actual_record_count = fired_repeater_ids_and_counts_during_daterange.get(repeater.get_id, 0)
+        actual_record_count = fired_repeater_ids_and_counts_during_daterange.get(repeater.repeater_id, 0)
 
         missing_count = expected_record_count - actual_record_count
         if missing_count < 0:
@@ -241,19 +235,19 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
 
         if missing_count > 0:
             if should_create:
-                if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
+                if isinstance(repeater, SQLCreateCaseRepeater) and len(case.transactions) > 1:
                     create_case_repeater_register(repeater, domain, case)
-                    logger.info(f"Registering case {case.get_id} for create case repeater {repeater.get_id}")
+                    logger.info(f"Registering case {case.get_id} for create case repeater {repeater.repeater_id}")
                 else:
-                    logger.info(f"Registering case {case.get_id} for repeater {repeater.get_id}")
+                    logger.info(f"Registering case {case.get_id} for repeater {repeater.repeater_id}")
                     repeater.register(case)
             else:
-                logger.info(f"Missing case {case.get_id} for repeater {repeater.get_id}")
+                logger.info(f"Missing case {case.get_id} for repeater {repeater.repeater_id}")
 
         missing_all_count += missing_count
-        if isinstance(repeater, CreateCaseRepeater):
+        if isinstance(repeater, SQLCreateCaseRepeater):
             missing_create_count += missing_count
-        elif isinstance(repeater, UpdateCaseRepeater):
+        elif isinstance(repeater, SQLUpdateCaseRepeater):
             missing_update_count += missing_count
 
         successful_count += actual_record_count
@@ -272,11 +266,11 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     Based on a case's transactions, and the number of repeat records
     """
     filtered_transactions = []
-    if isinstance(repeater, CreateCaseRepeater):
+    if isinstance(repeater, SQLCreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
         if create_case_repeater_allowed_to_forward(repeater, case):
             filtered_transactions = case.transactions[0:1]
-    elif isinstance(repeater, UpdateCaseRepeater):
+    elif isinstance(repeater, SQLUpdateCaseRepeater):
         if repeater.allowed_to_forward(case):
             filtered_transactions = case.transactions[1:]
     else:
@@ -413,21 +407,21 @@ def find_missing_repeat_records_in_domain(domain, repeaters, payload, enddate, s
         fired_repeater_ids_and_counts[record.repeater_id] += 1
 
     for repeater in repeaters:
-        if repeater.started_at.date() >= enddate:
-            # don't count a repeater that was created after the outage
-            continue
+        # if repeater.started_at.date() >= enddate:
+        #     # don't count a repeater that was created after the outage
+        #     continue
 
-        if fired_repeater_ids_and_counts.get(repeater.get_id, 0) > 0:
+        if fired_repeater_ids_and_counts.get(repeater.repeater_id, 0) > 0:
             # no need to trigger a repeater if it has fired since startdate
             continue
 
         # if we've made it this far, the repeater should have fired
         missing_count += 1
         if should_create:
-            logger.info(f"Registering {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
+            logger.info(f"Registering {type(payload)} {payload.get_id} for repeater {repeater.repeater_id}")
             repeater.register(payload)
         else:
-            logger.info(f"Missing {type(payload)} {payload.get_id} for repeater {repeater.get_id}")
+            logger.info(f"Missing {type(payload)} {payload.get_id} for repeater {repeater.repeater_id}")
 
     return missing_count
 
@@ -467,24 +461,24 @@ def get_transaction_date(transaction):
 
 
 def get_form_repeaters_in_domain(domain):
-    form_repeater_classes = (FormRepeater, ShortFormRepeater, OpenmrsRepeater, Dhis2EntityRepeater)
+    form_repeater_classes = ("FormRepeater", "ShortFormRepeater", "OpenmrsRepeater", "Dhis2EntityRepeater")
     return get_repeaters_for_type_in_domain(domain, form_repeater_classes)
 
 
 def get_case_repeaters_in_domain(domain):
-    return get_repeaters_for_type_in_domain(domain, (CaseRepeater, ))
+    return get_repeaters_for_type_in_domain(domain, ("CaseRepeater", ))
 
 
 def get_location_repeaters_in_domain(domain):
-    return get_repeaters_for_type_in_domain(domain, (LocationRepeater, ))
+    return get_repeaters_for_type_in_domain(domain, ("LocationRepeater", ))
 
 
 def get_app_repeaters_in_domain(domain):
-    return get_repeaters_for_type_in_domain(domain, (AppStructureRepeater, ))
+    return get_repeaters_for_type_in_domain(domain, ("AppStructureRepeater", ))
 
 
 def get_user_repeaters_in_domain(domain):
-    return get_repeaters_for_type_in_domain(domain, (UserRepeater, ))
+    return get_repeaters_for_type_in_domain(domain, ("UserRepeater", ))
 
 
 def get_repeaters_for_type_in_domain(domain, repeater_types):
@@ -492,10 +486,11 @@ def get_repeaters_for_type_in_domain(domain, repeater_types):
     :param domain: domain to search in
     :param repeater_types: a tuple of repeater class types
     """
-    repeaters = get_repeaters_by_domain(domain)
-    if repeater_types:
-        return [repeater for repeater in repeaters if isinstance(repeater, repeater_types)]
-    return repeaters
+    repeaters = SQLRepeater.objects.filter(
+        domain=domain,
+        repeater_type__in=repeater_types
+    )
+    return list(repeaters)
 
 
 def create_case_repeater_allowed_to_forward(repeater, case):
@@ -511,7 +506,7 @@ def create_case_repeater_register(repeater, domain, payload):
     If a CreateCaseRepeater has a missing repeat record, but the case now contains update transactions
     This can be used to properly trigger the missing repeat record.
     """
-    if not isinstance(repeater, CreateCaseRepeater):
+    if not isinstance(repeater, SQLCreateCaseRepeater):
         logger.error(f"Error - cannot call create_case_repeater_register on repeater type f{type(repeater)}")
         return
 
@@ -520,8 +515,8 @@ def create_case_repeater_register(repeater, domain, payload):
 
     now = datetime.utcnow()
     repeat_record = RepeatRecord(
-        repeater_id=repeater.get_id,
-        repeater_type=repeater.doc_type,
+        repeater_id=repeater.repeater_id,
+        repeater_type=repeater.repeater_type,
         domain=domain,
         registered_on=now,
         next_check=now,
@@ -529,7 +524,7 @@ def create_case_repeater_register(repeater, domain, payload):
     )
     metrics_counter('commcare.repeaters.new_record', tags={
         'domain': domain,
-        'doc_type': repeater.doc_type
+        'doc_type': repeater.repeater_type
     })
     repeat_record.save()
     repeat_record.attempt_forward_now()
