@@ -22,7 +22,7 @@ from corehq.motech.repeaters.const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.models import SQLRepeater
 
 
 class GroupFilterMixin(object):
@@ -133,7 +133,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
         return [(r.get_id, str(r)) for r in self._get_repeaters()]
 
     def _get_repeaters(self):
-        return get_repeaters_by_domain(self.domain)
+        return SQLRepeater.objects.by_domain(self.domain)
 
 
 class RepeatRecordStateFilter(BaseSingleOptionFilter):
