@@ -958,7 +958,8 @@ SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
     "In case search, show the filters on the left and results on the right.",
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
