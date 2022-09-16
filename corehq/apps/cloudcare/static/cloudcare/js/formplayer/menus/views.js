@@ -464,7 +464,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             kissmetrics.track.event('Completed Case Search', {
-                'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')
+                'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
             });
         },
 
@@ -791,7 +791,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 kissmetrics.track.event('Completed Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')
+                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
         },

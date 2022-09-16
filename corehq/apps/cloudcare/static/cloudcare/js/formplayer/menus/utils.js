@@ -157,7 +157,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             }
             if (menuResponse.queryKey.match('search_command.m') && menuResponse.currentPage === 0) {
                 hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')
+                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
