@@ -22,6 +22,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'tiles',
             'title',
             'type',
+            'multi_select_csv_support',
         ],
 
         entityProperties: [

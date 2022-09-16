@@ -1,6 +1,5 @@
 /*global DOMPurify, Marionette, moment */
 
-
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
@@ -14,17 +13,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
-    var encodeValue = function (model, searchForBlank) {
+    var encodeValue = function (model, searchForBlank, csv_support) {
             var value = model.get('value');
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
             } else if (value && model.get('input') === 'select') {
-                value = Util.joinMultiValue(value);
+                value = Util.joinMultiValue(value, csv_support);
             }
 
             var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
-                return Util.joinMultiValue(["", value]);
+                return Util.joinMultiValue(["", value], csv_support);
             } else if (queryProvided) {
                 return value;
             } else if (searchForBlank) {
@@ -35,7 +34,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (!_.isString(value)) {
                 return [false, undefined];
             }
-            var values = Util.splitMultiValue(value),
+            var values = Util.splitMultiValue(value, csv_support),
                 searchForBlank = _.contains(values, ""),
                 values = _.without(values, "");
 
@@ -171,19 +170,20 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function () {
             this.parentView = this.options.parentView;
+            this.multi_select_csv_support = this.options.parentView.multi_select_csv_support;
             this.model = this.options.model;
             this.errorMessage = null;
 
             var value = this.model.get('value'),
                 allStickyValues = hqImport("cloudcare/js/formplayer/utils/util").getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
-                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
+                [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue, this.multi_select_csv_support);
             this.model.set('searchForBlank', searchForBlank);
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
             }
             if (this.model.get('input') === 'select' && _.isString(value)) {
-                value = Util.splitMultiValue(value);
+                value = Util.splitMultiValue(value, this.multi_select_csv_support);
             }
             this.model.set('value', value);
         },
@@ -261,7 +261,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
             var queryValue = $(this.ui.queryField).val(),
                 searchForBlank = $(this.ui.searchForBlank).prop('checked');
-            return encodeValue(this.model, searchForBlank);
+            return encodeValue(this.model, searchForBlank, this.multi_select_csv_support);
         },
 
         changeQueryField: function (e) {
@@ -368,6 +368,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
+            this.multi_select_csv_support = options.multi_select_csv_support
         },
 
         templateContext: function () {
@@ -413,7 +414,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             $field.select2('close');
                         }
                         if (value !== null) {
-                            value = Util.splitMultiValue(value);
+                            value = Util.splitMultiValue(value, self.multi_select_csv_support);
                             value = _.filter(value, function (val) { return val !== ''; });
                             if (!$field.attr('multiple')) {
                                 value = _.isEmpty(value) ? null : value[0];

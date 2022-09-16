@@ -282,7 +282,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return new Util.CloudcareUrl(options);
     };
 
-    Util.splitMultiValue = function (str) {
+    Util.splitMultiValue = function (str, csv_support) {
+        if (!csv_support) {
+            return str.split("#,#")
+        }
+
         if (str === "") {
             return [""];
         }
@@ -312,7 +316,11 @@ hqDefine("cloudcare/js/formplayer/utils/util", function () {
         return items;
     };
 
-    Util.joinMultiValue = function (items) {
+    Util.joinMultiValue = function (items, csv_support) {
+        if (!csv_support) {
+            return items.join("#,#");
+        }
+
         return _.map(items, function (item) {
             if (item.indexOf(" ") !== -1) {
                 item = '"' + item.replaceAll('"', '\\"') + '"';
