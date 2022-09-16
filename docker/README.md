@@ -88,7 +88,7 @@ directly.
 Caveats
 -------
 
-* CloudCare is not currently part of this set up. It should probably be another docker image, different from CommCareHQ.
+* CloudCare is not currently part of this set up. It should probably be another docker image, different from CommCare HQ.
 * Celery, rabbitmq and other components not strictly necessary for a laptop install are not part of this setup.
 
 Your Data

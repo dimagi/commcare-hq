@@ -1,5 +1,5 @@
-/* global NProgress */
-hqDefine('cloudcare/js/util', [
+/* global moment, NProgress */
+hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',
@@ -292,14 +292,44 @@ hqDefine('cloudcare/js/util', [
         }
     };
 
-    var dateTimePickerOptions = function () {
-        return {
+    /**
+     *  Convert two-digit year to four-digit year.
+     *  Differs from JavaScript's two-year parsing to better match CommCare,
+     *  where most dates are either DOBs or EDDs.
+     *
+     *  Input is a string. If input looks like it has a two-digit year (MM.DD.YY, D/M/YY, etc.),
+     *  replace the year with a four-digit year that is within the range:
+     *    currentYear - 90 <= inputYear <= currentYear + 10
+     *  Otherwise, return the input string.
+     */
+    var convertTwoDigitYear = function (inputDate) {
+        var parts = inputDate.split(/\D/);
+        if (parts.length === 3 && parts.join("").length <= 6) {
+            var inputYear = parts[2];
+            if (inputYear.length === 2) {
+                inputYear = Math.floor(new Date().getFullYear() / 100) + inputYear;
+                if (inputYear > new Date().getFullYear() + 10) {
+                    inputYear -= 100;
+                }
+                inputDate = [parts[0], parts[1], inputYear].join("-");
+            }
+        }
+        return inputDate;
+    };
+
+    var initDateTimePicker = function ($el, extraOptions) {
+        if (!$el.length) {
+            return;
+        }
+
+        extraOptions = extraOptions || {};
+        $el.datetimepicker(_.extend({
             useCurrent: false,
             showClear: true,
             showClose: true,
             showTodayButton: true,
             debug: true,
-            extraFormats: ["MM/DD/YYYY"],
+            extraFormats: ["MM/DD/YYYY", "MM/DD/YY"],
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
@@ -330,11 +360,28 @@ hqDefine('cloudcare/js/util', [
                 togglePeriod: gettext('Toggle Period'),
                 selectTime: gettext('Select Time'),
             },
-        };
+        }, extraOptions));
+
+        var picker = $el.data("DateTimePicker");
+        picker.parseInputDate(function (dateString) {
+            if (!moment.isMoment(dateString) || dateString instanceof Date) {
+                dateString = convertTwoDigitYear(dateString);
+            }
+            if (extraOptions.parseInputDate) {
+                return extraOptions.parseInputDate(dateString);
+            }
+            let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
+            return dateObj.isValid() ? dateObj : "";
+        });
+
+        $el.on("focusout", function () {
+            picker.hide();
+        });
     };
 
     return {
-        dateTimePickerOptions: dateTimePickerOptions,
+        convertTwoDigitYear: convertTwoDigitYear,
+        initDateTimePicker: initDateTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,

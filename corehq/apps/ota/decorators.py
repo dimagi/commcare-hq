@@ -23,21 +23,18 @@ ORIGIN_TOKEN_SLUG = 'OriginToken'
 def require_mobile_access(fn):
     @wraps(fn)
     def _inner(request, domain, *args, **kwargs):
-        if Domain.get_by_name(domain).restrict_mobile_access:
-            origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
-            if origin_token:
-                if _test_token_valid(origin_token):
-                    return fn(request, domain, *args, **kwargs)
-                else:
-                    auth_logger.info(
-                        "Request rejected domain=%s reason=%s request=%s",
-                        domain, "flag:mobile_access_restricted", request.path
-                    )
-                    return HttpResponseForbidden()
+        origin_token = request.META.get(ORIGIN_TOKEN_HEADER, None)
+        if origin_token:
+            if _test_token_valid(origin_token):
+                return fn(request, domain, *args, **kwargs)
+            else:
+                auth_logger.info(
+                    "Request rejected domain=%s reason=%s request=%s",
+                    domain, "flag:mobile_access_restricted", request.path
+                )
+                return HttpResponseForbidden()
 
-            return require_permission(HqPermissions.access_mobile_endpoints)(fn)(request, domain, *args, **kwargs)
-
-        return fn(request, domain, *args, **kwargs)
+        return require_permission(HqPermissions.access_mobile_endpoints)(fn)(request, domain, *args, **kwargs)
 
     return _inner
 

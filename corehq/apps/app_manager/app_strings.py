@@ -343,6 +343,10 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_audio_locale(module), audio
 
+            title_label = module.search_config.get_search_title_label(app, lang, for_default=for_default)
+            if app.enable_case_search_title_translation:
+                yield id_strings.case_search_title_translation(module), title_label
+
             # search again label
             yield (
                 id_strings.case_search_again_locale(module),
@@ -363,6 +367,10 @@ def _create_case_search_app_strings(
             if audio:
                 yield id_strings.case_search_again_audio_locale(module), audio
         else:
+            yield(
+                id_strings.case_search_title_translation(module),
+                clean_trans(CaseSearch.title_label.default(), langs)
+            )
             yield (
                 id_strings.case_search_locale(module),
                 clean_trans(CaseSearch.search_label.default().label, langs)

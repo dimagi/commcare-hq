@@ -29,6 +29,7 @@ class EnterprisePermissionsTest(TestCase):
 
         # Set up users
         cls.master_role = UserRole.create("state", "role1", permissions=HqPermissions(
+            access_api=True,
             view_web_users=True,
             edit_web_users=False,
             view_groups=True,

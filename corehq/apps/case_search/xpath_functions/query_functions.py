@@ -12,6 +12,8 @@ from corehq.apps.es.queries import DISTANCE_UNITS
 from corehq.apps.es.case_search import (
     case_property_geo_distance,
     case_property_query,
+    sounds_like_text_query,
+    case_property_starts_with,
 )
 
 from .utils import confirm_args_count
@@ -21,6 +23,12 @@ def not_(node, context):
     from corehq.apps.case_search.filter_dsl import build_filter_from_ast
     confirm_args_count(node, 1)
     return filters.NOT(build_filter_from_ast(node.args[0], context))
+
+
+def starts_with(node, context):
+    property_name, search_value = node.args
+    property_name = _property_name_to_string(property_name, node)
+    return case_property_starts_with(property_name, search_value)
 
 
 def selected_any(node, context):
@@ -67,6 +75,14 @@ def within_distance(node, context):
         )
 
     return case_property_geo_distance(property_name, geo_point, **{unit: distance})
+
+
+def phonetic_match(node, context):
+    confirm_args_count(node, 2)
+    property_name, value = node.args
+    property_name = _property_name_to_string(property_name, node)
+
+    return sounds_like_text_query(property_name, value)
 
 
 def fuzzy_match(node, context):
