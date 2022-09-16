@@ -77,8 +77,8 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.templatetags.proptable_tags import (
-    get_default_definition,
-    get_table_as_columns,
+    DisplayConfig,
+    get_display_data,
 )
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -1218,10 +1218,6 @@ def _get_cases_changed_context(domain, form, case_id=None):
             case_blocks.insert(0, block)
     cases = []
 
-    def _sorted_case_update_keys(keys):
-        """Put common @ attributes at the bottom"""
-        return sorted(keys, key=lambda k: (k[0] == '@', k))
-
     for case_block in case_blocks:
         this_case_id = case_block.get(const.CASE_ATTR_ID)
         try:
@@ -1236,16 +1232,11 @@ def _get_cases_changed_context(domain, form, case_id=None):
         else:
             url = "#"
 
-        keys = _sorted_case_update_keys(list(case_block))
         assume_phonetimes = not form.metadata or form.metadata.deviceID != CLOUDCARE_DEVICE_ID
-        definition = get_default_definition(
-            keys,
-            phonetime_fields=keys if assume_phonetimes else {},
-        )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": get_table_as_columns(case_block, definition, timezone=get_timezone_for_request()),
+            "properties": _get_properties_display(case_block, assume_phonetimes, get_timezone_for_request()),
             "url": url,
             "valid_case": valid_case,
             "case_type": this_case.type if this_case and valid_case else None,
@@ -1256,6 +1247,15 @@ def _get_cases_changed_context(domain, form, case_id=None):
     }
 
 
+def _get_properties_display(case_block, assume_phonetimes, timezone):
+    definitions = [
+        DisplayConfig(expr=k, is_phone_time=assume_phonetimes)
+        # Sort with common @ attributes at the bottom
+        for k in sorted(case_block.keys(), key=lambda k: (k[0]=='@', k))
+    ]
+    return [get_display_data(case_block, definition, timezone=timezone) for definition in definitions]
+
+
 def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     meta = form.metadata.to_json() if form.metadata else {}
     meta['@xmlns'] = form.xmlns
@@ -1264,12 +1264,6 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    phonetime_fields = ['timeStart', 'timeEnd']
-    date_fields = ['received_on', 'server_modified_on'] + phonetime_fields
-    definition = get_default_definition(
-        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_fields, date_fields=date_fields
-    )
-    form_meta_data = get_table_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
@@ -1297,11 +1291,22 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         user_info = get_doc_info_by_id(None, meta_userID)
 
     return {
-        "form_meta_data": form_meta_data,
+        "form_meta_data": _get_meta_data_display(meta, timezone),
         "auth_context": auth_context,
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
+
+
+def _get_meta_data_display(meta, timezone):
+    phonetime_fields = {'timeStart', 'timeEnd'}
+    date_fields = {'received_on', 'server_modified_on'} | phonetime_fields
+    definitions = [DisplayConfig(
+        expr=k,
+        is_phone_time=k in phonetime_fields,
+        process="date" if k in date_fields else None,
+    ) for k in _sorted_form_metadata_keys(list(meta))]
+    return [get_display_data(meta, definition, timezone=timezone) for definition in definitions]
 
 
 def _sorted_form_metadata_keys(keys):

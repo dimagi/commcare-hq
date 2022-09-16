@@ -257,13 +257,6 @@ def get_table_as_rows(data, definition, timezone=pytz.utc):
     }
 
 
-def get_table_as_columns(*args, **kwargs):
-    table = get_table_as_rows(*args, **kwargs)
-    table['columns'] = list(zip_longest(*table['rows']))
-    del table['rows']
-    return table
-
-
 def get_default_definition(keys, num_columns=1, name=None, phonetime_fields=None, date_fields=None):
     """
     Get a default single table layout definition for `keys` split across
