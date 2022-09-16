@@ -235,7 +235,6 @@ def get_table_as_rows(data, definition, timezone=pytz.utc):
     calculations.
 
     :param definition: dict with keys:
-       "name" (optional): the name of the section
        "layout": list of rows to display. Each row must be a list of `DisplayConfig` classes
             that represent the cells of the row.
     """
@@ -251,7 +250,4 @@ def get_table_as_rows(data, definition, timezone=pytz.utc):
                 "colspan": 2 * (max_row_len - len(row))
             })
 
-    return {
-        "name": definition.get('name') or '',
-        "rows": rows
-    }
+    return rows

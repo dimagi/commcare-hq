@@ -281,7 +281,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
 
     return [{
         'name': name,
-        'table': get_table_as_rows(dynamic_data, definition, timezone),
+        'rows': get_table_as_rows(dynamic_data, definition, timezone),
     } for name, definition in tables]
 
 
