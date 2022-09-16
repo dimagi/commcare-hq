@@ -156,7 +156,7 @@ hqDefine("cloudcare/js/formplayer/menus/util", function () {
                 hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
             if (menuResponse.queryKey.match('search_command.m') && menuResponse.currentPage === 0) {
-                hqImport('analytix/js/kissmetrix').track.event('Started case search', {
+                hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
                     splitScreenSearch: hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH')
                 });
             }
