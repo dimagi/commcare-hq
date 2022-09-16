@@ -64,7 +64,12 @@
                     {% include "reports/partials/case_property_table.html" with table=dynamic_properties_table %}
                   {% elif dd_properties_tables %}
                     {% for table in dd_properties_tables %}
-                      {% include "reports/partials/case_property_table.html" with table=table %}
+                      <div class="property-table-row">
+                        <div class="property-table-container">
+                          <div class="table-tab">{{ table.name }}</div>
+                          {% include "reports/partials/case_property_table.html" with table=table.table %}
+                        </div>
+                      </div>
                     {% endfor %}
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">

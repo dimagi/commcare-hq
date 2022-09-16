@@ -1,43 +1,32 @@
 {# This table is used for case metadata and for case properties #}
 
-<div class="property-table-row">
-  <div class="property-table-container">
-    {% if table.name %}
-      <div class="table-tab">
-        {{ table.name }}
-      </div>
-    {% endif %}
-
-    <table class="table table-bordered case-property-table">
-      <tbody>
-      {% for row in table.rows %}
-        <tr>
-          {% for cell in row %}
-            {% if not cell.colspan %}
-              <th title="{{ cell.expr }}">
-                {% if cell.has_history %}
-                  <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
-                    <i class="fa fa-history"></i> {{ cell.name }}
-                  </a>
-                {% else %}
-                  {{ cell.name }}
-                {% endif %}
-                {% if cell.description %}
-                  <i class="fa fa-info-circle" title="{{ cell.description }}"></i>
-                {% endif %}
-              </th>
-              <td>
-                {{ cell.value }}
-              </td>
+<table class="table table-bordered case-property-table">
+  <tbody>
+  {% for row in table.rows %}
+    <tr>
+      {% for cell in row %}
+        {% if not cell.colspan %}
+          <th title="{{ cell.expr }}">
+            {% if cell.has_history %}
+              <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
+                <i class="fa fa-history"></i> {{ cell.name }}
+              </a>
             {% else %}
-              <th colspan="{{ cell.colspan }}">
-              </th>
+              {{ cell.name }}
             {% endif %}
-          {% endfor %}
-        </tr>
+            {% if cell.description %}
+              <i class="fa fa-info-circle" title="{{ cell.description }}"></i>
+            {% endif %}
+          </th>
+          <td>
+            {{ cell.value }}
+          </td>
+        {% else %}
+          <th colspan="{{ cell.colspan }}">
+          </th>
+        {% endif %}
       {% endfor %}
-      </tbody>
-    </table>
-
-  </div>
-</div>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

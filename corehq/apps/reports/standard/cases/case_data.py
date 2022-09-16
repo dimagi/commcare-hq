@@ -264,10 +264,10 @@ class CaseDataView(BaseProjectReportSectionView):
 
 def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     dd_props_by_group = _get_dd_props_by_group(domain, case_type)
-    definitions = [
-        _table_definition(group or _('Uncategorized'), [
+    tables = [
+        (group or _('Uncategorized'), _table_definition([
             (p.name, p.description) for p in props
-        ])
+        ]))
         for group, props in sorted(dd_props_by_group.items())
     ]
 
@@ -275,12 +275,14 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
                       for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd
     if unrecognized:
-        definitions.append(_table_definition(_('Unrecognized'), [
+        tables.append((_('Unrecognized'), _table_definition([
             (p, None) for p in unrecognized
-        ]))
+        ])))
 
-    return [get_table_as_rows(dynamic_data, definition, timezone)
-            for definition in definitions]
+    return [{
+        'name': name,
+        'table': get_table_as_rows(dynamic_data, definition, timezone),
+    } for name, definition in tables]
 
 
 def _get_dd_props_by_group(domain, case_type):
@@ -294,9 +296,8 @@ def _get_dd_props_by_group(domain, case_type):
     return ret
 
 
-def _table_definition(name, props):
+def _table_definition(props):
     return {
-        "name": name,
         "layout": list(chunked([
             DisplayConfig(
                 expr=name,
