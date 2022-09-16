@@ -119,6 +119,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             isPersistentDetail: menuResponse.isPersistentDetail,
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
+            multi_select_csv_support: menuResponse.multi_select_csv_support === "yes",
         };
         var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
         var urlObject = Utils.currentUrlToObject();

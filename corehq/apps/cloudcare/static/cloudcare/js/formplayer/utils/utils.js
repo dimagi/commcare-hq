@@ -342,6 +342,53 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return new Utils.CloudcareUrl(options);
     };
 
+    Utils.splitMultiValue = function (str, csvSupport) {
+        if (!csvSupport) {
+            return str.split("#,#");
+        }
+
+        if (str === "") {
+            return [""];
+        }
+
+        let items = [],
+            item = "",
+            quote;
+
+        for (let i = 0; i < str.length; i++) {
+            let current = str[i];
+            if (current === " " && !quote) {
+                items.push(item);
+                item = "";
+            } else if (current === quote && str[i - 1] !== "\\") {
+                quote = undefined;
+            } else if (!quote && (current === "'" || current === '"') && str[i - 1] !== "\\") {
+                quote = current;
+            } else {
+                item += current;
+            }
+        }
+
+        if (item) {
+            items.push(item);
+        }
+
+        return items;
+    };
+
+    Utils.joinMultiValue = function (items, csvSupport) {
+        if (!csvSupport) {
+            return items.join("#,#");
+        }
+
+        return _.map(items, function (item) {
+            if (item.indexOf(" ") !== -1) {
+                item = '"' + item.replaceAll('"', '\\"') + '"';
+            }
+            return item;
+        }).join(' ');
+    };
+
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
             position = position || 0;
