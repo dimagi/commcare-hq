@@ -1915,14 +1915,6 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-RESTRICT_MOBILE_ACCESS = StaticToggle(
-    'restrict_mobile_endpoints',
-    'USH: Displays a security setting option to require explicit permissions to access mobile app endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
-)
-
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
     "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
@@ -2188,6 +2180,15 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
+)
+
+GENERIC_INBOUND_API = StaticToggle(
+    'configurable_api',
+    'Generic inbound APIs',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Create inbound APIs that use UCR expressions to process data into case updates",
+    help_link="TODO",
 )
 
 CASE_UPDATES_UCR_FILTERS = StaticToggle(

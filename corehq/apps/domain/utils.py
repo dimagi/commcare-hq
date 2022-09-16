@@ -7,6 +7,7 @@ import time
 from collections import Counter
 
 import simplejson
+from decorator import contextmanager
 from django.conf import settings
 
 from memoized import memoized
@@ -124,11 +125,13 @@ def guess_domain_language_for_sms(domain_name):
     return counter.most_common(1)[0][0]
 
 
+@contextmanager
 def silence_during_tests():
     if settings.UNIT_TESTING:
-        return open(os.devnull, 'w')
+        with open(os.devnull, 'w') as out:
+            yield out
     else:
-        return sys.stdout
+        yield sys.stdout
 
 
 @unit_testing_only

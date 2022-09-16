@@ -479,6 +479,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/messaging/smsbackends/telerivet/forms.py
+#: corehq/motech/generic_inbound/views.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/views.py custom/abt/reports/late_pmt_2020.py
 msgid "Name"
@@ -1093,6 +1094,7 @@ msgstr ""
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Cancel"
@@ -3020,6 +3022,8 @@ msgstr ""
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/partials/conditional_alert_save.html
 #: corehq/motech/dhis2/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -3109,6 +3113,7 @@ msgstr "Raison de \"Non Facturation\""
 #: corehq/apps/toggle_ui/templates/toggle/flags.html
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_hierarchy.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #: corehq/tabs/tabclasses.py
 msgid "Edit"
@@ -5960,6 +5965,7 @@ msgstr "Horaire de visites"
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/templates/users/web_users.html
+#: corehq/motech/generic_inbound/views.py
 msgid "Actions"
 msgstr "Actions"
 
@@ -8814,6 +8820,18 @@ msgid "Label for Searching Again"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "Search Properties"
+msgid "Search Screen Title"
+msgstr "Propriétés de recherche"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+#, fuzzy
+#| msgid "User Interface Translations"
+msgid "Search Screen Title Translation"
+msgstr "Traductions d'interface utilisateur"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search Filter"
 msgstr ""
 
@@ -9253,7 +9271,7 @@ msgstr "Rapport"
 #: corehq/apps/userreports/templates/userreports/partials/filter_panel.html
 #: corehq/apps/userreports/templates/userreports/ucr_expression.html
 #: corehq/apps/userreports/views.py corehq/motech/dhis2/forms.py
-#: corehq/motech/dhis2/views.py
+#: corehq/motech/dhis2/views.py corehq/motech/generic_inbound/views.py
 msgid "Description"
 msgstr "Description"
 
@@ -20151,8 +20169,10 @@ msgid "Copy of {}"
 msgstr ""
 
 #: corehq/apps/export/views/utils.py
-msgid "Download Data Files"
-msgstr ""
+#, fuzzy
+#| msgid "Cancel Transfer"
+msgid "Secure File Transfer"
+msgstr "Annuler le transfer"
 
 #: corehq/apps/export/views/utils.py
 msgid "The data file exceeds the maximum size of {} MB."
@@ -25237,6 +25257,8 @@ msgstr "Voici vos clés !"
 #: corehq/apps/notifications/forms.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/repeat_records.html
 #: corehq/messaging/smsbackends/http/forms.py corehq/motech/forms.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/generic_inbound/views.py
 #: corehq/motech/repeaters/views/repeat_records.py corehq/motech/views.py
 msgid "URL"
 msgstr "URL"
@@ -31481,7 +31503,6 @@ msgid "Catch-All Gateway"
 msgstr "Passerelle Passe-partout"
 
 #: corehq/apps/sms/forms.py corehq/apps/users/views/__init__.py
-#: corehq/apps/users/views/mobile/users.py
 msgid "(none)"
 msgstr "(aucun)"
 
@@ -32759,7 +32780,7 @@ msgstr ""
 msgid "Relying Party Settings"
 msgstr ""
 
-#: corehq/apps/sso/forms.py
+#: corehq/apps/sso/forms.py corehq/motech/generic_inbound/forms.py
 msgid "Update Configuration"
 msgstr ""
 
@@ -35885,13 +35906,6 @@ msgstr ""
 
 #: corehq/apps/users/forms.py
 msgid ""
-"<i class=\"fa fa-info-circle\"></i> Only applies to mobile workers who will "
-"be entering data using <a href=\"https://wiki.commcarehq.org/display/"
-"commcarepublic/Web+Apps\">Web Apps</a>"
-msgstr ""
-
-#: corehq/apps/users/forms.py
-msgid ""
 "Multiply this user's case load by this number for load testing on phones."
 msgstr ""
 
@@ -37476,6 +37490,18 @@ msgid "Subscription Info"
 msgstr ""
 
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+#, fuzzy
+#| msgid "Mobile Workers only"
+msgid "Mobile Worker Default Role"
+msgstr "Utilisateurs mobiles uniquement"
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
+msgid ""
+"This is the default role for all Mobile Workers that do not have a role "
+"assigned."
+msgstr ""
+
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 msgid "Manage All"
 msgstr ""
 
@@ -37659,14 +37685,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
-msgid ""
-"We might be experiencing issues fetching the entire list of user roles right "
-"now. This issue is likely temporary and nothing to worry about, but if you "
-"keep seeing this for more than a day, please <a href='#modalReportIssue' "
-"data-toggle='modal'>Report an Issue</a>."
-msgstr ""
-
-#: corehq/apps/users/views/__init__.py
 msgid "Enterprise Users"
 msgstr ""
 
@@ -37689,6 +37707,14 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 msgid "Use Default"
 msgstr "Utiliser le Par défaut"
+
+#: corehq/apps/users/views/__init__.py
+msgid ""
+"We might be experiencing issues fetching the entire list of user roles right "
+"now. This issue is likely temporary and nothing to worry about, but if you "
+"keep seeing this for more than a day, please <a href='#modalReportIssue' "
+"data-toggle='modal'>Report an Issue</a>."
+msgstr ""
 
 #: corehq/apps/users/views/__init__.py
 msgid ""
@@ -37717,6 +37743,13 @@ msgstr ""
 
 #: corehq/apps/users/views/__init__.py
 msgid "A role with the same name already exists"
+msgstr ""
+
+#: corehq/apps/users/views/__init__.py
+#, python-brace-format
+msgid ""
+"Unable to delete role '{role}'. This role is the default role for Mobile "
+"Users and can not be deleted."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -40736,6 +40769,49 @@ msgstr ""
 #: corehq/motech/forms.py
 msgid "Auth type '{}' requires a username."
 msgstr ""
+
+#: corehq/motech/generic_inbound/forms.py
+#, fuzzy
+#| msgid "Create a new"
+msgid "Create a new API"
+msgstr "Créer un nouveau"
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
+#, fuzzy
+#| msgid "Copy"
+msgid "Copy URL"
+msgstr "Copier"
+
+#: corehq/motech/generic_inbound/utils.py
+#, fuzzy
+#| msgid "Enter valid JSON"
+msgid "Payload must be valid JSON"
+msgstr "Saisir un JSON valide"
+
+#: corehq/motech/generic_inbound/utils.py
+#, fuzzy
+#| msgid "Unknown user"
+msgid "Unknown user type"
+msgstr "Utilisateur inconnu"
+
+#: corehq/motech/generic_inbound/views.py
+#, fuzzy
+#| msgid "Configuration"
+msgid "Inbound API Configurations"
+msgstr "Configuration"
+
+#: corehq/motech/generic_inbound/views.py
+#, fuzzy
+#| msgid "Configuration"
+msgid "Edit API Configuration"
+msgstr "Configuration"
+
+#: corehq/motech/generic_inbound/views.py
+#, fuzzy
+#| msgid "Location configuration updated successfully"
+msgid "API Configuration updated successfully."
+msgstr "Configuration de site mise à jour avec succès"
 
 #: corehq/motech/models.py
 msgid ""

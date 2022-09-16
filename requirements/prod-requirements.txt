@@ -136,6 +136,8 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.2.0
     # via -r base-requirements.in
+django-field-audit==1.2.3
+    # via -r base-requirements.in
 django-formtools==2.3
     # via
     #   -r base-requirements.in
@@ -194,7 +196,7 @@ eulxml==1.1.3
     # via -r base-requirements.in
 executing==0.8.3
     # via stack-data
-flower==1.1.0
+flower==1.2.0
     # via -r prod-requirements.in
 future==0.18.2
     # via pyjwkest
@@ -398,8 +400,6 @@ pyphonetics==0.5.3
     # via -r base-requirements.in
 pyrsistent==0.17.3
     # via jsonschema
-pysocks==1.7.1
-    # via twilio
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
@@ -511,7 +511,6 @@ six==1.16.0
     #   qrcode
     #   quickcache
     #   tenacity
-    #   twilio
 socketpool==0.5.3
     # via -r base-requirements.in
 sortedcontainers==2.3.0
@@ -527,7 +526,7 @@ sqlparse==0.3.1
     # via django
 stack-data==0.1.4
     # via ipython
-stripe==2.54.0
+stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -547,7 +546,7 @@ tropo-webapi-python==0.1.3
     # via -r base-requirements.in
 turn-python==0.0.1
     # via -r base-requirements.in
-twilio==6.5.1
+twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via

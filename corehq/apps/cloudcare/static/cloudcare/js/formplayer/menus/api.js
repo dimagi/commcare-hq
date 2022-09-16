@@ -4,7 +4,7 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -67,7 +67,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 }
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
-                                Util.doUrlAction(urlObject => {
+                                Utils.doUrlAction(urlObject => {
                                     return urlObject.popSelection();
                                 }, true);
 
@@ -75,7 +75,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 document.location = response.smartLinkRedirect;
                                 return;
                             }
-                            Util.updateUrlFromResponse(parsedMenus);
+                            Utils.updateUrlFromResponse(parsedMenus);
 
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        Util.doUrlAction(urlObject => {
+                        Utils.doUrlAction(urlObject => {
                             return urlObject.popSelection();
                         });
                         defer.reject();

@@ -1,6 +1,6 @@
 /* global Backbone, Marionette */
 hqDefine("cloudcare/js/formplayer/router", function () {
-    var Util = hqImport("cloudcare/js/formplayer/utils/util");
+    var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
     var Router = Marionette.AppRouter.extend({
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
-            Util.setStickyQueryInputs({});
+            Utils.setStickyQueryInputs({});
             appsController.listApps();
         },
         singleApp: function (appId) {
@@ -44,8 +44,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             });
         },
         listMenus: function (sessionObject) {
-            var urlObject = Util.CloudcareUrl.fromJson(
-                Util.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
+            var urlObject = Utils.CloudcareUrl.fromJson(
+                Utils.encodedUrlToObject(sessionObject || Backbone.history.getFragment())
             );
             if (!urlObject.appId) {
                 // We can't do any menu navigation without an appId
@@ -95,7 +95,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
                 { parse: true }
             );
             // Need to get URL fragment again since fetch might have updated it
-            Util.setUrlToObject(Util.currentUrlToObject());
+            Utils.setUrlToObject(Utils.currentUrlToObject());
 
             menusController.showMenu(menuCollection);
         },
@@ -103,7 +103,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
-        const urlObject = Util.doUrlAction(urlObject => {
+        const urlObject = Utils.doUrlAction(urlObject => {
             urlObject.clearExceptApp();
         });
         API.selectApp(urlObject.appId);
@@ -115,8 +115,8 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("app:select", function (appId) {
-        var urlObject = new Util.CloudcareUrl({'appId': appId});
-        Util.setUrlToObject(urlObject);
+        var urlObject = new Utils.CloudcareUrl({'appId': appId});
+        Utils.setUrlToObject(urlObject);
         API.selectApp(appId, true);
     });
 
@@ -131,7 +131,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:select", function (index) {
-        Util.doUrlAction(urlObject => {
+        Utils.doUrlAction(urlObject => {
             if (index === undefined) {
                 urlObject.setQueryData(null, false, true);
             } else {
@@ -142,26 +142,26 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:paginate", function (page, selections) {
-        var urlObject = Util.currentUrlToObject();
-        Util.doUrlAction(urlObject => {
+        var urlObject = Utils.currentUrlToObject();
+        Utils.doUrlAction(urlObject => {
             urlObject.setPage(page);
         });
-        Util.setSelectedValues(selections);
-        Util.setUrlToObject(urlObject);
+        Utils.setSelectedValues(selections);
+        Utils.setUrlToObject(urlObject);
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:perPageLimit", function (casesPerPage, selections) {
-        Util.doUrlAction(urlObject => {
+        Utils.doUrlAction(urlObject => {
             urlObject.setCasesPerPage(casesPerPage);
         });
-        Util.setSelectedValues(selections);
-        Util.savePerPageLimitCookie('cases', casesPerPage);
+        Utils.setSelectedValues(selections);
+        Utils.savePerPageLimitCookie('cases', casesPerPage);
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:sort", function (newSortIndex) {
-        Util.doUrlAction(urlObject => {
+        Utils.doUrlAction(urlObject => {
             var currentSortIndex = urlObject.sortIndex;
             // If the column index is the same as already loaded, reverse the sort
             if (newSortIndex === Math.abs(currentSortIndex)) {
@@ -173,14 +173,14 @@ hqDefine("cloudcare/js/formplayer/router", function () {
     });
 
     FormplayerFrontend.on("menu:search", function (search) {
-        Util.doUrlAction(urlObject => {
+        Utils.doUrlAction(urlObject => {
             urlObject.setSearch(search);
         });
         API.listMenus();
     });
 
     FormplayerFrontend.on("menu:query", function (queryDict) {
-        Util.doUrlAction(urlObject => {
+        Utils.doUrlAction(urlObject => {
             urlObject.setQueryData(queryDict, true);
         });
         API.listMenus();
@@ -216,7 +216,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
     FormplayerFrontend.on("breadcrumbSelect", function (index) {
         FormplayerFrontend.trigger("clearForm");
-        const urlObject = Util.doUrlAction(urlObject => {
+        const urlObject = Utils.doUrlAction(urlObject => {
             urlObject.spliceSelections(index);
         });
         var options = {

@@ -7,7 +7,7 @@
  */
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
@@ -78,7 +78,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         },
 
         sync: function (method, model, options) {
-            Util.setCrossDomainAjaxOptions(options);
+            Utils.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });

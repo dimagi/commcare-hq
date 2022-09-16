@@ -217,7 +217,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 errorMessage = Utils.touchformsError(resp.responseJSON.message);
             }
 
-            hqImport('cloudcare/js/util').reportFormplayerErrorToHQ({
+            hqImport('cloudcare/js/utils').reportFormplayerErrorToHQ({
                 type: 'webformsession_request_failure',
                 request: action,
                 readableErrorMessage: errorMessage,
