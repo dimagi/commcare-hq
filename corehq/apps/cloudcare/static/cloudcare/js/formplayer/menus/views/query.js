@@ -8,33 +8,33 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         separator = " to ",
         dateFormat = "YYYY-MM-DD",
         Const = hqImport("cloudcare/js/form_entry/const"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util"),
-        Utils = hqImport("cloudcare/js/form_entry/utils"),
+        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/util"),
+        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
-    var encodeValue = function (model, searchForBlank, csv_support) {
+    var encodeValue = function (model, searchForBlank, csvSupport) {
             var value = model.get('value');
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
             } else if (value && model.get('input') === 'select') {
-                value = Util.joinMultiValue(value, csv_support);
+                value = FormplayerUtils.joinMultiValue(value, csvSupport);
             }
 
             var queryProvided = _.isObject(value) ? !!value.length : !!value;
             if (searchForBlank && queryProvided) {
-                return Util.joinMultiValue(["", value], csv_support);
+                return FormplayerUtils.joinMultiValue(["", value], csvSupport);
             } else if (queryProvided) {
                 return value;
             } else if (searchForBlank) {
                 return "";
             }
         },
-        decodeValue = function (model, value) {
+        decodeValue = function (model, value, csvSupport) {
             if (!_.isString(value)) {
                 return [false, undefined];
             }
-            var values = Util.splitMultiValue(value, csv_support),
+            var values = FormplayerUtils.splitMultiValue(value, csvSupport),
                 searchForBlank = _.contains(values, ""),
                 values = _.without(values, "");
 
@@ -55,7 +55,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
-                var broadcastObj = Utils.getBroadcastObject(item);
+                var broadcastObj = FormEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                Utils.renderMapboxInput(
+                FormEntryUtils.renderMapboxInput(
                     inputId,
                     geocoderItemCallback(id, model),
                     geocoderOnClearCallback(id),
@@ -183,7 +183,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = stickyValue;
             }
             if (this.model.get('input') === 'select' && _.isString(value)) {
-                value = Util.splitMultiValue(value, this.multi_select_csv_support);
+                value = FormplayerUtils.splitMultiValue(value, this.multi_select_csv_support);
             }
             this.model.set('value', value);
         },
@@ -368,7 +368,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
         initialize: function (options) {
             this.parentModel = options.collection.models;
-            this.multi_select_csv_support = options.multi_select_csv_support
+            this.multi_select_csv_support = options.multi_select_csv_support;
         },
 
         templateContext: function () {
@@ -414,7 +414,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                             $field.select2('close');
                         }
                         if (value !== null) {
-                            value = Util.splitMultiValue(value, self.multi_select_csv_support);
+                            value = FormplayerUtils.splitMultiValue(value, self.multi_select_csv_support);
                             value = _.filter(value, function (val) { return val !== ''; });
                             if (!$field.attr('multiple')) {
                                 value = _.isEmpty(value) ? null : value[0];
@@ -454,10 +454,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
          *  Returns a promise that contains the formplayer response.
          */
         validateFields: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-                self = this;
+            var self = this;
 
-            var urlObject = Utils.currentUrlToObject();
+            var urlObject = FormplayerUtils.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
@@ -500,8 +499,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         setStickyQueryInputs: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-            Utils.setStickyQueryInputs(this.getAnswers());
+            FormplayerUtils.setStickyQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {

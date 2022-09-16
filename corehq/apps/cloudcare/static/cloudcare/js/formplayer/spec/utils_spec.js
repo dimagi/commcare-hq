@@ -32,20 +32,20 @@ describe('Utils', function () {
 
     describe('Multi-Values for Query Screen', function () {
         it('should split a multi-value string', function () {
-            assert.deepEqual(Util.splitMultiValue("a b c"), ["a", "b", "c"]);
-            assert.deepEqual(Util.splitMultiValue(""), [""]);
-            assert.deepEqual(Util.splitMultiValue('texas "new mexico" utah'), ["texas", "new mexico", "utah"]);
-            assert.deepEqual(Util.splitMultiValue("'things' 'other things'"), ["things", "other things"]);
-            assert.deepEqual(Util.splitMultiValue('"Jenny\'s teapot" "Ethan\'s mug"'), ["Jenny's teapot", "Ethan's mug"]);
-            assert.deepEqual(Util.splitMultiValue(" blank"), ["", "blank"]);
+            assert.deepEqual(Utils.splitMultiValue("a b c"), ["a", "b", "c"]);
+            assert.deepEqual(Utils.splitMultiValue(""), [""]);
+            assert.deepEqual(Utils.splitMultiValue('texas "new mexico" utah'), ["texas", "new mexico", "utah"]);
+            assert.deepEqual(Utils.splitMultiValue("'things' 'other things'"), ["things", "other things"]);
+            assert.deepEqual(Utils.splitMultiValue('"Jenny\'s teapot" "Ethan\'s mug"'), ["Jenny's teapot", "Ethan's mug"]);
+            assert.deepEqual(Utils.splitMultiValue(" blank"), ["", "blank"]);
         });
 
         it('should join multiple values', function () {
-            assert.equal(Util.joinMultiValue(["a", "b", "c"]), "a b c");
-            assert.equal(Util.joinMultiValue([]), "");
-            assert.equal(Util.joinMultiValue(["texas", "new mexico", "utah"]), 'texas "new mexico" utah');
-            assert.equal(Util.joinMultiValue(['they said "hello"', "thing"]), '"they said \\"hello\\"" thing');
-            assert.equal(Util.joinMultiValue(["", "blank"]), " blank");
+            assert.equal(Utils.joinMultiValue(["a", "b", "c"]), "a b c");
+            assert.equal(Utils.joinMultiValue([]), "");
+            assert.equal(Utils.joinMultiValue(["texas", "new mexico", "utah"]), 'texas "new mexico" utah');
+            assert.equal(Utils.joinMultiValue(['they said "hello"', "thing"]), '"they said \\"hello\\"" thing');
+            assert.equal(Utils.joinMultiValue(["", "blank"]), " blank");
         });
     });
 

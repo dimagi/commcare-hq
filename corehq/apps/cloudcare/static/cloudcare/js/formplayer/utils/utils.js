@@ -288,9 +288,9 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return new Utils.CloudcareUrl(options);
     };
 
-    Util.splitMultiValue = function (str, csv_support) {
-        if (!csv_support) {
-            return str.split("#,#")
+    Utils.splitMultiValue = function (str, csvSupport) {
+        if (!csvSupport) {
+            return str.split("#,#");
         }
 
         if (str === "") {
@@ -322,8 +322,8 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         return items;
     };
 
-    Util.joinMultiValue = function (items, csv_support) {
-        if (!csv_support) {
+    Utils.joinMultiValue = function (items, csvSupport) {
+        if (!csvSupport) {
             return items.join("#,#");
         }
 
