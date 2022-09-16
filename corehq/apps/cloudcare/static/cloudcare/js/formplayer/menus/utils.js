@@ -155,7 +155,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
-            if (menuResponse.queryKey.match('search_command.m') && menuResponse.currentPage === 0) {
+            if (/search_command.m\d/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
                 hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
                     'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
