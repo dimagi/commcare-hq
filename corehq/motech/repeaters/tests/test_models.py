@@ -616,6 +616,8 @@ class TestSQLRepeaterToJSON(TestCase):
             couch_repeater = self.repeater_map[repeater_type]['couch']
             sql_repeater = self.repeater_map[repeater_type]['sql']
             sql_data = sql_repeater.to_json()
+            sql_data.pop('last_modified', None)
+            sql_data.pop('date_created', None)
             couch_data = self._clean_couch_json(couch_repeater.to_json())
 
             self.assertEqual(sql_data, couch_data)
