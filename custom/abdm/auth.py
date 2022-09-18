@@ -7,7 +7,6 @@ class UserAuthentication(TokenAuthentication):
 
     def authenticate(self, request):
         access_token = request.META.get('HTTP_AUTHORIZATION', "")
-        print(access_token)
         token = access_token.split(" ")[-1]
         if not token:
             return None
