@@ -17,7 +17,7 @@ Couch databases do not distinguish between different document types.  Any views
 you write have to interact with every document in that database.
 
 **Solution:**
-Store each type of document in a separate database. CommCareHQ has historically
+Store each type of document in a separate database. CommCare HQ has historically
 used one monolithic couch database, but we are gradually moving things into
 their own databases.  This module's `__init__.py` lets you specify which
 databases to sync each design document (and by extention, view) to.

@@ -22,8 +22,8 @@ bundled [web application platform](https://github.com/dimagi/formplayer).
 ### More Information
 
 + To try CommCare you can use [this production instance of hosted CommCare](https://www.commcarehq.org/).
-+ To setup a local CommCare HQ developer environment, see [Setting up CommCare HQ for Developers](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md).
-+ To setup a production CommCare HQ environment, check out [CommCare Cloud](https://dimagi.github.io/commcare-cloud/), our toolkit for deploying and maintaining CommCare servers.
++ For setting up a local CommCare HQ developer environment, see [Setting up CommCare HQ for Developers](https://github.com/dimagi/commcare-hq/blob/master/DEV_SETUP.md).
++ For setting up a production CommCare HQ environment, check out [CommCare Cloud](https://commcare-cloud.readthedocs.io/), our toolkit for deploying and maintaining CommCare servers.
 + Additional documentation is available on [ReadTheDocs](https://commcare-hq.readthedocs.io/).
 + We welcome contributions, see [Contributing](CONTRIBUTING.rst) for more.
 + Questions?  Contact the CommCare community at our [forum](https://forum.dimagi.com/).

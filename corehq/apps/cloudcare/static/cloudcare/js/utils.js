@@ -1,5 +1,5 @@
 /* global moment, NProgress */
-hqDefine('cloudcare/js/util', [
+hqDefine('cloudcare/js/utils', [
     'jquery',
     'hqwebapp/js/initial_page_data',
     'integration/js/hmac_callout',

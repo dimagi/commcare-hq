@@ -52,7 +52,7 @@ describe('FormplayerFrontend Integration', function () {
             FormplayerFrontend.start(newOptions);
 
             user = FormplayerFrontend.getChannel().request('currentUser');
-            hqImport("cloudcare/js/formplayer/utils/util").saveDisplayOptions(user.displayOptions);
+            hqImport("cloudcare/js/formplayer/utils/utils").saveDisplayOptions(user.displayOptions);
 
             // New session, but old options
             FormplayerFrontend.start(options);

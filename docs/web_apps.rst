@@ -254,8 +254,8 @@ formplayer_inline.js
 Inline formplayer is for the legacy "Edit Forms" behavior, which allowed users to edit submitted forms using the web apps UI.
 This feature has been a deprecation path for quite a while, largely replaced by data corrections. However, there are still a small number of clients using it for workflows that data corrections doesn't support.
 
-util.js
--------
+utils.js
+--------
 
 This contains miscellaneous utilities, mostly around error/success/progress messaging:
 
@@ -334,7 +334,7 @@ Routes **inside** an application serialize the ``CloudcareURL`` object.
 
 Most app-related data that needs to be passed to or from formplayer ends up as an attribute of CloudcareURL. It interfaces almost directly with formplayer, and most of its attributes are properties of formplayer's `SessionNavigationBean <https://github.com/dimagi/formplayer/blob/master/src/main/java/org/commcare/formplayer/beans/SessionNavigationBean.java>`_.
 
-CloudcareURL is defined in `formplayer/utils/util.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js>`_ although it probably justifies its own file.
+CloudcareURL is defined in `formplayer/utils/utils.js <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js>`_ although it probably justifies its own file.
 
 URLs using ``CloudcareURL`` are not especially human-legible due to JSON serialization, URL encoding, and the obscurity of the attributes. Example URL for form entry:
 

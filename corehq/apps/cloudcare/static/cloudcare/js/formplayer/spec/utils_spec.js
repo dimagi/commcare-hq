@@ -1,31 +1,31 @@
 /* eslint-env mocha */
 /* global Backbone */
 
-describe('Util', function () {
+describe('Utils', function () {
     let API = hqImport("cloudcare/js/formplayer/menus/api"),
         FakeFormplayer = hqImport("cloudcare/js/formplayer/spec/fake_formplayer"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     describe('#displayOptions', function () {
         beforeEach(function () {
-            sinon.stub(Util, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
+            sinon.stub(Utils, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
             window.localStorage.clear();
         });
 
         afterEach(function () {
-            Util.getDisplayOptionsKey.restore();
+            Utils.getDisplayOptionsKey.restore();
         });
 
         it('should retrieve saved display options', function () {
             let options = { option: 'yes' };
-            Util.saveDisplayOptions(options);
-            assert.deepEqual(Util.getSavedDisplayOptions(), options);
+            Utils.saveDisplayOptions(options);
+            assert.deepEqual(Utils.getSavedDisplayOptions(), options);
         });
 
         it('should not fail on bad json saved', function () {
-            localStorage.setItem(Util.getDisplayOptionsKey(), 'bad json');
-            assert.deepEqual(Util.getSavedDisplayOptions(), {});
+            localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
+            assert.deepEqual(Utils.getSavedDisplayOptions(), {});
         });
 
     });
@@ -34,12 +34,12 @@ describe('Util', function () {
         let stubs = {};
 
         beforeEach(function () {
-            let currentUrl = new Util.CloudcareUrl({appId: 'abc123'});
+            let currentUrl = new Utils.CloudcareUrl({appId: 'abc123'});
 
-            sinon.stub(Util, 'currentUrlToObject').callsFake(function () {
+            sinon.stub(Utils, 'currentUrlToObject').callsFake(function () {
                 return currentUrl;
             });
-            sinon.stub(Util, 'setUrlToObject').callsFake(function (urlObject) {
+            sinon.stub(Utils, 'setUrlToObject').callsFake(function (urlObject) {
                 currentUrl = urlObject;
             });
 
@@ -70,15 +70,15 @@ describe('Util', function () {
 
         afterEach(function () {
             Backbone.history.getFragment.restore();
-            Util.currentUrlToObject.restore();
-            Util.setUrlToObject.restore();
+            Utils.currentUrlToObject.restore();
+            Utils.setUrlToObject.restore();
             API.queryFormplayer.restore();
             Backbone.history.start.restore();
         });
 
         it("should navigate to a form", function () {
             FormplayerFrontend.trigger("menu:select", 0);
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['0']);
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
@@ -89,7 +89,7 @@ describe('Util', function () {
             assert.equal(lastCall.returnValue.title, "Survey Menu");
 
             FormplayerFrontend.trigger("menu:select", 0);
-            url = Util.currentUrlToObject();
+            url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['0', '0']);
             assert.equal(url.queryData, null);
             assert.equal(url.search, null);
@@ -110,7 +110,7 @@ describe('Util', function () {
             assert.equal(lastCall.returnValue.type, "entities");
 
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['1', 'some_case_id']);
             assert.isNotOk(url.queryData);
             assert.isNotOk(url.search);
@@ -125,7 +125,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:select", 0);
             FormplayerFrontend.trigger("menu:select", 0);
             FormplayerFrontend.trigger("breadcrumbSelect", 1);
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['0']);
             let lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.returnValue.title, "Survey Menu");
@@ -136,7 +136,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:select", 1);
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
             FormplayerFrontend.trigger("breadcrumbSelect", 1);
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['1']);
             let lastCall = stubs.queryFormplayer.lastCall;
             assert.equal(lastCall.returnValue.title, "Some Cases");
@@ -146,28 +146,28 @@ describe('Util', function () {
         it("should paginate, filter, and sort case lists", function () {
             FormplayerFrontend.trigger("menu:select", 1);
             FormplayerFrontend.trigger("menu:perPageLimit", 2);
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, null);
             assert.equal(url.sortIndex, null);
 
             FormplayerFrontend.trigger("menu:search", "x");
-            url = Util.currentUrlToObject();
+            url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, "x");
             assert.equal(url.sortIndex, null);
 
             FormplayerFrontend.trigger("menu:paginate", 1, []);
-            url = Util.currentUrlToObject();
+            url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, 1);
             assert.equal(url.search, "x");
             assert.equal(url.sortIndex, null);
 
             FormplayerFrontend.trigger("menu:sort", 2);
-            url = Util.currentUrlToObject();
+            url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, 1);
             assert.equal(url.search, "x");
@@ -180,7 +180,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:paginate", 1, []);
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "y");
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, "y");
@@ -194,7 +194,7 @@ describe('Util', function () {
             FormplayerFrontend.trigger("menu:sort", 2);
             FormplayerFrontend.trigger("menu:search", "z");
             FormplayerFrontend.trigger("menu:select", 'some_case_id');
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.equal(url.casesPerPage, 2);
             assert.equal(url.page, null);
             assert.equal(url.search, null);
@@ -210,7 +210,7 @@ describe('Util', function () {
             assert.deepEqual(_.pluck(response.displays, 'id'), ['dob']);
 
             FormplayerFrontend.trigger("menu:query", {dob: "2010-01-19"});
-            let url = Util.currentUrlToObject();
+            let url = Utils.currentUrlToObject();
             assert.deepEqual(url.selections, ['1', 'action 0']);
             assert.deepEqual(_.keys(url.queryData), ["search_command.m1"]);
             assert.isTrue(url.queryData["search_command.m1"].execute);
