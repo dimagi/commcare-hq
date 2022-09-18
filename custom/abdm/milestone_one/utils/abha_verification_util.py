@@ -1,71 +1,36 @@
 import requests
-import json
 
-from django.conf import settings
-
-base_url = "https://healthidsbx.abdm.gov.in/api/"
-
-
-def get_access_token():
-    url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
-    payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
-    if resp.status_code == 200:
-        return resp.json().get("accessToken")
+from custom.abdm.milestone_one.utils.request_util import get_access_token, get_response_http_post, base_url
 
 
 def generate_auth_otp(health_id, auth_method):
-    url = "https://healthidsbx.abdm.gov.in/api/v2/auth/init"
+    auth_otp_url = "v2/auth/init"
     payload = {"authMethod": auth_method, "healthid": health_id}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
-    token = get_access_token()
-    headers.update({"Authorization": "Bearer {}".format(token)})
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
-    print(resp.content)
-    if resp.status_code == 200:
-        return resp.json()
+    return get_response_http_post(auth_otp_url, payload)
 
 
 def confirm_with_mobile_otp(otp, txn_id):
-    url = "https://healthidsbx.abdm.gov.in/api/v1/auth/confirmWithMobileOTP"
+    confirm_with_mobile_otp_url = "v1/auth/confirmWithMobileOTP"
     payload = {"otp": otp, "txnId": txn_id}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
-    token = get_access_token()
-    headers.update({"Authorization": "Bearer {}".format(token)})
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
+    return get_response_http_post(confirm_with_mobile_otp_url, payload)
 
 
 def confirm_with_aadhaar_otp(otp, txn_id):
-    url = "https://healthidsbx.ndhm.gov.in/api/v1/auth/confirmWithAadhaarOtp"
+    confirm_with_aadhaar_otp_url = "v1/auth/confirmWithAadhaarOtp"
     payload = {"otp": otp, "txnId": txn_id}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
-    token = get_access_token()
-    headers.update({"Authorization": "Bearer {}".format(token)})
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
+    return get_response_http_post(confirm_with_aadhaar_otp_url, payload)
 
 
 def get_account_information(x_token):
-    url = "https://healthidsbx.abdm.gov.in/api/v1/account/profile"
+    account_information_url = "v1/account/profile"
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token), "X-Token": f"Bearer {x_token}"})
-    resp = requests.get(url=url, headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
+    resp = requests.get(url=base_url + account_information_url, headers=headers)
+    return resp.json()
 
 
 def search_by_health_id(health_id):
-    url = "https://healthidsbx.ndhm.gov.in/api/v1/search/searchByHealthId"
+    search_by_health_id_url = "v1/search/searchByHealthId"
     payload = {"healthId": health_id}
-    headers = {"Content-Type": "application/json; charset=UTF-8"}
-    token = get_access_token()
-    print("got token")
-    headers.update({"Authorization": "Bearer {}".format(token)})
-    resp = requests.post(url=url, data=json.dumps(payload), headers=headers)
-    if resp.status_code == 200:
-        return resp.json()
+    return get_response_http_post(search_by_health_id_url, payload)
