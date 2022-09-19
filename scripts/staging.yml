@@ -66,8 +66,6 @@ branches:
     - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
     - cs/missing-location-filter-definition # Charl Aug 5
-    - do/web-user-restore # Dominic Aug 8
-    - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     # - ad/remove-entered-wrap-functions # Addison Aug 22
@@ -76,7 +74,6 @@ branches:
     - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - do/migrate-apps # Dominic Sep 2
     - akj/abdm-api # Akash Sep 5
-    - jm/userrole-audit  # Joel Sep 6
     - ad/embed-tab-report-by-user # Addison Sep 7
     - ap/remove-celery-monkey-patching # Amit Sep 11
     - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
