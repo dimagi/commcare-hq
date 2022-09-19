@@ -37,7 +37,7 @@
             >
             {% trans "View records" %}
         </a>
-        {% if repeater.paused %}
+        {% if repeater.is_paused %}
         <a class="btn btn-default" href="#resume_forwarding_{{ repeater.repeater_id }}" data-toggle="modal"><i
                 class="fa fa-toggle-right"></i> {% trans "Resume" %}</a>
 
