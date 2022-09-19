@@ -1,9 +1,9 @@
 import datetime
 
-from celery.task import periodic_task
 from django.conf import settings
 from django.core.cache import cache
 
+from corehq.apps.celery import periodic_task
 from corehq.celery_monitoring.signals import get_task_time_to_start
 from corehq.util.metrics import metrics_gauge
 from corehq.util.metrics.const import MPM_MAX
