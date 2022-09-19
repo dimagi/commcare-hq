@@ -1,19 +1,25 @@
-from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend, IncomingRequest
-from corehq.apps.sms.api import incoming as incoming_sms
-from corehq.apps.sms.util import strip_plus
-from corehq.apps.ivr.api import log_call
-from celery.task import task
-from dimagi.utils.logging import notify_exception
 from django.conf import settings
-from corehq.apps.sms.models import SMS
-from .const import (
-    EVENT_INCOMING,
-    MESSAGE_TYPE_SMS,
-    MESSAGE_TYPE_CALL,
-    TELERIVET_FAILED_STATUSES,
-    DELIVERED,
-)
 from django.utils.translation import gettext_noop
+
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.celery import task
+from corehq.apps.ivr.api import log_call
+from corehq.apps.sms.api import incoming as incoming_sms
+from corehq.apps.sms.models import SMS
+from corehq.apps.sms.util import strip_plus
+from corehq.messaging.smsbackends.telerivet.models import (
+    IncomingRequest,
+    SQLTelerivetBackend,
+)
+
+from .const import (
+    DELIVERED,
+    EVENT_INCOMING,
+    MESSAGE_TYPE_CALL,
+    MESSAGE_TYPE_SMS,
+    TELERIVET_FAILED_STATUSES,
+)
 
 CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
     settings.CELERY_MAIN_QUEUE)
@@ -22,7 +28,9 @@ CELERY_QUEUE = ("sms_queue" if settings.SMS_QUEUE_ENABLED else
 @task(queue=CELERY_QUEUE, ignore_result=True)
 def process_incoming_message(*args, **kwargs):
     try:
-        from corehq.messaging.smsbackends.telerivet.views import TELERIVET_INBOUND_FIELD_MAP
+        from corehq.messaging.smsbackends.telerivet.views import (
+            TELERIVET_INBOUND_FIELD_MAP,
+        )
         fields = {a: kwargs[a] for (a, b) in TELERIVET_INBOUND_FIELD_MAP}
         log = IncomingRequest(**fields)
         log.save()
