@@ -39,10 +39,10 @@ services:
     command: [runcelery]
 
   pillowtop:
+    <<: *commcarehq_base
     environment:
       <<: *environment_base
       KAFKA_ADVERTISED_HOST_NAME: kafka
-    <<: *commcarehq_base
     command: [runpillowtop]
 
   formplayer:

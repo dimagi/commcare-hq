@@ -229,5 +229,3 @@ REPORTING_DATABASES = {
     'ucr': 'default',
     'aaa-data': 'default',
 }
-
-CELERY_BROKER_URL = 'redis://redis:6379/0'
