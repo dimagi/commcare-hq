@@ -62,10 +62,52 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         hqImport("cloudcare/js/formplayer/app").navigate(encodedUrl, { replace: replace });
     };
 
-    Utils.doUrlAction = function (actionCallback) {
-        var currentObject = Utils.CurrentUrlToObject();
-        actionCallback(currentObject);
-        Utils.setUrlToObject(currentObject);
+    Utils.updateUrlFromResponse = function (response) {
+        Utils.doUrlAction(urlObject => {
+            let update = false;
+            // If we don't have an appId in the URL (usually due to form preview or incomplete forms)
+            // then use the appId from the response.
+            if (!urlObject.appId) {
+                if (!response.appId) {
+                    let formplayer = hqImport("cloudcare/js/formplayer/app");
+                    formplayer.trigger('showError', gettext(
+                        "Response did not contain appId even though it was" +
+                        "required. If this persists, please report an issue to CommCareHQ"
+                    ));
+                    formplayer.trigger("apps:list");
+                    return false;
+                }
+                urlObject.appId = response.appId;
+                update = true;
+            }
+
+            if (urlObject.endpointId) {
+                urlObject.replaceEndpoint(response.selections);
+                update = true;
+            } else if (response.selections) {
+                urlObject.setSelections(response.selections);
+                update = true;
+            }
+            return update;
+        });
+    };
+
+    /**
+     * Helper function to update the URL
+     *
+     * @param actionCallback Function called with the current URL Object as an argument.
+     *                       Return 'false' to prevent updating the URL.
+     * @param replace        Set to 'true' to update the URL without creating an entry in
+     *                       the browser's history
+     * @returns              The updated URL Object
+     */
+    Utils.doUrlAction = function (actionCallback, replace) {
+        var currentObject = Utils.currentUrlToObject();
+        const update = actionCallback(currentObject);
+        if (update !== false) {
+            Utils.setUrlToObject(currentObject, replace);
+        }
+        return currentObject;
     };
 
     Utils.setCrossDomainAjaxOptions = function (options) {
@@ -150,7 +192,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.forceLoginAs = options.forceLoginAs;
 
         this.setSelections = function (selections) {
-            this.selections = selections;
+            this.selections = selections || [];
         };
 
         this.addSelection = function (selection) {
@@ -167,6 +209,19 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             // clear out pagination and search when we navigate
             this.page = null;
             this.search = null;
+        };
+
+        /**
+         * Drop last selection from the list of selections
+         *
+         * @returns {boolean} True if selections were modified
+         */
+        this.popSelection = function () {
+            if (this.selections) {
+                this.selections.pop();
+                return true;
+            }
+            return false;
         };
 
         this.setPage = function (page) {
@@ -206,8 +261,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         this.replaceEndpoint = function (selections) {
             delete this.endpointId;
             delete this.endpointArgs;
-            this.selections = selections || [];
-            sessionStorage.removeItem('selectedValues');
+            this.setSelections(selections);
         };
 
         this.clearExceptApp = function () {
