@@ -273,7 +273,7 @@
                     {% if cases|length == 1 %}in{% endif %}"
                  id="form-case-acc-{{ forloop.counter }}">
               <div class="accordion-inner">
-                {% include "hqwebapp/proptable/dl_property_table.html" with tables=case_data.table %}
+                {% include "reports/partials/form_property_table.html" with properties=case_data.properties %}
               </div>
             </div>
           </div>
@@ -307,7 +307,7 @@
 
   {% if form_meta_data %}
     <div class="tab-pane" id="form-metadata">
-      {% include "hqwebapp/proptable/dl_property_table.html" with tables=form_meta_data %}
+      {% include "reports/partials/form_property_table.html" with properties=form_meta_data %}
     </div>
   {% endif %}
 
