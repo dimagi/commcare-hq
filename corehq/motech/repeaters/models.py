@@ -716,6 +716,8 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
     class Meta:
         proxy = True
 
+    friendly_name = _("Forward Cases on Creation Only")
+
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
         return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
