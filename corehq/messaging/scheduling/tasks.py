@@ -3,10 +3,9 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
-from celery.task import task
-
 from dimagi.utils.couch import CriticalSection
 
+from corehq.apps.celery import task
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
