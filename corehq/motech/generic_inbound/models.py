@@ -1,9 +1,13 @@
+from uuid import uuid4
+
+from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldError
 from django.core.validators import validate_slug
 from django.db import models
+from django.utils.translation import gettext_lazy as _
+
 from field_audit import audit_fields
 from field_audit.models import AuditingManager
-
 from memoized import memoized
 
 from corehq.apps.userreports.models import UCRExpression
@@ -72,3 +76,50 @@ class ConfigurableApiValidation(models.Model):
             "expression_id": self.expression_id,
             "message": self.message,
         }
+
+
+class RequestLog(models.Model):
+
+    class Status(models.TextChoices):
+        FILTERED = 'filtered', _('Filtered')
+        VALIDATION_FAILED = 'validation_failed', _('Validation Failed')
+        SUCCESS = 'success', _('Success')
+        ERROR = 'error', _('Error')
+        REVERTED = 'reverted', _('Reverted')
+
+    class RequestMethod(models.TextChoices):
+        POST = 'POST'
+        PUT = 'PUT'
+        PATCH = 'PATCH'
+
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    domain = models.CharField(max_length=255, db_index=True)
+    api = models.ForeignKey(ConfigurableAPI, on_delete=models.CASCADE)
+    status = models.CharField(max_length=32, choices=Status.choices, db_index=True)
+
+    timestamp = models.DateTimeField(auto_now=True, db_index=True)
+    attempts = models.PositiveSmallIntegerField(default=1)
+    response_status = models.PositiveSmallIntegerField(db_index=True)
+    error_message = models.TextField()
+
+    username = models.CharField(max_length=128, db_index=True)
+    request_method = models.CharField(max_length=32, choices=RequestMethod.choices)
+    request_query = models.CharField(max_length=8192)
+    request_body = models.TextField()
+    request_headers = models.JSONField(default=dict)
+    request_ip = models.GenericIPAddressField(db_index=True)
+
+
+class ProcessingAttempt(models.Model):
+    log = models.ForeignKey(RequestLog, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(auto_now=True, db_index=True)
+    is_retry = models.BooleanField(default=False)
+    response_status = models.PositiveSmallIntegerField(db_index=True)
+    response_body = models.TextField()
+    raw_response = models.JSONField(default=dict)
+
+    xform_id = models.UUIDField(db_index=True, null=True, blank=True)
+    case_ids = ArrayField(models.UUIDField(default=uuid4), null=True, blank=True)
+
+    class Meta:
+        indexes = [] # TODO add django.contrib.postgres.indexes.GinIndex for case_ids
