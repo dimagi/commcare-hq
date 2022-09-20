@@ -311,7 +311,7 @@ class FoodRow:
             if indicator.is_calculated_later:
                 if not self.enrichment_complete:
                     raise AttributeError(f"{name} hasn't yet been set. It will be "
-                                        "calculated outside the scope of FoodRow.")
+                                         "calculated outside the scope of FoodRow.")
                 return None
             if self._is_std_recipe_ingredient:
                 # If it's an indicator that hasn't been explicitly set, check if it can
