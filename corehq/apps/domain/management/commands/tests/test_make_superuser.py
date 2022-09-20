@@ -17,10 +17,12 @@ class TestEmailValidation(SimpleTestCase):
         with patch_fake_webuser():
             call_command("make_superuser", "test@dimagi.com")  # does not raise
 
-    def test_make_superuser_allows_special_domains(self):
-        # as-built with email_validator version 1.1.3
-        with patch_fake_webuser():
-            call_command("make_superuser", "test@example.com")  # does not raise
+    def test_make_superuser_rejects_special_domains(self):
+        # as of email_validator 1.3.0, special domains raise EmailSyntaxError
+        # see: https://github.com/JoshData/python-email-validator/blob/10c34e6/CHANGELOG.md#version-130-september-18-2022  # noqa: E501
+        with (patch_fake_webuser(), self.assertRaises(CommandError) as test):
+            call_command("make_superuser", "test@example.com")
+        self.assertIsInstance(test.exception.__cause__, EmailSyntaxError)
 
     def test_make_superuser_rejects_invalid_email_syntax(self):
         with (patch_fake_webuser(), self.assertRaises(CommandError) as test):
