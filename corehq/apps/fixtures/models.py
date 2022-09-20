@@ -146,7 +146,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
-    table = models.ForeignKey(LookupTable, on_delete=models.CASCADE)
+    table = models.ForeignKey(LookupTable, on_delete=models.DO_NOTHING)
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
@@ -214,7 +214,7 @@ class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
-    row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE)
+    row = models.ForeignKey(LookupTableRow, on_delete=models.DO_NOTHING)
     couch_id = CharIdField(max_length=126, null=True, db_index=True)
 
     class Meta:
