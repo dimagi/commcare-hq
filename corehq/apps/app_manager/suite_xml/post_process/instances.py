@@ -329,7 +329,7 @@ def generic_fixture_instances(app, instance_name):
 
 @register_factory('search-input')
 def search_input_instances(app, instance_name):
-    return Instance(id=instance_name, src='jr://instance/search-input')
+    return Instance(id=instance_name, src=f'jr://instance/search-input/{instance_name}')
 
 
 @register_factory('results')
