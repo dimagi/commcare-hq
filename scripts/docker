@@ -289,6 +289,22 @@ if [ "$CMD" == "test" ]; then
     # [ -n "$GITHUB_ACTIONS" ] && echo "::group::Docker setup"  # ends in docker/run.sh
     echo "Pulling docker containers..."
     docker-compose pull --quiet
+
+    # Print service versions
+    docker-compose run --no-deps --rm minio minio --version
+    docker-compose run --no-deps --rm postgres postgres --version
+    docker-compose run --no-deps --rm redis redis-server --version
+    # Cannot get Couch version easily before it is running.
+    #
+    # The major version of elasticsearch is hard-coded in the container name
+    # so it is not convenient to execute a command on the container without
+    # hard-coding the major version here.
+    #
+    # It is not convenient to get versions of kafka or zookeeper.
+    #
+    # Some version information is encoded in docker image names
+    docker images
+
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"
