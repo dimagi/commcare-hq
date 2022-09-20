@@ -309,8 +309,9 @@ INSTANCE_KWARGS_BY_ID = {
     'casedb': dict(id='casedb', src='jr://instance/casedb'),
     'commcaresession': dict(id='commcaresession', src='jr://instance/session'),
     'registry': dict(id='registry', src='jr://instance/remote'),
-    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities'),
-    'search_selected_cases': dict(id='search_selected_cases', src='jr://instance/selected-entities'),
+    'selected_cases': dict(id='selected_cases', src='jr://instance/selected-entities/selected_cases'),
+    'search_selected_cases': dict(id='search_selected_cases',
+                                  src='jr://instance/selected-entities/search_selected_cases'),
 }
 
 
