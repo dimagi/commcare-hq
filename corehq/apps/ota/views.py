@@ -92,7 +92,7 @@ def restore(request, domain, app_id=None):
     """
     if rate_limit_restore(domain):
         return HttpTooManyRequests()
-
+    print(request)
     response, timing_context = get_restore_response(
         domain, request.couch_user, app_id, **get_restore_params(request, domain))
     return response
