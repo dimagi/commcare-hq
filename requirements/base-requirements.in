@@ -40,7 +40,7 @@ djangorestframework
 dropbox
 elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
-email_validator
+email-validator
 ethiopian-date-converter
 eulxml
 gevent
