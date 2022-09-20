@@ -214,7 +214,7 @@ class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
-    row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE, db_index=False)
+    row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE)
     couch_id = CharIdField(max_length=126, null=True, db_index=True)
 
     class Meta:
