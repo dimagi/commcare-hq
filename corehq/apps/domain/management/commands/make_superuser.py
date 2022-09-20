@@ -36,8 +36,8 @@ class Command(BaseCommand):
         from corehq.apps.users.models import WebUser
         try:
             validate_email(username)
-        except EmailSyntaxError:
-            raise CommandError('Your username must be an email address')
+        except EmailSyntaxError as exc:
+            raise CommandError('The username must be a valid email address') from exc
         couch_user = WebUser.get_by_username(username)
         if couch_user:
             if not isinstance(couch_user, WebUser):
