@@ -176,9 +176,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
 djangorestframework==3.13.1
     # via -r base-requirements.in
 dnspython==2.2.1
-    # via
-    #   -r base-requirements.in
-    #   email-validator
+    # via email-validator
 docutils==0.16
     # via
     #   -r docs-requirements.in
