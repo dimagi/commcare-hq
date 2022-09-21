@@ -55,7 +55,7 @@ class ConfigurableAPICreateForm(forms.ModelForm):
 
 
 class ConfigurableAPIUpdateForm(ConfigurableAPICreateForm):
-    fieldset_title = _('Update Configuration')
+    fieldset_title = _('Basic Configuration')
 
     def add_to_helper(self):
         self.helper.form_tag = False
