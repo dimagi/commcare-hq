@@ -21,3 +21,21 @@
 }
 
 
+@media print{
+  #breadcrumb-region {
+    position: static;
+  }
+
+  #breadcrumb-region .breadcrumb,
+  .breadcrumb-form-container .breadcrumb {
+    font-size: 12px;
+    margin-bottom: 0px;
+    padding-left: 33px;
+    .breadcrumb-text {
+      &:before {
+        font-size: 7px;
+        line-height: 17px;
+      }
+    }
+  }
+}
