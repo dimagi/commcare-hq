@@ -7,6 +7,7 @@ import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.core.validators import ValidationError, validate_email
 
 import boto3
 import KISSmetrics
@@ -15,7 +16,6 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
 from dimagi.utils.dates import add_months_to_date
@@ -661,8 +661,8 @@ def _email_is_valid(email):
 
     try:
         validate_email(email)
-    except EmailNotValidError as e:
-        logger.warning(str(e))
+    except ValidationError as exc:
+        logger.warning(str(exc))
         return False
 
     return True
