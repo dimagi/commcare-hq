@@ -263,15 +263,15 @@ class CaseDataView(BaseProjectReportSectionView):
 
 
 def _get_dd_tables(domain, case_type, dynamic_data, timezone):
-    dd_props_by_group = _get_dd_props_by_group(domain, case_type)
+    dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
     tables = [
-        (group or _('Uncategorized'), _table_definition([
+        (group, _table_definition([
             (p.name, p.description) for p in props
         ]))
-        for group, props in sorted(dd_props_by_group.items())
+        for group, props in dd_props_by_group
     ]
 
-    props_in_dd = set(prop.name for prop_group in dd_props_by_group.values()
+    props_in_dd = set(prop.name for _, prop_group in dd_props_by_group
                       for prop in prop_group)
     unrecognized = set(dynamic_data.keys()) - props_in_dd
     if unrecognized:
@@ -293,7 +293,13 @@ def _get_dd_props_by_group(domain, case_type):
             deprecated=False,
     ):
         ret[prop.group].append(prop)
-    return ret
+
+    uncategorized = ret.pop('', None)
+    for group, props in sorted(ret.items()):
+        yield (group, props)
+
+    if uncategorized:
+        yield (_('Uncategorized') if ret else None, uncategorized)
 
 
 def _table_definition(props):

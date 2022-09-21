@@ -66,7 +66,7 @@
                     {% for table in dd_properties_tables %}
                       <div class="property-table-row">
                         <div class="property-table-container">
-                          <div class="table-tab">{{ table.name }}</div>
+                          {% if table.name %}<div class="table-tab">{{ table.name }}</div>{% endif %}
                           {% include "reports/partials/case_property_table.html" with rows=table.rows %}
                         </div>
                       </div>
