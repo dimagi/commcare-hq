@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    # - rp/fix-case-properties-modal-styling # Rynhard 20 July
     - mjr/report-logging-verification # Matt July 20
     - dm/sql-lookup-tables-pr1  # Daniel July 21
     - cs/SC-2079-form-view-ff # Charl July 25
@@ -81,4 +80,5 @@ branches:
     - es/dd-case-data  # Ethan Sep 19
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - rc/update-case-search-settings-mapping # Robert Sept 20
+    - rp/mobile-worker-validation # Rynhard Sept 21
 submodules: { }
