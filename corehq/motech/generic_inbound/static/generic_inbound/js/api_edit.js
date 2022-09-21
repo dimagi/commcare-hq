@@ -5,9 +5,13 @@ hqDefine('generic_inbound/js/api_edit', [
     'generic_inbound/js/copy_data',
 ], function (_, ko, initialPageData) {
 
-    let ValidationModel = function (data) {
-        let self = ko.mapping.fromJS(data);
+    const VALIDATION_DEFAULTS = {
+        "name": "", "expression_id": null, "message": "", "id": null, "toDelete": false,
+    };
 
+    let ValidationModel = function (data) {
+        data = _.defaults(data, VALIDATION_DEFAULTS);
+        let self = ko.mapping.fromJS(data);
         self.nameError = ko.computed(() => {
             return self.name().length === 0 || self.name().length > 64;
         });
@@ -34,9 +38,7 @@ hqDefine('generic_inbound/js/api_edit', [
         self.initialValidationCount = validations.length;
 
         self.addValidation = function () {
-            self.validations.push(
-                ValidationModel({"name": "", "expression_id": null, "message": "", "id": null})
-            );
+            self.validations.push(ValidationModel(VALIDATION_DEFAULTS));
         };
 
         self.enableSubmit = ko.computed(() => {
@@ -45,6 +47,10 @@ hqDefine('generic_inbound/js/api_edit', [
 
         self.validateForm = function () {
             return self.enableSubmit();
+        };
+
+        self.deleteUnsavedValidation = function (item) {
+            self.validations.remove(item);
         };
 
         return self;

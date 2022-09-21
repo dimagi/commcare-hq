@@ -37,6 +37,7 @@
               <th class="col-sm-2">{% translate "Name" %}</th>
               <th class="col-sm-4">{% translate "Expression" %}</th>
               <th class="col-sm-4">{% translate "Message" %}</th>
+              <th class="col-sm-2">{% translate "Delete" %}</th>
             </tr>
           </thead>
           <tbody data-bind="foreach: validations">
@@ -57,7 +58,7 @@
                   options: $parent.filters,
                   optionsText: 'label',
                   optionsValue: 'id',
-                   attr: {name: `validations-${$index()}-expression`}
+                  attr: {name: `validations-${$index()}-expression`},
                   ">
                   </select>
                   <span class='help-block' data-bind="visible: expressionError">
@@ -71,7 +72,17 @@
                     {% translate "Message is required" %}
                   </span>
               </td>
-{#              <input type="checkbox" name="validations-0-DELETE" id="id_validations-0-DELETE">#}
+              <td>
+                <input type="checkbox" data-bind="
+                  checked: toDelete,
+                  attr: {name: `validations-${$index()}-DELETE`},
+                  visible: id
+                ">
+                <button type="btn" data-bind="
+                  click: $parent.deleteUnsavedValidation,
+                  hidden: id
+                "><i class="fa fa-undo"></i></button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -81,11 +92,10 @@
           <input type="hidden" name="validations-MIN_NUM_FORMS" value="0">
           <input type="hidden" name="validations-MAX_NUM_FORMS" value="1000">
         </div>
-{#        {% crispy form2 %}#}
         <button type="button" class="btn btn-primary" data-bind="click: addValidation">
-              <i class="fa fa-plus"></i>
-              {% trans "Add Validation" %}
-            </button>
+          <i class="fa fa-plus"></i>
+          {% trans "Add Validation" %}
+        </button>
         <div class="form-actions">
           <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
             <button class="btn btn-primary" type="submit" id="submit" data-bind="enabled: enableSubmit">{% trans "Save" %}</button>
