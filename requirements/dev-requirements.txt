@@ -466,7 +466,7 @@ pyjwt==2.4.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==20.0.1
+pyopenssl==21.0.0
     # via -r sso-requirements.in
 pyparsing==2.4.7
     # via
