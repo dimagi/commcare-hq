@@ -1,10 +1,15 @@
-from crispy_forms import layout as crispy
 from django import forms
+from django.forms import inlineformset_factory
 from django.utils.translation import gettext_lazy as _
+
+from crispy_forms import layout as crispy
 
 from corehq.apps.hqwebapp.crispy import HQFormHelper
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ConfigurableApiValidation,
+)
 
 
 class ConfigurableAPICreateForm(forms.ModelForm):
@@ -54,3 +59,9 @@ class ConfigurableAPIUpdateForm(ConfigurableAPICreateForm):
 
     def add_to_helper(self):
         self.helper.form_tag = False
+
+
+ApiValidationFormSet = inlineformset_factory(
+    ConfigurableAPI, ConfigurableApiValidation, fields=("name", "expression", "message"),
+    extra=1, can_delete=True
+)

@@ -1355,6 +1355,9 @@ class UCRExpressionManager(models.Manager):
     def get_expressions_for_domain(self, domain):
         return self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
 
+    def get_filters_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+
     def get_wrapped_filters_for_domain(self, domain, factory_context):
         return {
             f.name: f.wrapped_definition(factory_context)

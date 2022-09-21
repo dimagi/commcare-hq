@@ -2,20 +2,28 @@ from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
-from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
+
 from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import UserError, SubmissionError, serialize_case
+from corehq.apps.hqcase.api.core import (
+    SubmissionError,
+    UserError,
+    serialize_case,
+)
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
+from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.forms import (
+    ApiValidationFormSet,
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
@@ -112,23 +120,42 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
             return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.api)
         return ConfigurableAPIUpdateForm(self.request, instance=self.api)
 
+    def get_validation_formset(self):
+        if self.request.method == 'POST':
+            return ApiValidationFormSet(self.request.POST, instance=self.api)
+        return ApiValidationFormSet(instance=self.api)
+
     @property
     def main_context(self):
         main_context = super(ConfigurableAPIEditView, self).main_context
 
+        filter_expressions = [
+            {"id": expr.id, "label": str(expr)}
+            for expr in UCRExpression.objects.get_filters_for_domain(self.domain)
+        ]
         main_context.update({
             "form": self.get_form(),
             "api_model": self.api,
+            "filter_expressions": filter_expressions,
+            "validations": [
+                validation.to_json()
+                for validation in self.api.validations.all()
+            ],
             "page_title": self.page_title
         })
         return main_context
 
     def post(self, request, domain, **kwargs):
         form = self.get_form()
-        if form.is_valid():
+        validation_formset = ApiValidationFormSet(self.request.POST, instance=self.api)
+        if form.is_valid() and validation_formset.is_valid():
             form.save()
+            validation_formset.save()
             messages.success(request, _("API Configuration updated successfully."))
             return redirect(self.urlname, self.domain, self.api_id)
+
+        if not validation_formset.is_valid():
+            messages.error(request, _("There is an error in your data API validations"))
         return self.get(request, self.domain, **kwargs)
 
 
