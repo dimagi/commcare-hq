@@ -1,4 +1,3 @@
-from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
@@ -28,11 +27,9 @@ class TestEmailValidation(SimpleTestCase):
         self.assertIsInstance(test.exception.__cause__, ValidationError)
 
 
-@contextmanager
 def patch_fake_webuser():
-    with patch("corehq.apps.users.models.WebUser.get_by_username",
-               side_effect=get_fake_superuser) as mock:
-        yield mock
+    return patch("corehq.apps.users.models.WebUser.get_by_username",
+                 side_effect=get_fake_superuser)
 
 
 def get_fake_superuser(username):
