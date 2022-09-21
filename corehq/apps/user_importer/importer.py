@@ -7,7 +7,7 @@ from datetime import datetime
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
-from corehq.apps.users.util import get_complete_mobile_username
+from corehq.apps.users.util import normalize_username
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
@@ -485,9 +485,19 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             update_progress(current)
             current += 1
 
+        status_row = {}
         username = row.get('username')
         domain = row.get('domain') or upload_domain
-        username = get_complete_mobile_username(str(username), domain) if username else None
+        try:
+            username = normalize_username(str(username), domain) if username else None
+        except ValidationError as e:
+            status_row = {
+                'username': username,
+                'row': row,
+                'flag': str(e),
+            }
+            ret["rows"].append(status_row)
+            continue
         status_row = {
             'username': username,
             'row': row,
