@@ -120,11 +120,6 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
             return ConfigurableAPIUpdateForm(self.request, self.request.POST, instance=self.api)
         return ConfigurableAPIUpdateForm(self.request, instance=self.api)
 
-    def get_validation_formset(self):
-        if self.request.method == 'POST':
-            return ApiValidationFormSet(self.request.POST, instance=self.api)
-        return ApiValidationFormSet(instance=self.api)
-
     @property
     def main_context(self):
         main_context = super(ConfigurableAPIEditView, self).main_context
