@@ -250,7 +250,7 @@ intervaltree==3.1.0
     # via ddtrace
 ipython==8.2.0
     # via -r prod-requirements.in
-iso8601==0.1.13
+iso8601==1.0.2
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
