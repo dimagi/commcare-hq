@@ -353,18 +353,18 @@ class TestPartnerAnalyticsReportUtils(TestCase):
         headers, body = get_csv_details_for_partner(self.contact, self.year, self.month)
         self.assertListEqual(headers, ['Title', 'Project Space', 'Value'])
         self.assertListEqual(body, [
-            ['OData Access', 'test-001', 2],
-            ['OData Access', 'test-002', 1],
-            ['OData Access', 'test-003', 3],
+            ['Number of Mobile Workers', 'test-001', 10],
+            ['Number of Mobile Workers', 'test-002', 20],
+            ['Number of Mobile Workers', 'test-003', 30],
             ['Number of Submissions', 'test-001', 11],
             ['Number of Submissions', 'test-002', 22],
             ['Number of Submissions', 'test-003', 33],
             ['Number of Web Users', 'test-001', 11],
             ['Number of Web Users', 'test-002', 21],
             ['Number of Web Users', 'test-003', 31],
-            ['Number of Mobile Workers', 'test-001', 10],
-            ['Number of Mobile Workers', 'test-002', 20],
-            ['Number of Mobile Workers', 'test-003', 30],
+            ['OData Access', 'test-001', 2],
+            ['OData Access', 'test-002', 1],
+            ['OData Access', 'test-003', 3],
         ])
         self.assertEqual(mock_send_HTML_email.call_count, 1)
         email_args = mock_send_HTML_email.call_args_list
