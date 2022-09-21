@@ -656,7 +656,7 @@ def track_periodic_data():
 
 
 def _email_is_valid(email):
-    if not email or _is_suspicious_email(email):
+    if not email:
         return False
 
     try:
@@ -666,19 +666,6 @@ def _email_is_valid(email):
         return False
 
     return True
-
-
-# These domains provide disposable email addresses which attract scammers
-# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
-# if a Guard Duty alert is triggered for a domain not seen below, please add it
-SUSPICIOUS_DOMAINS = [
-    'mailna.me',
-    'mozej.com'
-]
-
-
-def _is_suspicious_email(email):
-    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
