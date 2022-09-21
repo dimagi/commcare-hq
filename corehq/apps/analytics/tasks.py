@@ -15,7 +15,6 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
 from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
@@ -52,6 +51,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     generate_monthly_web_user_statistics,
     send_partner_emails,
 )
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
