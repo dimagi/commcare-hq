@@ -63,5 +63,5 @@ class ConfigurableAPIUpdateForm(ConfigurableAPICreateForm):
 
 ApiValidationFormSet = inlineformset_factory(
     ConfigurableAPI, ConfigurableApiValidation, fields=("name", "expression", "message"),
-    extra=1, can_delete=True
+    extra=0, can_delete=True
 )
