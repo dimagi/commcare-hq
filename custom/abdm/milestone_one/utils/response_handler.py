@@ -2,11 +2,13 @@ from rest_framework.response import Response
 
 from rest_framework.status import HTTP_200_OK, HTTP_500_INTERNAL_SERVER_ERROR, HTTP_400_BAD_REQUEST
 
+success_response_keys = ["txnId", "healthIdNumber", "auth_methods", "token"]
+
 
 def get_response(response_data):
     if not response_data:
         return Response({"error": "No valid response found"}, status=HTTP_500_INTERNAL_SERVER_ERROR)
-    if "txnId" in response_data:
+    if any([key in response_data for key in success_response_keys]):
         return _get_success_abdm_response(response_data)
     return _get_error_abdm_response(response_data)
 
