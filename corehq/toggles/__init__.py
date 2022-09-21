@@ -2353,3 +2353,13 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly'
 )
+
+EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
+    'embed_tableau_report_by_user',
+    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
+                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
+                'to Tableau to get the embedded report.',
+)
