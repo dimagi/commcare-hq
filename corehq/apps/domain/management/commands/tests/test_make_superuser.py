@@ -2,8 +2,8 @@ from contextlib import contextmanager
 from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
+from django.core.validators import ValidationError
 from django.test import SimpleTestCase
-from email_validator import EmailSyntaxError
 
 from corehq.apps.users.models import FakeUser
 
@@ -25,7 +25,7 @@ class TestEmailValidation(SimpleTestCase):
     def test_make_superuser_rejects_invalid_email_syntax(self):
         with patch_fake_webuser(), self.assertRaises(CommandError) as test:
             call_command("make_superuser", "somebody_at_dimagi.com")
-        self.assertIsInstance(test.exception.__cause__, EmailSyntaxError)
+        self.assertIsInstance(test.exception.__cause__, ValidationError)
 
 
 @contextmanager

@@ -3,8 +3,7 @@ import logging
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-
-from email_validator import EmailSyntaxError, validate_email
+from django.core.validators import ValidationError, validate_email
 
 from corehq.apps.hqadmin.views.users import send_email_notif
 from corehq.util.signals import signalcommand
@@ -36,7 +35,7 @@ class Command(BaseCommand):
         from corehq.apps.users.models import WebUser
         try:
             validate_email(username)
-        except EmailSyntaxError as exc:
+        except ValidationError as exc:
             raise CommandError('The username must be a valid email address') from exc
         couch_user = WebUser.get_by_username(username)
         if couch_user:
