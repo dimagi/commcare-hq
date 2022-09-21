@@ -1425,6 +1425,16 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
         self.assertEqual(user_history.change_messages['groups'],
             UserChangeMessage.groups_info([])['groups'])
 
+    def test_create_or_update_commcare_users_and_groups_with_bad_username(self):
+        result = create_or_update_commcare_users_and_groups(
+            self.domain.name,
+            [self._get_spec(username="..bad username")],
+            self.uploading_user,
+            self.upload_record.pk,
+        )
+        print(result["rows"][0]["flag"])
+        self.assertEqual(result["rows"][0]["flag"], "['Enter a valid email address.']")
+
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
     @classmethod
