@@ -54,7 +54,7 @@ class ConnectionSettingsFormTests(SimpleTestCase):
             form = self.create_form(notify_emails=email_addrs)
             self.assertEqual(
                 {"notify_addresses_str": [{
-                    "message": "Contains an invalid email address.",
+                    "message": f"Invalid email address(es): {bad_addr}",
                     "code": "",
                 }]},
                 form.errors.get_json_data(),

@@ -1,13 +1,13 @@
 import re
 
 from django import forms
+from django.core.validators import validate_email
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
-from email_validator import EmailNotValidError, validate_email
 
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.motech.const import (
@@ -186,11 +186,19 @@ class ConnectionSettingsForm(forms.ModelForm):
 
     def clean_notify_addresses_str(self):
         emails = self.cleaned_data['notify_addresses_str']
-        are_valid = (validate_email(e) for e in re.split('[, ]+', emails) if e)
-        try:
-            all(are_valid)
-        except EmailNotValidError:
-            raise forms.ValidationError(_("Contains an invalid email address."))
+        invalid = []
+        for address in re.split('[, ]+', emails):
+            if not address:
+                continue
+            try:
+                validate_email(address)
+            except forms.ValidationError:
+                invalid.append(address)
+        if invalid:
+            addresses = ", ".join(invalid)
+            raise forms.ValidationError(
+                _("Invalid email address(es): {emails}").format(emails=addresses)
+            )
         return emails
 
     def clean(self):
