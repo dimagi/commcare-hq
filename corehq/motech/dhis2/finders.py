@@ -70,6 +70,7 @@ class TrackedEntityInstanceFinder:
         if not query_filters:
             return []
         params = {
+            "trackedEntityType": self.case_config.te_type_id,
             "ou": get_value(self.case_config.org_unit_id, case_trigger_info),
             "filter": query_filters,
             "ouMode": "DESCENDANTS",
