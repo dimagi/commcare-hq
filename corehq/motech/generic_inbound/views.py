@@ -27,7 +27,7 @@ from corehq.motech.generic_inbound.forms import (
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.models import ConfigurableAPI, RequestLog
 from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -157,7 +157,7 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 @json_error
 @api_auth
 @api_throttle
-@require_http_methods(["POST"])
+@require_http_methods(list(RequestLog.RequestMethod))
 def generic_inbound_api(request, domain, api_id):
     try:
         api = ConfigurableAPI.objects.get(url_key=api_id, domain=domain)
