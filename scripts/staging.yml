@@ -71,7 +71,7 @@ branches:
     - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - do/migrate-apps # Dominic Sep 2
     - akj/abdm-api # Akash Sep 5
-    - ad/embed-tab-report-by-user # Addison Sep 7
+#    - ad/embed-tab-report-by-user # Addison Sep 7
     - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
     - sk/webapps-update-url # Simon Sep 13
     - ap/sql-repeater/phase-2 # Amit Sep 16
