@@ -47,14 +47,14 @@
               <td data-bind="css: {'has-error': nameError}">
                 <input type="hidden" data-bind="value: id, attr: {name: `validations-${$index()}-id`}">
                 <input type="hidden" value="{{ api_model.id }}" data-bind="attr: {name: `validations-${$index()}-api`}">
-                <input type="text" maxlength="64" class="textinput textInput form-control" data-bind="
+                <input type="text" maxlength="64" class="textinput textInput form-control" required data-bind="
                   value: name, attr: {name: `validations-${$index()}-name`}">
                 <span class='help-block' data-bind="visible: nameError">
                   {% translate "Name is required and must be less than 64 characters" %}
                 </span>
               </td>
               <td data-bind="css: {'has-error': expressionError}">
-                <select class="select form-control" data-bind="
+                <select class="select form-control" required data-bind="
                   value: expression_id,
                   valueAllowUnset: true,
                   options: $parent.filters,
@@ -68,7 +68,7 @@
                   </span>
               </td>
               <td data-bind="css: {'has-error': messageError}">
-                <input type="text" class="textinput textInput form-control" data-bind="
+                <input type="text" class="textinput textInput form-control" required data-bind="
                   value: message, attr: {name: `validations-${$index()}-message`}">
                   <span class='help-block' data-bind="visible: messageError">
                     {% translate "Message is required" %}
@@ -101,7 +101,7 @@
         </fieldset>
         <div class="form-actions">
           <div class="col-xs-12 col-sm-8 col-md-8 col-lg-6 col-sm-offset-4 col-md-offset-4 col-lg-offset-2 controls">
-            <button class="btn btn-primary" type="submit" id="submit" data-bind="enable: enableSubmit">{% trans "Save" %}</button>
+            <button class="btn btn-primary" type="submit" id="submit">{% trans "Save" %}</button>
             <a href="{% url 'configurable_api_list' domain %}" class="btn btn-default">{% trans "Cancel" %}</a>
           </div>
         </div>
