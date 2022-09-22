@@ -234,6 +234,7 @@ DEFAULT_APPS = (
     'django_user_agents',
     'logentry_admin',
     'oauth2_provider',
+    'rest_framework.authtoken',
 )
 
 SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
@@ -391,6 +392,7 @@ HQ_APPS = (
 
     'custom.hki',
     'custom.champ',
+    'custom.abdm',
     'custom.covid',
     'custom.inddex',
     'custom.onse',
@@ -1075,6 +1077,9 @@ CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FI
 
 PHI_API_KEY = None
 PHI_PASSWORD = None
+
+ABDM_CLIENT_ID = None
+ABDM_CLIENT_SECRET = None
 
 STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
@@ -2017,6 +2022,9 @@ del _value, _protocol
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+       'rest_framework.authentication.TokenAuthentication',
+   ),
 }
 
 if not SENTRY_DSN:

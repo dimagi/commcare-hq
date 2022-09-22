@@ -100,6 +100,8 @@ IGNORE_MODELS = {
     "util.PermanentBounceMeta",
     "util.TransientBounceEmail",
     "users.Permission",
+    "abdm.ABDMUser",
+
 }
 
 # TODO: determine which of these should not be ignored
