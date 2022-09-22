@@ -2,12 +2,10 @@ from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_bulk_delete
 
 from corehq.util.couch_helpers import paginate_view
-from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 
 
-@quickcache(['domain', 'data_type_id'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
-def get_fixture_items_for_data_type(domain, data_type_id, bypass_cache=False):
+def get_fixture_items_for_data_type(domain, data_type_id):
     from corehq.apps.fixtures.models import FixtureDataItem
     return list(FixtureDataItem.view(
         'fixtures/data_items_by_domain_type',

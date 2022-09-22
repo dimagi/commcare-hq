@@ -57,7 +57,6 @@ from corehq.apps.fixtures.upload import (
     upload_fixture_file,
     validate_fixture_file_format,
 )
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import (
     clear_fixture_cache,
     is_identifier_invalid,
@@ -110,7 +109,6 @@ def update_tables(request, domain, data_type_id=None):
                     couch_type.recursive_delete(transaction)
                 data_type.delete(sync_to_couch=False)
             finally:
-                clear_fixture_quickcache(domain, [couch_type])
                 clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
@@ -161,8 +159,6 @@ def update_tables(request, domain, data_type_id=None):
                     data_type = _create_types(
                         fields_patches, domain, data_tag, is_global, description, transaction)
         finally:
-            couch_type = data_type._migration_get_couch_object()
-            clear_fixture_quickcache(domain, [couch_type])
             clear_fixture_cache(domain)
         return json_response(_table_json(data_type))
 

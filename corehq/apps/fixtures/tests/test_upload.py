@@ -678,28 +678,6 @@ class TestFixtureUpload(TestCase):
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
 
-    def test_upload_should_clear_cache_on_error(self):
-        def error_tx():
-            def error():
-                raise Exception("cannot save")
-            tx = CouchTransaction()
-            tx.add_post_commit_action(error)
-            return tx
-        CouchTransaction = mod.CouchTransaction
-
-        self.upload([(None, 'N', 'apple')])  # create lookup table
-        apple_id = self.get_rows(None)[0].id.hex
-
-        upload_error = patch.object(mod, "CouchTransaction", error_tx)
-        with upload_error, self.assertRaises(Exception):
-            # failed upload, previously resulted in stale cache
-            self.upload([(apple_id, 'N', 'orange')])
-        orange_id = self.get_rows(None)[0].id.hex
-
-        # previously failed with BulkSaveError due to stale cache
-        self.upload([(orange_id, 'N', 'banana')])
-        self.assertEqual(self.get_rows(), ['banana'])
-
 
 class TestFixtureOwnershipUpload(TestCase):
     do_upload = _run_upload

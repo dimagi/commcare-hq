@@ -5,7 +5,6 @@ from corehq.apps.fixtures.models import (
     TypeField,
     Field,
 )
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
@@ -113,7 +112,6 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             },
             sort_key=1,
         ).save()
-        clear_fixture_quickcache(self.domain, LookupTable.objects.by_domain(self.domain))
         clear_fixture_cache(self.domain)
         update_fixture(self.domain_link, self.table.tag)
 
@@ -146,7 +144,6 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             ],
         )
         other_table.save()
-        clear_fixture_quickcache(self.domain, LookupTable.objects.by_domain(self.domain))
         clear_fixture_cache(self.domain)
 
         with self.assertRaises(UnsupportedActionError):

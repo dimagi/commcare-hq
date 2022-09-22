@@ -21,7 +21,6 @@ from corehq.apps.fixtures.models import (
     LookupTableRow,
     TypeField,
 )
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.users.models import HqPermissions
 
@@ -145,7 +144,6 @@ class LookupTableResource(HqBaseResource):
             with CouchTransaction() as transaction:
                 data_type.recursive_delete(transaction)
         finally:
-            clear_fixture_quickcache(kwargs['domain'], [data_type])
             clear_fixture_cache(kwargs['domain'])
         return ImmediateHttpResponse(response=HttpAccepted())
 
@@ -266,9 +264,6 @@ class LookupTableItemResource(HqBaseResource):
                 row._migration_get_couch_object().recursive_delete(transaction)
             row.delete(sync_to_couch=False)
         finally:
-            class data_type:
-                _migration_couch_id = row.table_id.hex
-            clear_fixture_quickcache(row.domain, [data_type])
             clear_fixture_cache(row.domain)
         return ImmediateHttpResponse(response=HttpAccepted())
 
@@ -289,9 +284,6 @@ class LookupTableItemResource(HqBaseResource):
         try:
             bundle.obj.save()
         finally:
-            class data_type:
-                _migration_couch_id = UUID(data_type_id).hex
-            clear_fixture_quickcache(kwargs['domain'], [data_type])
             clear_fixture_cache(kwargs['domain'])
         return bundle
 
@@ -312,12 +304,7 @@ class LookupTableItemResource(HqBaseResource):
             try:
                 bundle.obj.save()
             finally:
-                data_item = bundle.obj
-
-                class data_type:
-                    _migration_couch_id = data_item.table_id.hex
-                clear_fixture_quickcache(data_item.domain, [data_type])
-                clear_fixture_cache(data_item.domain)
+                clear_fixture_cache(bundle.obj.domain)
 
         return bundle
 

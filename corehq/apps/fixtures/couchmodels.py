@@ -134,7 +134,7 @@ class FixtureDataType(SyncCouchToSQLMixin, Document):
 
     def recursive_delete(self, transaction):
         item_ids = []
-        for item in get_fixture_items_for_data_type(self.domain, self.get_id, bypass_cache=True):
+        for item in get_fixture_items_for_data_type(self.domain, self.get_id):
             transaction.delete(item)
             item_ids.append(item.get_id)
         for item_id_chunk in chunked(item_ids, 1000):

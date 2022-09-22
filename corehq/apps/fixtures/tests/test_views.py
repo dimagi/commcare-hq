@@ -5,8 +5,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from couchdbkit import BulkSaveError, ResourceNotFound
-from dimagi.utils.couch.bulk import CouchTransaction
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -235,76 +234,6 @@ class LookupTableViewsTest(TestCase):
             "e": FieldList(field_list=[]),
         })
 
-    def test_update_table_with_stale_caches(self):
-        table = self.create_lookup_table()
-        row1 = self.create_row(table)
-        row2 = self.create_row(table)
-
-        self.stale_caches(table)
-        data = {
-            'tag': 'a_modified_table',
-            'description': 'A Modified Table',
-            'is_global': False,
-            'fields': {'wing': {'update': 'foot'}},
-        }
-        with self.get_client(data) as client:
-            # should not raise BulkSaveError
-            response = client.put(self.url(data_type_id=table.id.hex), data)
-        self.assertEqual(response.status_code, 200)
-
-        # verify FixtureDataItem caches have been reset
-        FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
-        rows = [
-            FixtureDataItem.get(row1._migration_couch_id),
-            FixtureDataItem.get(row2._migration_couch_id),
-        ]
-        rows.extend(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
-        for row in rows:
-            self.assertIn("foot", row.fields)
-
-    def test_update_table_clears_caches_on_error(self):
-        def bulk_save_fail(docs):
-            cls = type(docs[0])
-            super(cls, cls).bulk_save(docs)
-            raise BulkSaveError([{}], [{}])
-            # NOTE SQL state is probably out of sync at this point.
-
-        table = self.create_lookup_table()
-        row1 = self.create_row(table)
-        row2 = self.create_row(table)
-        FixtureDataItem = LookupTableRow._migration_get_couch_model_class()
-
-        data = {
-            'tag': 'a_modified_table',
-            'description': 'A Modified Table',
-            'is_global': False,
-            'fields': {'wing': {'update': 'foot'}},
-        }
-        save_patch = patch.object(FixtureDataItem, "bulk_save", bulk_save_fail)
-        with self.get_client(data) as client, save_patch, self.assertRaises(BulkSaveError):
-            client.put(self.url(data_type_id=table.id.hex), data)
-
-        # verify FixtureDataItem caches have been reset
-        rows = [
-            FixtureDataItem.get(row1._migration_couch_id),
-            FixtureDataItem.get(row2._migration_couch_id),
-        ]
-        rows.extend(get_fixture_items_for_data_type(table.domain, table._migration_couch_id))
-        for row in rows:
-            self.assertIn("foot", row.fields)
-
-    def test_delete_table_with_stale_caches(self):
-        table = self.create_lookup_table()
-        row1 = self.create_row(table)
-        row2 = self.create_row(table)
-
-        self.stale_caches(table)
-        with self.get_client() as client:
-            # should not raise BulkSaveError
-            response = client.delete(self.url(data_type_id=table.id.hex))
-        self.assertEqual(response.status_code, 200)
-        self.assert_deleted(table, [row1, row2])
-
     def test_delete_table_with_previously_deleted_row(self):
         from dimagi.utils.couch.bulk import _bulk_delete as real_bulk_delete
 
@@ -322,27 +251,6 @@ class LookupTableViewsTest(TestCase):
             response = client.delete(self.url(data_type_id=table.id.hex))
         self.assertEqual(response.status_code, 200)
         self.assert_deleted(table, [row1, row2])
-
-    def stale_caches(self, table):
-        # An error during save can cause caches to become stale.
-        # Additionaly, QuickCache maintains a local in-memory cache,
-        # which immediately becomes stale when any other process
-        # updates the cached document, even if proper cache invalidation
-        # is performed in the foreign process.
-        #
-        # Caching on these documents is a performance optimization. A
-        # side effect is that the Couch concurrency protections (document
-        # versions) become less useful because caching is hard. We are
-        # not using that anyway since docuemnt versions are not passed
-        # to and from the client.
-
-        # populate caches
-        couch_rows = get_fixture_items_for_data_type(table.domain, table._migration_couch_id)
-        with CouchTransaction() as tx:
-            # transaction does not clear caches -> stale caches
-            for row in couch_rows:
-                tx.save(row)
-            tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
 
     def assert_deleted(self, table, rows):
         row_ids = [row.id.hex for row in rows]

@@ -31,7 +31,6 @@ from corehq.apps.integration.models import (
 )
 from corehq.apps.fixtures.dbaccessors import delete_fixture_items_for_data_type
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
     MODEL_AUTO_UPDATE_RULES,
@@ -249,7 +248,6 @@ def update_fixture(domain_link, tag):
         LookupTableRow.objects.bulk_create(chunk)
         save_to_couch(list(iter_couch_docs(LookupTableRow, chunk)))
 
-    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
     clear_fixture_cache(domain_link.linked_domain)
 
 

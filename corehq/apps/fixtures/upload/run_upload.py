@@ -105,7 +105,6 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
         update_progress(None)
         flush(tables, rows, owners)
     finally:
-        clear_fixture_quickcache(domain, old_tables)
         clear_fixture_cache(domain)
     return result
 
@@ -277,19 +276,3 @@ def _load_location_ids_by_name(location_names, domain_name):
         by_name[name] = MULTIPLE if name in by_name else location_id
         by_code[site_code] = location_id
     return by_name | by_code
-
-
-def clear_fixture_quickcache(domain, data_types):
-    """
-    Clears quickcache for fixtures.dbaccessors
-
-    Args:
-        :domain: The domain that has been updated
-        :data_types: List of LookupTable or FixtureDataType objects with stale cache
-    """
-    from ..dbaccessors import get_fixture_items_for_data_type
-    if not data_types:
-        return
-
-    for type_id in {t._migration_couch_id for t in data_types}:
-        get_fixture_items_for_data_type.clear(domain, type_id)
