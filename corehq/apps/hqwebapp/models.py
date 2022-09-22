@@ -50,10 +50,7 @@ class MaintenanceAlert(models.Model):
     @quickcache([], timeout=60 * 60)
     def get_active_alerts(cls):
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
-        if active_alerts:
-            return active_alerts
-        else:
-            return ''
+        return active_alerts if active_alerts else ''
 
 
 class UserAgent(models.Model):
