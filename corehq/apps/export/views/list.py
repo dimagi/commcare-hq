@@ -497,7 +497,7 @@ class BaseExportListView(BaseProjectDataView):
         for use in third-party data analysis tools.
     '''))
     is_odata = False
-    page_title = "Export Form Data"
+    page_title = gettext_lazy("Export Form Data")
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
