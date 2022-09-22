@@ -77,4 +77,5 @@ branches:
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - rc/update-case-search-settings-mapping # Robert Sept 20
     - rp/mobile-worker-validation # Rynhard Sept 21
+    - jt/ush-2147_improve_print_css #Jonathan T. Sept 22
 submodules: { }
