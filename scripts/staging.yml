@@ -62,9 +62,7 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - mjr/report-logging-verification # Matt July 20
     - dm/sql-lookup-tables-pr1  # Daniel July 21
-    - cs/SC-2079-form-view-ff # Charl July 25
     - ml/limit-superuser-changes # Minha July 25
-    - cs/missing-location-filter-definition # Charl Aug 5
     - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     # - ad/remove-entered-wrap-functions # Addison Aug 22
