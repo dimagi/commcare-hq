@@ -6,12 +6,10 @@ from corehq.apps.fixtures.dbaccessors import (
     get_fixture_items_for_data_type,
 )
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureItemField,
     LookupTable,
     LookupTableRow,
     TypeField,
+    Field,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
@@ -39,29 +37,32 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
     def setUp(self):
         # Reset table content for each test
         for item in [
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._migration_couch_id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Io')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Io')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=0,
             ),
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._migration_couch_id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Europa')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Europa')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=1,
             ),
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._migration_couch_id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Callisto')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Callisto')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=2,
             ),
         ]:
             item.save()
@@ -109,21 +110,23 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
 
         # Update rows in master table and re-update linked domain
         master_items[-1].delete()       # Callisto
-        FixtureDataItem(
+        LookupTableRow(
             domain=self.domain,
-            data_type_id=self.table._migration_couch_id,
+            table_id=self.table.id,
             fields={
-                'name': FieldList(field_list=[FixtureItemField(field_value='Thalassa')]),
-                'planet': FieldList(field_list=[FixtureItemField(field_value='Neptune')]),
+                'name': [Field(value='Thalassa')],
+                'planet': [Field(value='Neptune')],
             },
+            sort_key=0,
         ).save()
-        FixtureDataItem(
+        LookupTableRow(
             domain=self.domain,
-            data_type_id=self.table._migration_couch_id,
+            table_id=self.table.id,
             fields={
-                'name': FieldList(field_list=[FixtureItemField(field_value='Naiad')]),
-                'planet': FieldList(field_list=[FixtureItemField(field_value='Neptune')]),
+                'name': [Field(value='Naiad')],
+                'planet': [Field(value='Neptune')],
             },
+            sort_key=1,
         ).save()
         clear_fixture_quickcache(self.domain, LookupTable.objects.by_domain(self.domain))
         clear_fixture_cache(self.domain)
@@ -146,28 +149,6 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             ['Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa'],
             sorted(field[0].value for i in rows for field in i.fields.values()),
         )
-
-    def test_update_fixture_with_stale_caches(self):
-        def stale_caches():
-            from dimagi.utils.couch.bulk import CouchTransaction
-            table = LookupTable.objects.by_domain_tag(self.domain, "moons")
-            # populate row cache
-            rows = get_fixture_items_for_data_type(self.domain, table._migration_couch_id)
-            assert len(rows) == 3, rows
-            with CouchTransaction() as tx:
-                for row in rows:
-                    tx.delete(row)
-
-        self.assertFalse(LookupTable.objects.by_domain(self.linked_domain))
-
-        stale_caches()
-
-        # Update linked domain
-        update_fixture(self.domain_link, "moons")
-
-        # Linked domain should now have master domain's table and rows
-        table, = LookupTable.objects.by_domain(self.linked_domain)
-        self.assertFalse(get_fixture_items_for_data_type(self.linked_domain, table._migration_couch_id))
 
     def test_update_fixture_stale_cache_race(self):
         from .. import updates as mod

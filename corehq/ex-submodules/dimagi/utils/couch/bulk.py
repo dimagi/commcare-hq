@@ -138,7 +138,7 @@ class CouchTransaction(object):
                 saved_docs = self.sql_save_actions[cls]()
                 if issubclass(cls, SyncSQLToCouchMixin):
                     assert not docs, (docs, saved_docs)
-                    docs = _iter_couch_docs(cls, saved_docs)
+                    docs = iter_couch_docs(cls, saved_docs)
                     save = cls._migration_get_couch_model_class().bulk_save
                 else:
                     save = cls.bulk_save
@@ -160,7 +160,7 @@ class CouchTransaction(object):
                     start_sql_transaction()
                     cls.objects.bulk_create(chunk)
                     couch_class = cls._migration_get_couch_model_class()
-                    new_couch_docs = list(_iter_couch_docs(cls, chunk))
+                    new_couch_docs = list(iter_couch_docs(cls, chunk))
                     couch_class.bulk_save(new_couch_docs)
             else:
                 save = cls.bulk_save
@@ -180,7 +180,7 @@ class CouchTransaction(object):
             self.commit()
 
 
-def _iter_couch_docs(cls, sql_objects):
+def iter_couch_docs(cls, sql_objects):
     couch_class = cls._migration_get_couch_model_class()
     for obj in sql_objects:
         doc = couch_class(_id=obj._migration_couch_id)
