@@ -406,15 +406,22 @@ hqDefine('hqwebapp/js/main', [
         // Maintenance alerts
         var $maintenance = $(".alert-maintenance");
         if ($maintenance.length) {
-            var id = $maintenance.data("id"),
-                alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
-                $maintenance.removeClass('hide');
-                $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
-                });
-            }
-        }
+            var alertCookie = "alert_maintenance";
+            var closedAlerts = $.cookie(alertCookie) ? JSON.parse($.cookie(alertCookie)) : [];
+
+            $maintenance.each(
+                function (_index, alert) {
+                    var id = $(alert).data("id");
+                    if (!closedAlerts.includes(id)) {
+                        $(alert).removeClass('hide');
+                        $(alert).on('click', '.close', function () {
+                            closedAlerts.push(id);
+                            $.cookie(alertCookie, JSON.stringify(closedAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
+                        });
+                    };
+                }
+            );
+        };
 
         function unsupportedBrowser() {
             // check explicitly for Safari. Relying on browser capabilities would be preferred,
