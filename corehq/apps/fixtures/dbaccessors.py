@@ -1,3 +1,4 @@
+from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_bulk_delete
 
 from corehq.util.couch_helpers import paginate_view
@@ -51,10 +52,20 @@ def get_fixture_items_for_data_type(domain, data_type_id, bypass_cache=False):
 
 
 def delete_fixture_items_for_data_type(domain, data_type_id):
-    from corehq.apps.fixtures.models import FixtureDataItem
-    iter_bulk_delete(FixtureDataItem.get_db(), [
-        i["_id"] for i in iter_fixture_items_for_data_type(domain, data_type_id)
-    ])
+    from corehq.apps.fixtures.models import FixtureDataItem, LookupTableRow
+    db = FixtureDataItem.get_db()
+    items = paginate_view(
+        db,
+        'fixtures/data_items_by_domain_type',
+        chunk_size=1000,
+        startkey=[domain, data_type_id],
+        endkey=[domain, data_type_id, {}],
+        reduce=False,
+    )
+    for chunk in chunked(items, 1000, list):
+        ids = [i["id"] for i in chunk]
+        iter_bulk_delete(db, ids)
+        LookupTableRow.objects.filter(id__in=ids).delete()
 
 
 def iter_fixture_items_for_data_type(domain, data_type_id, wrap=True):
