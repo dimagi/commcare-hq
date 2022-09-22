@@ -1,6 +1,3 @@
-from decimal import Decimal
-from uuid import UUID
-
 from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
@@ -192,7 +189,7 @@ class FieldList(DocumentSchema):
         return hash(tuple(self.field_list))
 
 
-class FixtureDataItem(SyncCouchToSQLMixin, Document):
+class FixtureDataItem(Document):
     """
     Example old Item:
         domain = "hq-domain"
@@ -262,50 +259,6 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             obj['item_attributes'] = {}
 
         return super(FixtureDataItem, cls).wrap(obj)
-
-    @property
-    def _migration_couch_id(self):
-        return self._id
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain"]
-
-    def _migration_sync_to_sql(self, sql_object, save=True):
-        if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
-            sql_object.table_id = UUID(self.data_type_id)
-        fields = self._sql_fields
-        if sql_object.fields != fields:
-            sql_object.fields = fields
-        attributes = self._sql_item_attributes
-        if sql_object.item_attributes != attributes:
-            sql_object.item_attributes = attributes
-        sql_object.sort_key = self.sort_key or 0
-        super()._migration_sync_to_sql(sql_object, save=save)
-
-    @property
-    def _sql_fields(self):
-        from .models import Field
-        return {
-            name: [
-                Field(val.field_value, val.properties)
-                for val in values.field_list
-            ]
-            for name, values in self.fields.items()
-        }
-
-    @property
-    def _sql_item_attributes(self):
-        def convert(value):
-            if isinstance(value, Decimal):
-                return str(value)
-            return value
-        return {name: convert(value) for name, value in self.item_attributes.items()}
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        from .models import LookupTableRow
-        return LookupTableRow
 
     @property
     def fields_without_attributes(self):

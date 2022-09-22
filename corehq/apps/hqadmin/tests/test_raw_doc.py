@@ -52,7 +52,6 @@ class TestRawDocLookup(TestCase):
             sort_key=0,
         )
         row.save()
-        self.addCleanup(row._migration_get_couch_object().delete)
         expected_doc = {
             "model": "fixtures.lookuptablerow",
             "pk": str(row.id),
@@ -69,8 +68,8 @@ class TestRawDocLookup(TestCase):
 
         data = raw_doc_lookup(row.id.hex)
         self.assertEqual(json.loads(data["doc"]), expected_doc)
-        results = {r.dbname: r for r in data["db_results"]}
-        self.assertEqual(results["test_commcarehq__fixtures"].result, "found")
+        results = {r.dbname: r.result for r in data["db_results"]}
+        self.assertEqual(results["fixtures_lookuptablerow"], "found", results)
 
         data = raw_doc_lookup(str(row.id))
         self.assertEqual(json.loads(data["doc"]), expected_doc)

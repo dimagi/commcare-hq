@@ -242,26 +242,10 @@ def update_fixture(domain_link, tag):
         table_id=linked_data_type.id,
         **{f: getattr(master_item, f) for f in row_fields}
     ) for master_item in master_results["data_items"])
-    save_to_couch = LookupTableRow._migration_get_couch_model_class().bulk_save
     for chunk in chunked(rows, 1000, list):
         LookupTableRow.objects.bulk_create(chunk)
-        save_to_couch(list(iter_couch_docs(LookupTableRow, chunk)))
 
     clear_fixture_cache(domain_link.linked_domain)
-
-
-def iter_couch_docs(cls, sql_objects):
-    from dimagi.utils.couch.bulk import get_docs
-    couch_class = cls._migration_get_couch_model_class()
-    db = couch_class.get_db()
-    ids = [x._migration_couch_id for x in sql_objects]
-    couch_docs = {d["_id"]: couch_class.wrap(d) for d in get_docs(db, ids)}
-    for obj in sql_objects:
-        doc = couch_docs.get(obj._migration_couch_id)
-        if doc is None:
-            doc = couch_class(_id=obj._migration_couch_id)
-        obj._migration_sync_to_couch(doc, save=False)
-        yield doc
 
 
 def update_user_roles(domain_link):

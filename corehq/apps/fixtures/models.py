@@ -14,10 +14,7 @@ from corehq.sql_db.fields import CharIdField
 from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
 
 from .couchmodels import (  # noqa: F401
-    FieldList,
-    FixtureDataItem,
     FixtureDataType,
-    FixtureItemField,
     FixtureTypeField,
 )
 from .exceptions import FixtureVersionError
@@ -249,7 +246,7 @@ class Field:
 DB_CASCADE = models.DO_NOTHING
 
 
-class LookupTableRow(SyncSQLToCouchMixin, models.Model):
+class LookupTableRow(models.Model):
     """Lookup Table Row data model
 
     `fields` structure:
@@ -290,48 +287,6 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
         indexes = [
             models.Index(fields=["domain", "table_id", "sort_key", "id"]),
         ]
-
-    _migration_couch_id_name = "id"
-
-    @property
-    def _migration_couch_id(self):
-        return self.id.hex
-
-    @_migration_couch_id.setter
-    def _migration_couch_id(self, value):
-        self.id = UUID(value)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return ["domain", "sort_key"]
-
-    def _migration_sync_to_couch(self, couch_object, save=True):
-        if couch_object.data_type_id is None or UUID(couch_object.data_type_id) != self.table_id:
-            couch_object.data_type_id = self.table_id.hex
-        if self.fields != couch_object._sql_fields:
-            couch_object.fields = {
-                name: FieldList(field_list=[
-                    FixtureItemField(
-                        field_value=val.value,
-                        properties=val.properties,
-                    ) for val in values
-                ]) for name, values in self.fields.items()
-            }
-        if self.item_attributes != couch_object._sql_item_attributes:
-            couch_object.item_attributes = self.item_attributes
-        super()._migration_sync_to_couch(couch_object, save=save)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FixtureDataItem
-
-    def _migration_get_or_create_couch_object(self):
-        cls = self._migration_get_couch_model_class()
-        obj = self._migration_get_couch_object()
-        if obj is None:
-            obj = cls(_id=self._migration_couch_id)
-            obj.save(sync_to_sql=False)
-        return obj
 
     @property
     def fields_without_attributes(self):

@@ -204,7 +204,7 @@ class TestLookupTableRowManager(TestCase):
             table=blue_table,
             sort_key=10,
         )
-        blue_row.save(sync_to_couch=False)
+        blue_row.save()
 
         # create rows with higher table_id and lower sort_key than pink_rows
         # requires table_id in
@@ -288,7 +288,7 @@ class TestLookupTableRow(TestCase):
         self.assertEqual(row.fields["vera"][0].value, "What has become of you?")
         self.assertEqual(row.fields["vera"][0].properties, {})
         row.table.save(sync_to_couch=False)
-        row.save(sync_to_couch=False)
+        row.save()
         new = LookupTableRow.objects.get(id=row.id)
         self.assertEqual(new.fields, row.fields)
         self.assertIsNot(new.fields, row.fields)
@@ -336,7 +336,7 @@ class TestLookupTableRow(TestCase):
         }, sort_key=0)
         if save:
             row.table.save(sync_to_couch=False)
-            row.save(sync_to_couch=False)
+            row.save()
         return row
 
 

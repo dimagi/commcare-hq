@@ -46,7 +46,6 @@ class FixtureDataTest(TestCase):
             item_attributes=[],
         )
         self.data_type.save()
-        self.addCleanup(self.data_type._migration_get_couch_object().delete)
 
         self.data_item = LookupTableRow(
             domain=self.domain,
@@ -67,7 +66,6 @@ class FixtureDataTest(TestCase):
             sort_key=0,
         )
         self.data_item.save()
-        self.addCleanup(self.data_item._migration_get_couch_object().delete)
 
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
         self.addCleanup(self.user.delete, self.domain, deleted_by=None)
@@ -79,6 +77,7 @@ class FixtureDataTest(TestCase):
             row_id=self.data_item.id,
         )
         self.ownership.save()
+        self.addCleanup(delete_all_fixture_data, self.domain)
         self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
@@ -280,7 +279,6 @@ class FixtureDataTest(TestCase):
             sort_key=0,
         )
         data_item.save()
-        self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
 
