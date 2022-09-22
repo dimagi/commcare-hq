@@ -75,7 +75,6 @@ branches:
     - dependabot/pip/requirements/django-otp-1.1.3 # Graham Sep 12
     - sk/webapps-update-url # Simon Sep 13
     - ap/sql-repeater/phase-2 # Amit Sep 16
-    - es/dd-case-data  # Ethan Sep 19
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - rc/update-case-search-settings-mapping # Robert Sept 20
     - rp/mobile-worker-validation # Rynhard Sept 21
