@@ -24,7 +24,6 @@ from dimagi.utils.web import json_handler
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
-from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
 from corehq.util.soft_assert import soft_assert
 
@@ -390,30 +389,6 @@ def chevron(value):
         return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
-
-
-@register.simple_tag
-def maintenance_alert(request, dismissable=True):
-    """
-    Displays active alerts applicable to current domain or all domains.
-    """
-    alerts = MaintenanceAlert.get_active_alerts()
-    domain = getattr(request, 'domain', None)
-    output = []
-    for alert in alerts:
-        if not alert.domains or domain in alert.domains:
-            output.append(
-                format_html(
-                    '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
-                    ' hide' if dismissable else '',
-                    alert.id,
-                    mark_safe(  # nosec: no user input
-                        '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
-                    ) if dismissable else '',
-                    alert.html
-                )
-            )
-    return mark_safe(''.join(output))  # nosec: no user input
 
 
 @register.simple_tag

@@ -11,6 +11,7 @@ from corehq.apps.accounting.models import BillingAccount, SubscriptionType
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.utils.hubspot import is_hubspot_js_allowed_for_request
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 
 COMMCARE = 'commcare'
 COMMTRACK = 'commtrack'
@@ -230,6 +231,21 @@ def mobile_experience_hidden_by_toggle(request):
         if toggles.HIDE_HQ_ON_MOBILE_EXPERIENCE.enabled(project, toggles.NAMESPACE_DOMAIN):
             return True
     return False
+
+
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    if not active_alerts:
+        return {}
+
+    context = {}
+    domain = getattr(request, 'domain', None)
+    context.update({
+        'show_maintenance_alerts': True,
+        'maintenance_alerts': [alert for alert in active_alerts
+        if not alert.domains or domain in alert.domains],
+    })
+    return context
 
 
 def banners(request):
