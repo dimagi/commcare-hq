@@ -21,7 +21,7 @@ from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -181,6 +181,8 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundValidationError as e:
+        return _get_validation_error_response(e.errors)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
@@ -190,7 +192,15 @@ def generic_inbound_api(request, domain, api_id):
     return JsonResponse(response)
 
 
+def _get_validation_error_response(errors):
+    return JsonResponse({'error': 'validation error', 'errors': [
+        error['message'] for error in errors
+    ]}, status=400)
+
+
 def _execute_case_api(domain, couch_user, device_id, context, api_model):
+    _validate_api_request(api_model, context)
+
     data = api_model.parsed_expression(context.root_doc, context)
 
     if not isinstance(data, list):
@@ -214,3 +224,17 @@ def _execute_case_api(domain, couch_user, device_id, context, api_model):
         'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     }
+
+
+def _validate_api_request(api, eval_context):
+    validations = api.get_validations()
+    if not validations:
+        return
+
+    errors = []
+    for validation in validations:
+        if validation.parsed_expression(eval_context.root_doc, eval_context) is False:
+            errors.append(validation.get_error_context())
+
+    if errors:
+        raise GenericInboundValidationError(errors)
