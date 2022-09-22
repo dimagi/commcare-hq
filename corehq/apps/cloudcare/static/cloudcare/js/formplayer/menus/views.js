@@ -467,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 kissmetrics.track.event('Completed Case Search', {
                     'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
-            };
+            }
         },
 
         reconcileMultiSelectUI: function () {
@@ -796,7 +796,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     kissmetrics.track.event('Completed Case Search', {
                         'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
-                };
+                }
             }
         },
     });
