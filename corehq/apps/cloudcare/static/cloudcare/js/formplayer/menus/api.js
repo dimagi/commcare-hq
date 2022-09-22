@@ -67,14 +67,15 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 }
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
-                                var urlObject = Utils.currentUrlToObject();
-                                urlObject.setSelections(_.initial(urlObject.selections || []));
-                                Utils.setUrlToObject(urlObject, true);
+                                Utils.doUrlAction(urlObject => {
+                                    return urlObject.popSelection();
+                                }, true);
 
                                 console.log("Redirecting to " + response.smartLinkRedirect);
                                 document.location = response.smartLinkRedirect;
                                 return;
                             }
+                            Utils.updateUrlFromResponse(parsedMenus);
 
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
@@ -103,11 +104,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        var urlObject = Utils.currentUrlToObject();
-                        if (urlObject.selections) {
-                            urlObject.selections.pop();
-                            Utils.setUrlToObject(urlObject);
-                        }
+                        Utils.doUrlAction(urlObject => {
+                            return urlObject.popSelection();
+                        });
                         defer.reject();
                     },
                 };
