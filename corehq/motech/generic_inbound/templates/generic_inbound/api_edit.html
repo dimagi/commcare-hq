@@ -67,8 +67,8 @@
                   </span>
               </td>
               <td data-bind="css: {'has-error': messageError}">
-                <input type="text" class="textinput textInput form-control" required data-bind="
-                  value: message, attr: {name: `validations-${$index()}-message`}">
+                <textarea type="text" class="form-control vertical-resize" required data-bind="
+                  value: message, attr: {name: `validations-${$index()}-message`}"></textarea>
                   <span class='help-block' data-bind="visible: messageError">
                     {% translate "Message is required" %}
                   </span>
