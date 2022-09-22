@@ -12,6 +12,7 @@ from corehq.apps.dump_reload.sql.filters import (
     ManyFilters,
     SimpleFilter,
     UniqueFilteredModelIteratorBuilder,
+    UnfilteredModelIteratorBuilder,
     UserIDFilter,
     UsernameFilter,
 )
@@ -109,6 +110,10 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('data_interfaces.CaseRuleSubmission', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('data_interfaces.DomainCaseRuleRun', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('auth.User', UsernameFilter()),
+    FilteredModelIteratorBuilder('integration.DialerSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('integration.GaenOtpServerSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('integration.HmacCalloutSettings', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('integration.SimprintsIntegration', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.DeviceReportEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.ForceCloseEntry', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('phonelog.UserErrorEntry', SimpleFilter('domain')),
@@ -167,6 +172,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     # RepeatRecord, but this does not seem like a good idea.
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecord', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('repeaters.SQLRepeatRecordAttempt', SimpleFilter('repeat_record__domain')),
+    FilteredModelIteratorBuilder('saved_reports.ScheduledReportLog', SimpleFilter('domain')),
+    UnfilteredModelIteratorBuilder('saved_reports.ScheduledReportsCheckpoint'),
     FilteredModelIteratorBuilder('translations.SMSTranslations', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('translations.TransifexBlacklist', SimpleFilter('domain')),
     UniqueFilteredModelIteratorBuilder(
@@ -184,6 +191,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
 ]]
 
 

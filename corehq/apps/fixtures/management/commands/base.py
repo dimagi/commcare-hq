@@ -1,4 +1,5 @@
 import json
+import traceback
 from uuid import UUID
 
 from django.db.models import Q
@@ -9,6 +10,7 @@ from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model
     DiffDocs,
     PopulateSQLCommand,
 )
+from corehq.util.log import with_progress_bar
 
 
 class PopulateLookupTableCommand(PopulateSQLCommand):
@@ -72,19 +74,25 @@ class PopulateLookupTableCommand(PopulateSQLCommand):
         sql_ids = DiffDocs(diffs_file, None, chunk_size, MISSING_IN_COUCH)
         id_name = self.sql_class()._migration_couch_id_name
         ignored_count = deleted_count = 0
-        for ids in chunked(sql_ids.iter_doc_ids(), chunk_size, list):
-            to_delete = ids
-            couch_status = couch.view("_all_docs", keys=ids, reduce=False)
-            to_delete = []
-            for res in couch_status:
-                if "value" in res and res["value"].get("deleted"):
-                    to_delete.append(res["id"])
-                else:
-                    ignored_count += 1
-                    print("Unexpected: SQL record not deleted in Couch:", res, file=logfile)
-            print("Removed orphaned SQL rows:", to_delete, file=logfile)
-            self.sql_class().objects.filter(**{f"{id_name}__in": to_delete}).delete()
-            deleted_count += len(to_delete)
+        row_count = len(sql_ids)
+        row_ids = with_progress_bar(sql_ids.iter_doc_ids(), length=row_count, oneline=False)
+        try:
+            for ids in chunked(row_ids, chunk_size, list):
+                couch_status = couch.view("_all_docs", keys=ids, reduce=False)
+                to_delete = []
+                for res in couch_status:
+                    if "value" in res and res["value"].get("deleted"):
+                        to_delete.append(res["id"])
+                    else:
+                        ignored_count += 1
+                        print("Unexpected: SQL record not deleted in Couch:", res, file=logfile)
+                print("Removed orphaned SQL rows:", to_delete, file=logfile)
+                self.sql_class().objects.filter(**{f"{id_name}__in": to_delete}).delete()
+                deleted_count += len(to_delete)
+        except KeyboardInterrupt:
+            traceback.print_exc(file=logfile)
+            del row_ids  # gc with_progress_bar generator, finalize output
+            print("Aborted.")
         if deleted_count:
             print(f"Removed {deleted_count} orphaned SQL rows")
         if ignored_count:
