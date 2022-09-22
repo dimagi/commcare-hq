@@ -15,12 +15,11 @@ from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqcase.api.core import (
     SubmissionError,
     UserError,
-    serialize_case,
 )
-from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
+from corehq.motech.generic_inbound.core import execute_generic_api
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
@@ -170,7 +169,7 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        response = _execute_case_api(
+        response = execute_generic_api(
             request.domain,
             request.couch_user,
             request.META.get('HTTP_USER_AGENT'),
@@ -196,45 +195,3 @@ def _get_validation_error_response(errors):
     return JsonResponse({'error': 'validation error', 'errors': [
         error['message'] for error in errors
     ]}, status=400)
-
-
-def _execute_case_api(domain, couch_user, device_id, context, api_model):
-    _validate_api_request(api_model, context)
-
-    data = api_model.parsed_expression(context.root_doc, context)
-
-    if not isinstance(data, list):
-        # the bulk API always requires a list
-        data = [data]
-
-    xform, case_or_cases = handle_case_update(
-        domain=domain,
-        data=data,
-        user=couch_user,
-        device_id=device_id,
-        is_creation=None,
-    )
-
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
-    return {
-        'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
-    }
-
-
-def _validate_api_request(api, eval_context):
-    validations = api.get_validations()
-    if not validations:
-        return
-
-    errors = []
-    for validation in validations:
-        if validation.parsed_expression(eval_context.root_doc, eval_context) is False:
-            errors.append(validation.get_error_context())
-
-    if errors:
-        raise GenericInboundValidationError(errors)

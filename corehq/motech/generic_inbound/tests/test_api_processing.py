@@ -9,7 +9,7 @@ from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.exceptions import GenericInboundValidationError
 from corehq.motech.generic_inbound.models import ConfigurableAPI, ConfigurableApiValidation
 from corehq.motech.generic_inbound.utils import get_evaluation_context
-from corehq.motech.generic_inbound.views import _execute_case_api
+from corehq.motech.generic_inbound.core import execute_generic_api
 
 
 @dataclasses.dataclass
@@ -32,7 +32,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         user = MockUser()
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(BadSpecError):
-            _execute_case_api(self.domain_name, user, "device_id", context, api_model)
+            execute_generic_api(self.domain_name, user, "device_id", context, api_model)
 
     def test_validation_errors(self):
 
@@ -64,7 +64,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         user = MockUser()
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(GenericInboundValidationError) as cm:
-            _execute_case_api(self.domain_name, user, "device_id", context, api_model)
+            execute_generic_api(self.domain_name, user, "device_id", context, api_model)
 
         self.assertEqual(cm.exception.errors, [
             {"name": "is patient", "message": "must be patient"},
