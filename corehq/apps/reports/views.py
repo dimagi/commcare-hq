@@ -24,6 +24,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
@@ -1125,7 +1126,8 @@ def render_full_report_notification(request, content, email=None, report_notific
         })
 
     return render(request, "reports/report_email.html", {
-        'email_content': content,
+        # TODO: move the responsibility for safety up the chain, to scheduled reports, etc
+        'email_content': mark_safe(content),  # nosec: content is expected to be the report's HTML
         'unsub_link': unsub_link
     })
 
