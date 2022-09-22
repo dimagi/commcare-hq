@@ -494,7 +494,7 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             status_row = {
                 'username': username,
                 'row': row,
-                'flag': str(e),
+                'flag': str(e.message),
             }
             ret["rows"].append(status_row)
             continue

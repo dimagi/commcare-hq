@@ -1432,7 +1432,7 @@ class TestMobileUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.uploading_user,
             self.upload_record.pk,
         )
-        self.assertEqual(result["rows"][0]["flag"], "['Enter a valid email address.']")
+        self.assertEqual(result["rows"][0]["flag"], "Enter a valid email address.")
 
 
 class TestUserBulkUploadStrongPassword(TestCase, DomainSubscriptionMixin):
