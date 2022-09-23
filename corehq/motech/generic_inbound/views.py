@@ -33,6 +33,7 @@ from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
+@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
