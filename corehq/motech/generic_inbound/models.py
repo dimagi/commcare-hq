@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import FieldError
 from django.core.validators import validate_slug
 from django.db import models
@@ -132,7 +133,7 @@ class ProcessingAttempt(models.Model):
     case_ids = ArrayField(models.UUIDField(default=uuid4), null=True, blank=True)
 
     class Meta:
-        indexes = [] # TODO add django.contrib.postgres.indexes.GinIndex for case_ids
+        indexes = [GinIndex(fields=['case_ids'])]
 
     def __repr__(self):
         return f"ProcessingAttempt(log={self.log}, response_status='{self.response_status}')"

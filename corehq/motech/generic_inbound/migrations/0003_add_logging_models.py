@@ -1,6 +1,7 @@
 import uuid
 
 import django.contrib.postgres.fields
+import django.contrib.postgres.indexes
 import django.db.models.deletion
 from django.db import migrations, models
 
@@ -31,9 +32,6 @@ class Migration(migrations.Migration):
                 ('request_ip', models.GenericIPAddressField(db_index=True)),
                 ('api', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='generic_inbound.configurableapi')),
             ],
-            options={
-                'abstract': False,
-            },
         ),
         migrations.CreateModel(
             name='ProcessingAttempt',
@@ -48,5 +46,9 @@ class Migration(migrations.Migration):
                 ('case_ids', django.contrib.postgres.fields.ArrayField(base_field=models.UUIDField(default=uuid.uuid4), blank=True, null=True, size=None)),
                 ('log', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='generic_inbound.requestlog')),
             ],
+        ),
+        migrations.AddIndex(
+            model_name='processingattempt',
+            index=django.contrib.postgres.indexes.GinIndex(fields=['case_ids'], name='generic_inb_case_id_434f37_gin'),
         ),
     ]
