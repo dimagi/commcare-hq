@@ -30,27 +30,33 @@ hqDefine('generic_inbound/js/api_edit', [
         return self;
     };
 
+    let SubModelWrapper = function (modeClass, data, newDefautls) {
+        let self = {};
+        self.models = ko.observableArray(data.map(modeClass));
+        self.initialCount = data.length;
+        self.total = ko.computed(() => {
+            return self.models().length;
+        });
+        self.add = function () {
+            self.models.push(modeClass(newDefautls));
+        };
+        self.remove = function (item) {
+            self.models.remove(item);
+        };
+        self.allValid = ko.computed(() => {
+            return self.models().filter((v) => !v.isValid()).length === 0;
+        });
+        return self;
+    };
+
     let ViewModel = function (validations) {
         let self = {};
 
         self.filters = initialPageData.get("filters");
-        self.validations = ko.observableArray(validations.map(ValidationModel));
-        self.initialValidationCount = validations.length;
-
-        self.addValidation = function () {
-            self.validations.push(ValidationModel(VALIDATION_DEFAULTS));
-        };
-
-        self.enableSubmit = ko.computed(() => {
-            return self.validations().filter((v) => !v.isValid()).length === 0;
-        });
+        self.validations = SubModelWrapper(ValidationModel, validations, VALIDATION_DEFAULTS);
 
         self.validateForm = function () {
-            return self.enableSubmit();
-        };
-
-        self.deleteUnsavedValidation = function (item) {
-            self.validations.remove(item);
+            return self.validations.allValid();
         };
 
         return self;
