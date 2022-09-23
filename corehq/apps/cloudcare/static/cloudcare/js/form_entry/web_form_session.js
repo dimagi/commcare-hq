@@ -485,7 +485,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     }
                     clearInterval(timer);
 
-                    var requestParams = function () {
+                    var requestCallback = function () {
                         var answers = accumulateAnswers(form);
                         return {
                             'action': Const.SUBMIT,
@@ -493,9 +493,9 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                             'prevalidated': prevalidated,
                         };
                     };
-                    requestParams.action = Const.SUBMIT;
+                    requestCallback.action = Const.SUBMIT;
                     self.serverRequest(
-                        requestParams,
+                        requestCallback,
                         function (resp) {
                             form.isSubmitting(false);
                             if (resp.status === 'success') {
