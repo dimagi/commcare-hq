@@ -36,6 +36,9 @@ class ConfigurableAPI(models.Model):
         # keep track to avoid refetching to check whether value is updated
         self.__original_url_key = self.url_key
 
+    def __repr__(self):
+        return f"ConfigurableAPI(domain='{self.domain}', name='{self.name}')"
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             if self.url_key:
@@ -62,6 +65,9 @@ class ConfigurableApiValidation(models.Model):
     name = models.CharField(max_length=64)
     expression = models.ForeignKey(UCRExpression, on_delete=models.PROTECT)
     message = models.TextField()
+
+    def __repr__(self):
+        return f"ConfigurableApiValidation(api={self.api}, name='{self.name}')"
 
     @property
     @memoized
@@ -109,6 +115,9 @@ class RequestLog(models.Model):
     request_headers = models.JSONField(default=dict)
     request_ip = models.GenericIPAddressField(db_index=True)
 
+    def __repr__(self):
+        return f"RequestLog(domain='{self.domain}', api={self.api}, status='{self.status}')"
+
 
 class ProcessingAttempt(models.Model):
     log = models.ForeignKey(RequestLog, on_delete=models.CASCADE)
@@ -123,3 +132,6 @@ class ProcessingAttempt(models.Model):
 
     class Meta:
         indexes = [] # TODO add django.contrib.postgres.indexes.GinIndex for case_ids
+
+    def __repr__(self):
+        return f"ProcessingAttempt(log={self.log}, response_status='{self.response_status}')"
