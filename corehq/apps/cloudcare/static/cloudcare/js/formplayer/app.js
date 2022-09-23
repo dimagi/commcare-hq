@@ -247,19 +247,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }
 
                 // After end of form nav, we want to clear everything except app and sesson id
-                const urlObject = Utils.doUrlAction(urlObject => {
-                    urlObject.onSubmit();
-                });
+                var urlObject = Utils.currentUrlToObject();
+                urlObject.onSubmit();
+                Utils.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
-                    let nextScreen = resp.nextScreen;
-                    // urlObject.appId will be undefined when coming from an incomplete form
-                    if (urlObject.appId && urlObject.appId !== nextScreen.appId) {
-                        // not clear when this is needed
-                        nextScreen.appId = urlObject.appId;
-                    }
-
-                    Utils.updateUrlFromResponse(nextScreen);
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");

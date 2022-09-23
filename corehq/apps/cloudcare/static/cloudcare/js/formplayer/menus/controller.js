@@ -36,7 +36,26 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 return;
             }
 
-            const urlObject = Utils.currentUrlToObject();
+            var urlObject = Utils.currentUrlToObject();
+
+            if (urlObject.endpointId) {
+                urlObject.replaceEndpoint(menuResponse.selections);
+                Utils.setUrlToObject(urlObject);
+            }
+
+            // If we don't have an appId in the URL (usually due to form preview)
+            // then parse the appId from the response.
+            if (urlObject.appId === undefined || urlObject.appId === null) {
+                if (menuResponse.appId === null || menuResponse.appId === undefined) {
+                    FormplayerFrontend.trigger('showError', "Response did not contain appId even though it was" +
+                        "required. If this persists, please report an issue to CommCareHQ");
+                    FormplayerFrontend.trigger("apps:list");
+                    return;
+                }
+                urlObject.appId = menuResponse.appId;
+                Utils.setUrlToObject(urlObject);
+            }
+
             showMenu(menuResponse);
             // If a search exists in urlObject, make set search bar continues to show search
             if (urlObject.search !== null) {
