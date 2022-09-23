@@ -183,6 +183,27 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
         self.assertEqual(table.tag, "rings")
         self.assertFalse(get_fixture_items_for_data_type(self.linked_domain, table._id))
 
+    def test_update_fixture_stale_cache_race(self):
+        from .. import updates as mod
+
+        def delete_and_stale_cache(*args):
+            real_delete_fixture_items_for_data_type(*args)
+            # populate items cache before new items are created (race condition)
+            items = get_fixture_items_for_data_type(*args)
+            assert not items, items
+
+        real_delete_fixture_items_for_data_type = mod.delete_fixture_items_for_data_type
+        with patch.object(mod, "delete_fixture_items_for_data_type", delete_and_stale_cache):
+            update_fixture(self.domain_link, "moons")
+
+        # stale items cache should have been reset by now
+        table, = get_fixture_data_types(self.linked_domain)
+        items = get_fixture_items_for_data_type(self.linked_domain, table._id)
+        self.assertEqual(
+            ['Callisto', 'Europa', 'Io', 'Jupiter', 'Jupiter', 'Jupiter'],
+            sorted(i.fields[field_name].field_list[0].field_value for i in items for field_name in i.fields),
+        )
+
     def test_update_global_only(self):
         other_table = FixtureDataType(
             domain=self.domain,

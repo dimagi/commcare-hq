@@ -230,7 +230,6 @@ def update_fixture(domain_link, tag):
     linked_data_type["domain"] = domain_link.linked_domain
     linked_data_type = FixtureDataType.wrap(linked_data_type)
     linked_data_type.save()
-    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
 
     # Re-create relevant data items
     delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
@@ -242,6 +241,7 @@ def update_fixture(domain_link, tag):
         doc["data_type_id"] = linked_data_type._id
         FixtureDataItem.wrap(doc).save()
 
+    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
     clear_fixture_cache(domain_link.linked_domain)
 
 
