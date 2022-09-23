@@ -235,20 +235,20 @@ def mobile_experience_hidden_by_toggle(request):
 
 def maintenance_alerts(request):
     active_alerts = MaintenanceAlert.get_active_alerts()
-    if not active_alerts:
-        return {}
-
     context = {}
-    domain = getattr(request, 'domain', None)
-    context.update({
-        'show_maintenance_alerts': True,
-        'maintenance_alerts': [alert for alert in active_alerts
-        if not alert.domains or domain in alert.domains],
-    })
+    if active_alerts:
+        domain = getattr(request, 'domain', None)
+        context.update({
+            'maintenance_alerts': [
+                alert for alert in active_alerts
+                if not alert.domains
+                or domain in alert.domains
+            ],
+        })
     return context
 
 
-def banners(request):
+def subscription_banners(request):
     is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
     has_subscription = hasattr(request, 'subscription')
     if not (settings.IS_SAAS_ENVIRONMENT and is_logged_in_user and has_subscription):
