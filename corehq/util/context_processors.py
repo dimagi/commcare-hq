@@ -241,8 +241,8 @@ def maintenance_alerts(request):
         context.update({
             'maintenance_alerts': [
                 alert for alert in active_alerts
-                if not alert.domains
-                or domain in alert.domains
+                if (not alert.domains
+                    or domain in alert.domains)
             ],
         })
     return context

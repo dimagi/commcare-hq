@@ -404,14 +404,14 @@ hqDefine('hqwebapp/js/main', [
         });
 
         // Maintenance alerts
-        var $maintenance = $(".alert-maintenance");
+        var $maintenance = $('.alert-maintenance');
         if ($maintenance.length) {
-            var alertCookie = "alert_maintenance";
+            var alertCookie = 'alerts_maintenance';
             var closedAlerts = $.cookie(alertCookie) ? JSON.parse($.cookie(alertCookie)) : [];
 
             $maintenance.each(
                 function (_index, alert) {
-                    var id = $(alert).data("id");
+                    var id = $(alert).data('id');
                     if (!closedAlerts.includes(id)) {
                         $(alert).removeClass('hide');
                         $(alert).on('click', '.close', function () {
