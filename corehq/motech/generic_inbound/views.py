@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
@@ -7,6 +9,8 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
+
+from dimagi.utils.web import get_ip
 
 from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
@@ -27,7 +31,7 @@ from corehq.motech.generic_inbound.forms import (
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI, RequestLog
+from corehq.motech.generic_inbound.models import ConfigurableAPI, RequestLog, ProcessingAttempt
 from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -165,6 +169,12 @@ def generic_inbound_api(request, domain, api_id):
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
+    response = _generic_inbound_api(api, request)
+    _log_api_request(api, request, response)
+    return response
+
+
+def _generic_inbound_api(api, request):
     try:
         context = get_context_from_request(request)
     except GenericInboundUserError as e:
@@ -215,3 +225,37 @@ def _execute_case_api(domain, couch_user, device_id, context, api_model):
         'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     }
+
+
+def _log_api_request(api, request, response):
+    is_success = response.status_code == 200
+    status = RequestLog.Status.SUCCESS if is_success else RequestLog.Status.ERROR
+    response_body = response.content.decode('utf-8')
+    log = RequestLog.objects.create(
+        domain=request.domain,
+        api=api,
+        status=status,
+        response_status=response.status_code,
+        error_message=response_body if not is_success else '',
+        username=request.couch_user.username,
+        request_method=request.method,
+        request_query=request.get_raw_uri(),
+        request_body=request.body.decode('utf-8'),
+        request_headers=dict(request.headers),
+        request_ip=get_ip(request),
+    )
+
+    response_json = json.loads(response.content)
+    if is_success:
+        case_ids = [c['case_id'] for c in
+                    response_json.get('cases', [response_json.get('case')])]
+    else:
+        case_ids = []
+    ProcessingAttempt.objects.create(
+        log=log,
+        response_status=response.status_code,
+        response_body=response_body,
+        raw_response=response_json,
+        xform_id=response_json.get('form_id'),
+        case_ids=case_ids,
+    )
