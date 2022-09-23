@@ -31,8 +31,8 @@ def get_fixture_data_types(domain, bypass_cache=False):
     ))
 
 
-def get_fixture_data_type_by_tag(domain, tag):
-    data_types = get_fixture_data_types(domain)
+def get_fixture_data_type_by_tag(domain, tag, **kw):
+    data_types = get_fixture_data_types(domain, **kw)
     for data_type in data_types:
         if data_type.tag == tag:
             return data_type

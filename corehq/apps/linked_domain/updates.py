@@ -210,7 +210,7 @@ def update_fixture(domain_link, tag):
     if domain_link.is_remote:
         master_results = remote_fixture(domain_link, tag)
     else:
-        master_results = local_fixture(domain_link.master_domain, tag)
+        master_results = local_fixture(domain_link.master_domain, tag, bypass_cache=True)
 
     master_data_type = master_results["data_type"]
     if not master_data_type.is_global:

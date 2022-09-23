@@ -1,7 +1,10 @@
+from unittest.mock import patch
+
 from corehq.apps.fixtures.dbaccessors import (
-    delete_all_fixture_data_types,
+    delete_all_fixture_data,
     delete_fixture_items_for_data_type,
     get_fixture_data_types,
+    get_fixture_data_type_by_tag,
     get_fixture_items_for_data_type,
 )
 from corehq.apps.fixtures.models import (
@@ -66,14 +69,16 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
 
     def tearDown(self):
         delete_fixture_items_for_data_type(self.domain, self.table._id)
+        linked_types = get_fixture_data_types(self.linked_domain, bypass_cache=True)
+        for data_type in linked_types:
+            delete_fixture_items_for_data_type(self.linked_domain, data_type._id)
+        FixtureDataType.bulk_delete(linked_types)
+        clear_fixture_quickcache(self.domain, [self.table])
+        clear_fixture_quickcache(self.linked_domain, linked_types)
 
     @classmethod
     def tearDownClass(cls):
-        for data_type in get_fixture_data_types(cls.domain):
-            delete_fixture_items_for_data_type(cls.domain, data_type._id)
-        for data_type in get_fixture_data_types(cls.linked_domain):
-            delete_fixture_items_for_data_type(cls.linked_domain, data_type._id)
-        delete_all_fixture_data_types()
+        delete_all_fixture_data()
         super().tearDownClass()
 
     def test_update_fixture(self):
@@ -147,6 +152,36 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
             ['Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa'],
             sorted(field[0].value for i in rows for field in i.fields.values()),
         )
+
+    def test_update_fixture_with_stale_caches(self):
+        def stale_caches():
+            from dimagi.utils.couch.bulk import CouchTransaction
+            # populate caches
+            table = get_fixture_data_type_by_tag(self.domain, "moons")
+            rows = get_fixture_items_for_data_type(self.domain, table._id)
+            assert len(rows) == 3, rows
+            # simulate failed cache invalidation, which could be caused by
+            # BulkSaveError and probably for other things too
+            cache_patch = patch.object(FixtureDataType, "clear_caches", lambda self: None)
+            with cache_patch, CouchTransaction() as tx:
+                table.tag = "rings"
+                tx.save(table)
+                for row in rows:
+                    tx.delete(row)
+                tx.set_sql_save_action(FixtureDataType, lambda: None)
+                tx.set_sql_save_action(FixtureDataItem, lambda: None)
+
+        self.assertEqual([], get_fixture_data_types(self.linked_domain, bypass_cache=True))
+
+        stale_caches()
+
+        # Update linked domain
+        update_fixture(self.domain_link, "rings")
+
+        # Linked domain should now have master domain's table and rows
+        table, = get_fixture_data_types(self.linked_domain, bypass_cache=True)
+        self.assertEqual(table.tag, "rings")
+        self.assertFalse(get_fixture_items_for_data_type(self.linked_domain, table._id))
 
     def test_update_global_only(self):
         other_table = FixtureDataType(
