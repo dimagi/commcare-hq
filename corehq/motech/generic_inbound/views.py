@@ -242,6 +242,7 @@ def _log_api_request(api, request, response):
         request_query=request.get_raw_uri(),
         request_body=request.body.decode('utf-8'),
         request_headers=dict(request.headers),
+        request_user_agent=request.META.get('HTTP_USER_AGENT', ''),
         request_ip=get_ip(request),
     )
 

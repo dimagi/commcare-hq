@@ -114,7 +114,8 @@ class TestGenericInboundAPIView(TestCase):
         data = json.dumps(self.example_post_data)
         response = self.client.post(
             url, data=data, content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
         )
         response_json = response.json()
         self.assertEqual(response.status_code, 200, response_json)
@@ -148,6 +149,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.request_body, json.dumps(self.example_post_data))
         self.assertIn('Authorization', log.request_headers)
         self.assertIn('Content-Type', log.request_headers)
+        self.assertEqual(log.request_user_agent, 'user agent string')
         self.assertEqual(log.request_ip, '127.0.0.1')
 
         attempt = ProcessingAttempt.objects.last()

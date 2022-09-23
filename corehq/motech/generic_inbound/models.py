@@ -113,6 +113,7 @@ class RequestLog(models.Model):
     request_query = models.CharField(max_length=8192)
     request_body = models.TextField()
     request_headers = models.JSONField(default=dict)
+    request_user_agent = models.TextField()
     request_ip = models.GenericIPAddressField(db_index=True)
 
     def __repr__(self):
