@@ -32,14 +32,21 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
 
 
 def _validate_api_request(api, eval_context):
+    """Run any validation expressions against the context.
+
+    :returns: False if no expressions were run or True if all validations passed.
+    :raises: GenericInboundValidationError if any validations fail"""
     validations = api.get_validations()
     if not validations:
-        return
+        return False
 
     errors = []
     for validation in validations:
-        if validation.parsed_expression(eval_context.root_doc, eval_context) is False:
+        expr = validation.parsed_expression
+        if not expr(eval_context.root_doc, eval_context):
             errors.append(validation.get_error_context())
 
     if errors:
         raise GenericInboundValidationError(errors)
+
+    return True
