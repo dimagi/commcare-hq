@@ -1,4 +1,3 @@
-from copy import copy
 from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
@@ -368,6 +367,7 @@ def update_tableau_server_and_visualizations(domain_link):
         vis.view_url = master_vis['view_url']
         vis.title = master_vis['title']
         vis.save()
+
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:
