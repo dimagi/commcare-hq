@@ -4,8 +4,12 @@ on:
     - cron: '0 6 * * 3'  # Every Wed at 06:00 UTC
 
 name: Update transifex translations
+permissions: {}
 jobs:
   update_translations:
+    permissions:
+      contents: write # to create branch (peter-evans/create-pull-request)
+      pull-requests: write # to create a PR (peter-evans/create-pull-request)
     name: Update transifex translations
     runs-on: ubuntu-latest
     steps:
