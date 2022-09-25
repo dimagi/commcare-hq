@@ -8,6 +8,8 @@ on:
   schedule:
     # see corehq/apps/hqadmin/management/commands/static_analysis.py
     - cron: '47 12 * * *'
+permissions:
+  contents: read # to fetch code (actions/checkout)
 jobs:
   tests:
     runs-on: ubuntu-18.04
