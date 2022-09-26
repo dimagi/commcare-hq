@@ -8,9 +8,7 @@
 
 
 {% block pre_navigation_content %}
-  {% if maintenance_alerts %}
-    {% include "hqwebapp/partials/maintenance_alerts.html" %}
-  {% endif %}
+  {% include "hqwebapp/partials/maintenance_alerts.html" %}
   {% if show_trial_banner %}
     {% include "hqwebapp/partials/trial_banner.html" %}
   {% endif %}
