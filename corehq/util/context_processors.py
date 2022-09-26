@@ -232,7 +232,6 @@ def mobile_experience_hidden_by_toggle(request):
     return False
 
 
-
 def subscription_banners(request):
     is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
     has_subscription = hasattr(request, 'subscription')
