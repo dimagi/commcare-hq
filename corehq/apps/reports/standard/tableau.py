@@ -78,8 +78,12 @@ def tableau_visualization_ajax(request, domain):
     validate_hostname = visualiation_data.pop('validate_hostname')
     target_site = visualiation_data.pop('target_site')
 
-    # An equivalent Tableau user with the username "HQ/{role name}" and proper permissions must exist.
-    tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
+    if toggles.EMBED_TABLEAU_REPORT_BY_USER.enabled(domain):
+        # An equivalent Tableau user with the username "HQ/{username}" must exist.
+        tableau_username = f"HQ/{request.couch_user.username}"
+    else:
+        # An equivalent Tableau user with the username "HQ/{role name}" must exist.
+        tableau_username = f"HQ/{request.couch_user.get_role(domain).name}"
     tabserver_url = 'https://{}/trusted/'.format(server_name)
     post_arguments = {'username': tableau_username}
 

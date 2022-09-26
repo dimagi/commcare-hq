@@ -1,4 +1,3 @@
-from copy import copy
 from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
@@ -211,7 +210,7 @@ def update_fixture(domain_link, tag):
     if domain_link.is_remote:
         master_results = remote_fixture(domain_link, tag)
     else:
-        master_results = local_fixture(domain_link.master_domain, tag)
+        master_results = local_fixture(domain_link.master_domain, tag, bypass_cache=True)
 
     master_data_type = master_results["data_type"]
     if not master_data_type.is_global:
@@ -231,7 +230,6 @@ def update_fixture(domain_link, tag):
     linked_data_type["domain"] = domain_link.linked_domain
     linked_data_type = FixtureDataType.wrap(linked_data_type)
     linked_data_type.save()
-    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
 
     # Re-create relevant data items
     delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
@@ -243,6 +241,7 @@ def update_fixture(domain_link, tag):
         doc["data_type_id"] = linked_data_type._id
         FixtureDataItem.wrap(doc).save()
 
+    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
     clear_fixture_cache(domain_link.linked_domain)
 
 
@@ -368,6 +367,7 @@ def update_tableau_server_and_visualizations(domain_link):
         vis.view_url = master_vis['view_url']
         vis.title = master_vis['title']
         vis.save()
+
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:

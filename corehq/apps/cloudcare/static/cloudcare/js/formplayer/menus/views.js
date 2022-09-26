@@ -463,6 +463,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
+            if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
+                kissmetrics.track.event('Completed Case Search', {
+                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                });
+            }
         },
 
         reconcileMultiSelectUI: function () {
@@ -787,6 +792,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
+                if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
+                    kissmetrics.track.event('Completed Case Search', {
+                        'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    });
+                }
             }
         },
     });

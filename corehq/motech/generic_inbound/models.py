@@ -51,3 +51,24 @@ class ConfigurableAPI(models.Model):
     @memoized
     def absolute_url(self):
         return reverse("generic_inbound_api", args=[self.domain, self.url_key], absolute=True)
+
+
+class ConfigurableApiValidation(models.Model):
+    api = models.ForeignKey(ConfigurableAPI, on_delete=models.CASCADE, related_name="validations")
+    name = models.CharField(max_length=64)
+    expression = models.ForeignKey(UCRExpression, on_delete=models.PROTECT)
+    message = models.TextField()
+
+    @property
+    @memoized
+    def parsed_expression(self):
+        return self.expression.wrapped_definition(FactoryContext.empty())
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "api_id": self.api.id,
+            "name": self.name,
+            "expression_id": self.expression_id,
+            "message": self.message,
+        }

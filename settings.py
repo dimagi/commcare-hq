@@ -396,6 +396,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -2070,3 +2071,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+COMMCARE_ANALYTICS_HOST = ""
