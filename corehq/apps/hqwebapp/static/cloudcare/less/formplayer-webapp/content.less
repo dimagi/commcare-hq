@@ -54,7 +54,7 @@ body {
     visibility: visible;
   }
 
-  .noprint-sub-container{
+  .noprint-sub-container {
     display: none;
   }
 
@@ -62,7 +62,12 @@ body {
     padding: 0px;
   }
 
-  .case-tile-container > div {
-    margin-bottom: 0px;
+  .case-tile-container {
+    > div {
+      margin-bottom: 0px;
+    }
+    > div:not(:empty) {
+      border-bottom: 1px dashed black;
+    }
   }
 }
