@@ -2,6 +2,10 @@
 {% load i18n %}
 
 <div id="releases-table" class="hide" data-bind="css: {hide: false}">
+  <div id="release-control" class="pull-right" data-bind="visible: true">
+    <button type="button" class="btn btn-xs btn-default">Release ON</button>
+    <button type="button" class="btn btn-xs  active btn-primary">Release OFF</button>
+  </div>
   <div class="alert alert-danger hide" data-bind="visible: brokenBuilds, css: {hide: false}">
     <p>
       <i class="fa fa-exclamation-circle"></i>
