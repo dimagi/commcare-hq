@@ -2902,6 +2902,8 @@ class HQApiKey(models.Model):
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
 
     class Meta(object):
         unique_together = ('user', 'name')
