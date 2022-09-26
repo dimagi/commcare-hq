@@ -409,8 +409,8 @@ hqDefine('hqwebapp/js/main', [
             var alertCookie = 'alerts_maintenance';
             var closedAlerts = $.cookie(alertCookie) ? JSON.parse($.cookie(alertCookie)) : [];
 
-            $maintenance.each(
-                function (_index, alert) {
+            _.each($maintenance,
+                function (alert) {
                     var id = $(alert).data('id');
                     if (!closedAlerts.includes(id)) {
                         $(alert).removeClass('hide');
