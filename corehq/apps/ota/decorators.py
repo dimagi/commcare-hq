@@ -34,7 +34,10 @@ def require_mobile_access(fn):
                 )
                 return HttpResponseForbidden()
 
-        return require_permission(HqPermissions.access_mobile_endpoints, login_decorator=None)(fn)(request, domain, *args, **kwargs)
+        return require_permission(
+            HqPermissions.access_mobile_endpoints,
+            login_decorator=None
+        )(fn)(request, domain, *args, **kwargs)
 
     return _inner
 
