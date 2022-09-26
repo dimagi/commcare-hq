@@ -38,8 +38,8 @@ log = logging.getLogger(__name__)
 class BaseAdapter:
     """Base adapter that includes methods common to all adapters."""
 
-    def __init__(self, for_export=False):
-        self._es = get_client(for_export=for_export)
+    def __init__(self):
+        self._es = get_client()
 
     def info(self):
         """Return the Elasticsearch server info."""
@@ -51,10 +51,6 @@ class BaseAdapter:
 
 
 class ElasticManageAdapter(BaseAdapter):
-
-    def __init__(self):
-        # set explicitly because management clients are never for exports
-        super().__init__(for_export=False)
 
     def index_exists(self, index):
         """Check if ``index`` refers to a valid index identifier (index name or
@@ -313,6 +309,16 @@ class ElasticDocumentAdapter(BaseAdapter):
     - ``mapping``: class attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
     """
+
+    @classmethod
+    def export_adapter(cls):
+        """Get an instance of this document adapter configured for "export"
+        queries (i.e. the low-level Elasticsearch client object is configured
+        with longer request timeouts, etc).
+        """
+        adapter = cls()
+        adapter._es = get_client(for_export=True)
+        return adapter
 
     @classproperty
     def index_name(cls):

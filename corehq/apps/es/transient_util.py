@@ -29,7 +29,7 @@ def doc_adapter_from_info(index_info, for_export=False):
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return _DOC_ADAPTERS_BY_INDEX[index_info.index](for_export=for_export)
+    return _get_doc_adapter(_DOC_ADAPTERS_BY_INDEX[index_info.index], for_export)
 
 
 def doc_adapter_from_alias(index_alias, for_export=False):
@@ -39,7 +39,16 @@ def doc_adapter_from_alias(index_alias, for_export=False):
     :param for_export: ``bool`` used to instantiate the adapter instance
     :returns: instance of an ``ElasticDocumentAdapter`` subclass
     """
-    return _DOC_ADAPTERS_BY_ALIAS[index_alias](for_export=for_export)
+    return _get_doc_adapter(_DOC_ADAPTERS_BY_ALIAS[index_alias], for_export)
+
+
+def _get_doc_adapter(cls, for_export):
+    """Helper function to keep things DRY. Returns an adapter instance that is
+    configured for export (or not).
+    """
+    if for_export:
+        return cls().export_adapter()
+    return cls()
 
 
 def report_and_fail_on_shard_failures(search_result):
