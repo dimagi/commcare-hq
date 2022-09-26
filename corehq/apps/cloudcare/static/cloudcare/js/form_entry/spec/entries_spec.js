@@ -12,6 +12,12 @@ describe('Entries', function () {
             "has_geocoder_privs",
             true
         );
+        hqImport("hqwebapp/js/initial_page_data").register(
+            "toggles_dict",
+            {
+                WEB_APPS_UPLOAD_QUESTIONS: true,
+            }
+        );
     });
 
     beforeEach(function () {
@@ -430,5 +436,50 @@ describe('Entries', function () {
 
         entry.rawAnswer('...123');
         assert.isOk(entry.question.error());
+    });
+
+    it('Should return ImageEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_IMAGE_CHOOSE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.ImageEntry);
+    });
+
+    it('Should return AudioEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_AUDIO_CAPTURE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.AudioEntry);
+    });
+
+    it('Should return VideoEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_VIDEO_CAPTURE;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.VideoEntry);
+    });
+
+    it('Should return SignatureEntry', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.style = { raw: Const.SIGNATURE };
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.SignatureEntry);
+    });
+
+    it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
+        var entry;
+        questionJSON.datatype = Const.BINARY;
+        questionJSON.control = Const.CONTROL_UPLOAD;
+
+        entry = UI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof Controls.UnsupportedEntry);
     });
 });

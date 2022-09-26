@@ -13210,21 +13210,13 @@ msgid "Please specify at least one action."
 msgstr "Veuillez spécifier au moins une action."
 
 #: corehq/apps/data_interfaces/forms.py
-#, fuzzy
-#| msgid ""
-#| "The Actions will be performed for all open cases that match all filter "
-#| "criteria below."
 msgid ""
 "The rule will be applied to all cases that match all filter criteria below."
 msgstr ""
-"Les actions seront effectuées pour tous les cas ouverts qui correspondent à "
-"tous les critères de filtrage ci-dessous."
 
 #: corehq/apps/data_interfaces/forms.py
-#, fuzzy
-#| msgid "Case Filters"
 msgid "Cases Filter"
-msgstr "Filtres de dossiers"
+msgstr ""
 
 #: corehq/apps/data_interfaces/interfaces.py
 msgid "Reassign Cases"
@@ -13930,16 +13922,12 @@ msgid "Custom filter ID"
 msgstr "Identifiant du filtre personnalisé"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#, fuzzy
-#| msgid "Case Self-Registration"
 msgid "Case belongs to location"
-msgstr "Auto-enregistrement de dossier"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
-#, fuzzy
-#| msgid "(including child locations)"
 msgid "Include cases from child locations"
-msgstr "(y compris les sites enfants)"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
 msgid "Filter Definition"
@@ -14221,10 +14209,9 @@ msgid "Create Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
-#, fuzzy, python-format
-#| msgid "Couldn't send to the following number(s): "
+#, python-format
 msgid "Deduplication rule not saved due to the following issues: %s"
-msgstr "Impossible d'envoyer le(s) numéro(s) suivant(s) : "
+msgstr ""
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Successfully created deduplication rule: {}"
@@ -21114,14 +21101,8 @@ msgstr ""
 "numéros de téléphone du dossier seront synchronisés."
 
 #: corehq/apps/hqadmin/forms.py
-#, fuzzy
-#| msgid ""
-#| "The following e-mail addresses contain invalid characters, or are missing "
-#| "required characters: "
 msgid "The following email addresses are not dimagi email addresses:"
 msgstr ""
-"Les adresses mail suivantes contiennent des caractères invalides ou manque "
-"des caractères exigés:"
 
 #: corehq/apps/hqadmin/forms.py
 msgid ""
@@ -26300,7 +26281,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Get Free Trial\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
@@ -28068,10 +28049,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -28994,7 +28971,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -37737,11 +37716,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
@@ -42789,40 +42769,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "case property name"
-#~ msgstr "Nom de la propriété de dossier"
-
-#~ msgid "Worker Activity Times"
-#~ msgstr "Temps d'activité d'utilisateur"
-
-#~ msgid "Graphical representation of when forms are completed or submitted."
-#~ msgstr ""
-#~ "Représentation graphique des dates des formulaires complétés ou soumis."
-
-#~ msgid "Note: No submissions matched your filters."
-#~ msgstr "Remarque : Aucune soumission ne correspond à vos filtres."
-
-#~ msgid "Mon"
-#~ msgstr "Lun"
-
-#~ msgid "Tue"
-#~ msgstr "Mar"
-
-#~ msgid "Wed"
-#~ msgstr "Mer"
-
-#~ msgid "Thu"
-#~ msgstr "Jeu"
-
-#~ msgid "Fri"
-#~ msgstr "Ven"
-
-#~ msgid "Sat"
-#~ msgstr "Sam"
-
-#~ msgid "Sun"
-#~ msgstr "Dim"
-
-#~ msgid "Time ({timezone})"
-#~ msgstr "Heure ({timezone})"

@@ -151,7 +151,7 @@ class SyncCouchToSQLMixin(object):
             sql_object.save(sync_to_couch=False)
 
     @classmethod
-    def _migration_bulk_sync_to_sql(cls, couch_docs):
+    def _migration_bulk_sync_to_sql(cls, couch_docs, **kw):
         sql_class = cls._migration_get_sql_model_class()
         id_name = sql_class._migration_couch_id_name
         new_sql_docs = []
@@ -160,7 +160,7 @@ class SyncCouchToSQLMixin(object):
             obj = sql_class(**{id_name: doc._id})
             doc._migration_sync_to_sql(obj, save=False)
             new_sql_docs.append(obj)
-        sql_class.objects.bulk_create(new_sql_docs)
+        sql_class.objects.bulk_create(new_sql_docs, **kw)
 
     def _migration_sync_submodels_to_sql(self, sql_object):
         """Migrate submodels from the Couch model to the SQL model. This is called

@@ -3,9 +3,11 @@ from collections import OrderedDict, defaultdict, namedtuple
 import attr
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.python import Serializer
 from memoized import memoized
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
@@ -114,6 +116,16 @@ def get_databases():
             'SQLMobileBackend',
             lambda doc: doc.to_json()
         ),
+        _SQLDb(
+            LookupTable._meta.db_table,
+            lambda id_: LookupTable.objects.get(id=id_),
+            'LookupTable',
+        ),
+        _SQLDb(
+            LookupTableRow._meta.db_table,
+            lambda id_: LookupTableRow.objects.get(id=id_),
+            'LookupTableRow',
+        ),
     ]
 
     all_dbs = OrderedDict()
@@ -179,8 +191,12 @@ class _CouchDb(_DbWrapper):
         return self.db.get(record_id)
 
 
+def model_to_json(obj):
+    return Serializer().serialize([obj])[0]
+
+
 class _SQLDb(_DbWrapper):
-    def __init__(self, dbname, getter, doc_type, serializer):
+    def __init__(self, dbname, getter, doc_type, serializer=model_to_json):
         self._getter = getter
         super(_SQLDb, self).__init__(dbname, doc_type, serializer)
 

@@ -2,7 +2,7 @@
 Project Standards and Best Practices
 ====================================
 
-This document is a sumation of some of the standards and best practices that are followed in the design and implementation of the project to provide guidance and clarity for `implementers and contributors`_.
+This document is a summation of some of the standards and best practices that are followed in the design and implementation of the project to provide guidance and clarity for `implementers and contributors`_.
 
 These standards are presented for clarity and convenience (to avoid arguments about style or judgement and document reasoning) but they are not intended to be comprehensive. Code reviewers will expect that industry-wide best practices are followed in addition to any specifically outlined concepts which are covered in this document. 
 
@@ -22,7 +22,7 @@ Specifically, components of the project which externally authenticate users or s
 
 - Based on a publicly documented specification or approach (Basic Authentication, OAuth, SAML, AES256, etc)
 - In broad use in modern software with a practical basis of demonstrated success
-- Adopted through the use of externaly implemented libraries or dependencies whenever practically possible
+- Adopted through the use of externally implemented libraries or dependencies whenever practically possible
 
 This expectation does not necessarily extend to code which is required for integrations which authenticate against external systems. Those implementations should always follow this approach when possible, and best practices should be maintained when managing secrets for such components.
 

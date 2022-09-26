@@ -14,7 +14,7 @@ import sys, os
 import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.abspath('..'))
-from manage import init_hq_python_path
+from manage import init_hq_python_path, run_patches
 
 import settings
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
@@ -22,6 +22,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 # to OpenSSL
 settings.LOGGING = {}
 init_hq_python_path()
+run_patches()
 
 # -- Custom configuration -----------------------------------------------------
 

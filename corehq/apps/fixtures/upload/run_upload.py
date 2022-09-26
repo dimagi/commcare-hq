@@ -168,9 +168,9 @@ class Mutation:
 def flush(tables, rows, owners):
     def sync_docs_to_sql():
         if tables.to_sync:
-            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync)
+            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync, ignore_conflicts=True)
         if rows.to_sync:
-            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync)
+            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync, ignore_conflicts=True)
         assert not owners.to_sync, owners.to_sync
 
     with CouchTransaction() as couch:

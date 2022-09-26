@@ -376,7 +376,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ]),
     ModelDeletion('registry', 'RegistryGrant', 'from_domain'),
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
-    ModelDeletion('reports', 'ReportsSidebarOrdering', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),

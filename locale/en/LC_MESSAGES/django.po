@@ -25210,7 +25210,7 @@ msgstr ""
 #: corehq/apps/registration/templates/registration/partials/choose_your_plan.html
 msgid ""
 "\n"
-"              Get Free Trial\n"
+"              Request Custom Trial\n"
 "            "
 msgstr ""
 
@@ -26925,10 +26925,6 @@ msgstr ""
 msgid "Target Site"
 msgstr ""
 
-#: corehq/apps/reports/forms.py
-msgid "Domain Username"
-msgstr ""
-
 #: corehq/apps/reports/forms.py corehq/apps/reports/views.py
 msgid "View URL"
 msgstr ""
@@ -27801,7 +27797,9 @@ msgid "Tableau Reports"
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
-msgid "Tableau trusted authentication failed"
+msgid ""
+"Tableau trusted authentication failed. Double check that permissions are "
+"configured correctly in Tableau."
 msgstr ""
 
 #: corehq/apps/reports/standard/tableau.py
@@ -36254,11 +36252,12 @@ msgstr ""
 #: corehq/apps/users/views/__init__.py
 #, python-brace-format
 msgid ""
-"Unable to delete role '{role}'. It has one user still assigned to it. Remove "
-"all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has one user and/or invitation still "
+"assigned to it. Remove all users assigned to the role before deleting it."
 msgid_plural ""
-"Unable to delete role '{role}'. It has {user_count} users still assigned to "
-"it. Remove all users assigned to the role before deleting it."
+"Unable to delete role '{role}'. It has {user_count} users and/or invitations "
+"still assigned to it. Remove all users assigned to the role before deleting "
+"it."
 msgstr[0] ""
 msgstr[1] ""
 
