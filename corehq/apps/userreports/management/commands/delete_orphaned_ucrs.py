@@ -192,7 +192,11 @@ def get_tables_without_data_sources(tables_by_engine_id):
     """
     tables_without_data_sources = defaultdict(list)
     for engine_id, expected_tables in tables_by_engine_id.items():
-        engine = connection_manager.get_engine(engine_id)
+        try:
+            engine = connection_manager.get_engine(engine_id)
+        except KeyError:
+            print(f"Engine id {engine_id} does not exist anymore. Skipping.")
+            continue
         with engine.begin() as connection:
             # Using string formatting rather than execute with %s syntax
             # is acceptable here because the strings we're inserting are static
