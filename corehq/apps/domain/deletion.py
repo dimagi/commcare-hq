@@ -404,7 +404,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('translations', 'TransifexProject', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
-        extra_models=["ConfigurableApiValidation"],
+        extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
         audit_action=AuditAction.AUDIT
     ),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
