@@ -640,8 +640,6 @@ you can do that by running:
 ./manage.py make_superuser <email> --allow_superuser_management
 ```
 
-If this command raises an error, make sure that `ALLOW_SUPERUSER_MANAGEMENT` in `settings.py` is set to `True`.
-
 ## Running Formplayer and submitting data with Web Apps
 
 Formplayer is a Java service that allows us to use applications on the web  instead of on a mobile device.
