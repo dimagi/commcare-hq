@@ -24,6 +24,7 @@ from dimagi.utils.web import json_handler
 
 from corehq import privileges
 from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
 from corehq.util.soft_assert import soft_assert
 
@@ -389,6 +390,17 @@ def chevron(value):
         return format_html('<span class="fa fa-chevron-down" style="color: #8b0000;"> </span>')
     else:
         return ''
+
+
+@register.simple_tag
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    domain = getattr(request, 'domain', None)
+    return [
+        alert for alert in active_alerts
+        if (not alert.domains
+            or domain in alert.domains)
+    ]
 
 
 @register.simple_tag
