@@ -402,7 +402,11 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
     ModelDeletion('translations', 'TransifexBlacklist', 'domain'),
     ModelDeletion('translations', 'TransifexProject', 'domain'),
-    ModelDeletion('generic_inbound', 'ConfigurableAPI', 'domain', audit_action=AuditAction.AUDIT),
+    ModelDeletion(
+        'generic_inbound', 'ConfigurableAPI', 'domain',
+        extra_models=["ConfigurableApiValidation"],
+        audit_action=AuditAction.AUDIT
+    ),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),
     ModelDeletion('userreports', 'DataSourceActionLog', 'domain'),
     ModelDeletion('userreports', 'InvalidUCRData', 'domain'),

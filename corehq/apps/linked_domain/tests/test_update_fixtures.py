@@ -10,6 +10,7 @@ from corehq.apps.fixtures.models import (
     FixtureDataType,
     FixtureItemField,
     FixtureTypeField,
+    LookupTableRow,
 )
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
@@ -140,6 +141,12 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
         ], sorted([
             i.fields[field_name].field_list[0].field_value for i in items for field_name in i.fields.keys()
         ]))
+        # Linked SQL rows should have been deleted
+        rows = LookupTableRow.objects.filter(table_id=linked_types[0]._id)
+        self.assertEqual(
+            ['Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa'],
+            sorted(field[0].value for i in rows for field in i.fields.values()),
+        )
 
     def test_update_global_only(self):
         other_table = FixtureDataType(

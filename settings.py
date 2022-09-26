@@ -398,6 +398,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 

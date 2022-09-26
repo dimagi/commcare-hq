@@ -7,6 +7,7 @@ import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.core.validators import ValidationError, validate_email
 
 import boto3
 import KISSmetrics
@@ -15,8 +16,6 @@ import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from corehq.apps.celery import periodic_task
-from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
 from dimagi.utils.dates import add_months_to_date
@@ -52,6 +51,7 @@ from corehq.apps.analytics.utils.partner_analytics import (
     generate_monthly_web_user_statistics,
     send_partner_emails,
 )
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
@@ -656,29 +656,16 @@ def track_periodic_data():
 
 
 def _email_is_valid(email):
-    if not email or _is_suspicious_email(email):
+    if not email:
         return False
 
     try:
         validate_email(email)
-    except EmailNotValidError as e:
-        logger.warning(str(e))
+    except ValidationError as exc:
+        logger.warning(str(exc))
         return False
 
     return True
-
-
-# These domains provide disposable email addresses which attract scammers
-# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
-# if a Guard Duty alert is triggered for a domain not seen below, please add it
-SUSPICIOUS_DOMAINS = [
-    'mailna.me',
-    'mozej.com'
-]
-
-
-def _is_suspicious_email(email):
-    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
