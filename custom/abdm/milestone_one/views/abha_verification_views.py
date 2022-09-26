@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
-from custom.abdm.auth import UserAuthentication
+from custom.abdm.auth import ABDMUserAuthentication
 
 from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
@@ -9,7 +9,7 @@ from custom.abdm.milestone_one.utils.response_handler import get_response, gener
 
 @api_view(["GET"])
 @permission_classes((IsAuthenticated,))
-@authentication_classes((UserAuthentication,))
+@authentication_classes((ABDMUserAuthentication,))
 def get_auth_methods(request):
     health_id = request.query_params.get("health_id")
     if not health_id:
@@ -23,7 +23,7 @@ def get_auth_methods(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
-@authentication_classes((UserAuthentication,))
+@authentication_classes((ABDMUserAuthentication,))
 @required_request_params(["health_id", "auth_method"])
 def generate_auth_otp(request):
     health_id = request.data.get("health_id")
@@ -34,7 +34,7 @@ def generate_auth_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
-@authentication_classes((UserAuthentication,))
+@authentication_classes((ABDMUserAuthentication,))
 @required_request_params(["txn_id", "otp"])
 def confirm_with_mobile_otp(request):
     txn_id = request.data.get("txn_id")
@@ -47,7 +47,7 @@ def confirm_with_mobile_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
-@authentication_classes((UserAuthentication,))
+@authentication_classes((ABDMUserAuthentication,))
 @required_request_params(["txn_id", "otp"])
 def confirm_with_aadhaar_otp(request):
     txn_id = request.data.get("txn_id")
@@ -60,7 +60,7 @@ def confirm_with_aadhaar_otp(request):
 
 @api_view(["POST"])
 @permission_classes((IsAuthenticated,))
-@authentication_classes((UserAuthentication,))
+@authentication_classes((ABDMUserAuthentication,))
 @required_request_params(["health_id"])
 def search_health_id(request):
     health_id = request.data.get("health_id")

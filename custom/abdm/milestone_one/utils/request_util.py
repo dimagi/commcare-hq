@@ -16,9 +16,7 @@ def get_access_token():
         return resp.json().get("accessToken")
 
 
-def get_response_http_post(api_url: str,
-                           payload: Dict[str, Any],
-                           additional_headers: Dict[str, str] = None) -> Dict[Any, Any]:
+def get_response_http_post(api_url, payload, additional_headers):
     req_url = base_url + api_url
     headers = {"Content-Type": "application/json"}
     token = get_access_token()
@@ -26,4 +24,5 @@ def get_response_http_post(api_url: str,
     if additional_headers:
         headers.update(additional_headers)
     resp = requests.post(url=req_url, data=json.dumps(payload), headers=headers)
+    resp.raise_for_status()
     return resp.json()

@@ -5,8 +5,7 @@ from django.db import models
 
 
 class ABDMUser(models.Model):
-    id = models.AutoField(primary_key=True)
-    username = models.CharField(max_length=100)
+    username = models.CharField(max_length=100, primary_key=True)
     access_token = models.CharField(max_length=2000, null=True, blank=True)
 
     def save(self, *args, **kwargs):
@@ -27,6 +26,6 @@ class ABDMUser(models.Model):
     def is_authenticated(self):
         """
         Always return True. This is a way to tell if the user has been
-        authenticated in templates.
+        authenticated in REST views.
         """
         return True

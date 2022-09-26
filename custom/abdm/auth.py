@@ -3,7 +3,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from custom.abdm.models import ABDMUser
 
 
-class UserAuthentication(TokenAuthentication):
+class ABDMUserAuthentication(TokenAuthentication):
 
     def authenticate(self, request):
         access_token = request.META.get('HTTP_AUTHORIZATION', "")
@@ -11,7 +11,7 @@ class UserAuthentication(TokenAuthentication):
         if not token:
             return None
         try:
-            user: ABDMUser = ABDMUser.objects.get(access_token=token)
+            user = ABDMUser.objects.get(access_token=token)
         except ABDMUser.DoesNotExist:
             raise AuthenticationFailed('Unauthorized')
         if not user.is_token_valid:
