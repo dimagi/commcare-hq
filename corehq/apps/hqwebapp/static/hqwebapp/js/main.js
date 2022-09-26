@@ -418,10 +418,10 @@ hqDefine('hqwebapp/js/main', [
                             closedAlerts.push(id);
                             $.cookie(alertCookie, JSON.stringify(closedAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
                         });
-                    };
+                    }
                 }
             );
-        };
+        }
 
         function unsupportedBrowser() {
             // check explicitly for Safari. Relying on browser capabilities would be preferred,
