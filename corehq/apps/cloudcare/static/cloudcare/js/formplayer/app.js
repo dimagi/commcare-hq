@@ -376,9 +376,16 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
         window.addEventListener(
             'beforeprint', function () {
-                let lastPanelElement = Utils.getLastClassEl('.panel.panel-default, .q.form-group');
-                if (lastPanelElement) {lastPanelElement.classList.add('last');}
-            });
+                let lastPanelElement = $('.panel.panel-default, .q.form-group').last();
+                if (lastPanelElement) {
+                    lastPanelElement.addClass('last');
+                }
+        });
+
+        window.addEventListener(
+            'afterprint', function () {
+                $('.last').removeClass('last');
+        });
     });
 
     FormplayerFrontend.on('configureDebugger', function () {

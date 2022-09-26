@@ -343,14 +343,5 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
-    Utils.getLastClassEl = function (classNames) {
-        var elements = document.querySelectorAll(classNames);
-        if (elements[0]) {
-            var elementsLastIndex = elements.length - 1;
-            return elements[elementsLastIndex];
-        }
-        return null;
-    };
-
     return Utils;
 });
