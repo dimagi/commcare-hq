@@ -39,8 +39,6 @@ class Command(BaseCommand):
             from dimagi.utils.web import get_site_domain
             raise CommandError(f"""You cannot run this command in SaaS Enviornments.
             Use https://{get_site_domain()}/hq/admin/superuser_management/ for granting superuser permissions""")
-        if allow_superuser_management and not settings.ALLOW_SUPERUSER_MANAGEMENT:
-            raise CommandError('The ability to assign the can_assign_superuser privilege has been disabled')
         from corehq.apps.users.models import WebUser
         try:
             validate_email(username)
