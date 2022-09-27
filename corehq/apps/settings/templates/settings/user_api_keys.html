@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+{% requirejs_main "settings/js/user_api_keys" %}
 
 {% block pagination_templates %}
   <script type="text/html" id="base-user-api-key-template">
@@ -11,6 +11,18 @@
     <td data-bind="text: domain"></td>
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
+    <td>  {# is_active #}
+      <div data-bind="visible: is_active">
+        <button class="btn btn-default" data-action="deactivate">
+          <i class="fa fa-pause"></i> {% trans "Deactivate" %}
+        </button>
+      </div>
+      <div data-bind="hidden: is_active">
+        <button class="btn btn-default" data-action="activate">
+          <i class="fa fa-toggle-right"></i> {% trans "Re-activate" %}
+        </button>
+      </div>
+    </td>
     <td>
       <button type="button"
               data-toggle="modal"
@@ -63,6 +75,7 @@
     <td data-bind="text: domain"></td>
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
+    <td data-bind="text: is_active"></td>
     <td></td>
   </script>
 {% endblock %}

@@ -618,6 +618,31 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     template_name = "settings/user_api_keys.html"
 
     @property
+    def allowed_actions(self):
+        return [
+            'create',
+            'delete',
+            'paginate',
+            'activate',
+            'deactivate',
+        ]
+
+    @property
+    def activate_response(self):
+        return self._set_is_active_response(is_active=True)
+
+    @property
+    def deactivate_response(self):
+        return self._set_is_active_response(is_active=False)
+
+    def _set_is_active_response(self, is_active):
+        key_id = self.parameters.get('id')
+        api_key = self.base_query.get(pk=key_id)
+        api_key.is_active = is_active
+        api_key.save()
+        return {'success': True, 'itemData': self._to_json(api_key)}
+
+    @property
     def base_query(self):
         return HQApiKey.objects.filter(user=self.request.user)
 
@@ -633,6 +658,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
+            _("Active"),
             _("Delete"),
         ]
 
@@ -643,21 +669,26 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
     @property
     def paginated_list(self):
         for api_key in self.base_query.order_by('-created').all()[self.skip:self.skip + self.limit]:
-            redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
             yield {
-                "itemData": {
-                    "id": api_key.id,
-                    "name": api_key.name,
-                    "key": redacted_key,
-                    "domain": api_key.domain or _('All Projects'),
-                    "ip_allowlist": (
-                        ", ".join(api_key.ip_allowlist)
-                        if api_key.ip_allowlist else _("All IP Addresses")
-                    ),
-                    "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
-                },
+                "itemData": self._to_json(api_key),
                 "template": "base-user-api-key-template",
             }
+
+    @staticmethod
+    def _to_json(api_key):
+        redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+        return {
+            "id": api_key.id,
+            "name": api_key.name,
+            "key": redacted_key,
+            "domain": api_key.domain or _('All Projects'),
+            "ip_allowlist": (
+                ", ".join(api_key.ip_allowlist)
+                if api_key.ip_allowlist else _("All IP Addresses")
+            ),
+            "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
+            "is_active": api_key.is_active,
+        }
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
@@ -682,7 +713,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 'key': f"{new_api_key.key} ({copy_key_message})",
                 "domain": new_api_key.domain or _('All Projects'),
                 'ip_allowlist': new_api_key.ip_allowlist,
-                'created': new_api_key.created.isoformat()
+                'created': new_api_key.created.isoformat(),
+                'is_active': new_api_key.is_active,
             },
             'template': 'new-user-api-key-template',
         }
