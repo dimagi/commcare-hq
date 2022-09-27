@@ -376,10 +376,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
         window.addEventListener(
             'beforeprint', function () {
-                let lastPanelElement = $('.panel.panel-default, .q.form-group').last();
-                if (lastPanelElement) {
-                    lastPanelElement.addClass('last');
-                }
+                $('.panel.panel-default, .q.form-group').last().addClass('last');
         });
 
         window.addEventListener(
