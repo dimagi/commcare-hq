@@ -50,6 +50,15 @@ STANDARD_HEADER_KEYS = [
 ]
 
 
+def get_standard_headers(request_meta):
+    headers = {}
+    for k in STANDARD_HEADER_KEYS:
+        header_item = request_meta.get(k, None)
+        if header_item is not None:
+            headers[k] = header_item
+    return headers
+
+
 class UserAgent(models.Model):
     value = models.CharField(max_length=255, db_index=True, unique=True)
 
@@ -151,10 +160,7 @@ class NavigationEventAudit(AuditEvent):
         if request.GET:
             audit.params = request.META.get("QUERY_STRING", "")
         audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
-        for k in STANDARD_HEADER_KEYS:
-            header_item = request.META.get(k, None)
-            if header_item is not None:
-                audit.headers[k] = header_item
+        audit.headers.update(get_standard_headers(request.META))
         # it's a bit verbose to go to that extreme, TODO: need to have
         # targeted fields in the META, but due to server differences, it's
         # hard to make it universal.

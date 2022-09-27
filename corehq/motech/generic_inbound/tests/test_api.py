@@ -147,8 +147,7 @@ class TestGenericInboundAPIView(TestCase):
             r'http://testserver/a/ucr-api-test/api/case/custom/[\w-]+/\?param=value'
         )
         self.assertEqual(log.request_body, json.dumps(self.example_post_data))
-        self.assertIn('Authorization', log.request_headers)
-        self.assertIn('Content-Type', log.request_headers)
+        self.assertIn('CONTENT_TYPE', log.request_headers)
         self.assertEqual(log.request_user_agent, 'user agent string')
         self.assertEqual(log.request_ip, '127.0.0.1')
 

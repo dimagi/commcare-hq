@@ -14,6 +14,7 @@ from dimagi.utils.web import get_ip
 
 from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqcase.api.core import (
@@ -31,7 +32,11 @@ from corehq.motech.generic_inbound.forms import (
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI, RequestLog, ProcessingAttempt
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ProcessingAttempt,
+    RequestLog,
+)
 from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -241,7 +246,7 @@ def _log_api_request(api, request, response):
         request_method=request.method,
         request_query=request.get_raw_uri(),
         request_body=request.body.decode('utf-8'),
-        request_headers=dict(request.headers),
+        request_headers=get_standard_headers(request.META),
         request_user_agent=request.META.get('HTTP_USER_AGENT', ''),
         request_ip=get_ip(request),
     )
