@@ -216,4 +216,5 @@ def get_tracked_entity_instance_schema():
     return {
         "trackedEntityInstance": id_schema,
         SchemaOptional("programOwners"): [get_program_owner_schema],
+        SchemaOptional("potentialDuplicate"): bool,
     }
