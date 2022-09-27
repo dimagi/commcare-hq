@@ -26,17 +26,17 @@ def _validate_complete_username(username, domain):
     Raises a ValidationError if the username is invalid
     :param username: expects str formatted like 'username@example.commcarehq.org'
     """
+    try:
+        validate_email(username)
+    except ValidationError:
+        raise ValidationError(_("Username '{}' must be a valid email address.").format(username))
+
     email_username, email_domain = username.split('@')
     if BAD_MOBILE_USERNAME_REGEX.search(email_username) is not None:
         raise ValidationError(
             _("The username component '{}' of '{}' may not contain special characters.").format(
                 email_username, username)
         )
-
-    try:
-        validate_email(username)
-    except ValidationError:
-        raise ValidationError(_("Username '{}' must be a valid email address.").format(username))
 
     expected_domain = f"{domain}.commcarehq.org"
     if email_domain != expected_domain:
