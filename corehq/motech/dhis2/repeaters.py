@@ -471,11 +471,11 @@ def fetch_metadata(requests):
 
 
 def create_dhis2_event_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(Dhis2Repeater, xform)
+    create_repeat_records(SQLDhis2Repeater, xform)
 
 
 def create_dhis2_entity_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(Dhis2EntityRepeater, xform)
+    create_repeat_records(SQLDhis2EntityRepeater, xform)
 
 
 successful_form_received.connect(create_dhis2_event_repeat_records)
