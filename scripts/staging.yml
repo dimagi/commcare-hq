@@ -78,4 +78,5 @@ branches:
     - jt/ush-2147_improve_print_css #Jonathan T. Sept 22
     - mp/mobile_fix-2fa # Marco Sep 26
     - dm/sql-lookup-tables-pr2 # Daniel Sept 27
+    - jls/new-instance-connectors # Jenny Sept 27
 submodules: { }
