@@ -59,8 +59,4 @@ class Migration(migrations.Migration):
             model_name='requestlog',
             index=models.Index(fields=['username'], name='generic_inb_usernam_cfab8d_idx'),
         ),
-        migrations.AddIndex(
-            model_name='processingattempt',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['case_ids'], name='generic_inb_case_id_434f37_gin'),
-        ),
     ]

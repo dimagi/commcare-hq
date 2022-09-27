@@ -139,8 +139,5 @@ class ProcessingAttempt(models.Model):
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
     case_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)
 
-    class Meta:
-        indexes = [GinIndex(fields=['case_ids'])]
-
     def __repr__(self):
         return f"ProcessingAttempt(log={self.log}, response_status='{self.response_status}')"
