@@ -940,7 +940,7 @@ class TestTimezoneConversion(TestCase):
         cls.domain_obj.delete()
         super()
 
-    def convert_to_server_timezone(self):
+    def test_convert_to_server_timezone(self):
         report_notification = ReportNotification(
             domain=self.DOMAIN,
             config_ids=[],
@@ -958,7 +958,7 @@ class TestTimezoneConversion(TestCase):
         self.assertEqual(report_notification.hour, 18)
         self.assertEqual(report_notification.stop_hour, 2)
 
-    def convert_to_domain_timezone(self):
+    def test_convert_to_domain_timezone(self):
         report_notification = ReportNotification(
             domain=self.DOMAIN,
             config_ids=[],

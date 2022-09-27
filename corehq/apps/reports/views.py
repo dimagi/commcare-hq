@@ -628,42 +628,42 @@ def calculate_day(interval, day, day_change):
     return day
 
 
-def soft_shift_to_domain_timezone(instance: ReportNotification):
-    time_difference = get_timezone_difference(instance.domain)
-    (instance.hour, day_change) = recalculate_hour(
-        instance.hour,
+def _update_instance_time_with_func(report_notification, time_func, minute=None):
+    time_difference = get_timezone_difference(report_notification.domain)
+    (report_notification.hour, day_change) = time_func(
+        report_notification.hour,
         time_difference.hours,
         time_difference.minutes
     )
-    instance.minute = 0
+
+    if minute is None:
+        report_notification.minute = time_difference.minutes
+    else:
+        report_notification.minute = minute
+
     if day_change:
-        instance.day = calculate_day(instance.interval, instance.day, day_change)
+        report_notification.day = calculate_day(report_notification.interval, report_notification.day, day_change)
 
-    if instance.interval == "hourly":
-        (instance.stop_hour, _) = recalculate_hour(
-            instance.stop_hour, time_difference.hours, time_difference.minutes
+    if report_notification.interval == "hourly":
+        (report_notification.stop_hour, _) = time_func(
+            report_notification.stop_hour, time_difference.hours, time_difference.minutes
         )
-        instance.stop_minute = time_difference.minutes
+        report_notification.stop_minute = time_difference.minutes
 
 
-def soft_shift_to_server_timezone(instance: ReportNotification):
-    time_difference = get_timezone_difference(instance.domain)
-    (instance.hour, day_change) = calculate_hour(
-        instance.hour, time_difference.hours, time_difference.minutes
+def soft_shift_to_domain_timezone(report_notification):
+    _update_instance_time_with_func(
+        report_notification,
+        recalculate_hour,
+        minute=0,
     )
-    instance.minute = time_difference.minutes
-    if day_change:
-        instance.day = calculate_day(
-            instance.interval,
-            instance.day,
-            day_change
-        )
 
-    if instance.interval == "hourly":
-        (instance.stop_hour, _) = calculate_hour(
-            instance.stop_hour, time_difference.hours, time_difference.minutes
-        )
-        instance.stop_minute = time_difference.minutes
+
+def soft_shift_to_server_timezone(report_notification):
+    _update_instance_time_with_func(
+        report_notification,
+        calculate_hour,
+    )
 
 
 class ScheduledReportsView(BaseProjectReportSectionView):
