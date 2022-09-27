@@ -11,6 +11,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
 from ..dbaccessors import delete_all_fixture_data, get_fixture_items_for_data_type
+from ..interface import FixtureEditInterface
 from ..models import LookupTable, LookupTableRow, Field, TypeField
 
 DOMAIN = "lookup"
@@ -304,6 +305,40 @@ class LookupTableViewsTest(TestCase):
         row.save()
         self.addCleanup(delete_if_exists, row._migration_get_couch_object())
         return row
+
+
+class TestFixtureEditInterface(TestCase):
+
+    def test_json_conversion(self):
+        # initial_page_data performs JSON conversion in manage_tables.html
+        class FakeRequest:
+            class couch_user:
+                def can_view_some_reports(domain):
+                    return True
+                _id = "..."
+            method = "GET"
+            GET = {}
+            META = {}
+
+        import json
+        from corehq.apps.hqwebapp.templatetags.hq_shared_tags import JSON
+        table = LookupTableViewsTest.create_lookup_table(self)
+        interface = FixtureEditInterface(FakeRequest, {}, DOMAIN)
+        self.assertEqual(
+            json.loads(JSON(interface.data_types)),
+            [{
+                "_id": table.id.hex,
+                "is_global": True,
+                "tag": "atable",
+                "fields": [{
+                    "name": "wing",
+                    "properties": [],
+                    "is_indexed": False,
+                }],
+                "item_attributes": [],
+                "description": "A Table",
+            }],
+        )
 
 
 def delete_if_exists(doc):

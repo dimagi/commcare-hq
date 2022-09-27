@@ -9,7 +9,7 @@ from memoized import memoized
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
 from corehq.apps.fixtures.models import LookupTable
-from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home
+from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home, table_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 
@@ -159,4 +159,4 @@ class FixtureEditInterface(FixtureInterface):
     @property
     @memoized
     def data_types(self):
-        return list(LookupTable.objects.by_domain(self.domain))
+        return [table_json(t) for t in LookupTable.objects.by_domain(self.domain)]

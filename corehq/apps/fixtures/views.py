@@ -100,7 +100,7 @@ def update_tables(request, domain, data_type_id=None):
             raise Http404()
 
         if request.method == 'GET':
-            return json_response(_table_json(data_type))
+            return json_response(table_json(data_type))
 
         elif request.method == 'DELETE':
             couch_type = data_type._migration_get_couch_object()
@@ -160,10 +160,10 @@ def update_tables(request, domain, data_type_id=None):
                         fields_patches, domain, data_tag, is_global, description, transaction)
         finally:
             clear_fixture_cache(domain)
-        return json_response(_table_json(data_type))
+        return json_response(table_json(data_type))
 
 
-def _table_json(table):
+def table_json(table):
     data = {
         '_id': table.id.hex,
         'fields': [asdict(f) for f in table.fields],
