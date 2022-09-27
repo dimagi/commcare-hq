@@ -16,7 +16,7 @@ closed after May 1st.
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
 from . import aggregations, filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
@@ -56,6 +56,9 @@ class ElasticCase(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+case_adapter = create_document_adapter(ElasticCase)
 
 
 def opened_range(gt=None, gte=None, lt=None, lte=None):

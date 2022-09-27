@@ -42,13 +42,13 @@ def doc_adapter_from_alias(index_alias, for_export=False):
     return _get_doc_adapter(_DOC_ADAPTERS_BY_ALIAS[index_alias], for_export)
 
 
-def _get_doc_adapter(cls, for_export):
+def _get_doc_adapter(adapter, for_export):
     """Helper function to keep things DRY. Returns an adapter instance that is
     configured for export (or not).
     """
     if for_export:
-        return cls().export_adapter()
-    return cls()
+        return adapter.export_adapter()
+    return adapter
 
 
 def report_and_fail_on_shard_failures(search_result):
@@ -63,22 +63,22 @@ def populate_doc_adapter_map():
     method. Do not call this function other places.
     """
     from django.conf import settings
-    from .apps import ElasticApp
-    from .case_search import ElasticCaseSearch
-    from .cases import ElasticCase
-    from .domains import ElasticDomain
-    from .forms import ElasticForm
-    from .groups import ElasticGroup
-    from .sms import ElasticSMS
-    from .users import ElasticUser
+    from .apps import app_adapter
+    from .case_search import case_search_adapter
+    from .cases import case_adapter
+    from .domains import domain_adapter
+    from .forms import form_adapter
+    from .groups import group_adapter
+    from .sms import sms_adapter
+    from .users import user_adapter
 
     # by index
-    for DocAdapter in [ElasticApp, ElasticCaseSearch, ElasticCase,
-                       ElasticDomain, ElasticForm, ElasticGroup, ElasticSMS,
-                       ElasticUser]:
-        assert DocAdapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
-            (DocAdapter.index_name, _DOC_ADAPTERS_BY_INDEX)
-        _DOC_ADAPTERS_BY_INDEX[DocAdapter.index_name] = DocAdapter
+    for doc_adapter in [app_adapter, case_search_adapter, case_adapter,
+                       domain_adapter, form_adapter, group_adapter, sms_adapter,
+                       user_adapter]:
+        assert doc_adapter.index_name not in _DOC_ADAPTERS_BY_INDEX, \
+            (doc_adapter.index_name, _DOC_ADAPTERS_BY_INDEX)
+        _DOC_ADAPTERS_BY_INDEX[doc_adapter.index_name] = doc_adapter
     # aliases and mappings
     for index_info in get_registry().values():
         _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
@@ -108,8 +108,9 @@ def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
             return from_dict_with_possible_id(doc)
 
     Adapter.__name__ = f"{descriptor}Test"
-    _DOC_ADAPTERS_BY_INDEX[index_] = Adapter
-    _DOC_ADAPTERS_BY_ALIAS[alias] = Adapter
+    test_adapter = Adapter()
+    _DOC_ADAPTERS_BY_INDEX[index_] = test_adapter
+    _DOC_ADAPTERS_BY_ALIAS[alias] = test_adapter
     _DOC_MAPPINGS_BY_INDEX[index_] = mapping_
 
 

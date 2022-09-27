@@ -33,8 +33,8 @@ from corehq.apps.es.cases import CaseES, owner
 from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
-from .cases import ElasticCase
-from .client import ElasticDocumentAdapter
+from .cases import case_adapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
@@ -140,7 +140,7 @@ class CaseSearchES(CaseES):
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
     _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
-    type = ElasticCase.type
+    type = case_adapter.type
 
     @property
     def mapping(self):
@@ -149,6 +149,9 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+case_search_adapter = create_document_adapter(ElasticCaseSearch)
 
 
 def case_property_filter(case_property_name, value):

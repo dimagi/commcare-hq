@@ -17,7 +17,7 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
+from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.client import ElasticManageAdapter
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -301,7 +301,6 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    case_search = ElasticCaseSearch()
-    ElasticManageAdapter().index_refresh(case_search.index_name)
+    ElasticManageAdapter().index_refresh(case_search_adapter.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-    case_search.bulk_delete(case_ids)
+    case_search_adapter.bulk_delete(case_ids)

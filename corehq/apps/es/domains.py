@@ -12,7 +12,7 @@ DomainES
              .size(0))
 """
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
@@ -56,6 +56,9 @@ class ElasticDomain(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+domain_adapter = create_document_adapter(ElasticDomain)
 
 
 def non_test_domains():

@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.client import ElasticManageAdapter
-from corehq.apps.es.cases import ElasticCase
+from corehq.apps.es.cases import ElasticCase, case_adapter
 from corehq.util.es.elasticsearch import TransportError
 
 from ..es import CaseESView
@@ -11,7 +11,7 @@ from ..es import CaseESView
 class ElasticCase2(ElasticCase):
 
     type = "type2"
-    mapping = ElasticCase().mapping  # TODO: remove with transient_util
+    mapping = case_adapter.mapping  # TODO: remove with transient_util
 
 
 @es_test
@@ -20,7 +20,7 @@ class TestESView(SimpleTestCase):
     def setUp(self):
         super().setUp()
         self.manager = ElasticManageAdapter()
-        self.cases = ElasticCase()
+        self.cases = case_adapter
         self._purge_indices()
         self.manager.index_create(self.cases.index_name)
         self.manager.index_put_mapping(self.cases.index_name, self.cases.type,

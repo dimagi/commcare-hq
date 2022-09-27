@@ -7,7 +7,7 @@ from django.conf import settings
 from corehq.pillows.mappings.const import NULL_VALUE
 
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
@@ -60,6 +60,9 @@ class ElasticForm(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+form_adapter = create_document_adapter(ElasticForm)
 
 
 def form_ids(form_ids):

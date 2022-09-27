@@ -1,10 +1,10 @@
-from corehq.apps.es.case_search import ElasticCaseSearch
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_SEARCH_HQ_INDEX_NAME
 
 
-CASE_SEARCH_INDEX = ElasticCaseSearch.index_name
+CASE_SEARCH_INDEX = case_search_adapter.index_name
 CASE_SEARCH_ALIAS = prefix_for_tests('case_search')
 
 CASE_SEARCH_MAPPING = {
@@ -173,7 +173,7 @@ CASE_SEARCH_MAPPING = {
 CASE_SEARCH_INDEX_INFO = ElasticsearchIndexInfo(
     index=CASE_SEARCH_INDEX,
     alias=CASE_SEARCH_ALIAS,
-    type=ElasticCaseSearch.type,
+    type=case_search_adapter.type,
     mapping=CASE_SEARCH_MAPPING,
     hq_index_name=CASE_SEARCH_HQ_INDEX_NAME,
 )

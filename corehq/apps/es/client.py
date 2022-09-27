@@ -23,6 +23,7 @@ from corehq.util.es.elasticsearch import (
 )
 from corehq.util.metrics import metrics_counter
 
+from .app_config import register_document_adapter
 from .const import (
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
@@ -890,3 +891,13 @@ def _elastic_hosts():
             port = settings.ELASTICSEARCH_PORT
         hosts.append({"host": host, "port": port})
     return hosts
+
+
+def create_document_adapter(cls):
+    """Returns a document adapter instance for the parameters provided.
+
+    :param cls: an ``ElasticDocumentAdapter`` subclass
+    """
+    doc_adapter = cls()
+    register_document_adapter(doc_adapter)
+    return doc_adapter

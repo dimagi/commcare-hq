@@ -1,11 +1,11 @@
-from corehq.apps.es.forms import ElasticForm
+from corehq.apps.es.forms import form_adapter
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
 from pillowtop.es_utils import ElasticsearchIndexInfo, XFORM_HQ_INDEX_NAME
 
-XFORM_INDEX = ElasticForm.index_name
-XFORM_ES_TYPE = ElasticForm.type
+XFORM_INDEX = form_adapter.index_name
+XFORM_ES_TYPE = form_adapter.type
 XFORM_ALIAS = prefix_for_tests("xforms")
 
 XFORM_MAPPING = {
@@ -219,7 +219,7 @@ XFORM_MAPPING = {
     }
 }
 
-if ElasticForm.settings.get("DISABLE_ALL"):
+if form_adapter.settings.get("DISABLE_ALL"):
     XFORM_MAPPING["_all"] = {"enabled": False}
 
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(

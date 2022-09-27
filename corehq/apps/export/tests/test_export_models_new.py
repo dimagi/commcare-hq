@@ -8,8 +8,8 @@ import pytz
 from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
 from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
 from corehq.apps.es.client import ElasticManageAdapter
-from corehq.apps.es.cases import ElasticCase
-from corehq.apps.es.forms import ElasticForm
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.util.es.elasticsearch import TransportError
 
 from corehq.apps.export.models.new import CaseExportInstance, FormExportInstance
@@ -22,7 +22,7 @@ class FormExportInstanceTests(TestCase):
         super().setUp()
 
         self.manager = ElasticManageAdapter()
-        self.forms = ElasticForm()
+        self.forms = form_adapter
 
         self._purge_indices()
         self.manager.index_create(self.forms.index_name)
@@ -70,7 +70,7 @@ class CaseExportInstanceTests(TestCase):
         super().setUp()
 
         self.manager = ElasticManageAdapter()
-        self.cases = ElasticCase()
+        self.cases = case_adapter
         self._purge_indices()
         self.manager.index_create(self.cases.index_name)
         self.manager.index_put_mapping(self.cases.index_name, self.cases.type, self.cases.mapping)
