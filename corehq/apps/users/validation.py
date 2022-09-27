@@ -18,8 +18,7 @@ def validate_mobile_username(username, domain, is_unique=True):
 
     _validate_complete_username(username, domain)
 
-    if is_unique:
-        if not is_username_available(username):
+    if is_unique and not is_username_available(username):
             raise ValidationError(_("Username '{}' is already taken or reserved.").format(username))
 
 
