@@ -230,8 +230,6 @@ class EntryInstances(PostProcessor):
         used = {(instance.id, instance.src) for instance in entry.instances}
         instance_order_updated = EntryInstances.update_instance_order(entry)
         for instance in instances:
-            if EntryInstances._should_ignore_instance(instance):
-                continue
             if (instance.id, instance.src) not in used:
                 entry.instances.append(
                     # it's important to make a copy,
@@ -252,16 +250,6 @@ class EntryInstances(PostProcessor):
         sorted_instances = sorted(entry.instances, key=lambda instance: instance.id)
         if sorted_instances != entry.instances:
             entry.instances = sorted_instances
-
-    @staticmethod
-    def _should_ignore_instance(instance):
-        for prefix in {
-            'jr://instance/remote/',
-            'jr://instance/search-input/',
-        }:
-            if instance.src.startswith(prefix):
-                return True
-        return False
 
     @staticmethod
     def update_instance_order(entry):
