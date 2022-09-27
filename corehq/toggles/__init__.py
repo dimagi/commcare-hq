@@ -954,6 +954,14 @@ USH_INLINE_SEARCH = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
+SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
+    'split_screen_case_search',
+    "In case search, show the filters on the left and results on the right.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
     'usercases_for_web_users',
     "USH: Enable the creation of usercases for web users.",
@@ -1514,6 +1522,14 @@ DATA_DICTIONARY = StaticToggle(
     [NAMESPACE_DOMAIN],
     description='Available in the Data section, shows the names of all properties of each case type.',
     help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
+)
+
+DD_CASE_DATA = StaticToggle(
+    'dd_case_data',
+    'Data Dictionary Case Data Page',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description='Experimental: render the case data page in accordance with the data dictionary',
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -2344,4 +2360,14 @@ FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     TAG_INTERNAL,
     namespaces=[NAMESPACE_DOMAIN],
     owner='Simon Kelly'
+)
+
+EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
+    'embed_tableau_report_by_user',
+    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
+                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
+                'to Tableau to get the embedded report.',
 )

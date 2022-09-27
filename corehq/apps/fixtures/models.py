@@ -117,6 +117,12 @@ class Field:
     properties = field(factory=dict)
 
 
+# on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
+# constraints are configured in a migration. Note that Django signals
+# will not fire on records deleted via cascade.
+DB_CASCADE = models.DO_NOTHING
+
+
 class LookupTableRow(SyncSQLToCouchMixin, models.Model):
     """Lookup Table Row data model
 
@@ -146,7 +152,7 @@ class LookupTableRow(SyncSQLToCouchMixin, models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
-    table = models.ForeignKey(LookupTable, on_delete=models.CASCADE)
+    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE)
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
@@ -214,7 +220,7 @@ class LookupTableRowOwner(SyncSQLToCouchMixin, models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
-    row = models.ForeignKey(LookupTableRow, on_delete=models.CASCADE, db_index=False)
+    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE)
     couch_id = CharIdField(max_length=126, null=True, db_index=True)
 
     class Meta:

@@ -155,6 +155,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 }
                 hqImport('analytix/js/kissmetrix').track.event(event, eventData);
             }
+            if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
+                hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
+                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                });
+            }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
             } else {
