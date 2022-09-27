@@ -688,7 +688,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         }
 
     def get_deleted_item_data(self, item_id):
-        deleted_key = HQApiKey.objects.get(id=item_id)
+        deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {
             'itemData': {
