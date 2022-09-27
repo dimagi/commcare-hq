@@ -44,7 +44,7 @@ USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
 ]
 
 
-def generate_mobile_username(username, domain):
+def generate_mobile_username(username, domain, is_unique=True):
     """
     Returns the email formatted mobile username if successfully generated
     Handles exceptions raised by .validation.validate_mobile_username with user facing messages
@@ -56,7 +56,7 @@ def generate_mobile_username(username, domain):
     """
     from .validation import validate_mobile_username
     username = get_complete_mobile_username(username, domain)
-    validate_mobile_username(username, domain)
+    validate_mobile_username(username, domain, is_unique)
     return username
 
 
@@ -79,7 +79,8 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
+    username = re.sub(r'\s+', '.', username).lower()
+    return "%s@%s" % (str(username or ''), cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
