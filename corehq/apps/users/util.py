@@ -51,7 +51,7 @@ def generate_mobile_username(username, domain, is_unique=True):
     Any additional validation should live in .validation.validate_mobile_username
     :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
     :param domain: required str, domain name
-    :param is_unique: should be True when a new user is being created and false when a user is being updated.
+    :param is_unique: if true then username should not already exist
     :return: str, email formatted mobile username
     Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
     """

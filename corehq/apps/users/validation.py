@@ -11,7 +11,7 @@ def validate_mobile_username(username, domain, is_unique=True):
     Raises a ValidationError if any issue with the complete username is encountered
     :param username: str, expects complete username ('username@example.commcarehq.org')
     :param domain: str, required
-    :param is_unique: should be True when a new user is being created and false when a user is being updated.
+    :param is_unique: if true then username should not already exist.
     """
     if not username:
         raise ValidationError(_("Username is required."))
