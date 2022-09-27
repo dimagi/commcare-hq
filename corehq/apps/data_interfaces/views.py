@@ -651,19 +651,17 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+    @property
+    def page_context(self):
         context = super().main_context
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
         })
-        return render(request, 'data_interfaces/auto_update_rules.html', context)
+        return context
 
     def post(self, request, *args, **kwargs):
         response = self._update_rule(request.POST['id'], request.POST['action'])
         return JsonResponse(response)
-
-    def page_url(self):
-        return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
     @property
     def edit_url_name(self):
