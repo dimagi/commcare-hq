@@ -141,10 +141,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.error_message, '')
         self.assertEqual(log.username, self.user.username)
         self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
-        self.assertRegex(
-            log.request_query,
-            r'http://testserver/a/ucr-api-test/api/case/custom/[\w-]+/\?param=value'
-        )
+        self.assertEqual(log.request_query, 'param=value')
         self.assertEqual(log.request_body, json.dumps(self.example_post_data))
         self.assertIn('CONTENT_TYPE', log.request_headers)
         self.assertEqual(log.request_user_agent, 'user agent string')

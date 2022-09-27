@@ -244,7 +244,7 @@ def _log_api_request(api, request, response):
         error_message=response_body if not is_success else '',
         username=request.couch_user.username,
         request_method=request.method,
-        request_query=request.get_raw_uri(),
+        request_query=request.META.get('QUERY_STRING'),
         request_body=request.body.decode('utf-8'),
         request_headers=get_standard_headers(request.META),
         request_user_agent=request.META.get('HTTP_USER_AGENT', ''),
