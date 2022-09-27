@@ -136,8 +136,8 @@ class ProcessingAttempt(models.Model):
     response_body = models.TextField()
     raw_response = models.JSONField(default=dict)
 
-    xform_id = models.UUIDField(db_index=True, null=True, blank=True)
-    case_ids = ArrayField(models.UUIDField(default=uuid4), null=True, blank=True)
+    xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
+    case_ids = ArrayField(models.CharField(max_length=36), null=True, blank=True)
 
     class Meta:
         indexes = [GinIndex(fields=['case_ids'])]
