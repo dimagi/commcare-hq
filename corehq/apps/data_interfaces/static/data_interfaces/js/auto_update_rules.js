@@ -67,7 +67,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
                         self.rules.remove(rule);
                         self.goToPage(1);
                     } else {
-                        showActionError(rule, data.error);
+                        self.showActionError(rule, data.error);
                     }
                 },
                 error: function () {
@@ -103,7 +103,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
                         });
                         self.goToPage(1);
                     } else {
-                        showActionError(rule, data.error);
+                        self.showActionError(rule, data.error);
                     }
                 },
                 error: function () {
@@ -119,7 +119,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         };
 
         return self;
-    }
+    };
 
     $(function () {
         var rules = initialPageData.get('rules');
