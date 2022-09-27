@@ -9,9 +9,7 @@ from ..es import CaseESView
 
 
 class ElasticCase2(ElasticCase):
-
-    type = "type2"
-    mapping = case_adapter.mapping  # TODO: remove with transient_util
+    mapping = case_adapter.mapping
 
 
 @es_test
@@ -63,7 +61,7 @@ class TestESView(SimpleTestCase):
         self.assertEqual(doc_ny, to_dict(view.get_document(doc_id)))
 
         # index a doc with a new _type ('type2')
-        cases_type2 = ElasticCase2()
+        cases_type2 = ElasticCase2(case_adapter.index_name, "type2")
         self.manager.index_put_mapping(cases_type2.index_name, cases_type2.type,
                                        cases_type2.mapping)
         doc_dc = mk_doc(doc_id, "DC")

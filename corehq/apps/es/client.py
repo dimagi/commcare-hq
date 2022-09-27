@@ -1,4 +1,5 @@
 """HQ Elasticsearch client logic (adapters)."""
+import copy
 import json
 import logging
 from enum import Enum
@@ -305,30 +306,28 @@ class ElasticDocumentAdapter(BaseAdapter):
 
     Subclasses must define the following:
 
-    - ``_index_name``: class attribute (``str``)
-    - ``type``: class attribute (``str``)
-    - ``mapping``: class attribute (``dict``)
+    - ``mapping``: attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
     """
 
-    @classmethod
-    def export_adapter(cls):
+    def __init__(self, index_name, type_):
+        """A document adapter for a single index.
+
+        :param index_name: the name of the index that this adapter interacts with
+        :param type_: the index ``_type`` for the mapping
+        """
+        super().__init__()
+        self.index_name = index_name
+        self.type = type_
+
+    def export_adapter(self):
         """Get an instance of this document adapter configured for "export"
         queries (i.e. the low-level Elasticsearch client object is configured
         with longer request timeouts, etc).
         """
-        adapter = cls()
+        adapter = copy.copy(self)
         adapter._es = get_client(for_export=True)
         return adapter
-
-    @classproperty
-    def index_name(cls):
-        try:
-            return cls.__index_name
-        except AttributeError:
-            prefix = TEST_DATABASE_PREFIX if settings.UNIT_TESTING else ""
-            cls.__index_name = f"{prefix}{cls._index_name}"
-        return cls.__index_name
 
     @classproperty
     def settings(cls):
@@ -893,11 +892,19 @@ def _elastic_hosts():
     return hosts
 
 
-def create_document_adapter(cls):
+def create_document_adapter(cls, index_name, type_):
     """Returns a document adapter instance for the parameters provided.
 
     :param cls: an ``ElasticDocumentAdapter`` subclass
+    :param index_name: the name of the index that the adapter interacts with
+    :param type_: the index ``_type`` for the adapter's mapping.
     """
-    doc_adapter = cls()
+    # transform the name if testing
+    prefix = TEST_DATABASE_PREFIX if settings.UNIT_TESTING else ""
+    index_name = f"{prefix}{index_name}"
+
+    # create the adapter instance and register it
+    doc_adapter = cls(index_name, type_)
+
     register_document_adapter(doc_adapter)
     return doc_adapter

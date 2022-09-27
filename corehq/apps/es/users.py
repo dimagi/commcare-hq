@@ -68,9 +68,6 @@ class UserES(HQESQuery):
 
 class ElasticUser(ElasticDocumentAdapter):
 
-    _index_name = "hqusers_2017-09-07"
-    type = "user"
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -80,7 +77,11 @@ class ElasticUser(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-user_adapter = create_document_adapter(ElasticUser)
+user_adapter = create_document_adapter(
+    ElasticUser,
+    "hqusers_2017-09-07",
+    "user",
+)
 
 
 def domain(domain, allow_enterprise=False):

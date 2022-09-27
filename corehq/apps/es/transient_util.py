@@ -99,8 +99,6 @@ def populate_doc_adapter_map():
 def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
 
     class Adapter(ElasticDocumentAdapter):
-        index_name = index_  # override the classproperty
-        type = type_
         mapping = mapping_
 
         @classmethod
@@ -108,7 +106,7 @@ def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
             return from_dict_with_possible_id(doc)
 
     Adapter.__name__ = f"{descriptor}Test"
-    test_adapter = Adapter()
+    test_adapter = Adapter(index_, type_)
     _DOC_ADAPTERS_BY_INDEX[index_] = test_adapter
     _DOC_ADAPTERS_BY_ALIAS[alias] = test_adapter
     _DOC_MAPPINGS_BY_INDEX[index_] = mapping_

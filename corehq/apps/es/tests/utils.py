@@ -319,8 +319,6 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     involving ``TestDoc`` model objects.
     """
 
-    _index_name = "doc-adapter"
-    type = "test_doc"
     mapping = {
         "properties": {
             "value": {
@@ -336,3 +334,6 @@ class TestDocumentAdapter(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return doc.id, {"value": doc.value, "entropy": doc.entropy}
+
+
+test_adapter = TestDocumentAdapter("doc-adapter", "test_doc")

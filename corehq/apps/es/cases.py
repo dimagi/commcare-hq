@@ -46,9 +46,6 @@ class CaseES(HQESQuery):
 
 class ElasticCase(ElasticDocumentAdapter):
 
-    _index_name = "hqcases_2016-03-04"
-    type = "case"
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -58,7 +55,11 @@ class ElasticCase(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-case_adapter = create_document_adapter(ElasticCase)
+case_adapter = create_document_adapter(
+    ElasticCase,
+    "hqcases_2016-03-04",
+    "case",
+)
 
 
 def opened_range(gt=None, gte=None, lt=None, lte=None):

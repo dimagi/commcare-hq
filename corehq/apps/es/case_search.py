@@ -139,9 +139,6 @@ class CaseSearchES(CaseES):
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29")
-    type = case_adapter.type
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -151,7 +148,11 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-case_search_adapter = create_document_adapter(ElasticCaseSearch)
+case_search_adapter = create_document_adapter(
+    ElasticCaseSearch,
+    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    case_adapter.type,
+)
 
 
 def case_property_filter(case_property_name, value):

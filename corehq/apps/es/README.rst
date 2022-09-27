@@ -252,13 +252,8 @@ properties and functionality necessary for maintaining a single type of "model"
 document in a single index.  Each index in Elasticsearch needs to have a
 cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
 model is applied to that specific index.  At the very least, a document adapter
-must define the following:
+subclass must define the following:
 
-- An ``_index_name`` attribute whose value is the name of the Elastic index
-  used by the adapter. This attribute must be private to support proper index
-  naming between production code and tests.
-- A ``type`` attribute whose value is the name is the Elastic ``_type`` for
-  documents used by the adapter.
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
 - A ``from_python()`` classmethod which can convert a Python model object into the
@@ -287,8 +282,6 @@ A simple example of a document model and its cooresponding adapter:
 
     class ElasticBook(ElasticDocumentAdapter):
 
-        _index_name = "books"
-        type = "book"
         mapping = {"properties": {
             "author": {"type": "text"},
             "title": {"type": "text"},
@@ -304,11 +297,13 @@ A simple example of a document model and its cooresponding adapter:
             }
             return book.isbn, source
 
+    books_adapter = ElasticBook(index_name="books", type_="book")
+
+
 Using this adapter in practice might look as follows:
 
 .. code-block:: python
 
-    adapter = ElasticBook()
     # index new
     new_book = Book(
         "978-1491946008",
@@ -316,9 +311,9 @@ Using this adapter in practice might look as follows:
         "Fluent Python: Clear, Concise, and Effective Programming",
         datetime.date(2015, 2, 10),
     )
-    adapter.index(new_book)
+    books_adapter.index(new_book)
     # fetch existing
-    classic_book = adapter.fetch("978-0345391803")
+    classic_book = books_adapter.fetch("978-0345391803")
 
 
 Code Documentation

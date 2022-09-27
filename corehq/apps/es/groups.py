@@ -36,9 +36,6 @@ class GroupES(HQESQuery):
 
 class ElasticGroup(ElasticDocumentAdapter):
 
-    _index_name = "hqgroups_2017-05-29"
-    type = "group"
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -48,7 +45,11 @@ class ElasticGroup(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-group_adapter = create_document_adapter(ElasticGroup)
+group_adapter = create_document_adapter(
+    ElasticGroup,
+    "hqgroups_2017-05-29",
+    "group",
+)
 
 
 def is_case_sharing(value=True):

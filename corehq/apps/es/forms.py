@@ -50,9 +50,6 @@ class FormES(HQESQuery):
 
 class ElasticForm(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07")
-    type = "xform"
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -62,7 +59,11 @@ class ElasticForm(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-form_adapter = create_document_adapter(ElasticForm)
+form_adapter = create_document_adapter(
+    ElasticForm,
+    getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
+    "xform",
+)
 
 
 def form_ids(form_ids):

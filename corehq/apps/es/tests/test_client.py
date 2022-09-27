@@ -17,6 +17,7 @@ from .utils import (
     docs_to_dict,
     es_test,
     temporary_index,
+    test_adapter,
 )
 from ..client import (
     BulkActionItem,
@@ -105,17 +106,10 @@ class TestClient(SimpleTestCase):
         self.assertIsNot(client, client_exp)
 
 
-class AdapterTestCase(SimpleTestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.adapter = self.adapter_class()
-
-
 @es_test
-class TestBaseAdapter(AdapterTestCase):
+class TestBaseAdapter(SimpleTestCase):
 
-    adapter_class = BaseAdapter
+    adapter = BaseAdapter()
 
     def test_info(self):
         self.assertEqual(sorted(self.adapter.info()),
@@ -138,7 +132,7 @@ class TestBaseAdapter(AdapterTestCase):
         self.assertTrue(BaseAdapter().ping())
 
 
-class AdapterWithIndexTestCase(AdapterTestCase):
+class AdapterWithIndexTestCase(SimpleTestCase):
     """Subclasses must set ``index`` class attribute."""
 
     def setUp(self):
@@ -162,7 +156,7 @@ class AdapterWithIndexTestCase(AdapterTestCase):
 @es_test
 class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
-    adapter_class = ElasticManageAdapter
+    adapter = ElasticManageAdapter()
     index = "test_manage-adapter"
 
     def test_index_exists(self):
@@ -363,21 +357,19 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             patched.assert_called_once_with([self.index])
 
     def test_indices_refresh(self):
-        doc_adapter = TestDocumentAdapter()
-
         def get_search_hits():
-            return doc_adapter.search({})["hits"]["hits"]
+            return test_adapter.search({})["hits"]["hits"]
 
-        with temporary_index(doc_adapter.index_name, doc_adapter.type, doc_adapter.mapping):
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
             # Disable auto-refresh to ensure the index doesn't refresh between our
             # index and search (which would cause this test to fail).
             self.adapter._index_put_settings(
-                doc_adapter.index_name,
+                test_adapter.index_name,
                 {"index.refresh_interval": "-1"}
             )
-            doc_adapter.index(TestDoc("1", "test"))
+            test_adapter.index(TestDoc("1", "test"))
             self.assertEqual([], get_search_hits())
-            self.adapter.indices_refresh([doc_adapter.index_name])
+            self.adapter.indices_refresh([test_adapter.index_name])
             docs = [h["_source"] for h in get_search_hits()]
         self.assertEqual([{"_id": "1", "entropy": 3, "value": "test"}], docs)
 
@@ -397,12 +389,11 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             patched.assert_called_once_with(self.index, expand_wildcards="none")
 
     def test_index_close(self):
-        doc_adapter = TestDocumentAdapter()
-        with temporary_index(doc_adapter.index_name):
-            doc_adapter.index(TestDoc("1", "test"))  # does not raise
-            self.adapter.index_close(doc_adapter.index_name)
+        with temporary_index(test_adapter.index_name):
+            test_adapter.index(TestDoc("1", "test"))  # does not raise
+            self.adapter.index_close(test_adapter.index_name)
             with self.assertRaises(TransportError) as test:
-                doc_adapter.index(TestDoc("2", "test"))
+                test_adapter.index(TestDoc("2", "test"))
             self.assertEqual(test.exception.status_code, 403)
             self.assertEqual(test.exception.error, "index_closed_exception")
 
@@ -554,12 +545,15 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
         ElasticManageAdapter().indices_refresh([self.index_name])
 
 
+adapter_with_extras = TestDocumentAdapterWithExtras(test_adapter.index_name, test_adapter.type)
+
+
 @es_test
 class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
     """Document adapter tests that require an existing index."""
 
-    adapter_class = TestDocumentAdapterWithExtras
-    index = TestDocumentAdapterWithExtras.index_name
+    adapter = adapter_with_extras
+    index = test_adapter.index_name
 
     def setUp(self):
         super().setUp()
@@ -1072,10 +1066,10 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
 
 
 @es_test
-class TestElasticDocumentAdapterWithoutRequests(AdapterTestCase):
+class TestElasticDocumentAdapterWithoutRequests(SimpleTestCase):
     """Document adapter tests that don't need to hit the Elastic backend."""
 
-    adapter_class = TestDocumentAdapterWithExtras
+    adapter = adapter_with_extras
 
     def test_from_python(self):
         doc = TestDoc("1", "test")

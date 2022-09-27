@@ -46,9 +46,6 @@ class DomainES(HQESQuery):
 
 class ElasticDomain(ElasticDocumentAdapter):
 
-    _index_name = "hqdomains_2021-03-08"
-    type = "hqdomain"
-
     @property
     def mapping(self):
         return get_adapter_mapping(self)
@@ -58,7 +55,11 @@ class ElasticDomain(ElasticDocumentAdapter):
         return from_dict_with_possible_id(doc)
 
 
-domain_adapter = create_document_adapter(ElasticDomain)
+domain_adapter = create_document_adapter(
+    ElasticDomain,
+    "hqdomains_2021-03-08",
+    "hqdomain",
+)
 
 
 def non_test_domains():
