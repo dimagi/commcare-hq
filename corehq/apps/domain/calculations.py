@@ -490,7 +490,7 @@ def num_saved_exports(domain):
 
 
 def num_lookup_tables(domain):
-    return LookupTable.by_domain(domain).count()
+    return LookupTable.objects.by_domain(domain).count()
 
 
 def has_domain_icon(domain_obj):

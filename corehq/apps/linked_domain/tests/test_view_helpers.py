@@ -120,7 +120,7 @@ def _create_fixture(domain, tag="table", should_save=True):
         tag=tag,
         fields=[
             TypeField(
-                field_name="fixture_property",
+                name="fixture_property",
                 properties=["test"]
             )
         ],
@@ -162,7 +162,7 @@ class BaseLinkedDomainTest(TestCase):
         )
 
         cls.original_fixture = _create_fixture(cls.upstream_domain)
-        cls.addClassCleanup(cls.original_fixture._migration_get_couch_object().delete)
+        # Couch lookup tables are cleaned up by domain deletion
 
         cls.domain_link = DomainLink.link_domains(cls.downstream_domain, cls.upstream_domain)
 
