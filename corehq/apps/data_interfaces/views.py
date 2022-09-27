@@ -880,7 +880,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         hour = domain_obj.auto_case_update_hour
         context.update({
             'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
-            'time': f"{hour}:00" if hour else _('midnight'),
+            'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
         })
         return context
 
