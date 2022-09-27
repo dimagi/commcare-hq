@@ -386,6 +386,8 @@ class SessionDatum(IdNode, OrderedXmlObject):
 class InstanceDatum(SessionDatum):
     ROOT_NAME = 'instance-datum'
 
+    max_select_value = IntegerField('@max-select-value')
+
 
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'

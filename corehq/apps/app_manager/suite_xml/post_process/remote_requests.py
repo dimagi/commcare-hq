@@ -222,12 +222,19 @@ class RemoteRequestFactory(object):
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
         datum_cls = InstanceDatum if self.module.is_multi_select() else SessionDatum
+        force_select_params = {}
+        if self.module.is_multi_select():
+            force_select_params = {
+                "autoselect": "true",
+                "max_select_value": 100,
+            }
         return [datum_cls(
             id=self.case_session_var,
             nodeset=nodeset,
             value='./@case_id',
             detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
+            **force_select_params
         )]
 
     @cached_property
