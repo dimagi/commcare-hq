@@ -13,22 +13,9 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     googleAnalytics
 ) {
 
-    var RuleViewModel = function (data) {
-        var self = {};
-        self.action_error = null;
-        self.active = data.active;
-        self.caseType = data.case_type;
-        self.editURL = data.edit_url;
-        self.id = data.id;
-        self.lastRun = data.last_run;
-        self.name = data.name;
-        self.status = data.status;
-        return self;
-    };
-
     var RuleListViewModel = function (rules) {
         var self = {};
-        self.rules = ko.observableArray(_.map(rules, RuleViewModel));
+        self.rules = ko.mapping.fromJS(rules);
         self.paginatedRules = ko.observableArray([]);
         self.rulesById = ko.computed(function () {
             return _.indexBy(self.rules(), 'id');
@@ -88,19 +75,9 @@ hqDefine("data_interfaces/js/auto_update_rules", [
                 success: function (data) {
                     if (data.success) {
                         self.rules.remove(rule);
-                        var updatedRule = RuleViewModel(data.itemData);
+                        var updatedRule = ko.mapping.fromJS(data.itemData);
                         self.rules.push(updatedRule);
-                        self.rules().sort(function (first, second) {
-                            var firstName = first.name.toUpperCase();
-                            var secondName = second.name.toUpperCase();
-                            if (firstName > secondName) {
-                                return 1;
-                            } else if (firstName < secondName) {
-                                return -1;
-                            } else {
-                                return 0;
-                            }
-                        });
+                        self.rules(_.sortBy(self.rules(), function (rule) { return rule.name().toUpperCase(); }));
                         self.goToPage(1);
                     } else {
                         self.showActionError(rule, data.error);

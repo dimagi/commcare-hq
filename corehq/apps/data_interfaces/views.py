@@ -654,7 +654,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def get(self, request, *args, **kwargs):
         context = super().main_context
         context.update({
-            'help_site_url': 'https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases',
             'rules': [self._format_rule(rule) for rule in self._rules()],
         })
         return render(request, 'data_interfaces/auto_update_rules.html', context)

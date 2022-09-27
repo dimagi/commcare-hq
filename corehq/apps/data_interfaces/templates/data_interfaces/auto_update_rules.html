@@ -5,12 +5,11 @@
 {% requirejs_main 'data_interfaces/js/auto_update_rules' %}
 
 {% block page_content %}
-  {% initial_page_data 'help_site_url' help_site_url %}
   {% initial_page_data 'rules' rules %}
 
   <div id="ko-auto-update-rules" class="ko-template">
     <ul class="nav nav-tabs">
-      <li class="active"><a data-toggle="tab" href="#tabs-update-rules">Automatic Update Rules</a></li>
+      <li class="active"><a data-toggle="tab" href="#tabs-update-rules">{% trans "Automatic Update Rules" %}</a></li>
     </ul>
 
     <div class="tab-content">

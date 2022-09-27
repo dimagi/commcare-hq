@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<div id="ko-tabs-update-rules" data-bind="with: $root">
+<div id="ko-tabs-update-rules">
   <div class="spacer"></div>
   <div class="row">
     <div class="col-sm-8">
@@ -14,7 +14,7 @@
         {% blocktrans %}
           Create rules for updating or closing cases from CommCare HQ.
           All rules run every day at {{ time }} GMT.
-          For more information, see the <a href="{{ help_site_url }}">Help Site</a>.
+          For more information, see the <a href="https://confluence.dimagi.com/display/commcarepublic/Automatically+Close+Cases">Help Site</a>.
         {% endblocktrans %}
       </p>
     </div>
@@ -42,21 +42,21 @@
         <tbody data-bind="foreach: paginatedRules">
           <tr>
             <td>
-              <a data-bind="attr: {href: editURL}">
+              <a data-bind="attr: {href: edit_url}">
                 <strong data-bind="text: name"></strong>
               </a>
             </td>
-            <td data-bind="text: caseType"></td>
+            <td data-bind="text: case_type"></td>
             <td>
-              <span class="label label-success" data-bind="visible: active">{% trans "Active" %}</span>
-              <span class="label label-danger" data-bind="visible: !active">{% trans "Inactive" %}</span>
+              <span class="label label-success" data-bind="visible: active()">{% trans "Active" %}</span>
+              <span class="label label-danger" data-bind="visible: !active()">{% trans "Inactive" %}</span>
             </td>
-            <td data-bind="text: lastRun"></td>
+            <td data-bind="text: last_run"></td>
             <td>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active">
+              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active()">
                 {% trans "Activate" %}
               </button>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active">
+              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active()">
                 {% trans "Deactivate" %}
               </button>
               <button type="button" data-toggle="modal" class="btn btn-danger"
