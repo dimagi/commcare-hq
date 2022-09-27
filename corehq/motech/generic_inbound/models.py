@@ -100,22 +100,29 @@ class RequestLog(models.Model):
         PATCH = 'PATCH'
 
     id = models.UUIDField(primary_key=True, default=uuid4)
-    domain = models.CharField(max_length=255, db_index=True)
+    domain = models.CharField(max_length=255)
     api = models.ForeignKey(ConfigurableAPI, on_delete=models.CASCADE)
-    status = models.CharField(max_length=32, choices=Status.choices, db_index=True)
+    status = models.CharField(max_length=32, choices=Status.choices)
 
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
     attempts = models.PositiveSmallIntegerField(default=1)
-    response_status = models.PositiveSmallIntegerField(db_index=True)
+    response_status = models.PositiveSmallIntegerField()
     error_message = models.TextField()
 
-    username = models.CharField(max_length=128, db_index=True)
+    username = models.CharField(max_length=128)
     request_method = models.CharField(max_length=32, choices=RequestMethod.choices)
     request_query = models.CharField(max_length=8192)
     request_body = models.TextField()
     request_headers = models.JSONField(default=dict)
     request_user_agent = models.TextField()
-    request_ip = models.GenericIPAddressField(db_index=True)
+    request_ip = models.GenericIPAddressField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['domain']),
+            models.Index(fields=['status']),
+            models.Index(fields=['username']),
+        ]
 
     def __repr__(self):
         return f"RequestLog(domain='{self.domain}', api={self.api}, status='{self.status}')"
