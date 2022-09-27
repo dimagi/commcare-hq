@@ -22,8 +22,8 @@ from .utils import (
 from ..client import (
     BulkActionItem,
     BaseAdapter,
-    ElasticManageAdapter,
     get_client,
+    manager,
     _elastic_hosts,
     _client_default,
     _client_for_export,
@@ -147,7 +147,7 @@ class AdapterWithIndexTestCase(SimpleTestCase):
     @nottest
     def _purge_test_index(self):
         try:
-            ElasticManageAdapter().index_delete(self.index)
+            manager.index_delete(self.index)
         except TransportError:
             # TransportError(404, 'index_not_found_exception', 'no such index')
             pass
@@ -156,7 +156,7 @@ class AdapterWithIndexTestCase(SimpleTestCase):
 @es_test
 class TestElasticManageAdapter(AdapterWithIndexTestCase):
 
-    adapter = ElasticManageAdapter()
+    adapter = manager
     index = "test_manage-adapter"
 
     def test_index_exists(self):
@@ -533,16 +533,16 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     """
 
     def index_exists(self):
-        return ElasticManageAdapter().index_exists(self.index_name)
+        return manager.index_exists(self.index_name)
 
     def create_index(self, settings=None):
-        ElasticManageAdapter().index_create(self.index_name, settings)
+        manager.index_create(self.index_name, settings)
 
     def delete_index(self):
-        ElasticManageAdapter().index_delete(self.index_name)
+        manager.index_delete(self.index_name)
 
     def refresh_index(self):
-        ElasticManageAdapter().indices_refresh([self.index_name])
+        manager.indices_refresh([self.index_name])
 
 
 adapter_with_extras = TestDocumentAdapterWithExtras(test_adapter.index_name, test_adapter.type)

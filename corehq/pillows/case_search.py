@@ -18,7 +18,7 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
 from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
-from corehq.apps.es.client import ElasticManageAdapter
+from corehq.apps.es.client import manager
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -301,6 +301,6 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    ElasticManageAdapter().index_refresh(case_search_adapter.index_name)
+    manager.index_refresh(case_search_adapter.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
     case_search_adapter.bulk_delete(case_ids)

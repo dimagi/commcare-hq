@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 from testil import assert_raises, eq
 
 from .utils import es_test, es_test_attr, temporary_index
-from ..client import ElasticManageAdapter
+from ..client import manager
 from ..exceptions import ESRegistryError
 from ..registry import (
     get_registry,
@@ -178,7 +178,6 @@ def test_teardown_class_expects_classmethods():
 
 @es_test
 def test_temporary_index():
-    manager = ElasticManageAdapter()
     index = "test_index"
 
     def test_temporary_index_with_args(*args):
@@ -192,7 +191,6 @@ def test_temporary_index():
 
 @es_test
 def test_temporary_index_fails_with_invalid_args():
-    manager = ElasticManageAdapter()
     index = "test_index"
 
     def test_temporary_index_with_args(type_, mapping):

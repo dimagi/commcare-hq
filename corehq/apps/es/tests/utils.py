@@ -17,7 +17,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
-from ..client import ElasticDocumentAdapter, ElasticManageAdapter
+from ..client import ElasticDocumentAdapter, manager
 from ..registry import (
     register,
     deregister,
@@ -214,7 +214,6 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
         raise ValueError(f"type_ and mapping args are mutually inclusive "
                          f"(index={index!r}, type_={type_!r}, "
                          f"mapping={mapping!r})")
-    manager = ElasticManageAdapter()
     if purge and manager.index_exists(index):
         manager.index_delete(index)
     manager.index_create(index)

@@ -908,3 +908,6 @@ def create_document_adapter(cls, index_name, type_):
 
     register_document_adapter(doc_adapter)
     return doc_adapter
+
+
+manager = ElasticManageAdapter()

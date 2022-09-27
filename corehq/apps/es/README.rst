@@ -203,7 +203,9 @@ The ``corehq.apps.es.client`` module encapsulates the CommCare HQ Elasticsearch
 client adapters. It implements a high-level Elasticsearch client protocol
 necessary to accomplish all interactions with the backend Elasticsearch cluster.
 Client adapters are split into two usage patterns, the "Management Adapter" and
-"Document Adapters".
+"Document Adapters".  Client adapters are instantiated at import time in order
+to perform index verification when Django starts.  Downstream code needing an
+adapter import and use the adapter instance.
 
 .. toctree::
 
@@ -215,10 +217,11 @@ Client adapters are split into two usage patterns, the "Management Adapter" and
 Management Adapter
 ''''''''''''''''''
 
-There is only one management adapter, ``ElasticManageAdapter``. This adapter is
-used for performing all cluster management tasks such as creating and updating
-indices and their mappings, changing index settings, changing cluster settings,
-etc.  This functionality is split into a separate class for a few reasons:
+There is only one management adapter, ``corehq.apps.es.client.manager``. This
+adapter is used for performing all cluster management tasks such as creating and
+updating indices and their mappings, changing index settings, changing cluster
+settings, etc.  This functionality is split into a separate class for a few
+reasons:
 
 1. The management adapter is responsible for low-level Elastic operations which
    document adapters should never be performing because the scope of a document
@@ -227,21 +230,19 @@ etc.  This functionality is split into a separate class for a few reasons:
    operations a connection can be used for. The separation in these client
    adapter classes is designed to fit into that model.
 
-The management adapter does not need any special parameters to work with, and
-can be instantiated and used directly:
-
 .. code-block:: python
 
-    adapter = ElasticManageAdapter()
-    adapter.index_create("books")
+    from corehq.apps.es.client import manager
+
+    manager.index_create("books")
     mapping = {"properties": {
         "author": {"type": "text"},
         "title": {"type": "text"},
         "published": {"type": "date"},
     }}
-    adapter.index_put_mapping("books", "book", mapping)
-    adapter.index_refresh("books")
-    adapter.index_delete("books")
+    manager.index_put_mapping("books", "book", mapping)
+    manager.index_refresh("books")
+    manager.index_delete("books")
 
 
 Document Adapters

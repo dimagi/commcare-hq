@@ -1,6 +1,6 @@
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.client import ElasticManageAdapter, get_client
+from corehq.apps.es.client import get_client, manager
 from corehq.apps.es.exceptions import ESError
 from corehq.apps.es.registry import registry_entry
 from corehq.apps.es.transient_util import (  # noqa: F401
@@ -52,7 +52,7 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
 
 def refresh_elasticsearch_index(index_cname):
     index_info = registry_entry(index_cname)
-    ElasticManageAdapter().index_refresh(index_info.alias)
+    manager.index_refresh(index_info.alias)
 
 
 def run_query(index_cname, q, for_export=False):
