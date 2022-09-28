@@ -49,13 +49,13 @@ def get_case_location_ancestor_repeaters(case):
     Returns a list because more than one OpenmrsRepeater may have the
     same location.
     """
-    from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+    from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 
     case_location = get_case_location(case)
     if not case_location:
         return []
     location_repeaters = defaultdict(list)
-    for repeater in OpenmrsRepeater.by_domain(case.domain):
+    for repeater in SQLOpenmrsRepeater.objects.by_domain(case.domain):
         if repeater.location_id:
             location_repeaters[repeater.location_id].append(repeater)
     for location_id in reversed(case_location.path):
@@ -369,14 +369,14 @@ def generate_identifier(requests, identifier_type):
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
     case = CommCareCase.objects.get_case(info.case_id, domain)
-    patient_finder = PatientFinder.wrap(openmrs_config.case_config.patient_finder)
+    patient_finder = PatientFinder.wrap(openmrs_config['case_config'].get('patient_finder'))
     if patient_finder is None:
         return
-    patients = patient_finder.find_patients(requests, case, openmrs_config.case_config)
+    patients = patient_finder.find_patients(requests, case, openmrs_config['case_config'])
     if len(patients) == 1:
         patient, = patients
     elif not patients and get_value(patient_finder.create_missing, info):
-        patient = create_patient(requests, info, openmrs_config.case_config)
+        patient = create_patient(requests, info, openmrs_config['case_config'])
         if patient is None:
             # ``create_patient()`` will return None without an error
             # if the case has no basic data, not even a name. It
@@ -388,7 +388,7 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         # patients, don't guess. Just admit that we don't know.
         return None
     try:
-        save_match_ids(case, openmrs_config.case_config, patient)
+        save_match_ids(case, openmrs_config['case_config'], patient)
     except DuplicateCaseMatch as err:
         requests.notify_error(str(err), _(
             "Either the same person has more than one CommCare case, or "
@@ -401,14 +401,14 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 
 
 def get_patient(requests, domain, info, openmrs_config):
-    for id_ in openmrs_config.case_config.match_on_ids:
-        identifier_config: JsonDict = openmrs_config.case_config.patient_identifiers[id_]
-        identifier_case_property = identifier_config["case_property"]
+    for id_ in openmrs_config['case_config'].get('match_on_ids'):
+        identifier_config: JsonDict = openmrs_config['case_config'].get('patient_identifiers', {}).get(id_, {})
+        identifier_case_property = identifier_config.get("case_property")
         # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
         assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
         patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
-            if patient["voided"]:
+            if patient.get("voided"):
                 # The patient associated with the case has been merged with
                 # another patient in OpenMRS, or deleted. Delete the OpenMRS
                 # identifier on the case, and try again.
@@ -418,7 +418,7 @@ def get_patient(requests, domain, info, openmrs_config):
             return patient
 
     # Definitive IDs did not match a patient in OpenMRS.
-    if openmrs_config.case_config.patient_finder:
+    if openmrs_config['case_config'].get('patient_finder'):
         # Search for patients based on other case properties
         return find_or_create_patient(requests, domain, info, openmrs_config)
 
