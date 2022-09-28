@@ -55,19 +55,19 @@ def create_repeat_records(repeater_cls, payload):
             notify_exception(None, "create_repeat_records had an error resulting in a retry")
             metrics_counter('commcare.repeaters.error_creating_record', tags={
                 'domain': payload.domain,
-                'repeater_type': repeater_cls.__name__,
+                'repeater_type': repeater_cls._repeater_type,
             })
             time.sleep(sleep_length)
         else:
             return
     metrics_counter('commcare.repeaters.failed_to_create_record', tags={
         'domain': payload.domain,
-        'repeater_type': repeater_cls.__name__,
+        'repeater_type': repeater_cls._repeater_type,
     })
 
 
 def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
-    repeater_name = repeater_cls.__module__ + '.' + repeater_cls.__name__
+    repeater_name = repeater_cls.__module__ + '.' + repeater_cls._repeater_type
     if settings.REPEATERS_WHITELIST is not None and repeater_name not in settings.REPEATERS_WHITELIST:
         return
     domain = payload.domain
