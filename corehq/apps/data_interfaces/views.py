@@ -653,7 +653,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
 
     @property
     def page_context(self):
-        context = super().main_context
+        context = super().page_context
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
         })
