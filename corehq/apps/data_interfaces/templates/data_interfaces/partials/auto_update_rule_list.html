@@ -60,11 +60,11 @@
                 {% trans "Deactivate" %}
               </button>
               <button type="button" data-toggle="modal" class="btn btn-danger"
-                      data-bind="attr: { 'data-target': '#delete-rule-' + id }">
+                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }">
                 <i class="fa fa-remove"></i>
                 {% trans "Delete" %}
               </button>
-              <div class="modal fade" data-bind="attr: { id: 'delete-rule-' + id }">
+              <div class="modal fade" data-bind="attr: { id: 'delete-rule-' + id() }">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
