@@ -4,6 +4,10 @@ from corehq.apps.sso.views.oidc import (
     sso_oidc_login,
     sso_oidc_auth,
     sso_oidc_logout,
+    sso_oidc_api_auth,
+    sso_oidc_fake_odata_service_view,
+    sso_oidc_fake_odata_feed,
+    sso_oidc_fake_odata_metadata_view,
 )
 from corehq.apps.sso.views.saml import (
     sso_saml_metadata,
@@ -20,7 +24,11 @@ saml_urls = [
 oidc_urls = [
     url(r'^login/$', sso_oidc_login, name='sso_oidc_login'),
     url(r'^auth/$', sso_oidc_auth, name='sso_oidc_auth'),
+    url(r'^api/auth/$', sso_oidc_api_auth, name='sso_oidc_api_auth'),
     url(r'^logout/$', sso_oidc_logout, name='sso_oidc_logout'),
+    url(r'^odata/\$metadata$', sso_oidc_fake_odata_metadata_view, name='sso_oidc_fake_odata_metadata_view'),
+    url(r'^odata/feed$', sso_oidc_fake_odata_feed, name='sso_oidc_fake_odata_feed'),
+    url(r'^odata/$', sso_oidc_fake_odata_service_view, name='sso_oidc_fake_odata_service_view'),
 ]
 
 urlpatterns = [
