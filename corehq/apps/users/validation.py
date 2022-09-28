@@ -6,19 +6,20 @@ from corehq.apps.users.util import is_username_available
 from corehq.apps.users.views.mobile import BAD_MOBILE_USERNAME_REGEX
 
 
-def validate_mobile_username(username, domain):
+def validate_mobile_username(username, domain, is_unique=True):
     """
     Raises a ValidationError if any issue with the complete username is encountered
     :param username: str, expects complete username ('username@example.commcarehq.org')
     :param domain: str, required
+    :param is_unique: should be True when a new user is being created and false when a user is being updated.
     """
     if not username:
         raise ValidationError(_("Username is required."))
 
     _validate_complete_username(username, domain)
 
-    if not is_username_available(username):
-        raise ValidationError(_("Username '{}' is already taken or reserved.").format(username))
+    if is_unique and not is_username_available(username):
+            raise ValidationError(_("Username '{}' is already taken or reserved.").format(username))
 
 
 def _validate_complete_username(username, domain):
