@@ -331,8 +331,8 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         self.get_api_version()
 
         requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        for form_config in self.dhis2_config.form_configs:
-            if form_config.xmlns == payload['form']['@xmlns']:
+        for form_config in self.dhis2_config['form_configs']:
+            if form_config['xmlns'] == payload['form']['@xmlns']:
                 try:
                     return send_dhis2_event(
                         requests,
@@ -395,9 +395,9 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
         self.get_api_version()
 
         value_source_configs = []
-        for case_config in self.dhis2_entity_config.case_configs:
-            value_source_configs.append(case_config.org_unit_id)
-            value_source_configs.append(case_config.tei_id)
+        for case_config in self.dhis2_entity_config['case_configs']:
+            value_source_configs.append(case_config['org_unit_id'])
+            value_source_configs.append(case_config['tei_id'])
             for value_source_config in case_config.attributes.values():
                 value_source_configs.append(value_source_config)
 
