@@ -12,15 +12,16 @@ from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
-)
+from corehq.apps.hqcase.api.core import SubmissionError, UserError
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundUserError,
+    GenericInboundValidationError,
+)
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -180,6 +181,8 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundRequestFiltered:
+        return JsonResponse({}, status=204)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except SubmissionError as e:
