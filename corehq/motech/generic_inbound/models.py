@@ -20,7 +20,10 @@ class ConfigurableAPI(models.Model):
     updated_on = models.DateTimeField(auto_now=True)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    transform_expression = models.ForeignKey(UCRExpression, on_delete=models.PROTECT)
+    filter_expression = models.ForeignKey(
+        UCRExpression, on_delete=models.PROTECT, related_name="api_filter", null=True, blank=True)
+    transform_expression = models.ForeignKey(
+        UCRExpression, on_delete=models.PROTECT, related_name="api_expression")
 
     objects = AuditingManager()
 
@@ -46,6 +49,13 @@ class ConfigurableAPI(models.Model):
     @memoized
     def parsed_expression(self):
         return self.transform_expression.wrapped_definition(FactoryContext.empty())
+
+    @property
+    @memoized
+    def parsed_filter(self):
+        if not self.filter_expression:
+            return None
+        return self.filter_expression.wrapped_definition(FactoryContext.empty())
 
     @property
     @memoized
