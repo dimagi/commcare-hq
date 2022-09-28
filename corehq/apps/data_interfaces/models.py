@@ -1603,6 +1603,7 @@ class DomainCaseRuleRun(models.Model):
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
     status = models.CharField(max_length=1)
+    workflow = models.CharField(max_length=126, choices=RuleWorkflow.CHOICES, null=True)
 
     cases_checked = models.IntegerField(default=0)
     num_updates = models.IntegerField(default=0)
