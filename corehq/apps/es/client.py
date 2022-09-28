@@ -3,6 +3,7 @@ import copy
 import json
 import logging
 from enum import Enum
+from functools import cached_property
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
@@ -45,11 +46,32 @@ class BaseAdapter:
 
     def info(self):
         """Return the Elasticsearch server info."""
-        return self._es.info()
+        try:
+            return self._es.info()
+        except ElasticsearchException as exc:
+            raise ESError("Elasticsearch is unavailable") from exc
 
     def ping(self):
         """Ping the Elasticsearch service."""
-        return self._es.ping()
+        try:
+            return self._es.ping()
+        except ElasticsearchException as exc:
+            raise ESError("Elasticsearch is unavailable") from exc
+
+    @property
+    def elastic_major_version(self):
+        return self.elastic_version[0]
+
+    @cached_property
+    def elastic_version(self):
+        cluster_info = self.info()
+        try:
+            version = tuple(int(v) for v in cluster_info["version"]["number"].split("."))
+        except (KeyError, ValueError):
+            version = ()
+        if version:
+            return version
+        raise ESError(f"invalid elasticsearch info: {cluster_info!r}")
 
 
 class ElasticManageAdapter(BaseAdapter):
@@ -580,30 +602,59 @@ class ElasticDocumentAdapter(BaseAdapter):
         self._es.index(self.index_name, self.type, source, doc_id,
                        refresh=self._refresh_value(refresh), **kw)
 
-    def update(self, doc_id, fields, refresh=False, **kw):
+    def update(self, doc_id, fields, return_doc=False, refresh=False,
+               _upsert=False, retry_on_conflict=None):
         """Update an existing document in Elasticsearch
 
         Equivalent to the legacy
         ``ElasticsearchInterface.update_doc_fields(...)`` method.
 
         :param doc_id: ``str`` ID of the document to update
-        :param fields: ``dict`` of fields/values to update on the existing
-                       Elastic doc
+        :param fields: ``dict`` of name/values to update on the existing Elastic
+                       doc
+        :param return_doc: ``bool`` return the full updated doc. When ``False``
+                           (the default), ``None`` is returned.
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.Elasticsearch.update()`` method.
+        :param _upsert: ``bool``. Only needed for multiplexing, use the
+                        `index()` method instead. Create a new document if one
+                        doesn't already exist. When ``False`` (the default),
+                        performing an update request for a missing document will
+                        raise an exception.
+        :param retry_on_conflict: ``int`` number of times to retry the update if
+                                  there is a conflict. Ignored if ``None`` (the
+                                  default). Otherwise, the value it is passed
+                                  directly to the low-level `update()` method.
+        :returns: ``dict`` or ``None``
         """
         if "_id" in fields:
             if doc_id != fields["_id"]:
                 raise ValueError(f"ambiguous doc_id: ({doc_id!r} != {fields['_id']!r})")
             fields = {key: fields[key] for key in fields if key != "_id"}
         self._verify_doc_source(fields)
-        # NOTE: future implementations may wish to get a return value here (e.g.
-        # when using the `fields` kwarg), but the current implementation never
-        # uses this functionality, so this method does not return anything.
-        self._es.update(self.index_name, self.type, doc_id, {"doc": fields},
-                        refresh=self._refresh_value(refresh), **kw)
+        kw = {"refresh": self._refresh_value(refresh)}
+        if retry_on_conflict is not None:
+            kw["retry_on_conflict"] = retry_on_conflict
+        return self._update(doc_id, fields, return_doc, _upsert, **kw)
+
+    def _update(self, doc_id, fields, return_doc, _upsert, **kw):
+        """Perform the low-level (3rd party library) update operation."""
+        if return_doc:
+            major_version = self.elastic_major_version
+            assert major_version in {2, 5, 6, 7, 8}, self.elastic_version
+            if major_version == 2:
+                kw["fields"] = "_source"
+            elif major_version in {5, 6, 7}:
+                # this changed in elasticsearch-py v5.x
+                kw["_source"] = "true"
+            else:
+                # this changes again in elasticsearch-py v8.x
+                kw["source"] = True
+        payload = {"doc": fields}
+        if _upsert:
+            payload["doc_as_upsert"] = True
+        response = self._es.update(self.index_name, self.type, doc_id, payload, **kw)
+        return response.get("get", {}).get("_source")
 
     def delete(self, doc_id, refresh=False):
         """Delete an existing document from Elasticsearch

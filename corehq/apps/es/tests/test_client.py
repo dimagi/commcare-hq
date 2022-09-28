@@ -2,13 +2,18 @@ import json
 import math
 from contextlib import contextmanager
 from copy import deepcopy
+from unittest.mock import ANY
 
 import uuid
 from django.test import SimpleTestCase, override_settings
 from nose.tools import nottest
 from unittest.mock import patch
 
-from corehq.util.es.elasticsearch import Elasticsearch, TransportError
+from corehq.util.es.elasticsearch import (
+    Elasticsearch,
+    ElasticsearchException,
+    TransportError,
+)
 
 from .utils import (
     TestDoc,
@@ -29,7 +34,7 @@ from ..client import (
     _client_for_export,
 )
 from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD
-from ..exceptions import ESShardFailure, TaskError, TaskMissing
+from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 
 
 @override_settings(ELASTICSEARCH_HOSTS=["localhost"],
@@ -130,6 +135,61 @@ class TestBaseAdapter(SimpleTestCase):
         _client_default.reset_cache()
         # verify that the cache clear was successful
         self.assertTrue(BaseAdapter().ping())
+
+    def test_elastic_version(self):
+        with patch_elastic_version(self.adapter, "1.2.3"):
+            self.assertEqual((1, 2, 3), self.adapter.elastic_version)
+
+    def test_elastic_version_hits_cluster_only_once(self):
+        with patch_elastic_version(self.adapter, "1.2.3") as mock:
+            self.adapter.elastic_version  # get once
+            self.adapter.elastic_version  # get again (this time from cache)
+            mock.assert_called_once()
+
+    def test_elastic_version_raises_eserror_on_elasticsearchexception(self):
+        with (
+            patch_elastic_version(self.adapter, ElasticsearchException("fail")),
+            self.assertRaises(ESError),
+        ):
+            self.adapter.elastic_version
+
+    def test_elastic_version_raises_eserror_on_malformed_payload(self):
+        with patch_elastic_version(self.adapter, "1.2.3a"), self.assertRaises(ESError):
+            self.adapter.elastic_version
+
+    def test_elastic_version_raises_eserror_on_invalid_version_number(self):
+        try:
+            # clear the cached property so the next 'get' calls 'adapter._es.info()'
+            del self.adapter.elastic_version
+        except AttributeError:
+            pass  # not cached
+        with (
+            patch.object(self.adapter._es, "info", return_value={}),
+            self.assertRaises(ESError),
+        ):
+            self.adapter.elastic_version
+
+    def test_elastic_major_version(self):
+        with patch_elastic_version(self.adapter, "1.2.3"):
+            self.assertEqual(1, self.adapter.elastic_major_version)
+
+
+@contextmanager
+def patch_elastic_version(adapter, version_or_exception):
+    def clear_cached_property():
+        try:
+            del adapter.elastic_version
+        except AttributeError:
+            pass  # not cached
+
+    if isinstance(version_or_exception, Exception):
+        kwargs = {"side_effect": version_or_exception}
+    else:
+        kwargs = {"return_value": {"version": {"number": version_or_exception}}}
+    clear_cached_property()  # make the next "getattr" call adapter._es.info()
+    with patch.object(adapter._es, "info", **kwargs) as mock:
+        yield mock
+    clear_cached_property()  # don't poison other tests
 
 
 class AdapterWithIndexTestCase(SimpleTestCase):
@@ -892,6 +952,87 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         self.assertEqual(test.exception.status_code, 404)
         self.assertEqual(test.exception.error, "document_missing_exception")
         self.assertEqual([], docs_from_result(self.adapter.search({})))
+
+    def test_update_ignores_retry_on_conflict_if_not_present(self):
+        with patch.object(self.adapter._es, "update") as mock:
+            self.adapter.update("1", {})
+        mock.assert_called_once_with(ANY, ANY, "1", ANY, refresh=ANY)
+
+    def test_update_passes_retry_on_conflict_arg_directly_to_client(self):
+        arg = object()
+        with patch.object(self.adapter._es, "update") as mock:
+            self.adapter.update("1", {}, retry_on_conflict=arg)
+        mock.assert_called_once_with(ANY, ANY, "1", ANY, refresh=ANY, retry_on_conflict=arg)
+
+    def test_update_does_not_accept_arbitrary_low_level_elastic_kwargs(self):
+        with self.assertRaises(TypeError):
+            self.adapter.update("1", {"pet_name": "Cyrus"}, timeout=10)
+
+    def test_update_returns_none_by_default(self):
+        doc = self._make_doc()
+        self.adapter.index(doc, refresh=True)
+        self.assertIsNone(self.adapter.update(doc.id, {"value": 137}))
+
+    def test_update_returns_full_doc_if_specified(self):
+        doc = self._make_doc()
+        doc_id, doc_source = self.adapter.from_python(doc)
+        self.adapter.index(doc, refresh=True)
+        self.assertEqual(doc_source, self.adapter.update(doc_id, {}, return_doc=True))
+
+    def test_update_performs_upsert_for_missing_doc_with_private_kwarg(self):
+        doc = self._make_doc()
+        doc_id, doc_source = self.adapter.from_python(doc)
+        with self.assertRaises(TransportError):
+            self.adapter.get(doc_id)
+        self.adapter.update(doc_id, doc_source, refresh=True, _upsert=True)  # doesn't raise
+        doc_source["_id"] = doc_id
+        self.assertEqual(doc_source, self.adapter.get(doc_id))
+
+    def test__update_does_not_need_version_without_return_doc(self):
+        class Fail(Exception):
+            pass
+
+        doc = self._make_doc()
+        self.adapter.index(doc, refresh=True)
+        with patch_elastic_version(self.adapter, Fail()):
+            with self.assertRaises(Fail):
+                self.adapter.elastic_major_version
+            self.adapter._update(doc.id, {}, False, False)  # does not raise
+
+    def test__update_return_doc_requires_elasticsearch_2_5_6_7_8(self):
+        doc = self._make_doc()
+        self.adapter.index(doc, refresh=True)
+        with (
+            patch_elastic_version(self.adapter, "1.7"),
+            self.assertRaises(AssertionError) as test,
+        ):
+            self.adapter._update(doc.id, {}, True, False)
+        self.assertEqual(((1, 7),), test.exception.args)
+
+    def test__update_return_doc_uses_fields_kwarg_for_elasticsearch_2(self):
+        with (
+            patch_elastic_version(self.adapter, "2.4"),
+            patch.object(self.adapter._es, "update") as mock,
+        ):
+            self.adapter._update("1", {}, True, False)
+            mock.assert_called_once_with(ANY, ANY, "1", ANY, fields="_source")
+
+    def test__update_return_doc_uses__source_kwarg_for_elasticsearch_5_6_7(self):
+        for version in ["5.6", "6.8", "7.17"]:
+            with (
+                patch_elastic_version(self.adapter, version),
+                patch.object(self.adapter._es, "update") as mock,
+            ):
+                self.adapter._update("1", {}, True, False)
+                mock.assert_called_once_with(ANY, ANY, "1", ANY, _source="true")
+
+    def test__update_return_doc_uses_source_kwarg_for_elasticsearch_8(self):
+        with (
+            patch_elastic_version(self.adapter, "8.4"),
+            patch.object(self.adapter._es, "update") as mock,
+        ):
+            self.adapter._update("1", {}, True, False)
+            mock.assert_called_once_with(ANY, ANY, "1", ANY, source=True)
 
     def test_delete(self):
         doc = self._index_new_doc()
