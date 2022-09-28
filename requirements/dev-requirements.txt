@@ -169,7 +169,7 @@ django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/relea
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
-django-otp==0.9.4
+django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth

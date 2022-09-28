@@ -20,13 +20,12 @@ from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqcase.api.core import (
     SubmissionError,
     UserError,
-    serialize_case,
 )
-from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.core import execute_generic_api
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -186,7 +185,7 @@ def _generic_inbound_api(api, request):
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        response = _execute_case_api(
+        response = execute_generic_api(
             request.domain,
             request.couch_user,
             request.META.get('HTTP_USER_AGENT'),
@@ -197,6 +196,8 @@ def _generic_inbound_api(api, request):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundValidationError as e:
+        return _get_validation_error_response(e.errors)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
@@ -206,30 +207,10 @@ def _generic_inbound_api(api, request):
     return JsonResponse(response)
 
 
-def _execute_case_api(domain, couch_user, device_id, context, api_model):
-    data = api_model.parsed_expression(context.root_doc, context)
-
-    if not isinstance(data, list):
-        # the bulk API always requires a list
-        data = [data]
-
-    xform, case_or_cases = handle_case_update(
-        domain=domain,
-        data=data,
-        user=couch_user,
-        device_id=device_id,
-        is_creation=None,
-    )
-
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
-    return {
-        'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
-    }
+def _get_validation_error_response(errors):
+    return JsonResponse({'error': 'validation error', 'errors': [
+        error['message'] for error in errors
+    ]}, status=400)
 
 
 def _log_api_request(api, request, response):
