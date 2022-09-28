@@ -107,7 +107,7 @@ class TestDhis2EventsHelpers(TestCase):
             owner_id='test_location',
             form_question_values=get_form_question_values(self.form),
         )
-        event = get_event(DOMAIN, self.repeater.dhis2_config.form_configs[0], form_json=self.form, info=info)
+        event = get_event(DOMAIN, self.repeater.dhis2_config['form_configs'][0], form_json=self.form, info=info)
 
         self.assertDictEqual(
             {
