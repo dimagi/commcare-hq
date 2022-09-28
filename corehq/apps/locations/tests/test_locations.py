@@ -9,6 +9,7 @@ from corehq.apps.products.models import SQLProduct
 
 from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyPerTest, make_loc
+from ...data_interfaces.models import RuleWorkflow
 
 
 class LocationProducts(TestCase):
@@ -358,5 +359,5 @@ class TestDeleteLocations(LocationHierarchyPerTest):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )

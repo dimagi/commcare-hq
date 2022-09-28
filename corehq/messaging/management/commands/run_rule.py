@@ -1,4 +1,4 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.tasks import get_sync_key
@@ -24,7 +24,7 @@ class Command(BaseCommand):
         if rule.domain != domain:
             raise CommandError("Domain '%s' does not match rule's domain '%s'" % (domain, rule.domain))
 
-        if rule.workflow != AutomaticUpdateRule.WORKFLOW_SCHEDULING:
+        if rule.workflow != RuleWorkflow.SCHEDULING:
             raise CommandError("Expected the rule to be a messaging rule")
 
         return rule

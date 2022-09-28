@@ -20,6 +20,7 @@ from corehq.apps.data_interfaces.models import (
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
     CaseDuplicate,
+    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
@@ -259,7 +260,7 @@ class FindingDuplicatesQueryTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
 
 
@@ -421,7 +422,7 @@ class CaseDeduplicationActionTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         _, cls.action = cls.rule.add_action(
             CaseDeduplicationActionDefinition,
@@ -622,7 +623,7 @@ class CaseDeduplicationActionTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         _, self.action = self.rule.add_action(
             CaseDeduplicationActionDefinition,
@@ -782,7 +783,7 @@ class DeduplicationPillowTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         _, cls.action = cls.rule.add_action(
             CaseDeduplicationActionDefinition,
@@ -802,7 +803,7 @@ class DeduplicationPillowTest(TestCase):
             )
         ])
         cls.action.save()
-        AutomaticUpdateRule.clear_caches(cls.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        AutomaticUpdateRule.clear_caches(cls.domain, RuleWorkflow.DEDUPLICATE)
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
     def test_pillow_processes_changes(self, find_duplicate_cases_mock):
@@ -812,7 +813,7 @@ class DeduplicationPillowTest(TestCase):
         case2 = self.factory.create_case(case_name="foo", case_type=self.case_type, update={"age": 2})
         find_duplicate_cases_mock.return_value = [case1.case_id, case2.case_id]
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.DEDUPLICATE)
 
         new_kafka_sec = get_topic_offset(topics.FORM_SQL)
         self.pillow.process_changes(since=kafka_sec, forever=False)
@@ -866,7 +867,7 @@ class TestDeduplicationRuleRuns(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
 
     def _create_mobile_worker(self, username):
@@ -1181,7 +1182,7 @@ class DeduplicationBackfillTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         _, self.action = self.rule.add_action(
             CaseDeduplicationActionDefinition,
@@ -1191,7 +1192,7 @@ class DeduplicationBackfillTest(TestCase):
         )
 
         self.action.save()
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.DEDUPLICATE)
 
     def test_include_closed_finds_open_and_closed_cases(self):
         self._set_up_rule(include_closed=True)

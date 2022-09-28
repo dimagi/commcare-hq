@@ -9,7 +9,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition,
     CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition,
-    LocationFilterDefinition,
+    LocationFilterDefinition, RuleWorkflow,
 )
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
@@ -424,7 +424,7 @@ def update_auto_update_rules(domain_link):
 
     downstream_rules = AutomaticUpdateRule.by_domain(
         domain_link.linked_domain,
-        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        RuleWorkflow.CASE_UPDATE,
         active_only=False
     )
 
@@ -446,7 +446,7 @@ def update_auto_update_rules(domain_link):
             downstream_rule = AutomaticUpdateRule(
                 domain=domain_link.linked_domain,
                 active=upstream_rule_def['rule']['active'],
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                workflow=RuleWorkflow.CASE_UPDATE,
                 upstream_id=upstream_rule_def['rule']['id']
             )
 

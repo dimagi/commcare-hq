@@ -4,7 +4,7 @@ from casexml.apps.case.xform import get_case_updates
 from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_DEDUPE
 
@@ -37,7 +37,7 @@ class CaseDeduplicationProcessor(PillowProcessor):
             self._process_case_update(domain, case_update)
 
     def _get_rules(self, domain):
-        return AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+        return AutomaticUpdateRule.by_domain_cached(domain, RuleWorkflow.DEDUPLICATE)
 
     def _process_case_update(self, domain, case_update):
         changed_properties = set()

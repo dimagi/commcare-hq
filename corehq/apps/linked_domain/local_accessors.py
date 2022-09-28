@@ -11,7 +11,7 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 
 
 def get_tableau_server_and_visualizations(domain):
@@ -151,7 +151,7 @@ def get_auto_update_rules(domain):
     rules = AutomaticUpdateRule.by_domain(
         domain,
         # For now only grab those rules that update cases, not conditional alerts for messaging
-        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        RuleWorkflow.CASE_UPDATE,
         active_only=False
     )
 

@@ -7,7 +7,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_usercase import sync_usercases
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import RuleWorkflow
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.shortcuts import create_domain
@@ -91,7 +91,7 @@ class DeactivatedMobileWorkersTest(BaseCaseRuleTest):
     def test_custom_action(self):
         checkin_case = self.make_checkin_case()
         rule = create_empty_rule(
-            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type="checkin",
+            self.domain, RuleWorkflow.CASE_UPDATE, case_type="checkin",
         )
         case_properties = {
             "assigned_to_primary_checkin_case_id": checkin_case.case_id,
@@ -150,7 +150,7 @@ class AllActivityCompleteDateTest(BaseCaseRuleTest):
 
     def test_custom_action(self):
         rule = create_empty_rule(
-            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type="circus",
+            self.domain, RuleWorkflow.CASE_UPDATE, case_type="circus",
         )
 
         case1 = CaseFactory(self.domain).create_case(

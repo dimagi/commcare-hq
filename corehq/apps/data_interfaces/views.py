@@ -53,6 +53,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDuplicate,
+    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
@@ -643,7 +644,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
     ACTION_ACTIVATE = 'activate'
     ACTION_DEACTIVATE = 'deactivate'
 
-    rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
+    rule_workflow = RuleWorkflow.CASE_UPDATE
 
     @property
     def edit_url_name(self):
@@ -866,7 +867,7 @@ class AddCaseRuleView(DataInterfaceSection):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                        workflow=RuleWorkflow.CASE_UPDATE,
                     )
 
                 rule.name = self.rule_form.cleaned_data['name']
@@ -881,7 +882,7 @@ class EditCaseRuleView(AddCaseRuleView):
     urlname = 'edit_case_rule'
     page_title = gettext_lazy("Edit Case Rule")
 
-    rule_workflow = AutomaticUpdateRule.WORKFLOW_CASE_UPDATE
+    rule_workflow = RuleWorkflow.CASE_UPDATE
 
     @property
     @memoized
@@ -914,7 +915,7 @@ class DeduplicationRuleListView(AutomaticUpdateRuleListView):
     urlname = 'deduplication_rules'
     page_title = gettext_lazy("Deduplicate Cases")
 
-    rule_workflow = AutomaticUpdateRule.WORKFLOW_DEDUPLICATE
+    rule_workflow = RuleWorkflow.DEDUPLICATE
 
     @property
     def column_names(self):
@@ -1068,7 +1069,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
         existing_rule = AutomaticUpdateRule.objects.filter(
             deleted=False,
             domain=domain,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
             name=rule_params['name'],
         )
         if existing_rule and existing_rule[0] != rule:
@@ -1108,7 +1109,7 @@ class DeduplicationRuleCreateView(DataInterfaceSection):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
 
 
@@ -1130,7 +1131,7 @@ class DeduplicationRuleEditView(DeduplicationRuleCreateView):
         return get_object_or_404(
             AutomaticUpdateRule,
             id=self.rule_id,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
             domain=self.domain,
             deleted=False,
         )

@@ -12,7 +12,7 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
@@ -44,7 +44,7 @@ class DuplicateCaseRuleFilter(BaseSingleOptionFilter):
     def options(self):
         rules = AutomaticUpdateRule.objects.filter(
             domain=self.domain,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
             deleted=False,
         )
         return [(

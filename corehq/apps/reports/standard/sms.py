@@ -16,7 +16,7 @@ from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -1443,7 +1443,7 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
     def get_rule_display(self, rule_id):
         try:
             rule = AutomaticUpdateRule.objects.get(domain=self.domain, pk=rule_id,
-                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+                                                   workflow=RuleWorkflow.SCHEDULING)
         except AutomaticUpdateRule.DoesNotExist:
             return '-'
 

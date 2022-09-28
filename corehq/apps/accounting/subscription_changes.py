@@ -13,7 +13,7 @@ from dimagi.utils.parsing import json_format_date
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
@@ -106,7 +106,7 @@ def _get_active_scheduled_broadcasts(domain, survey_only=False):
 
 
 def _get_active_scheduling_rules(domain, survey_only=False):
-    rules = AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_SCHEDULING, active_only=False)
+    rules = AutomaticUpdateRule.by_domain(domain.name, RuleWorkflow.SCHEDULING, active_only=False)
 
     result = []
     for rule in rules:
@@ -261,9 +261,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         try:
             AutomaticUpdateRule.by_domain(
                 domain.name,
-                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                RuleWorkflow.CASE_UPDATE,
             ).update(active=False)
-            AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+            AutomaticUpdateRule.clear_caches(domain.name, RuleWorkflow.CASE_UPDATE)
             return True
         except Exception:
             log_accounting_error(
@@ -724,7 +724,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         rule_count = AutomaticUpdateRule.by_domain(
             domain.name,
-            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            RuleWorkflow.CASE_UPDATE,
         ).count()
         if rule_count > 0:
             return _fmt_alert(

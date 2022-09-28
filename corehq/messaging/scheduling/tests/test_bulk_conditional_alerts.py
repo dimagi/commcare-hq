@@ -13,6 +13,7 @@ from couchexport.models import Format
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CreateScheduleInstanceActionDefinition,
+    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
@@ -231,7 +232,7 @@ class TestBulkConditionalAlerts(TestCase):
 
     def _add_rule(self, alert_schedule_id=None, timed_schedule_id=None):
         assert(alert_schedule_id or timed_schedule_id)
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
         self.addCleanup(rule.delete)
         rule.add_action(
             CreateScheduleInstanceActionDefinition,

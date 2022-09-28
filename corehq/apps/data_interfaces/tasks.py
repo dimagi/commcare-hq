@@ -33,6 +33,7 @@ from .models import (
     CaseDuplicate,
     CaseRuleSubmission,
     DomainCaseRuleRun,
+    RuleWorkflow,
 )
 from .utils import (
     add_cases_to_case_group,
@@ -66,14 +67,14 @@ def reset_and_backfill_deduplicate_rule_task(domain, rule_id):
         rule = AutomaticUpdateRule.objects.get(
             id=rule_id,
             domain=domain,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
             active=True,
             deleted=False,
         )
     except AutomaticUpdateRule.DoesNotExist:
         return
 
-    AutomaticUpdateRule.clear_caches(rule.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+    AutomaticUpdateRule.clear_caches(rule.domain, RuleWorkflow.DEDUPLICATE)
 
     reset_deduplicate_rule(rule)
     backfill_deduplicate_rule(domain, rule)
@@ -117,7 +118,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 def run_case_update_rules(now=None):
     domains = (AutomaticUpdateRule
                .objects
-               .filter(active=True, deleted=False, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+               .filter(active=True, deleted=False, workflow=RuleWorkflow.CASE_UPDATE)
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
@@ -137,7 +138,7 @@ def run_case_update_rules(now=None):
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
 
-    domain_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+    domain_rules = AutomaticUpdateRule.by_domain(domain, RuleWorkflow.CASE_UPDATE)
     all_rule_case_types = set(domain_rules.values_list('case_type', flat=True))
 
     for case_type in all_rule_case_types:
@@ -160,7 +161,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
-    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+    all_rules = AutomaticUpdateRule.by_domain(domain, RuleWorkflow.CASE_UPDATE)
     rules = list(all_rules.filter(case_type=case_type))
 
     boundary_date = AutomaticUpdateRule.get_boundary_date(rules, now)
@@ -182,7 +183,7 @@ def run_case_update_rules_on_save(case):
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain,
-                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
+                RuleWorkflow.CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
             run_rules_for_case(case, rules, now)
 

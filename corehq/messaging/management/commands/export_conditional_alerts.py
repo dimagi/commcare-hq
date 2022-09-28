@@ -1,7 +1,7 @@
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
-    CreateScheduleInstanceActionDefinition,
+    CreateScheduleInstanceActionDefinition, RuleWorkflow,
 )
 from corehq.messaging.scheduling.models import (
     Schedule,
@@ -216,7 +216,7 @@ class Command(BaseCommand):
         result = []
         for rule in AutomaticUpdateRule.by_domain(
             domain,
-            AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            RuleWorkflow.SCHEDULING,
             active_only=False,
         ):
             json_rule = self.get_json_rule(rule)

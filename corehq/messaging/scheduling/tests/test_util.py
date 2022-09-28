@@ -1,4 +1,4 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.messaging.scheduling.models import (
     ScheduledBroadcast,
@@ -19,7 +19,7 @@ class TestMessagingModelLookups(TestCase):
         self.assertFalse(AutomaticUpdateRule.domain_has_conditional_alerts(self.domain))
         self.assertFalse(domain_has_reminders(self.domain))
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
         self.addCleanup(rule.delete)
 
         self.assertTrue(AutomaticUpdateRule.domain_has_conditional_alerts(self.domain))

@@ -109,7 +109,7 @@ def find_duplicate_case_ids(
 
 
 def reset_and_backfill_deduplicate_rule(rule):
-    from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+    from corehq.apps.data_interfaces.models import RuleWorkflow
     from corehq.apps.data_interfaces.tasks import (
         reset_and_backfill_deduplicate_rule_task,
     )
@@ -117,7 +117,7 @@ def reset_and_backfill_deduplicate_rule(rule):
     if not rule.active or rule.deleted:
         return
 
-    if rule.workflow != AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
+    if rule.workflow != RuleWorkflow.DEDUPLICATE:
         raise ValueError("You can only backfill a rule with workflow DEDUPLICATE")
 
     rule.locked_for_editing = True

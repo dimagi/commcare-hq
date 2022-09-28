@@ -2,6 +2,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
+    RuleWorkflow,
 )
 from corehq.apps.domain.models import Domain
 from corehq.messaging.management.commands.export_conditional_alerts import (
@@ -82,7 +83,7 @@ class Command(BaseCommand):
                     case_type=json_rule.case_type,
                     active=True,
                     filter_on_server_modified=False,
-                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    workflow=RuleWorkflow.SCHEDULING,
                 )
 
                 for criterion in json_rule.criteria:

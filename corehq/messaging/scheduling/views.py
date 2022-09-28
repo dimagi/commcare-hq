@@ -28,7 +28,7 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
+    AutomaticUpdateRule, RuleWorkflow,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
@@ -682,7 +682,7 @@ class ConditionalAlertListView(ConditionalAlertBaseView):
                 domain=self.domain,
                 pk=rule_id,
                 deleted=False,
-                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING
+                workflow=RuleWorkflow.SCHEDULING
             )
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()
@@ -905,7 +905,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
                     rule = AutomaticUpdateRule(
                         domain=self.domain,
                         active=True,
-                        workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                        workflow=RuleWorkflow.SCHEDULING,
                     )
 
                 rule.name = self.basic_info_form.cleaned_data['name']
@@ -966,7 +966,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
             return AutomaticUpdateRule.objects.get(
                 pk=self.rule_id,
                 domain=self.domain,
-                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                workflow=RuleWorkflow.SCHEDULING,
                 deleted=False,
             )
         except AutomaticUpdateRule.DoesNotExist:

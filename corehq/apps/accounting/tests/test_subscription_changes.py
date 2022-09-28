@@ -23,6 +23,7 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CreateScheduleInstanceActionDefinition,
+    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
@@ -327,7 +328,7 @@ class DeactivateScheduleTest(TransactionTestCase):
 
     def create_conditional_alert(self, domain, content):
         schedule = AlertSchedule.create_simple_alert(domain, content)
-        rule = create_empty_rule(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(domain, RuleWorkflow.SCHEDULING)
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
             alert_schedule_id=schedule.schedule_id,

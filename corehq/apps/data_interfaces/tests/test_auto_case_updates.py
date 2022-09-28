@@ -22,6 +22,7 @@ from corehq.apps.data_interfaces.models import (
     UCRFilterDefinition,
     UpdateCaseDefinition,
     LocationFilterDefinition,
+    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
@@ -88,7 +89,7 @@ def _create_empty_rule(domain, case_type='person', active=True, deleted=False):
         deleted=deleted,
         filter_on_server_modified=False,
         server_modified_boundary=None,
-        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        workflow=RuleWorkflow.CASE_UPDATE,
     )
 
 
@@ -1080,7 +1081,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         _create_empty_rule(self.domain, case_type='person-2', active=False)
         _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
-        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+        rules = AutomaticUpdateRule.by_domain(self.domain, RuleWorkflow.CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['person-1', 'person-2']
@@ -1113,7 +1114,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
         _create_empty_rule(self.domain, case_type='person-2')
 
-        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+        rules = AutomaticUpdateRule.by_domain(self.domain, RuleWorkflow.CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         boundary_date = AutomaticUpdateRule.get_boundary_date(

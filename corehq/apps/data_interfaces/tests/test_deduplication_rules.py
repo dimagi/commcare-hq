@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from django.test import RequestFactory, TestCase
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.data_interfaces.views import (
     DeduplicationRuleCreateView,
     DeduplicationRuleEditView,
@@ -92,7 +92,7 @@ class DeduplicationRuleCreateViewTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         return res.id
 
@@ -139,7 +139,7 @@ class DeduplicationRuleEditViewTest(TestCase):
             deleted=False,
             filter_on_server_modified=False,
             server_modified_boundary=None,
-            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+            workflow=RuleWorkflow.DEDUPLICATE,
         )
         return res.id
 

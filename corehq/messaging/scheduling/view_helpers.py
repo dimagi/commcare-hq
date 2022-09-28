@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils.translation import gettext as _
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.sms.util import get_language_list
 from corehq.messaging.scheduling.exceptions import RuleUpdateError
 from corehq.messaging.scheduling.forms import ScheduleForm
@@ -18,7 +18,7 @@ def get_conditional_alerts_queryset_by_domain(domain, query_string=''):
     query = (
         AutomaticUpdateRule
         .objects
-        .filter(domain=domain, workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING, deleted=False)
+        .filter(domain=domain, workflow=RuleWorkflow.SCHEDULING, deleted=False)
     )
     if query_string:
         query = query.filter(name__icontains=query_string)
@@ -126,7 +126,7 @@ class ConditionalAlertUploader(object):
                 rule = AutomaticUpdateRule.objects.get(
                     pk=row['id'],
                     domain=self.domain,
-                    workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+                    workflow=RuleWorkflow.SCHEDULING,
                     deleted=False,
                 )
             except AutomaticUpdateRule.DoesNotExist:

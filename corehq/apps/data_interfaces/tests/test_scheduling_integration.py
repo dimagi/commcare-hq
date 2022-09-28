@@ -19,7 +19,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CreateScheduleInstanceActionDefinition,
     MatchPropertyDefinition,
-    VisitSchedulerIntegrationHelper,
+    VisitSchedulerIntegrationHelper, RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
@@ -143,7 +143,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -158,7 +158,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),)
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -200,7 +200,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -215,7 +215,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),)
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -257,7 +257,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -273,7 +273,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             reset_case_property_name='reset_property',
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -330,7 +330,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -346,7 +346,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             reset_case_property_name='reset_property',
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -410,7 +410,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             extra_options={'stop_date_case_property_name': 'stop_date'},
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -418,7 +418,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2018, 7, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -532,7 +532,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=1,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -548,7 +548,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             start_date_case_property='appointment_date',
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -642,7 +642,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=1,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -658,7 +658,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             specific_start_date=date(2018, 3, 1),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2018, 2, 28, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -696,7 +696,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # Update start date. Instance is updated with new start date.
             definition.specific_start_date = date(2018, 4, 1)
             definition.save()
-            AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
             sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -717,7 +717,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             # Set start date to the past. Instance is updated with new start date and is inactive.
             definition.specific_start_date = date(2018, 2, 1)
             definition.save()
-            AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
             sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
@@ -769,7 +769,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -784,7 +784,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -852,7 +852,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=1,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         _, definition = rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -872,7 +872,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
         definition.save()
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 8, 1, 7, 0)
         module_and_form_patch.return_value = module, form
@@ -986,7 +986,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             start_offset=2,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -994,7 +994,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
         utcnow_patch.return_value = datetime(2017, 8, 1, 15, 0)
 
         with self.create_case_and_sync(self.domain, 'person') as case:
@@ -1071,7 +1071,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         rule.add_action(
             CreateScheduleInstanceActionDefinition,
@@ -1079,7 +1079,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('Self', None),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
         return rule.pk
 
     @patch('corehq.messaging.tasks.sync_case_chunk_for_messaging_rule.delay')
@@ -1116,7 +1116,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=2,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         # Leave all start date information blank so it schedules for the next available daily slot
         rule.add_action(
@@ -1125,7 +1125,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         # It's 3/1 at 7am local time; the schedule instance gets scheduled for the same day
         utcnow_patch.return_value = datetime(2018, 3, 1, 12, 0)
@@ -1197,7 +1197,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=2,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         # Leave all start date information blank so it schedules for the next available weekly slot
         rule.add_action(
@@ -1206,7 +1206,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         # It's 3/4 at 10pm local time; the schedule instance gets scheduled for the same week
         utcnow_patch.return_value = datetime(2018, 3, 5, 3, 0)
@@ -1276,7 +1276,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             total_iterations=2,
         )
 
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        rule = create_empty_rule(self.domain, RuleWorkflow.SCHEDULING)
 
         # Leave all start date information blank so it schedules for the next available monthly slot
         rule.add_action(
@@ -1285,7 +1285,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),),
         )
 
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        AutomaticUpdateRule.clear_caches(self.domain, RuleWorkflow.SCHEDULING)
 
         # It's 3/4 at 5pm local time; the schedule instance gets scheduled for the same month
         utcnow_patch.return_value = datetime(2018, 3, 4, 22, 0)

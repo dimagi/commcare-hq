@@ -84,16 +84,21 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
-class AutomaticUpdateRule(models.Model):
+class RuleWorkflow(object):
     # Used when the rule performs case update actions
-    WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
-
+    CASE_UPDATE = 'CASE_UPDATE'
     # Used when the rule spawns schedule instances in the scheduling framework
-    WORKFLOW_SCHEDULING = 'SCHEDULING'
-
+    SCHEDULING = 'SCHEDULING'
     # Used when the rule runs a deduplication workflow to find duplicate cases
-    WORKFLOW_DEDUPLICATE = 'DEDUPLICATE'
+    DEDUPLICATE = 'DEDUPLICATE'
+    CHOICES = (
+        (CASE_UPDATE, "Case Update"),
+        (DEDUPLICATE, "Deduplicate"),
+        (SCHEDULING, "Scheduling"),
+    )
 
+
+class AutomaticUpdateRule(models.Model):
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
     case_type = models.CharField(max_length=126)
@@ -1020,9 +1025,9 @@ class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
         """There can only ever be one CaseDeduplicationActionDefinition for any AutomaticUpdateRule
         Given the rule, return that action
         """
-        if not rule.workflow == AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
+        if not rule.workflow == RuleWorkflow.DEDUPLICATE:
             raise ValueError(
-                f"Rule must have workflow {AutomaticUpdateRule.WORKFLOW_DEDUPLICATE}, but we got {rule.workflow}"
+                f"Rule must have workflow {RuleWorkflow.DEDUPLICATE}, but we got {rule.workflow}"
             )
         try:
             deduplicate_action_definition = rule.memoized_actions[0].definition
@@ -1159,7 +1164,7 @@ class CaseDuplicate(models.Model):
         try:
             rule = AutomaticUpdateRule.objects.get(
                 id=rule_id,
-                workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+                workflow=RuleWorkflow.DEDUPLICATE,
                 deleted=False
             )
         except AutomaticUpdateRule.DoesNotExist:

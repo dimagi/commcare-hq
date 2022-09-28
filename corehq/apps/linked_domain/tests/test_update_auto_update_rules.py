@@ -3,7 +3,7 @@
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
     ClosedParentDefinition, CustomActionDefinition, CustomMatchDefinition,
-    MatchPropertyDefinition, UpdateCaseDefinition
+    MatchPropertyDefinition, UpdateCaseDefinition, RuleWorkflow
 )
 from corehq.apps.linked_domain.updates import update_auto_update_rules
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
@@ -17,7 +17,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
             AutomaticUpdateRule(
                 domain=self.domain,
                 active=True,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                workflow=RuleWorkflow.CASE_UPDATE,
                 name="Norway rule",
                 case_type="person",
                 filter_on_server_modified=True,
@@ -26,7 +26,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
             AutomaticUpdateRule(
                 domain=self.domain,
                 active=True,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                workflow=RuleWorkflow.CASE_UPDATE,
                 name="Is it hot enough?",
                 case_type="person",
                 filter_on_server_modified=False,
@@ -35,7 +35,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
             AutomaticUpdateRule(
                 domain=self.domain,
                 active=False,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                workflow=RuleWorkflow.CASE_UPDATE,
                 name="Closed parent case",
                 case_type="family_member",
                 filter_on_server_modified=True,
@@ -121,7 +121,7 @@ class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):
         update_auto_update_rules(self.domain_link)
 
         linked_domain_rules = AutomaticUpdateRule.by_domain(self.linked_domain, active_only=False,
-                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+                workflow=RuleWorkflow.CASE_UPDATE)
         self.assertEqual(3, linked_domain_rules.count())
 
         for rule in linked_domain_rules:

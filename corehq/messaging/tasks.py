@@ -5,7 +5,7 @@ from django.db.models import Q
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.es import CaseES
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.exceptions import CaseNotFound
@@ -86,7 +86,7 @@ def run_auto_update_rules_for_case(case, get_rules=None):
     if get_rules is not None:
         rules = get_rules(case.domain, case.type)
     else:
-        all_rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+        all_rules = AutomaticUpdateRule.by_domain_cached(case.domain, RuleWorkflow.SCHEDULING)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
         rules = rules_by_case_type.get(case.type, [])
     for rule in rules:
@@ -94,7 +94,7 @@ def run_auto_update_rules_for_case(case, get_rules=None):
 
 
 def _get_cached_rule(domain, rule_id):
-    rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+    rules = AutomaticUpdateRule.by_domain_cached(domain, RuleWorkflow.SCHEDULING)
     rules = [rule for rule in rules if rule.pk == rule_id]
     if len(rules) == 1:
         return rules[0]

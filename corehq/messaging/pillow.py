@@ -4,7 +4,7 @@ import attr
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.topics import CASE_TOPICS
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.tasks import sync_case_for_messaging
@@ -41,7 +41,7 @@ class CaseMessagingSyncProcessor(BulkPillowProcessor):
     def _get_rules(self, domain, case_type):
         domain_rules = self.rules_by_domain.get(domain)
         if not domain_rules or domain_rules.expired():
-            rules = AutomaticUpdateRule.by_domain_cached(domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+            rules = AutomaticUpdateRule.by_domain_cached(domain, RuleWorkflow.SCHEDULING)
             domain_rules = CaseRules(
                 datetime.utcnow(), AutomaticUpdateRule.organize_rules_by_case_type(rules)
             )

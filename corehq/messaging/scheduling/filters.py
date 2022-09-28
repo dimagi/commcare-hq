@@ -1,4 +1,4 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 
@@ -25,7 +25,7 @@ class ScheduleInstanceFilter(BaseReportFilter):
         return list(AutomaticUpdateRule.objects.filter(
             domain=self.domain,
             deleted=False,
-            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            workflow=RuleWorkflow.SCHEDULING,
         ).values('id', 'name'))
 
     @classmethod

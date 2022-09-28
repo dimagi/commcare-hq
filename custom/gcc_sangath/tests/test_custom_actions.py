@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+from corehq.apps.data_interfaces.models import RuleWorkflow
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
     BaseCaseRuleTest,
 )
@@ -30,7 +30,7 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
     @patch('custom.gcc_sangath.rules.custom_actions.update_case')
     def test_with_no_peer_rating_cases(self, update_case_mock):
         rule = create_empty_rule(
-            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
+            self.domain, RuleWorkflow.CASE_UPDATE, case_type=SESSION_CASE_TYPE,
         )
         session_case = CaseFactory(self.domain).create_case(
             case_type=SESSION_CASE_TYPE,
@@ -43,7 +43,7 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
 
     def test_with_empty_peer_rating_cases(self):
         rule = create_empty_rule(
-            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
+            self.domain, RuleWorkflow.CASE_UPDATE, case_type=SESSION_CASE_TYPE,
         )
         self._set_up_cases([{}])
 
@@ -67,7 +67,7 @@ class SanitizeSessionPeerRatingTest(BaseCaseRuleTest):
 
     def test_with_peer_rating_cases(self):
         rule = create_empty_rule(
-            self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE, case_type=SESSION_CASE_TYPE,
+            self.domain, RuleWorkflow.CASE_UPDATE, case_type=SESSION_CASE_TYPE,
         )
         self._set_up_cases([
             {
