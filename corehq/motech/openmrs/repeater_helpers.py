@@ -418,7 +418,7 @@ def get_patient(requests, domain, info, openmrs_config):
             return patient
 
     # Definitive IDs did not match a patient in OpenMRS.
-    if openmrs_config['case_config']['patient_finder']:
+    if openmrs_config['case_config'].get('patient_finder'):
         # Search for patients based on other case properties
         return find_or_create_patient(requests, domain, info, openmrs_config)
 
