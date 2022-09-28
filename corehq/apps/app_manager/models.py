@@ -536,7 +536,7 @@ class AutoSelectCase(DocumentSchema):
     Configuration for auto-selecting a case.
     Attributes:
         value_source    Reference to the source of the value. For mode = fixture,
-                        this represents the FixtureDataType ID. For mode = case
+                        this represents the LookupTable ID. For mode = case
                         this represents the 'case_tag' for the case.
                         The modes 'user' and 'raw' don't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
@@ -2306,7 +2306,7 @@ class FixtureSelect(DocumentSchema):
     Configuration for creating a details screen from a fixture which can be used to pre-filter
     cases prior to displaying the case list.
 
-    fixture_type:       FixtureDataType.tag
+    fixture_type:       LookupTable.tag
     display_column:     name of the column to display in the list
     localize:           boolean if display_column actually contains the key for the localized string
     variable_column:    name of the column whose value should be saved when the user selects an item
