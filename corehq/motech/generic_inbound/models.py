@@ -52,6 +52,9 @@ class ConfigurableAPI(models.Model):
     def absolute_url(self):
         return reverse("generic_inbound_api", args=[self.domain, self.url_key], absolute=True)
 
+    def get_validations(self):
+        return list(self.validations.all())
+
 
 class ConfigurableApiValidation(models.Model):
     api = models.ForeignKey(ConfigurableAPI, on_delete=models.CASCADE, related_name="validations")
@@ -63,6 +66,12 @@ class ConfigurableApiValidation(models.Model):
     @memoized
     def parsed_expression(self):
         return self.expression.wrapped_definition(FactoryContext.empty())
+
+    def get_error_context(self):
+        return {
+            "name": self.name,
+            "message": self.message,
+        }
 
     def to_json(self):
         return {

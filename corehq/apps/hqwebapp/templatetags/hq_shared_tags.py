@@ -393,20 +393,14 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert(request, dismissable=True):
-    alert = MaintenanceAlert.get_latest_alert()
-    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
-        return format_html(
-            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
-            ' hide' if dismissable else '',
-            alert.id,
-            mark_safe(  # nosec: no user input
-                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
-            ) if dismissable else '',
-            alert.html
-        )
-    else:
-        return ''
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    domain = getattr(request, 'domain', None)
+    return [
+        alert for alert in active_alerts
+        if (not alert.domains
+            or domain in alert.domains)
+    ]
 
 
 @register.simple_tag
