@@ -369,7 +369,7 @@ def generate_identifier(requests, identifier_type):
 
 def find_or_create_patient(requests, domain, info, openmrs_config):
     case = CommCareCase.objects.get_case(info.case_id, domain)
-    patient_finder = PatientFinder.wrap(openmrs_config['case_config']['patient_finder'])
+    patient_finder = PatientFinder.wrap(openmrs_config['case_config'].get('patient_finder'))
     if patient_finder is None:
         return
     patients = patient_finder.find_patients(requests, case, openmrs_config['case_config'])
@@ -401,14 +401,14 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
 
 
 def get_patient(requests, domain, info, openmrs_config):
-    for id_ in openmrs_config['case_config']['match_on_ids']:
-        identifier_config: JsonDict = openmrs_config['case_config']['patient_identifiers'][id_]
-        identifier_case_property = identifier_config["case_property"]
+    for id_ in openmrs_config['case_config'].get('match_on_ids'):
+        identifier_config: JsonDict = openmrs_config['case_config'].get('patient_identifiers', {}).get(id_, {})
+        identifier_case_property = identifier_config.get("case_property")
         # identifier_case_property must be in info.extra_fields because OpenmrsRepeater put it there
         assert identifier_case_property in info.extra_fields, 'identifier case_property missing from extra_fields'
         patient = get_patient_by_id(requests, id_, info.extra_fields[identifier_case_property])
         if patient:
-            if patient["voided"]:
+            if patient.get("voided"):
                 # The patient associated with the case has been merged with
                 # another patient in OpenMRS, or deleted. Delete the OpenMRS
                 # identifier on the case, and try again.
@@ -418,7 +418,7 @@ def get_patient(requests, domain, info, openmrs_config):
             return patient
 
     # Definitive IDs did not match a patient in OpenMRS.
-    if openmrs_config['case_config']['patient_finder']:
+    if openmrs_config['case_config'].get('patient_finder'):
         # Search for patients based on other case properties
         return find_or_create_patient(requests, domain, info, openmrs_config)
 
