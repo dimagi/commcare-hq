@@ -123,9 +123,7 @@ class AutomaticUpdateRule(models.Model):
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
 
-    # One of the WORKFLOW_* constants on this class describing the workflow
-    # that this rule belongs to.
-    workflow = models.CharField(max_length=126)
+    workflow = models.CharField(max_length=126, choices=RuleWorkflow.CHOICES)
 
     upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
