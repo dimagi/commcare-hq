@@ -2,16 +2,14 @@ import doctest
 import json
 
 from django.test.testcases import TestCase
-from fakecouch import FakeCouchDb
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
-from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 
@@ -48,9 +46,6 @@ class TestDhis2EventsHelpers(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        self.db = Dhis2Repeater.get_db()
-        self.fakedb = FakeCouchDb()
-        Dhis2Repeater.set_db(self.fakedb)
         self.form = {
             "domain": DOMAIN,
             "form": {
@@ -101,12 +96,9 @@ class TestDhis2EventsHelpers(TestCase):
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
         conn = ConnectionSettings.objects.create(url="http://dummy.com", domain=DOMAIN)
-        self.repeater = Dhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
-        self.repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        self.repeater = SQLDhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
+        self.repeater.dhis2_config['form_configs'] = data['form_configs']
         self.repeater.save()
-
-    def tearDown(self):
-        Dhis2Repeater.set_db(self.db)
 
     def test_form_processing_with_owner(self):
         info = CaseTriggerInfo(
