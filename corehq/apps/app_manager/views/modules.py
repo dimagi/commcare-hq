@@ -390,7 +390,7 @@ def _get_report_module_context(app, module):
 
 def _get_fixture_columns_by_type(domain):
     return {
-        fixture.tag: [field["field_name"] for field in fixture.fields]
+        fixture.tag: [field.name for field in fixture.fields]
         for fixture in LookupTable.objects.by_domain(domain)
     }
 
