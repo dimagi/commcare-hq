@@ -79,4 +79,5 @@ branches:
     - mp/mobile_fix-2fa # Marco Sep 26
     - dm/sql-lookup-tables-pr2 # Daniel Sept 27
     - jls/new-instance-connectors # Jenny Sept 27
+    - akj/abdm-api-for-mobile-app # Akash Sep 28
 submodules: { }
