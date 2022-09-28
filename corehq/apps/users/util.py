@@ -80,8 +80,8 @@ def cc_user_domain(domain):
 
 
 def format_username(username, domain):
-    username = re.sub(r'\s+', '.', username).lower()
-    return "%s@%s" % (str(username or ''), cc_user_domain(domain))
+    username = re.sub(r'\s+', '.', str(username or '')).lower()
+    return "%s@%s" % (username, cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
