@@ -1,14 +1,19 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from datetime import date
+
+from django.test import TestCase
+
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.messaging.scheduling.models import (
-    ScheduledBroadcast,
-    ImmediateBroadcast,
-    TimedSchedule,
     AlertSchedule,
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    TimedSchedule,
 )
 from corehq.messaging.scheduling.util import domain_has_reminders
-from datetime import date
-from django.test import TestCase
 
 
 class TestMessagingModelLookups(TestCase):

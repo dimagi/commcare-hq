@@ -4,7 +4,10 @@ from casexml.apps.case.xform import get_case_updates
 from pillowtop.processors import PillowProcessor
 
 from corehq.apps.data_interfaces.deduplication import is_dedupe_xmlns
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import CASE_DEDUPE
 

@@ -1,10 +1,10 @@
 from datetime import datetime
 from itertools import chain
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 
 from faker import Faker
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
@@ -12,41 +12,39 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.data_interfaces.deduplication import (
+    _get_es_filtered_case_query,
     backfill_deduplicate_rule,
     find_duplicate_case_ids,
-    _get_es_filtered_case_query,
 )
 from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
     CaseDuplicate,
+    CaseRuleCriteria,
+    LocationFilterDefinition,
+    MatchPropertyDefinition,
     RuleWorkflow,
 )
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
+from corehq.apps.data_interfaces.utils import run_rules_for_case
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import (
-    set_parent_case,
     flag_enabled,
+    set_parent_case,
     trap_extra_setup,
 )
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
-    CaseRuleCriteria,
-    LocationFilterDefinition,
-    MatchPropertyDefinition,
-)
-from corehq.apps.data_interfaces.utils import run_rules_for_case
-from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser
-from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 
 
 @es_test
@@ -986,8 +984,7 @@ class TestDeduplicationRuleRuns(TestCase):
         for case in cases:
             case.type = self.case_type
 
-        from corehq.apps.locations.models import make_location
-        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.models import LocationType, make_location
         loc_type = LocationType.objects.create(
             name='place',
             domain=self.domain,
@@ -1067,8 +1064,7 @@ class TestDeduplicationRuleRuns(TestCase):
         for case in cases:
             case.type = self.case_type
 
-        from corehq.apps.locations.models import make_location
-        from corehq.apps.locations.models import LocationType
+        from corehq.apps.locations.models import LocationType, make_location
         loc_type = LocationType.objects.create(
             name='place',
             domain=self.domain,

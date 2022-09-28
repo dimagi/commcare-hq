@@ -1,11 +1,16 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from django.core.management.base import BaseCommand, CommandError
+
+from dimagi.utils.chunked import chunked
+from dimagi.utils.couch import CriticalSection
+
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.form_processor.models import CommCareCase
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.tasks import get_sync_key
 from corehq.util.log import with_progress_bar
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch import CriticalSection
-from django.core.management.base import BaseCommand, CommandError
 
 
 class Command(BaseCommand):

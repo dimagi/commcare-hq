@@ -1,9 +1,8 @@
 from contextlib import contextmanager
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 
@@ -18,18 +17,18 @@ from corehq.apps.data_interfaces.models import (
     CustomActionDefinition,
     CustomMatchDefinition,
     DomainCaseRuleRun,
+    LocationFilterDefinition,
     MatchPropertyDefinition,
+    RuleWorkflow,
     UCRFilterDefinition,
     UpdateCaseDefinition,
-    LocationFilterDefinition,
-    RuleWorkflow,
 )
 from corehq.apps.data_interfaces.tasks import run_case_update_rules_for_domain
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.signals import sql_case_post_save
-from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.tests.locks import reentrant_redis_locks
+from corehq.toggles import NAMESPACE_DOMAIN, RUN_AUTO_CASE_UPDATES_ON_SAVE
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.test_utils import set_parent_case as set_actual_parent_case
 
@@ -582,8 +581,8 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertTrue(rule.criteria_match(case, datetime.utcnow()))
 
     def test_location_filter_criteria_does_include_child_locations(self):
-        from corehq.apps.locations.models import SQLLocation, LocationType
         from corehq.apps.domain.shortcuts import create_domain
+        from corehq.apps.locations.models import LocationType, SQLLocation
 
         create_domain(self.domain)
 

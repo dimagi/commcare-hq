@@ -13,7 +13,10 @@ from dimagi.utils.parsing import json_format_date
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
@@ -383,8 +386,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_report_builder(project, new_plan_version):
+        from corehq.apps.userreports.dbaccessors import (
+            get_report_and_registry_report_configs_for_domain,
+        )
         from corehq.apps.userreports.tasks import rebuild_indicators
-        from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
         reports = get_report_and_registry_report_configs_for_domain(project.name)
         builder_reports = [report for report in reports if report.report_meta.created_by_builder]
         for report in builder_reports:
@@ -423,7 +428,9 @@ def _has_report_builder_add_on(plan_version):
 
 
 def _get_report_builder_reports(project):
-    from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+    from corehq.apps.userreports.dbaccessors import (
+        get_report_and_registry_report_configs_for_domain,
+    )
     reports = get_report_and_registry_report_configs_for_domain(project.name)
     return [report for report in reports if report.report_meta.created_by_builder]
 

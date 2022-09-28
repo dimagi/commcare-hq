@@ -1,4 +1,7 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.reports.filters.base import BaseReportFilter
 
 

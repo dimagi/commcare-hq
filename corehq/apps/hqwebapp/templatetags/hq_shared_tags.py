@@ -23,7 +23,10 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.web import json_handler
 
 from corehq import privileges
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
+from corehq.apps.hqwebapp.exceptions import (
+    AlreadyRenderedException,
+    TemplateTagJSONException,
+)
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
 
@@ -114,7 +117,10 @@ def domains_for_user(context, request, selected_domain=None):
     the user doc updates via save.
     """
 
-    from corehq.apps.domain.views.base import get_domain_links_for_dropdown, get_enterprise_links_for_dropdown
+    from corehq.apps.domain.views.base import (
+        get_domain_links_for_dropdown,
+        get_enterprise_links_for_dropdown,
+    )
     domain_links = get_domain_links_for_dropdown(request.couch_user)
 
     # Enterprise permissions projects aren't in the dropdown, but show a hint they exist

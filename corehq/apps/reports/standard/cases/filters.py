@@ -1,9 +1,9 @@
 import json
 from collections import Counter
 
+from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy
-from django.utils.functional import lazy
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -12,7 +12,10 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,

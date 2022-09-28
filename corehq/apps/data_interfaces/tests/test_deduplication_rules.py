@@ -3,16 +3,20 @@ from unittest.mock import Mock, patch
 
 from django.test import RequestFactory, TestCase
 
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from pillowtop.es_utils import initialize_index_and_mapping
+
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.data_interfaces.views import (
     DeduplicationRuleCreateView,
     DeduplicationRuleEditView,
     HttpResponseRedirect,
 )
 from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.elastic import get_es_new
-from pillowtop.es_utils import initialize_index_and_mapping
+from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 
 
 @es_test

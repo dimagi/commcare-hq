@@ -20,7 +20,6 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -37,11 +36,22 @@ from corehq.apps.data_interfaces.deduplication import (
 )
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
-from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
+from corehq.apps.hqcase.utils import (
+    AUTO_UPDATE_XMLNS,
+    bulk_update_cases,
+    update_case,
+)
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
+from corehq.form_processor.models import (
+    DEFAULT_PARENT_IDENTIFIER,
+    CommCareCase,
+    CommCareCaseIndex,
+    XFormInstance,
+)
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
@@ -66,9 +76,6 @@ from corehq.sql_db.util import (
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
 

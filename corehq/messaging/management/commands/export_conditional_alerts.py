@@ -1,21 +1,26 @@
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
-    MatchPropertyDefinition,
-    CreateScheduleInstanceActionDefinition, RuleWorkflow,
-)
-from corehq.messaging.scheduling.models import (
-    Schedule,
-    AlertSchedule,
-    TimedSchedule,
-    TimedEvent,
-    SMSContent,
-)
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseScheduleInstanceMixin
-from django.core.management.base import BaseCommand, CommandError
 import copy
 import json
+
+from django.core.management.base import BaseCommand, CommandError
+
 import jsonobject
 
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CreateScheduleInstanceActionDefinition,
+    MatchPropertyDefinition,
+    RuleWorkflow,
+)
+from corehq.messaging.scheduling.models import (
+    AlertSchedule,
+    Schedule,
+    SMSContent,
+    TimedEvent,
+    TimedSchedule,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+)
 
 SIMPLE_SMS_DAILY_SCHEDULE_WITH_TIME = 1
 SIMPLE_SMS_ALERT_SCHEDULE = 2

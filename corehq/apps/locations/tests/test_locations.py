@@ -7,9 +7,9 @@ from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.products.models import SQLProduct
 
+from ...data_interfaces.models import RuleWorkflow
 from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyPerTest, make_loc
-from ...data_interfaces.models import RuleWorkflow
 
 
 class LocationProducts(TestCase):
@@ -230,12 +230,12 @@ class TestDeleteLocations(LocationHierarchyPerTest):
 
     def test_delete_location_related_rules__single_rule(self):
         from corehq.apps.data_interfaces.models import (
+            AutomaticUpdateRule,
+            CaseDeduplicationActionDefinition,
+            CaseRuleAction,
+            CaseRuleCriteria,
             LocationFilterDefinition,
             MatchPropertyDefinition,
-            AutomaticUpdateRule,
-            CaseRuleCriteria,
-            CaseRuleAction,
-            CaseDeduplicationActionDefinition,
         )
 
         rule = self._create_rule(self.domain, 'rule1', 'case_type')
@@ -285,12 +285,12 @@ class TestDeleteLocations(LocationHierarchyPerTest):
 
     def test_delete_location_related_rules__multiple_rules(self):
         from corehq.apps.data_interfaces.models import (
+            AutomaticUpdateRule,
+            CaseDeduplicationActionDefinition,
+            CaseRuleAction,
+            CaseRuleCriteria,
             LocationFilterDefinition,
             MatchPropertyDefinition,
-            AutomaticUpdateRule,
-            CaseRuleCriteria,
-            CaseRuleAction,
-            CaseDeduplicationActionDefinition,
         )
 
         rule1 = self._create_rule(self.domain, 'rule1', 'case_type')

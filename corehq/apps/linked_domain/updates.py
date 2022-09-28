@@ -1,112 +1,121 @@
-from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
-from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
-from django.utils.translation import gettext as _
 from django.db import transaction
+from django.utils.translation import gettext as _
 
-from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
-    ClosedParentDefinition, CustomActionDefinition,
-    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition,
-    LocationFilterDefinition, RuleWorkflow,
-)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
 )
-from corehq.apps.data_dictionary.models import (
-    CaseType,
-    CaseProperty
-)
-from corehq.apps.integration.models import (
-    DialerSettings,
-    GaenOtpServerSettings,
-    HmacCalloutSettings,
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseRuleAction,
+    CaseRuleCriteria,
+    ClosedParentDefinition,
+    CustomActionDefinition,
+    CustomMatchDefinition,
+    LocationFilterDefinition,
+    MatchPropertyDefinition,
+    RuleWorkflow,
+    UpdateCaseDefinition,
 )
 from corehq.apps.fixtures.dbaccessors import (
     delete_fixture_items_for_data_type,
     get_fixture_data_type_by_tag,
 )
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
+from corehq.apps.integration.models import (
+    DialerSettings,
+    GaenOtpServerSettings,
+    HmacCalloutSettings,
+)
 from corehq.apps.linked_domain.const import (
     MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
-    MODEL_FIXTURE,
-    MODEL_FLAGS,
-    MODEL_KEYWORD,
-    MODEL_LOCATION_DATA,
-    MODEL_PREVIEWS,
-    MODEL_PRODUCT_DATA,
-    MODEL_UCR_EXPRESSION,
-    MODEL_USER_DATA,
-    MODEL_REPORT,
-    MODEL_ROLES,
     MODEL_DATA_DICTIONARY,
     MODEL_DIALER_SETTINGS,
-    MODEL_OTP_SETTINGS,
+    MODEL_FIXTURE,
+    MODEL_FLAGS,
     MODEL_HMAC_CALLOUT_SETTINGS,
+    MODEL_KEYWORD,
+    MODEL_LOCATION_DATA,
+    MODEL_OTP_SETTINGS,
+    MODEL_PREVIEWS,
+    MODEL_PRODUCT_DATA,
+    MODEL_REPORT,
+    MODEL_ROLES,
     MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS,
+    MODEL_UCR_EXPRESSION,
+    MODEL_USER_DATA,
 )
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
+from corehq.apps.linked_domain.keywords import update_keyword
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rules as local_get_auto_update_rules
+from corehq.apps.linked_domain.local_accessors import \
+    get_custom_data_models as local_custom_data_models
+from corehq.apps.linked_domain.local_accessors import \
+    get_data_dictionary as local_get_data_dictionary
+from corehq.apps.linked_domain.local_accessors import \
+    get_dialer_settings as local_get_dialer_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_enabled_previews as local_enabled_previews
 from corehq.apps.linked_domain.local_accessors import \
     get_enabled_toggles as local_enabled_toggles
 from corehq.apps.linked_domain.local_accessors import \
-    get_custom_data_models as local_custom_data_models
-from corehq.apps.linked_domain.local_accessors import \
     get_fixture as local_fixture
-from corehq.apps.linked_domain.local_accessors import \
-    get_user_roles as local_get_user_roles
-from corehq.apps.linked_domain.local_accessors import \
-    get_data_dictionary as local_get_data_dictionary
-from corehq.apps.linked_domain.local_accessors import \
-    get_tableau_server_and_visualizations as local_get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.local_accessors import \
-    get_dialer_settings as local_get_dialer_settings
-from corehq.apps.linked_domain.local_accessors import \
-    get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
 from corehq.apps.linked_domain.local_accessors import \
-    get_auto_update_rules as local_get_auto_update_rules
+    get_otp_settings as local_get_otp_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_tableau_server_and_visualizations as \
+    local_get_tableau_server_and_visualizations
+from corehq.apps.linked_domain.local_accessors import \
+    get_user_roles as local_get_user_roles
+from corehq.apps.linked_domain.remote_accessors import \
+    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
     get_custom_data_models as remote_custom_data_models
 from corehq.apps.linked_domain.remote_accessors import \
+    get_data_dictionary as remote_get_data_dictionary
+from corehq.apps.linked_domain.remote_accessors import \
+    get_dialer_settings as remote_get_dialer_settings
+from corehq.apps.linked_domain.remote_accessors import \
     get_fixture as remote_fixture
+from corehq.apps.linked_domain.remote_accessors import \
+    get_hmac_callout_settings as remote_get_hmac_callout_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_otp_settings as remote_get_otp_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_tableau_server_and_visualizations as \
+    remote_get_tableau_server_and_visualizations
 from corehq.apps.linked_domain.remote_accessors import \
     get_toggles_previews as remote_toggles_previews
 from corehq.apps.linked_domain.remote_accessors import \
     get_user_roles as remote_get_user_roles
-from corehq.apps.linked_domain.remote_accessors import \
-    get_data_dictionary as remote_get_data_dictionary
-from corehq.apps.linked_domain.remote_accessors import \
-    get_tableau_server_and_visualizations as remote_get_tableau_server_and_visualizations
-from corehq.apps.linked_domain.remote_accessors import \
-    get_dialer_settings as remote_get_dialer_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_otp_settings as remote_get_otp_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_hmac_callout_settings as remote_get_hmac_callout_settings
-from corehq.apps.linked_domain.remote_accessors import \
-    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
-from corehq.apps.linked_domain.keywords import update_keyword
+from corehq.apps.linked_domain.ucr_expressions import (
+    update_linked_ucr_expression,
+)
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
+from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.userreports.dbaccessors import (
+    get_report_and_registry_report_configs_for_domain,
+)
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole, HqPermissions
+from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.toggles.shortcuts import set_toggle

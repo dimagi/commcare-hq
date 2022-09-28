@@ -1,12 +1,12 @@
 from contextlib import contextmanager
 from datetime import date, datetime, time
+from unittest.mock import call, patch
 
 from django.db.models import Q
 from django.test import TestCase
 
-from unittest.mock import call, patch
-
 from casexml.apps.case.tests.util import create_case
+
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedModule,
@@ -19,7 +19,8 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CreateScheduleInstanceActionDefinition,
     MatchPropertyDefinition,
-    VisitSchedulerIntegrationHelper, RuleWorkflow,
+    RuleWorkflow,
+    VisitSchedulerIntegrationHelper,
 )
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain

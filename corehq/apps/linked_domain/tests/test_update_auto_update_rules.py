@@ -1,12 +1,20 @@
 
 
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
-    ClosedParentDefinition, CustomActionDefinition, CustomMatchDefinition,
-    MatchPropertyDefinition, UpdateCaseDefinition, RuleWorkflow
+    AutomaticUpdateRule,
+    CaseRuleAction,
+    CaseRuleCriteria,
+    ClosedParentDefinition,
+    CustomActionDefinition,
+    CustomMatchDefinition,
+    MatchPropertyDefinition,
+    RuleWorkflow,
+    UpdateCaseDefinition,
+)
+from corehq.apps.linked_domain.tests.test_linked_apps import (
+    BaseLinkedDomainTest,
 )
 from corehq.apps.linked_domain.updates import update_auto_update_rules
-from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 
 
 class TestUpdateAutoUpdateRules(BaseLinkedDomainTest):

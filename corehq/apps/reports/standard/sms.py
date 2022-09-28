@@ -16,7 +16,10 @@ from memoized import memoized
 
 from corehq import toggles
 from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
 from corehq.apps.data_interfaces.views import CaseGroupCaseManagementView
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
@@ -62,11 +65,11 @@ from corehq.apps.sms.models import (
     OUTGOING,
     SMS,
     WORKFLOWS_FOR_REPORTS,
+    Email,
     MessagingEvent,
     MessagingSubEvent,
     PhoneBlacklist,
     PhoneNumber,
-    Email
 )
 from corehq.apps.sms.util import get_backend_name
 from corehq.apps.smsforms.models import SQLXFormsSession

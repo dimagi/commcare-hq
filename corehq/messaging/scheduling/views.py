@@ -28,7 +28,8 @@ from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.data_dictionary.util import get_data_dict_props_by_case_type
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule, RuleWorkflow,
+    AutomaticUpdateRule,
+    RuleWorkflow,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (

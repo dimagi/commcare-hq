@@ -1,6 +1,10 @@
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
-from corehq.messaging.util import MessagingRuleProgressHelper
 from django.core.management.base import BaseCommand, CommandError
+
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
+from corehq.messaging.util import MessagingRuleProgressHelper
 
 
 class Command(BaseCommand):

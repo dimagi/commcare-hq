@@ -8,7 +8,9 @@ from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.data_interfaces.models import RuleWorkflow
-from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
+from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
+    BaseCaseRuleTest,
+)
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -16,10 +18,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    sharded,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted

@@ -2,16 +2,26 @@ from collections import defaultdict
 
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
-from corehq.apps.data_dictionary.models import CaseType, CaseProperty
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_items_for_data_type
+from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    RuleWorkflow,
+)
+from corehq.apps.fixtures.dbaccessors import (
+    get_fixture_data_type_by_tag,
+    get_fixture_items_for_data_type,
+)
+from corehq.apps.integration.models import (
+    DialerSettings,
+    GaenOtpServerSettings,
+    HmacCalloutSettings,
+)
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
+from corehq.apps.reports.models import TableauServer, TableauVisualization
 from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
-from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
-from corehq.apps.reports.models import TableauServer, TableauVisualization
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, RuleWorkflow
 
 
 def get_tableau_server_and_visualizations(domain):

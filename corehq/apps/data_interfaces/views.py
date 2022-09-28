@@ -46,8 +46,8 @@ from corehq.apps.data_interfaces.forms import (
     CaseRuleActionsForm,
     CaseRuleCriteriaForm,
     CaseUpdateRuleForm,
-    UpdateCaseGroupForm,
     DedupeCaseFilterForm,
+    UpdateCaseGroupForm,
 )
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
@@ -88,10 +88,10 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse as reverse_with_params
 from corehq.util.workbook_json.excel import WorkbookJSONError, get_workbook
 
-from .dispatcher import require_form_management_privilege
-from .interfaces import BulkFormManagementInterface, FormManagementMode
 from ..users.decorators import require_permission
 from ..users.models import HqPermissions
+from .dispatcher import require_form_management_privilege
+from .interfaces import BulkFormManagementInterface, FormManagementMode
 
 
 @login_and_domain_required
@@ -522,7 +522,9 @@ class XFormManagementView(DataInterfaceSection):
             # Altough evaluating form_ids and sending to task would be cleaner,
             # heavier calls should be in an async task instead
             from urllib.parse import unquote
+
             from django.http import HttpRequest, QueryDict
+
             from django_otp.middleware import OTPMiddleware
 
             form_query_string = unquote(self.request.POST.get('select_all'))
