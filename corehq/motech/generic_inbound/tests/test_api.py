@@ -144,7 +144,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.request_query, 'param=value')
         self.assertEqual(log.request_body, json.dumps(self.example_post_data))
         self.assertIn('CONTENT_TYPE', log.request_headers)
-        self.assertEqual(log.request_user_agent, 'user agent string')
+        self.assertEqual(log.request_headers['HTTP_USER_AGENT'], 'user agent string')
         self.assertEqual(log.request_ip, '127.0.0.1')
 
         attempt = ProcessingAttempt.objects.last()
