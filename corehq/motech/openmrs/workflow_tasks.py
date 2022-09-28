@@ -40,7 +40,8 @@ class SyncPersonAttributesTask(WorkflowTask):
             attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
             for attribute in self.attributes
         }
-        for person_attribute_type, value_source_dict in self.openmrs_config.case_config.person_attributes.items():
+        person_attrs = self.openmrs_config['case_config']['person_attributes']
+        for person_attribute_type, value_source_dict in person_attrs.items():
             value_source = as_value_source(value_source_dict)
             if not value_source.can_export:
                 continue
@@ -86,7 +87,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             identifier['identifierType']['uuid']: (identifier['uuid'], identifier['identifier'])
             for identifier in self.patient['identifiers']
         }
-        for patient_identifier_type, dict_ in self.openmrs_config.case_config.patient_identifiers.items():
+        for patient_identifier_type, dict_ in self.openmrs_config['case_config']['patient_identifiers'].items():
             value_source = as_value_source(dict_)
             if not value_source.can_export:
                 continue
@@ -513,7 +514,7 @@ class UpdatePersonNameTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_name,
+            self.openmrs_config['case_config']['person_preferred_name'],
             NAME_PROPERTIES,
             self.info,
         )
@@ -535,7 +536,7 @@ class UpdatePersonNameTask(WorkflowTask):
         """
         properties = {
             property_: self.person['preferredName'].get(property_)
-            for property_ in self.openmrs_config.case_config.person_preferred_name.keys()
+            for property_ in self.openmrs_config['case_config']['person_preferred_name'].keys()
             if property_ in NAME_PROPERTIES
         }
         if properties:
@@ -561,7 +562,7 @@ class CreatePersonAddressTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_address,
+            self.openmrs_config['case_config']['person_preferred_address'],
             ADDRESS_PROPERTIES,
             self.info,
         )
@@ -613,7 +614,7 @@ class UpdatePersonAddressTask(WorkflowTask):
     def rollback(self):
         properties = {
             property_: self.person['preferredAddress'].get(property_)
-            for property_ in self.openmrs_config.case_config.person_preferred_address.keys()
+            for property_ in self.openmrs_config['case_config']['person_preferred_address'].keys()
             if property_ in ADDRESS_PROPERTIES
         }
         if properties:
@@ -637,7 +638,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_properties,
+            self.openmrs_config['case_config']['person_properties'],
             PERSON_PROPERTIES,
             self.info,
         )
@@ -656,7 +657,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         """
         properties = {
             property_: self.person.get(property_)
-            for property_ in self.openmrs_config.case_config.person_properties.keys()
+            for property_ in self.openmrs_config['case_config']['person_properties'].keys()
             if property_ in PERSON_PROPERTIES
         }
         if properties:
