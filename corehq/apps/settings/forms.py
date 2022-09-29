@@ -294,7 +294,7 @@ class HQApiKeyForm(forms.Form):
 
     def create_key(self, user):
         try:
-            HQApiKey.objects.get(name=self.cleaned_data['name'], user=user)
+            HQApiKey.all_objects.get(name=self.cleaned_data['name'], user=user)
             raise DuplicateApiKeyName
         except HQApiKey.DoesNotExist:
             new_key = HQApiKey.objects.create(

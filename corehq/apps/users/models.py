@@ -2894,6 +2894,11 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class ApiKeyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
@@ -2904,6 +2909,9 @@ class HQApiKey(models.Model):
     role_id = models.CharField(max_length=40, blank=True, default='')
     is_active = models.BooleanField(default=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+
+    objects = ApiKeyManager()
+    all_objects = models.Manager()
 
     class Meta(object):
         unique_together = ('user', 'name')

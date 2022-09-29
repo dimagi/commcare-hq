@@ -83,11 +83,21 @@ class LoginAuthenticationTest(AuthenticationTestBase):
     def test_login_no_auth(self):
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request())
 
-    def test_login_with_auth(self):
+    def test_login_with_api_key_auth(self):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_api_key())
 
     def test_auth_type_basic(self):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_basic_auth())
+
+    def test_login_with_inactive_api_key(self):
+        def reactivate_key():
+            self.api_key.is_active = True
+            self.api_key.save()
+
+        self.api_key.is_active = False
+        self.api_key.save()
+        self.addCleanup(reactivate_key)
+        self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
 
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):

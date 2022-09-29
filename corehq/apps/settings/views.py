@@ -644,7 +644,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     @property
     def base_query(self):
-        return HQApiKey.objects.filter(user=self.request.user)
+        return HQApiKey.all_objects.filter(user=self.request.user)
 
     @property
     def total(self):
