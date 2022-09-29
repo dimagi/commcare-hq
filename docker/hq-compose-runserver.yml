@@ -1,5 +1,3 @@
-version: '2.3'
-
 # x-anchors are ignored by Docker, are used for DRYness here
 x-commcarehq_base: &commcarehq_base
   build:
