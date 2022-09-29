@@ -2,10 +2,7 @@ from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.app_manager.util import is_linked_app
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_type_by_tag,
-    get_fixture_data_types,
-)
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.linked_domain.const import (
     DOMAIN_LEVEL_DATA_MODELS,
     FEATURE_FLAG_DATA_MODEL_TOGGLES,
@@ -75,8 +72,8 @@ def get_upstream_and_downstream_fixtures(domain, upstream_link):
 
 
 def get_fixtures_for_domain(domain):
-    fixtures = get_fixture_data_types(domain)
-    return {f.tag: f for f in fixtures if f.is_global}
+    fixtures = LookupTable.objects.filter(domain=domain, is_global=True)
+    return {f.tag: f for f in fixtures}
 
 
 def get_upstream_and_downstream_reports(domain):
@@ -320,7 +317,7 @@ def pop_fixture_for_action(action, fixtures, domain):
         tag = action.wrapped_detail.tag
         fixture = fixtures.pop(tag, None)
         if not fixture:
-            fixture = get_fixture_data_type_by_tag(domain, tag)
+            fixture = LookupTable.objects.by_domain_tag(domain, tag)
 
     return fixture
 
