@@ -658,8 +658,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
-            _("Active"),
-            _("Delete"),
+            _("Status"),
+            _("Actions"),
         ]
 
     @property
