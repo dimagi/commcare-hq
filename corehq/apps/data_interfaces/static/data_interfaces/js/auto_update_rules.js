@@ -98,10 +98,20 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         return self;
     };
 
+    var RuleRunHistoryViewModel = function (ruleRuns) {
+        var self = {};
+        self.ruleRuns = ko.mapping.fromJS(ruleRuns);
+        return self;
+    };
+
     $(function () {
         var rules = initialPageData.get('rules');
-        var viewModel = RuleListViewModel(rules);
-        $("#ko-auto-update-rules").koApplyBindings(viewModel);
+        var ruleRuns = initialPageData.get('rule_runs');
+        var ruleListViewModel = RuleListViewModel(rules);
+        $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+
+        var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);
+        $("#ko-tabs-rule-run-history").koApplyBindings(ruleRunHistoryViewModel);
 
         $("#add-new").click(function () {
             googleAnalytics.track.event('Automatic Case Closure', 'Rules', 'Set Rule');
