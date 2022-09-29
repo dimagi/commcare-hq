@@ -16,6 +16,9 @@
 # feature added by commcare-hq.
 # See: ./hqscripts/management/commands/makemigrations.py
 #
+abdm
+ 0001_initial
+ 0002_auto_20220926_0547
 accounting
  0001_squashed_0052_ensure_report_builder_plans
  0002_auto_20170222_2008
@@ -145,6 +148,10 @@ auth
  0010_alter_group_name_max_length
  0011_update_proxy_permissions
  0012_alter_user_first_name_max_length
+authtoken
+ 0001_initial
+ 0002_auto_20160226_1747
+ 0003_tokenproxy
 blobs
  0001_squashed_0009_domains
  0002_blobmeta
