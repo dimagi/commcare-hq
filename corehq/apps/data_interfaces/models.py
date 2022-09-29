@@ -1594,12 +1594,18 @@ class DomainCaseRuleRun(models.Model):
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
     STATUS_HAD_ERRORS = 'E'
+    STATUS_CHOICES = (
+        (STATUS_RUNNING, gettext_lazy("Running")),
+        (STATUS_FINISHED, gettext_lazy("Finished")),
+        (STATUS_HALTED, gettext_lazy("Stopped")),
+        (STATUS_HAD_ERRORS, gettext_lazy("Error")),
+    )
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
-    status = models.CharField(max_length=1)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
     workflow = models.CharField(max_length=126, choices=AutomaticUpdateRule.WORKFLOW_CHOICES, null=True)
 
     cases_checked = models.IntegerField(default=0)
