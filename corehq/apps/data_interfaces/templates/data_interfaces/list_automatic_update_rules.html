@@ -4,14 +4,13 @@
 
 {% requirejs_main 'data_interfaces/js/list_automatic_update_rules' %}
 
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
 {% block pagination_header %}
   <div class="row">
     <div class="col-sm-8">
-      <p class="lead">
-        {% blocktrans %}
-          Automatically update or close cases from CommCare HQ
-        {% endblocktrans %}
-      </p>
       <p>
         {% blocktrans %}
           Create rules for updating or closing cases from CommCare HQ.

@@ -6,7 +6,7 @@ files:
 
 linters:
   flake8:
-    python: 3.9
+    python: 3
     config: .flake8
   eslint:
     config: ./.eslintrc.js

@@ -373,6 +373,18 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 }
             }
         );
+
+        window.addEventListener(
+            'beforeprint', function () {
+                $('.panel.panel-default, .q.form-group').last().addClass('last');
+            }
+        );
+
+        window.addEventListener(
+            'afterprint', function () {
+                $('.last').removeClass('last');
+            }
+        );
     });
 
     FormplayerFrontend.on('configureDebugger', function () {
