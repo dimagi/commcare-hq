@@ -967,7 +967,18 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return rule, None
 
     def _format_rule(self, rule):
-        ret = super()._format_rule(rule)
+        ret = {
+            'id': rule.pk,
+            'name': rule.name,
+            'case_type': rule.case_type,
+            'active': rule.active,
+            'last_run': (ServerTime(rule.last_run)
+                         .user_time(self.project_timezone)
+                         .done()
+                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
+            'action_error': "",     # must be provided because knockout template looks for it
+        }
         rule_properties = (
             set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
             - set(CaseListExplorerColumns.DEFAULT_COLUMNS)
