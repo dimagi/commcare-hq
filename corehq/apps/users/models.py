@@ -2908,6 +2908,7 @@ class HQApiKey(models.Model):
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
     is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
     expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
 
     objects = ApiKeyManager()

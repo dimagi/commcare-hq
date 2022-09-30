@@ -1,6 +1,7 @@
 import json
 import re
 from base64 import b64encode
+from datetime import datetime
 from io import BytesIO
 
 from django.conf import settings
@@ -639,6 +640,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         key_id = self.parameters.get('id')
         api_key = self.base_query.get(pk=key_id)
         api_key.is_active = is_active
+        api_key.deactivated_on = None if is_active else datetime.now()
         api_key.save()
         return {'success': True, 'itemData': self._to_json(api_key)}
 
@@ -687,6 +689,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 if api_key.ip_allowlist else _("All IP Addresses")
             ),
             "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
+            "deactivated_on": api_key.deactivated_on.strftime('%Y-%m-%d %H:%M:%S') if api_key.deactivated_on else None,
             "is_active": api_key.is_active,
         }
 
@@ -714,7 +717,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 "domain": new_api_key.domain or _('All Projects'),
                 'ip_allowlist': new_api_key.ip_allowlist,
                 'created': new_api_key.created.isoformat(),
-                'is_active': new_api_key.is_active,
+                "deactivated_on": None,
+                'is_active': None,
             },
             'template': 'new-user-api-key-template',
         }

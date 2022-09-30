@@ -15,6 +15,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='hqapikey',
+            name='deactivated_on',
+            field=models.DateTimeField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name='hqapikey',
             name='is_active',
             field=models.BooleanField(default=True),
         ),
