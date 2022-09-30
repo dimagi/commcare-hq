@@ -21,16 +21,20 @@ from corehq.apps.fixtures.models import (
 from corehq.apps.fixtures.upload import DELETE_HEADER
 
 
-def prepare_fixture_download(table_ids, domain, task, download_id, owner_id):
+def prepare_fixture_download(table_ids, domain, task, download_id, owner_id, combine_sheets=False):
     """Prepare fixture data for Excel download
     """
-    data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task)
+    data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task, combine_sheets=combine_sheets)
 
     header_groups = [("types", excel_sheets["types"]["headers"])]
     value_groups = [("types", excel_sheets["types"]["rows"])]
-    for data_type in data_types_book:
-        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
-        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
+    if combine_sheets:
+        header_groups.append(("combined_sheet", excel_sheets["combined_sheet"]["headers"]))
+        value_groups.append(("combined_sheet", excel_sheets["combined_sheet"]["rows"]))
+    else:
+        for data_type in data_types_book:
+            header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
+            value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
 
     file = io.BytesIO()
     format = Format.XLS_2007
@@ -52,7 +56,7 @@ def prepare_fixture_html(table_ids, domain):
     return _prepare_fixture(table_ids, domain, html_response=True)[1]
 
 
-def _prepare_fixture(table_ids, domain, html_response=False, task=None):
+def _prepare_fixture(table_ids, domain, html_response=False, task=None, combine_sheets=False):
     # HELPME
     #
     # This method has been flagged for refactoring due to its complexity and
@@ -86,10 +90,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     now = datetime.utcnow
     last_update = [now()]
-    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
+    update_period = timedelta(seconds=1)  # do not update progress more than once a second
 
     def _update_progress(event_count, item_count, items_in_table):
-        if task and now() - last_update[0] > upate_period:
+        if task and now() - last_update[0] > update_period:
             last_update[0] = now()
             processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
@@ -99,6 +103,12 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     data_types_book = []
     data_items_book_by_type = {}
     item_helpers_by_type = {}
+    if combine_sheets:
+        item_helpers_by_type['combined_sheets'] = {
+            "max_users": 0,
+            "max_groups": 0,
+            "max_locations": 0,
+        }
     """
         Contains all excel sheets in following format
         excel_sheets = {
@@ -114,6 +124,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         }
     """
     excel_sheets = {}
+    combined_fields = []  # only used for FF
 
     def get_field_prop_format(field_number, property_number):
         return f"field {field_number} : property {property_number}"
@@ -145,11 +156,14 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
         data_types_book.append(data_type)
+        # these can all be replaced by max statements.....
         if len(data_type.fields) > max_fields:
             max_fields = len(data_type.fields)
         if len(data_type.item_attributes) > max_item_attributes:
             max_item_attributes = len(data_type.item_attributes)
         for index, field in enumerate(data_type.fields):
+            if combine_sheets and field not in combined_fields:
+                combined_fields.append(field)
             if len(field_prop_count) <= index:
                 field_prop_count.append(len(field.properties))
             elif field_prop_count[index] <= len(field.properties):
@@ -164,7 +178,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         max_users = 0
         max_groups = 0
         max_locations = 0
-        max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
+        if combine_sheets and "max_field_prop_combos" in item_helpers_by_type['combined_sheets']:
+            max_field_prop_combos = item_helpers_by_type['combined_sheets']["max_field_prop_combos"]
+        else:
+            max_field_prop_combos = {field_name: 0 for field_name in data_type.fields_without_attributes}
         fixture_data = sorted(FixtureDataItem.by_data_type(domain, data_type.get_id),
                               key=lambda x: x.sort_key)
         num_rows = len(fixture_data)
@@ -178,16 +195,23 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
                 if field_key in max_field_prop_combos:
                     max_combos = max_field_prop_combos[field_key]
                     cur_combo_len = len(item_row.fields[field_key].field_list)
-                    max_combos = cur_combo_len if cur_combo_len > max_combos else max_combos
+                    max_combos = max(cur_combo_len, max_combos)
                     max_field_prop_combos[field_key] = max_combos
 
-        item_helpers = {
-            "max_users": max_users,
-            "max_groups": max_groups,
-            "max_locations": max_locations,
-            "max_field_prop_combos": max_field_prop_combos,
-        }
-        item_helpers_by_type[data_type.tag] = item_helpers
+        if combine_sheets:
+            combined_sheets = item_helpers_by_type['combined_sheets']
+            combined_sheets["max_users"] = max(combined_sheets["max_users"], max_users)
+            combined_sheets["max_groups"] = max(combined_sheets["max_groups"], max_groups)
+            combined_sheets["max_locations"] = max(combined_sheets["max_locations"], max_locations)
+            combined_sheets["max_field_prop_combos"] = max_field_prop_combos
+        else:
+            item_helpers = {
+                "max_users": max_users,
+                "max_groups": max_groups,
+                "max_locations": max_locations,
+                "max_field_prop_combos": max_field_prop_combos,
+            }
+            item_helpers_by_type[data_type.tag] = item_helpers
 
     # Prepare 'types' sheet data
     indexed_field_numbers = get_indexed_field_numbers(data_types_view)
@@ -231,6 +255,95 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     types_sheet["headers"] = tuple(types_sheet["headers"])
     excel_sheets["types"] = types_sheet
 
+    if combine_sheets:
+        item_sheet = {"headers": [], "rows": []}
+        common_header = ["UID", DELETE_HEADER]
+        item_helpers = item_helpers_by_type['combined_sheets']
+        user_headers = ["user %d" % x for x in range(1, item_helpers["max_users"] + 1)]
+        group_headers = ["group %d" % x for x in range(1, item_helpers["max_groups"] + 1)]
+        location_headers = ["location %d" % x for x in range(1, item_helpers["max_locations"] + 1)]
+        item_att_headers = []  # come back to this one too
+        all_field_headers = []  # this could be moved somewhere above
+        for n, data_type in enumerate(data_types_book):
+            _update_progress(total_tables, n, total_tables)
+            item_att_headers.extend(
+                ["property: " + attribute for attribute in data_type.item_attributes])
+            for field in data_type.fields:
+                if len(field.properties) == 0:
+                    field_value = "field: " + field.field_name
+                    if field_value not in all_field_headers:
+                        all_field_headers.append(field_value)
+                else:
+                    # Will have to come back to this:
+                    # Not sure how to collect all fields and their properties in a way that makes sense
+                    prop_headers = []
+                    for x in range(1, item_helpers["max_field_prop_combos"][field.field_name] + 1):
+                        for property in field.properties:
+                            prop_headers.append("%(name)s: %(prop)s %(count)s" % {
+                                "name": field.field_name,
+                                "prop": property,
+                                "count": x
+                            })
+                        prop_headers.append("field: %(name)s %(count)s" % {
+                            "name": field.field_name,
+                            "count": x
+                        })
+                    all_field_headers.extend(prop_headers)
+            for item_row in data_items_book_by_type[data_type.tag]:
+                common_vals = [str(_id_from_doc(item_row)), "N"]
+                user_vals = ([user.raw_username for user in item_row.users]
+                             + empty_padding_list(item_helpers["max_users"] - len(item_row.users)))
+                group_vals = ([group.name for group in item_row.groups]
+                              + empty_padding_list(item_helpers["max_groups"] - len(item_row.groups)))
+                location_vals = ([loc.site_code for loc in item_row.locations]
+                                 + empty_padding_list(item_helpers["max_locations"] - len(item_row.locations)))
+                field_vals = []
+                # same issue - come investigate this again
+                item_att_vals = [item_row.item_attributes[attribute] for attribute in data_type.item_attributes]
+                for field in combined_fields:
+                    if len(field.properties) == 0:
+                        fixture_fields = item_row.fields.get(field.field_name)
+                        if fixture_fields and any(fixture_fields.field_list):
+                            value = item_row.fields.get(field.field_name).field_list[0].field_value
+                        else:
+                            value = ""
+                        field_vals.append(value)
+                    else:
+                        # same issue as above - not sure how to collect this in a way that makes sense
+                        field_prop_vals = []
+                        cur_combo_count = len(item_row.fields.get(field.field_name).field_list)
+                        cur_prop_count = len(field.properties)
+                        for count, field_prop_combo in enumerate(item_row.fields.get(field.field_name).field_list):
+                            for property in field.properties:
+                                field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
+                            field_prop_vals.append(field_prop_combo.field_value)
+                        padding_list_len = ((item_helpers["max_field_prop_combos"][field.field_name]
+                                             - cur_combo_count) * (cur_prop_count + 1))
+                        field_prop_vals.extend(empty_padding_list(padding_list_len))
+                        field_vals.extend(field_prop_vals)
+                row = tuple(
+                    common_vals[2 if html_response else 0:]
+                    + field_vals
+                    + item_att_vals
+                    + user_vals
+                    + group_vals
+                    + location_vals
+                    + [data_type.tag]
+                )
+                item_sheet["rows"].append(row)
+        item_sheet["headers"] = tuple(
+            common_header[2 if html_response else 0:]
+            + all_field_headers
+            + item_att_headers
+            + user_headers
+            + group_headers
+            + location_headers
+            + ['table_id']
+        )
+        item_sheet["rows"] = tuple(item_sheet["rows"])
+        excel_sheets['combined_sheet'] = item_sheet
+        return data_types_book, excel_sheets
+
     # Prepare 'items' sheet data for each data-type
     for n, data_type in enumerate(data_types_book):
         _update_progress(total_tables, n, total_tables)
@@ -271,7 +384,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             + group_headers
             + location_headers
         )
-        excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(_id_from_doc(item_row)), "N"]
             user_vals = ([user.raw_username for user in item_row.users]

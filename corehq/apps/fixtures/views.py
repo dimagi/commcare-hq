@@ -326,11 +326,16 @@ def download_item_lists(request, domain):
     """Asynchronously serve excel download for edit_lookup_tables
     """
     download = DownloadBase()
+    combine_sheets = False
+    if request.POST.get('extraParam', 'false') == 'true':
+        combine_sheets = True
+
     download.set_task(async_fixture_download.delay(
         table_ids=request.POST.getlist("table_ids[]", []),
         domain=domain,
         download_id=download.download_id,
         owner_id=request.couch_user.get_id,
+        combine_sheets=combine_sheets,
     ))
     return download.get_start_response()
 
