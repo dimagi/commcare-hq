@@ -474,7 +474,9 @@ class ElasticDocumentAdapter(BaseAdapter):
                      underlying ``elasticsearch.Elasticsearch.search()`` method.
         :returns: ``dict``
         """
-        # TODO: standardize all result collections returned by this class.
+        # TODO:
+        # - standardize all result collections returned by this class.
+        # - remove **kw and standardize which arguments HQ uses
         try:
             result = self._search(query, **kw)
             self._fix_hits_in_result(result)
@@ -489,26 +491,21 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         return self._es.search(self.index_name, self.type, query, **kw)
 
-    def scroll(self, query, **kw):
+    def scroll(self, query, scroll=SCROLL_KEEPALIVE, size=None):
         """Perfrom a scrolling search, yielding each doc until the entire context
         is exhausted.
 
         :param query: ``dict`` raw search query.
-        :param **kw: Additional scroll keyword arguments. Valid options:
-
-            - ``size``: ``int`` scroll size (number of documents per
-              "scroll" page)
-            - ``scroll``: ``str`` time value specifying how long the
-              Elastic cluster should keep the search context alive.
-
+        :param scroll: ``str`` time value specifying how long the Elastic
+                       cluster should keep the search context alive.
+        :param size: ``int`` scroll size (number of documents per "scroll" page)
+                     When set to ``None`` (the default), the default scroll size
+                     is used.
         :yields: ``dict`` documents
         """
         # TODO: standardize all result collections returned by this class.
-        valid_kw = {"size", "scroll"}
-        if not set(kw).issubset(valid_kw):
-            raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
         try:
-            for result in self._scroll(query, **kw):
+            for result in self._scroll(query, scroll, size):
                 self._report_and_fail_on_shard_failures(result)
                 self._fix_hits_in_result(result)
                 for hit in result["hits"]["hits"]:
@@ -516,14 +513,13 @@ class ElasticDocumentAdapter(BaseAdapter):
         except ElasticsearchException as e:
             raise ESError(e)
 
-    def _scroll(self, query={}, scroll=SCROLL_KEEPALIVE, **kwargs):
+    def _scroll(self, query, scroll, size):
         """Perform one or more scroll requests to completely exhaust a scrolling
         search context.
 
         :param query: ``dict`` search query to execute
         :param scroll: ``str`` duration to keep scroll context alive
-        :param **kwargs: extra parameters passed directly to the underlying
-                         ``elasticsearch.Elasticsearch.search()`` method.
+        :param size: ``int`` scroll size (number of documents per "scroll" page)
         :yields: ``dict``s of Elasticsearch result objects
 
         Providing a query with ``size`` specified as well as the ``size``
@@ -552,18 +548,18 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         query = query.copy()
         query.setdefault("sort", "_doc")  # configure for efficiency if able
-        # validate size
+        kwargs = {"scroll": scroll}
+        # validate/set default size
         size_qy = query.get("size")
-        size_kw = kwargs.get("size")
-        if size_kw is None and size_qy is None:
+        if size_qy is None:
             # Set a large scroll size if one is not already configured.
             # Observations on Elastic v2.4 show default (when not specified)
             # scroll size of 10.
-            kwargs["size"] = SCROLL_SIZE
-        elif not (size_kw is None or size_qy is None):
-            raise ValueError(f"size cannot be specified in both query and keyword "
-                             f"arguments (query: {size_qy}, kw: {size_kw})")
-        result = self._search(query, scroll=scroll, **kwargs)
+            kwargs["size"] = SCROLL_SIZE if size is None else size
+        elif size is not None:
+            raise ValueError(f"ambiguous scroll size (specified in both query "
+                             f"and arguments): query={size_qy}, arg={size}")
+        result = self._search(query, **kwargs)
         scroll_id = result.get("_scroll_id")
         if scroll_id is None:
             return
@@ -596,6 +592,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.Elasticsearch.index()`` method.
         """
+        # TODO: remove **kw and standardize which arguments HQ uses
         doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
@@ -695,6 +692,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.helpers.bulk()`` function.
         """
+        # TODO: remove **kw and standardize which arguments HQ uses
         payload = [self._render_bulk_action(action) for action in actions]
         return bulk(self._es, payload, refresh=self._refresh_value(refresh), **kw)
 
@@ -708,6 +706,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.helpers.bulk()`` function.
         """
+        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.index(doc) for doc in docs)
         return self.bulk(action_gen, refresh, **kw)
 
@@ -721,6 +720,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param **kw: extra parameters passed directly to the underlying
                      ``elasticsearch.helpers.bulk()`` function.
         """
+        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
         return self.bulk(action_gen, refresh, **kw)
 

@@ -33,7 +33,7 @@ from ..client import (
     _client_default,
     _client_for_export,
 )
-from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD
+from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
 from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 
 
@@ -788,7 +788,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         docs = self._index_many_new_docs(5)
         top_level = {"_scroll_id", "took", "timed_out", "_shards", "hits"}
         is_first = True
-        for result in self.adapter._scroll({}, size=2):
+        for result in self.adapter._scroll({}, SCROLL_KEEPALIVE, size=2):
             self.assertEqual(set(result), top_level)
             if is_first:
                 top_level.add("terminated_early")
@@ -1190,9 +1190,9 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
         """
         return docs_to_dict(docs_from_result(self.adapter.search(query)))
 
-    def _scroll_hits_dict(self, query, **kw):
+    def _scroll_hits_dict(self, *args, **kw):
         def do_scroll():
-            for doc in self.adapter.scroll(query, **kw):
+            for doc in self.adapter.scroll(*args, **kw):
                 yield doc["_source"]
         return docs_to_dict(do_scroll())
 
