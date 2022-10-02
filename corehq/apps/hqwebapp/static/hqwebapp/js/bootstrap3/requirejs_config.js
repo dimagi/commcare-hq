@@ -1,6 +1,9 @@
 requirejs.config({
     baseUrl: '/static/',
     paths: {
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
         "datatables.bootstrap": "datatables-bootstrap3/BS3/assets/js/datatables",
@@ -15,6 +18,7 @@ requirejs.config({
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "backbone": { exports: "backbone" },
         "bootstrap": { deps: ['jquery'] },
         "datatables.bootstrap": { deps: ['datatables'] },
         "d3/d3.min": {
