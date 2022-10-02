@@ -552,10 +552,13 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.renderFormXml = function (resp, $form) {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
-            self.form = FormEntryUtils.initialRender(resp, self.resourceMap, $form);
-            if (resp.shouldAutoSubmit) {
-                self.submitForm(self.form);
-            }
+            var promise = FormEntryUtils.initialRender(resp, self.resourceMap, $form);
+            $.when(promise).done(function (form) {
+                self.form = form;
+                if (resp.shouldAutoSubmit) {
+                    self.submitForm(self.form);
+                }
+            });
         };
 
         // Initialize
