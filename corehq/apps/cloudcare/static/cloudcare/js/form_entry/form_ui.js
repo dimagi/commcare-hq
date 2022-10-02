@@ -300,7 +300,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
-            if (!Utils.isWebApps() || !self.hasSubmitAttempted()) {
+            if (!self.hasSubmitAttempted()) {
                 return [];
             }
 
