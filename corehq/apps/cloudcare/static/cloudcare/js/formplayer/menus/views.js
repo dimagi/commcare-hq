@@ -1,10 +1,12 @@
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var Constants = hqImport("cloudcare/js/formplayer/constants"),
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        Constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
         Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -465,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                 kissmetrics.track.event('Completed Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
         },
@@ -744,7 +746,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                     kissmetrics.track.event('Completed Case Search', {
-                        'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                        'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }
             }
