@@ -1,6 +1,7 @@
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     var Utils = {};
     Utils.Users = {
         /**
@@ -20,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
                     currentUser.username
                 ),
                 currentUser.restoreAs,
-                { secure: initialPageData('secure_cookies') }
+                { secure: initialPageData.get('secure_cookies') }
             );
         },
         restoreAsKey: function (domain, username) {
