@@ -288,7 +288,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.on("start", function (model, options) {
         var user = FormplayerFrontend.getChannel().request('currentUser'),
-            savedDisplayOptions,
             self = this;
         user.username = options.username;
         user.domain = options.domain;
@@ -302,53 +301,56 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
 
-        savedDisplayOptions = _.pick(
-            FormplayerUtils.getSavedDisplayOptions(),
-            Const.ALLOWED_SAVED_OPTIONS
-        );
-        user.displayOptions = _.defaults(savedDisplayOptions, {
-            singleAppMode: options.singleAppMode,
-            landingPageAppMode: options.landingPageAppMode,
-            phoneMode: options.phoneMode,
-            oneQuestionPerScreen: options.oneQuestionPerScreen,
-            language: options.language,
+        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
+            savedDisplayOptions = _.pick(
+                savedDisplayOptions,
+                Const.ALLOWED_SAVED_OPTIONS
+            );
+            user.displayOptions = _.defaults(savedDisplayOptions, {
+                singleAppMode: options.singleAppMode,
+                landingPageAppMode: options.landingPageAppMode,
+                phoneMode: options.phoneMode,
+                oneQuestionPerScreen: options.oneQuestionPerScreen,
+                language: options.language,
+            });
+
+            FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+                var appId;
+                var apps = appCollection.toJSON();
+                if (Backbone.history) {
+                    Backbone.history.start();
+                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                            UsersViews.RestoreAsBanner({
+                                model: user,
+                            })
+                        );
+                    });
+                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                        appId = apps[0]['_id'];
+                    }
+
+                    if (self.getCurrentRoute() === "") {
+                        if (user.displayOptions.singleAppMode) {
+                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                            FormplayerFrontend.trigger("app:singleApp", appId);
+                        } else if (user.displayOptions.landingPageAppMode) {
+                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                            FormplayerFrontend.trigger("app:landingPageApp", appId);
+                        } else {
+                            FormplayerFrontend.trigger("apps:list", apps);
+                        }
+                        if (user.displayOptions.phoneMode) {
+                            // Refresh on start of preview mode so it ensures we're on the latest app
+                            // since app updates do not work.
+                            FormplayerFrontend.trigger('refreshApplication', appId);
+                        }
+                    }
+                }
+            });
         });
 
-        FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-        $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
-            var appId;
-            var apps = appCollection.toJSON();
-            if (Backbone.history) {
-                Backbone.history.start();
-                hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                    FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                        UsersViews.RestoreAsBanner({
-                            model: user,
-                        })
-                    );
-                });
-                if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-                    appId = apps[0]['_id'];
-                }
-
-                if (self.getCurrentRoute() === "") {
-                    if (user.displayOptions.singleAppMode) {
-                        FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                        FormplayerFrontend.trigger("app:singleApp", appId);
-                    } else if (user.displayOptions.landingPageAppMode) {
-                        FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                        FormplayerFrontend.trigger("app:landingPageApp", appId);
-                    } else {
-                        FormplayerFrontend.trigger("apps:list", apps);
-                    }
-                    if (user.displayOptions.phoneMode) {
-                        // Refresh on start of preview mode so it ensures we're on the latest app
-                        // since app updates do not work.
-                        FormplayerFrontend.trigger('refreshApplication', appId);
-                    }
-                }
-            }
-        });
         if (options.allowedHost) {
             var HQEvents = hqRequire("cloudcare/js/formplayer/hq_events");
             window.addEventListener(
