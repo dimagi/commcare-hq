@@ -476,14 +476,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.DisplayProperties || {};
     });
 
-    FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
-        var UsersUtils = hqImport("cloudcare/js/formplayer/users/utils");   // TODO: move this handler into a users module
-        return UsersUtils.Users.getRestoreAsUser(
-            domain,
-            username
-        );
-    });
-
     // Support for workflows that require Login As before moving on to the
     // screen that the user originally requested.
     FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
@@ -499,32 +491,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
 
     FormplayerFrontend.getChannel().reply('getLoginAsNextOptions', function () {
         return FormplayerFrontend.LoginAsNextOptions || null;
-    });
-
-    /**
-     * clearRestoreAsUser
-     *
-     * This will unset the localStorage restore as user as well as
-     * unset the restore as user from the currentUser. It then
-     * navigates you to the main page.
-     */
-    FormplayerFrontend.on('clearRestoreAsUser', function () {
-        var UsersUtils = hqImport("cloudcare/js/formplayer/users/utils");   // TODO: move this handler into a users module
-        var user = FormplayerFrontend.getChannel().request('currentUser');
-        UsersUtils.Users.clearRestoreAsUser(
-            user.domain,
-            user.username
-        );
-        user.restoreAs = null;
-        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                UsersViews.RestoreAsBanner({
-                    model: user,
-                })
-            );
-        });
-
-        FormplayerFrontend.trigger('navigateHome');
     });
 
     FormplayerFrontend.on("sync", function () {

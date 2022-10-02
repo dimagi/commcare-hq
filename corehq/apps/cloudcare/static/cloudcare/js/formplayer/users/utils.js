@@ -51,5 +51,38 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
+
+    FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
+        return Utils.Users.getRestoreAsUser(
+            domain,
+            username
+        );
+    });
+
+    /**
+     * clearRestoreAsUser
+     *
+     * This will unset the localStorage restore as user as well as
+     * unset the restore as user from the currentUser. It then
+     * navigates you to the main page.
+     */
+    FormplayerFrontend.on('clearRestoreAsUser', function () {
+        var user = FormplayerFrontend.getChannel().request('currentUser');
+        Utils.Users.clearRestoreAsUser(
+            user.domain,
+            user.username
+        );
+        user.restoreAs = null;
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({
+                    model: user,
+                })
+            );
+        });
+
+        FormplayerFrontend.trigger('navigateHome');
+    });
+
     return Utils;
 });
