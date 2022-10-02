@@ -7,6 +7,9 @@ requirejs.config({
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
@@ -21,6 +24,7 @@ requirejs.config({
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "backbone": { exports: "backbone" },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/bootstrap5/hq.helpers": { deps: ['jquery', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
