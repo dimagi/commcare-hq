@@ -205,7 +205,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             if (resp.status === 423) {
                 errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
-                errorMessage = FormEntryUtils.reloginErrorHtml();
+                errorMessage = Errors.INACTIVITY_ERROR;
                 isHTML = true;
             } else if (textStatus === 'timeout') {
                 errorMessage = Errors.TIMEOUT_ERROR;

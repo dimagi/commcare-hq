@@ -17,23 +17,6 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return Errors.JS_ERROR + message;
     };
 
-    module.isWebApps = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");   // TODO: hqRequire
-        var environment = FormplayerFrontend.getChannel().request('currentUser').environment;
-        return environment === FormplayerConst.WEB_APPS_ENVIRONMENT;
-    };
-
-    module.reloginErrorHtml = function () {
-        if (module.isWebApps()) {
-            var url = initialPageData.reverse('login_new_window');
-            return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                      "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
-        } else {
-            // target=_blank doesn't work properly within an iframe
-            return gettext("You have been logged out because of inactivity.");
-        }
-    };
-
     /**
      * Compares the equality of two answer sets.
      * @param {(string|string[])} answer1 - A string of answers or a single answer
