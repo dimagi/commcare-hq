@@ -1,12 +1,15 @@
 hqDefine("cloudcare/js/form_entry/web_form_session", function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils"),
+    var CloudcareUtils = hqImport("cloudcare/js/utils"),
+        Const = hqImport("cloudcare/js/form_entry/const"),
+        Errors = hqImport("cloudcare/js/form_entry/errors"),
+        TaskQueue = hqImport("cloudcare/js/form_entry/task_queue"),
+        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         UI = hqImport("cloudcare/js/form_entry/form_ui");
 
     function WebFormSession(params) {
         var self = {};
 
-        self.taskQueue = hqImport("cloudcare/js/form_entry/task_queue").TaskQueue();
+        self.taskQueue = TaskQueue.TaskQueue();
         self.formContext = params.formContext;
         self.domain = params.domain;
         self.username = params.username;
@@ -186,7 +189,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                 } catch (err) {
                     console.error(err);
                     self.onerror({
-                        human_readable_message: Utils.jsError(err)
+                        human_readable_message: FormEntryUtils.jsError(err)
                     });
                 }
             }
@@ -198,12 +201,11 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.handleFailure = function (resp, action, textStatus, failureCallback) {
             var self = this,
                 errorMessage = null,
-                isHTML = false,
-                Errors = hqImport("cloudcare/js/form_entry/errors");
+                isHTML = false;
             if (resp.status === 423) {
                 errorMessage = Errors.LOCK_TIMEOUT_ERROR;
             } else if (resp.status === 401) {
-                errorMessage = Utils.reloginErrorHtml();
+                errorMessage = FormEntryUtils.reloginErrorHtml();
                 isHTML = true;
             } else if (textStatus === 'timeout') {
                 errorMessage = Errors.TIMEOUT_ERROR;
@@ -214,10 +216,10 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
                     $('.form-control').prop('disabled', false);
                 }
             } else if (_.has(resp, 'responseJSON') && resp.responseJSON !== undefined) {
-                errorMessage = Utils.touchformsError(resp.responseJSON.message);
+                errorMessage = FormEntryUtils.touchformsError(resp.responseJSON.message);
             }
 
-            hqImport('cloudcare/js/utils').reportFormplayerErrorToHQ({
+            CloudcareUtils.reportFormplayerErrorToHQ({
                 type: 'webformsession_request_failure',
                 request: action,
                 readableErrorMessage: errorMessage,
@@ -550,7 +552,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
         self.renderFormXml = function (resp, $form) {
             var self = this;
             self.session_id = self.session_id || resp.session_id;
-            self.form = Utils.initialRender(resp, self.resourceMap, $form);
+            self.form = FormEntryUtils.initialRender(resp, self.resourceMap, $form);
             if (resp.shouldAutoSubmit) {
                 self.submitForm(self.form);
             }
