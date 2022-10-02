@@ -3,6 +3,9 @@ requirejs.config({
     paths: {
         "babel": "@babel/standalone/babel.min",
         "babel-plugin-transform-modules-requirejs-babel": "babel-plugin-transform-modules-requirejs-babel/index",
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "bootstrap5": "bootstrap5/dist/js/bootstrap.bundle.min",
         "datatables": "datatables.net/js/jquery.dataTables.min",
@@ -23,6 +26,7 @@ requirejs.config({
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "backbone": { exports: "backbone" },
         "datatables.bootstrap": { deps: ['datatables'] },
         "datatables.fixedColumns.bootstrap": { deps: ['datatables.fixedColumns'] },
         "datetimepicker": {
