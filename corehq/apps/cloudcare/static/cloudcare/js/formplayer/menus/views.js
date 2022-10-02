@@ -422,7 +422,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
-            var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
+            var pageNo = Utils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
@@ -490,7 +490,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
+            var paginateItems = Utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
@@ -522,56 +522,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             };
         },
     });
-
-
-
-    // this method takes current page number on which user has clicked and total possible pages
-    // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
-    var paginateOptions = function (currentPage, totalPages) {
-        var maxPages = 5;
-        // ensure current page isn't out of range
-        if (currentPage < 1) {
-            currentPage = 1;
-        } else if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        var startPage, endPage;
-        if (totalPages <= maxPages) {
-            // total pages less than max so show all pages
-            startPage = 1;
-            endPage = totalPages;
-        } else {
-            // total pages more than max so calculate start and end pages
-            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
-            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
-            if (currentPage <= maxPagesBeforeCurrentPage) {
-                // current page near the start
-                startPage = 1;
-                endPage = maxPages;
-            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
-                // current page near the end
-                startPage = totalPages - maxPages + 1;
-                endPage = totalPages;
-            } else {
-                // current page somewhere in the middle
-                startPage = currentPage - maxPagesBeforeCurrentPage;
-                endPage = currentPage + maxPagesAfterCurrentPage;
-            }
-        }
-        return {
-            startPage: startPage,
-            endPage: endPage,
-            pageCount: totalPages,
-        };
-    };
-
-    var paginationGoPageNumber = function (pageNumber, pageCount) {
-        if (pageNumber >= 1 && pageNumber <= pageCount) {
-            return pageNumber;
-        } else {
-            return pageCount;
-        }
-    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -836,8 +786,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
-        paginateOptions: paginateOptions,
-        paginationGoPageNumber: paginationGoPageNumber,
     };
 })
 ;
