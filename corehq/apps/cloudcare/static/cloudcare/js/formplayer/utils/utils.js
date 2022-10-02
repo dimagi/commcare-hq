@@ -107,6 +107,54 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         ].join(':');
     };
 
+    // this method takes current page number on which user has clicked and total possible pages
+    // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
+    Utils.paginateOptions = function (currentPage, totalPages) {
+        var maxPages = 5;
+        // ensure current page isn't out of range
+        if (currentPage < 1) {
+            currentPage = 1;
+        } else if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        var startPage, endPage;
+        if (totalPages <= maxPages) {
+            // total pages less than max so show all pages
+            startPage = 1;
+            endPage = totalPages;
+        } else {
+            // total pages more than max so calculate start and end pages
+            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
+            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
+            if (currentPage <= maxPagesBeforeCurrentPage) {
+                // current page near the start
+                startPage = 1;
+                endPage = maxPages;
+            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
+                // current page near the end
+                startPage = totalPages - maxPages + 1;
+                endPage = totalPages;
+            } else {
+                // current page somewhere in the middle
+                startPage = currentPage - maxPagesBeforeCurrentPage;
+                endPage = currentPage + maxPagesAfterCurrentPage;
+            }
+        }
+        return {
+            startPage: startPage,
+            endPage: endPage,
+            pageCount: totalPages,
+        };
+    };
+
+    Utils.paginationGoPageNumber = function (pageNumber, pageCount) {
+        if (pageNumber >= 1 && pageNumber <= pageCount) {
+            return pageNumber;
+        } else {
+            return pageCount;
+        }
+    };
+
     Utils.getCurrentQueryInputs = function () {
         var queryData = Utils.currentUrlToObject().queryData[sessionStorage.queryKey];
         if (queryData) {
