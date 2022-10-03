@@ -1,9 +1,17 @@
 'use strict';
-hqDefine("cloudcare/js/preview_app/main", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        previewApp = hqImport("cloudcare/js/preview_app/preview_app"),
-        sentry = hqImport("cloudcare/js/sentry");
-
+hqDefine("cloudcare/js/preview_app/main", [
+    'jquery',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/sentry',
+    'cloudcare/js/preview_app/preview_app',
+], function (
+    $,
+    _,
+    initialPageData,
+    sentry,
+    previewApp
+) {
     $(function () {
         sentry.initSentry();
 
