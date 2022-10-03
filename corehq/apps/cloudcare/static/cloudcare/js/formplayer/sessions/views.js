@@ -1,10 +1,20 @@
-/*global Marionette, moment */
-
-hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/sessions/views", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'moment',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+], function (
+    $,
+    _,
+    Marionette,
+    moment,
+    constants,
+    FormplayerFrontend,
+    utils
+) {
     var SessionView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
