@@ -1,10 +1,18 @@
 'use strict';
-/*global Marionette */
-
-hqDefine("cloudcare/js/formplayer/layout/views/settings", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/layout/views/settings", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
+], function (
+    $,
+    _,
+    Marionette,
+    FormplayerFrontend,
+    Utils
+) {
     var slugs = {
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',
