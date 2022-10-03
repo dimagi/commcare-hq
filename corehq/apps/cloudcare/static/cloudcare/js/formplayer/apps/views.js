@@ -1,11 +1,20 @@
-/*global Marionette */
-
-hqDefine("cloudcare/js/formplayer/apps/views", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        googleAnalytics = hqImport("analytix/js/google"),
-        kissmetrics = hqImport("analytix/js/kissmetrix");
-
+hqDefine("cloudcare/js/formplayer/apps/views", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+], function (
+    $,
+    _,
+    Marionette,
+    googleAnalytics,
+    kissmetrics,
+    constants,
+    FormplayerFrontend
+) {
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",
