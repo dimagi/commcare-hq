@@ -1,8 +1,32 @@
 'use strict';
-/* global Backbone, Marionette */
-hqDefine("cloudcare/js/formplayer/router", function () {
-    var utils = hqImport("cloudcare/js/formplayer/utils/utils");
-    var Router = Marionette.AppRouter.extend({
+hqDefine("cloudcare/js/formplayer/router", [
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/middleware',
+    'cloudcare/js/formplayer/apps/controller',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/controller',
+    'cloudcare/js/formplayer/sessions/controller',
+    'cloudcare/js/formplayer/users/controller',
+    'marionette.approuter/lib/marionette.approuter.min',    // for Marionette.AppRouter
+], function (
+    _,
+    Backbone,
+    Marionette,
+    utils,
+    FormplayerFrontend,
+    Middleware,
+    appsController,
+    menusCollections,
+    menusController,
+    sessionsController,
+    usersController,
+    AppRouter
+) {
+    var params = {
         appRoutes: {
             "apps": "listApps", // list all apps available to this user
             "single_app/:id": "singleApp", // Show app in phone mode (SingleAppView)
@@ -15,16 +39,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             "settings": "listSettings",
             ":session": "listMenus",  // Default route
         },
-    });
+    };
+    var Router = AppRouter.extend(params);
 
-
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Middleware = hqImport("cloudcare/js/formplayer/middleware"),
-        appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
-        menusCollections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
-        sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
-        usersController = hqImport("cloudcare/js/formplayer/users/controller");
     var API = {
         listApps: function () {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
