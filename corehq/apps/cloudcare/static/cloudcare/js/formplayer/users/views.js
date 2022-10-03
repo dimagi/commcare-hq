@@ -1,12 +1,23 @@
 'use strict';
-/*global Backbone, Marionette */
-
-hqDefine("cloudcare/js/formplayer/users/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        usersUtils = hqImport("cloudcare/js/formplayer/users/utils");
-
+hqDefine("cloudcare/js/formplayer/users/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/users/utils',
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    toggles,
+    FormplayerFrontend,
+    formplayerUtils,
+    usersUtils
+) {
     /**
      * RestoreAsBanner
      *
@@ -24,7 +35,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         },
         templateContext: function () {
             var template = "";
-            if (Toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
+            if (toggles.toggleEnabled('WEB_APPS_DOMAIN_BANNER')) {
                 template = gettext("Working as <b><%- restoreAs %></b> in <b><%- domain %></b>.");
             } else {
                 template = gettext("Working as <b><%- restoreAs %></b>.");
