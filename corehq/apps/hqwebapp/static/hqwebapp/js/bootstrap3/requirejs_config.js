@@ -18,6 +18,10 @@ requirejs.config({
     shim: {
         "accounting/js/lib/stripe": { exports: 'Stripe' },
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "ace-builds/src-min-noconflict/mode-json": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/mode-xml": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "ace-builds/src-min-noconflict/ext-searchbox": { deps: ["ace-builds/src-min-noconflict/ace"] },
+        "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
         "backbone": { exports: "backbone" },
         "bootstrap": { deps: ['jquery'] },
         "datatables.bootstrap": { deps: ['datatables'] },
