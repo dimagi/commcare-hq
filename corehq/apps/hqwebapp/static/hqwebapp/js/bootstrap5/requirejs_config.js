@@ -48,6 +48,10 @@ requirejs.config({
             exports: 'RMI',
         },
         "ko.mapping": { deps: ['knockout'] },
+        "leaflet-fullscreen/dist/Leaflet.fullscreen.min": {
+            deps: ["mapbox.js/dist/mapbox"],
+            exports: "L",
+        },
         "mapbox.js/dist/mapbox": { exports: "L" },
         "nvd3/nv.d3.min": {
             deps: ['d3/d3.min'],
