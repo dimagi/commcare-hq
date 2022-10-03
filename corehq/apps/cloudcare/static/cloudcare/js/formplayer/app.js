@@ -1,23 +1,47 @@
 'use strict';
-/*global Marionette, Backbone */
-
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-
-hqDefine("cloudcare/js/formplayer/app", function () {
-    var appcues = hqImport('analytix/js/appcues'),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        CloudcareUtils = hqImport("cloudcare/js/utils"),
-        Const = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        GGAnalytics = hqImport("analytix/js/google"),
-        Kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
-        WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
-
-    Marionette.setRenderer(Marionette.TemplateCache.render);
+hqDefine("cloudcare/js/formplayer/app", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'markdown-it/dist/markdown-it',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/appcues',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/utils',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/form_entry/web_form_session',
+    'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
+    'backbone.radio',
+    'jquery.cookie/jquery.cookie',  // $.cookie
+], function (
+    $,
+    ko,
+    _,
+    Backbone,
+    Marionette,
+    markdowner,
+    initialPageData,
+    appcues,
+    GGAnalytics,
+    Kissmetrics,
+    CloudcareUtils,
+    Const,
+    FormplayerUtils,
+    ProgressBar,
+    UsersModels,
+    WebFormSession,
+    TemplateCache
+) {
+    Marionette.setRenderer(TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
 
     FormplayerFrontend.on("before:start", function (app, options) {
@@ -51,6 +75,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
     });
 
+    // TODO: navigation isn't navigating
     FormplayerFrontend.navigate = function (route, options) {
         options || (options = {});
         Backbone.history.navigate(route, options);
@@ -209,8 +234,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             if (resp.status === "success") {
                 var $alert;
                 if (resp.submitResponseMessage) {
-                    var markdowner = window.markdownit(),
-                        analyticsLinks = [
+                    var analyticsLinks = [
                             { url: initialPageData.reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
                             { url: initialPageData.reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
                             { url: initialPageData.reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
