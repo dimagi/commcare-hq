@@ -1,7 +1,13 @@
 'use strict';
-/*global Marionette */
-
-hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", function () {
+hqDefine("cloudcare/js/formplayer/layout/views/progress_bar", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+], function (
+    $,
+    _,
+    Marionette
+) {
     var ProgressView = Marionette.View.extend({
         template: _.template($("#progress-view-template").html() || ""),
 
