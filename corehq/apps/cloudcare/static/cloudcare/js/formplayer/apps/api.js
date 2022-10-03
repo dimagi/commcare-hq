@@ -2,11 +2,15 @@
 /**
  * Backbone model and functions for listing and selecting CommCare apps
  */
-
-hqDefine("cloudcare/js/formplayer/apps/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/apps/collections"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-
+hqDefine("cloudcare/js/formplayer/apps/api", [
+    'jquery',
+    'cloudcare/js/formplayer/apps/collections',
+    'cloudcare/js/formplayer/app',
+], function (
+    $,
+    Collections,
+    FormplayerFrontend
+) {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
     var predefinedAppsPromise;
