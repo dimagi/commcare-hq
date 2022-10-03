@@ -1,12 +1,23 @@
 'use strict';
-/*global Backbone, Marionette, moment */
-
-hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils");
-
+hqDefine("cloudcare/js/formplayer/sessions/views", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'moment',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+], function (
+    $,
+    _,
+    Backbone,
+    Marionette,
+    moment,
+    constants,
+    FormplayerFrontend,
+    utils
+) {
     var SessionView = Marionette.View.extend({
         tagName: "tr",
         className: "formplayer-request",
@@ -102,7 +113,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var sessionsPerPage = this.ui.sessionsPerPageLimit.val();
             this.model.set("limit", Number(sessionsPerPage));
             this.model.set("page", 1);
-            FormplayerUtils.savePerPageLimitCookie("sessions", this.model.get("limit"));
+            utils.savePerPageLimitCookie("sessions", this.model.get("limit"));
         },
         paginationGoAction: function (e) {
             e.preventDefault();
