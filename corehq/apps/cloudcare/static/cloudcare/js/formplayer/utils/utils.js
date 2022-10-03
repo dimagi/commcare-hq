@@ -1,9 +1,19 @@
 'use strict';
-/*global Backbone, DOMPurify */
-hqDefine("cloudcare/js/formplayer/utils/utils", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
-
+hqDefine("cloudcare/js/formplayer/utils/utils", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles
+) {
     var Utils = {};
 
     /**
