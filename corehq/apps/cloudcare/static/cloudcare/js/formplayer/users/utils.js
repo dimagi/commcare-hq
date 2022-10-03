@@ -1,8 +1,12 @@
-/* global Sentry */
-hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("cloudcare/js/formplayer/users/utils", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+], function (
+    $,
+    initialPageData,
+    FormplayerFrontend
+) {
     var self = {};
     self.Users = {
         /**
