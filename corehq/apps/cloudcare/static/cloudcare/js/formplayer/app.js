@@ -229,7 +229,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                             }
                         };
                     $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                    $alert = CloudcareUtils.showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                    $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
                 } else {
                     $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
                 }
