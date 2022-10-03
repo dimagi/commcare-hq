@@ -2,16 +2,22 @@
 /**
  * Backbone model for listing and selecting FormEntrySessions
  */
-
-hqDefine("cloudcare/js/formplayer/sessions/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/sessions/collections"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        MenuCollections = hqImport("cloudcare/js/formplayer/menus/collections");
-
+hqDefine("cloudcare/js/formplayer/sessions/api", [
+    'jquery',
+    'underscore',
+    'cloudcare/js/formplayer/sessions/collections',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/menus/collections',
+], function (
+    $,
+    _,
+    Collections,
+    FormplayerFrontend,
+    MenuCollections
+) {
     var API = {
 
         getSessions: function (pageNumber, pageSize) {
-
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var domain = user.domain;
             var formplayerUrl = user.formplayer_url;
