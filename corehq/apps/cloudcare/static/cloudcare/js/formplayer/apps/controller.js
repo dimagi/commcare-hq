@@ -1,13 +1,21 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/apps/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        settingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        views = hqImport("cloudcare/js/formplayer/apps/views");
-
+hqDefine("cloudcare/js/formplayer/apps/controller", [
+    'jquery',
+    'backbone',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/layout/views/settings',
+    'cloudcare/js/formplayer/apps/views'
+], function (
+    $,
+    Backbone,
+    Toggles,
+    constants,
+    FormplayerFrontend,
+    settingsViews,
+    views
+) {
     return {
         listApps: function () {
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
