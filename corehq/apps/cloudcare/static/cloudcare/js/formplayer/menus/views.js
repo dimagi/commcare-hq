@@ -1,16 +1,33 @@
 'use strict';
-/*globals Marionette */
-
-hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    const kissmetrics = hqImport("analytix/js/kissmetrix"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        markdown = hqImport("cloudcare/js/markdown");
-
+hqDefine("cloudcare/js/formplayer/menus/views", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/markdown',
+    'cloudcare/js/utils',
+    'leaflet-fullscreen/dist/Leaflet.fullscreen.min',   // adds L.control.fullscreen to L
+], function (
+    $,
+    _,
+    Marionette,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    constants,
+    FormplayerFrontend,
+    formplayerUtils,
+    markdown,
+    cloudcareUtils,
+    L
+) {
     const MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -114,9 +131,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return _.template($(id).html() || "");
         },
         templateContext: function () {
+            const environment = FormplayerFrontend.getChannel().request('currentUser').environment;
             return {
                 title: this.options.title,
-                environment: FormplayerFrontend.getChannel().request('currentUser').environment,
+                isAppPreview: environment === constants.PREVIEW_APP_ENVIRONMENT,
             };
         },
         childViewOptions: function (model) {
