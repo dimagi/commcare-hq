@@ -1,16 +1,35 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        markdown = hqImport("cloudcare/js/markdown"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        queryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        Collection = hqImport("cloudcare/js/formplayer/menus/collections");
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'cloudcare/js/markdown',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/menus/views',
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles,
+    markdown,
+    constants,
+    FormplayerFrontend,
+    formplayerUtils,
+    Collection,
+    menusUtils,
+    queryView,
+    views
+) {
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
