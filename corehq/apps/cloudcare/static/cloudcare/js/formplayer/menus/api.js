@@ -1,19 +1,32 @@
 'use strict';
-/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
-
-hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("cloudcare/js/formplayer/menus/api", [
+    'jquery',
+    'underscore',
+    'sentry_browser',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+], function (
+    $,
+    _,
+    Sentry,
+    initialPageData,
+    Collections,
+    constants,
+    errors,
+    formEntryUtils,
+    FormplayerFrontend,
+    formplayerUtils,
+    ProgressBar
+) {
     var API = {
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.getChannel().request('currentUser'),
