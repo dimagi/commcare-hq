@@ -1,9 +1,15 @@
 'use strict';
-/* global Sentry */
-hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
-
+hqDefine("cloudcare/js/formplayer/users/utils", [
+    'jquery',
+    'sentry_browser',
+    'hqwebapp/js/initial_page_data',
+    'cloudcare/js/formplayer/app',
+], function (
+    $,
+    Sentry,
+    initialPageData,
+    FormplayerFrontend
+) {
     var self = {};
     self.Users = {
         /**
