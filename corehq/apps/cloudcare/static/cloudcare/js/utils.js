@@ -1,13 +1,25 @@
 'use strict';
-/* global Marionette, moment, NProgress, Sentry */
 hqDefine('cloudcare/js/utils', [
     'jquery',
+    'underscore',
+    'backbone.marionette',
+    'moment',
+    'DOMPurify/dist/purify.min',
     'hqwebapp/js/initial_page_data',
     "cloudcare/js/formplayer/constants",
+    'nprogress/nprogress',
+    'sentry_browser',
+    'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min',  // for $.datetimepicker
 ], function (
     $,
+    _,
+    Marionette,
+    moment,
+    DOMPurify,
     initialPageData,
-    constants
+    constants,
+    NProgress,
+    Sentry
 ) {
     if (!String.prototype.startsWith) {
         String.prototype.startsWith = function (searchString, position) {
