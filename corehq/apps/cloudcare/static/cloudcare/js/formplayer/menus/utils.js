@@ -1,16 +1,27 @@
 'use strict';
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/menus/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        view = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        constants = hqImport("cloudcare/js/formplayer/constants");
-
+hqDefine("cloudcare/js/formplayer/menus/utils", [
+    'underscore',
+    'backbone',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/menus/views/query',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/views',
+], function (
+    _,
+    Backbone,
+    toggles,
+    kissmetrics,
+    FormplayerFrontend,
+    constants,
+    ProgressBar,
+    view,
+    utils,
+    views
+) {
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
         sessionStorage.locationLon = position.coords.longitude;
