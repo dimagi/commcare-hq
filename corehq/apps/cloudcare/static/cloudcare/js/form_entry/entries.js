@@ -1,12 +1,35 @@
-/* globals moment, SignaturePad, DOMPurify */
-hqDefine("cloudcare/js/form_entry/entries", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
-
+hqDefine("cloudcare/js/form_entry/entries", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+    'moment',
+    'fast-levenshtein/levenshtein',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/utils',
+    'signature_pad/dist/signature_pad.umd.min',
+    'select2/dist/js/select2.full.min',
+    'leaflet-fullscreen/dist/Leaflet.fullscreen.min.js',    // mapbox
+    'mapbox.js/dist/mapbox',    // window.L
+], function (
+    $,
+    ko,
+    _,
+    DOMPurify,
+    moment,
+    Levenshtein,
+    initialPageData,
+    toggles,
+    kissmetrics,
+    cloudcareUtils,
+    constants,
+    formEntryUtils,
+    SignaturePad
+) {
     /**
      * The base Object for all entries. Each entry takes a question object
      * @param {Object} question - A question object
@@ -652,7 +675,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             var isFuzzyMatch = function (haystack, query, distanceThreshold) {
                 return (
                     haystack === query ||
-                    (query.length > 3 && window.Levenshtein.get(haystack, query) <= distanceThreshold)
+                    (query.length > 3 && Levenshtein.get(haystack, query) <= distanceThreshold)
                 );
             };
 
@@ -1046,6 +1069,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.loadMap = function () {
+            const L = window.L;
             var token = initialPageData.get("mapbox_access_token");
             if (token) {
                 // if a default answer exists, use that instead
@@ -1081,7 +1105,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.afterRender = function () {
-            if (typeof L === 'undefined') {
+            if (typeof window.L === 'undefined') {
                 question.error(gettext('Could not load map. Please try again later.'));
             } else {
                 self.loadMap();
