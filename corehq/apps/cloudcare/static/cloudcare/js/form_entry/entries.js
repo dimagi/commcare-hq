@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/utils',
     'signature_pad/dist/signature_pad.umd.min', // TODO: test SignaturePad
+    'cloudcare/js/formplayer/utils/calendar-picker-translations',   // EthiopianDateEntry
 ], function (
     $,
     ko,
