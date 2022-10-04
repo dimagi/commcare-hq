@@ -24,6 +24,40 @@ requirejs.config({
         "At.js/dist/js/jquery.atwho": { deps: ['jquery', 'Caret.js/dist/jquery.caret'] },
         "backbone": { exports: "backbone" },
         "bootstrap": { deps: ['jquery'] },
+        "calendars/dist/js/jquery.calendars.picker": {
+            deps: [
+                "calendars/dist/js/jquery.plugin",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.plus": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.picker-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars.ethiopian",
+            ],
+        },
         "datatables.bootstrap": { deps: ['datatables'] },
         "d3/d3.min": {
             "exports": "d3",
