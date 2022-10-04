@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/form_entry/entries", [
     'cloudcare/js/utils',
     'cloudcare/js/form_entry/const',
     'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/utils/calendar-picker-translations',   // EthiopianDateEntry
 ], function (
     $,
     ko,

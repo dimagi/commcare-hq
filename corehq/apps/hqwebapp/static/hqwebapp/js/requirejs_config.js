@@ -20,6 +20,40 @@ requirejs.config({
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
         "backbone": { exports: "backbone" },
         "bootstrap": { deps: ['jquery'] },
+        "calendars/dist/js/jquery.calendars.picker": {
+            deps: [
+                "calendars/dist/js/jquery.plugin",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.plus": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.picker-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars.ethiopian",
+            ],
+        },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },
