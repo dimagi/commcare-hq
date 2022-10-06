@@ -10,6 +10,7 @@ from corehq.motech.dhis2.views import (
 )
 from corehq.motech.fhir.views import AddFHIRRepeaterView, EditFHIRRepeaterView
 from corehq.motech.generic_inbound.views import ConfigurableAPIListView, ConfigurableAPIEditView
+from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.openmrs.views import (
     AddOpenmrsRepeaterView,
     EditOpenmrsRepeaterView,
@@ -119,4 +120,5 @@ urlpatterns = [
     # Generic inbound
     url(r'^inbound/$', ConfigurableAPIListView.as_view(), name=ConfigurableAPIListView.urlname),
     url(r'^inbound/(?P<api_id>\d+)/$', ConfigurableAPIEditView.as_view(), name=ConfigurableAPIEditView.urlname),
+    url(r'^inbound/log/(?P<log_id>[\w-]+)/$', ApiLogDetailView.as_view(), name=ApiLogDetailView.urlname),
 ]
