@@ -139,21 +139,21 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
         Returns a start datetime for the Visit and the Encounter, and a
         stop_datetime for the Visit
         """
-        if form_config.openmrs_start_datetime:
-            value_source = as_value_source(form_config.openmrs_start_datetime)
+        if form_config['openmrs_start_datetime']:
+            value_source = as_value_source(form_config['openmrs_start_datetime'])
             if value_source.can_export:
                 cc_start_datetime_str = value_source.get_commcare_value(self.info)
                 if cc_start_datetime_str is None:
                     raise ConfigurationError(
                         'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                        'the visit but no value was found in the form.'.format(form_config.xmlns)
+                        'the visit but no value was found in the form.'.format(form_config['xmlns'])
                     )
                 try:
                     cc_start_datetime = string_to_utc_datetime(cc_start_datetime_str)
                 except ValueError:
                     raise ConfigurationError(
                         'A form config for form XMLNS "{}" uses "openmrs_start_datetime" to get the start of '
-                        'the visit but an invalid value was found in the form.'.format(form_config.xmlns)
+                        'the visit but an invalid value was found in the form.'.format(form_config['xmlns'])
                     )
                 cc_stop_datetime = cc_start_datetime + timedelta(days=1) - timedelta(seconds=1)
                 # We need to serialize both values with the data type of
@@ -183,7 +183,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             # Location". Use that, if it exists.
         )
         for form_config in self.openmrs_config.form_configs:
-            if form_config.xmlns == self.form_json['form']['@xmlns']:
+            if form_config['xmlns'] == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
                     CreateOptionalVisitTask(
@@ -193,9 +193,9 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
                         start_datetime=start_datetime,
                         stop_datetime=stop_datetime,
                         values_for_concept=get_values_for_concept(form_config, self.info),
-                        encounter_type=form_config.openmrs_encounter_type,
-                        openmrs_form=form_config.openmrs_form,
-                        visit_type=form_config.openmrs_visit_type,
+                        encounter_type=form_config['openmrs_encounter_type'],
+                        openmrs_form=form_config['openmrs_form'],
+                        visit_type=form_config['openmrs_visit_type'],
                         location_uuid=location_uuid,
                     )
                 )
@@ -208,14 +208,14 @@ def get_values_for_concept(form_config, info):
     values. Each value will be exported as a separate Observation.
     """
     values_for_concept = defaultdict(list)
-    for obs in form_config.openmrs_observations:
-        if obs.concept == ALL_CONCEPTS:
+    for obs in form_config['openmrs_observations']:
+        if obs['concept'] == ALL_CONCEPTS:
             # ALL_CONCEPTS is a special value for importing all
             # Observations as extension cases. It's not applicable here.
             continue
-        value_source = as_value_source(obs.value)
+        value_source = as_value_source(obs['value'])
         if value_source.can_export and not is_blank(value_source.get_value(info)):
-            values_for_concept[obs.concept].append(value_source.get_value(info))
+            values_for_concept[obs['concept']].append(value_source.get_value(info))
     return values_for_concept
 
 
