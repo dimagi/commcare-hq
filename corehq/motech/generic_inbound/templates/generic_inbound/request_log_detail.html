@@ -1,0 +1,9 @@
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+{% block page_content %}
+<h1>{{ log.api.name }}</h1>
+{{ log.timestamp }}
+{% endblock %}
