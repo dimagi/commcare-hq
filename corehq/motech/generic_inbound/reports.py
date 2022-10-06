@@ -6,6 +6,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.standard import DatespanMixin
 from corehq.toggles import GENERIC_INBOUND_API
 
 from .models import RequestLog
@@ -20,7 +21,7 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
         return RequestLog.Status.choices
 
 
-class ApiRequestLogReport(GenericTabularReport):
+class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     name = gettext_lazy('Inbound API Request Logs')
     slug = 'api_request_log_report'
     base_template = "reports/base_template.html"
@@ -30,6 +31,7 @@ class ApiRequestLogReport(GenericTabularReport):
     sortable = False
 
     fields = [
+        'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.motech.generic_inbound.reports.RequestStatusFilter',
     ]
 
@@ -47,7 +49,7 @@ class ApiRequestLogReport(GenericTabularReport):
     def shared_pagination_GET_params(self):
         return [
             {'name': param, 'value': self.request.GET.getlist(param)}
-            for param in ['request_status']
+            for param in ['request_status', 'startdate', 'enddate']
         ]
 
     @property
@@ -63,6 +65,8 @@ class ApiRequestLogReport(GenericTabularReport):
     def _queryset(self):
         queryset = RequestLog.objects.filter(
             domain=self.domain,
+            timestamp__gte=self.request.datespan.startdate_utc,
+            timestamp__lt=self.request.datespan.enddate_utc,
         )
         status = self.request.GET.getlist('request_status')
         if status:
