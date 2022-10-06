@@ -4,10 +4,20 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.toggles import GENERIC_INBOUND_API
 
 from .models import RequestLog
+
+
+class RequestStatusFilter(BaseMultipleOptionFilter):
+    slug = 'request_status'
+    label = gettext_lazy('Request Status')
+
+    @property
+    def options(self):
+        return RequestLog.Status.choices
 
 
 class ApiRequestLogReport(GenericTabularReport):
@@ -19,7 +29,9 @@ class ApiRequestLogReport(GenericTabularReport):
     ajax_pagination = True
     sortable = False
 
-    fields = []
+    fields = [
+        'corehq.motech.generic_inbound.reports.RequestStatusFilter',
+    ]
 
     toggles = [GENERIC_INBOUND_API]
 
@@ -32,6 +44,13 @@ class ApiRequestLogReport(GenericTabularReport):
         return self._queryset.count()
 
     @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': param, 'value': self.request.GET.getlist(param)}
+            for param in ['request_status']
+        ]
+
+    @property
     def headers(self):
         return DataTablesHeader(
             DataTablesColumn(_("API")),
@@ -42,9 +61,13 @@ class ApiRequestLogReport(GenericTabularReport):
 
     @cached_property
     def _queryset(self):
-        return RequestLog.objects.filter(
+        queryset = RequestLog.objects.filter(
             domain=self.domain,
         )
+        status = self.request.GET.getlist('request_status')
+        if status:
+            queryset = queryset.filter(status__in=status)
+        return queryset
 
     @property
     def rows(self):
