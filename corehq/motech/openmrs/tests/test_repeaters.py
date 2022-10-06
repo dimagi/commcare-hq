@@ -630,7 +630,7 @@ class FindPatientTest(SimpleTestCase):
                 'person_preferred_name': {},
             },
             'form_configs': [],
-        })
+        }).to_json()
 
         with mock.patch.object(CommCareCase.objects, 'get_case'), \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
@@ -791,7 +791,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
                 "person_preferred_name": {},
             },
             "form_configs": [],
-        })
+        }).to_json()
         voided_patient = self.get_json("voided_patient")
         get_patient_mock.return_value = voided_patient
 
