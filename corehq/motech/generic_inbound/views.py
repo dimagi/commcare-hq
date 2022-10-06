@@ -6,26 +6,31 @@ from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
 from dimagi.utils.web import get_ip
 
-from corehq import toggles
-from corehq.apps.api.decorators import api_throttle
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
-)
+from corehq.apps.hqcase.api.core import SubmissionError, UserError
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundUserError,
+    GenericInboundValidationError,
+)
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -164,7 +169,13 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
 
 @json_error
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@allow_cors(['OPTIONS', 'GET', 'POST', 'PUT'])
 @api_auth
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
+@requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 @require_http_methods(list(RequestLog.RequestMethod))
 def generic_inbound_api(request, domain, api_id):
