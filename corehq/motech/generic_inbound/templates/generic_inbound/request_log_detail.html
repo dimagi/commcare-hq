@@ -2,8 +2,115 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block page_title %}{{ page_title }}{% endblock %}
 {% block page_content %}
-<h1>{{ log.api.name }}</h1>
-{{ log.timestamp }}
+
+<h1>{{ current_page.title }}</h1>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Request Details" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th>API</th>
+          <td>{{ log.api.name }}</td>
+        </tr>
+        <tr>
+          <th>timestamp</th>
+          <td>{{ log.timestamp }}</td>
+        </tr>
+        <tr>
+          <th>username</th>
+          <td>{{ log.username }}</td>
+        </tr>
+        <tr>
+          <th>request_method</th>
+          <td>{{ log.request_method }}</td>
+        </tr>
+        <tr>
+          <th>request_query</th>
+          <td>{{ log.request_query }}</td>
+        </tr>
+        <tr>
+          <th>request_body</th>
+          <td>{{ log.request_body }}</td>
+        </tr>
+        <tr>
+          <th>request_headers</th>
+          <td>{{ log.request_headers }}</td>
+        </tr>
+        <tr>
+          <th>request_ip</th>
+          <td>{{ log.request_ip }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Current Status" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
+        <tr>
+          <th>status</th>
+          <td>{{ log.status }}</td>
+        </tr>
+        <tr>
+          <th>response_status</th>
+          <td>{{ log.response_status }}</td>
+        </tr>
+        <tr>
+          <th>error_message</th>
+          <td>{{ log.error_message }}</td>
+        </tr>
+        <tr>
+          <th>attempts</th>
+          <td>{{ log.attempts }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Processing Attempts" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>timestamp</th>
+          <th>is_retry</th>
+          <th>response_status</th>
+          <th>response_body</th>
+          <th>raw_response</th>
+          <th>xform_id</th>
+          <th>case_ids</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attempt in log.processingattempt_set.all %}
+        <tr>
+          <td>{{ attempt.timestamp }}</td>
+          <td>{{ attempt.is_retry }}</td>
+          <td>{{ attempt.response_status }}</td>
+          <td>{{ attempt.response_body }}</td>
+          <td>{{ attempt.raw_response }}</td>
+          <td>{{ attempt.xform_id }}</td>
+          <td>{{ attempt.case_ids }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
