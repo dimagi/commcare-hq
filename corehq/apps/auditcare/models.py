@@ -46,8 +46,20 @@ STANDARD_HEADER_KEYS = [
     'HTTP_ACCEPT_LANGUAGE',
     'CONTENT_TYPE',
     'HTTP_ACCEPT_ENCODING',
+    'HTTP_USER_AGENT',
     # settings.AUDIT_TRACE_ID_HEADER (django-ified) will be added here
 ]
+
+
+def get_standard_headers(request_meta, exclude=None):
+    exclude = exclude or []
+    headers = {}
+    for k in STANDARD_HEADER_KEYS:
+        if k not in exclude:
+            header_item = request_meta.get(k, None)
+            if header_item is not None:
+                headers[k] = header_item
+    return headers
 
 
 class UserAgent(models.Model):
@@ -151,10 +163,7 @@ class NavigationEventAudit(AuditEvent):
         if request.GET:
             audit.params = request.META.get("QUERY_STRING", "")
         audit.view = "%s.%s" % (view_func.__module__, view_func.__name__)
-        for k in STANDARD_HEADER_KEYS:
-            header_item = request.META.get(k, None)
-            if header_item is not None:
-                audit.headers[k] = header_item
+        audit.headers.update(get_standard_headers(request.META, exclude=['HTTP_USER_AGENT']))
         # it's a bit verbose to go to that extreme, TODO: need to have
         # targeted fields in the META, but due to server differences, it's
         # hard to make it universal.

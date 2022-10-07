@@ -44,7 +44,7 @@ class Command(BaseCommand):
             options['case_type'],
             raise_multiple=True,
         )
-        assert case, 'Case %r not found' % (options["external_id"],)
+        assert case, f'Case {options["external_id"]!r} not found'
 
         form_ids = [tx.form_id for tx in case.get_form_transactions()]
         for form in XFormInstance.objects.get_forms(form_ids, ordered=True):

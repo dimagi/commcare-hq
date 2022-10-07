@@ -9,11 +9,16 @@ from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ProcessingAttempt,
+    RequestLog,
+)
 
 
 class TestGenericInboundAPIView(TestCase):
     domain_name = 'ucr-api-test'
+    example_post_data = {'name': 'cricket', 'is_team_sport': True}
 
     @classmethod
     def setUpClass(cls):
@@ -105,13 +110,47 @@ class TestGenericInboundAPIView(TestCase):
         if query_params:
             url = f"{url}?{urlencode(query_params)}"
 
-        data = json.dumps({'name': 'cricket', 'is_team_sport': True})
+        data = json.dumps(self.example_post_data)
         response = self.client.post(
             url, data=data, content_type="application/json",
-            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
         )
         response_json = response.json()
         self.assertEqual(response.status_code, 200, response_json)
         self.assertItemsEqual(response_json.keys(), ['cases', 'form_id'])
         self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
         return response_json
+
+    def test_logging(self):
+        query_params = {"param": "value"}
+        properties_expression = {
+            'prop_from_query': {
+                'type': 'jsonpath',
+                'jsonpath': 'request.query.param[0]',
+            }
+        }
+        response_json = self._test_generic_api(properties_expression, query_params)
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.domain, self.domain_name)
+        self.assertIsInstance(log.api, ConfigurableAPI)
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+        self.assertEqual(log.attempts, 1)
+        self.assertEqual(log.response_status, 200)
+        self.assertEqual(log.error_message, '')
+        self.assertEqual(log.username, self.user.username)
+        self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
+        self.assertEqual(log.request_query, 'param=value')
+        self.assertEqual(log.request_body, json.dumps(self.example_post_data))
+        self.assertIn('CONTENT_TYPE', log.request_headers)
+        self.assertEqual(log.request_headers['HTTP_USER_AGENT'], 'user agent string')
+        self.assertEqual(log.request_ip, '127.0.0.1')
+
+        attempt = ProcessingAttempt.objects.last()
+        self.assertEqual(attempt.is_retry, False)
+        self.assertEqual(attempt.response_status, 200)
+        self.assertEqual(json.loads(attempt.response_body), response_json)
+        self.assertEqual(attempt.raw_response, response_json)
+        self.assertEqual(attempt.xform_id, response_json.get('form_id'))
+        self.assertEqual(attempt.case_ids, [response_json.get('cases')[0]['case_id']])
