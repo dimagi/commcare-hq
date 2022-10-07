@@ -328,6 +328,8 @@ domain
  0011_alloweducrexpressionsettings
  0012_operatorcalllimitsettings
  0013_accountconfirmationsettings_squashed_0016_alter_smsaccountconfirmationsettings_project_name (4 squashed migrations)
+ 0014_appreleasemodesetting
+ 0015_auto_20220930_2012
 domain_migration_flags
  0001_initial
  0002_migrate_data_from_tzmigration
