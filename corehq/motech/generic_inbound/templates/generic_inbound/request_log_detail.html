@@ -24,7 +24,9 @@
       <tbody>
         <tr>
           <th>API</th>
-          <td>{{ log.api.name }}</td>
+          <td>
+            <a href="{% url 'configurable_api_edit' domain log.api_id %}">{{ log.api.name }}</a>
+          </td>
         </tr>
         <tr>
           <th>timestamp</th>
