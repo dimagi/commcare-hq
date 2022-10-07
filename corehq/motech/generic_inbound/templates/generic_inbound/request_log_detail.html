@@ -39,7 +39,14 @@
         </tr>
         <tr>
           <th>request_headers</th>
-          <td>{{ log.request_headers }}</td>
+          <td>
+            <dl class="dl-horizontal">
+            {% for key, value in log.request_headers.items|dictsort:0 %}
+              <dt>{{ key }}</dt>
+              <dd>{{ value }}</dd>
+            {% endfor %}
+            </dl>
+          </td>
         </tr>
         <tr>
           <th>request_ip</th>
