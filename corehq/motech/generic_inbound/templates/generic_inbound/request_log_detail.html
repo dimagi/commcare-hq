@@ -17,7 +17,7 @@
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title">{% trans "Request Details" %}</h3>
+    <h3 class="panel-title">{% trans "Metadata" %}</h3>
   </div>
   <div class="panel-body">
     <table class="table table-bordered">
@@ -29,6 +29,14 @@
           </td>
         </tr>
         <tr>
+          <th>status</th>
+          <td>
+            <span class="label label-{{ status_css.strip }}">
+              {{ log.get_status_display }}
+            </span>
+          </td>
+        </tr>
+        <tr>
           <th>timestamp</th>
           <td>{{ log.timestamp }}</td>
         </tr>
@@ -36,6 +44,19 @@
           <th>username</th>
           <td>{{ log.username }}</td>
         </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">{% trans "Request Details" %}</h3>
+  </div>
+  <div class="panel-body">
+    <table class="table table-bordered">
+      <tbody>
         <tr>
           <th>request_method</th>
           <td>{{ log.request_method }}</td>
@@ -65,25 +86,16 @@
         </tr>
       </tbody>
     </table>
-
   </div>
 </div>
 
 <div class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title">{% trans "Current Status" %}</h3>
+    <h3 class="panel-title">{% trans "Response Details" %}</h3>
   </div>
   <div class="panel-body">
     <table class="table table-bordered">
       <tbody>
-        <tr>
-          <th>status</th>
-          <td>
-            <span class="label label-{{ status_css.strip }}">
-              {{ log.get_status_display }}
-            </span>
-          </td>
-        </tr>
         <tr>
           <th>response_status</th>
           <td>{{ log.response_status }}</td>
