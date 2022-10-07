@@ -81,12 +81,11 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
 
     @property
     def rows(self):
-        status_labels = dict(RequestLog.Status.choices)
         for log in self._queryset[self.pagination.start:self.pagination.end]:
             yield [
                 log.api.name,
                 _to_link(log),
-                status_labels[log.status],
+                log.get_status_display(),
                 log.response_status,
             ]
 
