@@ -111,8 +111,24 @@
           <td>{{ attempt.response_status }}</td>
           <td><code>{{ attempt.response_body }}</code></td>
           <td><code>{{ attempt.raw_response }}</code></td>
-          <td>{{ attempt.xform_id }}</td>
-          <td>{{ attempt.case_ids }}</td>
+          <td>
+            {% if attempt.xform_id %}
+              <a href="{% url 'render_form_data' domain attempt.xform_id %}">{{ attempt.xform_id }}</a>
+            {% else %}
+              ---
+            {% endif %}
+          </td>
+          <td>
+            <ul class="list-unstyled">
+            {% for case_id in attempt.case_ids %}
+              <li>
+                <a href="{% url 'case_data' domain case_id %}">{{ case_id }}</a>
+              </li>
+            {% empty %}
+              ---
+            {% endfor %}
+            </ul>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
