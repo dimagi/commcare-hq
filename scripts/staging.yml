@@ -85,5 +85,5 @@ branches:
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
     #- akj/release-mode-toggle # Akash 7 Oct
     - smh/multi-select-selection-update # Steph Oct 10
-    - akj/ghost-migration # Akash Oct 11
+    - akj/migrations-fix # Akash Oct 11
 submodules: { }
