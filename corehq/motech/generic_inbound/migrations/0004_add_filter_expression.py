@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('userreports', '0019_ucrexpression_upstream_id'),
-        ('generic_inbound', '0002_configurableapivalidation'),
+        ('generic_inbound', '0003_add_logging_models'),
     ]
 
     operations = [
