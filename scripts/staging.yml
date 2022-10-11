@@ -86,4 +86,5 @@ branches:
     - smh/multi-select-selection-update # Steph Oct 10
     - akj/migrations-fix # Akash Oct 11
     - jls/multi-select-flag-handling # Jenny Oct 11
+    - ml/lookup-table-improvements # Minha Oct 11
 submodules: { }
