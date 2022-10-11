@@ -190,7 +190,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'auto_launch', 'blacklisted_owner_ids_expression', 'default_search', 'search_again_label',
-        'search_button_display_condition', 'search_label', 'search_filter',
+        'title_label', 'search_button_display_condition', 'search_label', 'search_filter',
         'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
         'custom_related_case_property', 'inline_search',
     ];
@@ -199,6 +199,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         options.search_label = options.search_label[lang] || "";
         options.search_again_label = options.search_again_label[lang] || "";
+        options.title_label = options.title_label[lang] || "";
         var mapping = {
             'additional_registry_cases': {
                 create: function(options) {

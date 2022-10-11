@@ -117,7 +117,7 @@ Using a management command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - `./manage.py add_commcare_build --latest` To fetch the latest released build from github
-- `./manage.py add_commcare_build --version=2.53.0` To manually specify the build number to use
+- `./manage.py add_commcare_build --build_version 2.53.0` To manually specify the build number to use
 - `./manage.py add_commcare_build path/to/build/ 2.53.0 2321` To make a J2ME build from a zip. The args are build_path, version, and build_number
 
 

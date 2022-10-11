@@ -11,7 +11,7 @@ hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
         },
 
         fetch: function (options) {
-            hqImport("cloudcare/js/formplayer/utils/util").setCrossDomainAjaxOptions(options);
+            hqImport("cloudcare/js/formplayer/utils/utils").setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });

@@ -78,11 +78,11 @@ def get_custom_data_models(domain, limit_types=None):
     return fields
 
 
-def get_fixture(domain, tag):
-    data_type = get_fixture_data_type_by_tag(domain, tag)
+def get_fixture(domain, tag, **kw):
+    data_type = get_fixture_data_type_by_tag(domain, tag, **kw)
     return {
         "data_type": data_type,
-        "data_items": get_fixture_items_for_data_type(domain, data_type._id),
+        "data_items": get_fixture_items_for_data_type(domain, data_type._id, **kw),
     }
 
 

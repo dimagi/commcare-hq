@@ -170,6 +170,7 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     # middleware that adds cookies must come before SecureCookiesMiddleware
     'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -220,6 +221,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -243,6 +245,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
 )
+
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
 
 HQ_APPS = (
     'django_digest',
@@ -389,6 +396,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -1230,7 +1238,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -2062,3 +2070,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+COMMCARE_ANALYTICS_HOST = ""

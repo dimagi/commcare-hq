@@ -156,7 +156,7 @@ class SQLXFormsSession(models.Model):
 
     @property
     def related_subevent(self):
-        subevents = self.messagingsubevent_set.all()
+        subevents = self.messagingsubevent_set.all().order_by("-date", "-id")[:1]
         return subevents[0] if subevents else None
 
     @property

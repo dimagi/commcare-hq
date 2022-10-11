@@ -3,7 +3,7 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from functools import cmp_to_key
+from functools import cmp_to_key, wraps
 from wsgiref.util import FileWrapper
 
 from django.conf import settings
@@ -14,11 +14,11 @@ from django.http import (
     Http404,
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseForbidden,
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
-    HttpResponseForbidden,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -41,7 +41,6 @@ from couchdbkit.exceptions import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 from no_exceptions.exceptions import Http403
-from functools import wraps
 
 from casexml.apps.case import const
 from casexml.apps.case.templatetags.case_tags import case_inline_display
@@ -61,7 +60,11 @@ from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import (
     get_user_contributions_to_touchforms_session,
 )
-from corehq.apps.domain.decorators import login_and_domain_required, require_superuser
+from corehq.apps.domain.decorators import (
+    api_auth,
+    login_and_domain_required,
+    require_superuser,
+)
 from corehq.apps.domain.models import Domain, DomainAuditRecordEntry
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.groups.models import Group
@@ -73,6 +76,10 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.doc_info import DocInfo, get_doc_info_by_id
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
+from corehq.apps.hqwebapp.templatetags.proptable_tags import (
+    DisplayConfig,
+    get_display_data,
+)
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.locations.permissions import (
@@ -117,6 +124,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
 from corehq.tabs.tabclasses import ProjectReportsTab
+from corehq.toggles import VIEW_FORM_ATTACHMENT
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
 from corehq.util.timezones.conversions import ServerTime
@@ -125,7 +133,6 @@ from corehq.util.timezones.utils import (
     get_timezone_for_user,
 )
 from corehq.util.view_utils import get_form_or_404, request_as_dict, reverse
-from corehq.toggles import VIEW_FORM_ATTACHMENT
 
 from .dispatcher import ProjectReportDispatcher
 from .forms import (
@@ -136,13 +143,8 @@ from .forms import (
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
 from .standard import ProjectReport, inspect
-from corehq.apps.domain.decorators import api_auth
 
 DATE_FORMAT = "%Y-%m-%d %H:%M"
-
-# Number of columns in case property history popup
-DYNAMIC_CASE_PROPERTIES_COLUMNS = 4
-
 
 datespan_default = datespan_in_request(
     from_param="startdate",
@@ -266,7 +268,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         scheduled_reports = sorted(scheduled_reports,
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
-            self._adjust_report_day_and_time(report)
+            soft_shift_to_domain_timezone(report)
         return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
@@ -293,7 +295,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
         for scheduled_report in all_scheduled_reports:
             if not _is_valid(scheduled_report) or owner_id == scheduled_report.owner_email:
                 continue
-            self._adjust_report_day_and_time(scheduled_report)
+            soft_shift_to_domain_timezone(scheduled_report)
             if scheduled_report.can_be_viewed_by(user):
                 ret.append(scheduled_report)
         return sorted(ret, key=self._report_sort_key())
@@ -320,18 +322,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     def _report_sort_key(self):
         return lambda report: report.configs[0].full_name.lower() if report.configs else None
-
-    def _adjust_report_day_and_time(self, report):
-        time_difference = get_timezone_difference(self.domain)
-        (report.hour, day_change) = recalculate_hour(
-            report.hour,
-            time_difference.hours,
-            time_difference.minutes
-        )
-        report.minute = 0
-        if day_change:
-            report.day = calculate_day(report.interval, report.day, day_change)
-        return report
 
     @property
     def page_context(self):
@@ -640,6 +630,44 @@ def calculate_day(interval, day, day_change):
     return day
 
 
+def _update_instance_time_with_func(report_notification, time_func, minute=None):
+    time_difference = get_timezone_difference(report_notification.domain)
+    (report_notification.hour, day_change) = time_func(
+        report_notification.hour,
+        time_difference.hours,
+        time_difference.minutes
+    )
+
+    if minute is None:
+        report_notification.minute = time_difference.minutes
+    else:
+        report_notification.minute = minute
+
+    if day_change:
+        report_notification.day = calculate_day(report_notification.interval, report_notification.day, day_change)
+
+    if report_notification.interval == "hourly":
+        (report_notification.stop_hour, _) = time_func(
+            report_notification.stop_hour, time_difference.hours, time_difference.minutes
+        )
+        report_notification.stop_minute = time_difference.minutes
+
+
+def soft_shift_to_domain_timezone(report_notification):
+    _update_instance_time_with_func(
+        report_notification,
+        recalculate_hour,
+        minute=0,
+    )
+
+
+def soft_shift_to_server_timezone(report_notification):
+    _update_instance_time_with_func(
+        report_notification,
+        calculate_hour,
+    )
+
+
 class ScheduledReportsView(BaseProjectReportSectionView):
     urlname = 'edit_scheduled_report'
     page_title = _("Scheduled Report")
@@ -666,15 +694,7 @@ class ScheduledReportsView(BaseProjectReportSectionView):
     def report_notification(self):
         if self.scheduled_report_id:
             instance = ReportNotification.get(self.scheduled_report_id)
-            time_difference = get_timezone_difference(self.domain)
-            (instance.hour, day_change) = recalculate_hour(
-                instance.hour,
-                time_difference.hours,
-                time_difference.minutes
-            )
-            instance.minute = 0
-            if day_change:
-                instance.day = calculate_day(instance.interval, instance.day, day_change)
+            soft_shift_to_domain_timezone(instance)
 
             if not self.can_edit_report(instance):
                 raise Http403()
@@ -824,19 +844,10 @@ class ScheduledReportsView(BaseProjectReportSectionView):
                 kwargs['error'] = str(err)
                 messages.error(request, gettext_lazy(kwargs['error']))
                 return self.get(request, *args, **kwargs)
-            time_difference = get_timezone_difference(self.domain)
-            (self.report_notification.hour, day_change) = calculate_hour(
-                self.report_notification.hour, time_difference.hours, time_difference.minutes
-            )
-            self.report_notification.minute = time_difference.minutes
-            if day_change:
-                self.report_notification.day = calculate_day(
-                    self.report_notification.interval,
-                    self.report_notification.day,
-                    day_change
-                )
 
+            soft_shift_to_server_timezone(self.report_notification)
             self.report_notification.save()
+
             ProjectReportsTab.clear_dropdown_cache(self.domain, self.request.couch_user)
             ReportConfig.shared_on_domain.clear(ReportConfig, self.domain)
             if self.is_new:
@@ -1215,14 +1226,9 @@ def _get_cases_changed_context(domain, form, case_id=None):
             case_blocks.pop(i)
             case_blocks.insert(0, block)
     cases = []
-    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
 
-    def _sorted_case_update_keys(keys):
-        """Put common @ attributes at the bottom"""
-        return sorted(keys, key=lambda k: (k[0] == '@', k))
-
-    for b in case_blocks:
-        this_case_id = b.get(const.CASE_ATTR_ID)
+    for case_block in case_blocks:
+        this_case_id = case_block.get(const.CASE_ATTR_ID)
         try:
             this_case = CommCareCase.objects.get_case(this_case_id, domain) if this_case_id else None
             valid_case = True
@@ -1235,16 +1241,11 @@ def _get_cases_changed_context(domain, form, case_id=None):
         else:
             url = "#"
 
-        keys = _sorted_case_update_keys(list(b))
         assume_phonetimes = not form.metadata or form.metadata.deviceID != CLOUDCARE_DEVICE_ID
-        definition = get_default_definition(
-            keys,
-            phonetime_fields=keys if assume_phonetimes else {},
-        )
         cases.append({
             "is_current_case": case_id and this_case_id == case_id,
             "name": case_inline_display(this_case),
-            "table": get_tables_as_columns(b, definition, timezone=get_timezone_for_request()),
+            "properties": _get_properties_display(case_block, assume_phonetimes, get_timezone_for_request()),
             "url": url,
             "valid_case": valid_case,
             "case_type": this_case.type if this_case and valid_case else None,
@@ -1255,9 +1256,16 @@ def _get_cases_changed_context(domain, form, case_id=None):
     }
 
 
-def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
-    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+def _get_properties_display(case_block, assume_phonetimes, timezone):
+    definitions = [
+        DisplayConfig(expr=k, is_phone_time=assume_phonetimes)
+        # Sort with common @ attributes at the bottom
+        for k in sorted(case_block.keys(), key=lambda k: (k[0] == '@', k))
+    ]
+    return [get_display_data(case_block, definition, timezone=timezone) for definition in definitions]
 
+
+def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     meta = form.metadata.to_json() if form.metadata else {}
     meta['@xmlns'] = form.xmlns
     meta['received_on'] = json_format_datetime(form.received_on)
@@ -1265,12 +1273,6 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
-    phonetime_fields = ['timeStart', 'timeEnd']
-    date_fields = ['received_on', 'server_modified_on'] + phonetime_fields
-    definition = get_default_definition(
-        _sorted_form_metadata_keys(list(meta)), phonetime_fields=phonetime_fields, date_fields=date_fields
-    )
-    form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
@@ -1298,11 +1300,22 @@ def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
         user_info = get_doc_info_by_id(None, meta_userID)
 
     return {
-        "form_meta_data": form_meta_data,
+        "form_meta_data": _get_meta_data_display(meta, timezone),
         "auth_context": auth_context,
         "auth_user_info": auth_user_info,
         "user_info": user_info,
     }
+
+
+def _get_meta_data_display(meta, timezone):
+    phonetime_fields = {'timeStart', 'timeEnd'}
+    date_fields = {'received_on', 'server_modified_on'} | phonetime_fields
+    definitions = [DisplayConfig(
+        expr=k,
+        is_phone_time=k in phonetime_fields,
+        process="date" if k in date_fields else None,
+    ) for k in _sorted_form_metadata_keys(list(meta))]
+    return [get_display_data(meta, definition, timezone=timezone) for definition in definitions]
 
 
 def _sorted_form_metadata_keys(keys):

@@ -4,7 +4,7 @@ describe('Entries', function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Controls = hqImport("cloudcare/js/form_entry/entries"),
         UI = hqImport("cloudcare/js/form_entry/form_ui"),
-        Util = hqImport("cloudcare/js/util"),
+        Utils = hqImport("cloudcare/js/utils"),
         questionJSON,
         spy;
 
@@ -333,10 +333,10 @@ describe('Entries', function () {
     });
 
     it('Should convert two-digit dates to four-digit dates', function () {
-        assert.equal(Util.convertTwoDigitYear("03-04-50"), "03-04-1950");
-        assert.equal(Util.convertTwoDigitYear("03-04-28"), "03-04-2028");
-        assert.equal(Util.convertTwoDigitYear("3/4/1928"), "3/4/1928");
-        assert.equal(Util.convertTwoDigitYear("not-a-date"), "not-a-date");
+        assert.equal(Utils.convertTwoDigitYear("03-04-50"), "03-04-1950");
+        assert.equal(Utils.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(Utils.convertTwoDigitYear("3/4/1928"), "3/4/1928");
+        assert.equal(Utils.convertTwoDigitYear("not-a-date"), "not-a-date");
     });
 
     it('Should return TimeEntry', function () {
