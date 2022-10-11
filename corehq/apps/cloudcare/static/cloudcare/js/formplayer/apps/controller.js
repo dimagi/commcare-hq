@@ -1,7 +1,9 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/apps/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+    var Const = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        SettingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
         views = hqImport("cloudcare/js/formplayer/apps/views");
     return {
         listApps: function () {
@@ -35,11 +37,11 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
         },
         listSettings: function () {
             var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
-                slugs = hqImport("cloudcare/js/formplayer/layout/views/settings").slugs,
+                slugs = SettingsViews.slugs,
                 settings = [],
                 collection,
                 settingsView;
-            if (currentUser.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+            if (currentUser.environment === Const.PREVIEW_APP_ENVIRONMENT) {
                 settings = settings.concat([
                     new Backbone.Model({ slug: slugs.SET_LANG }),
                     new Backbone.Model({ slug: slugs.SET_DISPLAY }),
@@ -53,7 +55,7 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
                 new Backbone.Model({ slug: slugs.CLEAR_USER_DATA })
             );
             collection = new Backbone.Collection(settings);
-            settingsView = hqImport("cloudcare/js/formplayer/layout/views/settings").SettingsView({
+            settingsView = SettingsViews.SettingsView({
                 collection: collection,
             });
 

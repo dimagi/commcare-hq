@@ -1,4 +1,7 @@
 hqDefine("cloudcare/js/formplayer_inline", function () {
+    var Utils = hqImport("cloudcare/js/utils"),
+        WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session");
+
     var alertHtml = function (message, cssClass) {
         return (
             "<div class='alert " + (cssClass || 'alert-info') + "'>" +
@@ -51,23 +54,21 @@ hqDefine("cloudcare/js/formplayer_inline", function () {
                 data.domain = options.domain;
                 data.username = options.username;
                 data.restoreAs = options.restoreAs;
-                var sess = hqImport('cloudcare/js/form_entry/web_form_session').WebFormSession(data);
+                var sess = WebFormSession.WebFormSession(data);
                 sess.load($target, options.lang);
             },
         });
     };
 
     $("body").on('click', '.formplayer-link', function () {
-        var getFormUrl = hqImport('cloudcare/js/utils').getFormUrl;
-        var getSubmitUrl = hqImport('cloudcare/js/utils').getSubmitUrl;
         var $this = $(this),
             $target = $($this.data('target')),
             appId = $this.data('app-id'),
             moduleId = $this.data('module-id'),
             formId = $this.data('form-id'),
             instanceId = $this.data('instance-id') || null,
-            formUrl = getFormUrl($this.data('form-url-root'), appId, moduleId, formId, instanceId),
-            submitUrl = getSubmitUrl($this.data('submit-url-root'), appId),
+            formUrl = Utils.getFormUrl($this.data('form-url-root'), appId, moduleId, formId, instanceId),
+            submitUrl = Utils.getSubmitUrl($this.data('submit-url-root'), appId),
             sessionData = $this.data('session-data') || {};
 
         $this.data('original-html', $this.data('original-html') || $this.html());
