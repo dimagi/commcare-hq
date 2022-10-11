@@ -747,11 +747,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.index = options.model.get('id');
             this.active = options.model.get('active');
-            this.showDetail = options.showDetail;
+            this.onTabClick = options.onTabClick;
         },
         tabClick: function (e) {
             e.preventDefault();
-            this.options.showDetail(this.index);
+            this.options.onTabClick(this.index);
         },
     });
 
@@ -762,7 +762,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ul",
         childViewOptions: function () {
             return {
-                showDetail: this.options.showDetail,
+                onTabClick: this.options.onTabClick,
             };
         },
     });
