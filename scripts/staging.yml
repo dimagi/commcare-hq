@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - mjr/report-logging-verification # Matt July 20
     - ml/limit-superuser-changes # Minha July 25
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     # - ad/remove-entered-wrap-functions # Addison Aug 22
@@ -83,7 +82,6 @@ branches:
     - gh/replace-base-crud-view # Graham Sep 29
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
     - akj/release-mode-toggle # Akash 7 Oct
-    - smh/multi-select-selection-update # Steph Oct 10
     - akj/migrations-fix # Akash Oct 11
     - jls/multi-select-flag-handling # Jenny Oct 11
     - ml/lookup-table-improvements # Minha Oct 11
