@@ -85,4 +85,5 @@ branches:
     - akj/release-mode-toggle # Akash 7 Oct
     - smh/multi-select-selection-update # Steph Oct 10
     - akj/migrations-fix # Akash Oct 11
+    - jls/multi-select-flag-handling # Jenny Oct 11
 submodules: { }
