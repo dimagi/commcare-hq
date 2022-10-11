@@ -16,7 +16,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
@@ -497,7 +497,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.total_by_domain(domain.name)
+        num_fixtures = LookupTable.objects.by_domain(domain.name).count()
         if num_fixtures > 0:
             return _fmt_alert(
                 ngettext(
