@@ -10984,7 +10984,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py
+#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
@@ -15967,7 +15967,7 @@ msgstr ""
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
 msgid "Error"
 msgstr ""
 
@@ -32883,6 +32883,10 @@ msgid "Domain cannot be set to '{domain}'"
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid "Username must not contain blank spaces or special characters."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
 msgstr ""
@@ -39244,6 +39248,18 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
 msgid "Basic Configuration"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Filtered"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Validation Failed"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Reverted"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html

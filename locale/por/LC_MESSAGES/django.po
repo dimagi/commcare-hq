@@ -11061,7 +11061,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py
+#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
@@ -13101,17 +13101,6 @@ msgid "Ok"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/find_by_id.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "    <p class=\"lead\">Find Data by ID</p>\n"
-#| "    <p>\n"
-#| "      This page allows you to directly access a specific form data or "
-#| "case data page.\n"
-#| "      Read more on our <a href='https://confluence.dimagi.com/display/"
-#| "commcarepublic/Find+Data+by+ID'>help site</a>.\n"
-#| "    </p>\n"
-#| "  "
 msgid ""
 "\n"
 "    <p>\n"
@@ -13122,14 +13111,6 @@ msgid ""
 "    </p>\n"
 "  "
 msgstr ""
-"\n"
-"<p class=\"lead\">Encontrar Dados pelo ID</p>\n"
-"<p>\n"
-"Esta página permite que acesse dados de um formulário ou uma página de dados "
-"de casos específicos.\n"
-"Leia mais no nosso <a href='https://confluence.dimagi.com/display/"
-"commcarepublic/Find+Data+by+ID'>site de ajuda</a>.\n"
-"</p>"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/interfaces/archive_forms.html
 msgid ""
@@ -16070,7 +16051,7 @@ msgstr ""
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
 msgid "Error"
 msgstr "Erro"
 
@@ -17872,10 +17853,8 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
-#, fuzzy
-#| msgid "CommCare Translations"
 msgid "CommCare Analytics"
-msgstr "Traduções do CommCare"
+msgstr ""
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 msgid ""
@@ -33107,6 +33086,10 @@ msgid "Domain cannot be set to '{domain}'"
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid "Username must not contain blank spaces or special characters."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
 msgstr ""
@@ -39501,16 +39484,26 @@ msgstr ""
 msgid "Basic Configuration"
 msgstr ""
 
+#: corehq/motech/generic_inbound/models.py
+msgid "Filtered"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Validation Failed"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Reverted"
+msgstr ""
+
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
 msgid "Copy URL"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Application Version"
 msgid "Validation Expressions"
-msgstr "Versão da Aplicação"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 msgid "Name is required and must be less than 64 characters"
@@ -39525,10 +39518,8 @@ msgid "Message is required"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Application"
 msgid "Add Validation"
-msgstr "Aplicação"
+msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
@@ -41565,21 +41556,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid ""
-#~ "\n"
-#~ "                Search any text, or use a targeted query. For more info "
-#~ "see the <a\n"
-#~ "                      href='https://wiki.commcarehq.org/display/"
-#~ "commcarepublic/Create+and+Manage+CommCare+Mobile"
-#~ "+Workers#CreateandManageCommCareMobileWorkers-SearchforMobileWorkers'\n"
-#~ "                      target='_blank'>Mobile Workers</a> help page\n"
-#~ "              "
-#~ msgstr ""
-#~ "\n"
-#~ "Procure por qualquer texto ou faça uma pesquisa direcionada. Para mais "
-#~ "informações, veja a página de ajuda para <a\n"
-#~ "                      href='https://wiki.commcarehq.org/display/"
-#~ "commcarepublic/Create+and+Manage+CommCare+Mobile"
-#~ "+Workers#CreateandManageCommCareMobileWorkers-SearchforMobileWorkers'\n"
-#~ "                      target='_blank'>Trabalhadores Móveis</a>."
