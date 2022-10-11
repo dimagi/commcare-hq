@@ -385,6 +385,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             </command>
             <instance id="casedb" src="jr://instance/casedb"/>
             <instance id="commcaresession" src="jr://instance/session"/>
+            <instance id="results" src="jr://instance/remote/results"/>
             <session>
               <query url="http://localhost:8000/a/domain/phone/search/123/"
                 storage-instance="results" template="case" default_search="false">
