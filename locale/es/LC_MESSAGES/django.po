@@ -11623,7 +11623,7 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/messaging/scheduling/views.py
+#: corehq/messaging/scheduling/views.py corehq/motech/generic_inbound/models.py
 #: corehq/motech/repeaters/templates/repeaters/partials/attempt_history.html
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/repeaters/views/repeat_record_display.py
@@ -16722,7 +16722,7 @@ msgstr "Seleccionar como tarjeta para pago automático"
 #: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
 #: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
 msgid "Error"
 msgstr "Error"
 
@@ -18586,10 +18586,8 @@ msgstr ""
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 #: corehq/apps/export/views/list.py
-#, fuzzy
-#| msgid "CommCare Translations"
 msgid "CommCare Analytics"
-msgstr "Traducciones CommCare"
+msgstr ""
 
 #: corehq/apps/export/templates/export/commcare_analytics.html
 msgid ""
@@ -34209,6 +34207,10 @@ msgid "Domain cannot be set to '{domain}'"
 msgstr ""
 
 #: corehq/apps/user_importer/importer.py
+msgid "Username must not contain blank spaces or special characters."
+msgstr ""
+
+#: corehq/apps/user_importer/importer.py
 msgid ""
 "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
 msgstr ""
@@ -40746,10 +40748,9 @@ msgid "Test Connection"
 msgstr ""
 
 #: corehq/motech/forms.py
-#, fuzzy, python-brace-format
-#| msgid "Invalid filter parameter: {}"
+#, python-brace-format
 msgid "Invalid email address(es): {emails}"
-msgstr "Parámetro de filtro inválido: {} "
+msgstr ""
 
 #: corehq/motech/forms.py
 msgid "Auth type '{}' requires a username."
@@ -40760,10 +40761,20 @@ msgid "Create a new API"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
-#, fuzzy
-#| msgid "Configuration"
 msgid "Basic Configuration"
-msgstr "Configuración"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Filtered"
+msgstr ""
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Validation Failed"
+msgstr "Validación Fallida"
+
+#: corehq/motech/generic_inbound/models.py
+msgid "Reverted"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
@@ -40771,32 +40782,24 @@ msgid "Copy URL"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Validation Message"
 msgid "Validation Expressions"
-msgstr "Mensaje de Validación"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 msgid "Name is required and must be less than 64 characters"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Menu is required"
 msgid "Expression is required"
-msgstr "Se necesita Menú"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Menu is required"
 msgid "Message is required"
-msgstr "Se necesita Menú"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#, fuzzy
-#| msgid "Validation"
 msgid "Add Validation"
-msgstr "Validación"
+msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
@@ -40819,10 +40822,8 @@ msgid "API Configuration updated successfully."
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
-#, fuzzy
-#| msgid "There was an error saving, please try again!"
 msgid "There is an error in your data API validations"
-msgstr "Hubo un error al guardar, por favor intente nuevamente."
+msgstr ""
 
 #: corehq/motech/models.py
 msgid ""
@@ -42813,6 +42814,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "No properties found."
-#~ msgstr "No se encontraron propiedades."
