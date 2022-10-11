@@ -330,16 +330,26 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         initialize: function (options) {
-            this.styles = options.styles;
-            this.hasNoItems = options.collection.length === 0;
-            this.redoLast = options.redoLast;
+            var self = this;
+            self.styles = options.styles;
+            self.hasNoItems = options.collection.length === 0;
+            self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
-                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
+                self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
             } else {
-                this.selectedCaseIds = [];
+                self.selectedCaseIds = [];
             }
-            this.isMultiSelect = options.isMultiSelect;
+            self.isMultiSelect = options.isMultiSelect;
+
+            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                if (action === Constants.MULTI_SELECT_ADD) {
+                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+                } else {
+                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+                }
+                self.reconcileMultiSelectUI();
+            });
         },
 
         ui: {
@@ -374,15 +384,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         onRender: function () {
-            var self = this;
-            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
             this.reconcileMultiSelectUI();
         },
 
@@ -699,11 +700,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.index = options.model.get('id');
             this.active = options.model.get('active');
-            this.showDetail = options.showDetail;
+            this.onTabClick = options.onTabClick;
         },
         tabClick: function (e) {
             e.preventDefault();
-            this.options.showDetail(this.index);
+            this.options.onTabClick(this.index);
         },
     });
 
@@ -714,7 +715,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ul",
         childViewOptions: function () {
             return {
-                showDetail: this.options.showDetail,
+                onTabClick: this.options.onTabClick,
             };
         },
     });
