@@ -141,7 +141,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
         var tabListView = hqImport("cloudcare/js/formplayer/menus/views").DetailTabListView({
             collection: tabCollection,
             showDetail: function (detailTabIndex) {
-                showDetail(model, detailTabIndex, caseId);
+                showDetail(model, detailTabIndex, caseId, isMultiSelect);
             },
         });
         var detailFooterView = hqImport("cloudcare/js/formplayer/menus/views").CaseDetailFooterView({
