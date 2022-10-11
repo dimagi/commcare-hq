@@ -328,18 +328,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         initialize: function (options) {
-            this.styles = options.styles;
-            this.hasNoItems = options.collection.length === 0;
-            this.redoLast = options.redoLast;
+            var self = this;
+            self.styles = options.styles;
+            self.hasNoItems = options.collection.length === 0;
+            self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
-                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
+                self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
             } else {
-                this.selectedCaseIds = [];
+                self.selectedCaseIds = [];
             }
-            this.isMultiSelect = options.isMultiSelect;
+            self.isMultiSelect = options.isMultiSelect;
 
-            var self = this;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
                 if (action === Constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
