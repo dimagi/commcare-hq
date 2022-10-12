@@ -84,4 +84,5 @@ branches:
     #- akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - jls/multi-select-flag-handling # Jenny Oct 11
+    - jls/kill-edit-forms # Jenny Oct 12
 submodules: { }
