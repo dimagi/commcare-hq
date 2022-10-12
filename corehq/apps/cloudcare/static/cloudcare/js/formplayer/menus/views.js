@@ -322,8 +322,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childView: CaseView,
         childViewOptions: function () {
             return {
-                isMultiSelect: this.options.isMultiSelect,
                 styles: this.options.styles,
+                isMultiSelect: false,
             };
         },
 
@@ -338,16 +338,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             } else {
                 self.selectedCaseIds = [];
             }
-            self.isMultiSelect = options.isMultiSelect;
-
-            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
         },
 
         ui: {
@@ -360,9 +350,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
-            selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
-            continueButtonText: "#multi-select-btn-text",
         },
 
         events: {
@@ -375,14 +362,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
-            'click @ui.selectAllCheckbox': 'selectAllAction',
-            'keypress @ui.selectAllCheckbox': 'selectAllAction',
-            'click @ui.continueButton': 'continueAction',
-            'keypress @ui.continueButton': 'continueAction',
-        },
-
-        onRender: function () {
-            this.reconcileMultiSelectUI();
         },
 
         caseListAction: function (e) {
@@ -449,11 +428,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
-        selectAllAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
-            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
-        },
-
         _allCaseIds: function () {
             var caseIds = [];
             this.children.each(function (childView) {
@@ -469,25 +443,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-        },
-
-        reconcileMultiSelectUI: function () {
-            var self = this;
-            if (!self.isMultiSelect) {
-                return;
-            }
-
-            // Update states of row checkboxes
-            self.children.each(function (childView) {
-                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
-            });
-
-            // Update state of Continue button
-            self.ui.continueButtonText.text(self.selectedCaseIds.length);
-            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
-
-            // Reconcile state of "select all" checkbox
-            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
 
         templateContext: function () {
@@ -511,8 +466,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: this.isMultiSelect,
                 selectedCaseIds: this.selectedCaseIds,
+                isMultiSelect: false,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -524,7 +479,74 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    var MultiSelectCaseListView = CaseListView.extend({
+        ui: function () {
+            return _.extend(MultiSelectCaseListView.__super__.ui, {
+                selectAllCheckbox: "#select-all-checkbox",
+                continueButton: "#multi-select-continue-btn",
+                continueButtonText: "#multi-select-btn-text",
+            });
+        },
 
+        events: function () {
+            return _.extend(MultiSelectCaseListView.__super__.events, {
+                'click @ui.selectAllCheckbox': 'selectAllAction',
+                'keypress @ui.selectAllCheckbox': 'selectAllAction',
+                'click @ui.continueButton': 'continueAction',
+                'keypress @ui.continueButton': 'continueAction',
+            });
+        },
+
+        childViewOptions: function () {
+            var options = MultiSelectCaseListView.__super__.childViewOptions.apply(this);
+            options.isMultiSelect = true;
+            return options;
+        },
+
+        initialize: function (options) {
+            MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
+            var self = this;
+            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                if (action === Constants.MULTI_SELECT_ADD) {
+                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+                } else {
+                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+                }
+                self.reconcileMultiSelectUI();
+            });
+        },
+
+        templateContext: function () {
+            var context = MultiSelectCaseListView.__super__.templateContext.apply(this);
+            context.isMultiSelect = true;
+            return context;
+        },
+
+        onRender: function () {
+            this.reconcileMultiSelectUI();
+        },
+
+        selectAllAction: function (e) {
+            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
+        },
+
+        reconcileMultiSelectUI: function () {
+            var self = this;
+
+            // Update states of row checkboxes
+            self.children.each(function (childView) {
+                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
+            });
+
+            // Update state of Continue button
+            self.ui.continueButtonText.text(self.selectedCaseIds.length);
+            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
+            // Reconcile state of "select all" checkbox
+            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
+        },
+    });
 
     // this method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
@@ -833,6 +855,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         MenuListView: function (options) {
             return new MenuListView(options);
+        },
+        MultiSelectCaseListView: function (options) {
+            return new MultiSelectCaseListView(options);
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
