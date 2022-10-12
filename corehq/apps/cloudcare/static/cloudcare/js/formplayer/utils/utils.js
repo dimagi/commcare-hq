@@ -282,6 +282,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         };
 
         this.onSubmit = function () {
+            sessionStorage.removeItem('selectedValues');
             this.page = null;
             this.sortIndex = null;
             this.search = null;

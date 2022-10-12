@@ -124,7 +124,8 @@
             "to": {
                 "trackedEntityInstance": {
                     "programOwners": [],
-                    "trackedEntityInstance": "T6PdaIWODvO"
+                    "trackedEntityInstance": "T6PdaIWODvO",
+                    "potentialDuplicate": false
                 }
             }
         }
