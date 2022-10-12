@@ -29,8 +29,15 @@ def create_engine(connection_url: str, connect_args: dict = None):
     # paramstyle='format' allows you to use column names that include the ')' character
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
+    # Pool recycle set smaller than NLB idle timeout (non-configurable 350s) to prevent reusing connections
+    # that have been closed by the NLB
     connect_args = connect_args or {}
-    return sqlalchemy.create_engine(connection_url, paramstyle='format', connect_args=connect_args)
+    return sqlalchemy.create_engine(
+        connection_url,
+        paramstyle='format',
+        pool_recycle=300,
+        connect_args=connect_args
+    )
 
 
 class SessionHelper(object):
