@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - ml/limit-superuser-changes # Minha July 25
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
     # - ad/remove-entered-wrap-functions # Addison Aug 22
     - ce/api-rate-limits # Cal Aug 23
