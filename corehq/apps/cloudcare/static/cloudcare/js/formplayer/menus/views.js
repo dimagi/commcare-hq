@@ -503,7 +503,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             return options;
         },
 
-        initialize: function (options) {
+        initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
             var self = this;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
