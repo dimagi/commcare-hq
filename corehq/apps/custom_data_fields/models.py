@@ -47,6 +47,7 @@ class Field(models.Model):
     regex = models.CharField(max_length=127, null=True)
     regex_msg = models.CharField(max_length=255, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
+    is_synced = models.BooleanField(default=False)
 
     class Meta:
         order_with_respect_to = "definition"
@@ -74,6 +75,13 @@ class Field(models.Model):
             ).format(
                 label=self.label
             )
+
+    def to_dict(self):
+        from django.forms.models import model_to_dict
+        return model_to_dict(self, exclude=['definition', 'id'])
+
+    def __repr__(self):
+        return f'Field ({self.slug})'
 
 
 class CustomDataFieldsDefinition(models.Model):
@@ -158,6 +166,7 @@ class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
     fields = models.JSONField(default=dict, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
+    is_synced = models.BooleanField(default=False)
 
     @property
     def has_users_assigned(self):
