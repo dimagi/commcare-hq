@@ -9,13 +9,13 @@ from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.ota.case_restore import get_case_hierarchy_for_restore
-from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import flag_enabled
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow, Field, TypeField
 
 
 class TestRelatedCases(TestCase, TestXmlMixin):
@@ -75,10 +75,9 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         case_id = self.dad.case_id
 
         domain_obj = create_domain(self.domain)
-        user = WebUser.create(self.domain, 'test-user', 'passmein', created_by=None, created_via=None)
 
-        self.addCleanup(delete_all_users)
         self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
 
         location_type = LocationType.objects.create(domain=self.domain, name="Top", code="top")
         location = SQLLocation.objects.create(domain=self.domain, name="Top Location", location_type=location_type)
@@ -89,7 +88,7 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         SQLLocation.objects.create(domain="random-domain", name="Top Location",
                                    location_type=another_location_type)
 
-        response = self._generate_restore(case_id, user)
+        response = self._generate_restore(case_id)
         self.assertEqual(response.status_code, 200)
 
         response_content = next(response.streaming_content)
@@ -103,8 +102,43 @@ class TestRelatedCases(TestCase, TestXmlMixin):
         self.assertXmlPartialEqual(locations_content, response_content,
                                    '{http://openrosa.org/http/response}fixture[@id="locations"]')
 
-    def _generate_restore(self, case_id, user):
-        self.client.login(username=user.username, password=user.password)
+    @flag_enabled('ADD_LIMITED_FIXTURES_TO_CASE_RESTORE')
+    def test_lookup_table_in_restore(self):
+        case_id = self.dad.case_id
+
+        domain_obj = create_domain(self.domain)
+
+        self.addCleanup(domain_obj.delete)
+        self.addCleanup(clear_fixture_cache, self.domain)
+
+        table_tag = "atable"
+
+        table = LookupTable(domain=self.domain,
+                            tag=table_tag,
+                            description="A Table",
+                            is_global=True,
+                            fields=[TypeField(name="wing")])
+        table.save()
+        row = LookupTableRow(
+            table_id=table.id,
+            domain=self.domain,
+            fields={
+                "wing": [Field(value="duck", properties={"says": "quack"})],
+            },
+            sort_key=0,
+        )
+        row.save()
+
+        response = self._generate_restore(case_id)
+        self.assertEqual(response.status_code, 200)
+
+        response_content = next(response.streaming_content)
+
+        lookup_table_content = lookup_table_fixture_content.format(table_tag=table_tag, user_id=case_id)
+        xpath = f'{{http://openrosa.org/http/response}}fixture[@id="item-list:{table_tag}"]'
+        self.assertXmlPartialEqual(lookup_table_content, response_content, xpath)
+
+    def _generate_restore(self, case_id):
         url = reverse("case_restore", args=[self.domain, case_id])
         hmac_header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, url)
         return self.client.get(url, HTTP_X_MAC_DIGEST=hmac_header_value)
@@ -139,6 +173,18 @@ location_fixture_content = """
                 <ns0:location_data/>
             </ns0:location>
         </ns0:locations>
+    </ns0:fixture>
+</partial>
+"""
+
+lookup_table_fixture_content = """
+<partial>
+    <ns0:fixture xmlns:ns0="http://openrosa.org/http/response" id="item-list:{table_tag}" user_id="{user_id}">
+        <ns0:atable_list>
+            <ns0:atable>
+                <ns0:wing says="quack">duck</ns0:wing>
+            </ns0:atable>
+        </ns0:atable_list>
     </ns0:fixture>
 </partial>
 """

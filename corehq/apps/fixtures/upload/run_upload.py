@@ -62,7 +62,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
                 owner_key,
             )
 
-        old_rows = retry(FixtureDataItem.get_item_list)(domain, table.tag)
+        old_rows = retry(FixtureDataItem.get_item_list)(domain, table.tag, bypass_cache=True)
         sort_keys = {r._id: r.sort_key for r in old_rows}
         if not skip_orm:
             sql_row_ids = {id.hex for id in LookupTableRow.objects
@@ -96,7 +96,7 @@ def _run_upload(domain, workbook, replace=False, task=None, skip_orm=False):
     else:
         owner_ids = load_owner_ids(workbook.get_owners(), domain)
     result.number_of_fixtures, update_progress = setup_progress(task, workbook)
-    old_tables = FixtureDataType.by_domain(domain)
+    old_tables = FixtureDataType.by_domain(domain, bypass_cache=True)
     sql_table_ids = {id.hex for id in LookupTable.objects
         .filter(id__in=[t._id for t in old_tables])
         .values_list("id", flat=True)}
@@ -168,9 +168,9 @@ class Mutation:
 def flush(tables, rows, owners):
     def sync_docs_to_sql():
         if tables.to_sync:
-            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync)
+            FixtureDataType._migration_bulk_sync_to_sql(tables.to_sync, ignore_conflicts=True)
         if rows.to_sync:
-            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync)
+            FixtureDataItem._migration_bulk_sync_to_sql(rows.to_sync, ignore_conflicts=True)
         assert not owners.to_sync, owners.to_sync
 
     with CouchTransaction() as couch:

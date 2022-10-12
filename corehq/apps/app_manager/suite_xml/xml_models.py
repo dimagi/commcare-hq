@@ -520,7 +520,6 @@ class QueryPrompt(DisplayNode):
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
     exclude = StringField('@exclude', required=False)
-    required_attr = StringField('@required', required=False)  # Temporary addition
     required = NodeField('required', Required, required=False)
     validations = NodeListField('validation', Validation)
 
@@ -529,11 +528,12 @@ class QueryPrompt(DisplayNode):
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
+    ORDER = ('title', 'data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
     template = StringField('@template')
+    title = NodeField('title', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")

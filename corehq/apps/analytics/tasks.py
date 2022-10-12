@@ -1,3 +1,4 @@
+import csv
 import json
 import logging
 import math
@@ -6,27 +7,17 @@ import time
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.core.validators import ValidationError, validate_email
 
-import csv
+import boto3
 import KISSmetrics
 import requests
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
-import tinys3
 from celery.schedules import crontab
-from celery.task import periodic_task
-from email_validator import EmailNotValidError, validate_email
 from memoized import memoized
 
-from corehq.apps.analytics.utils.partner_analytics import (
-    generate_monthly_mobile_worker_statistics,
-    generate_monthly_web_user_statistics,
-    generate_monthly_submissions_statistics,
-    send_partner_emails,
-)
-from corehq.util.metrics import metrics_counter, metrics_gauge
-from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from dimagi.utils.dates import add_months_to_date
 from dimagi.utils.logging import notify_exception
 
@@ -40,20 +31,27 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.analytics.utils import (
     analytics_enabled_for_email,
+    get_client_ip_from_meta,
     get_instance_string,
     get_meta,
-    get_client_ip_from_meta,
     log_response,
 )
 from corehq.apps.analytics.utils.hubspot import (
-    get_blocked_hubspot_domains,
-    hubspot_enabled_for_user,
-    hubspot_enabled_for_email,
-    remove_blocked_domain_contacts_from_hubspot,
     MAX_API_RETRIES,
     emails_that_accepted_invitations_to_blocked_hubspot_domains,
+    get_blocked_hubspot_domains,
+    hubspot_enabled_for_email,
+    hubspot_enabled_for_user,
+    remove_blocked_domain_contacts_from_hubspot,
     remove_blocked_domain_invited_users_from_hubspot,
 )
+from corehq.apps.analytics.utils.partner_analytics import (
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_submissions_statistics,
+    generate_monthly_web_user_statistics,
+    send_partner_emails,
+)
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
@@ -63,6 +61,8 @@ from corehq.apps.users.models import WebUser
 from corehq.toggles import deterministic_random
 from corehq.util.dates import unix_time
 from corehq.util.decorators import analytics_task
+from corehq.util.metrics import metrics_counter, metrics_gauge
+from corehq.util.metrics.const import MPM_LIVESUM, MPM_MAX
 from corehq.util.soft_assert import soft_assert
 
 logger = logging.getLogger('analytics')
@@ -656,29 +656,16 @@ def track_periodic_data():
 
 
 def _email_is_valid(email):
-    if not email or _is_suspicious_email(email):
+    if not email:
         return False
 
     try:
         validate_email(email)
-    except EmailNotValidError as e:
-        logger.warning(str(e))
+    except ValidationError as exc:
+        logger.warning(str(exc))
         return False
 
     return True
-
-
-# These domains provide disposable email addresses which attract scammers
-# AWS Guard Duty triggers alerts for these domains. The below list is likely incomplete --
-# if a Guard Duty alert is triggered for a domain not seen below, please add it
-SUSPICIOUS_DOMAINS = [
-    'mailna.me',
-    'mozej.com'
-]
-
-
-def _is_suspicious_email(email):
-    return any(email.endswith(domain) for domain in SUSPICIOUS_DOMAINS)
 
 
 def submit_data_to_hub_and_kiss(submit_json):
@@ -737,15 +724,16 @@ def _track_periodic_data_on_kiss(submit_json):
             ] + [prop['value'] for prop in webuser['properties']]
             csvwriter.writerow(row)
 
-    if settings.S3_ACCESS_KEY and settings.S3_SECRET_KEY and settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
-        s3_connection = tinys3.Connection(settings.S3_ACCESS_KEY, settings.S3_SECRET_KEY, tls=True)
-        f = open(filename, 'rb')
-        s3_connection.upload(filename, f, 'kiss-uploads')
+    if settings.ANALYTICS_IDS.get('KISSMETRICS_KEY', None):
+        s3 = boto3.client(
+            's3',
+            aws_access_key_id=settings.S3_ACCESS_KEY,
+            aws_secret_access_key=settings.S3_SECRET_KEY,
+        )
+        with open(filename, 'rb') as f:
+            s3.upload_fileobj(f, 'kiss-uploads', filename)
 
     os.remove(filename)
-
-
-
 
 
 def get_ab_test_properties(user):

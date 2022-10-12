@@ -179,13 +179,13 @@ class HqPermissions(DocumentSchema):
     view_apps = BooleanProperty(default=False)
     edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
-    access_api = BooleanProperty(default=True)
+    access_api = BooleanProperty(default=False)
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
-    download_reports = BooleanProperty(default=True)
+    download_reports = BooleanProperty(default=False)
     view_reports = BooleanProperty(default=False)
     view_report_list = StringListProperty(default=[])
     edit_ucrs = BooleanProperty(default=False)
@@ -195,7 +195,7 @@ class HqPermissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    access_mobile_endpoints = BooleanProperty(default=True)
+    access_mobile_endpoints = BooleanProperty(default=False)
 
     view_file_dropzone = BooleanProperty(default=False)
     edit_file_dropzone = BooleanProperty(default=False)
@@ -1748,7 +1748,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def supports_lockout(self):
         return not self.project.disable_mobile_login_lockout
 
-    def to_ota_restore_user(self, request_user=None):
+    def to_ota_restore_user(self, domain, request_user=None):
+        assert domain == self.domain
         return OTARestoreCommCareUser(
             self.domain,
             self,
@@ -2360,6 +2361,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             request_user=request_user
         )
 
+    @quickcache(['self._id', 'domain'], lambda _: settings.UNIT_TESTING)
+    def get_usercase_id(self, domain):
+        case = self.get_usercase_by_domain(domain)
+        return case.case_id if case else None
+
     def get_email(self):
         # Do not change the name of this method because this is implementing
         # get_email() from the CommCareMobileContactMixin
@@ -2503,6 +2509,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
     def get_location(self, domain):
         return self.get_sql_location(domain)
 
+    def get_usercase_by_domain(self, domain):
+        return CommCareCase.objects.get_case_by_external_id(domain, self._id, USERCASE_TYPE)
 
 class FakeUser(WebUser):
     """

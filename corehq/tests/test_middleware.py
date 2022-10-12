@@ -102,12 +102,31 @@ class NoDomainReport(BaseReport):
     slug = 'admin_report'
 
 
+def cookie_view(request):
+    response = HttpResponse()
+    response.set_cookie('test-cookie', 'abc123')
+    return response
+
+
+def secure_cookie_view(request):
+    response = HttpResponse()
+    response.set_cookie('test-cookie', 'abc123', secure=True)
+    return response
+
+
+def no_cookie_view(request):
+    return HttpResponse()
+
+
 urlpatterns = [
     path('slow_class', SlowClassView.as_view()),
     path('slow_function', slow_function_view),
     TestNoDomainReportDispatcher.url_pattern(),
     path('<domain>/', include([TestReportDispatcher.url_pattern()])),
     path('<domain>/custom/', include([TestCustomReportDispatcher.url_pattern()])),
+    path('cookie', cookie_view),
+    path('secure_cookie', secure_cookie_view),
+    path('no_cookie', no_cookie_view),
 ]
 
 
@@ -180,3 +199,34 @@ class TestLogLongRequestMiddlewareReports(TestCase):
         res = self.client.get('/domain2/custom/custom_report/')
         self.assertEqual(res.status_code, 200)
         notify_exception.assert_not_called()
+
+
+@override_settings(
+    ROOT_URLCONF='corehq.tests.test_middleware',
+    MIDDLEWARE=('corehq.middleware.SecureCookiesMiddleware',),
+)
+class TestSecureCookiesMiddleware(SimpleTestCase):
+
+    def test_secure_if_SECURE_COOKIES_is_true(self):
+        with override_settings(SECURE_COOKIES=True):
+            response = self.client.get('/cookie')
+        self.assertTrue(response.cookies['test-cookie']['secure'])
+
+    def test_not_secure_if_SECURE_COOKIES_is_false(self):
+        with override_settings(SECURE_COOKIES=False):
+            response = self.client.get('/cookie')
+        self.assertFalse(response.cookies['test-cookie']['secure'])
+
+    def test_already_secure_cookie_remains_secure_if_SECURE_COOKIES_is_true(self):
+        with override_settings(SECURE_COOKIES=True):
+            response = self.client.get('/secure_cookie')
+        self.assertTrue(response.cookies['test-cookie']['secure'])
+
+    def test_already_secure_cookie_remains_secure_if_SECURE_COOKIES_is_false(self):
+        with override_settings(SECURE_COOKIES=False):
+            response = self.client.get('/secure_cookie')
+        self.assertTrue(response.cookies['test-cookie']['secure'])
+
+    def test_ignores_if_no_cookies_set(self):
+        response = self.client.get('/no_cookie')
+        self.assertFalse(response.cookies)

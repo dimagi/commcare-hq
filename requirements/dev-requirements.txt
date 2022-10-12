@@ -38,6 +38,8 @@ botocore==1.27.28
     # via
     #   boto3
     #   s3transfer
+build==0.8.0
+    # via pip-tools
 cachetools==5.0.0
     # via google-auth
 celery==5.2.7
@@ -113,7 +115,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.14
+django==3.2.15
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -145,7 +147,7 @@ django-bulk-update==2.2.0
     # via -r base-requirements.in
 django-celery-results==2.4.0
     # via -r base-requirements.in
-django-compressor==2.4
+django-compressor==4.1
     # via -r base-requirements.in
 django-countries==7.3.2
     # via -r base-requirements.in
@@ -155,6 +157,8 @@ django-cte==1.2.0
     # via -r base-requirements.in
 django-extensions==3.1.3
     # via -r dev-requirements.in
+django-field-audit==1.2.3
+    # via -r base-requirements.in
 django-formtools==2.3
     # via
     #   -r base-requirements.in
@@ -165,7 +169,7 @@ django-nose @ https://github.com/dimagi/django-nose/raw/fast-first-1.4.6.1/relea
     # via -r test-requirements.in
 django-oauth-toolkit==1.5.0
     # via -r base-requirements.in
-django-otp==0.9.4
+django-otp==1.1.3
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -195,10 +199,6 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-dnspython==1.15.0
-    # via
-    #   -r base-requirements.in
-    #   email-validator
 docutils==0.16
     # via
     #   -r dev-requirements.in
@@ -210,8 +210,6 @@ elasticsearch2==2.5.1
     # via -r base-requirements.in
 elasticsearch5==5.5.6
     # via -r base-requirements.in
-email-validator==1.1.3
-    # via -r base-requirements.in
 et-xmlfile==1.0.1
     # via openpyxl
 ethiopian-date-converter==0.1.5
@@ -222,8 +220,8 @@ executing==0.8.3
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==5.0.2
-    # via -r base-requirements.in
+faker==14.2.0
+    # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
 flake8==3.9.2
@@ -243,7 +241,7 @@ gevent==21.8.0
     #   git-build-branch
 ghdiff==0.4
     # via -r base-requirements.in
-git-build-branch==0.1.13
+git-build-branch==0.1.14
     # via -r dev-requirements.in
 gnureadline==8.0.0
     # via -r dev-requirements.in
@@ -281,9 +279,7 @@ httplib2==0.20.4
     #   google-api-python-client
     #   google-auth-httplib2
 idna==2.10
-    # via
-    #   email-validator
-    #   requests
+    # via requests
 imagesize==1.2.0
     # via sphinx
 importlib-metadata==4.12.0
@@ -296,6 +292,8 @@ iso8601==0.1.13
     # via -r base-requirements.in
 isodate==0.6.1
     # via python3-saml
+isort==5.10.1
+    # via -r dev-requirements.in
 jedi==0.18.1
     # via ipython
 jinja2==2.11.3
@@ -337,7 +335,7 @@ lxml==4.9.1
     #   eulxml
     #   python3-saml
     #   xmlsec
-mako==1.1.3
+mako==1.2.2
     # via
     #   alembic
     #   oic
@@ -374,13 +372,15 @@ openpyxl==3.0.9
     #   -r base-requirements.in
     #   commcaretranslationchecker
 packaging==20.4
-    # via sphinx
+    # via
+    #   build
+    #   sphinx
 parso==0.8.3
     # via jedi
 pathspec==0.9.0
     # via black
 pep517==0.10.0
-    # via pip-tools
+    # via build
 pexpect==4.8.0
     # via ipython
 phonenumberslite==8.12.48
@@ -393,7 +393,7 @@ pillow==9.0.1
     # via
     #   -r base-requirements.in
     #   reportlab
-pip-tools==6.6.0
+pip-tools==6.8.0
     # via -r test-requirements.in
 platformdirs==2.4.1
     # via black
@@ -403,7 +403,7 @@ ply==3.11
     #   jsonpath-ng
 polib==1.1.1
     # via -r base-requirements.in
-prometheus-client==0.7.1
+prometheus-client==0.14.1
     # via -r base-requirements.in
 prompt-toolkit==3.0.26
     # via
@@ -470,8 +470,6 @@ pyphonetics==0.5.3
     # via -r base-requirements.in
 pyrsistent==0.17.3
     # via jsonschema
-pysocks==1.7.1
-    # via twilio
 python-dateutil==2.8.2
     # via
     #   -r base-requirements.in
@@ -510,7 +508,7 @@ quickcache==0.5.4
     # via -r base-requirements.in
 radon==5.1.0
     # via -r test-requirements.in
-rcssmin==1.0.6
+rcssmin==1.1.0
     # via django-compressor
 redis==3.5.3
     # via
@@ -536,7 +534,6 @@ requests==2.25.1
     #   requests-toolbelt
     #   sphinx
     #   stripe
-    #   tinys3
     #   twilio
 requests-mock==1.9.3
     # via -r test-requirements.in
@@ -546,7 +543,7 @@ requests-oauthlib==1.3.1
     #   google-auth-oauthlib
 requests-toolbelt==0.9.1
     # via -r base-requirements.in
-rjsmin==1.1.0
+rjsmin==1.2.0
     # via django-compressor
 rsa==4.8
     # via google-auth
@@ -554,7 +551,7 @@ s3transfer==0.6.0
     # via boto3
 schema==0.7.5
     # via -r base-requirements.in
-sentry-sdk==0.19.5
+sentry-sdk==1.9.0
     # via -r base-requirements.in
 sh==1.14.2
     # via
@@ -572,7 +569,6 @@ six==1.16.0
     #   asttokens
     #   click-repl
     #   django-braces
-    #   django-compressor
     #   django-oauth-toolkit
     #   django-statici18n
     #   django-transfer
@@ -602,7 +598,6 @@ six==1.16.0
     #   requests-mock
     #   sqlalchemy-postgres-copy
     #   tenacity
-    #   twilio
 sniffer==0.4.1
     # via -r dev-requirements.in
 snowballstemmer==2.0.0
@@ -647,7 +642,7 @@ sqlparse==0.3.1
     # via django
 stack-data==0.1.4
     # via ipython
-stripe==2.54.0
+stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
     # via -r base-requirements.in
@@ -656,15 +651,13 @@ tenacity==6.2.0
 testil==1.1
     # via -r test-requirements.in
 text-unidecode==1.3
-    # via
-    #   -r base-requirements.in
-    #   faker
-tinys3==0.1.12
     # via -r base-requirements.in
 toml==0.10.2
     # via pep517
 tomli==2.0.1
-    # via black
+    # via
+    #   black
+    #   build
 toposort==1.7
     # via -r base-requirements.in
 traitlets==5.1.1
@@ -675,7 +668,7 @@ tropo-webapi-python==0.1.3
     # via -r base-requirements.in
 turn-python==0.0.1
     # via -r base-requirements.in
-twilio==6.5.1
+twilio==7.12.0
     # via -r base-requirements.in
 typing-extensions==4.1.1
     # via

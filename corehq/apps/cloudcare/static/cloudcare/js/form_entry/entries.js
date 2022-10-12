@@ -3,7 +3,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Const = hqImport("cloudcare/js/form_entry/const"),
         Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -15,6 +16,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.answer = question.answer;
         self.datatype = question.datatype();
         self.entryId = _.uniqueId(this.datatype);
+        self.xformAction = Const.ANSWER;
+        self.xformParams = function () { return {}; };
 
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
@@ -136,7 +139,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (match) {
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
-                question.parentPubSub.subscribe(function (message) {
+                question.broadcastPubSub.subscribe(function (message) {
                     if (message === Const.NO_ANSWER) {
                         self.rawAnswer(Const.NO_ANSWER);
                     } else if (message) {
@@ -263,7 +266,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.editing = false;
             var broadcastObj = Utils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             if (_.isEmpty(broadcastObj)) {
                 question.answer(Const.NO_ANSWER);
@@ -280,7 +283,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.question.error(null);
             self.editing = true;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.parentPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
             });
         };
 
@@ -757,7 +760,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            self.$picker.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
+            hqImport("cloudcare/js/utils").initDateTimePicker(self.$picker, _.extend({
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
@@ -892,6 +895,100 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
+
+    /**
+     * Base class for entry types that involve uploading a file: multimedia and signatures.
+     */
+    function FileEntry(question, options) {
+        var self = this;
+        EntrySingleAnswer.call(this, question, options);
+        self.templateType = 'file';
+        self.xformAction = Const.ANSWER_MEDIA;
+        self.xformParams = function () {
+            return { file: self.file() };
+        };
+
+        self.file = ko.observable();
+
+    }
+    FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        if (newValue !== Const.NO_ANSWER) {
+            var $input = $('#' + self.entryId);
+            self.answer(newValue.replace(Const.FILE_PREFIX, ""));
+            self.file($input[0].files[0]);
+        } else {
+            self.answer(newValue);
+            self.file(null);
+        }
+        this.question.onchange();
+    };
+
+    /**
+     * Represents an image upload.
+     */
+    function ImageEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*";
+
+        self.helpText = function () {
+            return gettext("Upload image");
+        };
+
+    }
+    ImageEntry.prototype = Object.create(FileEntry.prototype);
+    ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an audio upload.
+     */
+    function AudioEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "audio/*";
+
+        self.helpText = function () {
+            return gettext("Upload audio file");
+        };
+
+    }
+    AudioEntry.prototype = Object.create(FileEntry.prototype);
+    AudioEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a video upload.
+     */
+    function VideoEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "video/*";
+
+        self.helpText = function () {
+            return gettext("Upload video file");
+        };
+
+    }
+    VideoEntry.prototype = Object.create(FileEntry.prototype);
+    VideoEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a signature, which requires the user to upload a signature file.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*,.pdf,.doc,.docx";
+
+        self.helpText = function () {
+            return gettext("Upload signature file");
+        };
+
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
 
     function GeoPointEntry(question, options) {
         var self = this;
@@ -1146,9 +1243,30 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             case Const.INFO:
                 entry = new InfoEntry(question, {});
                 break;
-            default:
-                window.console.warn('No active entry for: ' + question.datatype());
-                entry = new UnsupportedEntry(question, options);
+            case Const.BINARY:
+                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
+                    // do nothing, fall through to unsupported
+                } else if (style === Const.SIGNATURE) {
+                    entry = new SignatureEntry(question, {});
+                    break;
+                } else {
+                    switch (question.control()) {
+                        case Const.CONTROL_IMAGE_CHOOSE:
+                            entry = new ImageEntry(question, {});
+                            break;
+                        case Const.CONTROL_AUDIO_CAPTURE:
+                            entry = new AudioEntry(question, {});
+                            break;
+                        case Const.CONTROL_VIDEO_CAPTURE:
+                            entry = new VideoEntry(question, {});
+                            break;
+                        // any other control types are unsupported
+                    }
+                }
+        }
+        if (!entry) {
+            window.console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
         }
         return entry;
     }
@@ -1165,19 +1283,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility that gets the display options from a parent form of a question.
      * */
     function _getDisplayOptions(question) {
-        var maxIter = 10; // protect against a potential infinite loop
-        var form = question.parent;
-
+        const form = Utils.getRootForm(question);
         if (form === undefined) {
             return {};
         }
-
-        // logic in case the question is in a group or repeat or nested group, etc.
-        while (form.displayOptions === undefined && maxIter > 0) {
-            maxIter--;
-            form = parent.parent;
-        }
-
         return form.displayOptions || {};
     }
 
@@ -1211,18 +1320,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
+        AudioEntry: AudioEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
+        ImageEntry: ImageEntry,
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
+        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
+        UnsupportedEntry: UnsupportedEntry,
+        VideoEntry: VideoEntry,
     };
 });

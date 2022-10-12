@@ -1528,7 +1528,7 @@ msgid "Save"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Cancel"
 msgstr ""
 
@@ -1770,7 +1770,7 @@ msgid "Parsing Error. Please check that your form is valid XML."
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "OK"
 msgstr ""
 
@@ -2651,6 +2651,22 @@ msgid "24-hour clock"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload image"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload audio file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload video file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
+msgid "Upload signature file"
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entries.js
 msgid "Map layer not configured."
 msgstr ""
 
@@ -2733,10 +2749,6 @@ msgid "Form submission failed with error"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
-msgid "Unexpected Error"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js
 msgid "Form successfully saved!"
 msgstr ""
 
@@ -2765,8 +2777,8 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/constants.js
 msgid ""
-"Formplayer encountered an error. Please report an issue if you continue to "
-"see this message."
+"An unexpected error occurred. Please report an issue if you continue to see "
+"this message."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/layout/views/progress_bar.js
@@ -2855,7 +2867,7 @@ msgstr ""
 msgid "Page <%- num %>"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Confirm?"
 msgstr ""
 
@@ -2867,131 +2879,127 @@ msgstr ""
 msgid "An unexpected error occurred!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
-msgid "Sorry, an error occurred while processing that request."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not sync user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "User Data successfully synced."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Could not clear user data. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "User data successfully cleared."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error breaking locks. Please report an issue if this persists."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Go to today"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Clear selection"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Close the picker"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Select Month"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Previous Month"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Next Month"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Select Year"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Previous Year"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Next Year"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Select Decade"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Previous Decade"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Next Decade"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Previous Century"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Next Century"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Pick Hour"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Increment Hour"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Decrement Hour"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Pick Minute"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Increment Minute"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Decrement Minute"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Pick Second"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Increment Second"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Decrement Second"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Toggle Period"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/util.js
+#: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Select Time"
 msgstr ""
 
@@ -4672,6 +4680,10 @@ msgstr ""
 
 #: corehq/motech/dhis2/static/dhis2/js/dhis2_events_config.js
 msgid "Unable to save form configs"
+msgstr ""
+
+#: corehq/motech/generic_inbound/static/generic_inbound/js/copy_data.js
+msgid "URL Copied"
 msgstr ""
 
 #: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js

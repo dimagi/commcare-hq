@@ -190,7 +190,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
     var searchConfigKeys = [
         'auto_launch', 'blacklisted_owner_ids_expression', 'default_search', 'search_again_label',
-        'search_button_display_condition', 'search_label', 'search_filter',
+        'title_label', 'search_button_display_condition', 'search_label', 'search_filter',
         'additional_relevant', 'data_registry', 'data_registry_workflow', 'additional_registry_cases',
         'custom_related_case_property', 'inline_search',
     ];
@@ -199,6 +199,7 @@ hqDefine("app_manager/js/details/case_claim", function () {
 
         options.search_label = options.search_label[lang] || "";
         options.search_again_label = options.search_again_label[lang] || "";
+        options.title_label = options.title_label[lang] || "";
         var mapping = {
             'additional_registry_cases': {
                 create: function(options) {
@@ -360,7 +361,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
                     function (p) { return p.name().length > 0; }  // Skip properties where name is blank
                 ),
                 function (p) {
-                    var ifNotHidden = function (val) { return p.hidden() ? "" : val; };
+                    var ifSupportsValidation = function (val) {
+                        return p.hidden() || p.appearance() === "address" ? "" : val;
+                    };
                     return {
                         name: p.name(),
                         label: p.label().length ? p.label() : p.name(),  // If label isn't set, use name
@@ -369,10 +372,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
                         is_multiselect: p.isMultiselect(),
                         allow_blank_value: p.allowBlankValue(),
                         exclude: p.exclude(),
-                        required_test: ifNotHidden(p.requiredTest()),
-                        required_text: ifNotHidden(p.requiredText()),
-                        validation_test: ifNotHidden(p.validationTest()),
-                        validation_text: ifNotHidden(p.validationText()),
+                        required_test: ifSupportsValidation(p.requiredTest()),
+                        required_text: ifSupportsValidation(p.requiredText()),
+                        validation_test: ifSupportsValidation(p.validationTest()),
+                        validation_text: ifSupportsValidation(p.validationText()),
                         default_value: p.defaultValue(),
                         hidden: p.hidden(),
                         receiver_expression: p.receiverExpression(),

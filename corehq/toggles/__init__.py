@@ -901,6 +901,14 @@ WEB_APPS_DOMAIN_BANNER = StaticToggle(
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
 )
 
+WEB_APPS_UPLOAD_QUESTIONS = FeatureRelease(
+    'web_apps_upload_questions',
+    'USH: Support signature, image, audio, and video questions in Web Apps',
+    TAG_RELEASE,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Jenny Schweers',
+)
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -944,6 +952,14 @@ USH_INLINE_SEARCH = StaticToggle(
     Temporary toggle to manage the release of the 'inline search' / 'case search input' feature.
     """,
     parent_toggles=[USH_CASE_CLAIM_UPDATES]
+)
+
+SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
+    'split_screen_case_search',
+    "In case search, show the filters on the left and results on the right.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
 USH_USERCASES_FOR_WEB_USERS = StaticToggle(
@@ -1508,6 +1524,14 @@ DATA_DICTIONARY = StaticToggle(
     help_link='https://confluence.dimagi.com/display/GS/Data+Dictionary+for+Case+Properties',
 )
 
+DD_CASE_DATA = StaticToggle(
+    'dd_case_data',
+    'Data Dictionary Case Data Page',
+    TAG_INTERNAL,
+    [NAMESPACE_USER],
+    description='Experimental: render the case data page in accordance with the data dictionary',
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1907,14 +1931,6 @@ SKIP_UPDATING_USER_REPORTING_METADATA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-RESTRICT_MOBILE_ACCESS = StaticToggle(
-    'restrict_mobile_endpoints',
-    'USH: Displays a security setting option to require explicit permissions to access mobile app endpoints',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    help_link="https://confluence.dimagi.com/display/saas/COVID%3A+Require+explicit+permissions+to+access+mobile+app+endpoints",
-)
-
 DOMAIN_PERMISSIONS_MIRROR = StaticToggle(
     'domain_permissions_mirror',
     "USH: Enterprise Permissions: mirror a project space's permissions in other project spaces",
@@ -2182,6 +2198,15 @@ UCR_EXPRESSION_REGISTRY = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/UCR+Expression+Registry",
 )
 
+GENERIC_INBOUND_API = StaticToggle(
+    'configurable_api',
+    'Generic inbound APIs',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="Create inbound APIs that use UCR expressions to process data into case updates",
+    help_link="TODO",
+)
+
 CASE_UPDATES_UCR_FILTERS = StaticToggle(
     'case_updates_ucr_filters',
     'Allow the use of UCR filters in Auto Case Update Rules',
@@ -2285,6 +2310,18 @@ GOOGLE_SHEETS_INTEGRATION = StaticToggle(
     """
 )
 
+APP_DEPENDENCIES = StaticToggle(
+    'app-dependencies',
+    'Set Android app dependencies that must be installed before using a '
+    'CommCare app',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Prevents mobile workers from using a CommCare app until the Android apps
+    that it needs have been installed on the device.
+    """,
+)
+
 SUPERSET_ANALYTICS = StaticToggle(
     'superset-analytics',
     'Activates Analytics features to create Superset based reports and dashboards using UCR data',
@@ -2297,4 +2334,40 @@ TWO_STAGE_USER_PROVISIONING_BY_SMS = StaticToggle(
     'Enable two-stage user provisioning (users confirm and set their own passwords via sms).',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
+)
+
+SMS_USE_LATEST_DEV_APP = FeatureRelease(
+    'sms_use_latest_dev_app',
+    'Use latest development version of the app for SMS processing',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly',
+    description='This will revert the SMS processing to previous functionality of using the '
+                'development version of the app instead of the latest release. It should only'
+                'be used temporarily if a domain needs unreleased app changes to be used for SMS.',
+)
+
+VIEW_FORM_ATTACHMENT = StaticToggle(
+    'view_form_attachments',
+    'Allow users on the domain to view form attachments without having to have the report Submit History permission.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
+    'formplayer_include_state_hash',
+    'Make Formplayer include the state hash in sync and restore requests',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    owner='Simon Kelly'
+)
+
+EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
+    'embed_tableau_report_by_user',
+    'Use a Tableau username "HQ/{username}" to embed reports instead of "HQ/{role name}"',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
+                'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
+                'to Tableau to get the embedded report.',
 )

@@ -1,7 +1,7 @@
 # eslint-plugin-eslint-dimagi
 
 Dimagi-specific ESLint rules.
-Intended for developers of [CommCareHQ](https://github.com/dimagi/commcare-hq).
+Intended for developers of [CommCare HQ](https://github.com/dimagi/commcare-hq).
 
 ## Installation
 

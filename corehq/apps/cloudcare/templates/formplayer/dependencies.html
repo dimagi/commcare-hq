@@ -28,7 +28,8 @@
   <script src="{% static 'eonasdan-bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js' %}"></script>
   <script src="{% static 'crypto-js/crypto-js.js' %}"></script>
   <script src="{% static 'integration/js/hmac_callout.js' %}"></script>
-  <script src="{% static 'cloudcare/js/util.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
+  <script src="{% static 'cloudcare/js/utils.js' %}"></script>
   <script src="{% static 'Caret.js/dist/jquery.caret.js' %}"></script>
   <script src="{% static 'At.js/dist/js/jquery.atwho.js' %}"></script>
   <script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
@@ -53,11 +54,9 @@
 
 {% compress js %}
   <!-- The ordering of the cloudcare/js/* files matters, as many of them depend on each other. -->
-
-  <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/utils/calendar-picker-translations.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/app.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/constants.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/hq_events.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/middleware.js' %}"></script>
 
@@ -81,7 +80,7 @@
   <script src="{% static 'cloudcare/js/formplayer/menus/api.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/views/query.js' %}"></script>
-  <script src="{% static 'cloudcare/js/formplayer/menus/util.js' %}"></script>
+  <script src="{% static 'cloudcare/js/formplayer/menus/utils.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/controller.js' %}"></script>
   <script src="{% static 'cloudcare/js/formplayer/menus/collections.js' %}"></script>
 

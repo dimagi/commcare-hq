@@ -1,11 +1,11 @@
 import logging
 from datetime import datetime
 
-from celery.task import periodic_task
 from celery.schedules import crontab
+from corehq.apps.celery import periodic_task
 
-from corehq.blobs.models import BlobMeta
 from corehq.blobs import get_blob_db
+from corehq.blobs.models import BlobMeta
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.metrics import metrics_counter
 

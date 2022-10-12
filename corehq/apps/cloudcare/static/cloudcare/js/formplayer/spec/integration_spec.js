@@ -2,10 +2,10 @@
 /* eslint-env mocha */
 
 describe('FormplayerFrontend Integration', function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
 
     describe('Start up', function () {
-        var options,
+        let options,
             server;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
@@ -37,13 +37,13 @@ describe('FormplayerFrontend Integration', function () {
         it('should start the formplayer frontend app', function () {
             FormplayerFrontend.start(options);
 
-            var user = FormplayerFrontend.getChannel().request('currentUser');
+            let user = FormplayerFrontend.getChannel().request('currentUser');
             assert.equal(user.username, options.username);
             assert.equal(user.domain, options.domain);
         });
 
         it('should correctly restore display options', function () {
-            var newOptions = _.clone(options),
+            let newOptions = _.clone(options),
                 user;
             newOptions.phoneMode = true;
             newOptions.oneQuestionPerScreen = true;
@@ -52,7 +52,7 @@ describe('FormplayerFrontend Integration', function () {
             FormplayerFrontend.start(newOptions);
 
             user = FormplayerFrontend.getChannel().request('currentUser');
-            hqImport("cloudcare/js/formplayer/utils/util").saveDisplayOptions(user.displayOptions);
+            hqImport("cloudcare/js/formplayer/utils/utils").saveDisplayOptions(user.displayOptions);
 
             // New session, but old options
             FormplayerFrontend.start(options);

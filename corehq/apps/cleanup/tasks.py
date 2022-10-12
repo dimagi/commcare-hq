@@ -2,8 +2,8 @@ from django.conf import settings
 from django.core.management import call_command
 
 from celery.schedules import crontab
-from celery.task import periodic_task
 
+from corehq.apps.celery import periodic_task
 from corehq.apps.cleanup.dbaccessors import (
     find_es_docs_for_deleted_domains,
     find_sql_cases_for_deleted_domains,
@@ -72,7 +72,7 @@ def check_for_ucr_tables_without_existing_domain():
         for deleted_domain in deleted_domains_to_tables:
             mail_admins_async.delay(
                 f'Deleted domain "{deleted_domain}" has remaining UCR tables',
-                f'{deleted_domains_to_tables[deleted_domain]}\nConsider prune_old_datasources'
+                f'{deleted_domains_to_tables[deleted_domain]}\nConsider delete_orphaned_ucrs'
             )
     elif is_monday():
         mail_admins_async.delay('All UCR tables belong to valid domains', '')

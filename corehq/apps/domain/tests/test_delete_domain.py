@@ -83,7 +83,6 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import (
-    ReportsSidebarOrdering,
     TableauServer,
     TableauVisualization,
 )
@@ -677,20 +676,17 @@ class TestDeleteDomain(TestCase):
 
     def _assert_reports_counts(self, domain_name, count):
         self._assert_queryset_count([
-            ReportsSidebarOrdering.objects.filter(domain=domain_name),
             TableauServer.objects.filter(domain=domain_name),
             TableauVisualization.objects.filter(domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            ReportsSidebarOrdering.objects.create(domain=domain_name)
             server = TableauServer.objects.create(
                 domain=domain_name,
                 server_type='server',
                 server_name='my_server',
                 target_site='my_site',
-                domain_username='my_username',
             )
             TableauVisualization.objects.create(
                 domain=domain_name,

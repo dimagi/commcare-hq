@@ -27,12 +27,6 @@ class PrivacySecurityFormTests(SimpleTestCase):
             'disable_mobile_login_lockout'
         ])
 
-    @patch.object(forms.RESTRICT_MOBILE_ACCESS, 'enabled', return_value=True)
-    def test_restrict_mobile_access_toggle(self, mock_toggle):
-        form = self.create_form()
-        visible_field_names = self.get_visible_fields(form)
-        self.assertIn('restrict_mobile_access', visible_field_names)
-
     @patch.object(forms.HIPAA_COMPLIANCE_CHECKBOX, 'enabled', return_value=True)
     def test_hippa_compliance_toggle(self, mock_toggle):
         form = self.create_form()

@@ -175,6 +175,11 @@ class RemoteRequestFactory(object):
             ),
         )
 
+    def build_title(self):
+        return Display(
+            text=Text(locale_id=id_strings.case_search_title_translation(self.module))
+        )
+
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
@@ -191,6 +196,7 @@ class RemoteRequestFactory(object):
                 url=absolute_reverse('app_aware_remote_search', args=[self.app.domain, self.app._id]),
                 storage_instance=self.storage_instance,
                 template='case',
+                title=self.build_title() if self.app.enable_case_search_title_translation else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,
@@ -299,11 +305,10 @@ class RemoteRequestFactory(object):
             if prop.exclude:
                 kwargs['exclude'] = "true()"
             if prop.required.test:
-                kwargs['required_attr'] = interpolate_xpath(prop.required.test)
-                # kwargs['required'] = Required(
-                #     test=interpolate_xpath(prop.required.test),
-                #     text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
-                # )
+                kwargs['required'] = Required(
+                    test=interpolate_xpath(prop.required.test),
+                    text=[Text(locale_id=id_strings.search_property_required_text(self.module, prop.name))],
+                )
             if prop.validations:
                 kwargs['validations'] = [
                     Validation(

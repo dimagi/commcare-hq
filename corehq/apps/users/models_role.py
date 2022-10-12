@@ -4,6 +4,8 @@ import attr
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from field_audit import audit_fields
+from field_audit.models import AuditAction, AuditingManager
 
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
 from corehq.util.models import ForeignValue, foreign_value_init
@@ -22,6 +24,7 @@ class StaticRole:
     upstream_id = None
     couch_id = None
     assignable_by = []
+    is_commcare_user_default = False
 
     @classmethod
     def domain_admin(cls, domain):
@@ -48,7 +51,7 @@ class StaticRole:
         return role_to_dict(self)
 
 
-class UserRoleManager(models.Manager):
+class UserRoleManager(AuditingManager):
 
     def get_by_domain(self, domain, include_archived=False):
         query = self.filter(domain=domain)
@@ -67,14 +70,14 @@ class UserRoleManager(models.Manager):
             query = UserRole.objects
         return query.get(couch_id=couch_id)
 
-    def get_commcare_user_default(self, domain):
-        return self.get(domain=domain, is_commcare_user_default=True)
-
 
 def _uuid_str():
     return uuid.uuid4().hex
 
 
+@audit_fields("domain", "name", "default_landing_page", "is_non_admin_editable",
+              "is_archived", "upstream_id", "couch_id",
+              "is_commcare_user_default", audit_special_queryset_writes=True)
 class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
@@ -100,6 +103,9 @@ class UserRole(models.Model):
             models.Index(fields=("couch_id",)),
         )
 
+    def __repr__(self):
+        return f"UserRole(domain='{self.domain}', name='{self.name}')"
+
     @classmethod
     def create(cls, domain, name, permissions=None, assignable_by=None, **kwargs):
         from corehq.apps.users.models import HqPermissions
@@ -117,15 +123,23 @@ class UserRole(models.Model):
         return role
 
     @classmethod
-    @quickcache(['domain'])
     def commcare_user_default(cls, domain):
-        try:
-            return UserRole.objects.get_commcare_user_default(domain)
-        except UserRole.DoesNotExist:
-            notify_error("Domain is missing default commcare user role", {
+        """This will get the default mobile worker role for the domain. If one does not exist it
+        will create a new role.
+
+        Note: the role should exist for all domains but errors during domain registration can leave
+        domains improperly configured."""
+        from corehq.apps.users.role_utils import UserRolePresets
+        role, created = UserRole.objects.get_or_create(domain=domain, is_commcare_user_default=True, defaults={
+            "name": UserRolePresets.MOBILE_WORKER
+        })
+        if created:
+            notify_error("Domain was missing default commcare user role", {
                 "domain": domain
             })
-        return None
+            permissions = UserRolePresets.INITIAL_ROLES[UserRolePresets.MOBILE_WORKER]()
+            role.set_permissions(permissions.to_list())
+        return role
 
     @property
     def get_id(self):
@@ -151,7 +165,7 @@ class UserRole(models.Model):
                 pass
 
         if not permission_infos:
-            RolePermission.objects.filter(role=self).delete()
+            RolePermission.objects.filter(role=self).delete(audit_action=AuditAction.AUDIT)
             _clear_query_cache()
             return
 
@@ -171,7 +185,7 @@ class UserRole(models.Model):
 
         if permissions_by_name:
             old_ids = [old.id for old in permissions_by_name.values()]
-            RolePermission.objects.filter(id__in=old_ids).delete()
+            RolePermission.objects.filter(id__in=old_ids).delete(audit_action=AuditAction.AUDIT)
 
         _clear_query_cache()
 
@@ -198,7 +212,7 @@ class UserRole(models.Model):
                 pass
 
         if not role_ids:
-            self.roleassignableby_set.all().delete()
+            self.roleassignableby_set.all().delete(audit_action=AuditAction.AUDIT)
             _clear_query_cache()
             return
 
@@ -215,7 +229,7 @@ class UserRole(models.Model):
 
         if assignments_by_role_id:
             old_ids = list(assignments_by_role_id.values())
-            RoleAssignableBy.objects.filter(id__in=old_ids).delete()
+            RoleAssignableBy.objects.filter(id__in=old_ids).delete(audit_action=AuditAction.AUDIT)
 
         _clear_query_cache()
 
@@ -237,6 +251,8 @@ class UserRole(models.Model):
         return self.is_non_admin_editable or (role_id and role_id in self.assignable_by)
 
 
+@audit_fields("role", "permission_fk", "allow_all", "allowed_items",
+              audit_special_queryset_writes=True)
 @foreign_value_init
 class RolePermission(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
@@ -250,6 +266,8 @@ class RolePermission(models.Model):
     # current max len in 119 chars
     allowed_items = ArrayField(models.CharField(max_length=256), blank=True, null=True)
 
+    objects = AuditingManager()
+
     class Meta:
         unique_together = [
             ("role", "permission_fk")
@@ -260,6 +278,9 @@ class RolePermission(models.Model):
                 check=~models.Q(allow_all=True, allowed_items__len__gt=0)
             ),
         ]
+
+    def __repr__(self):
+        return f"RolePermission(role={self.role}, permission='{self.permission}')"
 
     @staticmethod
     def from_permission_info(role, info):
@@ -273,11 +294,17 @@ class RolePermission(models.Model):
         return PermissionInfo(self.permission, allow=allow)
 
 
+@audit_fields("value", audit_special_queryset_writes=True)
 class Permission(models.Model):
     value = models.CharField(max_length=255, unique=True)
 
+    objects = AuditingManager()
+
     class Meta:
         db_table = "users_permission"
+
+    def __repr__(self):
+        return f"Permission('{self.value}')"
 
     @classmethod
     def create_all(cls):
@@ -286,11 +313,13 @@ class Permission(models.Model):
             Permission.objects.get_or_create(value=name)
 
 
+@audit_fields("role", "assignable_by_role", audit_special_queryset_writes=True)
 class RoleAssignableBy(models.Model):
     role = models.ForeignKey("UserRole", on_delete=models.CASCADE)
     assignable_by_role = models.ForeignKey(
         "UserRole", on_delete=models.CASCADE, related_name="can_assign_roles"
     )
+    objects = AuditingManager()
 
 
 def role_to_dict(role):
@@ -301,6 +330,7 @@ def role_to_dict(role):
         "is_non_admin_editable",
         "is_archived",
         "upstream_id",
+        "is_commcare_user_default"
     ]
     data = {}
     for field in simple_fields:

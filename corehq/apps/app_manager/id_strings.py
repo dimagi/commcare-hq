@@ -345,6 +345,11 @@ def reports_last_updated_on():
     return 'cchq.reports_last_updated_on'
 
 
+@pattern('android.package.name.%s')
+def android_package_name(package_id):
+    return 'android.package.name.{package_id}'.format(package_id=package_id)
+
+
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
 
 
@@ -424,6 +429,11 @@ def case_list_icon_locale(module):
 @pattern('case_lists.m%d.audio')
 def case_list_audio_locale(module):
     return "case_lists.m{module.id}.audio".format(module=module)
+
+
+@pattern('case_search.m%d.inputs')
+def case_search_title_translation(module):
+    return "case_search.m{module.id}.inputs".format(module=module)
 
 
 def detail(module, detail_type):

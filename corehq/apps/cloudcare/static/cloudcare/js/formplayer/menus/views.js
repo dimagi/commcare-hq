@@ -4,7 +4,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix");
     var Constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -86,7 +86,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -278,7 +278,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -331,7 +331,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             this.styles = options.styles;
             this.hasNoItems = options.collection.length === 0;
             this.redoLast = options.redoLast;
-            this.selectedCaseIds = sessionStorage.selectedValues === undefined || sessionStorage.selectedValues.length === 0 ?  [] : sessionStorage.selectedValues.split(',');
+            if (sessionStorage.selectedValues !== undefined) {
+                let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
+                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
+            } else {
+                this.selectedCaseIds = [];
+            }
             this.isMultiSelect = options.isMultiSelect;
         },
 
@@ -374,7 +379,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
                 }
-                sessionStorage.selectedValues = self.selectedCaseIds.join(",");
                 self.reconcileMultiSelectUI();
             });
             this.reconcileMultiSelectUI();
@@ -405,21 +409,21 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         paginateAction: function (e) {
             var pageSelection = $(e.currentTarget).data("id");
-            FormplayerFrontend.trigger("menu:paginate", pageSelection);
+            FormplayerFrontend.trigger("menu:paginate", pageSelection, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Interaction");
         },
 
         onPerPageLimitChange: function (e) {
             e.preventDefault();
             var casesPerPage = this.ui.casesPerPageLimit.val();
-            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage);
+            FormplayerFrontend.trigger("menu:perPageLimit", casesPerPage, this.selectedCaseIds);
         },
 
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
             var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
-            FormplayerFrontend.trigger("menu:paginate", pageNo - 1);
+            FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
 
@@ -459,6 +463,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         continueAction: function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
+            if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
+                kissmetrics.track.event('Completed Case Search', {
+                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                });
+            }
         },
 
         reconcileMultiSelectUI: function () {
@@ -710,7 +719,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            var appId = Util.currentUrlToObject().appId;
+            var appId = Utils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -783,6 +792,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
+                if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
+                    kissmetrics.track.event('Completed Case Search', {
+                        'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    });
+                }
             }
         },
     });

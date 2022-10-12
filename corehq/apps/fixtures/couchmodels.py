@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -143,9 +144,9 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
         return count_fixture_data_types(domain)
 
     @classmethod
-    def by_domain(cls, domain):
+    def by_domain(cls, domain, **kw):
         from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-        return get_fixture_data_types(domain)
+        return get_fixture_data_types(domain, **kw)
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
@@ -167,12 +168,13 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
 
     def recursive_delete(self, transaction):
         item_ids = []
-        for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
+        for item in FixtureDataItem.by_data_type(self.domain, self.get_id, bypass_cache=True):
             transaction.delete(item)
             item_ids.append(item.get_id)
         for item_id_chunk in chunked(item_ids, 1000):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
+        # NOTE cache must be invalidated after transaction commit
 
     @classmethod
     def delete_fixtures_by_domain(cls, domain, transaction):
@@ -308,7 +310,7 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @classmethod
     def _migration_get_fields(cls):
-        return ["domain", "item_attributes"]
+        return ["domain"]
 
     def _migration_sync_to_sql(self, sql_object, save=True):
         if sql_object.table_id is None or sql_object.table_id != UUID(self.data_type_id):
@@ -316,6 +318,9 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         fields = self._sql_fields
         if sql_object.fields != fields:
             sql_object.fields = fields
+        attributes = self._sql_item_attributes
+        if sql_object.item_attributes != attributes:
+            sql_object.item_attributes = attributes
         sql_object.sort_key = self.sort_key or 0
         super()._migration_sync_to_sql(sql_object, save=save)
 
@@ -329,6 +334,14 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
             ]
             for name, values in self.fields.items()
         }
+
+    @property
+    def _sql_item_attributes(self):
+        def convert(value):
+            if isinstance(value, Decimal):
+                return str(value)
+            return value
+        return {name: convert(value) for name, value in self.item_attributes.items()}
 
     @classmethod
     def _migration_get_sql_model_class(cls):
@@ -556,9 +569,9 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
                         reduce=False, include_docs=True)
 
     @classmethod
-    def get_item_list(cls, domain, tag):
+    def get_item_list(cls, domain, tag, **kw):
         data_type = FixtureDataType.by_domain_tag(domain, tag).one()
-        return cls.by_data_type(domain, data_type)
+        return cls.by_data_type(domain, data_type, **kw)
 
     @classmethod
     def get_indexed_items(cls, domain, tag, index_field):

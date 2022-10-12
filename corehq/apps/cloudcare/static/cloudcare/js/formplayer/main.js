@@ -17,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         };
         hqImport("cloudcare/js/formplayer/app").start(options);
 
-        hqImport("cloudcare/js/util").injectMarkdownAnchorTransforms();
+        hqImport("cloudcare/js/utils").injectMarkdownAnchorTransforms();
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),

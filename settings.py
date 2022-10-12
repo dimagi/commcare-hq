@@ -168,6 +168,9 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    # middleware that adds cookies must come before SecureCookiesMiddleware
+    'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -218,6 +221,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -242,12 +246,16 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap3',
 )
 
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
+
 HQ_APPS = (
     'django_digest',
     'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
-    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -364,6 +372,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.motech.generic_inbound',
     'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
@@ -380,7 +389,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.covid',
@@ -388,6 +396,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -905,7 +914,10 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {
@@ -1018,8 +1030,6 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 # used for creating releases and deploys
 SENTRY_API_KEY = None
 
-OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
-RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
@@ -1228,7 +1238,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1247,7 +1257,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1408,7 +1418,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -2042,13 +2052,6 @@ if SENTRY_DSN:
 else:
     SENTRY_CONFIGURED = False
 
-if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
-        }
-    ]
-
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
 # Disable Datadog trace startup logs by default
@@ -2067,3 +2070,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+COMMCARE_ANALYTICS_HOST = ""

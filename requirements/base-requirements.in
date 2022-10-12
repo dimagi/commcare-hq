@@ -19,6 +19,7 @@ django-compressor
 django-countries
 django-crispy-forms
 django-cte
+django-field-audit
 django-formtools
 django-logentry-admin
 django-oauth-toolkit
@@ -36,14 +37,11 @@ django-user-agents
 django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websocket-redis/0.6.0.1/releases/django_websocket_redis-0.6.0.1-py3-none-any.whl
 django>=3.2.14,<4.0
 djangorestframework
-dnspython
 dropbox
 elasticsearch2>=2.0.0,<3.0.0  # we will be deprecating support for ES2 soon
 elasticsearch5>=5.0.0,<6.0.0  # ES5 support is currently in development
-email_validator
 ethiopian-date-converter
 eulxml
-Faker
 gevent
 ghdiff
 google-api-python-client==2.32.0
@@ -105,7 +103,6 @@ SQLAlchemy
 stripe
 suds-py3
 text-unidecode
-tinys3
 toposort
 tropo-webapi-python
 turn-python

@@ -4,7 +4,6 @@ from collections import OrderedDict
 from functools import partial
 from distutils.version import LooseVersion
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import (
     Http404,
@@ -247,6 +246,8 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                     module.search_config.search_label.label if hasattr(module, 'search_config') else "",
                 'search_again_label':
                     module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+                'title_label':
+                    module.search_config.title_label if hasattr(module, 'search_config') else "",
                 'data_registry': module.search_config.data_registry if module.search_config.data_registry else "",
                 'data_registry_workflow': module.search_config.data_registry_workflow,
                 'additional_registry_cases': module.search_config.additional_registry_cases,
@@ -781,7 +782,7 @@ def _new_advanced_module(request, domain, app, name, lang):
 
     app.save()
     response = back_to_main(request, domain, app_id=app.id, module_id=module_id)
-    response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+    response.set_cookie('suppress_build_errors', 'yes')
     return response
 
 
@@ -1224,6 +1225,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_properties.get('properties') is not None
                 or search_properties.get('default_properties') is not None
         ):
+            title_label = module.search_config.title_label
+            title_label[lang] = search_properties.get('title_label', '')
+
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
             if search_properties.get('search_label_image_for_all'):
@@ -1297,6 +1301,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
+                title_label=title_label,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
                 additional_relevant=search_properties.get('additional_relevant', ''),
@@ -1416,7 +1421,7 @@ def new_module(request, domain, app_id):
 
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=enroll_module.id, form_id=0)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type == 'case' or module_type == 'survey':  # survey option added for V2
         if module_type == 'case':
@@ -1455,7 +1460,7 @@ def new_module(request, domain, app_id):
         app.save()
         response = back_to_main(request, domain, app_id=app_id,
                                 module_id=module_id, form_id=form_id)
-        response.set_cookie('suppress_build_errors', 'yes', secure=settings.SECURE_COOKIES)
+        response.set_cookie('suppress_build_errors', 'yes')
         return response
     elif module_type in MODULE_TYPE_MAP:
         fn = MODULE_TYPE_MAP[module_type][FN]

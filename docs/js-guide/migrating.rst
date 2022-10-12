@@ -79,6 +79,7 @@ Considerations when choosing or creating a main module
   then use it as your main module. This can work fine, but be cautious of
   adding bloat or creating dependencies between django apps. There’s a
   loose hierarchy:
+
   - Major third-party libraries: jQuery, knockout, underscore
   - hqwebapp
   - analytics

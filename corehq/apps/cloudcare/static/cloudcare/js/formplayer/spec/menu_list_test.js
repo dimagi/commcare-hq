@@ -1,8 +1,8 @@
 /* global Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
-    var fixtures = hqImport("cloudcare/js/formplayer/spec/fixtures"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+    let MenuListFixture = hqImport("cloudcare/js/formplayer/spec/fixtures/menu_list"),
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     before(function () {
         hqImport("hqwebapp/js/initial_page_data").register(
@@ -11,11 +11,11 @@ describe('Render a case list', function () {
                 APP_ANALYTICS: true,
             }
         );
-        sinon.stub(Util, 'getCurrentQueryInputs').callsFake(function () { return {}; });
+        sinon.stub(Utils, 'getCurrentQueryInputs').callsFake(function () { return {}; });
     });
 
     describe('#getMenuView', function () {
-        var server;
+        let server;
         beforeEach(function () {
             server = sinon.useFakeXMLHttpRequest();
             sinon.stub(Backbone.history, 'getFragment').callsFake(sinon.spy());
@@ -26,33 +26,33 @@ describe('Render a case list', function () {
             Backbone.history.getFragment.restore();
         });
 
-        var getMenuView = hqImport("cloudcare/js/formplayer/menus/util").getMenuView;
+        let getMenuView = hqImport("cloudcare/js/formplayer/menus/utils").getMenuView;
         it('Should parse a case list response to a CaseListView', function () {
-            var view = getMenuView(fixtures.caseList);
+            let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_list"));
             assert.isFalse(view.templateContext().useTiles);
             assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a menu list response to a MenuListView', function () {
-            var view = getMenuView(fixtures.menuList);
+            let view = getMenuView(MenuListFixture);
             assert.isTrue(view.childViewContainer === ".menus-container");
         });
 
         it('Should parse a case list response with tiles to a CaseTileListView', function () {
-            var view = getMenuView(fixtures.caseTileList);
+            let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_tile_list"));
             assert.isTrue(view.templateContext().useTiles);
             assert.isFalse(view.templateContext().useGrid);
         });
 
         it('Should parse a case grid response with tiles to a GridCaseTileListView', function () {
-            var view = getMenuView(fixtures.caseGridList);
+            let view = getMenuView(hqImport("cloudcare/js/formplayer/spec/fixtures/case_grid_list"));
             assert.isTrue(view.templateContext().useTiles);
             assert.isTrue(view.templateContext().useGrid);
         });
     });
 
     describe('#getMenus', function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        let FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
             server,
             clock,
             user,
@@ -147,7 +147,7 @@ describe('Render a case list', function () {
             requests[1].respond(
                 200,
                 { "Content-Type": "application/json" },
-                JSON.stringify(fixtures.menuList)
+                JSON.stringify(MenuListFixture)
             );
 
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress
@@ -157,7 +157,7 @@ describe('Render a case list', function () {
         });
 
         it('Should execute an async restore', function () {
-            var promise = FormplayerFrontend.getChannel().request('app:select:menus', {
+            let promise = FormplayerFrontend.getChannel().request('app:select:menus', {
                 appId: 'my-app-id',
                 // Bypass permissions check by using preview mode
                 preview: true,
@@ -185,7 +185,7 @@ describe('Render a case list', function () {
             requests[1].respond(
                 200,
                 { "Content-Type": "application/json" },
-                JSON.stringify(fixtures.menuList)
+                JSON.stringify(MenuListFixture)
             );
 
             clock.tick(1); // click 1 forward to ensure that we've fired off the empty progress

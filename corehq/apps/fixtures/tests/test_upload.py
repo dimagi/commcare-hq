@@ -552,6 +552,21 @@ class TestFixtureUpload(TestCase):
         self.upload(self.get_workbook_from_data(headers, data))
         self.assertEqual(self.get_rows(part), ['branch'])
 
+    def test_upload_sheet_with_missing_UID_column(self):
+        self.upload([(None, 'N', 'apple')])
+
+        headers = (
+            self.headers[0],
+            ('things', ('Delete(Y/N)', 'field: name')),
+        )
+        data = [
+            ('types', [('N', 'things', 'yes', 'name', 'yes')]),
+            ('things', [('N', 'apple')]),
+            ('things', [('N', 'orange')]),
+        ]
+        self.upload(self.get_workbook_from_data(headers, data))
+        self.assertEqual(self.get_rows(), ['apple', 'orange'])
+
     def test_delete_row(self):
         self.upload([(None, 'N', 'apple'), (None, 'N', 'orange')])
         ids = {row_name(r): r._id for r in self.get_rows(None)}
@@ -675,6 +690,42 @@ class TestFixtureUpload(TestCase):
         self.assertIsNotNone(get_table())
         self.assertTrue(did_check)
 
+    def test_upload_should_not_be_impacted_by_stale_table_cache(self):
+        self.upload([(None, 'N', 'apple')])
+
+        # populate caches
+        couch_table, = FixtureDataType.by_domain(self.domain)
+        cache_patch = patch.object(
+            # simulate failed cache invalidation, which could be caused by
+            # BulkSaveError and probably for other things too
+            type(couch_table),
+            "clear_caches",
+            lambda self: None
+        )
+        with cache_patch, mod.CouchTransaction() as tx:
+            # stale caches
+            tx.save(couch_table)
+            tx.set_sql_save_action(type(couch_table), lambda: None)
+
+        data = [
+            ('types', [('N', 'things', 'yes', 'name', 'no')]),
+            ('things', [(None, 'N', 'peach')]),
+        ]
+        self.upload(self.get_workbook_from_data(self.headers, data), replace=True)
+
+    def test_upload_should_not_be_impacted_by_stale_row_cache(self):
+        self.upload([(None, 'N', 'apple')])
+
+        # populate caches
+        couch_rows = self.get_rows(None)
+        with mod.CouchTransaction() as tx:
+            # transaction does not clear caches -> stale caches
+            for row in couch_rows:
+                tx.save(row)
+            tx.set_sql_save_action(type(couch_rows[0]), lambda: None)
+
+        self.upload([(None, 'N', 'peach')], replace=True)
+
     def test_upload_should_clear_cache_on_error(self):
         def error_tx():
             def error():
@@ -703,6 +754,52 @@ class TestFixtureUpload(TestCase):
 
         self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
         connection.check_constraints()  # should not raise
+        self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
+
+    def test_upload_rows_with_concurrently_saved_sql_table(self):
+        def upload_runner():
+            # use the same connection as main test thread
+            connections[DEFAULT_DB_ALIAS] = test_connection
+            self.upload([(None, 'N', 'orange'), (None, 'N', 'banana')])
+
+        def flush_blocker(*args):
+            # wait to flush until concurrent save has occurred
+            nonlocal thread_success
+            concurrent_save.set()
+            if not continue_upload.wait(timeout=10):
+                raise RuntimeError("continue_upload timeout")
+            real_flush(*args)
+            thread_success = True
+
+        from threading import Thread, Event
+        from django.db import DEFAULT_DB_ALIAS, connections
+        test_connection = connections[DEFAULT_DB_ALIAS]
+        test_connection.inc_thread_sharing()
+        thread_success = False
+        try:
+            concurrent_save = Event()
+            continue_upload = Event()
+
+            with disable_save_to_sql():
+                # simulate save prior to start of migration
+                self.upload([(None, 'N', 'apple')])
+
+            real_flush = mod.flush
+            with patch.object(mod, "flush", flush_blocker):
+                upload = Thread(target=upload_runner)
+                upload.start()  # loads Couch docs, blocks on flush
+
+                if not concurrent_save.wait(timeout=10):
+                    raise RuntimeError("concurrent_save timeout")
+                things = self.get_table()
+                things.save()  # save to SQL
+
+                continue_upload.set()
+                upload.join()
+                assert thread_success, "upload in thread did not finish"
+        finally:
+            test_connection.dec_thread_sharing()
+
         self.assertEqual(self.get_rows(), ['apple', 'orange', 'banana'])
 
 

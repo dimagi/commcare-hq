@@ -2277,6 +2277,11 @@ class CaseSearch(DocumentSchema):
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
 
+    def get_search_title_label(self, app, lang, for_default=False):
+        if for_default:
+            lang = app.default_language
+        return self.title_label.get(lang, '')
+
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
             self.properties = src_config.properties
@@ -2373,6 +2378,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
+            self.search_config.title_label._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -4032,7 +4038,7 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+    def __set_cached_attachment(self, name, content, timeout=60*10):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
@@ -4819,16 +4825,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
         data['modules'] = [module for module in data.get('modules', [])
                            if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
-
-        translations = data.get('translations')
-        for module in self.modules:
-            if hasattr(module, 'search_config'):
-                label_dict = {lang: label.get('case.search.title')
-                    for lang, label in translations.items() if label}
-                search_config = getattr(module, 'search_config')
-                default_label_dict = getattr(search_config, 'title_label')
-                label_dict.update(default_label_dict)
-                setattr(search_config, 'title_label', label_dict)
 
         # make sure all form versions are None on working copies
         if not self.copy_of:
