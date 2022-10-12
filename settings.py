@@ -526,11 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
-
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
