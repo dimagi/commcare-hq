@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<div class="modal fade" id="edit-warning-modal">
+    <div class="modal-dialog">
+        <div class="modal-content" data-bind="with: modalModel">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>{% trans "Edit this rule?" %}</h3>
+            </div>
+            <div class="modal-body">
+                <p class="lead">
+                    {% trans "This rule is currently being managed by a parent domain. Are you sure you wish to edit it?" %}
+                </p>
+                <p class="lead"><strong data-bind="text: slug"></strong></p>
+            </div>
+            <div class="modal-footer">
+                <button data-dismiss="modal" class="btn btn-default">
+                    {% trans "Cancel" %}
+                </button>
+                <button data-dismiss="modal" data-bind="click: startEditing" class="btn btn-danger" id="rule-edit">
+                    <i class="fa fa-edit"></i> {% trans "Edit" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

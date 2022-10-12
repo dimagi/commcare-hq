@@ -30,6 +30,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             'choices',
             'regex',
             'regex_msg',
+            'is_synced',
         ]);
         var self = {};
         self.slug = ko.observable(options.slug);
@@ -41,6 +42,9 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
+        self.isSynced = ko.observable(options.is_synced);
+        self.isEditable = ko.observable(!options.is_synced);
+        self.editIcon = ko.observable("fa-edit");
 
         self.hasModalDetail = true;
         self.modalName = ko.computed(function () {
@@ -59,6 +63,32 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.removeChoice = function (choice) {
             self.choices.remove(choice);
         };
+
+        self.startEditing = function () {
+            self.isEditable(true);
+        };
+
+        self.editMessage = ko.computed(function () {
+            return self.isEditable() ? gettext('Lock') : gettext('Edit');
+        });
+
+        self.editIcon = ko.computed(function () {
+            return self.isEditable() ? 'fa-lock' : 'fa-edit';
+        });
+
+        self.handleEdit = function (vm, e) {
+            if (self.isEditable()) {
+                self.isEditable(false);
+            } else {
+                let context = ko.contextFor(e.target);
+                context.$parent.setModalModel(vm);
+                $('#edit-warning-modal').modal('show');
+            }
+        };
+
+        self.deleteLink = ko.computed(function () {
+            return self.isEditable() ? '#delete-confirm-modal' : null;
+        }, self);
 
         self.serialize = function () {
             var choices = [],
@@ -88,6 +118,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regexMsg,
+                'is_synced': self.isSynced(),
             };
         };
 
@@ -129,7 +160,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function CustomDataFieldsModel(options) {
-        assertProperties.assertRequired(options, ['custom_fields', 'custom_fields_profiles']);
+        assertProperties.assertRequired(options, [ 'custom_fields', 'custom_fields_profiles']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -146,6 +177,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 choices: [],
                 regex: '',
                 regex_msg: '',
+                is_synced: false,
             }));
         };
 

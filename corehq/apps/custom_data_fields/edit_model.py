@@ -188,6 +188,7 @@ class CustomDataFieldForm(forms.Form):
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
+    is_synced = forms.BooleanField(required=False)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -326,6 +327,7 @@ class CustomDataModelMixin(object):
             choices=choices,
             regex=regex,
             regex_msg=regex_msg,
+            is_synced=field.get('is_synced')
         )
 
     @property
@@ -336,6 +338,7 @@ class CustomDataModelMixin(object):
             "disable_save": self.request.method == "GET" or self.form.is_valid(),
             "show_purge_existing": self.show_purge_existing,
             "profiles_active": self.show_profiles and self.request.POST.get("profiles_active", "false") == "true",
+            "is_managed_by_upstream_domain": self.is_managed_by_upstream_domain(),
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])
@@ -354,20 +357,18 @@ class CustomDataModelMixin(object):
         else:
             return CustomDataFieldsForm({
                 'data_fields': json.dumps([
-                    {
-                        'slug': field.slug,
-                        'is_required': field.is_required,
-                        'label': field.label,
-                        'choices': field.choices,
-                        'regex': field.regex,
-                        'regex_msg': field.regex_msg,
-                    } for field in self.get_definition().get_fields()
+                    field.to_dict()
+                    for field in self.get_definition().get_fields()
                 ]),
                 'profiles': json.dumps([
                     profile.to_json()
                     for profile in self.get_profiles()
                 ]),
             })
+
+    def is_managed_by_upstream_domain(self):
+        fields = self.get_definition().get_fields()
+        return any(f.is_synced for f in fields)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
