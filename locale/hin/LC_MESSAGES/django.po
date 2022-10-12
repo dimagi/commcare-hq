@@ -2022,6 +2022,7 @@ msgstr ""
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopay_setup.html
 #: corehq/apps/accounting/views.py corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/enterprise/enterprise.py corehq/apps/hqadmin/reports.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqwebapp/forms.py corehq/apps/reports/filters/simple.py
 #: corehq/apps/reports/standard/deployments.py
@@ -5345,6 +5346,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/module_actions.html
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/domain/templates/domain/select_plan.html
+#: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 msgid "Learn More"
 msgstr ""
 
@@ -8607,6 +8609,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/inactivity_modal.html
+#: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html
 #: corehq/apps/users/views/mobile/users.py
 msgid "Done"
 msgstr "समाप्त"
@@ -13081,7 +13084,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/export/views/incremental.py
-#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
@@ -20484,6 +20487,38 @@ msgstr ""
 msgid "Reprocess Messaging Case Updates"
 msgstr ""
 
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+msgid ""
+"Please type comma or new-line separated email addresses from the official "
+"list of current employees."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+msgid ""
+"The following users do not exist on this site and so do not need to be "
+"offboarded."
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Developer"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Superuser"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/reports.py
+msgid "Accounting Admin"
+msgstr ""
+
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
+msgid "Two Factor Enabled"
+msgstr ""
+
 #: corehq/apps/hqadmin/templates/hqadmin/partials/pillow-operation-modal.html
 msgid "Are you sure you want to continue?"
 msgstr ""
@@ -20503,9 +20538,7 @@ msgid "Go!"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-msgid ""
-"Please type comma or new-line separated email addresses from the official "
-"list of current employees."
+msgid "You do not have permission to change superuser and staff status."
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
@@ -20515,31 +20548,12 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-msgid ""
-"The following users do not exist on this site and so do not need to be "
-"offboarded."
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 #: corehq/apps/hqadmin/views/users.py
 msgid "All superusers and staff users"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-msgid "Developer"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-msgid "Superuser"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#: corehq/reports.py
-msgid "Accounting Admin"
-msgstr ""
-
-#: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-msgid "Two Factor Enabled"
+msgid "Can assign Superuser"
 msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/web_user_lookup.html
@@ -20619,6 +20633,10 @@ msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Grant or revoke superuser access"
+msgstr ""
+
+#: corehq/apps/hqadmin/views/users.py
+msgid "You do not have permission to update superuser or staff status"
 msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
@@ -22087,9 +22105,9 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/get_demo_modals.html
 msgid ""
 "\n"
-"            Select a time to see CommCare in action and review\n"
-"            questions with our team.\n"
-"          "
+"              Thank you! A member of our team will be in touch to schedule a "
+"time with you.\n"
+"            "
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/partials/ko_feedback.html
@@ -25409,12 +25427,8 @@ msgstr ""
 
 #: corehq/apps/registration/templates/registration/partials/start_trial_modal.html
 msgid ""
-"\n"
-"          <p> A member of our team will call you soon to complete the setup "
-"of your CommCare trial account. </p>\n"
-"          <p> Prefer to schedule your call instead? You can do that, too! </"
-"p>\n"
-"        "
+"A member of our team will call you soon to complete the setup of your "
+"CommCare trial account."
 msgstr ""
 
 #: corehq/apps/registration/templates/registration/register_new_user.html
