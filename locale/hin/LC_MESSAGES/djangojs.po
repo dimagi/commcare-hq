@@ -143,7 +143,7 @@ msgid "We are sorry, but something unexpected has occurred."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Book a Time"
+msgid "Submit Request"
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
@@ -3690,10 +3690,6 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js
 msgid "Good Job! Your password is strong!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/register_new_user.js
-msgid "Choose a time for your CommCare trial setup"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
