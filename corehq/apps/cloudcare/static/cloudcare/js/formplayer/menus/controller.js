@@ -142,8 +142,8 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
 
         var tabListView = Views.DetailTabListView({
             collection: tabCollection,
-            showDetail: function (detailTabIndex) {
-                showDetail(model, detailTabIndex, caseId);
+            onTabClick: function (detailTabIndex) {
+                showDetail(model, detailTabIndex, caseId, isMultiSelect);
             },
         });
         var detailFooterView = Views.CaseDetailFooterView({
@@ -161,6 +161,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
     var getDetailList = function (detailObject) {
         var i;
         if (detailObject.get('entities')) {
+            // This is a data tab, displaying a table
             var entities = detailObject.get('entities');
             var listModel = [];
             // we need to map the details and headers JSON to a list for a Backbone Collection
@@ -181,6 +182,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             return Views.CaseListDetailView(menuData);
         }
 
+        // This is a regular detail, displaying name-value pairs
         var headers = detailObject.get('headers');
         var details = detailObject.get('details');
         var styles = detailObject.get('styles');
