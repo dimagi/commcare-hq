@@ -72,7 +72,7 @@ class Command(BaseCommand):
             fields_changed['is_staff'] = couch_user.is_staff
         else:
             logger.info("✓ User {} can access django admin".format(couch_user.username))
-            fields_changed['same_staff'] = couch_user.can_assign_superuser
+            fields_changed['same_staff'] = couch_user.is_staff
 
         if can_assign_superuser_changed:
             logger.info("→ User {} can now assign superuser privilege".format(couch_user.username))
