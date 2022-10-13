@@ -421,7 +421,7 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
-    release_mode_visibility = forms.BooleanField(
+    release_mode_visibility = BooleanField(
         label=gettext_lazy("Enable Release Mode"),
         required=False,
         help_text=gettext_lazy("Check this box to enable release mode in the app settings.")
@@ -435,6 +435,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
