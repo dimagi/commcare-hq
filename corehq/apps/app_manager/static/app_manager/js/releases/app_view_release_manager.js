@@ -21,6 +21,9 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
         var releases_control_el = $('#release-control');
         if (releases_control_el.length) {
+
+            releasesMain.releasesEnabled(false);
+
             var toggleReleaseLockButtons = function () {
                 if(releasesMain.releasesEnabled()) {
                     $("#btn-lock-release").show();
