@@ -375,6 +375,7 @@ fixtures
  0005_lookuptablemodels
  0006_index_row_id
  0007_db_cascade
+ 0008_sqllookuptables
 form_processor
  0001_initial
  0002_xformattachmentsql

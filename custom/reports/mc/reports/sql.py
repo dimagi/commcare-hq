@@ -6,7 +6,7 @@ from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
 from sqlagg.columns import CountColumn, SimpleColumn, SumColumn
 from django.utils.translation import gettext as _, gettext_noop
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.models import LookupTableRow
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn, DataFormatter,\
     SqlTabularReport, DictDataFormat
@@ -150,7 +150,7 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
         type = 'loc'
         if 'fixture_id' in self.request_params and self.request_params.get('fixture_id'):
             type, id = self.request_params.get('fixture_id').split(":")
-            loc = FixtureDataItem.get(id).fields['name']['field_list'][0]['field_value']
+            loc = self._get_loc(id)
         return {
             'domain': self.domain,
             'startdate': self.datespan.startdate_param_utc,
@@ -161,6 +161,16 @@ class BaseReport(McMixin, SqlTabularReport, DatespanMixin, CustomProjectReport, 
             'not': -1,
             'empty': ''
         }
+
+    def _get_loc(self, loc_id):
+        try:
+            return self._locs[loc_id]
+        except AttributeError:
+            self._locs = {}
+        except KeyError:
+            pass
+        loc = self._locs[loc_id] = LookupTableRow.objects.get(id=loc_id).fields['name'][0].value
+        return loc
 
     @property
     @memoized
