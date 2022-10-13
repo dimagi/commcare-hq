@@ -79,7 +79,7 @@ branches:
     - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC)
     - bmb/remove-oidc-dev-notice  # Biyeun Sep 29
     - gh/replace-base-crud-view # Graham Sep 29
-    #- akj/release-mode-toggle # Akash 7 Oct
+    - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling+jls/kill-edit-forms
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
