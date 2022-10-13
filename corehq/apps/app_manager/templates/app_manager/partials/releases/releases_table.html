@@ -137,7 +137,7 @@
             <button type="button"
                     class="btn btn-xs"
                     data-bind="click: $root.toggleRelease,
-                                attr: {disabled: releaseLocked()},
+                                attr: {disabled: !releasesEnabled()},
                                            css: {
                                               'active': is_released(),
                                               'btn-primary': is_released(),
@@ -148,7 +148,7 @@
             <button type="button"
                     class="btn btn-xs btn-default"
                     data-bind="click: $root.toggleRelease,
-                                attr: {disabled: releaseLocked()},
+                                attr: {disabled: !releasesEnabled()},
                                            css: {
                                               'active': !is_released(),
                                               'btn-primary': !is_released(),
