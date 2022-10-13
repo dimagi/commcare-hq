@@ -122,7 +122,7 @@ def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
     results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
-    results.sort(key=lambda result: result['doc']['registered_on'], reverse=True)
+    results.sort(key=lambda result: (result['doc']['registered_on'] or 0), reverse=True)
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
