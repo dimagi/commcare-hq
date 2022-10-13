@@ -12,6 +12,7 @@ class TestMigrationDiff(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         domain = 'caserepeater-migration'
         cls.conn = ConnectionSettings(domain=domain, url='http://url.com')
         cls.conn.save()
@@ -42,7 +43,6 @@ class TestMigrationDiff(TestCase):
             format='case_json',
             repeater_id='id_1',
         )
-        super().setUpClass()
 
     def test_diff_couch_and_sql_with_no_diff(self):
         output = MigrationCommand.diff_couch_and_sql(self.couch_repeater_obj.to_json(), self.sql_repeater_obj)
@@ -65,6 +65,7 @@ class TestMigrationCommand(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super().setUpClass()
         cls.domain_1 = 'caserepeater-migration'
         cls.domain_2 = 'migration-caserepeater'
         cls.date = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
@@ -89,7 +90,6 @@ class TestMigrationCommand(TestCase):
 
         for repeater in cls.repeaters:
             repeater.save(sync_to_sql=False)
-        return super(TestMigrationCommand, cls).setUpClass()
 
     @classmethod
     def tearDownClass(cls):
