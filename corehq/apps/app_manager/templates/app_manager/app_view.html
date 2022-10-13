@@ -64,18 +64,6 @@
         cols: 50,
         disallow_edit: {{ request.couch_user.can_edit_apps|yesno:"false,true" }},
     "></inline-edit>
-
-    <div id="release-control" class="pull-right" data-bind="visible: true">
-    Release Mode
-    <button id="btn-release-lock" class="btn" data-bind="click: releaseModeToggle,
-                                    visible: !releaseLocked()">
-                                    <i class="fa fa-lock-open"></i>
-      </button>
-    <button id="btn-release-lock-open" class="btn" data-bind="click: releaseModeToggle,
-                                    visible: releaseLocked()">
-                                    <i class="fa fa-lock"></i>
-      </button>
-  </div>
   </div>
 {% endblock %}
 
