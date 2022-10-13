@@ -18,7 +18,9 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
 
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Middleware = hqImport("cloudcare/js/formplayer/middleware"),
         appsController = hqImport("cloudcare/js/formplayer/apps/controller"),
+        menusCollections = hqImport("cloudcare/js/formplayer/menus/collections"),
         menusController = hqImport("cloudcare/js/formplayer/menus/controller"),
         sessionsController = hqImport("cloudcare/js/formplayer/sessions/controller"),
         usersController = hqImport("cloudcare/js/formplayer/users/controller");
@@ -102,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
 
             // When the response gets parsed, it will automatically trigger form
             // entry if it is a form response.
-            menuCollection = hqImport("cloudcare/js/formplayer/menus/collections")(
+            menuCollection = menusCollections(
                 response,
                 { parse: true }
             );
@@ -115,7 +117,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             menusController.showMenu(menuCollection);
         },
     };
-    API = hqImport("cloudcare/js/formplayer/middleware").apply(API);
+    API = Middleware.apply(API);
 
     FormplayerFrontend.on("apps:currentApp", function () {
         var urlObject = Utils.currentUrlToObject();
@@ -237,7 +239,7 @@ hqDefine("cloudcare/js/formplayer/router", function () {
             'selections': urlObject.selections,
             'queryData': urlObject.queryData,
         };
-        hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(options);
+        menusController.selectMenu(options);
     });
 
     return {
