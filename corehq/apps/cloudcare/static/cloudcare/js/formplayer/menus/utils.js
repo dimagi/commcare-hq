@@ -1,7 +1,13 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/menus/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Kissmetrics = hqImport("analytix/js/kissmetrix"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
+        QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
+        Toggles = hqImport("hqwebapp/js/toggles"),
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        Views = hqImport("cloudcare/js/formplayer/menus/views");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -12,9 +18,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
 
     var handleLocationRequest = function (optionsFromLastRequest) {
         var success = function (position) {
-            FormplayerFrontend.regions.getRegion('loadingProgress').empty();
-            recordPosition(position);
-            hqImport("cloudcare/js/formplayer/menus/controller").selectMenu(optionsFromLastRequest);
+            hqRequire(["cloudcare/js/formplayer/menus/controller"], function (MenusController) {
+                FormplayerFrontend.regions.getRegion('loadingProgress').empty();
+                recordPosition(position);
+                MenusController.selectMenu(optionsFromLastRequest);
+            });
         };
 
         var error = function (err) {
@@ -39,8 +47,8 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         };
 
         if (navigator.geolocation) {
-            var progressView = hqImport("cloudcare/js/formplayer/layout/views/progress_bar")({
-                progressMessage: "Fetching your location...",
+            var progressView = ProgressBar({
+                progressMessage: gettext("Fetching your location..."),
             });
             FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView.render());
             navigator.geolocation.getCurrentPosition(success, error, {timeout: 10000});
@@ -71,7 +79,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
-        var breadcrumbView = hqImport("cloudcare/js/formplayer/menus/views").BreadcrumbListView({
+        var breadcrumbView = Views.BreadcrumbListView({
             collection: detailCollection,
         });
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
@@ -91,7 +99,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         langCollection = new Backbone.Collection(langModels);
-        var formMenuView = hqImport("cloudcare/js/formplayer/menus/views").FormMenuView({
+        var formMenuView = Views.FormMenuView({
             collection: langCollection,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
@@ -120,26 +128,25 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
         };
-        var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
         var urlObject = Utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
-            return hqImport("cloudcare/js/formplayer/menus/views").MenuListView(menuData);
+            return Views.MenuListView(menuData);
         } else if (menuResponse.type === "query") {
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+            if (Toggles.toggleEnabled('APP_ANALYTICS')) {
                 var props = {
                     domain: FormplayerFrontend.getChannel().request('currentUser').domain,
                 };
                 if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                     props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
                 }
-                hqImport('analytix/js/kissmetrix').track.event('Case Search', props);
+                Kissmetrics.track.event('Case Search', props);
             }
             urlObject.setQueryData({}, false, false);
-            return hqImport("cloudcare/js/formplayer/menus/views/query")(menuData);
+            return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
-            if (hqImport('hqwebapp/js/toggles').toggleEnabled('APP_ANALYTICS')) {
+            if (Toggles.toggleEnabled('APP_ANALYTICS')) {
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
                 if (searchText) {
@@ -153,20 +160,24 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 if (!_.isEmpty(fields)) {
                     eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }
-                hqImport('analytix/js/kissmetrix').track.event(event, eventData);
+                Kissmetrics.track.event(event, eventData);
             }
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-                hqImport('analytix/js/kissmetrix').track.event('Started Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                Kissmetrics.track.event('Started Case Search', {
+                    'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
+                if (menuData.isMultiSelect) {
+                    return Views.MultiSelectCaseListView(menuData);
+                } else {
+                    return Views.CaseListView(menuData);
+                }
             } else {
                 if (menuResponse.numEntitiesPerRow > 1) {
-                    return hqImport("cloudcare/js/formplayer/menus/views").GridCaseTileListView(menuData);
+                    return Views.GridCaseTileListView(menuData);
                 } else {
-                    return hqImport("cloudcare/js/formplayer/menus/views").CaseTileListView(menuData);
+                    return Views.CaseTileListView(menuData);
                 }
             }
         }

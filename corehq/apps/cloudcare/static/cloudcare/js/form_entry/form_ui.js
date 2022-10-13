@@ -1,6 +1,7 @@
 /* global DOMPurify, mdAnchorRender */
 hqDefine("cloudcare/js/form_entry/form_ui", function () {
     var Const = hqImport("cloudcare/js/form_entry/const"),
+        Entries = hqImport("cloudcare/js/form_entry/entries"),
         Utils = hqImport("cloudcare/js/form_entry/utils");
     var md = window.markdownit();
     var groupNum = 0;
@@ -299,7 +300,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         });
 
         self.erroredQuestions = ko.computed(function () {
-            if (!hqImport("cloudcare/js/form_entry/utils").isWebApps() || !self.hasSubmitAttempted()) {
+            if (!self.hasSubmitAttempted()) {
                 return [];
             }
 
@@ -609,7 +610,7 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
 
         self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
         self.isLabel = self.datatype() === 'info';
-        self.entry = hqImport("cloudcare/js/form_entry/entries").getEntry(self);
+        self.entry = Entries.getEntry(self);
         self.entryTemplate = function () {
             return self.entry.templateType + '-entry-ko-template';
         };
