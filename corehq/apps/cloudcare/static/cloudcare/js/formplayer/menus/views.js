@@ -324,22 +324,22 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childView: CaseView,
         childViewOptions: function () {
             return {
-                isMultiSelect: this.options.isMultiSelect,
                 styles: this.options.styles,
+                isMultiSelect: false,
             };
         },
 
         initialize: function (options) {
-            this.styles = options.styles;
-            this.hasNoItems = options.collection.length === 0;
-            this.redoLast = options.redoLast;
+            var self = this;
+            self.styles = options.styles;
+            self.hasNoItems = options.collection.length === 0;
+            self.redoLast = options.redoLast;
             if (sessionStorage.selectedValues !== undefined) {
                 let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
-                this.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
+                self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
             } else {
-                this.selectedCaseIds = [];
+                self.selectedCaseIds = [];
             }
-            this.isMultiSelect = options.isMultiSelect;
         },
 
         ui: {
@@ -352,9 +352,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             columnHeader: '.header-clickable',
             paginationGoText: '#goText',
             casesPerPageLimit: '.per-page-limit',
-            selectAllCheckbox: "#select-all-checkbox",
-            continueButton: "#multi-select-continue-btn",
-            continueButtonText: "#multi-select-btn-text",
         },
 
         events: {
@@ -367,23 +364,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             'keypress @ui.searchTextBox': 'searchTextKeyAction',
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
-            'click @ui.selectAllCheckbox': 'selectAllAction',
-            'keypress @ui.selectAllCheckbox': 'selectAllAction',
-            'click @ui.continueButton': 'continueAction',
-            'keypress @ui.continueButton': 'continueAction',
-        },
-
-        onRender: function () {
-            var self = this;
-            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
-                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
-                } else {
-                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
-                }
-                self.reconcileMultiSelectUI();
-            });
-            this.reconcileMultiSelectUI();
         },
 
         caseListAction: function (e) {
@@ -450,11 +430,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:sort", columnSelection);
         },
 
-        selectAllAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
-            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
-        },
-
         _allCaseIds: function () {
             var caseIds = [];
             this.children.each(function (childView) {
@@ -470,25 +445,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                     'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
-        },
-
-        reconcileMultiSelectUI: function () {
-            var self = this;
-            if (!self.isMultiSelect) {
-                return;
-            }
-
-            // Update states of row checkboxes
-            self.children.each(function (childView) {
-                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
-            });
-
-            // Update state of Continue button
-            self.ui.continueButtonText.text(self.selectedCaseIds.length);
-            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
-
-            // Reconcile state of "select all" checkbox
-            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
 
         templateContext: function () {
@@ -512,8 +468,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
                 sortIndices: this.options.sortIndices,
-                isMultiSelect: this.isMultiSelect,
                 selectedCaseIds: this.selectedCaseIds,
+                isMultiSelect: false,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -522,6 +478,75 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 },
                 pageNumLabel: _.template(gettext("Page <%-num%>")),
             };
+        },
+    });
+
+    var MultiSelectCaseListView = CaseListView.extend({
+        ui: function () {
+            return _.extend(MultiSelectCaseListView.__super__.ui, {
+                selectAllCheckbox: "#select-all-checkbox",
+                continueButton: "#multi-select-continue-btn",
+                continueButtonText: "#multi-select-btn-text",
+            });
+        },
+
+        events: function () {
+            return _.extend(MultiSelectCaseListView.__super__.events, {
+                'click @ui.selectAllCheckbox': 'selectAllAction',
+                'keypress @ui.selectAllCheckbox': 'selectAllAction',
+                'click @ui.continueButton': 'continueAction',
+                'keypress @ui.continueButton': 'continueAction',
+            });
+        },
+
+        childViewOptions: function () {
+            var options = MultiSelectCaseListView.__super__.childViewOptions.apply(this);
+            options.isMultiSelect = true;
+            return options;
+        },
+
+        initialize: function (options) {    // eslint-disable-line no-unused-vars
+            MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
+            var self = this;
+            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+                if (action === Constants.MULTI_SELECT_ADD) {
+                    self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
+                } else {
+                    self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
+                }
+                self.reconcileMultiSelectUI();
+            });
+        },
+
+        templateContext: function () {
+            var context = MultiSelectCaseListView.__super__.templateContext.apply(this);
+            context.isMultiSelect = true;
+            return context;
+        },
+
+        onRender: function () {
+            this.reconcileMultiSelectUI();
+        },
+
+        selectAllAction: function (e) {
+            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
+        },
+
+        reconcileMultiSelectUI: function () {
+            var self = this;
+
+            // Update states of row checkboxes
+            self.children.each(function (childView) {
+                childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
+            });
+
+            // Update state of Continue button
+            self.ui.continueButtonText.text(self.selectedCaseIds.length);
+            self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+
+            // Reconcile state of "select all" checkbox
+            self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
     });
 
@@ -699,11 +724,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {
             this.index = options.model.get('id');
             this.active = options.model.get('active');
-            this.showDetail = options.showDetail;
+            this.onTabClick = options.onTabClick;
         },
         tabClick: function (e) {
             e.preventDefault();
-            this.options.showDetail(this.index);
+            this.options.onTabClick(this.index);
         },
     });
 
@@ -714,7 +739,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: "ul",
         childViewOptions: function () {
             return {
-                showDetail: this.options.showDetail,
+                onTabClick: this.options.onTabClick,
             };
         },
     });
@@ -784,6 +809,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         MenuListView: function (options) {
             return new MenuListView(options);
+        },
+        MultiSelectCaseListView: function (options) {
+            return new MultiSelectCaseListView(options);
         },
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
