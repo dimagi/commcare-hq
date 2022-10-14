@@ -146,10 +146,8 @@ msgid "We are sorry, but something unexpected has occurred."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
-#, fuzzy
-#| msgid "Submit Invoice Request"
 msgid "Submit Request"
-msgstr "Ingrese Solicitud de Factura"
+msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Next"
@@ -3013,14 +3011,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Confirm?"
 msgstr "¿Corfirmar?"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "Form successfully submitted!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "An unexpected error occurred!"
-msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"

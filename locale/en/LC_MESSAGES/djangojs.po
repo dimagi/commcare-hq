@@ -2870,14 +2870,6 @@ msgstr ""
 msgid "Confirm?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "Form successfully submitted!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "An unexpected error occurred!"
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
 msgstr ""
