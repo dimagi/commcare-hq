@@ -248,111 +248,20 @@ function runpillowtop {
     su cchq -c "./manage.py run_ptop --all --processor-chunk-size=1"
 }
 
-source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
-source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
+source /vendor/scripts/datadog-utils.sh  # provides send_metric_to_datadog
+source /vendor/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
 # build the run_tests script to be executed as cchq later
 func_text logmsg _run_tests  > /mnt/run_tests
 echo '_run_tests "$@"'      >> /mnt/run_tests
 
-# Initial state of /mnt docker volumes:
-# /mnt/commcare-hq-ro:
-#   - points to local commcare-hq repo directory
-#   - read-only (except for travis).
-# /mnt/lib:
-#   - empty (except for travis)
 cd /mnt
-if [ "$DOCKER_HQ_OVERLAY" == "none" ]; then
-    ln -s commcare-hq-ro commcare-hq
+if ! [[ -h commcare-hq ]]
+then
+    ln -s /vendor commcare-hq
     mkdir commcare-hq/staticfiles
-    chown cchq:cchq commcare-hq-ro commcare-hq/staticfiles
-else
-    # commcare-hq source overlay prevents modifications in this container
-    # from leaking to the host; allows safe overwrite of localsettings.py
-    rm -rf lib/overlay  # clear source overlay (if it exists)
-    mkdir -p commcare-hq lib/{overlay,node_modules,staticfiles}
-    ln -s /mnt/lib/node_modules lib/overlay/node_modules
-    ln -s /mnt/lib/staticfiles lib/overlay/staticfiles
-    logmsg INFO "mounting $(pwd)/commcare-hq via $DOCKER_HQ_OVERLAY"
-    if [ "$DOCKER_HQ_OVERLAY" == "overlayfs" ]; then
-        # Default Docker overlay engine
-        rm -rf lib/work
-        mkdir lib/work
-        overlayopts="lowerdir=/mnt/commcare-hq-ro,upperdir=/mnt/lib/overlay,workdir=/mnt/lib/work"
-        if truthy "$DOCKER_HQ_OVERLAYFS_METACOPY"; then
-            # see: https://www.kernel.org/doc/html/latest/filesystems/overlayfs.html#metadata-only-copy-up
-            # Significantly speeds up recursive chmods (<1sec when enabled
-            # compared to ~20sec when not). Provided as a configurable setting
-            # since there are security implications.
-            overlayopts="metacopy=on,${overlayopts}"
-        fi
-        mount -t overlay -o"$overlayopts" overlay commcare-hq
-        if truthy "$DOCKER_HQ_OVERLAYFS_CHMOD"; then
-            # May be required so cchq user can read files in the mounted
-            # commcare-hq volume. Provided as a configurable setting because it
-            # is an expensive operation and some container ecosystems (travis
-            # perhaps?) may not require it. I suspect this is the reason local
-            # testing was not working for many people in the past.
-            logmsg -n INFO "chmod'ing commcare-hq overlay... "
-            now=$(date +%s)
-            # add world-read (and world-x for dirs and existing-x files)
-            chmod -R o+rX commcare-hq
-            delta=$(($(date +%s) - $now))
-            echo "(delta=${delta}sec)"  # append the previous log line
-        fi
-    else
-        # This (aufs) was the default (perhaps only?) Docker overlay engine when
-        # this script was originally written, and has hung around ever since.
-        # Likely because this script has not been kept up-to-date with the
-        # latest Docker features.
-        #
-        # TODO: use overlayfs and drop support for aufs
-        mount -t aufs -o br=/mnt/lib/overlay:/mnt/commcare-hq-ro none commcare-hq
-    fi
-    # Own the new dirs after the overlay is mounted.
-    chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
-    # with one that points at the overlay mount.
-    ln -sf commcare-hq/docker/wait.sh wait.sh
+    chown cchq:cchq /vendor commcare-hq/staticfiles
 fi
-# New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
-#
-# none (travis, typically):
-#   /mnt
-#   ├── commcare-hq -> commcare-hq-ro
-#   ├── commcare-hq-ro  # NOTE: not read-only
-#   │   ├── staticfiles
-#   │   │   └── [empty]
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       └── [maybe files with travis...]
-#
-# overlayfs:
-#   /mnt
-#   ├── commcare-hq
-#   │   └── [overlayfs of /mnt/commcare-hq-ro + /mnt/lib/overlay + /mnt/lib/work]
-#   ├── commcare-hq-ro
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       ├── node_modules
-#       ├── overlay
-#       │   ├── node_modules -> /mnt/lib/node_modules
-#       │   └── staticfiles -> /mnt/lib/staticfiles
-#       ├── staticfiles
-#       └── work
-#
-# aufs:
-#   /mnt
-#   ├── commcare-hq
-#   │   └── [aufs of /mnt/commcare-hq-ro + /mnt/lib/overlay]
-#   ├── commcare-hq-ro
-#   │   └── [existing commcare-hq files...]
-#   └── lib
-#       ├── node_modules
-#       ├── overlay
-#       │   ├── node_modules -> /mnt/lib/node_modules
-#       │   └── staticfiles -> /mnt/lib/staticfiles
-#       └── staticfiles
 
 mkdir -p lib/sharedfiles
 ln -sf /mnt/lib/sharedfiles /sharedfiles

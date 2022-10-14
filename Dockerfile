@@ -6,20 +6,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH=/vendor/bin:$PATH \
     NODE_VERSION=14.19.1
 
-RUN mkdir /vendor
-
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz" \
   && tar -xzf "node-v$NODE_VERSION-linux-x64.tar.gz" -C /usr/local --strip-components=1 \
   && rm "node-v$NODE_VERSION-linux-x64.tar.gz"
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-     default-jdk \
-     wget \
-     libxml2-dev \
-     libxmlsec1-dev \
-     libxmlsec1-openssl \
-     gettext
 
 # Install latest chrome dev package and fonts to support major
 # charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
@@ -34,17 +23,23 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
      fonts-wqy-zenhei \
      fonts-thai-tlwg \
      fonts-kacst \
-     fonts-freefont-ttf
+     fonts-freefont-ttf \
+     default-jdk \
+     wget \
+     libxml2-dev \
+     libxmlsec1-dev \
+     libxmlsec1-openssl \
+     gettext
 
 # Deletes all package sources, so don't apt-get install anything after this:
 RUN rm -rf /var/lib/apt/lists/* /src/*.deb
 
-COPY requirements/test-requirements.txt package.json /vendor/
+RUN git clone -b nh/shared_files --depth 1 https://github.com/dimagi/commcare-hq.git /vendor
 
 # prefer https for git checkouts made by pip
 RUN git config --global url."https://".insteadOf git:// \
  && pip install --upgrade pip \
- && pip install -r /vendor/test-requirements.txt --user --upgrade \
+ && pip install -r /vendor/requirements/test-requirements.txt --upgrade \
  && rm -rf /root/.cache/pip
 
 # this keeps the image size down, make sure to set in mocha-headless-chrome options

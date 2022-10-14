@@ -5,8 +5,8 @@ set -e
 
 TIMEOUT=90  # max seconds to wait for each service
 
-if [ -f /mnt/commcare-hq-ro/scripts/bash-utils.sh ]; then
-    source /mnt/commcare-hq-ro/scripts/bash-utils.sh # provides logmsg
+if [ -f /vendor/scripts/bash-utils.sh ]; then
+    source /vendor/scripts/bash-utils.sh # provides logmsg
 else
     # if bash-utils.sh is not where we expect it, stub out logmsg (allows this
     # script to be used outside the docker environment).

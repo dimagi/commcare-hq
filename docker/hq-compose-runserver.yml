@@ -1,27 +1,26 @@
+volumes:
+  shared-files:
+
 # x-anchors are ignored by Docker, are used for DRYness here
 x-commcarehq_base: &commcarehq_base
   build:
     context: .
-    dockerfile: "${DOCKERFILE}"
+    dockerfile: "Dockerfile"
   environment: &environment_base
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
-    DOCKER_HQ_OVERLAY: "${DOCKER_HQ_OVERLAY}"
-    DOCKER_HQ_OVERLAYFS_CHMOD: "${DOCKER_HQ_OVERLAYFS_CHMOD}"
-    DOCKER_HQ_OVERLAYFS_METACOPY: "${DOCKER_HQ_OVERLAYFS_METACOPY}"
+    DOCKER_HQ_OVERLAY: "none"
   privileged: true  # allows mount inside container
   depends_on:
     - postgres
     - couch
     - redis
     - elasticsearch2
-    - elasticsearch5
     - kafka
     - zookeeper
     - minio
   volumes:
-    - ..:/mnt/commcare-hq-ro:ro
-    - ${VOLUME_PREFIX}lib:/mnt/lib
+    - shared-files:/mnt/lib
 
 services:
   web:
@@ -75,11 +74,6 @@ services:
     extends:
       file: hq-compose-services.yml
       service: elasticsearch2
-
-  elasticsearch5:
-    extends:
-      file: hq-compose-services.yml
-      service: elasticsearch5
 
   zookeeper:
     extends:
