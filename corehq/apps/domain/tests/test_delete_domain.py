@@ -13,7 +13,6 @@ from django.test import TestCase
 from dateutil.relativedelta import relativedelta
 from unittest.mock import patch
 
-from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.models import SyncLogSQL
 from couchforms.models import UnfinishedSubmissionStub
 
@@ -302,7 +301,7 @@ class TestDeleteDomain(TestCase):
 
     def _test_case_deletion(self):
         for domain_name in [self.domain.name, self.domain2.name]:
-            CaseFactory(domain_name).create_case()
+            create_case(domain_name, save=True)
             self.assertEqual(len(CommCareCase.objects.get_case_ids_in_domain(domain_name)), 1)
 
         self.domain.delete()
