@@ -35,7 +35,7 @@ def create_engine(connection_url: str, connect_args: dict = None):
     return sqlalchemy.create_engine(
         connection_url,
         paramstyle='format',
-        pool_class=NullPool,
+        poolclass=NullPool,
         connect_args=connect_args
     )
 
