@@ -81,7 +81,7 @@ branches:
     - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling
+    #- jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
-    - jls/multi-select-flag-handling # Jenny Oct 11
+    #- jls/multi-select-flag-handling # Jenny Oct 11
 submodules: { }
