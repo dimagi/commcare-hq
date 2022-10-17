@@ -304,7 +304,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e);
+            this.parentView.notifyFieldChange(e, this);
         },
 
         toggleBlankSearch: function (e) {
