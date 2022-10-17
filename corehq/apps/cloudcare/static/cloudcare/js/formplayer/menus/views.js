@@ -314,6 +314,34 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
     });
 
+    var CaseListViewUI = function () {
+        return {
+            actionButton: '.case-list-action-button button',
+            searchButton: '#case-list-search-button',
+            searchTextBox: '.module-search-container',
+            paginators: '.js-page',
+            paginationGoButton: '#pagination-go-button',
+            paginationGoTextBox: '.module-go-container',
+            columnHeader: '.header-clickable',
+            paginationGoText: '#goText',
+            casesPerPageLimit: '.per-page-limit',
+        };
+    };
+
+    var CaseListViewEvents = function () {
+        return {
+            'click @ui.actionButton': 'caseListAction',
+            'click @ui.searchButton': 'caseListSearch',
+            'click @ui.paginators': 'paginateAction',
+            'click @ui.paginationGoButton': 'paginationGoAction',
+            'click @ui.columnHeader': 'columnSortAction',
+            'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
+            'keypress @ui.searchTextBox': 'searchTextKeyAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
+            'keypress @ui.paginators': 'paginateKeyAction',
+        };
+    };
+
     var CaseListView = Marionette.CollectionView.extend({
         tagName: "div",
         template: _.template($("#case-view-list-template").html() || ""),
@@ -340,29 +368,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             }
         },
 
-        ui: {
-            actionButton: '.case-list-action-button button',
-            searchButton: '#case-list-search-button',
-            searchTextBox: '.module-search-container',
-            paginators: '.js-page',
-            paginationGoButton: '#pagination-go-button',
-            paginationGoTextBox: '.module-go-container',
-            columnHeader: '.header-clickable',
-            paginationGoText: '#goText',
-            casesPerPageLimit: '.per-page-limit',
-        },
+        ui: CaseListViewUI(),
 
-        events: {
-            'click @ui.actionButton': 'caseListAction',
-            'click @ui.searchButton': 'caseListSearch',
-            'click @ui.paginators': 'paginateAction',
-            'click @ui.paginationGoButton': 'paginationGoAction',
-            'click @ui.columnHeader': 'columnSortAction',
-            'change @ui.casesPerPageLimit': 'onPerPageLimitChange',
-            'keypress @ui.searchTextBox': 'searchTextKeyAction',
-            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
-            'keypress @ui.paginators': 'paginateKeyAction',
-        },
+        events: CaseListViewEvents(),
 
         caseListAction: function (e) {
             var index = $(e.currentTarget).data().index,
@@ -480,22 +488,18 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
     });
 
     var MultiSelectCaseListView = CaseListView.extend({
-        ui: function () {
-            return _.extend(MultiSelectCaseListView.__super__.ui, {
-                selectAllCheckbox: "#select-all-checkbox",
-                continueButton: "#multi-select-continue-btn",
-                continueButtonText: "#multi-select-btn-text",
-            });
-        },
+        ui: _.extend(CaseListViewUI(), {
+            selectAllCheckbox: "#select-all-checkbox",
+            continueButton: "#multi-select-continue-btn",
+            continueButtonText: "#multi-select-btn-text",
+        }),
 
-        events: function () {
-            return _.extend(MultiSelectCaseListView.__super__.events, {
-                'click @ui.selectAllCheckbox': 'selectAllAction',
-                'keypress @ui.selectAllCheckbox': 'selectAllAction',
-                'click @ui.continueButton': 'continueAction',
-                'keypress @ui.continueButton': 'continueAction',
-            });
-        },
+        events: _.extend(CaseListViewEvents(), {
+            'click @ui.selectAllCheckbox': 'selectAllAction',
+            'keypress @ui.selectAllCheckbox': 'selectAllAction',
+            'click @ui.continueButton': 'continueAction',
+            'keypress @ui.continueButton': 'continueAction',
+        }),
 
         childViewOptions: function () {
             var options = MultiSelectCaseListView.__super__.childViewOptions.apply(this);
