@@ -14,7 +14,7 @@
           <th>{% trans "Finished On" %}</th>
         </tr>
         </thead>
-        <tbody data-bind="foreach: ruleRuns">
+        <tbody data-bind="foreach: paginatedRuleRuns">
           <tr>
             <td data-bind="text: case_type"></td>
             <td data-bind="text: started_on"></td>
@@ -22,6 +22,12 @@
           </tr>
         </tbody>
       </table>
+      <pagination data-apply-bindings="false"
+        params="goToPage: goToPage,
+                perPage: itemsPerPage,
+                totalItems: totalItems,
+                onLoad: onPaginationLoad,
+                slug: 'rule-run-list'"></pagination>
     </div>
   </div>
 </div>

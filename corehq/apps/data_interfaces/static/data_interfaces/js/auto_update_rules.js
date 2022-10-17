@@ -101,6 +101,24 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     var RuleRunHistoryViewModel = function (ruleRuns) {
         var self = {};
         self.ruleRuns = ko.mapping.fromJS(ruleRuns);
+        self.paginatedRuleRuns = ko.observableArray([]);
+        // pagination
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.computed(function () {
+            return self.ruleRuns().length;
+        });
+        self.currentPage = 1;
+
+        self.goToPage = function (page) {
+            self.currentPage = page;
+            self.paginatedRuleRuns.removeAll();
+            var skip = (self.currentPage - 1) * self.itemsPerPage();
+            self.paginatedRuleRuns(self.ruleRuns().slice(skip, skip + self.itemsPerPage()));
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
         return self;
     };
 
