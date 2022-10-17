@@ -415,7 +415,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         notifyFieldChange: function (e, changedChildView) {
             e.preventDefault();
             var self = this;
-            self.ValidateFieldChange(changedChildView).always(function (response) {
+            self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -461,25 +461,12 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         validateFieldChange: function(changedChildView) {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-                self = this;
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
 
-            var urlObject = Utils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                _.each(response.models, function (responseModel, i) {
-                    self.collection.models[i].set({
-                        error: responseModel.get('error'),
-                        required: responseModel.get('required'),
-                        required_msg: responseModel.get('required_msg'),
-                    });
-                });
-
-                // Gather error messages
-                var invalidFields = [];
+            self._updateModelsForValidation().done(function (response) {
+                //Gather error messages
                 self.children.each(function (childView) {
                     if ((!childView.hasRequiredError() || childView == changedChildView)
                          && !childView.isValid()) {
@@ -496,30 +483,18 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
 
             return promise;
         },
+
         /*
          *  Send request to formplayer to validate fields. Displays any errors.
          *  Returns a promise that contains the formplayer response.
          */
         validateAllFields: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-                self = this;
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
 
-            var urlObject = Utils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                _.each(response.models, function (responseModel, i) {
-                    self.collection.models[i].set({
-                        error: responseModel.get('error'),
-                        required: responseModel.get('required'),
-                        required_msg: responseModel.get('required_msg'),
-                    });
-                });
-
+            self._updateModelsForValidation().done(function (response) {
                 // Gather error messages
-                var invalidFields = [];
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
@@ -541,6 +516,30 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 } else {
                     promise.resolve(response);
                 }
+            });
+
+            return promise;
+        },
+
+        _updateModelsForValidation: function () {
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+                self = this;
+
+            var urlObject = Utils.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+                promise.resolve(response);
+
             });
 
             return promise;
