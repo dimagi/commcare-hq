@@ -510,7 +510,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
             var self = this;
-            FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
+            // Remove any event handling left over from previous instances of MultiSelectCaseListView.
+            // Only one of these views is supporteed on the page at any given time.
+            FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
                 if (action === Constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
                 } else {
