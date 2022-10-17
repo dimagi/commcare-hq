@@ -667,11 +667,6 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def edit_url_name(self):
         return EditCaseRuleView.urlname
 
-    @property
-    @memoized
-    def project_timezone(self):
-        return get_timezone_for_user(None, self.domain)
-
     def _format_rule(self, rule):
         return {
             'id': rule.pk,
@@ -679,7 +674,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'case_type': rule.case_type,
             'active': rule.active,
             'last_run': (ServerTime(rule.last_run)
-                         .user_time(self.project_timezone)
+                         .user_time(get_timezone_for_user(None, self.domain))
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
@@ -973,7 +968,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'case_type': rule.case_type,
             'active': rule.active,
             'last_run': (ServerTime(rule.last_run)
-                         .user_time(self.project_timezone)
+                         .user_time(get_timezone_for_user(None, self.domain))
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
