@@ -412,10 +412,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e) {
+        notifyFieldChange: function (e, changedChildView) {
             e.preventDefault();
             var self = this;
-            self.validateFields().always(function (response) {
+            self.ValidateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -455,18 +455,52 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            // validateFields will likely already have been called when user blurred the last field,
-            // but call it here just in case they didn't fill anything out
-            self.validateFields().done(function () {
+            self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
         },
 
+        validateFieldChange: function(changedChildView) {
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+                self = this;
+
+            var urlObject = Utils.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+
+                // Gather error messages
+                var invalidFields = [];
+                self.children.each(function (childView) {
+                    if ((!childView.hasRequiredError() || childView == changedChildView)
+                         && !childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                if (invalidFields.length) {
+                    promise.reject(response);
+                } else {
+                    promise.resolve(response);
+                }
+            });
+
+            return promise;
+        },
         /*
          *  Send request to formplayer to validate fields. Displays any errors.
          *  Returns a promise that contains the formplayer response.
          */
-        validateFields: function () {
+        validateAllFields: function () {
             var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
                 self = this;
 
