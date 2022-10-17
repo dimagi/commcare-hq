@@ -14,7 +14,6 @@ from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
 from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.views import ConnectionSettingsListView
 
@@ -22,11 +21,6 @@ from corehq.motech.views import ConnectionSettingsListView
 class GenericRepeaterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('data'):
-            repeater = Repeater.wrap(kwargs['data'])
-            if not repeater.connection_settings_id:
-                repeater.create_connection_settings()
-
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
