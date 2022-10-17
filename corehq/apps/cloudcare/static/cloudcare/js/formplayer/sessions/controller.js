@@ -1,10 +1,13 @@
 hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Const = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        Views = hqImport("cloudcare/js/formplayer/sessions/views");
+
     return {
         listSessions: function listSessions(pageNumber, pageSize) {
             /* eslint-disable */
             if (pageSize == null) {
-                pageSize = hqImport("cloudcare/js/formplayer/constants").DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+                pageSize = Const.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             }
             /* eslint-disable */
             if (pageNumber == null) {
@@ -14,7 +17,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
 
             $.when(fetchingSessions).done(function (sessions) {
 
-                var sessionListView = hqImport("cloudcare/js/formplayer/sessions/views")({
+                var sessionListView = Views({
                     collection: sessions,
                 });
 
