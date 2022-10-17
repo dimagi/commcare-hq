@@ -654,8 +654,11 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     @property
     def page_context(self):
         context = super().page_context
+        domain_obj = Domain.get_by_name(self.domain)
+        hour = domain_obj.auto_case_update_hour
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
+            'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
         })
         return context
 
