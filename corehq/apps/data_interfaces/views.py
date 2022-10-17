@@ -688,6 +688,8 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'case_type': rule_run.case_type,
             'started_on': self._convert_to_user_time(rule_run.started_on),
             'finished_on': self._convert_to_user_time(rule_run.finished_on),
+            'cases_updated': rule_run.num_updates,
+            'cases_closed': rule_run.num_closes,
         }
 
     def _convert_to_user_time(self, value):
