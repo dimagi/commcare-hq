@@ -214,27 +214,41 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
         },
 
+        hasRequiredError: function () {
+            if (!this.model.get('required')) {
+                return false;
+            }
+            var answer = this.getEncodedValue();
+            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
+                return false;
+            } else {
+                return true
+            }
+
+        },
+
+        hasNonRequiredErrors: function () {
+            if (this.model.get("error")) {
+                return true
+            }
+        },
+
         /**
          * Determines if model has either a server error or is required and missing.
          * Returns error message, or null if model is valid.
          */
-        checkValid: function () {
-            if (this.model.get("error")) {
+        getError: function () {
+            if (this.hasNonRequiredErrors()) {
                 return this.model.get("error");
             }
-            if (!this.model.get('required')) {
-                return null;
-            }
-            var answer = this.getEncodedValue();
-            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
-                return null;
-            } else {
+            if (this.hasRequiredError()) {
                 return this.model.get("required_msg");
             }
+            return null
         },
 
         isValid: function () {
-            var newError = this.checkValid();
+            var newError = this.getError();
             if (newError !== this.errorMessage) {
                 this.errorMessage = newError;
                 this._render();
