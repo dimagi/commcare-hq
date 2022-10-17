@@ -7,6 +7,7 @@ hqDefine("fixtures/js/lookup-manage", [
     "knockout",
     "hqwebapp/js/assert_properties",
     "hqwebapp/js/initial_page_data",
+    'hqwebapp/js/toggles',
     "hqwebapp/js/hq.helpers",
     "hqwebapp/js/knockout_bindings.ko",
 ], function (
@@ -14,7 +15,8 @@ hqDefine("fixtures/js/lookup-manage", [
     _,
     ko,
     assertProperties,
-    initialPageData
+    initialPageData,
+    toggles
 ) {
     "use strict";
     var somethingWentWrong = $("#FailText").text();
@@ -112,7 +114,7 @@ hqDefine("fixtures/js/lookup-manage", [
             self.fields.push(field);
         };
         for (var i = 0; i < raw_fields.length; i += 1) {
-            var tag = raw_fields[i].field_name();
+            var tag = raw_fields[i].name();
             var with_props = !!raw_fields[i].properties().length;
             self.addField(undefined, undefined, {
                 tag: tag,
@@ -244,7 +246,13 @@ hqDefine("fixtures/js/lookup-manage", [
         var self = {};
         self.data_types = ko.observableArray(_.map(options.data_types, function (t) { return makeDataType(t, self); }));
         self.file = ko.observable();
+        self.combineSheets = ko.observable(false);
+        self.flagEnabled = ko.observable(false);
         self.selectedTables = ko.observableArray([]);
+
+        if (toggles.toggleEnabled('COMBINE_LOOKUP_TABLES')) {
+            self.flagEnabled = true;
+        }
 
         self.removeBadDataType = function (dataType) {
             setTimeout(function () {
@@ -296,6 +304,7 @@ hqDefine("fixtures/js/lookup-manage", [
                     type: 'POST',
                     data: {
                         'table_ids': tables,
+                        'extraParam': self.combineSheets(),
                     },
                     dataType: 'json',
                     success: function (response) {
