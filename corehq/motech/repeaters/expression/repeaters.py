@@ -122,6 +122,16 @@ class SQLBaseExpressionRepeater(SQLRepeater):
             self.parsed_expression,
         )
 
+    def get_url(self, repeat_record):
+        base_url = super().get_url(repeat_record)
+        if self.url_template:
+            return base_url + self.generator.get_url(
+                repeat_record,
+                self.url_template,
+                self.payload_doc(repeat_record),
+            )
+        return base_url
+
     @classmethod
     def _migration_get_couch_model_class(cls):
         return BaseExpressionRepeater

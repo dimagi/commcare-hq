@@ -21,8 +21,8 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     delete_all_repeaters,
-    get_all_repeater_docs,
 )
+from corehq.motech.repeaters.utils import get_all_repeater_docs
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
     SQLCaseExpressionRepeater,
@@ -278,14 +278,12 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
             # renamed
             'paused',
             # connection setting props
-            'plaintext_password', 'username', 'notify_addresses_str', 'create_connection_settings', 'name', 'url',
-            'verify', 'skip_cert_verify', 'password', 'auth_type',
+            'plaintext_password', 'username', 'notify_addresses_str', 'create_connection_settings', 'url',
+            'skip_cert_verify', 'password', 'auth_type',
             # not required in sql
             'by_domain', 'base_doc',
             'get_class_from_doc_type', 'started_at', '_get_connection_settings',
             'clear_caches',  # will see if we need it as per requirement
-            # not used
-            'get_attempt_info'
         }
 
     @classmethod
@@ -293,11 +291,14 @@ class TestRepeaterModelsAttrEquality(ModelAttrEqualityHelper):
         return {
             'repeater_id', 'set_next_attempt', 'next_attempt_at',
             'is_ready', 'options', '_repeater_type', 'last_attempt_at', 'repeat_records_ready', 'repeat_records',
-            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME', 'Meta', 'repeater',
+            'all_objects', 'reset_next_attempt', 'is_deleted', 'PROXY_FIELD_NAME',
+            'Meta', 'repeater', 'last_modified', 'date_created',
             # added by django choicefield in models
-            'get_request_method_display',
+            'get_request_method_display', 'get_next_by_date_created', 'get_next_by_last_modified',
+            'get_previous_by_date_created', 'get_previous_by_last_modified',
+            # other attrs
             'to_json', '_convert_to_serializable',
-            '_optionvalue_fields', '_wrap_schema_attrs'
+            '_optionvalue_fields', '_wrap_schema_attrs',
         }
 
 
