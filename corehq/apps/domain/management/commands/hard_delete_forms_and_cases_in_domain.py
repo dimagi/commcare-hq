@@ -24,7 +24,7 @@ class Command(BaseCommand):
             action='store_true',
             dest='ignore_domain_in_use',
             default=False,
-            help='Allow deleting a domain that is in use.',
+            help='Allow deleting forms and cases for a domain that is in use.',
         )
 
     def handle(self, domain, **options):
