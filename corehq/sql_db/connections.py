@@ -9,6 +9,7 @@ from memoized import memoized
 from urllib.parse import urlencode
 from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from corehq.util.test_utils import unit_testing_only
 
@@ -30,7 +31,11 @@ def create_engine(connection_url: str, connect_args: dict = None):
     # otherwise queries will sometimes be misformated/error when formatting
     # https://github.com/zzzeek/sqlalchemy/blob/ff20903/lib/sqlalchemy/dialects/postgresql/psycopg2.py#L173
     connect_args = connect_args or {}
-    return sqlalchemy.create_engine(connection_url, paramstyle='format', connect_args=connect_args)
+    return sqlalchemy.create_engine(
+        connection_url,
+        paramstyle='format',
+        connect_args=connect_args
+    )
 
 
 class SessionHelper(object):
