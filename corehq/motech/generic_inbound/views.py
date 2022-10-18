@@ -217,8 +217,19 @@ def _get_validation_error_response(errors):
 
 
 def _log_api_request(api, request, response):
-    is_success = response.status_code == 200
-    status = RequestLog.Status.SUCCESS if is_success else RequestLog.Status.ERROR
+    if response.status_code == 200:
+        is_success = True
+        status = RequestLog.Status.SUCCESS
+    elif response.status_code == 204:
+        is_success = True
+        status = RequestLog.Status.FILTERED
+    elif response.status_code == 400:
+        is_success = False
+        status = RequestLog.Status.VALIDATION_FAILED
+    else:
+        is_success = False
+        status = RequestLog.Status.ERROR
+
     response_body = response.content.decode('utf-8')
     log = RequestLog.objects.create(
         domain=request.domain,
