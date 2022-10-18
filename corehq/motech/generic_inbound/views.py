@@ -17,15 +17,16 @@ from corehq.apps.api.decorators import api_throttle
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
-)
+from corehq.apps.hqcase.api.core import SubmissionError, UserError
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundUserError,
+    GenericInboundValidationError,
+)
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -196,6 +197,8 @@ def _generic_inbound_api(api, request):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundRequestFiltered:
+        return JsonResponse({}, status=204)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except SubmissionError as e:
@@ -214,8 +217,19 @@ def _get_validation_error_response(errors):
 
 
 def _log_api_request(api, request, response):
-    is_success = response.status_code == 200
-    status = RequestLog.Status.SUCCESS if is_success else RequestLog.Status.ERROR
+    if response.status_code == 200:
+        is_success = True
+        status = RequestLog.Status.SUCCESS
+    elif response.status_code == 204:
+        is_success = True
+        status = RequestLog.Status.FILTERED
+    elif response.status_code == 400:
+        is_success = False
+        status = RequestLog.Status.VALIDATION_FAILED
+    else:
+        is_success = False
+        status = RequestLog.Status.ERROR
+
     response_body = response.content.decode('utf-8')
     log = RequestLog.objects.create(
         domain=request.domain,
