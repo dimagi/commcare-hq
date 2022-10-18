@@ -54,6 +54,8 @@ class _FixtureWorkbook(object):
         try:
             rows = self._rows[tag]
         except KeyError:
+            if tag == "combined_sheet":
+                return None
             rows = self._rows[tag] = list(self.workbook.get_worksheet(tag))
         return rows
 
