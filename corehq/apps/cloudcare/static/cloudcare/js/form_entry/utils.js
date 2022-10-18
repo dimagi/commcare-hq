@@ -1,18 +1,18 @@
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
-    var Errors = hqImport("cloudcare/js/form_entry/errors"),
-        FormEntryConst = hqImport("cloudcare/js/form_entry/const");
+    var errors = hqImport("cloudcare/js/form_entry/errors"),
+        formEntryConst = hqImport("cloudcare/js/form_entry/const");
 
     var module = {
         resourceMap: undefined,
     };
 
     module.touchformsError = function (message) {
-        return Errors.GENERIC_ERROR + message;
+        return errors.GENERIC_ERROR + message;
     };
 
     module.jsError = function (message) {
-        return Errors.JS_ERROR + message;
+        return errors.JS_ERROR + message;
     };
 
     /**
@@ -174,7 +174,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         return getRoot(question, function (container) {
             // Return first containing repeat group, or form if there are no ancestor repeats
             var parent = container.parent;
-            return parent && parent.type && parent.type() === FormEntryConst.REPEAT_TYPE;
+            return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
         });
     };
 

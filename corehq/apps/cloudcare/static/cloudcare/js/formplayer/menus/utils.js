@@ -2,12 +2,12 @@
 
 hqDefine("cloudcare/js/formplayer/menus/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Kissmetrics = hqImport("analytix/js/kissmetrix"),
+        kissmetrics = hqImport("analytix/js/kissmetrix"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
         QueryView = hqImport("cloudcare/js/formplayer/menus/views/query"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        Views = hqImport("cloudcare/js/formplayer/menus/views");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        views = hqImport("cloudcare/js/formplayer/menus/views");
 
     var recordPosition = function (position) {
         sessionStorage.locationLat = position.coords.latitude;
@@ -79,7 +79,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         detailCollection = new Backbone.Collection(breadcrumbModels);
-        var breadcrumbView = Views.BreadcrumbListView({
+        var breadcrumbView = views.BreadcrumbListView({
             collection: detailCollection,
         });
         FormplayerFrontend.regions.getRegion('breadcrumb').show(breadcrumbView);
@@ -99,7 +99,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         });
 
         langCollection = new Backbone.Collection(langModels);
-        var formMenuView = Views.FormMenuView({
+        var formMenuView = views.FormMenuView({
             collection: langCollection,
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
@@ -128,25 +128,25 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             sortIndices: menuResponse.sortIndices,
             isMultiSelect: menuResponse.multiSelect,
         };
-        var urlObject = Utils.currentUrlToObject();
+        var urlObject = utils.currentUrlToObject();
 
         sessionStorage.queryKey = menuResponse.queryKey;
         if (menuResponse.type === "commands") {
-            return Views.MenuListView(menuData);
+            return views.MenuListView(menuData);
         } else if (menuResponse.type === "query") {
-            if (Toggles.toggleEnabled('APP_ANALYTICS')) {
+            if (toggles.toggleEnabled('APP_ANALYTICS')) {
                 var props = {
                     domain: FormplayerFrontend.getChannel().request('currentUser').domain,
                 };
                 if (menuResponse.breadcrumbs && menuResponse.breadcrumbs.length) {
                     props.name = menuResponse.breadcrumbs[menuResponse.breadcrumbs.length - 1];
                 }
-                Kissmetrics.track.event('Case Search', props);
+                kissmetrics.track.event('Case Search', props);
             }
             urlObject.setQueryData({}, false, false);
             return QueryView(menuData);
         } else if (menuResponse.type === "entities") {
-            if (Toggles.toggleEnabled('APP_ANALYTICS')) {
+            if (toggles.toggleEnabled('APP_ANALYTICS')) {
                 var searchText = urlObject.search;
                 var event = "Viewed Case List";
                 if (searchText) {
@@ -156,28 +156,28 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                     domain: FormplayerFrontend.getChannel().request("currentUser").domain,
                     name: menuResponse.title,
                 };
-                var fields = _.pick(Utils.getCurrentQueryInputs(), function (v) { return !!v; });
+                var fields = _.pick(utils.getCurrentQueryInputs(), function (v) { return !!v; });
                 if (!_.isEmpty(fields)) {
                     eventData.searchFields = _.sortBy(_.keys(fields)).join(",");
                 }
-                Kissmetrics.track.event(event, eventData);
+                kissmetrics.track.event(event, eventData);
             }
             if (/search_command\.m\d+/.test(menuResponse.queryKey) && menuResponse.currentPage === 0) {
-                Kissmetrics.track.event('Started Case Search', {
-                    'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                kissmetrics.track.event('Started Case Search', {
+                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
                 if (menuData.isMultiSelect) {
-                    return Views.MultiSelectCaseListView(menuData);
+                    return views.MultiSelectCaseListView(menuData);
                 } else {
-                    return Views.CaseListView(menuData);
+                    return views.CaseListView(menuData);
                 }
             } else {
                 if (menuResponse.numEntitiesPerRow > 1) {
-                    return Views.GridCaseTileListView(menuData);
+                    return views.GridCaseTileListView(menuData);
                 } else {
-                    return Views.CaseTileListView(menuData);
+                    return views.CaseTileListView(menuData);
                 }
             }
         }

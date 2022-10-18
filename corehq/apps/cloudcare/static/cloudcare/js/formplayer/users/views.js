@@ -2,9 +2,9 @@
 
 hqDefine("cloudcare/js/formplayer/users/views", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         Toggles = hqImport("hqwebapp/js/toggles"),
-        UsersUtils = hqImport("cloudcare/js/formplayer/users/utils");
+        usersUtils = hqImport("cloudcare/js/formplayer/users/utils");
 
     /**
      * RestoreAsBanner
@@ -66,14 +66,14 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             };
         },
         onClickUser: function () {
-            FormplayerUtils.confirmationModal({
+            formplayerUtils.confirmationModal({
                 title: _.template(gettext('Log in as <%= username %>?'))({username: this.model.get('username')}),
                 message: _.template($('#user-data-template').html())(
                     { user: this.model.toJSON() }
                 ),
                 confirmText: gettext('Yes, log in as this user'),
                 onConfirm: function () {
-                    UsersUtils.Users.logInAsUser(this.model.get('username'));
+                    usersUtils.Users.logInAsUser(this.model.get('username'));
                     FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
                         new RestoreAsBanner({
                             model: FormplayerFrontend.getChannel().request('currentUser'),
@@ -139,7 +139,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
         },
         templateContext: function () {
-            var paginationOptions = FormplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
+            var paginationOptions = formplayerUtils.paginateOptions(this.model.get('page') - 1, this.totalPages());
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
@@ -197,7 +197,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             var page = Number(this.ui.paginationGoText.val());
-            var pageNo = FormplayerUtils.paginationGoPageNumber(page, this.totalPages());
+            var pageNo = formplayerUtils.paginationGoPageNumber(page, this.totalPages());
             this.model.set('page', pageNo);
         },
         paginationGoKeyAction: function (e) {
@@ -212,7 +212,7 @@ hqDefine("cloudcare/js/formplayer/users/views", function () {
             this.limit = Number(rowCount);
             this.fetchUsers();
             this.model.set('page', 1);
-            FormplayerUtils.savePerPageLimitCookie('users', this.limit);
+            formplayerUtils.savePerPageLimitCookie('users', this.limit);
         },
     });
 

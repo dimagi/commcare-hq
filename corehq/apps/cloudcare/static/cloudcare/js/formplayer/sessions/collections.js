@@ -2,7 +2,7 @@
 
 hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
     var Models = hqImport("cloudcare/js/formplayer/sessions/models"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var session = Backbone.Collection.extend({
         model: Models,
@@ -13,7 +13,7 @@ hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
         },
 
         fetch: function (options) {
-            Utils.setCrossDomainAjaxOptions(options);
+            utils.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });

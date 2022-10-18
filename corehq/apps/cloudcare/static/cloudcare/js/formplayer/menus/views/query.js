@@ -4,11 +4,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        CloudcareUtils = hqImport("cloudcare/js/utils"),
-        Const = hqImport("cloudcare/js/form_entry/const"),
-        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        constants = hqImport("cloudcare/js/form_entry/const"),
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     var separator = " to ",
@@ -58,7 +58,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
-                var broadcastObj = FormEntryUtils.getBroadcastObject(item);
+                var broadcastObj = formEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
@@ -66,7 +66,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         geocoderOnClearCallback = function (addressTopic) {
             return function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
-                $.publish(addressTopic, Const.NO_ANSWER);
+                $.publish(addressTopic, constants.NO_ANSWER);
             };
         },
         updateReceiver = function (element) {
@@ -75,8 +75,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 var receiveExpression = element.data().receive;
                 var receiveField = receiveExpression.split("-")[1];
                 var value = null;
-                if (broadcastObj === undefined || broadcastObj === Const.NO_ANSWER) {
-                    value = Const.NO_ANSWER;
+                if (broadcastObj === undefined || broadcastObj === constants.NO_ANSWER) {
+                    value = constants.NO_ANSWER;
                 } else if (broadcastObj[receiveField]) {
                     value = broadcastObj[receiveField];
                 } else {
@@ -136,7 +136,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                FormEntryUtils.renderMapboxInput(
+                formEntryUtils.renderMapboxInput(
                     inputId,
                     geocoderItemCallback(id, model),
                     geocoderOnClearCallback(id),
@@ -177,7 +177,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.errorMessage = null;
 
             var value = this.model.get('value'),
-                allStickyValues = FormplayerUtils.getStickyQueryInputs(),
+                allStickyValues = formplayerUtils.getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
@@ -333,7 +333,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            CloudcareUtils.initDateTimePicker(this.ui.date, {
+            cloudcareUtils.initDateTimePicker(this.ui.date, {
                 format: dateFormat,
             });
             this.ui.dateRange.daterangepicker({
@@ -526,7 +526,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         _updateModelsForValidation: function () {
             var self = this;
 
-            var urlObject = FormplayerUtils.currentUrlToObject();
+            var urlObject = formplayerUtils.currentUrlToObject();
             urlObject.setQueryData(self.getAnswers(), false);
             var promise = $.Deferred(),
                 fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
@@ -547,7 +547,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         setStickyQueryInputs: function () {
-            FormplayerUtils.setStickyQueryInputs(this.getAnswers());
+            formplayerUtils.setStickyQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {

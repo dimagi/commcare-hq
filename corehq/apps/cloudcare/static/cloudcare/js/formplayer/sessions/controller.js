@@ -1,5 +1,5 @@
 hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
-    var Const = hqImport("cloudcare/js/formplayer/constants"),
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         Views = hqImport("cloudcare/js/formplayer/sessions/views");
 
@@ -7,7 +7,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
         listSessions: function listSessions(pageNumber, pageSize) {
             /* eslint-disable */
             if (pageSize == null) {
-                pageSize = Const.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+                pageSize = constants.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             }
             /* eslint-disable */
             if (pageNumber == null) {
