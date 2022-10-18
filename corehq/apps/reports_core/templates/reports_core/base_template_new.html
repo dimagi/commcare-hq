@@ -40,7 +40,7 @@
 {% endblock %}
 
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_title %}{% endblock %}
 
@@ -116,7 +116,7 @@
           <div class="panel-body hq-datatable-container">
             <table id="report_table_{{ report.slug }}" class="table table-striped">
               <thead>
-              {{ headers.render_html|safe }}
+              {{ headers.render_html }}
               </thead>
               <tbody>
               </tbody>
