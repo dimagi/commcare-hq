@@ -140,7 +140,7 @@ msgid "We are sorry, but something unexpected has occurred."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Book a Time"
+msgid "Submit Request"
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
@@ -2871,14 +2871,6 @@ msgstr ""
 msgid "Confirm?"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "Form successfully submitted!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "An unexpected error occurred!"
-msgstr ""
-
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
 msgstr ""
@@ -3687,10 +3679,6 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js
 msgid "Good Job! Your password is strong!"
-msgstr ""
-
-#: corehq/apps/registration/static/registration/js/register_new_user.js
-msgid "Choose a time for your CommCare trial setup"
 msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
@@ -4682,7 +4670,7 @@ msgstr ""
 msgid "Unable to save form configs"
 msgstr ""
 
-#: corehq/motech/generic_inbound/static/generic_inbound/js/api_edit.js
+#: corehq/motech/generic_inbound/static/generic_inbound/js/copy_data.js
 msgid "URL Copied"
 msgstr ""
 

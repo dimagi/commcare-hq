@@ -9,7 +9,6 @@ from unittest.mock import patch
 from testil import tempdir
 
 from corehq.apps.auditcare.models import AccessAudit, NavigationEventAudit
-from corehq.apps.auditcare.utils.migration import get_sql_start_date
 
 from ..utils.export import (
     AuditWindowQuery,
@@ -149,9 +148,6 @@ class TestNavigationEventsQueries(AuditcareTest):
             with self.assertRaises(ForeignKeyAccessError):
                 getattr(event, key)
 
-    def test_get_sql_start_date(self):
-        self.assertEqual(get_sql_start_date(), datetime(2021, 2, 1, 3))
-
     def test_get_domain_first_access_times(self):
 
         def create_session_events(domain):
@@ -195,9 +191,6 @@ class TestNavigationEventsQueriesWithoutData(AuditcareTest):
     def test_get_all_log_events_returns_empty(self):
         start = end = datetime.utcnow()
         self.assertEqual(list(get_all_log_events(start, end)), [])
-
-    def test_get_sql_start_date_returns_datetime(self):
-        self.assertIsInstance(get_sql_start_date(), datetime)
 
 
 @contextmanager

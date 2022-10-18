@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect
@@ -8,30 +10,39 @@ from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
+from dimagi.utils.web import get_ip
+
 from corehq import toggles
 from corehq.apps.api.decorators import api_throttle
+from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
-)
+from corehq.apps.hqcase.api.core import SubmissionError, UserError
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError, GenericInboundValidationError
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundUserError,
+    GenericInboundValidationError,
+)
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ProcessingAttempt,
+    RequestLog,
+)
 from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
+@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
@@ -156,13 +167,19 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 @json_error
 @api_auth
 @api_throttle
-@require_http_methods(["POST"])
+@require_http_methods(list(RequestLog.RequestMethod))
 def generic_inbound_api(request, domain, api_id):
     try:
         api = ConfigurableAPI.objects.get(url_key=api_id, domain=domain)
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
+    response = _generic_inbound_api(api, request)
+    _log_api_request(api, request, response)
+    return response
+
+
+def _generic_inbound_api(api, request):
     try:
         context = get_context_from_request(request)
     except GenericInboundUserError as e:
@@ -180,6 +197,8 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundRequestFiltered:
+        return JsonResponse({}, status=204)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except SubmissionError as e:
@@ -195,3 +214,48 @@ def _get_validation_error_response(errors):
     return JsonResponse({'error': 'validation error', 'errors': [
         error['message'] for error in errors
     ]}, status=400)
+
+
+def _log_api_request(api, request, response):
+    if response.status_code == 200:
+        is_success = True
+        status = RequestLog.Status.SUCCESS
+    elif response.status_code == 204:
+        is_success = True
+        status = RequestLog.Status.FILTERED
+    elif response.status_code == 400:
+        is_success = False
+        status = RequestLog.Status.VALIDATION_FAILED
+    else:
+        is_success = False
+        status = RequestLog.Status.ERROR
+
+    response_body = response.content.decode('utf-8')
+    log = RequestLog.objects.create(
+        domain=request.domain,
+        api=api,
+        status=status,
+        response_status=response.status_code,
+        error_message=response_body if not is_success else '',
+        username=request.couch_user.username,
+        request_method=request.method,
+        request_query=request.META.get('QUERY_STRING'),
+        request_body=request.body.decode('utf-8'),
+        request_headers=get_standard_headers(request.META),
+        request_ip=get_ip(request),
+    )
+
+    response_json = json.loads(response.content)
+    if is_success:
+        case_ids = [c['case_id'] for c in
+                    response_json.get('cases', [response_json.get('case')])]
+    else:
+        case_ids = []
+    ProcessingAttempt.objects.create(
+        log=log,
+        response_status=response.status_code,
+        response_body=response_body,
+        raw_response=response_json,
+        xform_id=response_json.get('form_id'),
+        case_ids=case_ids,
+    )

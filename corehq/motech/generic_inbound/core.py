@@ -1,9 +1,13 @@
 from corehq.apps.hqcase.api.core import serialize_case
 from corehq.apps.hqcase.api.updates import handle_case_update
-from corehq.motech.generic_inbound.exceptions import GenericInboundValidationError
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundValidationError,
+)
 
 
 def execute_generic_api(domain, couch_user, device_id, context, api_model):
+    _apply_api_filter(api_model, context)
     _validate_api_request(api_model, context)
 
     data = api_model.parsed_expression(context.root_doc, context)
@@ -29,6 +33,17 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
         'form_id': xform.form_id,
         'case': serialize_case(case_or_cases),
     }
+
+
+def _apply_api_filter(api, eval_context):
+    api_filter = api.parsed_filter
+    if not api_filter:
+        return False
+
+    if not api_filter(eval_context.root_doc, eval_context):
+        raise GenericInboundRequestFiltered()
+
+    return True
 
 
 def _validate_api_request(api, eval_context):

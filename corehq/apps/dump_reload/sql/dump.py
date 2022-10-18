@@ -192,6 +192,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
+    FilteredModelIteratorBuilder('generic_inbound.RequestLog', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('generic_inbound.ProcessingAttempt', SimpleFilter('log__domain')),
 ]]
 
 

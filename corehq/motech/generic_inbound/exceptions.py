@@ -6,6 +6,10 @@ class GenericInboundUserError(Exception):
     pass
 
 
+class GenericInboundRequestFiltered(GenericInboundApiError):
+    pass
+
+
 class GenericInboundValidationError(GenericInboundApiError):
     def __init__(self, errors):
         self.errors = errors

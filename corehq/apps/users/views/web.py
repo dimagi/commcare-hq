@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
@@ -219,6 +220,7 @@ class UserInvitationView(object):
             return reverse("domain_homepage", args=[domain])
 
 
+@waf_allow('XSS_BODY')
 @always_allow_project_access
 @location_safe
 @sensitive_post_parameters('password')
