@@ -222,14 +222,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
                 return false;
             } else {
-                return true
+                return true;
             }
 
         },
 
         hasNonRequiredErrors: function () {
             if (this.model.get("error")) {
-                return true
+                return true;
             }
         },
 
@@ -244,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (this.hasRequiredError()) {
                 return this.model.get("required_msg");
             }
-            return null
+            return null;
         },
 
         isValid: function () {
@@ -460,7 +460,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
         },
 
-        validateFieldChange: function(changedChildView) {
+        validateFieldChange: function (changedChildView) {
             var self = this;
             var promise = $.Deferred();
             var invalidFields = [];
@@ -468,7 +468,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self._updateModelsForValidation().done(function (response) {
                 //Gather error messages
                 self.children.each(function (childView) {
-                    if ((!childView.hasRequiredError() || childView == changedChildView)
+                    if ((!childView.hasRequiredError() || childView === changedChildView)
                          && !childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
                     }
