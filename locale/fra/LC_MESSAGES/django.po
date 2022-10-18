@@ -21321,10 +21321,8 @@ msgid "Go!"
 msgstr "Démarrer"
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You do not have permission to change superuser and staff status."
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/hqadmin/templates/hqadmin/superuser_management.html
 msgid ""
@@ -21426,10 +21424,8 @@ msgid "Grant or revoke superuser access"
 msgstr "Accorder ou révoquer l'accès en tant que super-utilisateur"
 
 #: corehq/apps/hqadmin/views/users.py
-#, fuzzy
-#| msgid "You don't have permission to access this page."
 msgid "You do not have permission to update superuser or staff status"
-msgstr "Vous n'avez pas la permission pour accéder à cette page."
+msgstr ""
 
 #: corehq/apps/hqadmin/views/users.py
 msgid "Successfully updated superuser permissions"
@@ -29273,25 +29269,6 @@ msgstr ""
 msgid "Filter your cases by entering a search query in the box below."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-#: corehq/apps/reports/views.py
-msgid "Edit Submission"
-msgstr "Modifier soumission"
-
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-msgid ""
-"\n"
-"      This page is being removed. Use the \"Clean Form Submission\" button "
-"on the form submission page\n"
-"      to edit this form.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html
-msgid "Loading"
-msgstr "Chargement en cours"
-
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
 msgid "All data is listed as Unrecognized Data."
 msgstr "Toutes les données sont listées connes des données non reconnues "
@@ -29615,18 +29592,6 @@ msgid "Clean Case Data"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
-msgid ""
-"\n"
-"              This feature is replacing the old \"Edit this form\" "
-"functionality, which will be removed soon.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
-msgid "Click here to access the old \"edit this form\" page."
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
 #, python-format
 msgid ""
 "\n"
@@ -29934,6 +29899,10 @@ msgid "No transaction found"
 msgstr "Aucune transaction trouvée"
 
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html
+msgid "Loading"
+msgstr "Chargement en cours"
+
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html
 #: corehq/apps/sms/models.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 msgid "Received"
@@ -30165,10 +30134,6 @@ msgid "Please apply filters to view:"
 msgstr "Veuillez appliquer des filtre pour voir:"
 
 #: corehq/apps/reports/util.py
-msgid "Form cannot be edited because it will create a new case"
-msgstr ""
-
-#: corehq/apps/reports/util.py
 #, python-format
 msgid "%s: Requested export excel data"
 msgstr ""
@@ -30322,51 +30287,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "You do not have permission to view this form."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Application not found."
-msgstr "Application introuvable."
-
-#: corehq/apps/reports/views.py
-msgid "Missing module or form information!"
-msgstr "Module ou information formulaire manquent!"
-
-#: corehq/apps/reports/views.py
-msgid ""
-"Could not detect the application or form for this submission. A common cause "
-"is that the form was submitted via App or Form preview"
-msgstr ""
-"Impossible de trouver l'application/formulaire pour cette soumission. Une "
-"cause commune est que le formulaire a été envoyé via un aperçu de "
-"l'application ou du formulaire"
-
-#: corehq/apps/reports/views.py
-msgid "Could not detect the application or form for this submission."
-msgstr "Casos IRA Tratados"
-
-#: corehq/apps/reports/views.py
-msgid "Could not find user for this submission."
-msgstr "Casos IRA Tratados"
-
-#: corehq/apps/reports/views.py
-msgid "Could not find the user-case for this form"
-msgstr "Impossible de trouver le dossier-utilisateur pour ce formulaire"
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case <a href=\"{case_url}\">{case_name}</a> is closed. Please reopen the "
-"case before editing the form"
-msgstr ""
-"Le dossier <a href=\"{case_url}\">{case_name}</a> est fermé. Veuillez "
-"reouvrir le dossier avant de modifier le formulaire"
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case <a href=\"{case_url}\">{case_name}</a> is deleted. Cannot edit this "
-"form."
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -42797,3 +42717,36 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
+
+#~ msgid "Edit Submission"
+#~ msgstr "Modifier soumission"
+
+#~ msgid "Application not found."
+#~ msgstr "Application introuvable."
+
+#~ msgid "Missing module or form information!"
+#~ msgstr "Module ou information formulaire manquent!"
+
+#~ msgid ""
+#~ "Could not detect the application or form for this submission. A common "
+#~ "cause is that the form was submitted via App or Form preview"
+#~ msgstr ""
+#~ "Impossible de trouver l'application/formulaire pour cette soumission. Une "
+#~ "cause commune est que le formulaire a été envoyé via un aperçu de "
+#~ "l'application ou du formulaire"
+
+#~ msgid "Could not detect the application or form for this submission."
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Could not find user for this submission."
+#~ msgstr "Casos IRA Tratados"
+
+#~ msgid "Could not find the user-case for this form"
+#~ msgstr "Impossible de trouver le dossier-utilisateur pour ce formulaire"
+
+#~ msgid ""
+#~ "Case <a href=\"{case_url}\">{case_name}</a> is closed. Please reopen the "
+#~ "case before editing the form"
+#~ msgstr ""
+#~ "Le dossier <a href=\"{case_url}\">{case_name}</a> est fermé. Veuillez "
+#~ "reouvrir le dossier avant de modifier le formulaire"

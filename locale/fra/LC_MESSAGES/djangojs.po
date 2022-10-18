@@ -12,9 +12,9 @@
 # Sarah Sagan <ssagan@dimagi.com>, 2020
 # Rowena Luk <rluk@dimagi.com>, 2021
 # Dimagi Dev <devops@dimagi.com>, 2021
-# Tyler Wymer <twymer@dimagi.com>, 2022
 # Ismaïla Diene <idiene@dimagi.com>, 2022
 # Aissetou Sawadogo <ais107@hotmail.com>, 2022
+# Tyler Wymer <twymer@dimagi.com>, 2022
 #
 #, fuzzy
 msgid ""
@@ -22,7 +22,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "PO-Revision-Date: 2017-07-19 15:34+0000\n"
-"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>, 2022\n"
+"Last-Translator: Tyler Wymer <twymer@dimagi.com>, 2022\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -154,10 +154,8 @@ msgid "We are sorry, but something unexpected has occurred."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
-#, fuzzy
-#| msgid "Submit Invoice Request"
 msgid "Submit Request"
-msgstr "Soumettre la demande de Facture"
+msgstr "Soumettre la demande"
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
 msgid "Next"
@@ -2909,14 +2907,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Confirm?"
 msgstr "Confirmer?"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "Form successfully submitted!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "An unexpected error occurred!"
-msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
