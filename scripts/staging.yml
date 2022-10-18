@@ -80,7 +80,6 @@ branches:
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling+jt/ush-2427
-    - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
     - jls/multi-select-flag-handling # Jenny Oct 11
     - jt/ush-2427 # Jonathan T. Oct 18
