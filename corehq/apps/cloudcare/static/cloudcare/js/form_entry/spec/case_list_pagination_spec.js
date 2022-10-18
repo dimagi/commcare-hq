@@ -1,5 +1,5 @@
 describe('#paginateOptions', function () {
-    var paginateItems = hqImport("cloudcare/js/formplayer/menus/views");
+    var paginateItems = hqImport("cloudcare/js/formplayer/utils/utils");
     it('Should return paginateOptions', function () {
         var case1 = paginateItems.paginateOptions(0, 15);
         /**
