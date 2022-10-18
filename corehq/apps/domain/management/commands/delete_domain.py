@@ -3,7 +3,6 @@ import textwrap
 from django.core.management.base import BaseCommand
 
 from corehq.apps.domain.dbaccessors import iter_all_domains_and_deleted_domains_with_name
-from corehq.apps.domain.utils import is_domain_in_use
 
 
 class Command(BaseCommand):
@@ -20,20 +19,8 @@ class Command(BaseCommand):
             default=False,
             help='Skip important confirmation warnings.',
         )
-        parser.add_argument(
-            '--ignore-domain-in-use-check',
-            action='store_true',
-            dest='ignore_domain_in_use',
-            default=False,
-            help='Allow deleting a domain that is in use.',
-        )
 
     def handle(self, domain_name, **options):
-        if not options['ignore_domain_in_use'] and is_domain_in_use(domain_name):
-            print(f'WARNING: Domain {domain_name} is currently in use. If you are sure you want to delete'
-                  f'this domain, use the "--ignore_domain_in_use" argument.')
-            return
-
         domain_objs = list(iter_all_domains_and_deleted_domains_with_name(domain_name))
         if not domain_objs:
             print('domain with name "{}" not found'.format(domain_name))
