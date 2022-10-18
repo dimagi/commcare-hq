@@ -710,6 +710,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def _rule_runs(self):
         return DomainCaseRuleRun.objects.filter(
             domain=self.domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
     def _update_rule(self, rule_id, action):
