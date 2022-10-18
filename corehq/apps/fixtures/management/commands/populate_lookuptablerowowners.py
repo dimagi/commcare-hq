@@ -25,7 +25,7 @@ class Command(PopulateLookupTableCommand):
 
     @classmethod
     def commit_adding_migration(cls):
-        return "TODO: add once the PR adding this file is merged"
+        return "f829719365bca901f399bce0c543aeaa827fd630"
 
     @classmethod
     def diff_couch_and_sql(cls, couch, sql):
