@@ -1,11 +1,11 @@
 hqDefine("cloudcare/js/preview_app/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        PreviewApp = hqImport("cloudcare/js/preview_app/preview_app"),
-        Utils = hqImport("cloudcare/js/utils");
+        previewApp = hqImport("cloudcare/js/preview_app/preview_app"),
+        utils = hqImport("cloudcare/js/utils");
 
     $(function () {
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
-        PreviewApp.start({
+        previewApp.start({
             apps: [initialPageData.get('app')],
             language: initialPageData.get('language'),
             username: initialPageData.get('username'),
@@ -19,7 +19,7 @@ hqDefine("cloudcare/js/preview_app/main", function () {
             debuggerEnabled: initialPageData.get('debugger_enabled'),
         });
 
-        Utils.injectMarkdownAnchorTransforms();
+        utils.injectMarkdownAnchorTransforms();
 
         $('.dragscroll').on('scroll', function () {
             $('.form-control').blur();
