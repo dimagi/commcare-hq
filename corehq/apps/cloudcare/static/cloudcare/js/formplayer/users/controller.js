@@ -1,7 +1,7 @@
 hqDefine("cloudcare/js/formplayer/users/controller", function () {
     var Collections = hqImport("cloudcare/js/formplayer/users/collections"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Views = hqImport("cloudcare/js/formplayer/users/views");
+        views = hqImport("cloudcare/js/formplayer/users/views");
 
     return {
         listUsers: function (page, query) {
@@ -9,7 +9,7 @@ hqDefine("cloudcare/js/formplayer/users/controller", function () {
                 users;
 
             users = Collections([], { domain: currentUser.domain });
-            var restoreAsView = Views.RestoreAsView({
+            var restoreAsView = views.RestoreAsView({
                 collection: users,
                 page: page,
                 query: query,

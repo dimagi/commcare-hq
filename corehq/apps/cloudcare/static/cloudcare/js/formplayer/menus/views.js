@@ -2,10 +2,10 @@
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
     var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        Constants = hqImport("cloudcare/js/formplayer/constants"),
+        constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var MenuView = Marionette.View.extend({
         tagName: function () {
@@ -37,7 +37,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             var id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === Constants.LayoutStyles.GRID) {
+            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -88,7 +88,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -104,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: ".menus-container",
         getTemplate: function () {
             var id = "#menu-view-list-template";
-            if (this.collection.layoutStyle === Constants.LayoutStyles.GRID) {
+            if (this.collection.layoutStyle === constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-template";
             }
             return _.template($(id).html() || "");
@@ -244,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.isMultiSelect = this.options.isMultiSelect;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
                 if (_.contains(caseIds, self.model.get('id'))) {
-                    self.ui.selectRow.prop("checked", action === Constants.MULTI_SELECT_ADD);
+                    self.ui.selectRow.prop("checked", action === constants.MULTI_SELECT_ADD);
                 }
             });
         },
@@ -271,7 +271,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectRowAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            var action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, [this.model.get('id')]);
         },
 
@@ -280,7 +280,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -376,7 +376,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         onRender: function () {
             var self = this;
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
+                if (action === constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
@@ -424,7 +424,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
-            var pageNo = Utils.paginationGoPageNumber(goText, this.options.pageCount);
+            var pageNo = utils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
@@ -451,7 +451,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            var action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
         },
 
@@ -467,7 +467,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                 kissmetrics.track.event('Completed Case Search', {
-                    'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
         },
@@ -492,7 +492,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var paginateItems = Utils.paginateOptions(this.options.currentPage, this.options.pageCount);
+            var paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
@@ -671,7 +671,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -741,12 +741,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         selectCase: function () {
             if (this.isMultiSelect) {
-                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.caseId]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", constants.MULTI_SELECT_ADD, [this.caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                     kissmetrics.track.event('Completed Case Search', {
-                        'Split Screen Case Search': Toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                        'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }
             }

@@ -1,7 +1,7 @@
 /*global Backbone, DOMPurify */
 hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        Toggles = hqImport("hqwebapp/js/toggles");
+        toggles = hqImport("hqwebapp/js/toggles");
 
     var Utils = {};
 
@@ -171,7 +171,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     };
 
     Utils.getStickyQueryInputs = function () {
-        if (!Toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
+        if (!toggles.toggleEnabled('WEBAPPS_STICKY_SEARCH')) {
             return {};
         }
         if (!this.stickyQueryInputs) {

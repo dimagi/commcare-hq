@@ -4,11 +4,11 @@
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
     var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        Const = hqImport("cloudcare/js/formplayer/constants"),
-        Errors = hqImport("cloudcare/js/form_entry/errors"),
-        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
+        constants = hqImport("cloudcare/js/formplayer/constants"),
+        errors = hqImport("cloudcare/js/form_entry/errors"),
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
         ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
 
     var API = {
@@ -65,16 +65,16 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
 
                         } else {
                             if (response.smartLinkRedirect) {
-                                if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
+                                if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
                                     FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
                                     FormplayerFrontend.trigger('navigateHome');
                                     return;
                                 }
 
                                 // Drop last selection to avoid redirect loop if user presses back in the future
-                                var urlObject = FormplayerUtils.currentUrlToObject();
+                                var urlObject = formplayerUtils.currentUrlToObject();
                                 urlObject.setSelections(_.initial(urlObject.selections || []));
-                                FormplayerUtils.setUrlToObject(urlObject, true);
+                                formplayerUtils.setUrlToObject(urlObject, true);
 
                                 console.log("Redirecting to " + response.smartLinkRedirect);
                                 document.location = response.smartLinkRedirect;
@@ -93,12 +93,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                Errors.LOCK_TIMEOUT_ERROR
+                                errors.LOCK_TIMEOUT_ERROR
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                FormEntryUtils.reloginErrorHtml(),
+                                formEntryUtils.reloginErrorHtml(),
                                 true
                             );
                         } else {
@@ -108,10 +108,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        var urlObject = FormplayerUtils.currentUrlToObject();
+                        var urlObject = formplayerUtils.currentUrlToObject();
                         if (urlObject.selections) {
                             urlObject.selections.pop();
-                            FormplayerUtils.setUrlToObject(urlObject);
+                            formplayerUtils.setUrlToObject(urlObject);
                         }
                         defer.reject();
                     },

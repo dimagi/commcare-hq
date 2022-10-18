@@ -3,7 +3,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             toggles = hqImport("hqwebapp/js/toggles"),
             FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
-            Utils = hqImport("cloudcare/js/utils");
+            utils = hqImport("cloudcare/js/utils");
 
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
         var options = {
@@ -20,7 +20,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         };
         FormplayerFrontEnd.start(options);
 
-        Utils.injectMarkdownAnchorTransforms();
+        utils.injectMarkdownAnchorTransforms();
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
