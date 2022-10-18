@@ -515,7 +515,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Remove any event handling left over from previous instances of MultiSelectCaseListView.
             // Only one of these views is supporteed on the page at any given time.
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
+                if (action === constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
