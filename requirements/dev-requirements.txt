@@ -409,7 +409,7 @@ prompt-toolkit==3.0.26
     # via
     #   click-repl
     #   ipython
-protobuf==3.15.0
+protobuf==3.18.3
     # via
     #   ddtrace
     #   google-api-core
@@ -588,7 +588,6 @@ six==1.16.0
     #   jsonschema
     #   mando
     #   packaging
-    #   protobuf
     #   pyjwkest
     #   pyopenssl
     #   python-dateutil
