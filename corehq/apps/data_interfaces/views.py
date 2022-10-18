@@ -686,6 +686,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def _format_rule_run(self, rule_run):
         return {
             'case_type': rule_run.case_type,
+            'status': rule_run.get_status_display(),
             'started_on': self._convert_to_user_time(rule_run.started_on),
             'finished_on': self._convert_to_user_time(rule_run.finished_on),
             'cases_updated': rule_run.num_updates,

@@ -10,6 +10,7 @@
         <thead>
         <tr>
           <th>{% trans "Case Type" %}</th>
+          <th>{% trans "Status" %}</th>
           <th>{% trans "Started On" %}</th>
           <th>{% trans "Finished On" %}</th>
           <th>{% trans "# of Cases Updated" %}</th>
@@ -19,6 +20,7 @@
         <tbody data-bind="foreach: paginatedRuleRuns">
           <tr>
             <td data-bind="text: case_type"></td>
+            <td data-bind="text: status"></td>
             <td data-bind="text: started_on"></td>
             <td data-bind="text: finished_on"></td>
             <td data-bind="text: cases_updated"></td>
