@@ -1,10 +1,10 @@
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/apps/views", function () {
-    var Const = hqImport("cloudcare/js/formplayer/constants"),
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        GGAnalytics = hqImport("analytix/js/google"),
-        Kissmetrics = hqImport("analytix/js/kissmetrix");
+        googleAnalytics = hqImport("analytix/js/google"),
+        kissmetrics = hqImport("analytix/js/kissmetrix");
 
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
@@ -49,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         incompleteSessionsClick: function (e) {
             e.preventDefault();
-            var pageSize = Const.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
+            var pageSize = constants.DEFAULT_INCOMPLETE_FORMS_PAGE_SIZE;
             FormplayerFrontend.trigger("sessions", 0, pageSize);
         },
         syncClick: function (e) {
@@ -143,8 +143,8 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         },
         startApp: function (e) {
             e.preventDefault();
-            Kissmetrics.track.event("[app-preview] User clicked Start App");
-            GGAnalytics.track.event("App Preview", "User clicked Start App");
+            kissmetrics.track.event("[app-preview] User clicked Start App");
+            googleAnalytics.track.event("App Preview", "User clicked Start App");
             FormplayerFrontend.trigger("app:select", this.appId);
         },
         keyAction: function (e) {
