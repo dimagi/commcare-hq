@@ -1,8 +1,9 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils"),
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        CloudcareUtils = hqImport("cloudcare/js/utils"),
+        Const = hqImport("cloudcare/js/form_entry/const"),
+        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         toggles = hqImport("hqwebapp/js/toggles");
 
@@ -72,7 +73,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
     EntryArrayAnswer.prototype.onAnswerChange = function () {
-        if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
+        if (FormEntryUtils.answersEqual(this.answer(), this.previousAnswer)) {
             return;
         }
         this.question.onchange();
@@ -87,7 +88,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 processed = Const.NO_ANSWER;
             }
 
-            if (!Utils.answersEqual(processed, this.answer())) {
+            if (!FormEntryUtils.answersEqual(processed, this.answer())) {
                 this.previousAnswer = this.answer();
                 this.answer(processed);
             }
@@ -264,7 +265,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
-            var broadcastObj = Utils.getBroadcastObject(item);
+            var broadcastObj = FormEntryUtils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
                 question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
@@ -297,7 +298,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
             }
 
-            Utils.renderMapboxInput(
+            FormEntryUtils.renderMapboxInput(
                 self.entryId,
                 self.geocoderItemCallback,
                 self.geocoderOnClearCallback,
@@ -760,7 +761,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            hqImport("cloudcare/js/utils").initDateTimePicker(self.$picker, _.extend({
+            CloudcareUtils.initDateTimePicker(self.$picker, _.extend({
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
@@ -1283,7 +1284,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility that gets the display options from a parent form of a question.
      * */
     function _getDisplayOptions(question) {
-        const form = Utils.getRootForm(question);
+        const form = FormEntryUtils.getRootForm(question);
         if (form === undefined) {
             return {};
         }

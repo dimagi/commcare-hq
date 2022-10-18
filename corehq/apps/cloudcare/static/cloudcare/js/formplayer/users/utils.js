@@ -1,6 +1,7 @@
 hqDefine("cloudcare/js/formplayer/users/utils", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     var Utils = {};
     Utils.Users = {
         /**
@@ -20,7 +21,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
                     currentUser.username
                 ),
                 currentUser.restoreAs,
-                { secure: initialPageData('secure_cookies') }
+                { secure: initialPageData.get('secure_cookies') }
             );
         },
         restoreAsKey: function (domain, username) {
@@ -50,5 +51,38 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
             return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
+
+    FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
+        return Utils.Users.getRestoreAsUser(
+            domain,
+            username
+        );
+    });
+
+    /**
+     * clearRestoreAsUser
+     *
+     * This will unset the localStorage restore as user as well as
+     * unset the restore as user from the currentUser. It then
+     * navigates you to the main page.
+     */
+    FormplayerFrontend.on('clearRestoreAsUser', function () {
+        var user = FormplayerFrontend.getChannel().request('currentUser');
+        Utils.Users.clearRestoreAsUser(
+            user.domain,
+            user.username
+        );
+        user.restoreAs = null;
+        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                UsersViews.RestoreAsBanner({
+                    model: user,
+                })
+            );
+        });
+
+        FormplayerFrontend.trigger('navigateHome');
+    });
+
     return Utils;
 });
