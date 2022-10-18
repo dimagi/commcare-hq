@@ -1,17 +1,19 @@
 /*global DOMPurify, Marionette, moment */
 
-
 hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
     // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
     // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        CloudcareUtils = hqImport("cloudcare/js/utils"),
+        Const = hqImport("cloudcare/js/form_entry/const"),
+        FormEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+
     var separator = " to ",
         dateFormat = "YYYY-MM-DD";
     var selectDelimiter = "#,#"; // Formplayer also uses this
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
     // special format handled by CaseSearch API
     var encodeValue = function (model, searchForBlank) {
@@ -56,7 +58,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 kissmetrics.track.event("Accessibility Tracking - Geocoder Interaction in Case Search");
                 model.set('value', item.place_name);
                 initMapboxWidget(model);
-                var broadcastObj = Utils.getBroadcastObject(item);
+                var broadcastObj = FormEntryUtils.getBroadcastObject(item);
                 $.publish(addressTopic, broadcastObj);
                 return item.place_name;
             };
@@ -134,7 +136,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                     );
                     return true;
                 }
-                Utils.renderMapboxInput(
+                FormEntryUtils.renderMapboxInput(
                     inputId,
                     geocoderItemCallback(id, model),
                     geocoderOnClearCallback(id),
@@ -175,7 +177,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.errorMessage = null;
 
             var value = this.model.get('value'),
-                allStickyValues = hqImport("cloudcare/js/formplayer/utils/utils").getStickyQueryInputs(),
+                allStickyValues = FormplayerUtils.getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
@@ -214,27 +216,41 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
         },
 
+        hasRequiredError: function () {
+            if (!this.model.get('required')) {
+                return false;
+            }
+            var answer = this.getEncodedValue();
+            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
+                return false;
+            } else {
+                return true
+            }
+
+        },
+
+        hasNonRequiredErrors: function () {
+            if (this.model.get("error")) {
+                return true
+            }
+        },
+
         /**
          * Determines if model has either a server error or is required and missing.
          * Returns error message, or null if model is valid.
          */
-        checkValid: function () {
-            if (this.model.get("error")) {
+        getError: function () {
+            if (this.hasNonRequiredErrors()) {
                 return this.model.get("error");
             }
-            if (!this.model.get('required')) {
-                return null;
-            }
-            var answer = this.getEncodedValue();
-            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
-                return null;
-            } else {
+            if (this.hasRequiredError()) {
                 return this.model.get("required_msg");
             }
+            return null
         },
 
         isValid: function () {
-            var newError = this.checkValid();
+            var newError = this.getError();
             if (newError !== this.errorMessage) {
                 this.errorMessage = newError;
                 this._render();
@@ -290,7 +306,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e);
+            this.parentView.notifyFieldChange(e, this);
         },
 
         toggleBlankSearch: function (e) {
@@ -317,7 +333,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            hqImport("cloudcare/js/utils").initDateTimePicker(this.ui.date, {
+            CloudcareUtils.initDateTimePicker(this.ui.date, {
                 format: dateFormat,
             });
             this.ui.dateRange.daterangepicker({
@@ -398,10 +414,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e) {
+        notifyFieldChange: function (e, changedChildView) {
             e.preventDefault();
             var self = this;
-            self.validateFields().always(function (response) {
+            self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -441,37 +457,46 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            // validateFields will likely already have been called when user blurred the last field,
-            // but call it here just in case they didn't fill anything out
-            self.validateFields().done(function () {
+            self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
+        },
+
+        validateFieldChange: function(changedChildView) {
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
+
+            self._updateModelsForValidation().done(function (response) {
+                //Gather error messages
+                self.children.each(function (childView) {
+                    if ((!childView.hasRequiredError() || childView == changedChildView)
+                         && !childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                if (invalidFields.length) {
+                    promise.reject(response);
+                } else {
+                    promise.resolve(response);
+                }
+            });
+
+            return promise;
         },
 
         /*
          *  Send request to formplayer to validate fields. Displays any errors.
          *  Returns a promise that contains the formplayer response.
          */
-        validateFields: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-                self = this;
+        validateAllFields: function () {
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
 
-            var urlObject = Utils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                _.each(response.models, function (responseModel, i) {
-                    self.collection.models[i].set({
-                        error: responseModel.get('error'),
-                        required: responseModel.get('required'),
-                        required_msg: responseModel.get('required_msg'),
-                    });
-                });
-
+            self._updateModelsForValidation().done(function (response) {
                 // Gather error messages
-                var invalidFields = [];
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
@@ -498,9 +523,31 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return promise;
         },
 
+        _updateModelsForValidation: function () {
+            var self = this;
+
+            var urlObject = FormplayerUtils.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+                promise.resolve(response);
+
+            });
+
+            return promise;
+        },
+
         setStickyQueryInputs: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils");
-            Utils.setStickyQueryInputs(this.getAnswers());
+            FormplayerUtils.setStickyQueryInputs(this.getAnswers());
         },
 
         onAttach: function () {
