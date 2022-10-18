@@ -2,8 +2,8 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         initialPageData = hqImport("hqwebapp/js/initial_page_data");
 
-    var Utils = {};
-    Utils.Users = {
+    var self = {};
+    self.Users = {
         /**
          * logInAsUser
          * :param: {String} restoreAsUsername - The username to restore as. Does not include
@@ -16,7 +16,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
             currentUser.restoreAs = restoreAsUsername;
 
             $.cookie(
-                Utils.Users.restoreAsKey(
+                self.Users.restoreAsKey(
                     currentUser.domain,
                     currentUser.username
                 ),
@@ -36,7 +36,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Returns the restore as user from the cookies or null if it doesn't exist
          */
         getRestoreAsUser: function (domain, username) {
-            return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
+            return $.cookie(self.Users.restoreAsKey(domain, username)) || null;
         },
 
         /**
@@ -48,12 +48,12 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
          * Clears the restore as user from the cookies
          */
         clearRestoreAsUser: function (domain, username) {
-            return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
+            return $.removeCookie(self.Users.restoreAsKey(domain, username));
         },
     };
 
     FormplayerFrontend.getChannel().reply('restoreAsUser', function (domain, username) {
-        return Utils.Users.getRestoreAsUser(
+        return self.Users.getRestoreAsUser(
             domain,
             username
         );
@@ -68,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
      */
     FormplayerFrontend.on('clearRestoreAsUser', function () {
         var user = FormplayerFrontend.getChannel().request('currentUser');
-        Utils.Users.clearRestoreAsUser(
+        self.Users.clearRestoreAsUser(
             user.domain,
             user.username
         );
@@ -84,5 +84,5 @@ hqDefine("cloudcare/js/formplayer/users/utils", function () {
         FormplayerFrontend.trigger('navigateHome');
     });
 
-    return Utils;
+    return self;
 });
