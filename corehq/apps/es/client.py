@@ -1065,19 +1065,27 @@ def _elastic_hosts():
     return hosts
 
 
-def create_document_adapter(cls, index_name, type_):
-    """Returns a document adapter instance for the parameters provided.
+def create_document_adapter(cls, index_name, type_, *, secondary=None):
+    """Creates, registers and returns a document adapter instance for the
+    parameters provided.
 
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
     :param type_: the index ``_type`` for the adapter's mapping.
+    :param secondary: the name of the secondary index in a multiplexing
+        configuration. If an index name is provided, the returned adapter will
+        be an instance of ``ElasticMultiplexAdapter``.  If ``None`` (the
+        default), the returned adapter will be an instance of ``cls``.
+    :returns: a document adapter instance.
     """
-    # transform the name if testing
-    prefix = TEST_DATABASE_PREFIX if settings.UNIT_TESTING else ""
-    index_name = f"{prefix}{index_name}"
+    def runtime_name(name):
+        # transform the name if testing
+        return f"{TEST_DATABASE_PREFIX}{name}" if settings.UNIT_TESTING else name
 
-    # create the adapter instance and register it
-    doc_adapter = cls(index_name, type_)
+    doc_adapter = cls(runtime_name(index_name), type_)
+    if secondary is not None:
+        secondary_adapter = cls(runtime_name(secondary), type_)
+        doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
 
     register_document_adapter(doc_adapter)
     return doc_adapter
