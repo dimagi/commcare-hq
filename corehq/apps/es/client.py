@@ -890,6 +890,111 @@ class BulkActionItem:
         return f"<{self.__class__.__name__} op_type={self.op_type.name}, {doc_info}>"
 
 
+class ElasticMultiplexAdapter(BaseAdapter):
+
+    def __init__(self, primary_adapter, secondary_adapter):
+        super().__init__()
+        self.index_name = primary_adapter.index_name
+        self.type = primary_adapter.type
+        self.mapping = primary_adapter.mapping
+
+        self.primary = primary_adapter
+        self.secondary = secondary_adapter
+        # TODO document this better
+        self.secondary.from_python = self.from_python
+
+    def export_adapter(self):
+        adapter = copy.copy(self)
+        adapter.primary = adapter.primary.export_adapter()
+        return adapter
+
+    def from_python(self, doc):
+        # TODO: this is a classmethod on the the document adapter, but should
+        # be converted to an instance method
+        if isinstance(doc, Tombstone):
+            return doc.id, Tombstone.create_document()
+        return self.primary.from_python(doc)
+
+    # meta methods and Elastic index read methods (pass-through on the primary
+    # adapter)
+    @property
+    def settings(self):
+        # TODO: this is a classproperty on the the document adapter, but should
+        # be converted to a property
+        return self.primary.settings
+
+    def to_json(self, doc):
+        # TODO: this is a classmethod on the the document adapter, but should
+        # be converted to an instance method
+        return self.primary.to_json(doc)
+
+    def count(self, *args, **kw):
+        return self.primary.count(*args, **kw)
+
+    def exists(self, *args, **kw):
+        return self.primary.exists(*args, **kw)
+
+    def get(self, *args, **kw):
+        return self.primary.get(*args, **kw)
+
+    def get_docs(self, *args, **kw):
+        return self.primary.get_docs(*args, **kw)
+
+    def iter_docs(self, *args, **kw):
+        return self.primary.iter_docs(*args, **kw)
+
+    def scroll(self, *args, **kw):
+        return self.primary.scroll(*args, **kw)
+
+    def search(self, *args, **kw):
+        return self.primary.search(*args, **kw)
+
+    # Elastic index write methods (multiplexed between both adapters)
+    def bulk(self, actions, refresh=False, **kw):
+        """Pass actions verbatim to primary. Convert delete actions to
+        'index tombstone' actions and send to secondary."""
+        primary_actions = []
+        secondary_actions = []
+        for action in actions:
+            primary_actions.append(action)
+            if action.is_delete:
+                # This logic belongs in the BulkActionItem class, but that class
+                # has no concept of 'to_python(doc)'
+                if action.doc_id is None:
+                    doc_id = self.from_python(action.doc)[0]
+                else:
+                    doc_id = action.doc_id
+                action = BulkActionItem.index(Tombstone(doc_id))
+            secondary_actions.append(action)
+        self.primary.bulk(primary_actions, refresh, **kw)
+        # don't refresh the secondary because we never read from it
+        self.secondary.bulk(secondary_actions, **kw)
+
+    def delete(self, doc_id, refresh=False):
+        """Delete on primary, index tombstone on secondary."""
+        self.primary.delete(doc_id, refresh)
+        # don't refresh the secondary because we never read from it
+        self.secondary._index(doc_id, Tombstone.create_document())
+
+    def index(self, doc, refresh=False, **kw):
+        """Index on both adapters"""
+        self.primary.index(doc, refresh, **kw)
+        # don't refresh the secondary because we never read from it
+        self.secondary.index(doc, **kw)
+
+    def update(self, doc_id, fields, return_doc=False, refresh=False,
+               _upsert=False, **kw):
+        """Update on the primary adapter, fetching the full doc; then upsert the
+        secondary adapter.
+        """
+        full_doc = self.primary.update(doc_id, fields, return_doc=True,
+                                       refresh=refresh, _upsert=_upsert, **kw)
+        # don't refresh the secondary because we never read from it
+        self.secondary.update(doc_id, full_doc, _upsert=True, **kw)
+        if return_doc:
+            return full_doc
+        return None
+
 
 class Tombstone:
 
