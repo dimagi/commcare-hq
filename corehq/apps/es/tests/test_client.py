@@ -26,7 +26,7 @@ from .utils import (
 )
 from ..client import (
     BulkActionItem,
-    BaseAdapter,
+    Tombstone,
     get_client,
     manager,
     _elastic_hosts,
@@ -1430,6 +1430,26 @@ class TestBulkActionItem(SimpleTestCase):
         self.assertNotEqual(
             BulkActionItem.delete(doc),
             BulkActionItem.delete_id(doc.id),
+        )
+
+
+
+class TestTombstone(SimpleTestCase):
+
+    def test_property_name_is_unchanged(self):
+        # It is only safe to change this when there are no multiplexed index
+        # configurations.
+        self.assertEqual("__is_tombstone__", Tombstone.PROPERTY_NAME)
+
+    def test_id(self):
+        doc_id = object()
+        tombstone = Tombstone(doc_id)
+        self.assertIs(doc_id, tombstone.id)
+
+    def test_create_document(self):
+        self.assertEqual(
+            {Tombstone.PROPERTY_NAME: True},
+            Tombstone.create_document(),
         )
 
 
