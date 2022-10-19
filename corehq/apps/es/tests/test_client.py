@@ -608,8 +608,55 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
 adapter_with_extras = TestDocumentAdapterWithExtras(test_adapter.index_name, test_adapter.type)
 
 
+@nottest
+class ESTestHelpers:
+    def _index_many_new_docs(self, count, refresh=True):
+        docs = []
+        for x in range(count):
+            docs.append(self._index_new_doc(refresh=False))
+        if refresh:
+            self.adapter.refresh_index()
+        return docs
+
+    def _index_new_doc(self, refresh=True):
+        doc = self._make_doc()
+        self.adapter.index(doc, refresh=refresh)
+        return self.adapter.to_json(doc)
+
+    def _make_doc(self, value=None):
+        if value is None:
+            if not hasattr(self, "_doc_value_history"):
+                self._doc_value_history = 0
+            value = f"test doc {self._doc_value_history:04}"
+            self._doc_value_history += 1
+        return TestDoc(uuid.uuid4().hex, value)
+
+    def _search_hits_dict(self, query):
+        """Convenience method for getting a ``dict`` of search results.
+
+        :param query: ``dict`` search query (default: ``{}``)
+        :returns: ``{<doc_id>: <doc_sans_id>, ...}`` dict
+        """
+        return docs_to_dict(docs_from_result(self.adapter.search(query)))
+
+    def _scroll_hits_dict(self, *args, **kw):
+        def do_scroll():
+            for doc in self.adapter.scroll(*args, **kw):
+                yield doc["_source"]
+        return docs_to_dict(do_scroll())
+
+    @staticmethod
+    def _make_shards_fail(shards_obj, result_getter):
+        def wrapper(*args, **kw):
+            result = result_getter(*args, **kw)
+            result["_shards"] = shards_obj
+            return result
+        exc_args = (f"_shards: {json.dumps(shards_obj)}",)
+        return exc_args, wrapper
+
+
 @es_test
-class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
+class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     """Document adapter tests that require an existing index."""
 
     adapter = adapter_with_extras
@@ -1160,50 +1207,6 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase):
     def test__report_and_fail_on_shard_failures_with_invalid_result_raises_valueerror(self):
         with self.assertRaises(ValueError):
             self.adapter._report_and_fail_on_shard_failures([])
-
-    def _index_many_new_docs(self, count, refresh=True):
-        docs = []
-        for x in range(count):
-            docs.append(self._index_new_doc(refresh=False))
-        if refresh:
-            self.adapter.refresh_index()
-        return docs
-
-    def _index_new_doc(self, refresh=True):
-        doc = self._make_doc()
-        self.adapter.index(doc, refresh=refresh)
-        return self.adapter.to_json(doc)
-
-    def _make_doc(self, value=None):
-        if value is None:
-            if not hasattr(self, "_doc_value_history"):
-                self._doc_value_history = 0
-            value = f"test doc {self._doc_value_history:04}"
-            self._doc_value_history += 1
-        return TestDoc(uuid.uuid4().hex, value)
-
-    def _search_hits_dict(self, query):
-        """Convenience method for getting a ``dict`` of search results.
-
-        :param query: ``dict`` search query (default: ``{}``)
-        :returns: ``{<doc_id>: <doc_sans_id>, ...}`` dict
-        """
-        return docs_to_dict(docs_from_result(self.adapter.search(query)))
-
-    def _scroll_hits_dict(self, *args, **kw):
-        def do_scroll():
-            for doc in self.adapter.scroll(*args, **kw):
-                yield doc["_source"]
-        return docs_to_dict(do_scroll())
-
-    @staticmethod
-    def _make_shards_fail(shards_obj, result_getter):
-        def wrapper(*args, **kw):
-            result = result_getter(*args, **kw)
-            result["_shards"] = shards_obj
-            return result
-        exc_args = (f"_shards: {json.dumps(shards_obj)}",)
-        return exc_args, wrapper
 
 
 @es_test
