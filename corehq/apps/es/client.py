@@ -594,6 +594,10 @@ class ElasticDocumentAdapter(BaseAdapter):
         doc_id, source = self.from_python(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
+        self._index(doc_id, source, refresh, **kw)
+
+    def _index(self, doc_id, source, refresh, **kw):
+        """Perform the low-level (3rd party library) index operation."""
         self._es.index(self.index_name, self.type, source, doc_id,
                        refresh=self._refresh_value(refresh), **kw)
 
@@ -771,6 +775,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
+        if Tombstone.PROPERTY_NAME in source:
+            raise ValueError(f"property {Tombstone.PROPERTY_NAME} is reserved")
 
     @staticmethod
     def _fix_hit(hit):
