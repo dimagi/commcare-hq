@@ -389,13 +389,15 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         return self._es.exists(self.index_name, self.type, doc_id)
 
-    def get(self, doc_id, source_includes=[]):
+    def get(self, doc_id, source_includes=None):
         """Return the document for the provided ``doc_id``
 
         Equivalent to the legacy ``ElasticsearchInterface.get_doc(...)`` method.
 
         :param doc_id: ``str`` ID of the document to be fetched
-        :param source_includes: a list of fields to extract and return
+        :param source_includes: a list of fields to extract and return. If
+                                ``None`` (the default), the entire document is
+                                returned.
         :returns: ``dict``
         """
         kw = {"_source_include": source_includes} if source_includes else {}
