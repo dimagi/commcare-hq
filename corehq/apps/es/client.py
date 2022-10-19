@@ -7,11 +7,7 @@ from functools import cached_property
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
-try:
-    from django.utils.functional import classproperty
-except ImportError:
-    # Django < 3.1 compatibility
-    from django.utils.decorators import classproperty
+from django.utils.functional import classproperty
 
 from memoized import memoized
 
