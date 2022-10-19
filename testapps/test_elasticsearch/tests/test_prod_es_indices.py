@@ -78,13 +78,22 @@ EXPECTED_PROD_INDICES = [
                 "number_of_replicas": 1,
                 "number_of_shards": 5,
                 "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
+                        }
+                    },
+                    'analyzer': {
+                        'default': {
+                            'type': 'custom',
+                            'tokenizer': 'whitespace',
+                            'filter': ['lowercase']
+                        },
+                        'phonetic': {
+                            'filter': ['standard', 'lowercase', 'soundex'],
+                            'tokenizer': 'standard'
                         }
                     }
                 }
