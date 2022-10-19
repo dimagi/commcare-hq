@@ -882,6 +882,19 @@ class BulkActionItem:
         return f"<{self.__class__.__name__} op_type={self.op_type.name}, {doc_info}>"
 
 
+
+class Tombstone:
+
+    PROPERTY_NAME = "__is_tombstone__"
+
+    def __init__(self, doc_id):
+        self.id = doc_id
+
+    @classmethod
+    def create_document(cls):
+        return {cls.PROPERTY_NAME: True}
+
+
 def get_client(for_export=False):
     """Get an elasticsearch client instance.
 
