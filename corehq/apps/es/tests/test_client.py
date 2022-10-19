@@ -25,7 +25,9 @@ from .utils import (
     test_adapter,
 )
 from ..client import (
+    BaseAdapter,
     BulkActionItem,
+    ElasticMultiplexAdapter,
     Tombstone,
     get_client,
     manager,
@@ -1435,6 +1437,152 @@ class TestBulkActionItem(SimpleTestCase):
             BulkActionItem.delete_id(doc.id),
         )
 
+
+class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
+
+    ARG = object()
+    VALUE = object()
+
+    adapter = ElasticMultiplexAdapter(
+        TestDocumentAdapter("primary", "doc"),
+        TestDocumentAdapter("secondary", "doc"),
+    )
+
+    def test_settings(self):
+        self.assertEqual(self.adapter.settings, self.adapter.primary.settings)
+
+    def test_to_json(self):
+        doc = self._make_doc()
+        as_json = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
+        self.assertEqual(as_json, self.adapter.to_json(doc))
+
+    def test_from_python_for_tombstones(self):
+        doc = Tombstone(doc_id=1)
+        doc_id, tombstone = self.adapter.from_python(doc)
+        self.assertEqual(doc_id, 1)
+        self.assertEqual(tombstone, Tombstone.create_document())
+
+    # Elastic index read methods (pass-through on the primary adapter)
+    def test_to_json_use_primary_index(self):
+        doc = self._make_doc()
+        with patch_adapters_method(self.adapter, "to_json") as mocks:
+            self.adapter.to_json(doc)
+        self.assert_passthru_primary_only(*mocks, doc)
+
+    def test_from_python_use_primary_index(self):
+        doc = self._make_doc()
+        with patch_adapters_method(self.adapter, "from_python") as mocks:
+            self.adapter.from_python(doc)
+        self.assert_passthru_primary_only(*mocks, doc)
+
+    def test_count(self):
+        with patch_adapters_method(self.adapter, "count") as mocks:
+            self.adapter.count(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_exists(self):
+        with patch_adapters_method(self.adapter, "exists") as mocks:
+            self.adapter.exists(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_get(self):
+        with patch_adapters_method(self.adapter, "get") as mocks:
+            self.adapter.get(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_get_docs(self):
+        with patch_adapters_method(self.adapter, "get_docs") as mocks:
+            self.adapter.get_docs(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_iter_docs(self):
+        with patch_adapters_method(self.adapter, "iter_docs") as mocks:
+            self.adapter.iter_docs(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_scroll(self):
+        with patch_adapters_method(self.adapter, "scroll") as mocks:
+            self.adapter.scroll(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def test_search(self):
+        with patch_adapters_method(self.adapter, "search") as mocks:
+            self.adapter.search(self.ARG, keyword=self.VALUE)
+        self.assert_passthru_primary_only(*mocks, self.ARG, keyword=self.VALUE)
+
+    def assert_passthru_primary_only(self, p_mock, s_mock, *args, **kw):
+        p_mock.assert_called_once_with(*args, **kw)
+        s_mock.assert_not_called()
+
+    # Elastic index write methods (multiplexed between both adapters)
+    def test_bulk_index(self):
+        docs = [self._make_doc() for x in range(3)]
+        bulk_actions = [BulkActionItem.index(doc) for doc in docs]
+        with patch_adapters_method(self.adapter, "bulk") as (p_mock, s_mock):
+            self.adapter.bulk(bulk_actions)
+
+        # Both adapters receive bulk request
+        p_mock.assert_called_once_with(bulk_actions, False)
+        s_mock.assert_called_once_with(bulk_actions)
+
+    def test_bulk_delete(self):
+        docs = [self._make_doc() for x in range(2)]
+        bulk_actions = [BulkActionItem.delete(doc) for doc in docs]
+        doc_ids = [doc.id for doc in docs]
+        with patch_adapters_method(self.adapter, "bulk") as (p_mock, s_mock):
+            self.adapter.bulk(bulk_actions)
+
+        # Primary index gets delete request
+        p_mock.assert_called_once_with(bulk_actions, False)
+
+        # Secondary index creates tombstones for the docs
+        s_mock.assert_called_once()
+        tombstone_ids = [tombstone_obj.doc.id for tombstone_obj in s_mock.call_args.args[0]]
+        self.assertEqual(doc_ids, tombstone_ids)
+
+    def test_delete(self):
+        doc_id = self._make_doc().id
+        with (
+            patch.object(self.adapter.primary, 'delete') as p_mock,
+            patch.object(self.adapter.secondary, '_index') as s_mock,
+        ):
+            self.adapter.delete(doc_id)
+
+        # Primary index gets delete request
+        p_mock.assert_called_once_with(doc_id, False)
+
+        # Secondary index creates tombstone
+        s_mock.assert_called_once_with(doc_id, Tombstone.create_document())
+
+    def test_index(self):
+        doc = self._make_doc()
+        with patch_adapters_method(self.adapter, "index") as (p_mock, s_mock):
+            self.adapter.index(doc, True)
+
+        # Primary and secondary makes index request
+        p_mock.assert_called_once_with(doc, True)
+        s_mock.assert_called_once_with(doc)
+
+    def test_update(self):
+        doc_id = self._make_doc().id
+        to_update = {
+            'db': 'elasticsearch'
+        }
+        with patch_adapters_method(self.adapter, "update") as (p_mock, s_mock):
+            self.adapter.update(doc_id, to_update)
+
+        p_mock.assert_called_once_with(doc_id, to_update, return_doc=True, refresh=False, _upsert=False)
+
+        s_mock.assert_called_once_with(doc_id, p_mock.return_value, _upsert=True)
+
+
+@contextmanager
+def patch_adapters_method(adapter, name, **kw):
+    with (
+        patch.object(adapter.primary, name, **kw) as p_mock,
+        patch.object(adapter.secondary, name, **kw) as s_mock,
+    ):
+        yield p_mock, s_mock
 
 
 class TestTombstone(SimpleTestCase):
