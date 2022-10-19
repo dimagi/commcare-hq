@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 describe('Integration', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/form_ui"),
+    var constants = hqImport("cloudcare/js/form_entry/const"),
+        formUI = hqImport("cloudcare/js/form_entry/form_ui"),
         formJSON,
         questionJSONMulti,
         questionJSONString;
@@ -19,7 +19,7 @@ describe('Integration', function () {
             "relevant": 1,
             "help": null,
             "answer": null,
-            "datatype": Const.MULTI_SELECT,
+            "datatype": constants.MULTI_SELECT,
             "style": {},
             "caption_video": null,
             "choices": [
@@ -39,7 +39,7 @@ describe('Integration', function () {
             "relevant": 1,
             "help": null,
             "answer": null,
-            "datatype": Const.STRING,
+            "datatype": constants.STRING,
             "style": {},
             "caption_video": null,
         };
@@ -65,7 +65,7 @@ describe('Integration', function () {
         questionJSONString.ix = '0';
         questionJSONString2.ix = '1';
         formJSON.tree = [questionJSONString, questionJSONString2];
-        var form = UI.Form(_.clone(formJSON));
+        var form = formUI.Form(_.clone(formJSON));
 
         var stringQ1 = form.children()[0];
         var stringQ2 = form.children()[1];
@@ -79,14 +79,14 @@ describe('Integration', function () {
         // Fire off a change in the string question
         stringQ1.entry.rawAnswer('ben');
         this.clock.tick(stringQ1.throttle);
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(constants.KO_ENTRY_TIMEOUT);
 
         // once we receive signal to answer question, pending answer should be set
         assert.equal(stringQ1.pendingAnswer(), 'ben');
 
         // Fire off a change in the other question before we've reconciled first one
         stringQ2.entry.rawAnswer('lisa');
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(constants.KO_ENTRY_TIMEOUT);
         assert.equal(stringQ2.pendingAnswer(), 'lisa');
 
         // Have server respond to the string question before string changes
@@ -95,7 +95,7 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response1, stringQ1]);
         assert.equal(stringQ2.pendingAnswer(), 'lisa');
         assert.equal(stringQ2.answer(), 'lisa');
-        assert.equal(stringQ1.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.pendingAnswer(), constants.NO_PENDING_ANSWER);
         assert.equal(stringQ1.answer(), 'ben');
 
         var response2 = {};
@@ -106,12 +106,12 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response2, stringQ2]);
         assert.equal(stringQ1.answer(), 'ben');
         assert.equal(stringQ2.answer(), 'lisa');
-        assert.equal(stringQ1.pendingAnswer(), Const.NO_PENDING_ANSWER);
-        assert.equal(stringQ2.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ1.pendingAnswer(), constants.NO_PENDING_ANSWER);
+        assert.equal(stringQ2.pendingAnswer(), constants.NO_PENDING_ANSWER);
     });
 
     it('Should reconcile questions answered at the same time for multi', function () {
-        var form = UI.Form(_.clone(formJSON));
+        var form = formUI.Form(_.clone(formJSON));
         var multiQ = form.children()[0];
         var stringQ = form.children()[1];
 
@@ -122,20 +122,20 @@ describe('Integration', function () {
 
         // Fire off a change in the string question
         stringQ.entry.rawAnswer('ben');
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(constants.KO_ENTRY_TIMEOUT);
         this.clock.tick(stringQ.throttle);
         assert.equal(stringQ.pendingAnswer(), 'ben');
 
         // Fire off a change in the multi question
         multiQ.entry.rawAnswer(["Yes"]);
-        this.clock.tick(Const.KO_ENTRY_TIMEOUT);
+        this.clock.tick(constants.KO_ENTRY_TIMEOUT);
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
 
         // Have server respond to the string question before multi changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
         $.publish('session.reconcile', [response1, stringQ]);
-        assert.equal(stringQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.pendingAnswer(), constants.NO_PENDING_ANSWER);
         assert.equal(stringQ.answer(), 'ben');
         assert.sameMembers(multiQ.pendingAnswer(), [1]);
         assert.sameMembers(multiQ.answer(), [1]);
@@ -148,8 +148,8 @@ describe('Integration', function () {
         $.publish('session.reconcile', [response2, multiQ]);
         assert.equal(stringQ.answer(), 'ben');
         assert.sameMembers(multiQ.answer(), [1]);
-        assert.equal(stringQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
-        assert.equal(multiQ.pendingAnswer(), Const.NO_PENDING_ANSWER);
+        assert.equal(stringQ.pendingAnswer(), constants.NO_PENDING_ANSWER);
+        assert.equal(multiQ.pendingAnswer(), constants.NO_PENDING_ANSWER);
     });
 
     it('Should properly reconcile Geo', function () {
@@ -203,7 +203,7 @@ describe('Integration', function () {
             }],
         };
 
-        var f = UI.Form(json1);
+        var f = formUI.Form(json1);
         var child = f.children()[0];
         $.publish('session.reconcile', [json2, child]);
         assert.equal(child.answer()[0], 30.000000000000018);
