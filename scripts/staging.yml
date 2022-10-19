@@ -84,4 +84,5 @@ branches:
     - jls/multi-select-flag-handling # Jenny Oct 11
     - jt/ush-2427 # Jonathan T. Oct 18
     - dm/moment-timezone # Daniel Oct 19
+    - ce/api-rate-limits # Cal Oct 19
 submodules: { }
