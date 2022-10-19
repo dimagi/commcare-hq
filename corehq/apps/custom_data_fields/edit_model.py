@@ -7,6 +7,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html_join
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
@@ -151,7 +153,9 @@ class CustomDataFieldsForm(forms.Form):
         errors.update(self.verify_profiles_validate(data_fields, profiles))
 
         if errors:
-            raise ValidationError('<br/>'.join(sorted(errors)))
+            separator = mark_safe('<br/>')  # nosec: no user input
+            error_html = format_html_join(separator, '{}', ((error,) for error in sorted(errors)))
+            raise ValidationError(error_html)
 
         return cleaned_data
 
