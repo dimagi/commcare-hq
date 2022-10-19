@@ -917,6 +917,13 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
         return DeduplicationRuleEditView.urlname
 
     @property
+    def allowed_actions(self):
+        actions = super().allowed_actions
+        actions.append(self.ACTION_ACTIVATE)
+        actions.append(self.ACTION_DEACTIVATE)
+        return actions
+
+    @property
     def activate_response(self):
         return self.update_rule()
 
