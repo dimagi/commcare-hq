@@ -145,7 +145,8 @@ def run_case_update_rules_for_domain(domain, now=None):
             domain=domain,
             started_on=datetime.utcnow(),
             status=DomainCaseRuleRun.STATUS_RUNNING,
-            case_type=case_type
+            case_type=case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
         for db in get_db_aliases_for_partitioned_query():
