@@ -41,6 +41,7 @@
   {% initial_page_data 'sms_contacts' sms_contacts %}
   {% initial_page_data 'confirm' confirm %}
   {% initial_page_data 'upstream_url' upstream_url_template %}
+  {% initial_page_data 'show_release_mode' show_release_mode %}
   {% registerurl "app_data_json" app.domain '---' %}
   {% registerurl "app_form_summary_diff" domain '---' '---' %}
   {% registerurl "paginate_releases" domain app.id %}
@@ -58,6 +59,17 @@
   {% registerurl "formplayer_main" app.domain %}
   {% registerurl "app_form_summary" app.domain '---' %}
   <div class="tab-pane" id="releases">
+    {% if show_release_mode %}
+      <div id="release-control" class="pull-right">
+        Release Mode
+          <button id="btn-lock-release" class="btn">
+            <i class="fa fa-lock"></i>
+          </button>
+          <button id="btn-unlock-release" class="btn">
+            <i class="fa fa-unlock"></i>
+          </button>
+      </div>
+    {% endif %}
     {% include "app_manager/partials/releases/releases.html" %}
   </div>
 {% endblock app_view_tabs %}
