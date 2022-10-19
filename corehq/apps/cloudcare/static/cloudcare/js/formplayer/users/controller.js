@@ -1,12 +1,15 @@
 hqDefine("cloudcare/js/formplayer/users/controller", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var Collections = hqImport("cloudcare/js/formplayer/users/collections"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        views = hqImport("cloudcare/js/formplayer/users/views");
+
     return {
         listUsers: function (page, query) {
             var currentUser = FormplayerFrontend.getChannel().request('currentUser'),
                 users;
 
-            users = hqImport("cloudcare/js/formplayer/users/collections")([], { domain: currentUser.domain });
-            var restoreAsView = hqImport("cloudcare/js/formplayer/users/views").RestoreAsView({
+            users = Collections([], { domain: currentUser.domain });
+            var restoreAsView = views.RestoreAsView({
                 collection: users,
                 page: page,
                 query: query,
