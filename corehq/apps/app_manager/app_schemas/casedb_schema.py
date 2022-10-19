@@ -63,7 +63,7 @@ def get_registry_schema(form):
 
     return {
         "id": "registry",
-        "uri": "jr://instance/remote",
+        "uri": "jr://instance/remote/registry",
         "name": "registry_case",
         "path": "/results/case",
         "structure": {},
