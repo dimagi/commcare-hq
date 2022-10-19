@@ -72,7 +72,7 @@ branches:
     - rc/update-case-search-settings-mapping # Robert Sept 20
     - rp/mobile-worker-validation # Rynhard Sept 21
     # - mp/mobile_fix-2fa # Marco Sep 26
-    - jls/new-instance-connectors # Jenny Sept 27
+    #- jls/new-instance-connectors # Jenny Sept 27
     - akj/abdm-api-for-mobile-app # Akash Sep 28
     - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC)
     - bmb/remove-oidc-dev-notice  # Biyeun Sep 29
