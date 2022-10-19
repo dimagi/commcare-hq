@@ -1,5 +1,10 @@
 """Transient utilities needed during the interim of converting HQ Elastic logic
 to use the new "client adapter" models.
+
+This module includes tools needed to route the legacy ElasticsearchInterface
+logic (corehq.util.es.*) through the new document adapters (corehq.apps.es.*),
+and will be completely removed when the code that uses the old "interface" is
+refactored to use the new "adapters".
 """
 
 from .client import ElasticDocumentAdapter
