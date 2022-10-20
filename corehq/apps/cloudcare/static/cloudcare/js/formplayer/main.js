@@ -6,8 +6,13 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         if (dsn) {
             Sentry.init({
                 dsn: initialPageData('sentry_dsn'),
+                environment: initialPageData('sentry_environment'),
                 release: initialPageData('sentry_release'),
                 tracesSampleRate: 1.0,
+                initialScope: {
+                    tags: { "domain": initialPageData('domain') },
+                    user: { "username": initialPageData('username') },
+                },
             });
         }
     };

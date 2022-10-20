@@ -212,6 +212,7 @@ class FormplayerMain(View):
             "has_geocoder_privs": has_geocoder_privs(domain),
             "sentry": {
                 "dsn": settings.SENTRY_DSN,
+                "environment": settings.SERVER_ENVIRONMENT,
                 "release": settings.COMMCARE_RELEASE
             }
         }
