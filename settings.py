@@ -1069,6 +1069,8 @@ ELASTIC_ADAPTER_SETTINGS = {
     },
 }
 
+ES_CASE_SEARCH_INDEX_NAME = "case_search_2022-10-14"
+
 # TODO: remove these Elastic settings:
 ES_SETTINGS = None  # [do not use] legacy mechanism for tests
 CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
