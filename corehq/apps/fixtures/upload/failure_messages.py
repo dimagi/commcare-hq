@@ -63,4 +63,7 @@ FAILURE_MESSAGES = {
     "no_types_sheet": gettext_noop(
         "Workbook does not contain a sheet called types"
     ),
+    "sheets_have_been_combined": gettext_noop(
+        "Cannot upload a fixture created using the COMBINE_LOOKUP_TABLES feature flag. (To change later)"
+    ),
 }
