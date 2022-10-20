@@ -5,6 +5,7 @@ from importlib import import_module
 from itertools import chain
 from urllib.parse import urlparse, urlunparse
 
+import gevent
 import requests
 from attrs import define, field
 from django.core.management.base import BaseCommand, CommandError
@@ -58,18 +59,28 @@ class Command(BaseCommand):
         if castore is not None and not os.path.isfile(castore):
             raise CommandError(f"Invalid CA store file: {castore}")
 
-        endpoints = with_progress_bar(
-            list(self.iter_endpoints()),
-            oneline=(not self.verbose),
-            stream=self.stderr._out,  # OutputWrapper.write() does not play nice
-        )
+        def verify(end, request_kw):
+            results.append(self.verify_ssl(end, request_kw))
+
+        def iter_done(jobs):
+            while jobs:
+                for job in gevent.wait(jobs, count=1):
+                    jobs.remove(job)
+                    yield job
+
         results = []
         request_kw = {
             "verify": (castore or True),
             "timeout": timeout,
         }
-        for end in endpoints:
-            results.append(self.verify_ssl(end, request_kw))
+        jobs = {gevent.spawn(verify, end, request_kw) for end in self.iter_endpoints()}
+        for job in with_progress_bar(
+            iter_done(jobs),
+            length=len(jobs),
+            oneline=(not self.verbose),
+            stream=self.stderr._out,  # OutputWrapper.write() does not play nice
+        ):
+            pass
 
         failures = [r for r in results if r.failure]
         errors = [r for r in results if r.error]
