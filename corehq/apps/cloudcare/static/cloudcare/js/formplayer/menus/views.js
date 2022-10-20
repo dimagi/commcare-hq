@@ -1,10 +1,12 @@
 /*global Marionette */
 
 hqDefine("cloudcare/js/formplayer/menus/views", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var Constants = hqImport("cloudcare/js/formplayer/constants"),
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
+        toggles = hqImport("hqwebapp/js/toggles"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
+
     var MenuView = Marionette.View.extend({
         tagName: function () {
             if (this.model.collection.layoutStyle === 'grid') {
@@ -35,7 +37,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
         getTemplate: function () {
             var id = "#menu-view-row-template";
-            if (this.model.collection.layoutStyle === Constants.LayoutStyles.GRID) {
+            if (this.model.collection.layoutStyle === constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-item-template";
             } else if (this.model.get('audioUri')) {
                 id = "#menu-view-row-audio-template";
@@ -86,7 +88,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
             var navState = this.options.model.get('navigationState');
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.getChannel().request('resourceMap', imageUri, appId) : "",
@@ -102,7 +104,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: ".menus-container",
         getTemplate: function () {
             var id = "#menu-view-list-template";
-            if (this.collection.layoutStyle === Constants.LayoutStyles.GRID) {
+            if (this.collection.layoutStyle === constants.LayoutStyles.GRID) {
                 id = "#menu-view-grid-template";
             }
             return _.template($(id).html() || "");
@@ -242,7 +244,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.isMultiSelect = this.options.isMultiSelect;
             FormplayerFrontend.on("multiSelect:updateCases", function (action, caseIds) {
                 if (_.contains(caseIds, self.model.get('id'))) {
-                    self.ui.selectRow.prop("checked", action === Constants.MULTI_SELECT_ADD);
+                    self.ui.selectRow.prop("checked", action === constants.MULTI_SELECT_ADD);
                 }
             });
         },
@@ -269,7 +271,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectRowAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            var action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, [this.model.get('id')]);
         },
 
@@ -278,7 +280,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         templateContext: function () {
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 data: this.options.model.get('data'),
                 styles: this.options.styles,
@@ -410,7 +412,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         paginationGoAction: function (e) {
             e.preventDefault();
             var goText = Number(this.ui.paginationGoText.val());
-            var pageNo = paginationGoPageNumber(goText, this.options.pageCount);
+            var pageNo = utils.paginationGoPageNumber(goText, this.options.pageCount);
             FormplayerFrontend.trigger("menu:paginate", pageNo - 1, this.selectedCaseIds);
             kissmetrics.track.event("Accessibility Tracking - Pagination Go To Page Interaction");
         },
@@ -448,13 +450,13 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             FormplayerFrontend.trigger("menu:select", this.selectedCaseIds);
             if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                 kissmetrics.track.event('Completed Case Search', {
-                    'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                    'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                 });
             }
         },
 
         templateContext: function () {
-            var paginateItems = paginateOptions(this.options.currentPage, this.options.pageCount);
+            var paginateItems = utils.paginateOptions(this.options.currentPage, this.options.pageCount);
             var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
             return {
                 startPage: paginateItems.startPage,
@@ -513,7 +515,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Remove any event handling left over from previous instances of MultiSelectCaseListView.
             // Only one of these views is supporteed on the page at any given time.
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
-                if (action === Constants.MULTI_SELECT_ADD) {
+                if (action === constants.MULTI_SELECT_ADD) {
                     self.selectedCaseIds = _.union(self.selectedCaseIds, caseIds);
                 } else {
                     self.selectedCaseIds = _.difference(self.selectedCaseIds, caseIds);
@@ -533,7 +535,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
 
         selectAllAction: function (e) {
-            var action = e.target.checked ? Constants.MULTI_SELECT_ADD : Constants.MULTI_SELECT_REMOVE;
+            var action = e.target.checked ? constants.MULTI_SELECT_ADD : constants.MULTI_SELECT_REMOVE;
             FormplayerFrontend.trigger("multiSelect:updateCases", action, this._allCaseIds());
         },
 
@@ -553,54 +555,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
     });
-
-    // this method takes current page number on which user has clicked and total possible pages
-    // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
-    var paginateOptions = function (currentPage, totalPages) {
-        var maxPages = 5;
-        // ensure current page isn't out of range
-        if (currentPage < 1) {
-            currentPage = 1;
-        } else if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-        var startPage, endPage;
-        if (totalPages <= maxPages) {
-            // total pages less than max so show all pages
-            startPage = 1;
-            endPage = totalPages;
-        } else {
-            // total pages more than max so calculate start and end pages
-            var maxPagesBeforeCurrentPage = Math.floor(maxPages / 2);
-            var maxPagesAfterCurrentPage = Math.ceil(maxPages / 2) - 1;
-            if (currentPage <= maxPagesBeforeCurrentPage) {
-                // current page near the start
-                startPage = 1;
-                endPage = maxPages;
-            } else if (currentPage + maxPagesAfterCurrentPage >= totalPages) {
-                // current page near the end
-                startPage = totalPages - maxPages + 1;
-                endPage = totalPages;
-            } else {
-                // current page somewhere in the middle
-                startPage = currentPage - maxPagesBeforeCurrentPage;
-                endPage = currentPage + maxPagesAfterCurrentPage;
-            }
-        }
-        return {
-            startPage: startPage,
-            endPage: endPage,
-            pageCount: totalPages,
-        };
-    };
-
-    var paginationGoPageNumber = function (pageNumber, pageCount) {
-        if (pageNumber >= 1 && pageNumber <= pageCount) {
-            return pageNumber;
-        } else {
-            return pageCount;
-        }
-    };
 
     // Return a two- or three-length array of case tile CSS styles
     //
@@ -748,7 +702,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         className: "",
         template: _.template($("#detail-view-item-template").html() || ""),
         templateContext: function () {
-            var appId = Utils.currentUrlToObject().appId;
+            var appId = utils.currentUrlToObject().appId;
             return {
                 resolveUri: function (uri) {
                     return FormplayerFrontend.getChannel().request('resourceMap', uri, appId);
@@ -818,12 +772,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         selectCase: function () {
             if (this.isMultiSelect) {
-                FormplayerFrontend.trigger("multiSelect:updateCases", Constants.MULTI_SELECT_ADD, [this.caseId]);
+                FormplayerFrontend.trigger("multiSelect:updateCases", constants.MULTI_SELECT_ADD, [this.caseId]);
             } else {
                 FormplayerFrontend.trigger("menu:select", this.caseId);
                 if (/search_command\.m\d+/.test(sessionStorage.queryKey)) {
                     kissmetrics.track.event('Completed Case Search', {
-                        'Split Screen Case Search': hqImport('hqwebapp/js/toggles').toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
+                        'Split Screen Case Search': toggles.toggleEnabled('SPLIT_SCREEN_CASE_SEARCH'),
                     });
                 }
             }
@@ -868,8 +822,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         PersistentCaseTileView: function (options) {
             return new PersistentCaseTileView(options);
         },
-        paginateOptions: paginateOptions,
-        paginationGoPageNumber: paginationGoPageNumber,
     };
 })
 ;
