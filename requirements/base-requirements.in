@@ -81,7 +81,7 @@ python-dateutil
 python-imap
 pyphonetics
 python-magic
-pytjwt
+pyjwt
 PyYAML
 pyzxcvbn
 qrcode
