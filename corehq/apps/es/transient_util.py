@@ -51,9 +51,7 @@ def _get_doc_adapter(adapter, for_export):
     """Helper function to keep things DRY. Returns an adapter instance that is
     configured for export (or not).
     """
-    if for_export:
-        return adapter.export_adapter()
-    return adapter
+    return adapter.export_adapter() if for_export else adapter
 
 
 def report_and_fail_on_shard_failures(search_result):
