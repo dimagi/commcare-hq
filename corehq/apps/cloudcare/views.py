@@ -210,6 +210,10 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             "integrations": integration_contexts(domain),
             "has_geocoder_privs": has_geocoder_privs(domain),
+            "sentry": {
+                "dsn": settings.SENTRY_DSN,
+                "release": settings.COMMCARE_RELEASE
+            }
         }
         return set_cookie(
             render(request, "cloudcare/formplayer_home.html", context)

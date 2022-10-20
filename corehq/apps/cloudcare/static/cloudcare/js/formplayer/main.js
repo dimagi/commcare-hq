@@ -1,5 +1,20 @@
+/* globals Sentry */
 hqDefine("cloudcare/js/formplayer/main", function () {
+    let initSentry = function () {
+        let initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+        const dsn = initialPageData('sentry_dsn');
+        if (dsn) {
+            Sentry.init({
+                dsn: initialPageData('sentry_dsn'),
+                release: initialPageData('sentry_release'),
+                tracesSampleRate: 1.0,
+            });
+        }
+    };
+
     $(function () {
+        initSentry();
+
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             toggles = hqImport("hqwebapp/js/toggles");
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
