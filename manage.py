@@ -42,7 +42,47 @@ def main():
     set_default_settings_path(sys.argv)
     set_nosetests_verbosity(sys.argv)
     from django.core.management import execute_from_command_line
-    execute_from_command_line(sys.argv)
+    execute_from_command_line(sys.argv)  # Raises ModuleNotFoundError:
+    #     Traceback (most recent call last):
+    #       File "/vendor/./manage.py", line 189, in <module>
+    #         main()
+    #       File "/vendor/./manage.py", line 47, in main
+    #         execute_from_command_line(sys.argv)
+    #       File "/vendor/venv/lib/python3.9/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    #         utility.execute()
+    #       File "/vendor/venv/lib/python3.9/site-packages/django/core/management/__init__.py", line 395, in execute
+    #         django.setup()
+    #       File "/vendor/venv/lib/python3.9/site-packages/django/__init__.py", line 24, in setup
+    #         apps.populate(settings.INSTALLED_APPS)
+    #       File "/vendor/venv/lib/python3.9/site-packages/django/apps/registry.py", line 91, in populate
+    #         app_config = AppConfig.create(entry)
+    #       File "/vendor/venv/lib/python3.9/site-packages/django/apps/config.py", line 224, in create
+    #         import_module(entry)
+    #       File "/usr/local/lib/python3.9/importlib/__init__.py", line 127, in import_module
+    #         return _bootstrap._gcd_import(name[level:], package, level)
+    #       File "<frozen importlib._bootstrap>", line 1030, in _gcd_import
+    #       File "<frozen importlib._bootstrap>", line 1007, in _find_and_load
+    #       File "<frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked
+    #     ModuleNotFoundError: No module named 'django_digest'
+
+    # sys.path:
+    #     /vendor
+    #     /vendor/./custom/_legacy
+    #     /vendor/./corehq/ex-submodules
+    #     /vendor/./submodules/django-digest-src
+    #     /vendor/./submodules/python-digest
+    #     /vendor/./submodules/couchdbkit-aggregate
+    #     /vendor/./submodules/langcodes
+    #     /vendor/./submodules/django-no-exceptions
+    #     /vendor/./submodules/xml2json
+    #     /vendor/./submodules/vellum
+    #     /vendor/./submodules/commcare-translations
+    #     /usr/local/lib/python39.zip
+    #     /usr/local/lib/python3.9
+    #     /usr/local/lib/python3.9/lib-dynload
+    #     /vendor/venv/lib/python3.9/site-packages
+    #     /vendor/./submodules
+
 
 
 @attr.s

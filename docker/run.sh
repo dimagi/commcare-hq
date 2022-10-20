@@ -29,6 +29,11 @@ function setup {
     [ -n "$1" ] && TEST="$1"
     logmsg INFO "performing setup..."
 
+    if [[ -z "$VIRTUAL_ENV" ]]
+    then
+        . venv/bin/activate
+    fi
+
     rm *.log || true
 
     pip-sync requirements/test-requirements.txt
@@ -235,17 +240,17 @@ function bootstrap {
 
 function runserver {
     JS_SETUP=yes setup python
-    su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
+    su cchq -c ". venv/bin/activate && ./manage.py runserver $@ 0.0.0.0:8000"
 }
 
 function runcelery {
     JS_SETUP=yes setup python
-    su cchq -c "celery -A corehq worker -l info"
+    su cchq -c ". venv/bin/activate && celery -A corehq worker -l info"
 }
 
 function runpillowtop {
     setup python
-    su cchq -c "./manage.py run_ptop --all --processor-chunk-size=1"
+    su cchq -c ". venv/bin/activate && ./manage.py run_ptop --all --processor-chunk-size=1"
 }
 
 source /vendor/scripts/datadog-utils.sh  # provides send_metric_to_datadog
