@@ -1,13 +1,11 @@
 from datetime import datetime
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
-from jsonfield import JSONField
 
 from dimagi.ext.couchdbkit import IntegerProperty
 
@@ -196,3 +194,14 @@ class TableauVisualization(models.Model):
             if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
         ]
         return sorted(items, key=lambda v: v.name.lower())
+
+
+class TableauConnectedApp(models.Model):
+    app_client_id = models.CharField(max_length=32)
+    secret_id = models.CharField(max_length=64)
+    encrypted_secret_value = models.CharField(max_length=64)
+    server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'App client ID: {app_client_id},  Server: {server}'.format(app_client_id=self.app_client_id,
+                                                                          server=self.server)
