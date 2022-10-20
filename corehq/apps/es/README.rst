@@ -94,21 +94,22 @@ Design Details
 Reindex Procedure Details
 '''''''''''''''''''''''''
 
-1. Configure multiplexing on an index.
+1. Configure multiplexing on an index by passing in `secondary` index name to `create_document_adapter`.
 
-   - Configure the document adapter for the index with a "secondary index name".
-     This will cause the adapter to use multiplexing logic instead of a single
-     index.
-
-     **Note**: The multiplexing logic required for this operation is not yet
-     implemented. The multiplexing adapter will most likely delegate to two
-     document adapters configured for separate indexes. Suffice it to say that
-     when a secondary index is defined for an adapter, it effectively becomes a
-     multiplexing adapter (which to the consumer, is indistinguishable from a
-     "standard" adapter).
-
+   - Ensure that there is a migration in place for creating the index.
+   **Note** Tooling around this is a WIP
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
+    **Note** Currently the Adapter will not support reindexing on specific environments but it would be compatible to accommodate it in future. This support will be added once we get to V5 of ES.
+   - Configure `create_document_adapter` to return an instance of `ElasticMultiplexAdapter` by passing in `secondary` index name.
+    ```python
+    case_adapter = create_document_adapter(
+      ElasticCase,
+      "hqcases_2016-03-04",
+      "case",
+      secondary="hqcase_2022-10-20"
+    )
+    ```
    - Add a migration which performs all cluster-level operations required for
      the new (secondary) index. For example:
 
