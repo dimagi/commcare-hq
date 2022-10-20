@@ -18,15 +18,10 @@ class TestESView(SimpleTestCase):
     def setUp(self):
         super().setUp()
         self.cases = case_adapter
-        self._purge_indices()
         manager.index_create(self.cases.index_name)
-        manager.index_put_mapping(self.cases.index_name, self.cases.type,
-                                       self.cases.mapping)
+        self.addCleanup(self._purge_indices())
+        manager.index_put_mapping(self.cases.index_name, self.cases.type, self.cases.mapping)
         manager.index_put_alias(self.cases.index_name, CaseESView.es_alias)
-
-    def tearDown(self):
-        self._purge_indices()
-        super().tearDown()
 
     def _purge_indices(self):
         try:
