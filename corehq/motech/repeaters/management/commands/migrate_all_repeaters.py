@@ -4,8 +4,8 @@ import traceback
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
-from corehq.motech.repeaters.dbaccessors import get_all_repeater_docs
 from corehq.motech.repeaters.models import SQLRepeater
+from corehq.motech.repeaters.utils import get_all_repeater_docs
 from corehq.util.django_migrations import skip_on_fresh_install
 
 
