@@ -23,7 +23,7 @@ from corehq.util.urlvalidate.urlvalidate import (
     validate_user_input_url,
 )
 
-IMPLICIT_HTTPS_PORT = 443
+IMPLICIT_HTTPS_PORT = "443"
 
 
 class Command(BaseCommand):
@@ -205,7 +205,7 @@ class Endpoint:
             port = IMPLICIT_HTTPS_PORT
         self.scheme = urlparts.scheme
         self.netloc = urlparts.netloc
-        self.uniq = (hostname, int(port))
+        self.uniq = (hostname, port)
 
 
 @define
