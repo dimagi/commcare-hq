@@ -997,7 +997,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
 
 
 class Tombstone:
+    """
+    Used to create Tombstone documents in the secondary index when the document from primary index is deleted.
 
+    This is required to avoid a potential race condition
+    that might ocuur when we run reindex process along with the multiplexer
+    """
     PROPERTY_NAME = "__is_tombstone__"
 
     def __init__(self, doc_id):
