@@ -1069,7 +1069,7 @@ ELASTIC_ADAPTER_SETTINGS = {
     },
 }
 
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2022-10-14"
+ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
 
 # TODO: remove these Elastic settings:
 ES_SETTINGS = None  # [do not use] legacy mechanism for tests
