@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 from argparse import FileType
 from importlib import import_module
 from itertools import chain
@@ -229,7 +230,11 @@ class Result:
 
 
 def exc_tuple(exc):
-    return type(exc).__name__, str(exc)
+    return type(exc).__name__, rm_obj_addr(str(exc))
+
+
+def rm_obj_addr(msg):
+    return re.sub(r" object at 0x[0-9a-f]+", "", msg)
 
 
 def iter_sms_model_classes():
