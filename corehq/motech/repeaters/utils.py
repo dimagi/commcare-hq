@@ -5,11 +5,6 @@ from corehq.apps.cleanup.management.commands.populate_sql_model_from_couch_model
     PopulateSQLCommand,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.dbaccessors import (
-    get_all_repeater_docs,
-    get_repeater_count_for_domains,
-    get_repeaters_by_domain,
-)
 from corehq.motech.repeaters.models import Repeater
 
 
@@ -144,3 +139,41 @@ class RepeaterMigrationHelper(PopulateSQLCommand):
         for domain in domains:
             for repeater in get_repeaters_by_domain(domain):
                 yield repeater.to_json()
+
+
+def get_all_repeater_docs():
+    results = Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all()
+    return [
+        repeater['doc'] for repeater in results
+        if Repeater.get_class_from_doc_type(repeater['doc']['doc_type'])
+    ]
+
+
+def get_repeater_count_for_domains(domains):
+    view_kwargs = {
+        'reduce': True,
+        'include_docs': False,
+    }
+    count = 0
+    for domain in domains:
+        view_kwargs.update({
+            'startkey': [domain],
+            'endkey': [domain, {}]
+        })
+        result = Repeater.get_db().view('repeaters/repeaters', **view_kwargs).first()
+        if result:
+            count += result['value']
+    return count
+
+
+def get_repeaters_by_domain(domain):
+    results = Repeater.get_db().view('repeaters/repeaters',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=True,
+        reduce=False,
+    ).all()
+
+    return [Repeater.wrap(result['doc']) for result in results
+            if Repeater.get_class_from_doc_type(result['doc']['doc_type'])
+            ]

@@ -18,7 +18,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 
 from ..models import FHIRResourceProperty, FHIRResourceType
-from ..repeaters import FHIRRepeater
+from ..repeaters import SQLFHIRRepeater
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 CASE_ID = str(uuid4())
@@ -88,7 +88,7 @@ class TestPatientRegistration(TestCase, DomainSubscriptionMixin):
             name='Fhirplace',
             url=BASE_URL,
         )
-        cls.repeater = FHIRRepeater(
+        cls.repeater = SQLFHIRRepeater(
             domain=DOMAIN,
             connection_settings_id=cls.conn.id,
         )
