@@ -15,6 +15,8 @@ class SyniverseException(Exception):
 
 class SQLMachBackend(SQLSMSBackend):
 
+    url = MACH_URL
+
     class Meta(object):
         app_label = 'sms'
         proxy = True

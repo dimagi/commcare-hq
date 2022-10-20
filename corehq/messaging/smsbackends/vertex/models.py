@@ -20,6 +20,9 @@ from django.conf import settings
 
 
 class VertexBackend(SQLSMSBackend):
+
+    url = VERTEX_URL
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -77,7 +80,7 @@ class VertexBackend(SQLSMSBackend):
             return
 
         params = self.populate_params(msg_obj)
-        resp = requests.get(VERTEX_URL, params=params, timeout=settings.SMS_GATEWAY_TIMEOUT)
+        resp = requests.get(self.url, params=params, timeout=settings.SMS_GATEWAY_TIMEOUT)
         self.handle_response(msg_obj, resp.status_code, resp.text)
 
     def handle_response(self, msg_obj, resp_status_code, resp_text):

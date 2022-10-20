@@ -1,20 +1,24 @@
 import csv
 import os
 from argparse import FileType
+from importlib import import_module
 from itertools import chain
 from urllib.parse import urlparse, urlunparse
 
 import requests
 from attrs import define, field
 from django.core.management.base import BaseCommand, CommandError
-from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 from requests.exceptions import HTTPError, RequestException, SSLError
+from setuptools import find_packages
 
+from corehq.apps.sms.models import SQLSMSBackend
+from corehq.messaging import smsbackends
 from corehq.motech.models import ConnectionSettings
 from corehq.util.argparse_types import validate_range
 from corehq.util.log import with_progress_bar
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
 from corehq.util.urlvalidate.urlvalidate import (
+    InvalidURL,
     PossibleSSRFAttempt,
     validate_user_input_url,
 )
@@ -115,7 +119,17 @@ class Command(BaseCommand):
             yield Endpoint(connection.url, connection.domain, connection.name)
 
     def iter_sms_endpoints(self):
-        raise NotImplementedError("TODO")
+        def log_error(message):
+            self.console(message, self.style.WARNING)
+        for name, model_class in iter_sms_model_classes():
+            if not (hasattr(model_class, "url") or hasattr(model_class, "urls")):
+                self.console(
+                    f"{model_class.__module__}.{model_class.__name__} URL(s) not found",
+                    self.style.WARNING,
+                )
+                continue
+            for domain, url in iter_sms_urls(model_class, log_error):
+                yield Endpoint(url, domain, f"SMS:{name}")
 
     def verify_ssl(self, end, request_kw):
         """Verify SSL certificates for unique connection domains.
@@ -127,7 +141,7 @@ class Command(BaseCommand):
         url = urlunparse(("https", end.netloc, "/", "", "", ""))
         try:
             validate_user_input_url(url)
-        except (CannotResolveHost, PossibleSSRFAttempt) as exc:
+        except (CannotResolveHost, InvalidURL, PossibleSSRFAttempt) as exc:
             return Result(end, "error", error=exc_tuple(exc))
         self.debug(f"HEAD {url}")
         try:
@@ -204,3 +218,53 @@ class Result:
 
 def exc_tuple(exc):
     return type(exc).__name__, str(exc)
+
+
+def iter_sms_model_classes():
+    """Yield (backend_name, model_class) tuples"""
+    packages = find_packages(os.path.dirname(smsbackends.__file__))
+    for name in sorted(packages):
+        if name in _IGNORE_SMS_BACKENDS or "." in name:
+            continue
+        path = f"{smsbackends.__name__}.{name}.models"
+        models = import_module(path)
+        for obj in vars(models).values():
+            if (
+                isinstance(obj, type)
+                and issubclass(obj, SQLSMSBackend)
+                and obj is not SQLSMSBackend
+            ):
+                yield name, obj
+
+
+def iter_sms_urls(model_class, log_error):
+    """Yield (domain, url) tuples
+
+    SMS model classes are expected to have a `url` or/and `urls`
+    attribute. The `url` attribute may be a string or calculated
+    property. The `urls` attribute must be a dict with URL values.
+    """
+    if hasattr(model_class, "url"):
+        if isinstance(model_class.url, str):
+            yield "", model_class.url
+        else:
+            api_id = model_class.get_api_id()
+            for backend in model_class.active_objects.filter(hq_api_id=api_id):
+                try:
+                    yield backend.domain or "", backend.url
+                except Exception as err:
+                    log_error(
+                        f"Cannot get SMS URL for {model_class.__name__} "
+                        f"domain={backend.domain} "
+                        f"{type(err).__name__}: {err}"
+                    )
+    if hasattr(model_class, "urls"):
+        assert isinstance(model_class.urls, dict), model_class.urls
+        for url in model_class.urls.values():
+            yield "", url
+
+
+_IGNORE_SMS_BACKENDS = {
+    "amazon_pinpoint",  # AWS S3 backend. URL is not readily available.
+    "test",
+}
