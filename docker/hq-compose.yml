@@ -117,7 +117,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-zookeeper:}/opt/zookeeper-3.7/data
 
   kafka:
-      image: bitnami/kafka:3.2
+      image: ubuntu/kafka:3.1-22.04_edge
       ports:
         - "9092:9092"
       environment:
