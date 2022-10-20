@@ -83,4 +83,5 @@ branches:
     - jt/ush-2427 # Jonathan T. Oct 18
     - ce/api-rate-limits # Cal Oct 19
     - ml/lookup-table-UI # Minha Oct 19
+    - gh/add-history-tab # Graham Oct 20
 submodules: { }
