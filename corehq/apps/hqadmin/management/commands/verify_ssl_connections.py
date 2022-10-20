@@ -82,6 +82,7 @@ class Command(BaseCommand):
         ):
             pass
 
+        results.sort(key=lambda r: (r.endpoint.url, str(r.endpoint.domain)))
         failures = [r for r in results if r.failure]
         errors = [r for r in results if r.error]
         success_count = len(results) - len(failures) - len(errors)
