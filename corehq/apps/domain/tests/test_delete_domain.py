@@ -82,6 +82,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.registration.models import RegistrationRequest
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.reports.models import (
+    TableauConnectedApp,
     TableauServer,
     TableauVisualization,
 )
@@ -680,6 +681,7 @@ class TestDeleteDomain(TestCase):
         self._assert_queryset_count([
             TableauServer.objects.filter(domain=domain_name),
             TableauVisualization.objects.filter(domain=domain_name),
+            TableauConnectedApp.objects.filter(server__domain=domain_name),
         ], count)
 
     def test_reports_delete(self):
@@ -694,6 +696,11 @@ class TestDeleteDomain(TestCase):
                 domain=domain_name,
                 server=server,
                 view_url='my_url',
+            )
+            TableauConnectedApp.objects.create(
+                app_client_id='qwer1234',
+                secret_id='asdf5678',
+                server=server,
             )
             self._assert_reports_counts(domain_name, 1)
 
