@@ -21,12 +21,7 @@ def get_context_from_request(request):
         raise GenericInboundUserError(_("Payload must be valid JSON"))
 
     couch_user = request.couch_user
-    if couch_user.is_commcare_user():
-        restore_user = couch_user.to_ota_restore_user(couch_user)
-    elif couch_user.is_web_user():
-        restore_user = couch_user.to_ota_restore_user(request.domain, couch_user)
-    else:
-        raise GenericInboundUserError(_("Unknown user type"))
+    restore_user = couch_user.to_ota_restore_user(request.domain, request_user=couch_user)
 
     query = dict(request.GET.lists())
     return get_evaluation_context(
