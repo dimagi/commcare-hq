@@ -410,9 +410,8 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             if attribute not in all_item_attrs:
                 all_item_attrs.append(attribute)
         for index, field in enumerate(data_type.fields):
-            # this might pose a problem when fields of the same name have different properties..
-            if field not in all_fields:
-                all_fields.append(field)
+            if field.name not in all_fields:
+                all_fields.append(field.name)
             if len(field_prop_count) <= index:
                 field_prop_count.append(len(field.properties))
             elif field_prop_count[index] <= len(field.properties):
@@ -427,10 +426,10 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
         max_users = 0
         max_groups = 0
         max_locations = 0
-        if "field_prop_combos" in combined_item_helper:
-            field_prop_combos = combined_item_helper["field_prop_combos"]
+        if "max_field_prop_combos" in combined_item_helper:
+            max_field_prop_combos = combined_item_helper["max_field_prop_combos"]
         else:
-            field_prop_combos = {field.name: [] for field in data_type.fields}
+            max_field_prop_combos = {field.name: [] for field in data_type.fields}
         fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
         num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
         for n, item_row in enumerate(fixture_data):
@@ -440,20 +439,20 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
             max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
         for field in data_type.fields:
-            # need for a check to see if field.field_name is in max_field_prop_combos?
+            if field.name not in max_field_prop_combos:
+                max_field_prop_combos[field.field_name] = []
             for property in field.properties:
-                if property not in field_prop_combos[field.field_name]:
-                    field_prop_combos[field.field_name].append(property)
+                if property not in max_field_prop_combos[field.field_name]:
+                    max_field_prop_combos[field.field_name].append(property)
 
         combined_item_helper["max_users"] = max(combined_item_helper["max_users"], max_users)
         combined_item_helper["max_groups"] = max(combined_item_helper["max_groups"], max_groups)
         combined_item_helper["max_locations"] = max(combined_item_helper["max_locations"], max_locations)
-        combined_item_helper["field_prop_combos"] = field_prop_combos
+        combined_item_helper["max_field_prop_combos"] = max_field_prop_combos
 
     # Prepare 'types' sheet data
     indexed_field_numbers = get_indexed_field_numbers(data_types_view)
-    types_sheet = {"headers": [], "rows": []}
-    types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
+    types_sheet = {"headers": [DELETE_HEADER, "table_id", 'is_global?'], "rows": []}
     types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
     types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
@@ -467,7 +466,6 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
     for data_type in data_types_book:
         common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
         field_vals = []
-        # Count "is_indexed?" columns added, because data types with fewer fields will add fewer columns
         indexed_field_count = 0
         for i, field in enumerate(data_type.fields):
             field_vals.append(field.field_name)
@@ -500,31 +498,37 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
     location_headers = ["location %d" % x for x in range(1, combined_item_helper["max_locations"] + 1)]
     item_att_headers = ["property: " + attribute for attribute in all_item_attrs]
     all_field_headers = []
+
     # building the all_field_headers list
-    for field in all_fields:
-        if len(field.properties) == 0:
-            field_value = "field: " + field.field_name
+    for field_name in all_fields:
+        max_prop_combos = combined_item_helper["max_field_prop_combos"][field_name]
+        if len(max_prop_combos) == 0:
+            field_value = "field: " + field_name
             if field_value not in all_field_headers:
                 all_field_headers.append(field_value)
         else:
-            # will need to revisit this
             prop_headers = []
-            for x in range(1, len(combined_item_helper["max_field_prop_combos"][field.field_name]) + 1):
-                for property in combined_item_helper["max_field_prop_combos"][field.field_name]:
-                    prop_headers.append("%(name)s: %(prop)s %(count)s" % {
-                        "name": field.field_name,
+            for x in range(1, len(max_prop_combos) + 1):
+                for property in max_prop_combos:
+                    prop_header = "%(name)s: %(prop)s %(count)s" % {
+                        "name": field_name,
                         "prop": property,
                         "count": x
-                    })
-                prop_headers.append("field: %(name)s %(count)s" % {
-                    "name": field.field_name,
+                    }
+                    if prop_header not in all_field_headers:
+                        prop_headers.append(prop_header)
+                prop_header = "field: %(name)s %(count)s" % {
+                    "name": field_name,
                     "count": x
-                })
+                }
+                if prop_header not in all_field_headers:
+                    prop_headers.append(prop_header)
             all_field_headers.extend(prop_headers)
 
     # building the rows
     for n, data_type in enumerate(data_types_book):
         _update_progress(task, last_update, total_tables, n, total_tables, total_events)
+        max_prop_combos = combined_item_helper["max_field_prop_combos"]
         for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(item_row.id.hex), "N"]
             users = owner_names.get_usernames(item_row)
@@ -534,33 +538,26 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             group_vals = (groups + empty_padding_list(combined_item_helper["max_groups"] - len(groups)))
             location_vals = (locations + empty_padding_list(
                 combined_item_helper["max_locations"] - len(locations)))
-            field_vals = []
+
             item_att_vals = []
             for attribute in all_item_attrs:
                 if attribute in item_row.item_attributes:
                     item_att_vals.append(item_row.item_attributes[attribute])
                 else:
                     item_att_vals.append("")
-            for field in all_fields:
-                if len(field.properties) == 0:
-                    field_values = item_row.fields.get(field.name)
+
+            field_vals = []
+            for field_name in all_fields:
+                field_values = item_row.fields.get(field_name)
+                if len(max_prop_combos[field_name]) == 0:
                     value = field_values[0].value if field_values else ""
                     field_vals.append(value)
                 else:
-                    # there needs to be a check here that the field exists for this item row
-                    # similar to what's happening above actually...
-                    # if not, refer to the max_field_prop_combos and add a padding list
-                    # need to revisit this section (and corresponding headers)
                     field_prop_vals = []
-                    cur_combo_count = len(item_row.fields.get(field.field_name).field_list)
-                    cur_prop_count = len(field.properties)
-                    for count, field_prop_combo in enumerate(item_row.fields.get(field.field_name).field_list):
-                        for property in field.properties:
+                    for field_prop_combo in item_row.fields[field_name]:
+                        for property in max_prop_combos[field_name]:
                             field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
-                        field_prop_vals.append(field_prop_combo.field_value)
-                    padding_list_len = ((combined_item_helper["max_field_prop_combos"][field.field_name]
-                                         - cur_combo_count) * (cur_prop_count + 1))
-                    field_prop_vals.extend(empty_padding_list(padding_list_len))
+                        field_prop_vals.append(field_prop_combo.value)
                     field_vals.extend(field_prop_vals)
             row = tuple(
                 common_vals
