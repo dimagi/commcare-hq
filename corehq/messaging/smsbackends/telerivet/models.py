@@ -13,6 +13,7 @@ MESSAGE_TYPE_SMS = "sms"
 
 class SQLTelerivetBackend(SQLSMSBackend):
 
+    url = "https://api.telerivet.com/v1/projects/"
     show_inbound_api_key_during_edit = False
 
     class Meta(object):
@@ -49,8 +50,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
 
     def get_phone_info(self):
         config = self.config
-        url = ('https://api.telerivet.com/v1/projects/{}/phones/{}'
-               .format(config.project_id, config.phone_id))
+        url = f'{self.url}{config.project_id}/phones/{config.phone_id}'
 
         response = requests.post(
             url,
@@ -80,7 +80,7 @@ class SQLTelerivetBackend(SQLSMSBackend):
             'status_secret': self.config.webhook_secret
         }
 
-        url = 'https://api.telerivet.com/v1/projects/%s/messages/send' % config.project_id
+        url = f'{self.url}{config.project_id}/messages/send'
 
         # Sending with the json param automatically sets the Content-Type header to application/json
         response = requests.post(
