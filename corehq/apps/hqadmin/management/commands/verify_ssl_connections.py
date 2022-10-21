@@ -147,9 +147,9 @@ class Command(BaseCommand):
     def verify_ssl(self, end, request_kw):
         """Verify SSL certificates for unique connection domains.
 
-        :param connections: iterable of ConnectionSettings objects
+        :param end: Endpoint object.
         :param request_kw: dict of kw args for `requests.request()` call
-        :yields: (connection, exception) tuples for SSL verification failures
+        :returns: Result object
         """
         url = urlunparse(("https", end.netloc, "/", "", "", ""))
         try:
