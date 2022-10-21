@@ -62,8 +62,6 @@ services:
     extends:
       file: hq-compose.yml
       service: kafka
-    environment:
-      KAFKA_ADVERTISED_HOST_NAME: ${KAFKA_ADVERTISED_HOST_NAME}
     ports:
       - "9092:9092"
 
