@@ -2371,3 +2371,10 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
 )
+
+COMBINE_LOOKUP_TABLES = StaticToggle(
+    'combine_lookup_tables',
+    "Combines lookup table exports into one master sheet",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
