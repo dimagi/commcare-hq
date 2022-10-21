@@ -15,10 +15,11 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.util.test_utils import privilege_enabled
+from corehq.util.test_utils import privilege_enabled, flag_enabled
 
 
 @privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestGenericInboundAPIView(TestCase):
     domain_name = 'ucr-api-test'
     example_post_data = {'name': 'cricket', 'is_team_sport': True}
