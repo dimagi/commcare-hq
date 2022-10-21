@@ -125,7 +125,7 @@ services:
           KAFKA_BROKER_ID: 1
           KAFKA_INTER_BROKER_LISTENER_NAME: HQ_KAFKA
           KAFKA_LISTENERS: HQ_KAFKA://0.0.0.0:9092
-          KAFKA_ADVERTISED_LISTENERS: HQ_KAFKA://localhost:9092
+          KAFKA_ADVERTISED_LISTENERS: HQ_KAFKA://:9092
           KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HQ_KAFKA:PLAINTEXT
           CUSTOM_INIT_SCRIPT: |
             URL="https://raw.githubusercontent.com/vishnubob/wait-for-it/c096cface5fbd9f2d6b037391dfecae6fde1362e/wait-for-it.sh"
