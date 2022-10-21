@@ -485,6 +485,8 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
         row = tuple(common_vals + field_vals + item_att_vals + prop_vals)
         types_sheet["rows"].append(row)
+    # prevent combined sheets from being imported
+    types_sheet["rows"].append(tuple(["N", "combined_sheet_via_feature_flag", yesno(False)]))
 
     types_sheet["rows"] = tuple(types_sheet["rows"])
     types_sheet["headers"] = tuple(types_sheet["headers"])
