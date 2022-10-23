@@ -74,12 +74,12 @@ branches:
     #- jls/new-instance-connectors # Jenny Sept 27
     - akj/abdm-api-for-mobile-app # Akash Sep 28
     - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC) in QA
-    - gh/replace-base-crud-view # Graham Sep 29
+    # - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling+jt/ush-2427
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
     - jt/ush-2427 # Jonathan T. Oct 18
     - ml/lookup-table-UI # Minha Oct 19
-    - gh/add-history-tab # Graham Oct 20
+    # - gh/add-history-tab # Graham Oct 20
 submodules: { }
