@@ -25,16 +25,24 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 
 
-def prepare_fixture_download(table_ids, domain, task, download_id, owner_id):
+def prepare_fixture_download(table_ids, domain, task, download_id, owner_id, combine_sheets=False):
     """Prepare fixture data for Excel download
     """
-    data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task)
-
-    header_groups = [("types", excel_sheets["types"]["headers"])]
-    value_groups = [("types", excel_sheets["types"]["rows"])]
-    for data_type in data_types_book:
-        header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
-        value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
+    header_groups = []
+    value_groups = []
+    if combine_sheets:
+        # the sheets here will always just be "types" and "combined_sheet"
+        sheets, excel_sheets = _prepare_fixture_collated(table_ids, domain, task=task)
+        for sheet in sheets:
+            header_groups.append((sheet, excel_sheets[sheet]["headers"]))
+            value_groups.append((sheet, excel_sheets[sheet]["rows"]))
+    else:
+        data_types_book, excel_sheets = _prepare_fixture(table_ids, domain, task=task)
+        header_groups.append(("types", excel_sheets["types"]["headers"]))
+        value_groups.append(("types", excel_sheets["types"]["rows"]))
+        for data_type in data_types_book:
+            header_groups.append((data_type.tag, excel_sheets[data_type.tag]["headers"]))
+            value_groups.append((data_type.tag, excel_sheets[data_type.tag]["rows"]))
 
     file = io.BytesIO()
     format = Format.XLS_2007
@@ -89,17 +97,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     # when total_tables < 4 the final percentage can be >= 100%, but for
     # a small number of tables it renders more accurate progress
     total_events = (total_tables + (0 if total_tables < 4 else 1)) * 10
-
-    now = datetime.utcnow
-    last_update = [now()]
-    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
-
-    def _update_progress(event_count, item_count, items_in_table):
-        if task and now() - last_update[0] > upate_period:
-            last_update[0] = now()
-            processed = event_count * 10 + (10 * item_count / items_in_table)
-            processed = min(processed, total_events)  # limit at 100%
-            DownloadBase.set_progress(task, processed, total_events)
+    last_update = [datetime.utcnow()]
 
     # book-keeping data from view_results for repeated use
     data_types_book = []
@@ -120,12 +118,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         }
     """
     excel_sheets = {}
-
-    def get_field_prop_format(field_number, property_number):
-        return f"field {field_number} : property {property_number}"
-
-    def empty_padding_list(length):
-        return [""] * length
 
     max_fields = 0
     max_item_attributes = 0
@@ -175,7 +167,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
         num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
         for n, item_row in enumerate(fixture_data):
-            _update_progress(event_count, n, num_rows)
+            _update_progress(task, last_update, event_count, n, num_rows, total_events)
             data_items_book_by_type[data_type.tag].append(item_row)
             max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
             max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
@@ -239,7 +231,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     # Prepare 'items' sheet data for each data-type
     for n, data_type in enumerate(data_types_book):
-        _update_progress(total_tables, n, total_tables)
+        _update_progress(task, last_update, total_tables, n, total_tables, total_events)
         item_sheet = {"headers": [], "rows": []}
         item_helpers = item_helpers_by_type[data_type.tag]
         max_users = item_helpers["max_users"]
@@ -277,7 +269,6 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
             + group_headers
             + location_headers
         )
-        excel_sheets[data_type.tag] = item_sheet
         for item_row in data_items_book_by_type[data_type.tag]:
             common_vals = [str(item_row.id.hex), "N"]
             users = owner_names.get_usernames(item_row)
@@ -370,6 +361,243 @@ class OwnerNames:
     def get_location_codes(self, row):
         loc_ids = self.owners[row.id][OwnerType.Location]
         return sorted(self.location_codes[loc_id] for loc_id in loc_ids)
+
+
+def _prepare_fixture_collated(table_ids, domain, task=None):
+
+    # Feature flag only function
+    # Collects all separate sheets into one master sheet and adds a "table_id" column
+    # that indicates which table that row came from.
+
+    if table_ids and table_ids[0]:
+        try:
+            data_types_view = [LookupTable.objects.get(id=id) for id in table_ids]
+        except LookupTable.DoesNotExist:
+            data_types_view = LookupTable.objects.by_domain(domain)
+    else:
+        data_types_view = LookupTable.objects.by_domain(domain)
+
+    total_tables = len(data_types_view)
+    total_events = (total_tables + (0 if total_tables < 4 else 1)) * 10
+    last_update = [datetime.utcnow()]
+
+    # book-keeping data from view_results for repeated use
+    data_types_book = []
+    data_items_book_by_type = {}
+    combined_item_helper = {
+        "max_users": 0,
+        "max_groups": 0,
+        "max_locations": 0,
+    }
+    excel_sheets = {}  # will contain only "types" and "combined_sheets" sheets
+    all_fields = []
+    all_item_attrs = []
+    max_fields = 0
+    max_item_attributes = 0
+    field_prop_count = []
+    type_field_properties = {}
+    owner_names = OwnerNames(data_types_view)
+
+    for event_count, data_type in enumerate(data_types_view):
+        # Helpers to generate 'types' sheet
+        type_field_properties[data_type.tag] = {}
+        data_types_book.append(data_type)
+        if len(data_type.fields) > max_fields:
+            max_fields = len(data_type.fields)
+        if len(data_type.item_attributes) > max_item_attributes:
+            max_item_attributes = len(data_type.item_attributes)
+        for attribute in data_type.item_attributes:
+            if attribute not in all_item_attrs:
+                all_item_attrs.append(attribute)
+        for index, field in enumerate(data_type.fields):
+            if field.name not in all_fields:
+                all_fields.append(field.name)
+            if len(field_prop_count) <= index:
+                field_prop_count.append(len(field.properties))
+            elif field_prop_count[index] <= len(field.properties):
+                field_prop_count[index] = len(field.properties)
+            if len(field.properties) > 0:
+                for prop_index, property in enumerate(field.properties):
+                    prop_key = get_field_prop_format(index + 1, prop_index + 1)
+                    type_field_properties[data_type.tag][prop_key] = property
+
+        # Helpers to generate item-sheets
+        data_items_book_by_type[data_type.tag] = []
+        max_users = 0
+        max_groups = 0
+        max_locations = 0
+        if "max_field_prop_combos" in combined_item_helper:
+            max_field_prop_combos = combined_item_helper["max_field_prop_combos"]
+        else:
+            max_field_prop_combos = {field.name: [] for field in data_type.fields}
+        fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
+        num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
+        for n, item_row in enumerate(fixture_data):
+            _update_progress(task, last_update, event_count, n, num_rows, total_events)
+            data_items_book_by_type[data_type.tag].append(item_row)
+            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
+            max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
+            max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
+        for field in data_type.fields:
+            if field.name not in max_field_prop_combos:
+                max_field_prop_combos[field.field_name] = []
+            for property in field.properties:
+                if property not in max_field_prop_combos[field.field_name]:
+                    max_field_prop_combos[field.field_name].append(property)
+
+        combined_item_helper["max_users"] = max(combined_item_helper["max_users"], max_users)
+        combined_item_helper["max_groups"] = max(combined_item_helper["max_groups"], max_groups)
+        combined_item_helper["max_locations"] = max(combined_item_helper["max_locations"], max_locations)
+        combined_item_helper["max_field_prop_combos"] = max_field_prop_combos
+
+    # Prepare 'types' sheet data
+    indexed_field_numbers = get_indexed_field_numbers(data_types_view)
+    types_sheet = {"headers": [DELETE_HEADER, "table_id", 'is_global?'], "rows": []}
+    types_sheet["headers"].extend(iter_types_headers(max_fields, indexed_field_numbers))
+    types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
+    field_prop_headers = []
+    for field_num, prop_num in enumerate(field_prop_count):
+        if prop_num > 0:
+            for c in range(0, prop_num):
+                prop_key = get_field_prop_format(field_num + 1, c + 1)
+                field_prop_headers.append(prop_key)
+                types_sheet["headers"].append(prop_key)
+
+    for data_type in data_types_book:
+        common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
+        field_vals = []
+        indexed_field_count = 0
+        for i, field in enumerate(data_type.fields):
+            field_vals.append(field.field_name)
+            if i in indexed_field_numbers:
+                field_vals.append('yes' if field.is_indexed else 'no')
+                indexed_field_count += 1
+        field_vals.extend(empty_padding_list(
+            max_fields - len(data_type.fields)
+            + len(indexed_field_numbers) - indexed_field_count
+        ))
+        item_att_vals = (data_type.item_attributes + empty_padding_list(
+            max_item_attributes - len(data_type.item_attributes)
+        ))
+        prop_vals = []
+        if data_type.tag in type_field_properties:
+            props = type_field_properties.get(data_type.tag)
+            prop_vals.extend([props.get(key, "") for key in field_prop_headers])
+        row = tuple(common_vals + field_vals + item_att_vals + prop_vals)
+        types_sheet["rows"].append(row)
+
+    types_sheet["rows"] = tuple(types_sheet["rows"])
+    types_sheet["headers"] = tuple(types_sheet["headers"])
+    excel_sheets["types"] = types_sheet
+
+    # Making the collated master sheet
+    item_sheet = {"headers": [], "rows": []}
+    common_headers = ["UID", DELETE_HEADER]
+    user_headers = ["user %d" % x for x in range(1, combined_item_helper["max_users"] + 1)]
+    group_headers = ["group %d" % x for x in range(1, combined_item_helper["max_groups"] + 1)]
+    location_headers = ["location %d" % x for x in range(1, combined_item_helper["max_locations"] + 1)]
+    item_att_headers = ["property: " + attribute for attribute in all_item_attrs]
+    all_field_headers = []
+
+    # building the all_field_headers list
+    for field_name in all_fields:
+        max_prop_combos = combined_item_helper["max_field_prop_combos"][field_name]
+        if len(max_prop_combos) == 0:
+            field_value = "field: " + field_name
+            if field_value not in all_field_headers:
+                all_field_headers.append(field_value)
+        else:
+            prop_headers = []
+            for x in range(1, len(max_prop_combos) + 1):
+                for property in max_prop_combos:
+                    prop_header = "%(name)s: %(prop)s %(count)s" % {
+                        "name": field_name,
+                        "prop": property,
+                        "count": x
+                    }
+                    if prop_header not in all_field_headers:
+                        prop_headers.append(prop_header)
+                prop_header = "field: %(name)s %(count)s" % {
+                    "name": field_name,
+                    "count": x
+                }
+                if prop_header not in all_field_headers:
+                    prop_headers.append(prop_header)
+            all_field_headers.extend(prop_headers)
+
+    # building the rows
+    for n, data_type in enumerate(data_types_book):
+        _update_progress(task, last_update, total_tables, n, total_tables, total_events)
+        max_prop_combos = combined_item_helper["max_field_prop_combos"]
+        for item_row in data_items_book_by_type[data_type.tag]:
+            common_vals = [str(item_row.id.hex), "N"]
+            users = owner_names.get_usernames(item_row)
+            groups = owner_names.get_group_names(item_row)
+            locations = owner_names.get_location_codes(item_row)
+            user_vals = (users + empty_padding_list(combined_item_helper["max_users"] - len(users)))
+            group_vals = (groups + empty_padding_list(combined_item_helper["max_groups"] - len(groups)))
+            location_vals = (locations + empty_padding_list(
+                combined_item_helper["max_locations"] - len(locations)))
+
+            item_att_vals = []
+            for attribute in all_item_attrs:
+                if attribute in item_row.item_attributes:
+                    item_att_vals.append(item_row.item_attributes[attribute])
+                else:
+                    item_att_vals.append("")
+
+            field_vals = []
+            for field_name in all_fields:
+                field_values = item_row.fields.get(field_name)
+                if len(max_prop_combos[field_name]) == 0:
+                    value = field_values[0].value if field_values else ""
+                    field_vals.append(value)
+                else:
+                    field_prop_vals = []
+                    for field_prop_combo in item_row.fields[field_name]:
+                        for property in max_prop_combos[field_name]:
+                            field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
+                        field_prop_vals.append(field_prop_combo.value)
+                    field_vals.extend(field_prop_vals)
+            row = tuple(
+                common_vals
+                + field_vals
+                + item_att_vals
+                + user_vals
+                + group_vals
+                + location_vals
+                + [data_type.tag]
+            )
+            item_sheet["rows"].append(row)
+    item_sheet["headers"] = tuple(
+        common_headers
+        + all_field_headers
+        + item_att_headers
+        + user_headers
+        + group_headers
+        + location_headers
+        + ['table_id']
+    )
+    item_sheet["rows"] = tuple(item_sheet["rows"])
+    excel_sheets['combined_sheet'] = item_sheet
+    return ["types", "combined_sheet"], excel_sheets
+
+
+def _update_progress(task, last_update, event_count, item_count, items_in_table, total_events):
+    update_period = timedelta(seconds=1)  # do not update progress more than once a second
+    if task and datetime.utcnow() - last_update[0] > update_period:
+        last_update[0] = datetime.utcnow()
+        processed = event_count * 10 + (10 * item_count / items_in_table)
+        processed = min(processed, total_events)  # limit at 100%
+        DownloadBase.set_progress(task, processed, total_events)
+
+
+def get_field_prop_format(field_number, property_number):
+    return f"field {field_number} : property {property_number}"
+
+
+def empty_padding_list(length):
+    return [""] * length
 
 
 def get_indexed_field_numbers(tables):
