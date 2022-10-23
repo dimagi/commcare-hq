@@ -712,7 +712,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
         return DomainCaseRuleRun.objects.filter(
             domain=self.domain,
             workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-        )
+        ).order_by('-started_on', '-finished_on')
 
     def _update_rule(self, rule_id, action):
         rule, error = self._get_rule(rule_id)
