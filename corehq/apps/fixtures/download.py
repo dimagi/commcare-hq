@@ -330,9 +330,11 @@ class OwnerNames:
         ).values_list("row_id", "owner_type", "owner_id", named=True)
         for rec in row_owners:
             owners[rec.row_id][rec.owner_type].add(rec.owner_id)
-        self.usernames = self._load_usernames(owners)
-        self.group_names = self._load_group_names(owners)
-        self.location_codes = self._load_location_codes(owners)
+        self.names = {
+            OwnerType.User: self._load_usernames(owners),
+            OwnerType.Group: self._load_group_names(owners),
+            OwnerType.Location: self._load_location_codes(owners),
+        }
 
     def _load_usernames(self, owners):
         docs = self._iter_couch_docs(owners, OwnerType.User, CommCareUser)
@@ -357,19 +359,23 @@ class OwnerNames:
         return dict(codes)
 
     def count(self, row, owner_type):
-        return len(self.owners[row.id][owner_type])
+        names = self.names[owner_type]
+        return sum(1 for doc_id in self.owners[row.id][owner_type] if doc_id in names)
 
     def get_usernames(self, row):
         user_ids = self.owners[row.id][OwnerType.User]
-        return sorted(self.usernames[doc_id] for doc_id in user_ids)
+        names = self.names[OwnerType.User]
+        return sorted(names[doc_id] for doc_id in user_ids if doc_id in names)
 
     def get_group_names(self, row):
         group_ids = self.owners[row.id][OwnerType.Group]
-        return sorted(self.group_names[doc_id] for doc_id in group_ids)
+        names = self.names[OwnerType.Group]
+        return sorted(names[doc_id] for doc_id in group_ids if doc_id in names)
 
     def get_location_codes(self, row):
         loc_ids = self.owners[row.id][OwnerType.Location]
-        return sorted(self.location_codes[loc_id] for loc_id in loc_ids)
+        names = self.names[OwnerType.Location]
+        return sorted(names[loc_id] for loc_id in loc_ids if loc_id in names)
 
 
 def get_indexed_field_numbers(tables):
