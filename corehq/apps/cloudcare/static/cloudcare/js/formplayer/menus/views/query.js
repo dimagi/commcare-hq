@@ -468,17 +468,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             self._updateModelsForValidation().done(function (response) {
                 //Gather error messages
                 self.children.each(function (childView) {
+                    //Filter out empty required fields that user has not updated yet
                     if ((!childView.hasRequiredError() || childView === changedChildView)
                          && !childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
                     }
                 });
 
-                if (invalidFields.length) {
-                    promise.reject(response);
-                } else {
-                    promise.resolve(response);
-                }
+                promise.resolve(response);
             });
 
             return promise;
