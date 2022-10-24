@@ -352,12 +352,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
 
         if (options.allowedHost) {
-            var HQEvents = hqRequire("cloudcare/js/formplayer/hq_events");
-            window.addEventListener(
-                "message",
-                HQEvents.Receiver(options.allowedHost),
-                false
-            );
+            hqRequire(["cloudcare/js/formplayer/hq_events"], function (HQEvents) {
+                window.addEventListener(
+                    "message",
+                    HQEvents.Receiver(options.allowedHost),
+                    false
+                );
+            });
         }
 
         const reconnectTimingWindow = 2000;
