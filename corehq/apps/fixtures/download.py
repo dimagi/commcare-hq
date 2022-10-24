@@ -92,10 +92,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     now = datetime.utcnow
     last_update = [now()]
-    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
+    update_period = timedelta(seconds=1)  # do not update progress more than once a second
 
     def _update_progress(event_count, item_count, items_in_table):
-        if task and now() - last_update[0] > upate_period:
+        if task and now() - last_update[0] > update_period:
             last_update[0] = now()
             processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
