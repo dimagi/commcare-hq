@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 from django.test import TestCase
 from django.urls import reverse
 
+from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
 from corehq.apps.userreports.models import UCRExpression
@@ -14,8 +15,11 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
+from corehq.util.test_utils import privilege_enabled, flag_enabled
 
 
+@privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestGenericInboundAPIView(TestCase):
     domain_name = 'ucr-api-test'
     example_post_data = {'name': 'cricket', 'is_team_sport': True}
@@ -24,7 +28,7 @@ class TestGenericInboundAPIView(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.domain = create_domain(cls.domain_name)
-        cls.user = WebUser.create(cls.domain_name, 'test@dimagi.com', 'secret', None, None)
+        cls.user = WebUser.create(cls.domain_name, 'test@dimagi.com', 'secret', None, None, is_admin=True)
         cls.addClassCleanup(cls.domain.delete)
 
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
@@ -116,8 +120,8 @@ class TestGenericInboundAPIView(TestCase):
             HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
             HTTP_USER_AGENT="user agent string",
         )
+        self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response.status_code, 200, response_json)
         self.assertItemsEqual(response_json.keys(), ['cases', 'form_id'])
         self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
         return response_json
