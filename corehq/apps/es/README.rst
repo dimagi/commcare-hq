@@ -318,6 +318,36 @@ Using this adapter in practice might look as follows:
     classic_book = books_adapter.fetch("978-0345391803")
 
 
+Tombstone
+'''''''''
+
+The concept of Tombstone in the ES mulitplexer is there to be placeholder for the docs that are deleted in the primary index. It means that whenever an adapter is multiplexed and a document is deleted from the primary index, then the secondary index will create tombstone entry for that document. The python class defined to represent these tombstones is  `corehq.apps.es.client.Tombstone`
+
+The requirement of tombstones arise due to a potential race condition that might come when reindex operation is run on the multiplexed index.
+
+Scenario without tomstones: If a multiplexing adapter deletes a document in the secondary index (which turns out to be a no-op because the document does not exist there yet), and then that same document is copied to the secondary index by the reindexer, then it will exist indefinitely in the secondary even though it has been deleted in the primary.
+
+Put another way:
+
+- Reindexer: gets batch of objects from primary index to copy to secondary.
+- Multiplexer: deletes a document in that batch (in both primary and secondary indexes).
+- Reindexer: writes deleted (now stale) document into secondary index.
+- Result: secondary index contains a document that has been deleted.
+
+With tombstsones: this will not happen because the reindexer uses a "ignore existing documents" copy mode, so it will never overwrite a tombstone with a stale (deleted) document.
+
+The tombstones would **only exist** in the secondary index and would be deleted when we are switching from primary to secondary.
+
+A sample tombstone document would look like
+
+```
+{
+  "__is_tombstone__" : True
+}
+```
+
+Current mapping does not index `__is_tombstone__` property but it would be added to mappings before we start reindexing. This would help us in ensuring that we can ignore them in the ES queries.
+
 Code Documentation
 ''''''''''''''''''
 
