@@ -7,6 +7,7 @@ from ..management.commands.populate_lookuptablerowowners import Command as Looku
 
 
 class Migration(migrations.Migration):
+    atomic = False
 
     dependencies = [
         ('fixtures', '0007_db_cascade'),
