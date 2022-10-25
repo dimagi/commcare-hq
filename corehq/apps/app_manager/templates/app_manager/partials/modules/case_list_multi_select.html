@@ -18,6 +18,12 @@
               {% trans "Enable multi-select case list" %}
             </label>
           </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: autoSelectEnabled, disable: !multiSelectEnabled()"/>
+              {% trans "Enable auto select" %}
+            </label>
+          </div>
         </div>
       </div>
     </div>
