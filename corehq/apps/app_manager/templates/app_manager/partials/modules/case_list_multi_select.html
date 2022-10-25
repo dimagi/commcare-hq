@@ -32,6 +32,16 @@
               {% trans "Enable auto select" %}
             </label>
           </div>
+          <div class="form-group" data-bind="visible: multiSelectEnabled()">
+            <label class="control-label {% css_label_class %}">
+                {% trans "Maximum selected value" %}
+                <span class="hq-help-template" data-title="{% trans 'Maximum Selected Value' %}"
+                      data-content="{% trans_html_attr 'Sets a maximum selected value for multi select case lists. If no value is inputted, the default value is used.' %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text" name="max-select-value-input" data-bind="value: maxSelectValue" class="form-control">
+            </div>
+          </div>
         </div>
       </div>
     </div>

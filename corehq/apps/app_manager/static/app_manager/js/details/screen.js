@@ -72,10 +72,12 @@ hqDefine("app_manager/js/details/screen", function () {
         self.multiSelectEnabled.subscribe(function () {
             self.fireChange();
         });
+        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value) || hqImport("cloudcare/js/formplayer/constants").MULTI_SELECT_MAX_SELECT_VALUE;
         self.autoSelectEnabled = ko.observable(spec[self.columnKey].auto_select);
         self.autoSelectEnabled.subscribe(function () {
             self.fireChange();
         });
+
         self.persistTileOnForms = ko.observable(spec[self.columnKey].persist_tile_on_forms || false);
         self.enableTilePullDown = ko.observable(spec[self.columnKey].pull_down_tile || false);
         self.allowsEmptyColumns = options.allowsEmptyColumns;
@@ -336,6 +338,7 @@ hqDefine("app_manager/js/details/screen", function () {
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
             data.multi_select = self.multiSelectEnabled();
             data.auto_select = self.autoSelectEnabled() && self.multiSelectEnabled();
+            data.max_select_value = self.maxSelectValue();
             if (self.containsSearchConfiguration) {
                 data.search_properties = JSON.stringify(self.config.search.serialize());
             }
