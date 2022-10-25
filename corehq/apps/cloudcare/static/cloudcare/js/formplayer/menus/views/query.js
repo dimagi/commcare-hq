@@ -214,27 +214,41 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             });
         },
 
+        hasRequiredError: function () {
+            if (!this.model.get('required')) {
+                return false;
+            }
+            var answer = this.getEncodedValue();
+            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
+                return false;
+            } else {
+                return true;
+            }
+
+        },
+
+        hasNonRequiredErrors: function () {
+            if (this.model.get("error")) {
+                return true;
+            }
+        },
+
         /**
          * Determines if model has either a server error or is required and missing.
          * Returns error message, or null if model is valid.
          */
-        checkValid: function () {
-            if (this.model.get("error")) {
+        getError: function () {
+            if (this.hasNonRequiredErrors()) {
                 return this.model.get("error");
             }
-            if (!this.model.get('required')) {
-                return null;
-            }
-            var answer = this.getEncodedValue();
-            if (answer !== undefined && (answer === "" || answer.replace(/\s+/, "") !== "")) {
-                return null;
-            } else {
+            if (this.hasRequiredError()) {
                 return this.model.get("required_msg");
             }
+            return null;
         },
 
         isValid: function () {
-            var newError = this.checkValid();
+            var newError = this.getError();
             if (newError !== this.errorMessage) {
                 this.errorMessage = newError;
                 this._render();
@@ -293,7 +307,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Geocoder doesn't have a real value, doesn't need to be sent to formplayer
                 return;
             }
-            this.parentView.notifyFieldChange(e);
+            this.parentView.notifyFieldChange(e, this);
         },
 
         toggleBlankSearch: function (e) {
@@ -401,10 +415,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             return answers;
         },
 
-        notifyFieldChange: function (e) {
+        notifyFieldChange: function (e, changedChildView) {
             e.preventDefault();
             var self = this;
-            self.validateFields().always(function (response) {
+            self.validateFieldChange(changedChildView).always(function (response) {
                 var $fields = $(".query-field");
                 for (var i = 0; i < response.models.length; i++) {
                     var choices = response.models[i].get('itemsetChoices');
@@ -444,37 +458,43 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var self = this;
             e.preventDefault();
 
-            // validateFields will likely already have been called when user blurred the last field,
-            // but call it here just in case they didn't fill anything out
-            self.validateFields().done(function () {
+            self.validateAllFields().done(function () {
                 FormplayerFrontend.trigger("menu:query", self.getAnswers());
             });
+        },
+
+        validateFieldChange: function (changedChildView) {
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
+
+            self._updateModelsForValidation().done(function (response) {
+                //Gather error messages
+                self.children.each(function (childView) {
+                    //Filter out empty required fields that user has not updated yet
+                    if ((!childView.hasRequiredError() || childView === changedChildView)
+                         && !childView.isValid()) {
+                        invalidFields.push(childView.model.get('text'));
+                    }
+                });
+
+                promise.resolve(response);
+            });
+
+            return promise;
         },
 
         /*
          *  Send request to formplayer to validate fields. Displays any errors.
          *  Returns a promise that contains the formplayer response.
          */
-        validateFields: function () {
-            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-                self = this;
+        validateAllFields: function () {
+            var self = this;
+            var promise = $.Deferred();
+            var invalidFields = [];
 
-            var urlObject = Utils.currentUrlToObject();
-            urlObject.setQueryData(self.getAnswers(), false);
-            var promise = $.Deferred(),
-                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
-            $.when(fetchingPrompts).done(function (response) {
-                // Update models based on response
-                _.each(response.models, function (responseModel, i) {
-                    self.collection.models[i].set({
-                        error: responseModel.get('error'),
-                        required: responseModel.get('required'),
-                        required_msg: responseModel.get('required_msg'),
-                    });
-                });
-
+            self._updateModelsForValidation().done(function (response) {
                 // Gather error messages
-                var invalidFields = [];
                 self.children.each(function (childView) {
                     if (!childView.isValid()) {
                         invalidFields.push(childView.model.get('text'));
@@ -496,6 +516,30 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 } else {
                     promise.resolve(response);
                 }
+            });
+
+            return promise;
+        },
+
+        _updateModelsForValidation: function () {
+            var Utils = hqImport("cloudcare/js/formplayer/utils/utils"),
+                self = this;
+
+            var urlObject = Utils.currentUrlToObject();
+            urlObject.setQueryData(self.getAnswers(), false);
+            var promise = $.Deferred(),
+                fetchingPrompts = FormplayerFrontend.getChannel().request("app:select:menus", urlObject);
+            $.when(fetchingPrompts).done(function (response) {
+                // Update models based on response
+                _.each(response.models, function (responseModel, i) {
+                    self.collection.models[i].set({
+                        error: responseModel.get('error'),
+                        required: responseModel.get('required'),
+                        required_msg: responseModel.get('required_msg'),
+                    });
+                });
+                promise.resolve(response);
+
             });
 
             return promise;
