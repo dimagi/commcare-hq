@@ -254,11 +254,12 @@ def _log_api_request(api, request, response):
         request_ip=get_ip(request),
     )
 
-    response_json = json.loads(response.content)
-    if is_success:
+    if is_success and response.content:
+        response_json = json.loads(response.content)
         case_ids = [c['case_id'] for c in
                     response_json.get('cases', [response_json.get('case')])]
     else:
+        response_json = {}
         case_ids = []
     ProcessingAttempt.objects.create(
         log=log,
