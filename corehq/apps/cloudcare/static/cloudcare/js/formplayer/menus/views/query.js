@@ -272,6 +272,9 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 this.model.set('value', $(e.currentTarget).val());
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
+            } else if (this.model.get('input') === 'checkbox') {
+                let value = this.model.get('value');
+                this.model.set('value', value !== 'checked' ? 'checked' : '');
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
