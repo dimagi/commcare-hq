@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -207,7 +207,7 @@ def _generic_inbound_api(api, request):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except GenericInboundRequestFiltered:
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except SubmissionError as e:
