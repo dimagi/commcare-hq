@@ -3,6 +3,14 @@
 
 {% if request|toggle_enabled:"USH_CASE_LIST_MULTI_SELECT" %}
 
+	<script>
+		function reconcileCheckboxes() {
+			if (!document.getElementById("multi-select-checkbox").checked) {
+			  document.getElementById("auto-select-checkbox").checked = false;
+      }
+		}
+	</script>
+
   <div class="panel panel-appmanager" data-bind="with: shortScreen">
     <div class="panel-heading">
       <h4 class="panel-title panel-title-nolink">
@@ -14,13 +22,13 @@
         <div class="col-sm-8">
           <div class="checkbox">
             <label>
-              <input type="checkbox" data-bind="checked: multiSelectEnabled"/>
+              <input type="checkbox" id="multi-select-checkbox" data-bind="checked: multiSelectEnabled" onchange="reconcileCheckboxes()"/>
               {% trans "Enable multi-select case list" %}
             </label>
           </div>
           <div class="checkbox">
             <label>
-              <input type="checkbox" data-bind="checked: autoSelectEnabled, disable: !multiSelectEnabled()"/>
+              <input type="checkbox" id="auto-select-checkbox" data-bind="checked: autoSelectEnabled, disable: !multiSelectEnabled()"/>
               {% trans "Enable auto select" %}
             </label>
           </div>

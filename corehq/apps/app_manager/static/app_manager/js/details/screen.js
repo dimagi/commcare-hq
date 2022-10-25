@@ -335,7 +335,7 @@ hqDefine("app_manager/js/details/screen", function () {
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
             data.multi_select = self.multiSelectEnabled();
-            data.auto_select = self.autoSelectEnabled();
+            data.auto_select = self.autoSelectEnabled() && self.multiSelectEnabled();
             if (self.containsSearchConfiguration) {
                 data.search_properties = JSON.stringify(self.config.search.serialize());
             }
