@@ -1,8 +1,8 @@
-from django.test import TestCase
+from django.test import SimpleTestCase
 from corehq.apps.reports.models import TableauConnectedApp, TableauServer
 
 
-class TestTableauConnectedApp(TestCase):
+class TestTableauConnectedApp(SimpleTestCase):
 
     def setUp(self):
         self.domain = 'test-domain-name'
@@ -13,18 +13,15 @@ class TestTableauConnectedApp(TestCase):
             validate_hostname='host name',
             target_site='target site'
         )
-        self.test_server.save()
         self.test_connected_app = TableauConnectedApp(
             app_client_id='asdf1234',
             secret_id='zxcv5678',
             server=self.test_server
         )
-        self.test_connected_app.save()
         super(TestTableauConnectedApp, self).setUp()
 
     def test_encryption(self):
         self.test_connected_app.plaintext_secret_value = 'qwer1234'
-        self.test_connected_app.save()
 
         self.assertNotEqual(self.test_connected_app.encrypted_secret_value, 'qwer1234')
         self.assertEqual(self.test_connected_app.plaintext_secret_value, 'qwer1234')
