@@ -196,10 +196,14 @@ class LookupTableRowManager(models.Manager):
                 break
             row = results._result_cache[-1]
             next_page = models.Q(
+                table_id=row.table_id,
                 sort_key=row.sort_key,
                 id__gt=row.id,
             ) | models.Q(
+                table_id=row.table_id,
                 sort_key__gt=row.sort_key
+            ) | models.Q(
+                table_id__gt=row.table_id,
             )
 
     def with_value(self, domain, table_id, field_name, value):
