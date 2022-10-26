@@ -61,6 +61,8 @@ ES_INDEX_SETTINGS = {
     # Apply phonetic analysis to case search index only
     CASE_SEARCH_HQ_INDEX_NAME: {
         "settings": {
+            "number_of_replicas": 1,
+            "number_of_shards": 5,
             "analysis": phonetic_analysis,
         },
     },

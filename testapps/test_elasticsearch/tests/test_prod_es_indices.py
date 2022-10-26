@@ -102,6 +102,7 @@ EXPECTED_PROD_INDICES = [
                     }
                 },
                 "number_of_replicas": 1,
+                "number_of_shards": 5,
             }
         }
     },
