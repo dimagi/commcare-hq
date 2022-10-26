@@ -13370,12 +13370,46 @@ msgid "Completion Time"
 msgstr "L'heure d'exécution"
 
 #: corehq/apps/data_interfaces/models.py
+msgid "Case Update"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Deduplicate"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py corehq/messaging/scheduling/forms.py
+msgid "Scheduling"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
 msgid "ALL of the criteria are met"
 msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
 msgid "ANY of the criteria are met"
 msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Running"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Finished"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Stopped"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+#: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/templates/integration/web_app_integration_err.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
+msgid "Error"
+msgstr "Erreur"
 
 #: corehq/apps/data_interfaces/tasks.py
 msgid "No Forms are supplied"
@@ -16604,15 +16638,6 @@ msgstr "Supprimer le paiement automatique"
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 msgid "Set as autopay card"
 msgstr "Définir en tant que carte pour paiement automatique"
-
-#: corehq/apps/domain/templates/error.html
-#: corehq/apps/integration/templates/integration/web_app_integration_err.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
-msgid "Error"
-msgstr "Erreur"
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -36107,7 +36132,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Are you sure you want to to accept the invitation\n"
+"                        Are you sure you want to accept the invitation\n"
 "                        to join the CommCare HQ %(invite_type)s\n"
 "                        <strong>%(invite_to)s</strong> as <strong>"
 "%(username)s</strong>?\n"
@@ -38673,10 +38698,6 @@ msgid "JSON: list of strings"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Scheduling"
-msgstr ""
-
-#: corehq/messaging/scheduling/forms.py
 msgid "Add Event"
 msgstr ""
 
@@ -40671,10 +40692,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -42717,36 +42734,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Edit Submission"
-#~ msgstr "Modifier soumission"
-
-#~ msgid "Application not found."
-#~ msgstr "Application introuvable."
-
-#~ msgid "Missing module or form information!"
-#~ msgstr "Module ou information formulaire manquent!"
-
-#~ msgid ""
-#~ "Could not detect the application or form for this submission. A common "
-#~ "cause is that the form was submitted via App or Form preview"
-#~ msgstr ""
-#~ "Impossible de trouver l'application/formulaire pour cette soumission. Une "
-#~ "cause commune est que le formulaire a été envoyé via un aperçu de "
-#~ "l'application ou du formulaire"
-
-#~ msgid "Could not detect the application or form for this submission."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Could not find user for this submission."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Could not find the user-case for this form"
-#~ msgstr "Impossible de trouver le dossier-utilisateur pour ce formulaire"
-
-#~ msgid ""
-#~ "Case <a href=\"{case_url}\">{case_name}</a> is closed. Please reopen the "
-#~ "case before editing the form"
-#~ msgstr ""
-#~ "Le dossier <a href=\"{case_url}\">{case_name}</a> est fermé. Veuillez "
-#~ "reouvrir le dossier avant de modifier le formulaire"

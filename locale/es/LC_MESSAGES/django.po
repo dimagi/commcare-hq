@@ -13492,12 +13492,46 @@ msgid "Completion Time"
 msgstr "Tiempo de Finalización"
 
 #: corehq/apps/data_interfaces/models.py
+msgid "Case Update"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Deduplicate"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py corehq/messaging/scheduling/forms.py
+msgid "Scheduling"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
 msgid "ALL of the criteria are met"
 msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
 msgid "ANY of the criteria are met"
 msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Running"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Finished"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Stopped"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+#: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/templates/integration/web_app_integration_err.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
+msgid "Error"
+msgstr "Error"
 
 #: corehq/apps/data_interfaces/tasks.py
 msgid "No Forms are supplied"
@@ -16719,15 +16753,6 @@ msgstr "Eliminar Pago automático"
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 msgid "Set as autopay card"
 msgstr "Seleccionar como tarjeta para pago automático"
-
-#: corehq/apps/domain/templates/error.html
-#: corehq/apps/integration/templates/integration/web_app_integration_err.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
-msgid "Error"
-msgstr "Error"
 
 #: corehq/apps/domain/templates/error.html
 msgid "Error details"
@@ -36176,7 +36201,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Are you sure you want to to accept the invitation\n"
+"                        Are you sure you want to accept the invitation\n"
 "                        to join the CommCare HQ %(invite_type)s\n"
 "                        <strong>%(invite_to)s</strong> as <strong>"
 "%(username)s</strong>?\n"
@@ -38741,10 +38766,6 @@ msgid "JSON: list of strings"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Scheduling"
-msgstr ""
-
-#: corehq/messaging/scheduling/forms.py
 msgid "Add Event"
 msgstr ""
 
@@ -40739,10 +40760,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
@@ -42750,46 +42767,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Edit Submission"
-#~ msgstr "Edite Ingreso"
-
-#~ msgid "Form cannot be edited because it will create a new case"
-#~ msgstr "El formulario no puede ser editado porque creará un nuevo caso. "
-
-#~ msgid "Application not found."
-#~ msgstr "Aplicación no encontrada."
-
-#~ msgid "Missing module or form information!"
-#~ msgstr "¡Módulo o información del formulario perdida!"
-
-#~ msgid ""
-#~ "Could not detect the application or form for this submission. A common "
-#~ "cause is that the form was submitted via App or Form preview"
-#~ msgstr ""
-#~ "No se pudo detectar la aplicación o formulario a ser ingresado. Una causa "
-#~ "común es que el formulario fue ingresado via App o Vista Previa del "
-#~ "Formulario."
-
-#~ msgid "Could not detect the application or form for this submission."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Could not find user for this submission."
-#~ msgstr "Casos IRA Tratados"
-
-#~ msgid "Could not find the user-case for this form"
-#~ msgstr "No se pudo encontrar el usuario-caso para este formulario"
-
-#~ msgid ""
-#~ "Case <a href=\"{case_url}\">{case_name}</a> is closed. Please reopen the "
-#~ "case before editing the form"
-#~ msgstr ""
-#~ "El caso <a href=\"{case_url}\">{case_name}</a> está cerrado. Por favor "
-#~ "abra nuevamente el caso antes de editar el formulario"
-
-#~ msgid ""
-#~ "Case <a href=\"{case_url}\">{case_name}</a> is deleted. Cannot edit this "
-#~ "form."
-#~ msgstr ""
-#~ "Caso <a href=\"{case_url}\">{case_name}</a> ha sido borrado. No se puede "
-#~ "editar este formulario."
