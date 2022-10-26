@@ -232,7 +232,7 @@ def mobile_experience_hidden_by_toggle(request):
     return False
 
 
-def banners(request):
+def subscription_banners(request):
     is_logged_in_user = hasattr(request, 'user') and request.user.is_authenticated
     has_subscription = hasattr(request, 'subscription')
     if not (settings.IS_SAAS_ENVIRONMENT and is_logged_in_user and has_subscription):

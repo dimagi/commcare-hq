@@ -64,6 +64,10 @@ class InfobipBackend(SQLSMSBackend):
     def get_opt_out_keywords(cls):
         return ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'END', 'QUIT']
 
+    @property
+    def url(self):
+        return f'https://{self.config.personalized_subdomain}.{INFOBIP_DOMAIN}'
+
     def send(self, msg, orig_phone_number=None, *args, **kwargs):
         config = self.config
         to = clean_phone_number(msg.phone_number)
@@ -90,7 +94,7 @@ class InfobipBackend(SQLSMSBackend):
             'voice': {'text': msg.text},
             'sms': {'text': msg.text}
         }
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/omni/1/advanced'
+        url = f'{self.url}/omni/1/advanced'
 
         if is_whatsapp_template_message(msg.text):
             if msg.invalid_survey_response:
@@ -137,7 +141,7 @@ class InfobipBackend(SQLSMSBackend):
                 'text': msg.text
             }]
         }
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}/sms/2/text/advanced'
+        url = f'{self.url}/sms/2/text/advanced'
         response = requests.post(url, json=payload, headers=headers)
         self.handle_response(response, msg)
 
@@ -214,7 +218,7 @@ class InfobipBackend(SQLSMSBackend):
             raise RetryBillableTaskException(str(e))
 
     def _get_message_details(self, api_channel, api_suffix, config, headers, parameters):
-        url = f'https://{config.personalized_subdomain}.{INFOBIP_DOMAIN}{api_channel}{api_suffix}'
+        url = f'{self.url}{api_channel}{api_suffix}'
         response = requests.get(url, params=parameters, headers=headers)
         return response.json()['results']
 

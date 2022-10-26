@@ -107,7 +107,7 @@
     <div class="webforms-nav"
          data-bind="template: { name: 'form-navigation-ko-template' }"></div>
   </div>
-  <div class="container form-container js-form-container" data-bind="
+  <div class="container form-container js-form-container print-container" data-bind="
           css: { 'form-single-question': showInFormNavigation },
       ">
 
@@ -142,7 +142,7 @@
               </ul>
             </div>
           </div>
-          <div id="submit-button" class="form-actions form-group" data-bind="visible: showSubmitButton">
+          <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"

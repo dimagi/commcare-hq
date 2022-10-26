@@ -234,6 +234,12 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info = ElasticsearchIndexInfo.wrap(raw_info)
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
+        from corehq.apps.es.registry import register
+        from corehq.apps.es.transient_util import add_dynamic_es_adapter
+        register(index_info, index_info.alias)
+        add_dynamic_es_adapter(
+            "CaseSearchBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
+        )
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(

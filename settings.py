@@ -396,6 +396,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -524,11 +525,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
-
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -1237,7 +1233,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
@@ -1256,7 +1252,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1417,7 +1413,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -2069,3 +2065,4 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
+COMMCARE_ANALYTICS_HOST = ""

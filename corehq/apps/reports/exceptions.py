@@ -14,7 +14,3 @@ class InvalidDaterangeException(Exception):
 
 class TooMuchDataError(Exception):
     pass
-
-
-class EditFormValidationError(Exception):
-    pass
