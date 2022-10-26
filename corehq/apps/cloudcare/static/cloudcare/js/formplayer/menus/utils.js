@@ -161,7 +161,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 });
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
+                if (menuData.isMultiSelect) {
+                    return hqImport("cloudcare/js/formplayer/menus/views").MultiSelectCaseListView(menuData);
+                } else {
+                    return hqImport("cloudcare/js/formplayer/menus/views").CaseListView(menuData);
+                }
             } else {
                 if (menuResponse.numEntitiesPerRow > 1) {
                     return hqImport("cloudcare/js/formplayer/menus/views").GridCaseTileListView(menuData);
