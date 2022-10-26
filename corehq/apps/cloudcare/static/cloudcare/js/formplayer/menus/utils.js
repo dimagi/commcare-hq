@@ -168,7 +168,11 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
                 });
             }
             if (menuResponse.tiles === null || menuResponse.tiles === undefined) {
-                return views.CaseListView(menuData);
+                if (menuData.isMultiSelect) {
+                    return views.MultiSelectCaseListView(menuData);
+                } else {
+                    return views.CaseListView(menuData);
+                }
             } else {
                 if (menuResponse.numEntitiesPerRow > 1) {
                     return views.GridCaseTileListView(menuData);
