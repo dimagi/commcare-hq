@@ -63,9 +63,6 @@ class ProdIndexManagementTest(SimpleTestCase):
             [alias(info) for info in expected_prod_indices],
             [alias(info) for info in found_prod_indices],
         )
-        print("expected_prod_indices", expected_prod_indices)
-        print("----------------------------------------------------")
-        print("found_prod_indices", found_prod_indices)
         # do full comparison once we know the index aliases are the same
         self.assertEqual(expected_prod_indices, found_prod_indices)
 
