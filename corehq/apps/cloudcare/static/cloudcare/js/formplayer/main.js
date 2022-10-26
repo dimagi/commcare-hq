@@ -1,7 +1,10 @@
 hqDefine("cloudcare/js/formplayer/main", function () {
     $(function () {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            toggles = hqImport("hqwebapp/js/toggles");
+            toggles = hqImport("hqwebapp/js/toggles"),
+            FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
+            utils = hqImport("cloudcare/js/utils");
+
         window.MAPBOX_ACCESS_TOKEN = initialPageData('mapbox_access_token'); // maps api is loaded on-demand
         var options = {
             apps: initialPageData('apps'),
@@ -15,9 +18,9 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             environment: initialPageData('environment'),
             changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
         };
-        hqImport("cloudcare/js/formplayer/app").start(options);
+        FormplayerFrontEnd.start(options);
 
-        hqImport("cloudcare/js/utils").injectMarkdownAnchorTransforms();
+        utils.injectMarkdownAnchorTransforms();
 
         var $menuToggle = $('#commcare-menu-toggle'),
             $navbar = $('#hq-navigation'),
