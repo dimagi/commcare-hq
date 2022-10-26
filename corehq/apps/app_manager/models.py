@@ -2469,6 +2469,11 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             return self.case_details.short.multi_select
         return False
 
+    def is_auto_select(self):
+        if self.is_multi_select and hasattr(self, 'case_details'):
+            return self.case_details.short.auto_select
+        return self.auto_select_case
+
     def default_name(self, app=None):
         if not app:
             app = self.get_app()
@@ -3302,6 +3307,9 @@ class AdvancedModule(ModuleBase):
     def is_multi_select(self):
         return False
 
+    def is_auto_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
@@ -3962,6 +3970,11 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return False
         return self.source_module.is_multi_select()
+
+    def is_auto_select(self):
+        if not self.source_module:
+            return False
+        return self.source_module.is_auto_select()
 
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
