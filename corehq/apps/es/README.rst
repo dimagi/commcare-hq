@@ -323,8 +323,6 @@ Tombstone
 
 The concept of Tombstone in the ES mulitplexer is there to be placeholder for the docs that are deleted in the primary index. It means that whenever an adapter is multiplexed and a document is deleted from the primary index, then the secondary index will create tombstone entry for that document. The python class defined to represent these tombstones is  `corehq.apps.es.client.Tombstone`
 
-The requirement of tombstones arise due to a potential race condition that might come when reindex operation is run on the multiplexed index.
-
 Scenario without tomstones: If a multiplexing adapter deletes a document in the secondary index (which turns out to be a no-op because the document does not exist there yet), and then that same document is copied to the secondary index by the reindexer, then it will exist indefinitely in the secondary even though it has been deleted in the primary.
 
 Put another way:
