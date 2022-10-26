@@ -30,7 +30,7 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT='production', ES_SETTINGS={
+    @override_settings(SERVER_ENVIRONMENT="production", ES_SETTINGS={
         "default": {"number_of_replicas": 1},
         CASE_SEARCH_HQ_INDEX_NAME: {},
         APP_HQ_INDEX_NAME: {},
@@ -45,15 +45,15 @@ class ProdIndexManagementTest(SimpleTestCase):
         # TODO: implement index verification in a way that is reindex-friendly
         found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
         for info in found_prod_indices:
-            # for now don't test this property, just ensure it exist
-            self.assertTrue(info['mapping'])
-            del info['mapping']
+            # for now don"t test this property, just ensure it exist
+            self.assertTrue(info["mapping"])
+            del info["mapping"]
             # TODO: test mappings.  Seems related, but different from
             # `corehq/pillows/mappings/tests`. The tests here in this module
             # should probably move over there some day.
 
         def alias(info):
-            return info['alias']
+            return info["alias"]
 
         found_prod_indices = sorted(found_prod_indices, key=alias)
         expected_prod_indices = sorted(EXPECTED_PROD_INDICES, key=alias)
@@ -63,40 +63,48 @@ class ProdIndexManagementTest(SimpleTestCase):
             [alias(info) for info in expected_prod_indices],
             [alias(info) for info in found_prod_indices],
         )
+        print("expected_prod_indices", expected_prod_indices)
+        print("----------------------------------------------------")
+        print("found_prod_indices", found_prod_indices)
         # do full comparison once we know the index aliases are the same
         self.assertEqual(expected_prod_indices, found_prod_indices)
 
 
 EXPECTED_PROD_INDICES = [
     {
-        "alias": "test_case_search",
-        "hq_index_name": "case_search",
         "index": "test_case_search_2018-05-29",
+        "alias": "test_case_search",
         "type": "case",
+        "hq_index_name": "case_search",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
                 "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
+                            ],
+                            "tokenizer": "standard"
+                        }
+                    },
                     "filter": {
                         "soundex": {
                             "replace": "true",
                             "type": "phonetic",
                             "encoder": "soundex"
                         }
-                    },
-                    'analyzer': {
-                        'default': {
-                            'type': 'custom',
-                            'tokenizer': 'whitespace',
-                            'filter': ['lowercase']
-                        },
-                        'phonetic': {
-                            'filter': ['standard', 'lowercase', 'soundex'],
-                            'tokenizer': 'standard'
-                        }
                     }
-                }
+                },
+                "number_of_replicas": 1,
             }
         }
     },
