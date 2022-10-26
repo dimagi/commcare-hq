@@ -68,7 +68,6 @@ branches:
     # - sk/webapps-update-url # Simon Sep 13
     - ap/sql-repeater/phase-2 # Amit Sep 16
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - rc/update-case-search-settings-mapping # Robert Sept 20
     - rp/mobile-worker-validation # Rynhard Sept 21
     # - mp/mobile_fix-2fa # Marco Sep 26
     #- jls/new-instance-connectors # Jenny Sept 27
