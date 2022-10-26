@@ -61,7 +61,6 @@ branches:
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
     - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO) in QA
-    # - ad/remove-entered-wrap-functions # Addison Aug 22
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     # - akj/abdm-api # Akash Sep 5
@@ -81,4 +80,5 @@ branches:
     - jt/ush-2427 # Jonathan T. Oct 18
     - ml/lookup-table-UI # Minha Oct 19
     # - gh/add-history-tab # Graham Oct 20
+    - ad/tableau-connected-app # Addison Oct 26
 submodules: { }
