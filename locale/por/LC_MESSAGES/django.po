@@ -12908,10 +12908,8 @@ msgid "Completion Time"
 msgstr "Tempo de Preenchimento"
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Update"
 msgid "Case Update"
-msgstr "Atualizar"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
 msgid "Deduplicate"
@@ -39489,10 +39487,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py

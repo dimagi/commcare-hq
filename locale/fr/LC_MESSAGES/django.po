@@ -39241,10 +39241,6 @@ msgstr ""
 msgid "Payload must be valid JSON"
 msgstr ""
 
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
-msgstr ""
-
 #: corehq/motech/generic_inbound/views.py
 msgid "Inbound API Configurations"
 msgstr ""

@@ -13370,16 +13370,12 @@ msgid "Completion Time"
 msgstr "L'heure d'exécution"
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Last Updated"
 msgid "Case Update"
-msgstr "Ayant la mise à jour la plus récente"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Duplicate Form"
 msgid "Deduplicate"
-msgstr "Formulaire dupliqué"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py corehq/messaging/scheduling/forms.py
 msgid "Scheduling"
@@ -13394,22 +13390,16 @@ msgid "ANY of the criteria are met"
 msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Remaining"
 msgid "Running"
-msgstr "Restant"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Finish"
 msgid "Finished"
-msgstr "Fin"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
-#, fuzzy
-#| msgid "Stop"
 msgid "Stopped"
-msgstr "Arrêter"
+msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
 #: corehq/apps/domain/templates/error.html
@@ -40702,10 +40692,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py
