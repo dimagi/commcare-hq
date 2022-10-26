@@ -22,6 +22,10 @@ ANALYZERS = {
     "comma": {
         "type": "pattern",
         "pattern": r"\s*,\s*"
+    },
+    "phonetic_analyzer": {
+        "filter": ["standard", "lowercase", "soundex_filter"],
+        "tokenizer": "standard"
     }
 }
 
@@ -35,15 +39,25 @@ SMS_HQ_INDEX_NAME = "smslogs"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
 TEST_HQ_INDEX_NAME = "pillowtop_tests"
 
+phonetic_analysis = _get_analysis('default', 'phonetic_analyzer')
+phonetic_analysis.update({
+    "filter": {
+        "soundex_filter": {
+            "replace": "false",
+            "type": "phonetic",
+            "encoder": "soundex"
+        }
+    }})
 ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
             "number_of_replicas": 0,
             "number_of_shards": 5,
-            "analysis": _get_analysis('default'),
+            "analysis": phonetic_analysis,
         },
     },
+
     # Default settings for aliases on all environments (overrides default settings)
     DOMAIN_HQ_INDEX_NAME: {
         "settings": {

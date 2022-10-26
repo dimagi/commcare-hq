@@ -241,6 +241,13 @@ def case_property_starts_with(case_property_name, value):
     )
 
 
+def sounds_like_text_query(case_property_name, value, fuzziness='0'):
+    return _base_property_query(
+        case_property_name,
+        queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
+    )
+
+
 def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
