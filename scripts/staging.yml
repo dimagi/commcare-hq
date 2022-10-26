@@ -77,7 +77,6 @@ branches:
     - akj/migrations-fix # Akash Oct 11
     - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling+jt/ush-2427
     - jls/standardize-web-apps-js-imports # Jenny Oct 3
-    - jt/ush-2427 # Jonathan T. Oct 18
     - ml/lookup-table-UI # Minha Oct 19
     # - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
