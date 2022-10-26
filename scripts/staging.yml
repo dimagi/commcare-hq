@@ -75,7 +75,6 @@ branches:
     # - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - jls/standardize-web-apps-js-imports # Jenny Oct 3
     - ml/lookup-table-UI # Minha Oct 19
     # - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
