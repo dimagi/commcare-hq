@@ -169,8 +169,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         for n, item_row in enumerate(fixture_data):
             _update_progress(task, last_update, event_count, n, num_rows, total_events)
             data_items_book_by_type[data_type.tag].append(item_row)
-            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
-            max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
+            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.Group))
+            max_users = max(max_users, owner_names.count(item_row, OwnerType.User))
             max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
             for field_key in item_row.fields:
                 if field_key in max_field_prop_combos:

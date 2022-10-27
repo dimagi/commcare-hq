@@ -73,6 +73,8 @@ def get_event_schema() -> dict:
             SchemaOptional("providedElsewhere"): bool,
             SchemaOptional("storedBy"): str,
             "value": object,
+            SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+            SchemaOptional("createdByUserInfo"): user_info_schema,
         }],
         SchemaOptional("deleted"): bool,
         SchemaOptional("dueDate"): date_schema,
