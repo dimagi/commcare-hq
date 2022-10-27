@@ -98,61 +98,6 @@ class PillowCheckpoint(object):
         return False
 
 
-class PillowCheckpointEventHandler(ChangeEventHandler):
-
-    def __init__(self, checkpoint, checkpoint_frequency, checkpoint_callback=None):
-        """
-        :param checkpoint: PillowCheckpoint object
-        :param checkpoint_frequency: Number of changes between checkpoint updates
-        """
-        # check settings to make it easy to override in tests
-        self.max_checkpoint_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', MAX_CHECKPOINT_DELAY)
-        self.checkpoint = checkpoint
-        self.checkpoint_frequency = checkpoint_frequency
-        self.last_update = None
-        self.last_log = None
-        self.checkpoint_callback = checkpoint_callback
-
-    def should_update_checkpoint(self, context):
-        frequency_hit = context.changes_seen >= self.checkpoint_frequency
-        time_hit = False
-        if self.max_checkpoint_delay:
-            if self.last_update is not None:
-                seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
-                time_hit = seconds_since_last_update >= self.max_checkpoint_delay
-            else:
-                time_hit = True
-        return frequency_hit or time_hit
-
-    def get_new_seq(self, change):
-        return change['seq']
-
-    def update_checkpoint(self, change, context):
-        if self.should_update_checkpoint(context):
-            context.reset()
-            self.checkpoint.update_to(self.get_new_seq(change))
-            self.last_update = datetime.utcnow()
-            if self.checkpoint_callback:
-                self.checkpoint_callback.checkpoint_updated()
-            return True
-        elif self.last_log is None or (datetime.utcnow() - self.last_log).total_seconds() > 10:
-            self.last_log = datetime.utcnow()
-            pillow_logging.info("Heartbeat: %s", self.get_new_seq(change))
-
-        return False
-
-
-class WrappedCheckpoint(object):
-    def __init__(self, kafka_seq, timestamp):
-        self.kafka_seq = kafka_seq
-        self.timestamp = timestamp
-        self.sequence_format = 'json'
-
-    @property
-    def wrapped_sequence(self):
-        return self.kafka_seq
-
-
 class KafkaPillowCheckpoint(PillowCheckpoint):
 
     def __init__(self, checkpoint_id, topics):
@@ -214,6 +159,61 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
 
     def reset(self):
         KafkaCheckpoint.objects.filter(checkpoint_id=self.checkpoint_id).delete()
+
+
+class PillowCheckpointEventHandler(ChangeEventHandler):
+
+    def __init__(self, checkpoint, checkpoint_frequency, checkpoint_callback=None):
+        """
+        :param checkpoint: PillowCheckpoint object
+        :param checkpoint_frequency: Number of changes between checkpoint updates
+        """
+        # check settings to make it easy to override in tests
+        self.max_checkpoint_delay = getattr(settings, 'PTOP_CHECKPOINT_DELAY_OVERRIDE', MAX_CHECKPOINT_DELAY)
+        self.checkpoint = checkpoint
+        self.checkpoint_frequency = checkpoint_frequency
+        self.last_update = None
+        self.last_log = None
+        self.checkpoint_callback = checkpoint_callback
+
+    def should_update_checkpoint(self, context):
+        frequency_hit = context.changes_seen >= self.checkpoint_frequency
+        time_hit = False
+        if self.max_checkpoint_delay:
+            if self.last_update is not None:
+                seconds_since_last_update = (datetime.utcnow() - self.last_update).total_seconds()
+                time_hit = seconds_since_last_update >= self.max_checkpoint_delay
+            else:
+                time_hit = True
+        return frequency_hit or time_hit
+
+    def get_new_seq(self, change):
+        return change['seq']
+
+    def update_checkpoint(self, change, context):
+        if self.should_update_checkpoint(context):
+            context.reset()
+            self.checkpoint.update_to(self.get_new_seq(change))
+            self.last_update = datetime.utcnow()
+            if self.checkpoint_callback:
+                self.checkpoint_callback.checkpoint_updated()
+            return True
+        elif self.last_log is None or (datetime.utcnow() - self.last_log).total_seconds() > 10:
+            self.last_log = datetime.utcnow()
+            pillow_logging.info("Heartbeat: %s", self.get_new_seq(change))
+
+        return False
+
+
+class WrappedCheckpoint(object):
+    def __init__(self, kafka_seq, timestamp):
+        self.kafka_seq = kafka_seq
+        self.timestamp = timestamp
+        self.sequence_format = 'json'
+
+    @property
+    def wrapped_sequence(self):
+        return self.kafka_seq
 
 
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
