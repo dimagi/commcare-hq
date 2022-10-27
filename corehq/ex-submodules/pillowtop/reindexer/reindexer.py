@@ -139,6 +139,8 @@ class PillowChangeProviderReindexer(Reindexer):
             if i > 0 and i % 1000 == 0:
                 pillow_logging.info("Processed %s docs", i)
 
+        pillow_logging.info("Processed %s docs", i)
+
 
 def clean_index(es, index_info):
     if es.indices.exists(index_info.index):
