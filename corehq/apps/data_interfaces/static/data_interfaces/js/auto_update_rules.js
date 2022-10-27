@@ -22,7 +22,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         });
 
         // pagination
-        self.itemsPerPage = ko.observable(5);
+        self.itemsPerPage = ko.observable(25);
         self.totalItems = ko.computed(function () {
             return self.rules().length;
         });
