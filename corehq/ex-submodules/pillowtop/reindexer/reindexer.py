@@ -136,7 +136,7 @@ class PillowChangeProviderReindexer(Reindexer):
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
-            if i % 1000 == 0:
+            if i > 0 and i % 1000 == 0:
                 pillow_logging.info("Processed %s docs", i)
 
 
