@@ -202,7 +202,6 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         events: {
             'change @ui.queryField': 'changeQueryField',
             'change @ui.searchForBlank': 'notifyParentOfFieldChange',
-            'dp.change @ui.queryField': 'changeDateQueryField',
             'click @ui.searchForBlank': 'toggleBlankSearch',
         },
 
@@ -281,22 +280,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         changeQueryField: function (e) {
-            if (this.model.get('input') === 'date') {
-                // Skip because dates get handled by changeDateQueryField
-                return;
-            } else if (this.model.get('input') === 'select1' || this.model.get('input') === 'select') {
-                this.model.set('value', $(e.currentTarget).val());
-            } else if (this.model.get('input') === 'address') {
+            if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
+            } else if (this.model.get('input') === 'checkbox') {
+                let value = this.model.get('value');
+                this.model.set('value', value !== 'checked' ? 'checked' : '');
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
-            this.notifyParentOfFieldChange(e);
-            this.parentView.setStickyQueryInputs();
-        },
-
-        changeDateQueryField: function (e) {
-            this.model.set('value', $(e.currentTarget).val());
             this.notifyParentOfFieldChange(e);
             this.parentView.setStickyQueryInputs();
         },
