@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -207,7 +207,7 @@ def _generic_inbound_api(api, request):
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except GenericInboundRequestFiltered:
-        return JsonResponse({}, status=204)
+        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except SubmissionError as e:
@@ -254,11 +254,12 @@ def _log_api_request(api, request, response):
         request_ip=get_ip(request),
     )
 
-    response_json = json.loads(response.content)
-    if is_success:
+    if is_success and response.content:
+        response_json = json.loads(response.content)
         case_ids = [c['case_id'] for c in
                     response_json.get('cases', [response_json.get('case')])]
     else:
+        response_json = {}
         case_ids = []
     ProcessingAttempt.objects.create(
         log=log,
