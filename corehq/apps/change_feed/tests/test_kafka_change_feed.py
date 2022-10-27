@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from django.test import SimpleTestCase, TestCase
 
-from pillowtop.checkpoints.manager import PillowCheckpoint
+from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.feed.interface import ChangeMeta
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.sample import CountingProcessor
@@ -56,7 +56,7 @@ class KafkaCheckpointTest(TestCase):
     def test_checkpoint_with_multiple_topics(self):
         feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed')
         pillow_name = 'test-multi-topic-checkpoints'
-        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
+        checkpoint = KafkaPillowCheckpoint(pillow_name, feed.topics)
         processor = CountingProcessor()
         pillow = ConstructedPillow(
             name=pillow_name,
@@ -93,7 +93,7 @@ class KafkaCheckpointTest(TestCase):
 
         # initialize change feed and pillow
         feed = KafkaChangeFeed(topics=topics.USER_TOPICS, client_id='test-kafka-feed')
-        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
+        checkpoint = KafkaPillowCheckpoint(pillow_name, feed.topics)
         processor = CountingProcessor()
         pillow = ConstructedPillow(
             name=pillow_name,
