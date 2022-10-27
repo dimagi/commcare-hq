@@ -364,7 +364,6 @@ class OwnerNames:
 
 
 def _prepare_fixture_collated(table_ids, domain, task=None):
-
     # Feature flag only function
     # Collects all separate sheets into one master sheet and adds a "table_id" column
     # that indicates which table that row came from.
@@ -384,23 +383,26 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
     # book-keeping data from view_results for repeated use
     data_types_book = []
     data_items_book_by_type = {}
-    combined_item_helper = {
-        "max_users": 0,
-        "max_groups": 0,
-        "max_locations": 0,
-    }
+
+    # data for building the combined sheet
+    max_users = 0
+    max_groups = 0
+    max_locations = 0
     max_field_prop_combos = {}
-    excel_sheets = {}  # will contain only "types" and "combined_sheets" sheets
+    field_properties = {}
     all_fields = []
     all_item_attrs = []
+
+    excel_sheets = {}  # will contain only "types" and "combined_sheets" sheets
+
+    # data for building the "types" sheet
     max_fields = 0
     max_item_attributes = 0
     field_prop_count = []
     type_field_properties = {}
-    owner_names = OwnerNames(data_types_view)
 
+    owner_names = OwnerNames(data_types_view)
     for event_count, data_type in enumerate(data_types_view):
-        # Helpers to generate 'types' sheet
         type_field_properties[data_type.tag] = {}
         data_types_book.append(data_type)
         if len(data_type.fields) > max_fields:
@@ -411,8 +413,6 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             if attribute not in all_item_attrs:
                 all_item_attrs.append(attribute)
         for index, field in enumerate(data_type.fields):
-            if field.name not in all_fields:
-                all_fields.append(field.name)
             if len(field_prop_count) <= index:
                 field_prop_count.append(len(field.properties))
             elif field_prop_count[index] <= len(field.properties):
@@ -421,41 +421,31 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
                 for prop_index, property in enumerate(field.properties):
                     prop_key = get_field_prop_format(index + 1, prop_index + 1)
                     type_field_properties[data_type.tag][prop_key] = property
+            if field.name not in all_fields:
+                all_fields.append(field.name)
+            if field.name not in field_properties:
+                field_properties[field.name] = []
+            if field.name not in max_field_prop_combos:
+                max_field_prop_combos[field.name] = 0
 
-        # Helpers to generate item-sheets
         data_items_book_by_type[data_type.tag] = []
-        max_users = 0
-        max_groups = 0
-        max_locations = 0
-        if "field_properties" in combined_item_helper:
-            field_properties = combined_item_helper["field_properties"]
-        else:
-            field_properties = {field.name: [] for field in data_type.fields}
         fixture_data = LookupTableRow.objects.iter_rows(domain, table_id=data_type.id)
         num_rows = LookupTableRow.objects.filter(domain=domain, table_id=data_type.id).count()
         for field in data_type.fields:
-            if field.name not in field_properties:
-                field_properties[field.field_name] = []
-            if field.name not in max_field_prop_combos:
-                max_field_prop_combos[field.field_name] = 0
             for property in field.properties:
-                if property not in field_properties[field.field_name]:
-                    field_properties[field.field_name].append(property)
-            max_field_prop_combos[field.field_name] = len(field_properties[field.field_name])
+                if property not in field_properties[field.name]:
+                    field_properties[field.name].append(property)
+            max_field_prop_combos[field.name] = max(max_field_prop_combos[field.name],
+                                                    len(field_properties[field.name]))
         for n, item_row in enumerate(fixture_data):
             _update_progress(task, last_update, event_count, n, num_rows, total_events)
             data_items_book_by_type[data_type.tag].append(item_row)
             max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
             max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
             max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
-            for field_key in item_row.fields:
-                max_field_prop_combos[field.field_name] = max(max_field_prop_combos[field.field_name],
-                                                              len(item_row.fields[field_key]))
-
-        combined_item_helper["max_users"] = max(combined_item_helper["max_users"], max_users)
-        combined_item_helper["max_groups"] = max(combined_item_helper["max_groups"], max_groups)
-        combined_item_helper["max_locations"] = max(combined_item_helper["max_locations"], max_locations)
-        combined_item_helper["field_properties"] = field_properties
+            for field in item_row.fields:
+                max_field_prop_combos[field.name] = max(max_field_prop_combos[field.name],
+                                                        len(item_row.fields[field.name]))
 
     # Prepare 'types' sheet data
     indexed_field_numbers = get_indexed_field_numbers(data_types_view)
@@ -492,6 +482,7 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             prop_vals.extend([props.get(key, "") for key in field_prop_headers])
         row = tuple(common_vals + field_vals + item_att_vals + prop_vals)
         types_sheet["rows"].append(row)
+
     # prevent combined sheets from being imported
     types_sheet["rows"].append(tuple(["N", "combined_sheet_via_feature_flag", yesno(False)]))
 
@@ -502,15 +493,15 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
     # Making the collated master sheet
     item_sheet = {"headers": [], "rows": []}
     common_headers = ["UID", DELETE_HEADER]
-    user_headers = ["user %d" % x for x in range(1, combined_item_helper["max_users"] + 1)]
-    group_headers = ["group %d" % x for x in range(1, combined_item_helper["max_groups"] + 1)]
-    location_headers = ["location %d" % x for x in range(1, combined_item_helper["max_locations"] + 1)]
+    user_headers = ["user %d" % x for x in range(1, max_users + 1)]
+    group_headers = ["group %d" % x for x in range(1, max_groups + 1)]
+    location_headers = ["location %d" % x for x in range(1, max_locations + 1)]
     item_att_headers = ["property: " + attribute for attribute in all_item_attrs]
     all_field_headers = []
 
     # building the all_field_headers list
     for field_name in all_fields:
-        field_props = combined_item_helper["field_properties"][field_name]
+        field_props = field_properties[field_name]
         if len(field_props) == 0:
             field_value = "field: " + field_name
             if field_value not in all_field_headers:
@@ -537,16 +528,15 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
     # building the rows
     for n, data_type in enumerate(data_types_book):
         _update_progress(task, last_update, total_tables, n, total_tables, total_events)
-        field_props = combined_item_helper["field_properties"]
         for item_row in data_items_book_by_type[data_type.tag]:
-            common_vals = [str(item_row.id.hex), "N"]
             users = owner_names.get_usernames(item_row)
             groups = owner_names.get_group_names(item_row)
             locations = owner_names.get_location_codes(item_row)
-            user_vals = (users + empty_padding_list(combined_item_helper["max_users"] - len(users)))
-            group_vals = (groups + empty_padding_list(combined_item_helper["max_groups"] - len(groups)))
-            location_vals = (locations + empty_padding_list(
-                combined_item_helper["max_locations"] - len(locations)))
+
+            common_vals = [str(item_row.id.hex), "N"]
+            user_vals = (users + empty_padding_list(max_users - len(users)))
+            group_vals = (groups + empty_padding_list(max_groups - len(groups)))
+            location_vals = (locations + empty_padding_list(max_locations - len(locations)))
 
             item_att_vals = []
             for attribute in all_item_attrs:
@@ -558,14 +548,14 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
             field_vals = []
             for field_name in all_fields:
                 field_values = item_row.fields.get(field_name)
-                if len(field_props[field_name]) == 0:
+                if len(field_properties[field_name]) == 0:
                     value = field_values[0].value if field_values else ""
                     field_vals.append(value)
                 else:
                     field_prop_vals = []
                     if field_name in item_row.fields:
                         for field_prop_combo in item_row.fields[field_name]:
-                            for property in field_props[field_name]:
+                            for property in field_properties[field_name]:
                                 field_prop_vals.append(field_prop_combo.properties.get(property, None) or "")
                             field_prop_vals.append(field_prop_combo.value)
                         extra_props = max_field_prop_combos[field_name] - len(item_row.fields[field_name])
@@ -573,7 +563,7 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
                             field_prop_vals.extend(
                                 empty_padding_list(extra_props * (max_field_prop_combos[field_name]) + 1))
                     else:
-                        field_prop_vals.extend(empty_padding_list((len(field_props[field_name]) + 1)
+                        field_prop_vals.extend(empty_padding_list((len(field_properties[field_name]) + 1)
                                                * max_field_prop_combos[field_name]))
                     field_vals.extend(field_prop_vals)
             row = tuple(
