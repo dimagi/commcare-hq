@@ -79,4 +79,5 @@ branches:
     - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
     - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
+    - em/case-search-checkbox # Evan Oct 27
 submodules: { }
