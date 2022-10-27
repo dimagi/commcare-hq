@@ -26,9 +26,16 @@
         <tbody data-bind="foreach: paginatedRules">
           <tr>
             <td>
-              <a data-bind="attr: {href: edit_url}">
-                <strong data-bind="text: name"></strong>
-              </a>
+              <span data-bind="if: upstream_id">
+                <a data-bind="attr: {href: view_url}">
+                  <strong data-bind="text: name"></strong>
+                </a>
+              </span>
+              <span data-bind="ifnot: upstream_id">
+                <a data-bind="attr: {href: edit_url}">
+                  <strong data-bind="text: name"></strong>
+                </a>
+              </span>
             </td>
             <td data-bind="text: case_type"></td>
             <td>
