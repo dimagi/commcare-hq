@@ -31,6 +31,7 @@ from corehq.apps.integration.models import (
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULE,
     MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
@@ -72,6 +73,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_auto_update_rules as local_get_auto_update_rules
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rule as local_get_auto_update_rule
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -115,6 +118,7 @@ from corehq.apps.users.role_utils import UserRolePresets
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULE: update_auto_update_rule,
         MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
         MODEL_FLAGS: update_toggles,
@@ -540,6 +544,102 @@ def update_hmac_callout_settings(domain_link):
     model.save()
 
 
+def update_auto_update_rule(domain_link, id):
+    upstream_rule_definition = local_get_auto_update_rule(domain_link.master_domain, id)
+    downstream_rule = get_or_create_downstream_rule(domain_link.linked_domain, upstream_rule_definition)
+    _update_rule(downstream_rule, upstream_rule_definition)
+
+
+def get_or_create_downstream_rule(domain, upstream_definition):
+    try:
+        downstream_rule = AutomaticUpdateRule.objects.get(upstream_id=upstream_definition['rule']['id'])
+    except AutomaticUpdateRule.DoesNotExist:
+        downstream_rule = AutomaticUpdateRule(
+            domain=domain,
+            active=upstream_definition['rule']['active'],
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            upstream_id=upstream_definition['rule']['id']
+        )
+
+    return downstream_rule
+
+
+def _update_rule(rule, definition):
+    with transaction.atomic():
+        _update_rule_properties(rule, definition['rule'])
+
+        rule.delete_criteria()
+        rule.delete_actions()
+
+        _create_rule_criteria(rule, definition['criteria'])
+        _create_rule_actions(rule, definition['actions'])
+
+
+def _update_rule_properties(rule, definition):
+    rule.name = definition['name']
+    rule.case_type = definition['case_type']
+    rule.filter_on_server_modified = definition['filter_on_server_modified']
+    rule.server_modified_boundary = definition['server_modified_boundary']
+    rule.active = definition['active']
+    rule.save()
+
+
+def _create_rule_criteria(rule, criteria_definition):
+    # Largely from data_interfaces/forms.py - save_criteria()
+    for criteria in criteria_definition:
+        definition = None
+
+        if criteria['match_property_definition']:
+            definition = MatchPropertyDefinition.objects.create(
+                property_name=criteria['match_property_definition']['property_name'],
+                property_value=criteria['match_property_definition']['property_value'],
+                match_type=criteria['match_property_definition']['match_type'],
+            )
+        elif criteria['custom_match_definition']:
+            definition = CustomMatchDefinition.objects.create(
+                name=criteria['custom_match_definition']['name'],
+            )
+        elif criteria['closed_parent_definition']:
+            definition = ClosedParentDefinition.objects.create()
+        elif criteria['location_filter_definition']:
+            definition = LocationFilterDefinition.objects.create(
+                location_id=criteria['location_filter_definition']['location_id'],
+                include_child_locations=criteria['location_filter_definition']['include_child_locations'],
+            )
+
+        new_criteria = CaseRuleCriteria(rule=rule)
+        new_criteria.definition = definition
+        new_criteria.save()
+
+
+def _create_rule_actions(rule, action_definition):
+    # Largely from data_interfacees/forms.py - save_actions()
+    for action in action_definition:
+        definition = None
+
+        if action['update_case_definition']:
+            definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+            properties = []
+            for propertyItem in action['update_case_definition']['properties_to_update']:
+                properties.append(
+                    UpdateCaseDefinition.PropertyDefinition(
+                        name=propertyItem['name'],
+                        value_type=propertyItem['value_type'],
+                        value=propertyItem['value'],
+                    )
+                )
+            definition.set_properties_to_update(properties)
+            definition.save()
+        elif action['custom_action_definition']:
+            definition = CustomActionDefinition.objects.create(
+                name=action['custom_action_definition']['name'],
+            )
+
+        action = CaseRuleAction(rule=rule)
+        action.definition = definition
+        action.save()
+
+
 def update_auto_update_rules(domain_link):
     if domain_link.is_remote:
         upstream_rules = remote_get_auto_update_rules(domain_link)
@@ -553,17 +653,11 @@ def update_auto_update_rules(domain_link):
     )
 
     for upstream_rule_def in upstream_rules:
-        # Grab local rule by upstream ID (preferred) or by name
+        # Grab local rule by upstream ID
         try:
             downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
         except AutomaticUpdateRule.DoesNotExist:
-            try:
-                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
-            except AutomaticUpdateRule.MultipleObjectsReturned:
-                # If there are multiple rules with the same name, overwrite the first.
-                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
-            except AutomaticUpdateRule.DoesNotExist:
-                downstream_rule = None
+            downstream_rule = None
 
         # If no corresponding local rule, make a new rule
         if not downstream_rule:
@@ -574,70 +668,7 @@ def update_auto_update_rules(domain_link):
                 upstream_id=upstream_rule_def['rule']['id']
             )
 
-        # Copy all the contents from old rule to new rule
-        with transaction.atomic():
-
-            downstream_rule.name = upstream_rule_def['rule']['name']
-            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
-            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
-            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
-            downstream_rule.active = upstream_rule_def['rule']['active']
-            downstream_rule.save()
-
-            downstream_rule.delete_criteria()
-            downstream_rule.delete_actions()
-
-            # Largely from data_interfaces/forms.py - save_criteria()
-            for criteria in upstream_rule_def['criteria']:
-                definition = None
-
-                if criteria['match_property_definition']:
-                    definition = MatchPropertyDefinition.objects.create(
-                        property_name=criteria['match_property_definition']['property_name'],
-                        property_value=criteria['match_property_definition']['property_value'],
-                        match_type=criteria['match_property_definition']['match_type'],
-                    )
-                elif criteria['custom_match_definition']:
-                    definition = CustomMatchDefinition.objects.create(
-                        name=criteria['custom_match_definition']['name'],
-                    )
-                elif criteria['closed_parent_definition']:
-                    definition = ClosedParentDefinition.objects.create()
-                elif criteria['location_filter_definition']:
-                    definition = LocationFilterDefinition.objects.create(
-                        location_id=criteria['location_filter_definition']['location_id'],
-                        include_child_locations=criteria['location_filter_definition']['include_child_locations'],
-                    )
-
-                new_criteria = CaseRuleCriteria(rule=downstream_rule)
-                new_criteria.definition = definition
-                new_criteria.save()
-
-            # Largely from data_interfacees/forms.py - save_actions()
-            for action in upstream_rule_def['actions']:
-                definition = None
-
-                if action['update_case_definition']:
-                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
-                    properties = []
-                    for propertyItem in action['update_case_definition']['properties_to_update']:
-                        properties.append(
-                            UpdateCaseDefinition.PropertyDefinition(
-                                name=propertyItem['name'],
-                                value_type=propertyItem['value_type'],
-                                value=propertyItem['value'],
-                            )
-                        )
-                    definition.set_properties_to_update(properties)
-                    definition.save()
-                elif action['custom_action_definition']:
-                    definition = CustomActionDefinition.objects.create(
-                        name=action['custom_action_definition']['name'],
-                    )
-
-                action = CaseRuleAction(rule=downstream_rule)
-                action.definition = definition
-                action.save()
+        _update_rule(downstream_rule, upstream_rule_def)
 
 
 def _convert_reports_permissions(domain_link, master_results):
