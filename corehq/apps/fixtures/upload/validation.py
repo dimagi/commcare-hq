@@ -34,6 +34,8 @@ def _validate_fixture_upload(workbook):
         tag = table_def.table_id
         fields = table_def.fields
         item_attributes = table_def.item_attributes
+        if tag == "combined_sheet_via_feature_flag":
+            return [_(FAILURE_MESSAGES["sheets_have_been_combined"])]
         try:
             data_items = workbook.get_data_sheet(tag)
         except WorksheetNotFound:
