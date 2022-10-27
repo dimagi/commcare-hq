@@ -98,6 +98,7 @@ from corehq.apps.linked_domain.view_helpers import (
     get_upstream_and_downstream_keywords,
     get_upstream_and_downstream_reports,
     get_upstream_and_downstream_ucr_expressions,
+    get_upstream_and_downstream_update_rules
 )
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import ReleaseManagementReportDispatcher
@@ -290,6 +291,8 @@ class DomainLinkView(BaseProjectSettingsView):
             self.domain
         )
 
+        upstream_rules, downstream_rules = get_upstream_and_downstream_update_rules(self.domain, upstream_link)
+
         is_superuser = self.request.couch_user.is_superuser
         timezone = get_timezone_for_request()
         view_models_to_pull = build_pullable_view_models_from_data_models(
@@ -300,6 +303,7 @@ class DomainLinkView(BaseProjectSettingsView):
             downstream_reports,
             downstream_keywords,
             downstream_ucr_expressions,
+            downstream_rules,
             timezone,
             is_superuser=is_superuser
         )
@@ -311,6 +315,7 @@ class DomainLinkView(BaseProjectSettingsView):
             upstream_reports,
             upstream_keywords,
             upstream_ucr_expressions,
+            upstream_rules,
             is_superuser=is_superuser
         )
 
