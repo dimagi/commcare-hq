@@ -711,6 +711,10 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
     def edit_url_name(self):
         return EditCaseRuleView.urlname
 
+    @property
+    def view_url_name(self):
+        return ViewCaseRuleView.urlname
+
     def _format_rule(self, rule):
         return {
             'id': rule.pk,
@@ -719,7 +723,9 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'active': rule.active,
             'last_run': self._convert_to_user_time(rule.last_run),
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
+            'view_url': reverse(self.view_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
+            'upstream_id': rule.upstream_id,
         }
 
     def _format_rule_run(self, rule_run):
@@ -803,11 +809,12 @@ class AddCaseRuleView(DataInterfaceSection):
     @property
     @memoized
     def read_only_mode(self):
-        return (
-            not self.is_system_admin and (
-                self.criteria_form.requires_system_admin_to_edit
-                or self.actions_form.requires_system_admin_to_edit
-            )
+        return self.requires_system_admin()
+
+    def requires_system_admin(self):
+        return not self.is_system_admin and (
+            self.criteria_form.requires_system_admin_to_edit
+            or self.actions_form.requires_system_admin_to_edit
         )
 
     @property
@@ -844,6 +851,7 @@ class AddCaseRuleView(DataInterfaceSection):
             'criteria_form': self.criteria_form,
             'actions_form': self.actions_form,
             'read_only_mode': self.read_only_mode,
+            'requires_sysadmin': self.requires_system_admin(),
             'all_case_properties': {
                 t: sorted(names) for t, names in
                 get_data_dict_props_by_case_type(self.domain).items()
@@ -917,6 +925,16 @@ class EditCaseRuleView(AddCaseRuleView):
             raise Http404()
 
         return rule
+
+
+class ViewCaseRuleView(EditCaseRuleView):
+    urlname = 'view_case_rule'
+    page_title = gettext_lazy("View Case Rule")
+
+    @property
+    @memoized
+    def read_only_mode(self):
+        return True
 
 
 @method_decorator(toggles.CASE_DEDUPE.required_decorator(), name='dispatch')

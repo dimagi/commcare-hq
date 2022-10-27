@@ -95,6 +95,11 @@ hqDefine("data_interfaces/js/auto_update_rules", [
             self.rules.valueHasMutated();
         };
 
+        self.modalModel = ko.observable();
+        self.setModalModel = function (model) {
+            self.modalModel(model);
+        };
+
         return self;
     };
 
@@ -139,6 +144,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         var rules = initialPageData.get('rules');
         var ruleListViewModel = RuleListViewModel(rules);
         $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+        $("#edit-warning-modal").koApplyBindings(ruleListViewModel);
 
         var ruleRuns = initialPageData.get('rule_runs');
         var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);
