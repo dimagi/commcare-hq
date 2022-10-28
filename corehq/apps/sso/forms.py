@@ -937,6 +937,9 @@ class SsoPowerBiEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         initial.setdefault('entity_id', identity_provider.entity_id)
         initial.setdefault('client_id', identity_provider.client_id)
         initial.setdefault('client_secret', identity_provider.client_secret)
+        initial.setdefault('login_url', identity_provider.login_url)
+        initial.setdefault('logout_url', identity_provider.logout_url)
+        initial.setdefault('idp_cert_public', identity_provider.idp_cert_public)
         super().__init__(identity_provider, *args, **kwargs)
 
         rp_details_form = RelyingPartyDetailsForm(identity_provider)
