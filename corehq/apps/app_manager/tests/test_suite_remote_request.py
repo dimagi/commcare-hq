@@ -164,7 +164,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date")
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
+                CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox")
             ],
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
