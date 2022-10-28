@@ -308,6 +308,9 @@ hqDefine("app_manager/js/details/case_claim", function () {
         if (searchProperty.appearance === "address") {
             appearance = "address";
         }
+        if (searchProperty.input_ === "checkbox") {
+            appearance = "checkbox";
+        }
         if (["date", "daterange"].indexOf(searchProperty.input_) !== -1) {
             appearance = searchProperty.input_;
         }
