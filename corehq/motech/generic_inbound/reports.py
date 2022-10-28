@@ -4,12 +4,12 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSimpleFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.toggles import GENERIC_INBOUND_API
 
-from .models import RequestLog
+from .models import RequestLog, ProcessingAttempt
 
 
 class RequestStatusFilter(BaseMultipleOptionFilter):
@@ -19,6 +19,12 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         return RequestLog.Status.choices
+
+
+class FormIdFilter(BaseSimpleFilter):
+    slug = "form_id"
+    label = gettext_lazy("Form ID")
+    help_inline = gettext_lazy("Enter a form id to filter results")
 
 
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
@@ -33,6 +39,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.motech.generic_inbound.reports.RequestStatusFilter',
+        'corehq.motech.generic_inbound.reports.FormIdFilter',
     ]
 
     toggles = [GENERIC_INBOUND_API]
@@ -49,7 +56,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     def shared_pagination_GET_params(self):
         return [
             {'name': param, 'value': self.request.GET.getlist(param)}
-            for param in ['request_status', 'startdate', 'enddate']
+            for param in ['request_status', 'startdate', 'enddate', 'form_id']
         ]
 
     @property
@@ -59,6 +66,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("Status")),
             DataTablesColumn(_("Response")),
+            DataTablesColumn(_("Form ID")),
         )
 
     @cached_property
@@ -71,15 +79,22 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         status = self.request.GET.getlist('request_status')
         if status:
             queryset = queryset.filter(status__in=status)
+        input_form_id = self.request.GET.get('form_id')
+        if input_form_id:
+            attempts = ProcessingAttempt.objects.filter(xform_id=input_form_id)
+            queryset = queryset.filter(id__in=[attempt.log for attempt in attempts])
         return queryset
 
     @property
     def rows(self):
         status_labels = dict(RequestLog.Status.choices)
         for log in self._queryset[self.pagination.start:self.pagination.end]:
+            processing_attempt = log.processingattempt_set.get(log=log.id)
+            xform_id = processing_attempt.xform_id
             yield [
                 log.api.name,
                 log.timestamp,
                 status_labels[log.status],
                 log.response_status,
+                xform_id,
             ]
