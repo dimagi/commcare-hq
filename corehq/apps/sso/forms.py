@@ -906,3 +906,129 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.last_modified_by = admin_user.username
         self.idp.save()
         return self.idp
+
+
+class SsoPowerBiEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
+    login_url = forms.CharField(
+        label=gettext_lazy("Redirect URI"),
+        required=False,
+    )
+    logout_url = forms.CharField(
+        label=gettext_lazy("Scope"),
+        required=False,
+    )
+    idp_cert_public = forms.CharField(
+        label=gettext_lazy("Resource"),
+        required=False,
+    )
+    client_id = forms.CharField(
+        label=gettext_lazy("Client ID"),
+        required=False,
+    )
+    client_secret = forms.CharField(
+        label=gettext_lazy("Client Secret"),
+        required=False,
+    )
+
+    def __init__(self, identity_provider, *args, **kwargs):
+        initial = kwargs['initial'] = kwargs.get('initial', {}).copy()
+        initial.setdefault('is_active', identity_provider.is_active)
+        initial.setdefault('login_enforcement_type', identity_provider.login_enforcement_type)
+        initial.setdefault('entity_id', identity_provider.entity_id)
+        initial.setdefault('client_id', identity_provider.client_id)
+        initial.setdefault('client_secret', identity_provider.client_secret)
+        super().__init__(identity_provider, *args, **kwargs)
+
+        rp_details_form = RelyingPartyDetailsForm(identity_provider)
+        self.fields.update(rp_details_form.fields)
+
+        self.fields['entity_id'].label = _("Tenant ID")
+
+        if self.idp.client_secret:
+            client_secret_toggles = crispy.Div(
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text"><a href="#" data-bind="click: showClientSecret, '
+                        'visible: isClientSecretHidden">{}</a></p>',
+                        gettext("Show Secret")
+                    ),
+                ),
+                crispy.HTML(
+                    format_html(
+                        '<p class="form-control-text" data-bind="visible: isClientSecretVisible">'
+                        '<a href="#" data-bind="click: hideClientSecret">{}</a></p>',
+                        gettext("Hide Secret")
+                    ),
+                ),
+            )
+        else:
+            client_secret_toggles = crispy.Div()
+
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('Application Details for {}').format(self.idp.service_name),
+                        _get_help_text(self.idp),
+                        crispy.Div(*rp_details_form.application_details_fields),
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(
+                crispy.Div(
+                    crispy.Fieldset(
+                        _('OpenID Provider Configuration'),
+                        'client_id',
+                        hqcrispy.B3MultiField(
+                            gettext("Client Secret"),
+                            crispy.Div(
+                                hqcrispy.InlineField(
+                                    'client_secret',
+                                    data_bind="visible: isClientSecretVisible"
+                                ),
+                                client_secret_toggles,
+                            ),
+                            show_row_class=False,
+                        ),
+                        'entity_id',  # tenant id
+                        'login_url',  # acting as redirect url for debugging
+                        'logout_url',  # acting as scope for debugging
+                        'idp_cert_public',  # acting as resource for debugging
+                    ),
+                    css_class="panel-body"
+                ),
+                css_class="panel panel-modern-gray panel-form-only"
+            ),
+            crispy.Div(*self.get_primary_fields()),
+        )
+
+    def clean_client_id(self):
+        is_active = bool(self.data.get('is_active'))
+        client_id = self.cleaned_data['client_id']
+        _check_required_when_active(is_active, client_id)
+        return client_id
+
+    def clean_client_secret(self):
+        is_active = bool(self.data.get('is_active'))
+        client_secret = self.cleaned_data['client_secret']
+        _check_required_when_active(is_active, client_secret)
+        return client_secret
+
+    def update_identity_provider(self, admin_user):
+        self.idp.is_active = self.cleaned_data['is_active']
+        self.idp.login_enforcement_type = self.cleaned_data['login_enforcement_type']
+        self.idp.entity_id = self.cleaned_data['entity_id']
+        self.idp.client_id = self.cleaned_data['client_id']
+        self.idp.client_secret = self.cleaned_data['client_secret']
+        self.idp.login_url = self.cleaned_data['login_url']
+        self.idp.logout_url = self.cleaned_data['logout_url']
+        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
+
+        self.idp.last_modified_by = admin_user.username
+        self.idp.save()
+        return self.idp
