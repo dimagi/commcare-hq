@@ -428,6 +428,18 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         )]
     else:
         fields = []
+
+    detail_fields = []
+    report_config = config.report(domain)
+    support_expanded_col = toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(domain)
+    for c in report_config.report_columns:
+        if c.visible:
+            if c.type == 'expanded' and support_expanded_col:
+                for expanded_column in report_config.get_expanded_columns(c):
+                    detail_fields.append(_column_to_field(expanded_column))
+            elif c.type != 'expanded':
+                detail_fields.append(_column_to_field(c))
+
     return Detail(
         id='reports.{}.data'.format(config.uuid),
         nodeset=(
@@ -437,10 +449,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
-        fields=fields + [
-            _column_to_field(c) for c in config.report(domain).report_columns
-            if c.type != 'expanded' and c.visible
-        ]
+        fields=fields + detail_fields
     )
 
 
