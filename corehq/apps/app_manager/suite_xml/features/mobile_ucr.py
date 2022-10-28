@@ -27,6 +27,7 @@ from corehq.apps.reports_core.filters import (
     ChoiceListFilter,
     DynamicChoiceListFilter,
 )
+from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
 
@@ -346,6 +347,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
             return TextXPath(
                 function="column[@id='{}']".format(column_id),
             )
+
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
@@ -403,17 +405,24 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
             else:
                 return get_xpath(col.column_id)
 
+        if isinstance(column, UCRExpandDatabaseSubcolumn):
+            xpath = get_xpath(column.slug)
+            locale_id = id_strings.report_column_header(config.uuid, column.slug)
+        else:
+            xpath = _get_xpath(column)
+            locale_id = id_strings.report_column_header(config.uuid, column.column_id)
+
         return Field(
             header=Header(
                 text=Text(
                     locale=Locale(
-                        id=id_strings.report_column_header(config.uuid, column.column_id)
+                        id=locale_id
                     ),
                 )
             ),
             template=Template(
                 text=Text(
-                    xpath=_get_xpath(column),
+                    xpath=xpath,
                 )
             ),
         )
