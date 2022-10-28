@@ -303,7 +303,7 @@ class EntriesHelper(object):
             if isinstance(module, Module):
                 self.configure_entry_module_form(module, e)
             elif isinstance(module, AdvancedModule):
-                detail_inline = self.get_detail_inline_attr(module, module, "case_short")
+                detail_inline = self.get_detail_inline_attr(module, "case_short")
                 detail_confirm = None
                 if not detail_inline:
                     detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
@@ -314,7 +314,7 @@ class EntriesHelper(object):
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
                     detail_confirm=detail_confirm,
-                    detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
+                    detail_persistent=self.get_detail_persistent_attr(module, "case_short"),
                     detail_inline=detail_inline,
                     autoselect=module.auto_select_case,
                 ))
@@ -527,8 +527,8 @@ class EntriesHelper(object):
                         if datum['module'].unique_id == source_module.parent_select.module_id:
                             detail_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
 
-            detail_persistent = self.get_detail_persistent_attr(detail_module, detail_module, "case_short")
-            detail_inline = self.get_detail_inline_attr(detail_module, detail_module, "case_short")
+            detail_persistent = self.get_detail_persistent_attr(detail_module, "case_short")
+            detail_inline = self.get_detail_inline_attr(detail_module, "case_short")
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
@@ -826,7 +826,7 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
-            detail_inline = self.get_detail_inline_attr(target_module_, target_module_, "case_short")
+            detail_inline = self.get_detail_inline_attr(target_module_, "case_short")
 
             return SessionDatum(
                 id=action_.case_session_var,
@@ -838,7 +838,7 @@ class EntriesHelper(object):
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
                     if (not referenced_by or referenced_by['type'] != 'load') and not detail_inline else None
                 ),
-                detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
+                detail_persistent=self.get_detail_persistent_attr(target_module_, "case_short"),
                 detail_inline=detail_inline,
                 autoselect=target_module_.auto_select_case,
             )
@@ -897,12 +897,8 @@ class EntriesHelper(object):
                             nodeset=nodeset,
                             value="./@id",
                             detail_select=self.details_helper.get_detail_id_safe(target_module, 'product_short'),
-                            detail_persistent=self.get_detail_persistent_attr(
-                                target_module, target_module, "product_short"
-                            ),
-                            detail_inline=self.get_detail_inline_attr(
-                                target_module, target_module, "product_short"
-                            ),
+                            detail_persistent=self.get_detail_persistent_attr(target_module, "product_short"),
+                            detail_inline=self.get_detail_inline_attr(target_module, "product_short"),
                         ),
                         case_type=None,
                         requires_selection=True,
@@ -971,38 +967,41 @@ class EntriesHelper(object):
         return ret + datums_remaining
 
     @staticmethod
-    def _get_module_for_persistent_context(detail_module, module_unique_id):
-        module_for_persistent_context = detail_module.get_app().get_module_by_unique_id(module_unique_id)
+    def _get_module_for_persistent_context(app, module_unique_id):
+        module_for_persistent_context = app.get_module_by_unique_id(module_unique_id)
         if (module_for_persistent_context and
                 (module_for_persistent_context.case_details.short.use_case_tiles or
                  module_for_persistent_context.case_details.short.custom_xml
                  )):
             return module_for_persistent_context
 
-    def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
+    def get_detail_persistent_attr(self, module, detail_type="case_short"):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled:
             # if configured to use persisted case tile context from another module which has case tiles
             # configured then get id_string for that module
             if detail.persistent_case_tile_from_module:
                 module_for_persistent_context = self._get_module_for_persistent_context(
-                    module, detail.persistent_case_tile_from_module
+                    app=module.get_app(), module_unique_id=detail.persistent_case_tile_from_module
                 )
                 if module_for_persistent_context:
                     return id_strings.detail(module_for_persistent_context, detail_type)
             if detail.has_persistent_tile():
-                return id_strings.detail(detail_module, detail_type)
+                return id_strings.detail(module, detail_type)
             if detail.persist_case_context and detail_type == "case_short":
                 # persistent_case_context will not work on product lists.
-                return id_strings.persistent_case_context_detail(detail_module)
+                return id_strings.persistent_case_context_detail(module)
         return None
 
     def _get_detail_inline_attr_from_module(self, module, module_unique_id):
-        module_for_persistent_context = self._get_module_for_persistent_context(module, module_unique_id)
+        module_for_persistent_context = self._get_module_for_persistent_context(
+            app=module.get_app(),
+            module_unique_id=module_unique_id
+        )
         if module_for_persistent_context:
             return self.details_helper.get_detail_id_safe(module_for_persistent_context, "case_long")
 
-    def get_detail_inline_attr(self, module, detail_module, detail_type="case_short"):
+    def get_detail_inline_attr(self, module, detail_type="case_short"):
         assert detail_type in ["case_short", "product_short"]
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled and detail.pull_down_tile:
@@ -1013,7 +1012,7 @@ class EntriesHelper(object):
                     return inline_attr
             if detail.has_persistent_tile():
                 list_type = "case_long" if detail_type == "case_short" else "product_long"
-                return self.details_helper.get_detail_id_safe(detail_module, list_type)
+                return self.details_helper.get_detail_id_safe(module, list_type)
         return None
 
     def _get_detail_from_module(self, module, detail_type):
