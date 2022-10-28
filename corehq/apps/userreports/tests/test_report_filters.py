@@ -826,7 +826,8 @@ class LocationDrilldownFilterTest(LocationHierarchyTestCase):
             'hierarchy': location_hierarchy_config(self.domain),
             'locations': load_locs_json(self.domain),
             'loc_url': '/a/{}/api/v0.5/location_internal/'.format(self.domain),
-            'max_drilldown_levels': 99
+            'max_drilldown_levels': 99,
+            'auto_drill': 'false',
         }
         self.assertDictEqual(ui_filter.filter_context(self.user), filter_context_expected)
 
