@@ -68,5 +68,6 @@ class DomainReportDispatcherTests(SimpleTestCase):
             'incremental_export_logs',
             'couch_repeat_record_report',
             'project_link_report',
-            'repeat_record_report'
+            'repeat_record_report',
+            'api_request_log_report'
         })
