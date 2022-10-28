@@ -94,7 +94,7 @@ function run_tests {
             logdo sh -c "mount | grep 'on /mnt/'"
             logdo id
             logdo pwd
-            logdo ls -ld . .. corehq manage.py node_modules staticfiles docker/wait.sh
+            logdo ls -ld . .. corehq manage.py node_modules staticfiles
             if logdo df -hP .; then
                 upone=..
             else
@@ -193,10 +193,21 @@ function _run_tests {
         fi
     }
 
+    function _wait_for_runserver {
+        began=$(date +%s)
+        while ! { exec 6<>/dev/tcp/127.0.0.1/8000; } 2>/dev/null; do
+            if [ $(($(date +%s) - $began)) -gt 90 ]; then
+                logmsg ERROR "timed out (90 sec) waiting for 127.0.0.1:8000"
+                exit 1
+            fi
+            sleep 1
+        done
+    }
+
     function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        /mnt/wait.sh 127.0.0.1:8000
+        _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"
         grunt test "${js_test_args[@]}"
     }
@@ -299,9 +310,6 @@ else
     fi
     # Own the new dirs after the overlay is mounted.
     chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
-    # with one that points at the overlay mount.
-    ln -sf commcare-hq/docker/wait.sh wait.sh
 fi
 # New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
 #
