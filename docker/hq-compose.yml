@@ -37,7 +37,6 @@ services:
       - couch
       - redis
       - elasticsearch2
-      - elasticsearch5
       - kafka
       - zookeeper
       - minio
