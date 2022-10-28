@@ -14,14 +14,20 @@ services:
     privileged: true  # allows mount inside container
     command: [runserver]
     depends_on:
-      - postgres
-      - couch
-      - redis
-      - elasticsearch2
-      - elasticsearch5
-      - kafka
-      - zookeeper
-      - minio
+      postgres:
+        condition: service_started
+      couch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch2:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      zookeeper:
+        condition: service_started
+      minio:
+        condition: service_healthy
     expose:
       - 8000
     ports:

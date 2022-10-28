@@ -1,5 +1,5 @@
 #!/bin/bash
-# TODO convert to using docker compose'depends_on' feature with health checks
+# Used by run.sh _test_javascript to check "manage.py runserver" is running
 
 set -e
 
@@ -16,9 +16,6 @@ fi
 if [ -n "$1" ]; then
     # always use argv if provided
     SERVICES="$1"
-elif [ -n "$DEPENDENT_SERVICES" ]; then
-    # otherwise use DEPENDENT_SERVICES (if present)
-    SERVICES="$DEPENDENT_SERVICES"
 else
     logmsg ERROR "No services to wait for!"
     exit 1
