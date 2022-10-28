@@ -273,7 +273,7 @@ jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
-jsonschema==3.2.0
+jsonschema==4.16.0
     # via -r base-requirements.in
 jwcrypto==1.4
     # via django-oauth-toolkit
@@ -498,7 +498,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   jsonschema
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
@@ -597,6 +596,5 @@ setuptools==50.3.0
     #   gevent
     #   gunicorn
     #   ipython
-    #   jsonschema
     #   zope-event
     #   zope-interface
