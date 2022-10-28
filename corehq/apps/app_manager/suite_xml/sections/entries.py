@@ -492,8 +492,9 @@ class EntriesHelper(object):
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
-        datum_module = module.source_module if module.module_type == 'shadow' else module
-        datums_meta = get_select_chain_meta(self.app, datum_module)
+        is_shadow_module = module.module_type == 'shadow'
+        source_module = module.source_module if is_shadow_module else module
+        datums_meta = get_select_chain_meta(self.app, source_module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
             parent_id = datums_meta[i - 1]['session_var'] if i >= 1 else ''
@@ -510,7 +511,7 @@ class EntriesHelper(object):
 
             # Shadow modules are different because datums_meta is generated based on the source module,
             # but the various details should be supplied based on the shadow's own configuration.
-            if module.module_type == 'shadow':
+            if is_shadow_module:
                 if datum['module'].unique_id == module.source_module_id:
                     # We're looking at the datum that corresponds to the original module,
                     # so use that module for details
@@ -521,13 +522,13 @@ class EntriesHelper(object):
                     # parent select, and when we see that datum, we need to use the SHADOW's parent select
                     # to supply the details.
                     shadow_active = hasattr(module, 'parent_select') and module.parent_select.active
-                    source_active = hasattr(datum_module, 'parent_select') and datum_module.parent_select.active
+                    source_active = hasattr(source_module, 'parent_select') and source_module.parent_select.active
                     if shadow_active and source_active:
-                        if datum['module'].unique_id == datum_module.parent_select.module_id:
+                        if datum['module'].unique_id == source_module.parent_select.module_id:
                             detail_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
 
-            detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
-            detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
+            detail_persistent = self.get_detail_persistent_attr(detail_module, detail_module, "case_short")
+            detail_inline = self.get_detail_inline_attr(detail_module, detail_module, "case_short")
 
             fixture_select_filter = ''
             if datum['module'].fixture_select.active:
