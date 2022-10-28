@@ -60,7 +60,6 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO) in QA
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     # - akj/abdm-api # Akash Sep 5
@@ -71,7 +70,6 @@ branches:
     # - mp/mobile_fix-2fa # Marco Sep 26
     #- jls/new-instance-connectors # Jenny Sept 27
     - akj/abdm-api-for-mobile-app # Akash Sep 28
-    - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC) in QA
     - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
