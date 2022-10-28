@@ -922,7 +922,7 @@ class EditConditionalAlertView(CreateConditionalAlertView):
         return format_html('{}<br>{}',
             super().help_text,
             _("Editing a conditional alert will cause it to process each case of the alert's case type. "
-            "This may take some time")
+              "This may take some time.")
         )
 
     @property

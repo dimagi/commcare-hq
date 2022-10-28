@@ -82,7 +82,7 @@ class UserInvitationView(object):
             # Add zero-width space to username for better line breaking
             formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
         else:
-            formatted_username = self.request.user.username
+            formatted_username = username
 
         context = {
             'formatted_username': formatted_username,
