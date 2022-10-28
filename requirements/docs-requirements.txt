@@ -68,7 +68,7 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==3.4.8
+cryptography==38.0.1
     # via
     #   jwcrypto
     #   oic

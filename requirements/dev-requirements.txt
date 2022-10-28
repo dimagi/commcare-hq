@@ -88,7 +88,7 @@ contextlib2==21.6.0
     #   schema
 coverage==5.5
     # via -r test-requirements.in
-cryptography==37.0.4
+cryptography==38.0.1
     # via
     #   jwcrypto
     #   oic
