@@ -184,11 +184,6 @@ Now that you have Elasticsearch running you will need to install the necessary p
 $ <es home>/bin/plugin install analysis-phonetic
 ```
 
-**Elasticsearch v5**
-```
-$ <es home>/bin/elasticsearch-plugin install analysis-phonetic
-```
-
 Now restart the service.
 
 
