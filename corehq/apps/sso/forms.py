@@ -910,7 +910,15 @@ class SsoOidcEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
 
 class SsoPowerBiEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
     login_url = forms.CharField(
-        label=gettext_lazy("Login URL"),
+        label=gettext_lazy("Redirect URI"),
+        required=False,
+    )
+    logout_url = forms.CharField(
+        label=gettext_lazy("Scope"),
+        required=False,
+    )
+    idp_cert_public = forms.CharField(
+        label=gettext_lazy("Resource"),
         required=False,
     )
     client_id = forms.CharField(
@@ -987,8 +995,10 @@ class SsoPowerBiEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
                             ),
                             show_row_class=False,
                         ),
-                        'entity_id',
-                        'login_url',
+                        'entity_id',  # tenant id
+                        'login_url',  # acting as redirect url for debugging
+                        'logout_url',  # acting as scope for debugging
+                        'idp_cert_public',  # acting as resource for debugging
                     ),
                     css_class="panel-body"
                 ),
@@ -1016,6 +1026,8 @@ class SsoPowerBiEnterpriseSettingsForm(BaseSsoEnterpriseSettingsForm):
         self.idp.client_id = self.cleaned_data['client_id']
         self.idp.client_secret = self.cleaned_data['client_secret']
         self.idp.login_url = self.cleaned_data['login_url']
+        self.idp.logout_url = self.cleaned_data['logout_url']
+        self.idp.idp_cert_public = self.cleaned_data['idp_cert_public']
 
         self.idp.last_modified_by = admin_user.username
         self.idp.save()

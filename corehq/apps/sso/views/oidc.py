@@ -1,6 +1,6 @@
 from django.contrib import auth
 from django.contrib.auth import logout
-from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse, Http404
 from django.shortcuts import redirect
 from rest_framework.status import HTTP_401_UNAUTHORIZED
 
@@ -74,23 +74,32 @@ def sso_oidc_logout(request, idp_slug):
     return HttpResponseRedirect(reverse('login'))
 
 
-def _get_authorization_url(request):
-    redirect_url = "https://staging.commcarehq.org"
+def _get_authorization_url(request, hide_secret=False):
+    if not (request.idp.idp_type == IdentityProviderType.AZURE_AD
+            and request.idp.protocol == IdentityProviderProtocol.OIDC):
+        raise Http404()
+    client_secret = "<hidden>" if hide_secret else request.idp.client_secret
+
+    # temporary substitutes for debugging
+    tenant_id = request.idp.entity_id
+    redirect_url = request.idp.login_url or "https://staging.commcarehq.org"
+    scope = request.idp.logout_url or "profile,openid,User.Read,email"
+    resource = request.idp.idp_cert_public or "https://graph.windows.net"
+
     initialize_oidc_session(request)
     nonce = request.session["oidc_nonce"]
-    authorization_url = f"https://login.microsoftonline.com/{request.idp.entity_id}/oauth2/authorize?" \
-                        f"client_id={request.idp.client_id}&client_secret={request.idp.client_secret}&scope=profile,openid,User.Read,email" \
+    authorization_url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/authorize?" \
+                        f"client_id={request.idp.client_id}&client_secret={client_secret}&scope={scope}" \
                         f"&response_type=code&" \
-                        f"redirect_uri={redirect_url}&nonce={nonce}&resource=https://graph.windows.net&prompt=consent"
+                        f"redirect_uri={redirect_url}&nonce={nonce}&resource={resource}&prompt=consent"
     return authorization_url
 
 
 @identity_provider_required
 def sso_oidc_api_auth(request, idp_slug):
-    authorization_url = _get_authorization_url(request)
     return JsonResponse({
         "success": True,
-        # "authorization_url": authorization_url,
+        "authorization_url": _get_authorization_url(request, True),
     })
 
 
