@@ -26,21 +26,21 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
             var toggleReleaseLockButtons = function () {
                 if (releasesMain.releasesEnabled()) {
-                    $("#btn-lock-release").show();
-                    $("#btn-unlock-release").hide();
+                    $("#btn-release-unlocked").show();
+                    $("#btn-release-locked").hide();
                 } else {
-                    $("#btn-lock-release").hide();
-                    $("#btn-unlock-release").show();
+                    $("#btn-release-unlocked").hide();
+                    $("#btn-release-locked").show();
                 }
             };
 
-            $("#btn-lock-release").click(function () {
-                console.log("btn click lock");
+            $("#btn-release-unlocked").click(function () {
+                console.log("btn click to lock");
                 releasesMain.toggleReleasesControl(false);
                 toggleReleaseLockButtons();
             });
-            $("#btn-unlock-release").click(function () {
-                console.log("btn click unlock");
+            $("#btn-release-locked").click(function () {
+                console.log("btn click to unlock");
                 releasesMain.toggleReleasesControl(true);
                 toggleReleaseLockButtons();
             });
