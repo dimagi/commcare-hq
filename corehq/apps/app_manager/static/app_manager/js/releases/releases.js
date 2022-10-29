@@ -387,9 +387,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.releaseLocked = ko.observable(true);
 
         self.releaseModeToggle = function (savedApp, event) {
-            console.log("Clciked release mode toggle")
             self.releaseLocked(!self.releaseLocked);
-            console.log(event);
         };
 
         self.toggleRelease = function (savedApp, event) {
