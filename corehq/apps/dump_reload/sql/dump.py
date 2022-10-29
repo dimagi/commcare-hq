@@ -194,6 +194,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
     FilteredModelIteratorBuilder('generic_inbound.RequestLog', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ProcessingAttempt', SimpleFilter('log__domain')),
+    FilteredModelIteratorBuilder('domain.AppReleaseModeSetting', SimpleFilter('domain')),
 ]]
 
 
