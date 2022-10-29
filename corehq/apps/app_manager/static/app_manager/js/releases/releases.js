@@ -388,6 +388,7 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.releaseModeToggle = function (savedApp, event) {
             self.releaseLocked(!self.releaseLocked);
+            console.log(savedApp + event);
         };
 
         self.toggleRelease = function (savedApp, event) {
