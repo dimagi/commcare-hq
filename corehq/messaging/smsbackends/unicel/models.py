@@ -45,6 +45,8 @@ UNICODE_PARAMS = [("udhi", 0),
 
 class SQLUnicelBackend(SQLSMSBackend):
 
+    url = OUTBOUND_URLBASE
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -85,7 +87,7 @@ class SQLUnicelBackend(SQLSMSBackend):
             text_as_hex = codecs.encode(text_as_utf_16_be, 'hex')
             params.append((OutboundParams.MESSAGE, text_as_hex.upper()))
 
-        data = urlopen('%s?%s' % (OUTBOUND_URLBASE, urlencode(params)),
+        data = urlopen('%s?%s' % (self.url, urlencode(params)),
             timeout=settings.SMS_GATEWAY_TIMEOUT).read()
 
         return data

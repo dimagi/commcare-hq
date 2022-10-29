@@ -6,10 +6,20 @@ from django.test import SimpleTestCase
 from corehq.apps.userreports.const import UCR_NAMED_FILTER
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.exceptions import GenericInboundValidationError
-from corehq.motech.generic_inbound.models import ConfigurableAPI, ConfigurableApiValidation
+from corehq.motech.generic_inbound.core import (
+    _apply_api_filter,
+    _validate_api_request,
+    execute_generic_api,
+)
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundValidationError,
+)
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ConfigurableApiValidation,
+)
 from corehq.motech.generic_inbound.utils import get_evaluation_context
-from corehq.motech.generic_inbound.core import execute_generic_api, _validate_api_request
 
 
 @dataclasses.dataclass
@@ -33,6 +43,30 @@ class TestGenericInboundAPI(SimpleTestCase):
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(BadSpecError):
             execute_generic_api(self.domain_name, user, "device_id", context, api_model)
+
+    def test_no_filter(self):
+        api_model = ConfigurableAPI(
+            domain=self.domain_name,
+            transform_expression=UCRExpression(definition={
+                'type': 'dict', 'properties': {'case_type': 'patient'}
+            }),
+        )
+        user = MockUser()
+        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "patient"}})
+        self.assertFalse(_apply_api_filter(api_model, context))
+
+    def test_filter_pass(self):
+        api_model = _get_api_with_filter(self.domain_name)
+        user = MockUser()
+        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "patient"}})
+        self.assertTrue(_apply_api_filter(api_model, context))
+
+    def test_filter_fail(self):
+        api_model = _get_api_with_filter(self.domain_name)
+        user = MockUser()
+        context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "client"}})
+        with self.assertRaises(GenericInboundRequestFiltered):
+            _apply_api_filter(api_model, context)
 
     def test_validation_pass(self):
         api_model = _get_api_with_validation(self.domain_name)
@@ -87,4 +121,23 @@ def _get_api_with_validation(domain_name):
     )
     # mock 'get_validations'
     api_model.get_validations = lambda: validations
+    return api_model
+
+
+def _get_api_with_filter(domain_name):
+    filter_expression = UCRExpression(
+        expression_type=UCR_NAMED_FILTER,
+        definition={
+            "type": "boolean_expression",
+            "expression": {"type": "jsonpath", "jsonpath": "body.resource.type"},
+            "operator": "eq",
+            "property_value": "patient"
+        })
+    api_model = ConfigurableAPI(
+        domain=domain_name,
+        filter_expression=filter_expression,
+        transform_expression=UCRExpression(definition={
+            'type': 'dict', 'properties': {'case_type': 'patient'}
+        }),
+    )
     return api_model

@@ -397,6 +397,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
+    ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),

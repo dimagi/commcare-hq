@@ -14,6 +14,8 @@ class MegamobileException(Exception):
 
 class SQLMegamobileBackend(SQLSMSBackend):
 
+    url = "http://api.mymegamobile.com/"
+
     class Meta(object):
         app_label = 'sms'
         proxy = True
@@ -54,5 +56,5 @@ class SQLMegamobileBackend(SQLSMSBackend):
             "src": config.source_identifier,
         })
         api_account_name = quote(config.api_account_name)
-        url = 'http://api.mymegamobile.com/%s?%s' % (api_account_name, params)
-        response = urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        url = '%s%s?%s' % (self.url, api_account_name, params)
+        urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()

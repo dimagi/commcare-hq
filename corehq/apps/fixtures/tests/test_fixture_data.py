@@ -7,21 +7,16 @@ from casexml.apps.phone.tests.utils import \
     call_fixture_generator as call_fixture_generator_raw
 
 from corehq.apps.fixtures import fixturegenerators
-from corehq.apps.fixtures.dbaccessors import (
-    delete_all_fixture_data_types,
-    get_fixture_data_types,
-)
-from corehq.apps.fixtures.exceptions import FixtureVersionError
+from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
     FIXTURE_BUCKET,
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-    FixtureOwnership,
-    FixtureTypeField,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
+    TypeField,
 )
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.blobs import get_blob_db
 
@@ -37,93 +32,56 @@ class FixtureDataTest(TestCase):
         super(FixtureDataTest, self).setUp()
         self.domain = 'qwerty'
         self.tag = "district"
-        delete_all_users()
-        delete_all_fixture_data_types()
+        delete_all_fixture_data()
 
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain,
             tag=self.tag,
-            name="Districts",
+            description="Districts",
             fields=[
-                FixtureTypeField(
-                    field_name="state_name",
-                    properties=[]
-                ),
-                FixtureTypeField(
-                    field_name="district_name",
-                    properties=["lang"]
-                ),
-                FixtureTypeField(
-                    field_name="district_id",
-                    properties=[]
-                ),
+                TypeField(name="state_name"),
+                TypeField(name="district_name", properties=["lang"]),
+                TypeField(name="district_id"),
             ],
             item_attributes=[],
         )
         self.data_type.save()
+        self.addCleanup(self.data_type._migration_get_couch_object().delete)
 
-        self.data_item = FixtureDataItem(
+        self.data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=self.data_type.get_id,
+            table_id=self.data_type.id,
             fields={
-                "state_name": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_state",
-                            properties={}
-                        )
-                    ]
-                ),
-                "district_name": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_in_HIN",
-                            properties={"lang": "hin"}
-                        ),
-                        FixtureItemField(
-                            field_value="Delhi_in_ENG",
-                            properties={"lang": "eng"}
-                        )
-                    ]
-                ),
-                "district_id": FieldList(
-                    field_list=[
-                        FixtureItemField(
-                            field_value="Delhi_id",
-                            properties={}
-                        )
-                    ]
-                )
+                "state_name": [
+                    Field(value="Delhi_state")
+                ],
+                "district_name": [
+                    Field(value="Delhi_in_HIN", properties={"lang": "hin"}),
+                    Field(value="Delhi_in_ENG", properties={"lang": "eng"})
+                ],
+                "district_id": [
+                    Field(value="Delhi_id")
+                ]
             },
             item_attributes={},
+            sort_key=0,
         )
         self.data_item.save()
+        self.addCleanup(self.data_item._migration_get_couch_object().delete)
 
         self.user = CommCareUser.create(self.domain, 'to_delete', '***', None, None)
+        self.addCleanup(self.user.delete, self.domain, deleted_by=None)
 
-        self.fixture_ownership = FixtureOwnership(
+        self.ownership = LookupTableRowOwner(
             domain=self.domain,
             owner_id=self.user.get_id,
-            owner_type='user',
-            data_item_id=self.data_item.get_id
+            owner_type=OwnerType.User,
+            row_id=self.data_item.id,
         )
-        self.fixture_ownership.save()
-        get_fixture_data_types.clear(self.domain)
-
-    def tearDown(self):
-        self.data_type.delete()
-        self.data_item.delete()
-        self.user.delete(self.domain, deleted_by=None)
-        self.fixture_ownership.delete()
-        delete_all_users()
-        delete_all_fixture_data_types()
-        get_fixture_data_types.clear(self.domain)
-        get_blob_db().delete(key=FIXTURE_BUCKET + '/' + self.domain)
-        super(FixtureDataTest, self).tearDown()
+        self.ownership.save(sync_to_couch=False)
+        self.addCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + '/' + self.domain)
 
     def test_xml(self):
-        item_dict = self.data_item.to_json()
-        item_dict['_data_type'] = self.data_item.data_type
         check_xml_line_by_line(self, """
         <district>
             <state_name>Delhi_state</state_name>
@@ -131,11 +89,12 @@ class FixtureDataTest(TestCase):
             <district_name lang="eng">Delhi_in_ENG</district_name>
             <district_id>Delhi_id</district_id>
         </district>
-        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(item_dict), encoding='utf-8'))
+        """, ElementTree.tostring(fixturegenerators.item_lists.to_xml(
+            self.data_item, self.data_type), encoding='utf-8'))
 
     def test_ownership(self):
-        self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, include_docs=False))
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
+        row_ids = [r.id for r in LookupTableRow.objects.iter_by_user(self.user)]
+        self.assertItemsEqual([self.data_item.id], row_ids)
 
         fixture, = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
 
@@ -152,19 +111,13 @@ class FixtureDataTest(TestCase):
         </fixture>
         """ % self.user.user_id, ElementTree.tostring(fixture, encoding='utf-8'))
 
-        self.data_item.remove_user(self.user)
-        self.assertItemsEqual([], self.data_item.get_all_users())
-
-        self.fixture_ownership = self.data_item.add_user(self.user)
-        self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
-
     def test_fixture_removal(self):
         """
         An empty fixture list should be generated for each fixture that the
         use does not have access to (within the domain).
         """
-
-        self.data_item.remove_user(self.user)
+        self.ownership.delete()
+        self.ownership = None
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(1, len(fixtures))
@@ -178,19 +131,11 @@ class FixtureDataTest(TestCase):
             ElementTree.tostring(fixtures[0], encoding='utf-8')
         )
 
-        self.fixture_ownership = self.data_item.add_user(self.user)
-
-    def test_get_indexed_items(self):
-        with self.assertRaises(FixtureVersionError):
-            fixtures = FixtureDataItem.get_indexed_items(
-                self.domain, self.tag, 'state_name')
-            delhi_id = fixtures['Delhi_state']['district_id']
-            self.assertEqual(delhi_id, 'Delhi_id')
-
     def test_get_item_by_field_value(self):
         self.assertEqual(
-            FixtureDataItem.by_field_value(self.domain, self.data_type, 'state_name', 'Delhi_state').one().get_id,
-            self.data_item.get_id
+            LookupTableRow.objects.with_value(
+                self.domain, self.data_type.id, 'state_name', 'Delhi_state').get().id,
+            self.data_item.id
         )
 
     def test_fixture_is_indexed(self):
@@ -229,21 +174,15 @@ class FixtureDataTest(TestCase):
         )
 
     def test_empty_data_types(self):
-        empty_data_type = FixtureDataType(
+        empty_data_type = LookupTable(
             domain=self.domain,
             tag='blank',
-            name="blank",
-            fields=[
-                FixtureTypeField(
-                    field_name="name",
-                    properties=[]
-                ),
-            ],
+            description="blank",
+            fields=[TypeField(name="name")],
             item_attributes=[],
         )
         empty_data_type.save()
-        self.addCleanup(empty_data_type.delete)
-        get_fixture_data_types.clear(self.domain)
+        self.addCleanup(empty_data_type._migration_get_couch_object().delete)
 
         fixtures = call_fixture_generator(self.user.to_ota_restore_user(self.domain))
         self.assertEqual(2, len(fixtures))
@@ -266,7 +205,10 @@ class FixtureDataTest(TestCase):
             </fixture>
             </f>
             """.format(self.user.user_id),
-            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8') for fixture in fixtures])
+            '<f>{}\n{}\n</f>'.format(*[
+                ElementTree.tostring(fixture, encoding='utf-8').decode('utf-8')
+                for fixture in fixtures
+            ])
         )
 
     def test_user_data_type_with_item(self):
@@ -303,7 +245,9 @@ class FixtureDataTest(TestCase):
         sandwich = self.make_data_type("sandwich", is_global=True)
         self.make_data_item(sandwich, "7.39")
         frank = self.user.to_ota_restore_user(self.domain)
-        sammy = CommCareUser.create(self.domain, 'sammy', '***', None, None).to_ota_restore_user(self.domain)
+        sammy_ = CommCareUser.create(self.domain, 'sammy', '***', None, None)
+        self.addCleanup(sammy_.delete, self.domain, deleted_by=None)
+        sammy = sammy_.to_ota_restore_user(self.domain)
 
         fixtures = call_fixture_generator(frank)
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {frank.user_id})
@@ -313,36 +257,30 @@ class FixtureDataTest(TestCase):
         self.assertEqual({item.attrib['user_id'] for item in fixtures}, {sammy.user_id})
 
     def make_data_type(self, name, is_global):
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=self.domain,
             tag="{}-index".format(name),
             is_global=is_global,
-            name=name.title(),
+            description=name.title(),
             fields=[
-                FixtureTypeField(field_name="cost", properties=[]),
+                TypeField(name="cost", properties=[]),
             ],
             item_attributes=[],
         )
         data_type.save()
-        self.addCleanup(data_type.delete)
+        self.addCleanup(data_type._migration_get_couch_object().delete)
         return data_type
 
     def make_data_item(self, data_type, cost):
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=self.domain,
-            data_type_id=data_type._id,
-            fields={
-                "cost": FieldList(
-                    field_list=[FixtureItemField(
-                        field_value=cost,
-                        properties={},
-                    )]
-                ),
-            },
+            table_id=data_type.id,
+            fields={"cost": [Field(value=cost)]},
             item_attributes={},
+            sort_key=0,
         )
         data_item.save()
-        self.addCleanup(data_item.delete)
+        self.addCleanup(data_item._migration_get_couch_object().delete)
         return data_item
 
 
@@ -352,16 +290,17 @@ class TestFixtureOrdering(TestCase):
         super(TestFixtureOrdering, cls).setUpClass()
         cls.domain = "TestFixtureOrdering"
         cls.user = CommCareUser.create(cls.domain, 'george', '***', None, None)
+        cls.addClassCleanup(cls.user.delete, cls.domain, deleted_by=None)
 
-        cls.data_type = FixtureDataType(
+        cls.data_type = LookupTable(
             domain=cls.domain,
             tag="houses-of-westeros",
             is_global=True,
-            name="Great Houses of Westeros",
+            description="Great Houses of Westeros",
             fields=[
-                FixtureTypeField(field_name="name", properties=[]),
-                FixtureTypeField(field_name="seat", properties=[]),
-                FixtureTypeField(field_name="sigil", properties=[]),
+                TypeField(name="name"),
+                TypeField(name="seat"),
+                TypeField(name="sigil"),
             ],
             item_attributes=[],
         )
@@ -376,33 +315,23 @@ class TestFixtureOrdering(TestCase):
             cls._make_data_item(2, "Stark", "Winterfell", "Direwolf"),
             cls._make_data_item(7, "Baratheon", "Storm's End", "Stag"),
         ]
+        cls.addClassCleanup(delete_all_fixture_data, cls.domain)
 
     @classmethod
     def _make_data_item(cls, sort_key, name, seat, sigil):
-        def field_list(value):
-            return FieldList(field_list=[FixtureItemField(field_value=value, properties={})])
-
-        data_item = FixtureDataItem(
+        data_item = LookupTableRow(
             domain=cls.domain,
-            data_type_id=cls.data_type._id,
+            table_id=cls.data_type.id,
             fields={
-                "name": field_list(name),
-                "seat": field_list(seat),
-                "sigil": field_list(sigil),
+                "name": [Field(value=name)],
+                "seat": [Field(value=seat)],
+                "sigil": [Field(value=sigil)],
             },
             item_attributes={},
             sort_key=sort_key,
         )
         data_item.save()
         return data_item
-
-    @classmethod
-    def tearDownClass(cls):
-        for data_item in cls.data_items:
-            data_item.delete()
-        cls.data_type.delete()
-        cls.user.delete(cls.domain, deleted_by=None)
-        super(TestFixtureOrdering, cls).tearDownClass()
 
     def test_fixture_order(self):
         (fixture,) = call_fixture_generator(self.user.to_ota_restore_user(self.domain))

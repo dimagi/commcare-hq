@@ -1,17 +1,19 @@
-from datetime import datetime
+import jwt
+import uuid
+
+from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 
-from jsonfield import JSONField
 
 from dimagi.ext.couchdbkit import IntegerProperty
 
 from corehq.apps.users.models import CommCareUser
+from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
 
 class HQUserType(object):
@@ -196,3 +198,41 @@ class TableauVisualization(models.Model):
             if couch_user.can_view_tableau_viz(domain, f"{viz.id}")
         ]
         return sorted(items, key=lambda v: v.name.lower())
+
+
+class TableauConnectedApp(models.Model):
+    app_client_id = models.CharField(max_length=32)
+    secret_id = models.CharField(max_length=64)
+    encrypted_secret_value = models.CharField(max_length=64)
+    server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return 'App client ID: {app_client_id},  Server: {server}'.format(app_client_id=self.app_client_id,
+                                                                          server=self.server)
+
+    @property
+    def plaintext_secret_value(self):
+        return b64_aes_decrypt(self.encrypted_secret_value)
+
+    @plaintext_secret_value.setter
+    def plaintext_secret_value(self, plaintext):
+        self.encrypted_secret_value = b64_aes_encrypt(plaintext)
+
+    def create_jwt(self):
+        token = jwt.encode(
+            {
+                "iss": self.app_client_id,
+                "exp": datetime.utcnow() + timedelta(minutes=5),
+                "jti": str(uuid.uuid4()),
+                "aud": "tableau",
+                "sub": "username",
+                "scp": ["tableau:views:embed", "tableau:metrics:embed"]
+            },
+            self.plaintext_secret_value,
+            algorithm="HS256",
+            headers={
+                'kid': self.secret_id,
+                'iss': self.app_client_id
+            }
+        )
+        return token

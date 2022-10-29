@@ -12810,11 +12810,45 @@ msgid "Completion Time"
 msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
+msgid "Case Update"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Deduplicate"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py corehq/messaging/scheduling/forms.py
+msgid "Scheduling"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
 msgid "ALL of the criteria are met"
 msgstr ""
 
 #: corehq/apps/data_interfaces/models.py
 msgid "ANY of the criteria are met"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Running"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Finished"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+msgid "Stopped"
+msgstr ""
+
+#: corehq/apps/data_interfaces/models.py
+#: corehq/apps/domain/templates/error.html
+#: corehq/apps/integration/templates/integration/web_app_integration_err.html
+#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
+#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
+#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
+#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
+msgid "Error"
 msgstr ""
 
 #: corehq/apps/data_interfaces/tasks.py
@@ -15949,15 +15983,6 @@ msgstr ""
 
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 msgid "Set as autopay card"
-msgstr ""
-
-#: corehq/apps/domain/templates/error.html
-#: corehq/apps/integration/templates/integration/web_app_integration_err.html
-#: corehq/apps/linked_domain/templates/linked_domain/partials/pull_content.html
-#: corehq/apps/reports/standard/monitoring.py corehq/apps/sms/filters.py
-#: corehq/apps/sms/models.py corehq/messaging/scheduling/views.py
-#: corehq/motech/generic_inbound/models.py corehq/motech/views.py
-msgid "Error"
 msgstr ""
 
 #: corehq/apps/domain/templates/error.html
@@ -28139,25 +28164,6 @@ msgstr ""
 msgid "Filter your cases by entering a search query in the box below."
 msgstr ""
 
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-#: corehq/apps/reports/views.py
-msgid "Edit Submission"
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-msgid ""
-"\n"
-"      This page is being removed. Use the \"Clean Form Submission\" button "
-"on the form submission page\n"
-"      to edit this form.\n"
-"    "
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/form/edit_submission.html
-#: corehq/apps/reports/templates/reports/reportdata/case_data.html
-msgid "Loading"
-msgstr ""
-
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
 msgid "All data is listed as Unrecognized Data."
 msgstr ""
@@ -28473,18 +28479,6 @@ msgid "Clean Case Data"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
-msgid ""
-"\n"
-"              This feature is replacing the old \"Edit this form\" "
-"functionality, which will be removed soon.\n"
-"            "
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
-msgid "Click here to access the old \"edit this form\" page."
-msgstr ""
-
-#: corehq/apps/reports/templates/reports/partials/data_corrections_modal.html
 #, python-format
 msgid ""
 "\n"
@@ -28782,6 +28776,10 @@ msgid "No transaction found"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/reportdata/case_data.html
+msgid "Loading"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/reportdata/case_data.html
 #: corehq/apps/sms/models.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_property_modal.html
 msgid "Received"
@@ -29013,10 +29011,6 @@ msgid "Please apply filters to view:"
 msgstr ""
 
 #: corehq/apps/reports/util.py
-msgid "Form cannot be edited because it will create a new case"
-msgstr ""
-
-#: corehq/apps/reports/util.py
 #, python-format
 msgid "%s: Requested export excel data"
 msgstr ""
@@ -29170,46 +29164,6 @@ msgstr ""
 
 #: corehq/apps/reports/views.py
 msgid "You do not have permission to view this form."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Application not found."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Missing module or form information!"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid ""
-"Could not detect the application or form for this submission. A common cause "
-"is that the form was submitted via App or Form preview"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Could not detect the application or form for this submission."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Could not find user for this submission."
-msgstr ""
-
-#: corehq/apps/reports/views.py
-msgid "Could not find the user-case for this form"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case <a href=\"{case_url}\">{case_name}</a> is closed. Please reopen the "
-"case before editing the form"
-msgstr ""
-
-#: corehq/apps/reports/views.py
-#, python-brace-format
-msgid ""
-"Case <a href=\"{case_url}\">{case_name}</a> is deleted. Cannot edit this "
-"form."
 msgstr ""
 
 #: corehq/apps/reports/views.py
@@ -34809,7 +34763,7 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"                        Are you sure you want to to accept the invitation\n"
+"                        Are you sure you want to accept the invitation\n"
 "                        to join the CommCare HQ %(invite_type)s\n"
 "                        <strong>%(invite_to)s</strong> as <strong>"
 "%(username)s</strong>?\n"
@@ -37295,10 +37249,6 @@ msgid "JSON: list of strings"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-msgid "Scheduling"
-msgstr ""
-
-#: corehq/messaging/scheduling/forms.py
 msgid "Add Event"
 msgstr ""
 
@@ -39289,10 +39239,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
-msgstr ""
-
-#: corehq/motech/generic_inbound/utils.py
-msgid "Unknown user type"
 msgstr ""
 
 #: corehq/motech/generic_inbound/views.py

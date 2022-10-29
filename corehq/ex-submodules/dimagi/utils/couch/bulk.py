@@ -11,7 +11,7 @@ from simplejson import JSONDecodeError
 from couchdbkit import BulkSaveError
 from dimagi.utils.chunked import chunked
 
-from .migration import SyncCouchToSQLMixin
+from .migration import SyncCouchToSQLMixin, SyncSQLToCouchMixin
 
 
 class BulkFetchException(Exception):
@@ -61,7 +61,7 @@ class CouchTransaction(object):
     def __init__(self):
         self.depth = 0
         self.docs_to_delete = defaultdict(set)
-        self.docs_to_save = defaultdict(set)
+        self.docs_to_save = defaultdict(list)
         self.sql_save_actions = {}
         self.post_commit_actions = []
 
@@ -77,7 +77,11 @@ class CouchTransaction(object):
 
     def save(self, doc):
         cls = doc.__class__
-        self.docs_to_save[cls].add(doc)
+        if cls in self.sql_save_actions and issubclass(cls, SyncSQLToCouchMixin):
+            raise TypeError("Updated SQL objects must be returned by save "
+                f"action ({self.sql_save_actions[cls]}), not added to "
+                "the transaction with CouchTransaction.save()")
+        self.docs_to_save[cls].append(doc)
 
     def set_sql_save_action(self, doc_class, action):
         """Set action callback to perform instead of bulk SQL insert
@@ -85,10 +89,20 @@ class CouchTransaction(object):
         This must be used when updating existing documents since it is
         not possible for the transaction to efficiently apply updates to
         large numbers of existing SQL rows.
+
+        When `doc_class` is a subclass of `SyncSQLToCouchMixin` the
+        action must return a list of saved model objects, which will be
+        used to construct Couch documents to be persisted with
+        `Document.bulk_save()`.
         """
         if doc_class in self.sql_save_actions:
             raise TypeError(f"Save action already set for {doc_class.__name__}")
-        self.docs_to_save.setdefault(doc_class, set())
+        if issubclass(doc_class, SyncSQLToCouchMixin) and self.docs_to_save.get(doc_class):
+            raise TypeError("Unexpected docs to save:"
+                f"{self.docs_to_save[doc_class]}. Updated SQL objects must be "
+                "returned by save action, not added to the transaction with "
+                "CouchTransaction.save()")
+        self.docs_to_save.setdefault(doc_class, [])
         self.sql_save_actions[doc_class] = action
 
     def commit(self):
@@ -102,6 +116,7 @@ class CouchTransaction(object):
             self._commit(start_sql_transaction)
 
     def _commit(self, start_sql_transaction):
+        from dimagi.utils.couch.database import iter_bulk_delete
         for cls, docs in self.docs_to_delete.items():
             if issubclass(cls, SyncCouchToSQLMixin):
                 def delete(chunk):
@@ -111,6 +126,16 @@ class CouchTransaction(object):
                     sql_class.objects.filter(**{id_name + "__in": ids}).delete()
                 sql_class = cls._migration_get_sql_model_class()
                 id_name = sql_class._migration_couch_id_name
+            elif issubclass(cls, SyncSQLToCouchMixin):
+                def delete(chunk):
+                    assert not any(obj._state.adding for obj in chunk), \
+                        [obj for obj in chunk if obj._state.adding]
+                    couch_ids = [obj._migration_couch_id for obj in chunk]
+                    iter_bulk_delete(couch_class.get_db(), couch_ids)
+                    pks = [obj.pk for obj in chunk]
+                    start_sql_transaction()
+                    cls.objects.filter(pk__in=pks).delete()
+                couch_class = cls._migration_get_couch_model_class()
             else:
                 delete = partial(_bulk_delete, cls)
             for chunk in chunked(docs, 1000):
@@ -119,8 +144,13 @@ class CouchTransaction(object):
         for cls, docs in self.docs_to_save.items():
             if cls in self.sql_save_actions:
                 start_sql_transaction()
-                self.sql_save_actions[cls]()
-                save = cls.bulk_save
+                saved_docs = self.sql_save_actions[cls]()
+                if issubclass(cls, SyncSQLToCouchMixin):
+                    assert not docs, (docs, saved_docs)
+                    docs = iter_couch_docs(cls, saved_docs)
+                    save = cls._migration_get_couch_model_class().bulk_save
+                else:
+                    save = cls.bulk_save
             elif issubclass(cls, SyncCouchToSQLMixin) and cls not in self.sql_save_actions:
                 def save(chunk):
                     if any(doc._rev is not None for doc in chunk):
@@ -130,6 +160,17 @@ class CouchTransaction(object):
                     cls.bulk_save(chunk)
                     start_sql_transaction()
                     cls._migration_bulk_sync_to_sql(chunk)
+            elif issubclass(cls, SyncSQLToCouchMixin):
+                def save(chunk):
+                    if any(not obj._state.adding for obj in chunk):
+                        raise NotImplementedError("Cannot update "
+                            f"{cls.__name__}. Use CouchTransaction."
+                            "set_sql_save_action() to update objects in bulk.")
+                    start_sql_transaction()
+                    cls.objects.bulk_create(chunk)
+                    couch_class = cls._migration_get_couch_model_class()
+                    new_couch_docs = list(iter_couch_docs(cls, chunk))
+                    couch_class.bulk_save(new_couch_docs)
             else:
                 save = cls.bulk_save
             for chunk in chunked(docs, 1000, list):
@@ -146,6 +187,19 @@ class CouchTransaction(object):
         self.depth -= 1
         if self.depth == 0 and not exc_type:
             self.commit()
+
+
+def iter_couch_docs(cls, sql_objects):
+    couch_class = cls._migration_get_couch_model_class()
+    db = couch_class.get_db()
+    ids = [x._migration_couch_id for x in sql_objects]
+    couch_docs = {d["_id"]: couch_class.wrap(d) for d in get_docs(db, ids)}
+    for obj in sql_objects:
+        doc = couch_docs.get(obj._migration_couch_id)
+        if doc is None:
+            doc = couch_class(_id=obj._migration_couch_id)
+        obj._migration_sync_to_couch(doc, save=False)
+        yield doc
 
 
 def _bulk_delete(cls, chunk):

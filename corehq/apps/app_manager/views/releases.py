@@ -214,7 +214,7 @@ def get_releases_context(request, domain, app_id):
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
         })
-        if app.version == 1:
+        if app.version == 1 and len(app.modules) == 0:
             context.update({'intro_only': True})
 
         # Multimedia is not supported for remote applications at this time.
