@@ -22,7 +22,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         });
 
         // pagination
-        self.itemsPerPage = ko.observable(5);
+        self.itemsPerPage = ko.observable(25);
         self.totalItems = ko.computed(function () {
             return self.rules().length;
         });
@@ -98,10 +98,38 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         return self;
     };
 
+    var RuleRunHistoryViewModel = function (ruleRuns) {
+        var self = {};
+        self.ruleRuns = ko.mapping.fromJS(ruleRuns);
+        self.paginatedRuleRuns = ko.observableArray([]);
+        // pagination
+        self.itemsPerPage = ko.observable(5);
+        self.totalItems = ko.computed(function () {
+            return self.ruleRuns().length;
+        });
+        self.currentPage = 1;
+
+        self.goToPage = function (page) {
+            self.currentPage = page;
+            self.paginatedRuleRuns.removeAll();
+            var skip = (self.currentPage - 1) * self.itemsPerPage();
+            self.paginatedRuleRuns(self.ruleRuns().slice(skip, skip + self.itemsPerPage()));
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+        return self;
+    };
+
     $(function () {
         var rules = initialPageData.get('rules');
-        var viewModel = RuleListViewModel(rules);
-        $("#ko-auto-update-rules").koApplyBindings(viewModel);
+        var ruleRuns = initialPageData.get('rule_runs');
+        var ruleListViewModel = RuleListViewModel(rules);
+        $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+
+        var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);
+        $("#ko-tabs-rule-run-history").koApplyBindings(ruleRunHistoryViewModel);
 
         $("#add-new").click(function () {
             googleAnalytics.track.event('Automatic Case Closure', 'Rules', 'Set Rule');
