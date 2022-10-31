@@ -145,18 +145,6 @@ class AppNotFound(Exception):
     pass
 
 
-def _apply_mapping(export_tables, mapping_dict):
-    def _clean(tabledata):
-        def _clean_tablename(tablename):
-            return mapping_dict.get(tablename, tablename)
-        return (_clean_tablename(tabledata[0]), tabledata[1])
-    return list(map(_clean, export_tables))
-
-
-def _apply_removal(export_tables, removal_list):
-    return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
-
-
 class TableauServer(models.Model):
     SERVER_TYPES = (
         ('server', gettext_lazy('Tableau Server')),
