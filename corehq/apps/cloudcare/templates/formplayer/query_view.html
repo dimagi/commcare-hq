@@ -71,6 +71,14 @@
            value="<%- value %>"
            <% if (required) { %> aria-required="true"<% } %>>
 
+    <% } else if (input === "checkbox") { %>
+    <input id="<%- text ? text : "" %>"
+           type="checkbox"
+           class="checkbox query-field"
+           value="<%- value %>"
+           <% if (value === 'checked') { %> checked <% } %>
+           <% if (required) { %> aria-required="true"<% } %>>
+
     <% } else if (input == "address") { %>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
     </div>
