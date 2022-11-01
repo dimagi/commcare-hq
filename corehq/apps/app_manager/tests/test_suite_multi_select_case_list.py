@@ -76,7 +76,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m0_case_short"
-                                  detail-confirm="m0_case_long"/>
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -110,7 +111,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   value="./@case_id"
                                   detail-select="m0_case_short"
                                   detail-confirm="m0_case_long"
-                                  autoselect="true"/>
+                                  autoselect="true"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -240,7 +242,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -303,7 +306,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
