@@ -126,6 +126,36 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             "./remote-request",
         )
 
+    def test_multi_select_case_list_modified_max_select_value(self):
+        self.module.case_details.short.max_select_value = 15
+        print(self.module.case_details.short)
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="selected_cases"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="15"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
+        )
+
     def test_session_schema(self):
         # Session schema should not contain case
         self.assertEqual(get_session_schema(self.form), {
