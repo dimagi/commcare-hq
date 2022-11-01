@@ -1,18 +1,10 @@
-from corehq.apps.fixtures.dbaccessors import (
-    delete_all_fixture_data_types,
-    delete_fixture_items_for_data_type,
-    get_fixture_data_types,
-    get_fixture_items_for_data_type,
-)
+from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureItemField,
-    FixtureTypeField,
+    LookupTable,
     LookupTableRow,
+    TypeField,
+    Field,
 )
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
@@ -23,143 +15,135 @@ class TestUpdateFixtures(BaseLinkedDomainTest):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.table = FixtureDataType(
+        cls.table = LookupTable(
             domain=cls.domain,
             tag='moons',
             is_global=True,
             fields=[
-                FixtureTypeField(field_name="name"),
-                FixtureTypeField(field_name="planet"),
+                TypeField(name="name"),
+                TypeField(name="planet"),
             ],
         )
         cls.table.save()
+        cls.addClassCleanup(delete_all_fixture_data)
 
     def setUp(self):
         # Reset table content for each test
         for item in [
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Io')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Io')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=0,
             ),
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Europa')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Europa')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=1,
             ),
-            FixtureDataItem(
+            LookupTableRow(
                 domain=self.domain,
-                data_type_id=self.table._id,
+                table_id=self.table.id,
                 fields={
-                    'name': FieldList(field_list=[FixtureItemField(field_value='Callisto')]),
-                    'planet': FieldList(field_list=[FixtureItemField(field_value='Jupiter')]),
+                    'name': [Field(value='Callisto')],
+                    'planet': [Field(value='Jupiter')],
                 },
+                sort_key=2,
             ),
         ]:
             item.save()
 
-    def tearDown(self):
-        delete_fixture_items_for_data_type(self.domain, self.table._id)
-
-    @classmethod
-    def tearDownClass(cls):
-        for data_type in get_fixture_data_types(cls.domain):
-            delete_fixture_items_for_data_type(cls.domain, data_type._id)
-        for data_type in get_fixture_data_types(cls.linked_domain):
-            delete_fixture_items_for_data_type(cls.linked_domain, data_type._id)
-        delete_all_fixture_data_types()
-        super().tearDownClass()
-
     def test_update_fixture(self):
-        self.assertEqual([], get_fixture_data_types(self.linked_domain))
+        self.assertFalse(LookupTable.objects.by_domain(self.linked_domain).count())
 
         # Update linked domain
         update_fixture(self.domain_link, self.table.tag)
 
         # Linked domain should now have master domain's table and rows
-        linked_types = get_fixture_data_types(self.linked_domain)
+        linked_types = LookupTable.objects.by_domain(self.linked_domain)
         self.assertEqual({'moons'}, {t.tag for t in linked_types})
         self.assertEqual({self.linked_domain}, {t.domain for t in linked_types})
-        items = get_fixture_items_for_data_type(self.linked_domain, linked_types[0]._id)
+        items = list(LookupTableRow.objects.iter_rows(self.linked_domain, table_id=linked_types[0].id))
         self.assertEqual({self.linked_domain}, {i.domain for i in items})
-        self.assertEqual({linked_types[0]._id}, {i.data_type_id for i in items})
+        self.assertEqual({linked_types[0].id}, {i.table_id for i in items})
         self.assertEqual([
             'Callisto', 'Europa', 'Io', 'Jupiter', 'Jupiter', 'Jupiter',
         ], sorted([
-            i.fields[field_name].field_list[0].field_value for i in items for field_name in i.fields.keys()
+            i.fields[field_name][0].value for i in items for field_name in i.fields.keys()
         ]))
 
         # Master domain's table and rows should be untouched
-        master_types = get_fixture_data_types(self.domain)
+        master_types = LookupTable.objects.by_domain(self.domain)
         self.assertEqual({'moons'}, {t.tag for t in master_types})
         self.assertEqual({self.domain}, {t.domain for t in master_types})
-        master_items = get_fixture_items_for_data_type(self.domain, master_types[0]._id)
+        master_items = list(LookupTableRow.objects.iter_rows(self.domain, table_id=master_types[0].id))
         self.assertEqual([
             'Callisto', 'Europa', 'Io', 'Jupiter', 'Jupiter', 'Jupiter',
         ], sorted([
-            i.fields[field_name].field_list[0].field_value
+            i.fields[field_name][0].value
             for i in master_items
             for field_name in i.fields.keys()
         ]))
 
         # Update rows in master table and re-update linked domain
         master_items[-1].delete()       # Callisto
-        FixtureDataItem(
+        LookupTableRow(
             domain=self.domain,
-            data_type_id=self.table._id,
+            table_id=self.table.id,
             fields={
-                'name': FieldList(field_list=[FixtureItemField(field_value='Thalassa')]),
-                'planet': FieldList(field_list=[FixtureItemField(field_value='Neptune')]),
+                'name': [Field(value='Thalassa')],
+                'planet': [Field(value='Neptune')],
             },
+            sort_key=0,
         ).save()
-        FixtureDataItem(
+        LookupTableRow(
             domain=self.domain,
-            data_type_id=self.table._id,
+            table_id=self.table.id,
             fields={
-                'name': FieldList(field_list=[FixtureItemField(field_value='Naiad')]),
-                'planet': FieldList(field_list=[FixtureItemField(field_value='Neptune')]),
+                'name': [Field(value='Naiad')],
+                'planet': [Field(value='Neptune')],
             },
+            sort_key=1,
         ).save()
-        clear_fixture_quickcache(self.domain, get_fixture_data_types(self.domain))
         clear_fixture_cache(self.domain)
         update_fixture(self.domain_link, self.table.tag)
 
         # Linked domain should still have one table, with the new rows
-        linked_types = get_fixture_data_types(self.linked_domain)
+        linked_types = LookupTable.objects.by_domain(self.linked_domain)
         self.assertEqual(1, len(linked_types))
         self.assertEqual('moons', linked_types[0].tag)
-        items = get_fixture_items_for_data_type(self.linked_domain, linked_types[0]._id)
+        items = list(LookupTableRow.objects.iter_rows(self.linked_domain, table_id=linked_types[0].id))
         self.assertEqual(4, len(items))
         self.assertEqual([
             'Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa',
         ], sorted([
-            i.fields[field_name].field_list[0].field_value for i in items for field_name in i.fields.keys()
+            i.fields[field_name][0].value for i in items for field_name in i.fields.keys()
         ]))
         # Linked SQL rows should have been deleted
-        rows = LookupTableRow.objects.filter(table_id=linked_types[0]._id)
+        rows = LookupTableRow.objects.filter(table_id=linked_types[0].id)
         self.assertEqual(
             ['Europa', 'Io', 'Jupiter', 'Jupiter', 'Naiad', 'Neptune', 'Neptune', 'Thalassa'],
             sorted(field[0].value for i in rows for field in i.fields.values()),
         )
 
     def test_update_global_only(self):
-        other_table = FixtureDataType(
+        other_table = LookupTable(
             domain=self.domain,
             tag='jellyfish',
             is_global=False,
             fields=[
-                FixtureTypeField(field_name="genus"),
-                FixtureTypeField(field_name="species"),
+                TypeField(name="genus"),
+                TypeField(name="species"),
             ],
         )
         other_table.save()
-        clear_fixture_quickcache(self.domain, get_fixture_data_types(self.domain))
         clear_fixture_cache(self.domain)
 
         with self.assertRaises(UnsupportedActionError):

@@ -397,6 +397,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('registry', 'RegistryInvitation', 'domain'),
     ModelDeletion('reports', 'TableauServer', 'domain'),
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
+    ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),
@@ -404,7 +405,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('translations', 'TransifexProject', 'domain'),
     ModelDeletion(
         'generic_inbound', 'ConfigurableAPI', 'domain',
-        extra_models=["ConfigurableApiValidation"],
+        extra_models=["ConfigurableApiValidation", "RequestLog", "ProcessingAttempt"],
         audit_action=AuditAction.AUDIT
     ),
     ModelDeletion('userreports', 'AsyncIndicator', 'domain'),

@@ -180,12 +180,6 @@ hqDefine('analytix/js/cta_forms', [
                 dataType: 'json',
                 success: function (data) {
                     if (data.success) {
-                        let newUrl = document.location.origin + document.location.pathname + '?email=' + self.email() + '&name=' + self.firstname() + '%20' + self.lastname();
-
-                        // This nastiness is required for Schedule Once to auto-fill
-                        // required fields. Sending snark the way of the S.O. devs...
-                        window.history.pushState({}, document.title, newUrl);
-
                         config.submitCallbackFn();
                     } else {
                         self.errorMessage(data.message);

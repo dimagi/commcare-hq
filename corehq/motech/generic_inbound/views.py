@@ -1,38 +1,52 @@
+import json
+
 from django.contrib import messages
-from django.http import Http404, JsonResponse
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
-from corehq import toggles
-from corehq.apps.api.decorators import api_throttle
+from dimagi.utils.web import get_ip
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.api.decorators import allow_cors, api_throttle
+from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import (
-    SubmissionError,
-    UserError,
-    serialize_case,
-)
-from corehq.apps.hqcase.api.updates import handle_case_update
+from corehq.apps.hqcase.api.core import SubmissionError, UserError
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
-from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+from corehq.motech.generic_inbound.core import execute_generic_api
+from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundRequestFiltered,
+    GenericInboundUserError,
+    GenericInboundValidationError,
+)
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
     ConfigurableAPIUpdateForm,
 )
-from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.motech.generic_inbound.models import (
+    ConfigurableAPI,
+    ProcessingAttempt,
+    RequestLog,
+)
 from corehq.motech.generic_inbound.utils import get_context_from_request
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
+@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
@@ -155,22 +169,33 @@ class ConfigurableAPIEditView(BaseProjectSettingsView):
 
 
 @json_error
+@csrf_exempt
+@allow_cors(list(RequestLog.RequestMethod))
+@require_http_methods(list(RequestLog.RequestMethod))
 @api_auth
+@requires_privilege_with_fallback(privileges.API_ACCESS)
+@require_permission(HqPermissions.edit_data)
+@require_permission(HqPermissions.access_api)
 @api_throttle
-@require_http_methods(["POST"])
 def generic_inbound_api(request, domain, api_id):
     try:
         api = ConfigurableAPI.objects.get(url_key=api_id, domain=domain)
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
+    response = _generic_inbound_api(api, request)
+    _log_api_request(api, request, response)
+    return response
+
+
+def _generic_inbound_api(api, request):
     try:
         context = get_context_from_request(request)
     except GenericInboundUserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
-        response = _execute_case_api(
+        response = execute_generic_api(
             request.domain,
             request.couch_user,
             request.META.get('HTTP_USER_AGENT'),
@@ -181,6 +206,10 @@ def generic_inbound_api(request, domain, api_id):
         return JsonResponse({'error': str(e)}, status=500)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except GenericInboundRequestFiltered:
+        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
+    except GenericInboundValidationError as e:
+        return _get_validation_error_response(e.errors)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
@@ -190,27 +219,53 @@ def generic_inbound_api(request, domain, api_id):
     return JsonResponse(response)
 
 
-def _execute_case_api(domain, couch_user, device_id, context, api_model):
-    data = api_model.parsed_expression(context.root_doc, context)
+def _get_validation_error_response(errors):
+    return JsonResponse({'error': 'validation error', 'errors': [
+        error['message'] for error in errors
+    ]}, status=400)
 
-    if not isinstance(data, list):
-        # the bulk API always requires a list
-        data = [data]
 
-    xform, case_or_cases = handle_case_update(
-        domain=domain,
-        data=data,
-        user=couch_user,
-        device_id=device_id,
-        is_creation=None,
+def _log_api_request(api, request, response):
+    if response.status_code == 200:
+        is_success = True
+        status = RequestLog.Status.SUCCESS
+    elif response.status_code == 204:
+        is_success = True
+        status = RequestLog.Status.FILTERED
+    elif response.status_code == 400:
+        is_success = False
+        status = RequestLog.Status.VALIDATION_FAILED
+    else:
+        is_success = False
+        status = RequestLog.Status.ERROR
+
+    response_body = response.content.decode('utf-8')
+    log = RequestLog.objects.create(
+        domain=request.domain,
+        api=api,
+        status=status,
+        response_status=response.status_code,
+        error_message=response_body if not is_success else '',
+        username=request.couch_user.username,
+        request_method=request.method,
+        request_query=request.META.get('QUERY_STRING'),
+        request_body=request.body.decode('utf-8'),
+        request_headers=get_standard_headers(request.META),
+        request_ip=get_ip(request),
     )
 
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
-    return {
-        'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
-    }
+    if is_success and response.content:
+        response_json = json.loads(response.content)
+        case_ids = [c['case_id'] for c in
+                    response_json.get('cases', [response_json.get('case')])]
+    else:
+        response_json = {}
+        case_ids = []
+    ProcessingAttempt.objects.create(
+        log=log,
+        response_status=response.status_code,
+        response_body=response_body,
+        raw_response=response_json,
+        xform_id=response_json.get('form_id'),
+        case_ids=case_ids,
+    )

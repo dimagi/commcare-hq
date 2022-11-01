@@ -614,7 +614,7 @@ def find_by_id(request, domain):
     if not can_view_cases and not can_view_forms:
         raise Http403()
 
-    name = _("Find Case or Form Submission by ID")
+    name = _("Find Data by ID")
     return render(request, 'data_interfaces/find_by_id.html', {
         'domain': domain,
         'current_page': {
