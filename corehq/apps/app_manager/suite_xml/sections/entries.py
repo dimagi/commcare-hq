@@ -317,6 +317,7 @@ class EntriesHelper(object):
                     detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
                     detail_inline=detail_inline,
                     autoselect=module.is_auto_select(),
+                    max_select_value=module.max_select_value,
                 ))
                 if self.app.commtrack_enabled:
                     e.datums.append(SessionDatum(
@@ -583,6 +584,7 @@ class EntriesHelper(object):
                     detail_persistent=detail_persistent,
                     detail_inline=detail_inline,
                     autoselect=datum['module'].is_auto_select(),
+                    max_select_value=datum['module'].max_select_value,
                 ),
                 case_type=datum['case_type'],
                 requires_selection=True,

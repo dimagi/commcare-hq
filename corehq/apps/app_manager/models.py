@@ -2474,6 +2474,10 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             return self.case_details.short.auto_select
         return self.auto_select_case
 
+    @property
+    def max_select_value(self):
+        return self.case_details.short.max_select_value
+
     def default_name(self, app=None):
         if not app:
             app = self.get_app()
@@ -3975,6 +3979,10 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
         if not self.source_module:
             return False
         return self.source_module.is_auto_select()
+
+    @property
+    def max_select_value(self):
+        return self.source_module.max_select_value
 
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
