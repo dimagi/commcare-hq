@@ -966,9 +966,8 @@ class EntriesHelper(object):
 
         return ret + datums_remaining
 
-    @staticmethod
-    def _get_module_for_persistent_context(app, module_unique_id):
-        module_for_persistent_context = app.get_module_by_unique_id(module_unique_id)
+    def _get_module_for_persistent_context(self, module_unique_id):
+        module_for_persistent_context = self.app.get_module_by_unique_id(module_unique_id)
         if (module_for_persistent_context and
                 (module_for_persistent_context.case_details.short.use_case_tiles or
                  module_for_persistent_context.case_details.short.custom_xml
@@ -982,7 +981,7 @@ class EntriesHelper(object):
             # configured then get id_string for that module
             if detail.persistent_case_tile_from_module:
                 module_for_persistent_context = self._get_module_for_persistent_context(
-                    app=module.get_app(), module_unique_id=detail.persistent_case_tile_from_module
+                    module_unique_id=detail.persistent_case_tile_from_module
                 )
                 if module_for_persistent_context:
                     return id_strings.detail(module_for_persistent_context, detail_type)
@@ -995,7 +994,6 @@ class EntriesHelper(object):
 
     def _get_detail_inline_attr_from_module(self, module, module_unique_id):
         module_for_persistent_context = self._get_module_for_persistent_context(
-            app=module.get_app(),
             module_unique_id=module_unique_id
         )
         if module_for_persistent_context:
