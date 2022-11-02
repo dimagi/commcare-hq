@@ -228,6 +228,7 @@ class RemoteRequestFactory(object):
             value='./@case_id',
             detail_select=self._details_helper.get_detail_id_safe(self.module, short_detail_id),
             detail_confirm=self._details_helper.get_detail_id_safe(self.module, long_detail_id),
+            max_select_value=self.module.max_select_value,
         )]
 
     @cached_property
