@@ -911,6 +911,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
+        'auto_select',
         'print_template',
         'search_properties',
         'search_default_properties',
@@ -1128,6 +1129,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'long': params.get("long_custom_variables", None)
     }
     multi_select = params.get('multi_select', None)
+    auto_select = params.get('auto_select', None)
 
     app = get_app(domain, app_id)
 
@@ -1149,6 +1151,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
         detail.short.multi_select = multi_select
+        detail.short.auto_select = auto_select
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
