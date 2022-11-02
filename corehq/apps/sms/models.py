@@ -314,6 +314,11 @@ class SMS(SMSBase):
         except Exception:
             publish_sms_change.delay(self.id)
 
+    def update_subevent_activity(self):
+        subevent = self.messaging_subevent
+        if subevent:
+            subevent.update_date_last_activity()
+
     def requeue(self):
         if self.processed or self.direction != OUTGOING:
             raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
