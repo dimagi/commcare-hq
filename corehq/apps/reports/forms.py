@@ -386,3 +386,7 @@ class TableauVisualizationForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)
+
+
+class UpdateTableauVisualizationForm(TableauVisualizationForm):
+    pass
