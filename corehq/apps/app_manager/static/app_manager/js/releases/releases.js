@@ -199,6 +199,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
+            self.releaseLocked(true);
         };
 
         self.clickScan = function () {
@@ -249,6 +250,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
+        self.releasesEnabled = ko.observable(true);
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -369,11 +371,24 @@ hqDefine('app_manager/js/releases/releases', function () {
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
+                    //if (self.enableReleasesControl) {
+                    //    self.releasesEnabled(true);
+                    //} else {
+                    //    self.releasesEnabled(false);
+                    //}
                 },
                 error: function () {
                     self.fetchState('error');
                 },
             });
+        };
+
+        self.releaseModeVisible = ko.observable(true);
+        self.releaseLocked = ko.observable(true);
+
+        self.releaseModeToggle = function (savedApp, event) {
+            self.releaseLocked(!self.releaseLocked);
+            console.log(savedApp + event);
         };
 
         self.toggleRelease = function (savedApp, event) {
@@ -401,6 +416,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            self.releaseLocked(data.is_released);
                         }
                     },
                     error: function () {
@@ -494,6 +510,12 @@ hqDefine('app_manager/js/releases/releases', function () {
                     }
                 },
             });
+        };
+
+        self.toggleReleasesControl = function (enableRelease) {
+            console.log("in toggleReleasesControl with release status " + enableRelease);
+            self.releasesEnabled(enableRelease);
+            console.log("self.releasesEnabled " + self.releasesEnabled());
         };
 
         return self;
