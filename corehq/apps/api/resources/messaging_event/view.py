@@ -34,16 +34,18 @@ def messaging_events(request, domain, event_id=None):
 
     # if the request does not acquire the lock in one minute, return a rate limiting response
     messaging_events_lock = get_redis_lock('MESSAGING_EVENTS_API_LOCK', timeout=60*10, name='api')
-    if not messaging_events_lock.acquire(blocking=True, timeout=60):
+    if not messaging_events_lock.acquire(blocking=True, blocking_timeout=60):
         return JsonResponse(status=429)
     try:
         if request.method == 'GET' and event_id:
-            return _get_individual(request, event_id)
+            res = _get_individual(request, event_id)
         if request.method == 'GET' and not event_id:
-            return _get_list(request)
-        return JsonResponse({'error': "Request method not allowed"}, status=405)
+            res = _get_list(request)
+        res = JsonResponse({'error': "Request method not allowed"}, status=405)
     except BadRequest as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        res = JsonResponse({'error': str(e)}, status=400)
+    messaging_events_lock.release()
+    return res
 
 
 def _get_individual(request, event_id):
