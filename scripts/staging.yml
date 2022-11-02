@@ -82,4 +82,5 @@ branches:
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     - smh/auto-select-app-config # Steph Nov 2
     - smh/auto-select-xml # Steph Nov 2
+    - jt/ush-2369 # Jonathan T. Nov 2
 submodules: { }
