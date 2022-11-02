@@ -154,6 +154,9 @@ class SQLXFormsSession(models.Model):
             )
         })
         self.save()
+        subevent = self.related_subevent
+        if subevent:
+            subevent.update_date_last_activity()
 
     @property
     def related_subevent(self):

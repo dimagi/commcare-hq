@@ -1594,6 +1594,9 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
 
+    def update_date_last_activity(self):
+        self.save(update_fields=["date_last_activity"])
+
 
 class ActiveMobileBackendManager(models.Manager):
 
