@@ -18,7 +18,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             var value = model.get('value');
             if (value && model.get("input") === "daterange") {
                 value = "__range__" + value.replace(separator, "__");
-            } else if (value && model.get('input') === 'select') {
+            } else if (value && (model.get('input') === 'select' || model.get('input') === 'checkbox')) {
                 value = value.join(selectDelimiter);
             }
 
@@ -39,7 +39,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 searchForBlank = _.contains(values, ""),
                 values = _.without(values, "");
 
-            if (model.get('input') === 'select') {
+            if (model.get('input') === 'select' || model.get('input') === 'checkbox') {
                 value = values;
             } else if (values.length === 1) {
                 value = values[0];
@@ -182,7 +182,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
             }
-            if (this.model.get('input') === 'select' && _.isString(value)) {
+            if ((this.model.get('input') === 'select' || this.model.get('input') === 'checkbox') && _.isString(value)) {
                 value = value.split(selectDelimiter);
             }
             this.model.set('value', value);
@@ -287,8 +287,11 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             } else if (this.model.get('input') === 'address') {
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
-                let value = this.model.get('value');
-                this.model.set('value', value !== 'checked' ? 'checked' : '');
+                var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
+                    .filter(function (checkbox) { return checkbox.checked })
+                    .map(function (checkbox) { return checkbox.value })
+                    .value();
+                this.model.set('value', newValue)
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
