@@ -77,7 +77,7 @@ branches:
     - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
     - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
-    # - em/case-search-checkbox # Evan Oct 27
+    - em/case-search-checkbox # Evan Oct 27
     - cs/sc-2369/shadow_module_fix # Chris Oct 31
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     - smh/auto-select-app-config # Steph Nov 2
