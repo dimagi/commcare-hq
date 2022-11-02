@@ -2689,6 +2689,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid "You have been logged out because of inactivity."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
 "An unknown error occurred. If you have problems filling in the rest of your "
 "form please submit an issue. Technical Details: "
@@ -2728,16 +2732,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "This answer is outside the allowed range."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid ""
-"Looks like you got logged out because of inactivity, but your work is safe. "
-"<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid "You have been logged out because of inactivity."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
@@ -2819,6 +2813,10 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js
 msgid "Switching project spaces..."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
+msgid "Fetching your location..."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js

@@ -12097,12 +12097,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                Please correct the answers below before submitting.\n"
-"                <br>\n"
-"                You can use the <strong><i class='fa fa-fast-forward'></i> "
+"                  Please correct the answers below before submitting.\n"
+"                  <br>\n"
+"                  You can use the <strong><i class='fa fa-fast-forward'></i> "
 "Next Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"              "
+"                "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
