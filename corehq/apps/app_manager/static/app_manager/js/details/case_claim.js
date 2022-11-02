@@ -148,7 +148,10 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var itemLists = get('js_options').item_lists;
             return _.map(
                 _.filter(itemLists, function (p) {
-                    return p.fixture_type === self.appearance();
+                    return (
+                        p.fixture_type === self.appearance()
+                        || (p.fixture_type === 'lookup_table_fixture' && self.appearance() === 'checkbox')
+                    );
                 }),
                 function (p) {
                     return {
@@ -300,18 +303,14 @@ hqDefine("app_manager/js/details/case_claim", function () {
             var uri = searchProperty.itemset.instance_uri;
             if (uri !== null && uri.includes("commcare-reports")) {
                 appearance = "report_fixture";
-            }
-            else {
+            } else {
                 appearance = "lookup_table_fixture";
             }
         }
         if (searchProperty.appearance === "address") {
             appearance = "address";
         }
-        if (searchProperty.input_ === "checkbox") {
-            appearance = "checkbox";
-        }
-        if (["date", "daterange"].indexOf(searchProperty.input_) !== -1) {
+        if (["date", "daterange", "checkbox"].indexOf(searchProperty.input_) !== -1) {
             appearance = searchProperty.input_;
         }
         return appearance;

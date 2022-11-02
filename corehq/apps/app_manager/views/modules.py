@@ -1025,6 +1025,16 @@ def _update_search_properties(module, search_properties, lang='en'):
             values[lang] = new_value
         return values
 
+    def _get_itemset(prop):
+        fixture_props = json.loads(prop['fixture'])
+        keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        missing = [key for key in keys if not fixture_props.get(key)]
+        if missing:
+            raise CaseSearchConfigError(_("""
+                The case search property '{}' is missing the following lookup table attributes: {}
+            """).format(prop['name'], ", ".join(missing)))
+        return {key: fixture_props[key] for key in keys}
+
     props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
         current = props_by_name.get(prop['name'])
@@ -1059,25 +1069,15 @@ def _update_search_properties(module, search_properties, lang='en'):
                 ret['default_value'] = prop['default_value']
             else:
                 ret['input_'] = 'select1'
-            fixture_props = json.loads(prop['fixture'])
-            keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
-            missing = [key for key in keys if not fixture_props.get(key)]
-            if missing:
-                raise CaseSearchConfigError(_("""
-                    The case search property '{}' is missing the following lookup table attributes: {}
-                """).format(prop['name'], ", ".join(missing)))
-            ret['itemset'] = {
-                key: fixture_props[key]
-                for key in keys
-            }
-
+            ret['itemset'] = _get_itemset(prop)
+        elif prop.get('appearance', '') == 'checkbox':
+            ret['input_'] = 'checkbox'
+            ret['itemset'] = _get_itemset(prop)
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') == 'checkbox':
-            ret['input_'] = 'checkbox'
-        elif prop.get('appearance', '') in ['date', 'daterange']:
+        elif prop.get('appearance', '') in ('date', 'daterange'):
             ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
