@@ -2080,6 +2080,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)
 
+    # If True, enables auto selection of cases in a multi-select case list
+    auto_select = BooleanProperty(default=False)
+
+    # Sets a maximum selected value for manual and auto select multi-select case lists
+    max_select_value = IntegerProperty(default=100)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
