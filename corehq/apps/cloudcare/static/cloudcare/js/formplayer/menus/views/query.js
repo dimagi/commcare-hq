@@ -288,10 +288,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // geocoderItemCallback sets the value on the model
             } else if (this.model.get('input') === 'checkbox') {
                 var newValue = _.chain($(e.currentTarget).find('input[type=checkbox]'))
-                    .filter(function (checkbox) { return checkbox.checked })
-                    .map(function (checkbox) { return checkbox.value })
+                    .filter(checkbox => checkbox.checked)
+                    .map(checkbox => checkbox.value)
                     .value();
-                this.model.set('value', newValue)
+                this.model.set('value', newValue);
             } else {
                 this.model.set('value', $(e.currentTarget).val());
             }
