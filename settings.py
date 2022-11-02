@@ -1102,9 +1102,6 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
