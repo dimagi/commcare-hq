@@ -4,6 +4,8 @@ from django.http import JsonResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from tastypie.exceptions import BadRequest
 
+from dimagi.utils.couch import get_redis_lock
+
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
@@ -26,7 +28,14 @@ def messaging_events(request, domain, event_id=None):
     """Despite it's name this API is backed by the MessagingSubEvent model
     which has a more direct relationship with who the messages are being sent to.
     Each event may have more than one actual message associated with it.
+
+    Due to performance issues, this API only allows one usage at a time
     """
+
+    # if the request does not acquire the lock in one minute, return a rate limiting response
+    messaging_events_lock = get_redis_lock('MESSAGING_EVENTS_API_LOCK', timeout=60*10, name='api')
+    if not messaging_events_lock.acquire(blocking=True, timeout=60):
+        return JsonResponse(status=429)
     try:
         if request.method == 'GET' and event_id:
             return _get_individual(request, event_id)
