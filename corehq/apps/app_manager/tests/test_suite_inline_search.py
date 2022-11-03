@@ -213,7 +213,7 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                   </prompt>
                 </query>
                 <instance-datum id="selected_cases" nodeset="instance('{RESULTS_INSTANCE_INLINE}')/results/case[@case_type='case'][@status='open'][active = 'yes'][not(commcare_is_related_case=true())]"
-                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+                    value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long" max-select-value="100"/>
             </session>
           </entry>
         </partial>"""  # noqa: E501
