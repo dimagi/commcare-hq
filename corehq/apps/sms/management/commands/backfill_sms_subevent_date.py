@@ -7,10 +7,14 @@ CHUNK_SIZE = 500000
 class Command(BaseCommand):
     help = "Populate the 'date_last_activity' column in the sms_messagingsubevent table"
 
+    def add_arguments(self, parser):
+        parser.add_argument("--chunksize", type=int, default=CHUNK_SIZE)
+
     def handle(self, **options):
-        update_subevent_date_from_emails(CHUNK_SIZE)
-        update_subevent_date_from_sms(CHUNK_SIZE)
-        update_subevent_date_from_xform_session(CHUNK_SIZE)
+        chunk_size = options["chunk_size"]
+        update_subevent_date_from_emails(chunk_size)
+        update_subevent_date_from_sms(chunk_size)
+        update_subevent_date_from_xform_session(chunk_size)
 
 
 def update_subevent_date_from_emails(chunk_size):
