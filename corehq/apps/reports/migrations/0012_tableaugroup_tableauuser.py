@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             name='TableauUser',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('username', models.CharField(max_length=64)),
+                ('username', models.CharField(max_length=255)),
                 ('role', models.CharField(choices=[('Explorer - Can Publish', 'ExplorerCanPublish'), ('Server Administrator', 'ServerAdministrator'), ('Site Administrator - Explorer', 'SiteAdministratorExplorer'), ('Site Administrator - Creator', 'SiteAdministratorCreator'), ('Unlicensed', 'Unlicensed'), ('Read Only', 'ReadOnly'), ('Viewer', 'Viewer')], max_length=32)),
                 ('tableau_user_id', models.CharField(max_length=64)),
                 ('last_synced', models.DateTimeField(auto_now=True)),

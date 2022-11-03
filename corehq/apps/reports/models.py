@@ -235,7 +235,7 @@ class TableauGroup(models.Model):
 
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
-    username = models.CharField(max_length=64)
+    username = models.CharField(max_length=255)
     role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
     groups = models.ManyToManyField(TableauGroup)
     tableau_user_id = models.CharField(max_length=64)
