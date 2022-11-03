@@ -1,7 +1,16 @@
 from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
+from corehq.apps.domain_migration_flags.api import (
+    ALL_DOMAINS,
+    migration_in_progress,
+    set_migration_complete,
+    set_migration_started,
+)
+
 CHUNK_SIZE = 500000
+
+MIGRATION_SLUG = "sms_messagingsubevent_date_last_activity_backfill"
 
 
 class Command(BaseCommand):
@@ -11,10 +20,15 @@ class Command(BaseCommand):
         parser.add_argument("--chunksize", type=int, default=CHUNK_SIZE)
 
     def handle(self, **options):
+        if not migration_in_progress(ALL_DOMAINS, MIGRATION_SLUG):
+            set_migration_started(ALL_DOMAINS, MIGRATION_SLUG)
+
         chunk_size = options["chunk_size"]
         update_subevent_date_from_emails(chunk_size)
         update_subevent_date_from_sms(chunk_size)
         update_subevent_date_from_xform_session(chunk_size)
+
+        set_migration_complete(ALL_DOMAINS, MIGRATION_SLUG)
 
 
 def update_subevent_date_from_emails(chunk_size):
