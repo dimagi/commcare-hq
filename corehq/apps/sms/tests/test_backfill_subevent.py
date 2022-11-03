@@ -33,12 +33,13 @@ class TestBackfillSubeventDateEmail(TestCase):
         for i in range(2):
             make_email_event_for_test(cls.domain.name, "test broadcast", user_ids)
 
-        MessagingSubEvent.objects.all().update(date_last_activity=None)
+        update_ids = MessagingSubEvent.objects.all()[1:]
+        MessagingSubEvent.objects.filter(id__in=update_ids).update(date_last_activity=None)
 
     def test_update_date_last_activity(self):
-        self.assertEqual(4, MessagingSubEvent.objects.filter(date_last_activity=None).count())
+        self.assertEqual(3, MessagingSubEvent.objects.filter(date_last_activity=None).count())
         rows_updated, iterations = update_subevent_date_from_emails(chunk_size=2)
-        self.assertEqual(4, rows_updated)
+        self.assertEqual(3, rows_updated)
         self.assertEqual(3, iterations)  # 2 with updates + 1 with no updates
         self.assertFalse(MessagingSubEvent.objects.filter(date_last_activity=None).exists())
 
@@ -53,12 +54,13 @@ class TestBackfillSubeventDateSMS(TestCase):
         for i in range(4):
             create_fake_sms(cls.domain.name, randomize=True)
 
-        MessagingSubEvent.objects.all().update(date_last_activity=None)
+        update_ids = MessagingSubEvent.objects.all()[1:]
+        MessagingSubEvent.objects.filter(id__in=update_ids).update(date_last_activity=None)
 
     def test_update_date_last_activity(self):
-        self.assertEqual(4, MessagingSubEvent.objects.filter(date_last_activity=None).count())
+        self.assertEqual(3, MessagingSubEvent.objects.filter(date_last_activity=None).count())
         rows_updated, iterations = update_subevent_date_from_sms(chunk_size=2)
-        self.assertEqual(4, rows_updated)
+        self.assertEqual(3, rows_updated)
         self.assertEqual(3, iterations)  # 2 with updates + 1 with no updates
         self.assertFalse(MessagingSubEvent.objects.filter(date_last_activity=None).exists())
 
@@ -73,11 +75,12 @@ class TestBackfillSubeventDateXformSession(TestCase):
         for i in range(4):
             make_survey_sms_for_test(cls.domain.name, "test survey")
 
-        MessagingSubEvent.objects.all().update(date_last_activity=None)
+        update_ids = MessagingSubEvent.objects.all()[1:]
+        MessagingSubEvent.objects.filter(id__in=update_ids).update(date_last_activity=None)
 
     def test_update_date_last_activity(self):
-        self.assertEqual(4, MessagingSubEvent.objects.filter(date_last_activity=None).count())
+        self.assertEqual(3, MessagingSubEvent.objects.filter(date_last_activity=None).count())
         rows_updated, iterations = update_subevent_date_from_xform_session(chunk_size=2)
-        self.assertEqual(4, rows_updated)
+        self.assertEqual(3, rows_updated)
         self.assertEqual(3, iterations)  # 2 with updates + 1 with no updates
         self.assertFalse(MessagingSubEvent.objects.filter(date_last_activity=None).exists())
