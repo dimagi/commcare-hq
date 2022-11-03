@@ -1,4 +1,4 @@
-hqDefine("data_interfaces/js/list_automatic_update_rules", [
+hqDefine("data_interfaces/js/deduplication_rules", [
     'jquery',
     'knockout',
     'underscore',
