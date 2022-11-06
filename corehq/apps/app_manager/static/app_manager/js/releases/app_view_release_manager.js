@@ -24,7 +24,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
             releasesMain.releasesEnabled(false);
 
-            var toggleReleaseLockButtons = function () {
+            var setReleaseLockButtons = function () {
                 if (releasesMain.releasesEnabled()) {
                     $("#btn-release-unlocked").show();
                     $("#btn-release-locked").hide();
@@ -35,17 +35,15 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             };
 
             $("#btn-release-unlocked").click(function () {
-                console.log("btn click to lock");
                 releasesMain.toggleReleasesControl(false);
-                toggleReleaseLockButtons();
+                setReleaseLockButtons();
             });
             $("#btn-release-locked").click(function () {
-                console.log("btn click to unlock");
                 releasesMain.toggleReleasesControl(true);
-                toggleReleaseLockButtons();
+                setReleaseLockButtons();
             });
 
-            toggleReleaseLockButtons();
+            setReleaseLockButtons();
         }
     }
     // View changes / app diff

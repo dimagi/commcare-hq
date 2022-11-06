@@ -220,7 +220,7 @@ class TestAppReleaseModeSettingForm(TestCase):
         if kwargs:
             for field, value in kwargs.items():
                 data.update({field: value})
-        if not domain:
+        if domain is None:
             domain = self.domain_obj
         return DomainGlobalSettingsForm(data, domain=domain)
 

@@ -371,11 +371,6 @@ hqDefine('app_manager/js/releases/releases', function () {
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
-                    //if (self.enableReleasesControl) {
-                    //    self.releasesEnabled(true);
-                    //} else {
-                    //    self.releasesEnabled(false);
-                    //}
                 },
                 error: function () {
                     self.fetchState('error');
@@ -386,9 +381,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.releaseModeVisible = ko.observable(true);
         self.releaseLocked = ko.observable(true);
 
-        self.releaseModeToggle = function (savedApp, event) {
+        self.toggleReleaseMode = function () {
             self.releaseLocked(!self.releaseLocked);
-            console.log(savedApp + event);
         };
 
         self.toggleRelease = function (savedApp, event) {
@@ -513,9 +507,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.toggleReleasesControl = function (enableRelease) {
-            console.log("in toggleReleasesControl with release status " + enableRelease);
             self.releasesEnabled(enableRelease);
-            console.log("self.releasesEnabled " + self.releasesEnabled());
         };
 
         return self;
