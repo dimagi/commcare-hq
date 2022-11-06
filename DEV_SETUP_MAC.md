@@ -175,6 +175,26 @@ NOTE: Make sure that `/path/to` is replaced with the actual path!
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
 
+#### Install Elasticsearch plugins
+
+Now that you have Elasticsearch running you will need to install the necessary plugins:
+
+1. Install the plugin
+
+    ```shell
+    $ plugin install analysis-phonetic
+    ```
+
+    (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
+
+2. Restart the service
+
+3. Verify the plugin was correctly installed
+
+    ```shell
+    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version
+    analysis-phonetic 2.4.6
+    ```
 
 ## Fixing ImportError with `libmagic`
 

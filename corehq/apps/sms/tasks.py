@@ -67,6 +67,7 @@ def remove_from_queue(queued_sms):
         sms.save()
 
     sms.publish_change()
+    sms.update_subevent_activity()
 
     tags = {'backend': sms.backend_api}
     if sms.direction == OUTGOING and sms.processed and not sms.error:
