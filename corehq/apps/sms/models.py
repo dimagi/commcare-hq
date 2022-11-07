@@ -314,11 +314,6 @@ class SMS(SMSBase):
         except Exception:
             publish_sms_change.delay(self.id)
 
-    def update_subevent_activity(self):
-        subevent = self.messaging_subevent
-        if subevent:
-            subevent.update_date_last_activity()
-
     def requeue(self):
         if self.processed or self.direction != OUTGOING:
             raise ValueError("Should only requeue outgoing messages that haven't yet been proccessed")
@@ -1548,7 +1543,6 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     date = models.DateTimeField(null=False, db_index=True)
-    date_last_activity = models.DateTimeField(null=True, db_index=True, auto_now=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
@@ -1598,9 +1592,6 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     def get_recipient_doc_type(self):
         return MessagingEvent._get_recipient_doc_type(self.recipient_type)
-
-    def update_date_last_activity(self):
-        self.save(update_fields=["date_last_activity"])
 
 
 class ActiveMobileBackendManager(models.Manager):

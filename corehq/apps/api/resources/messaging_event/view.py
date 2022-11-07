@@ -56,7 +56,7 @@ def _get_list(request):
 
 
 def _get_base_query(domain):
-    """The base query includes a 'date_last_activity_computed' field. This field
+    """The base query includes a 'date_last_activity' field. This field
     is calculated as:
       Max(
         event.date,
@@ -76,7 +76,7 @@ def _get_base_query(domain):
        .order_by('-date_modified')
        .values('date_modified')[:1]
     )
-    query = query.annotate(date_last_activity_computed=Greatest(
+    query = query.annotate(date_last_activity=Greatest(
         'date', 'xforms_session__modified_time', Subquery(newest_sms), Subquery(newest_email)
     ))
     return query
