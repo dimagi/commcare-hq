@@ -44,8 +44,8 @@ Structured SMS
     asking one question at a time as in an SMS Survey; for example: "REGISTER Joe 25" could be one way
     to define a Structured SMS that registers a contact named Joe whose age is 25.
 
-Messaging Terms Commonly Used in CommCareHQ
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Messaging Terms Commonly Used in CommCare HQ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 SMS Backend
     the code which implements the API of a specific SMS Gateway

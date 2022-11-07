@@ -704,6 +704,7 @@ reports
  0009_remove_tableauserver_domain_username
  0010_delete_reportssidebarordering
  0011_tableauconnectedapp
+ 0012_tableaugroup_tableauuser
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -799,6 +800,7 @@ sms
  0050_sms_email_date_modified
  0051_reset_modified_on
  0052_messagingsubevent_date_last_activity
+ 0053_alter_messagingsubevent_date_last_activity
 smsbillables
  0001_initial
  0002_bootstrap
