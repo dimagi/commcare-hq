@@ -149,7 +149,7 @@ class EmailContent(Content):
 
         email = Email(
             domain=logged_event.domain,
-            date=datetime.utcnow(),
+            date=logged_subevent.date_last_activity,  # use date from subevent for consistency
             couch_recipient_doc_type=logged_subevent.recipient_type,
             couch_recipient=logged_subevent.recipient_id,
             messaging_subevent_id=logged_subevent.pk,

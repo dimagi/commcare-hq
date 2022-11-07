@@ -153,6 +153,10 @@ class SQLXFormsSession(models.Model):
                 'completed_without_submission'
             )
         })
+        self.save()
+        subevent = self.related_subevent
+        if subevent:
+            subevent.update_date_last_activity()
 
     @property
     def related_subevent(self):
@@ -193,7 +197,6 @@ class SQLXFormsSession(models.Model):
         sessions = cls.get_all_open_sms_sessions(domain, contact_id)
         for session in sessions:
             session.close()
-            session.save()
 
     @classmethod
     def by_session_id(cls, id):
