@@ -44,7 +44,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
 from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
 from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -314,7 +314,7 @@ class AllowedToForwardTests(TestCase):
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
         self.assertFalse(repeater.allowed_to_forward(payload))
 
     def test_excluded_case_type(self):
@@ -325,7 +325,7 @@ class AllowedToForwardTests(TestCase):
         form_payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
         )
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
         repeater.white_listed_case_types = ['patient']
         self.assertFalse(repeater.allowed_to_forward(form_payload))
 
@@ -336,7 +336,40 @@ class AllowedToForwardTests(TestCase):
         """
         case_id = uuid.uuid4().hex
         form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
-        repeater = OpenmrsRepeater()
+        repeater = SQLOpenmrsRepeater()
+        self.assertTrue(repeater.allowed_to_forward(form_payload))
+
+    def test_update_from_sqlopenmrs(self):
+        """
+        payloads from OpenMRS should not be forwarded back to OpenMRS
+        """
+        payload = XFormInstance(
+            domain=DOMAIN,
+            xmlns=XMLNS_OPENMRS,
+        )
+        repeater = SQLOpenmrsRepeater()
+        self.assertFalse(repeater.allowed_to_forward(payload))
+
+    def test_excluded_case_type_sqlopenmrs(self):
+        """
+        If the repeater has white-listed case types, excluded case types should not be forwarded
+        """
+        case_id = uuid.uuid4().hex
+        form_payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
+        )
+        repeater = SQLOpenmrsRepeater()
+        repeater.white_listed_case_types = ['patient']
+        self.assertFalse(repeater.allowed_to_forward(form_payload))
+
+    def test_allowed_to_forward_sqlopenmrs(self):
+        """
+        If all criteria pass, the payload should be allowed to forward
+        :return:
+        """
+        case_id = uuid.uuid4().hex
+        form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
+        repeater = SQLOpenmrsRepeater()
         self.assertTrue(repeater.allowed_to_forward(form_payload))
 
 
@@ -368,8 +401,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     def tearDown(self):
         delete_all_users()
-        for repeater in OpenmrsRepeater.by_domain(self.domain):
-            repeater.delete()
+        SQLOpenmrsRepeater.objects.all().delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -462,8 +494,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         gardens = self.locations['Gardens']
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
-        gardens_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        gardens_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': gardens.location_id,
             'connection_settings_id': self.conn.id,
@@ -471,7 +502,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         gardens_repeater.save()
 
         repeaters = get_case_location_ancestor_repeaters(case)
-        self.assertEqual(repeaters, [gardens_repeater])
+        self.assertEqual(repeaters[0], gardens_repeater)
 
     def test_get_case_location_ancestor_repeaters_multi(self):
         """
@@ -482,15 +513,13 @@ class CaseLocationTests(LocationHierarchyTestCase):
             case_id=uuid.uuid4().hex,
             owner_id=self.locations['Gardens'].location_id
         )
-        cape_town_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        cape_town_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
-        western_cape_repeater = OpenmrsRepeater.wrap({
-            'doc_type': 'OpenmrsRepeater',
+        western_cape_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
             'connection_settings_id': self.conn.id,
@@ -498,9 +527,61 @@ class CaseLocationTests(LocationHierarchyTestCase):
         western_cape_repeater.save()
 
         repeaters = get_case_location_ancestor_repeaters(gardens_case)
-        self.assertEqual(repeaters, [cape_town_repeater])
+
+        self.assertEqual(repeaters[0], cape_town_repeater)
 
     def test_get_case_location_ancestor_repeaters_none(self):
+        """
+        get_case_location_ancestor_repeaters should not return repeaters if there are none at ancestor locations
+        """
+        gardens = self.locations['Gardens']
+        form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
+
+        repeaters = get_case_location_ancestor_repeaters(case)
+        self.assertEqual(repeaters, [])
+
+    def test_sql_get_case_location_ancestor_repeaters_same(self):
+        """
+        get_case_location_ancestor_repeaters should return the repeater at the same location as the case
+        """
+        gardens = self.locations['Gardens']
+        form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
+        gardens_repeater = SQLOpenmrsRepeater(
+            domain=self.domain,
+            location_id=gardens.location_id,
+            connection_settings=self.conn,
+        )
+        gardens_repeater.save()
+
+        repeaters = get_case_location_ancestor_repeaters(case)
+        self.assertEqual(repeaters, [gardens_repeater])
+
+    def test_get_sql_case_location_ancestor_repeaters_multi(self):
+        """
+        get_case_location_ancestor_repeaters should return the repeater at the closest ancestor location
+        """
+        form, (gardens_case, ) = _create_case(
+            domain=self.domain,
+            case_id=uuid.uuid4().hex,
+            owner_id=self.locations['Gardens'].location_id
+        )
+        cape_town_repeater = SQLOpenmrsRepeater(
+            domain=self.domain,
+            location_id=self.locations['Cape Town'].location_id,
+            connection_settings_id=self.conn.id,
+        )
+        cape_town_repeater.save()
+        western_cape_repeater = SQLOpenmrsRepeater(
+            domain=self.domain,
+            location_id=self.locations['Western Cape'].location_id,
+            connection_settings_id=self.conn.id,
+        )
+        western_cape_repeater.save()
+
+        repeaters = get_case_location_ancestor_repeaters(gardens_case)
+        self.assertEqual(repeaters, [cape_town_repeater])
+
+    def test_get_sql_case_location_ancestor_repeaters_none(self):
         """
         get_case_location_ancestor_repeaters should not return repeaters if there are none at ancestor locations
         """
@@ -549,7 +630,7 @@ class FindPatientTest(SimpleTestCase):
                 'person_preferred_name': {},
             },
             'form_configs': [],
-        })
+        }).to_json()
 
         with mock.patch.object(CommCareCase.objects, 'get_case'), \
                 mock.patch('corehq.motech.openmrs.repeater_helpers.create_patient') as create_patient_patch, \
@@ -710,7 +791,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
                 "person_preferred_name": {},
             },
             "form_configs": [],
-        })
+        }).to_json()
         voided_patient = self.get_json("voided_patient")
         get_patient_mock.return_value = voided_patient
 
@@ -732,7 +813,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
 
 
 def test_observation_mappings():
-    repeater = OpenmrsRepeater.wrap({
+    repeater = SQLOpenmrsRepeater(**{
         "openmrs_config": {
             "openmrs_provider": "",
             "case_config": {},
@@ -744,6 +825,7 @@ def test_observation_mappings():
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
                         "case_property": "abnormal_temperature",
+                        'doc_type': 'ObservationMapping',
                         "value": {
                             "doc_type": "FormQuestionMap",
                             "form_question": "/data/abnormal_temperature",
@@ -756,6 +838,7 @@ def test_observation_mappings():
                     {
                         "concept": "397b9631-2911-435a-bf8a-ae4468b9c1d4",
                         "case_property": "bahmni_abnormal_temperature",
+                        'doc_type': 'ObservationMapping',
                         "value": {
                             "doc_type": "ConstantString",
                             "value": "",
@@ -780,7 +863,7 @@ def test_observation_mappings():
                         'no': 'eea8e4e9-4a91-416c-b0f5-ef0acfbc51c0'
                     }
                 }
-            ),
+            ).to_json(),
             ObservationMapping(
                 concept='397b9631-2911-435a-bf8a-ae4468b9c1d4',
                 case_property='bahmni_abnormal_temperature',
@@ -789,7 +872,7 @@ def test_observation_mappings():
                     "doc_type": "ConstantString",
                     "value": ''
                 }
-            )
+            ).to_json()
         ]
     })
 

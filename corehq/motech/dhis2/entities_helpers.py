@@ -48,7 +48,7 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     # Create relationships after handling tracked entity instances, to
     # ensure that both the instances in the relationship have been created.
     for info, case_config in info_config_pairs:
-        if not case_config.relationships_to_export:
+        if not case_config['relationships_to_export']:
             continue
         try:
             create_relationships(
@@ -83,8 +83,8 @@ def _get_info_config_pairs(repeater, case_trigger_infos):
 
 
 def get_case_config_for_case_type(case_type, dhis2_entity_config):
-    for case_config in dhis2_entity_config.case_configs:
-        if case_config.case_type == case_type:
+    for case_config in dhis2_entity_config['case_configs']:
+        if case_config['case_type'] == case_type:
             return case_config
 
 
@@ -122,7 +122,7 @@ def get_tracked_entity_instance_id(case_trigger_info, case_config):
     Return the Tracked Entity instance ID stored in a case property (or
     other value source like a form question or a constant).
     """
-    tei_id_value_source = case_config.tei_id
+    tei_id_value_source = case_config['tei_id']
     return get_value(tei_id_value_source, case_trigger_info)
 
 
@@ -425,15 +425,15 @@ def get_enrollments(case_trigger_info, case_config):
 
 def get_programs_by_id(case_trigger_info, case_config):
     programs_by_id = defaultdict(lambda: {"events": []})
-    for form_config in case_config.form_configs:
-        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config.xmlns:
+    for form_config in case_config['form_configs']:
+        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config['xmlns']:
             continue
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         if event:
             program = programs_by_id[event["program"]]
             program["events"].append(event)
-            program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
-            program["status"] = get_value(form_config.program_status, case_trigger_info)
+            program["orgUnit"] = get_value(form_config['org_unit_id'], case_trigger_info)
+            program["status"] = get_value(form_config['program_status'], case_trigger_info)
             program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
@@ -441,12 +441,12 @@ def get_programs_by_id(case_trigger_info, case_config):
 
 def get_program_dates(form_config, case_trigger_info):
     program = {}
-    if form_config.enrollment_date:
-        enrollment_date = get_value(form_config.enrollment_date, case_trigger_info)
+    if form_config['enrollment_date']:
+        enrollment_date = get_value(form_config['enrollment_date'], case_trigger_info)
         if enrollment_date:
             program["enrollmentDate"] = enrollment_date
-    if form_config.incident_date:
-        incident_date = get_value(form_config.incident_date, case_trigger_info)
+    if form_config['incident_date']:
+        incident_date = get_value(form_config['incident_date'], case_trigger_info)
         if incident_date:
             program["incidentDate"] = incident_date
     return program
