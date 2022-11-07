@@ -131,7 +131,11 @@ def run_query_until_no_updates_(slug, query, count_query):
         cursor.execute(count_query)
         total_rows = cursor.fetchone()[0]
 
-    print(f"Running backfill for {slug} query. {total_rows} to update")
+    if total_rows == 0:
+        print(f"Skipping backfill for '{slug}', no rows to update.")
+        return
+
+    print(f"Running backfill for '{slug}' query. {total_rows} rows to update")
 
     while True:
         with transaction.atomic(using='default'), connections["default"].cursor() as cursor:
@@ -142,7 +146,7 @@ def run_query_until_no_updates_(slug, query, count_query):
         iterations += 1
 
         if rowcount != 0 or total_rows_updated == 0:
-            print(f"[{slug}] Updated {rowcount} ({total_rows_updated} / {total_rows}) subevent rows")
+            print(f"  [{slug}] Updated {total_rows_updated} of {total_rows} rows")
 
         if rowcount == 0:
             break
