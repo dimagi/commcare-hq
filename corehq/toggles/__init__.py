@@ -2371,3 +2371,11 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
 )
+
+APPLICATION_RELEASE_LOGS = StaticToggle(
+    'application_release_logs',
+    'Show Application release logs',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_USER],
+    description='This feature provides the release logs for application with user and version history.'
+)
