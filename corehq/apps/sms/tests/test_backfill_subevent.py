@@ -36,7 +36,7 @@ class TestBackfillSubeventDate(TestCase):
         self._do_backfill_validate_result(update_subevent_date_from_xform_session)
 
     def _do_backfill_validate_result(self, update_fn):
-        rows_updated, iterations = update_fn(chunk_size=2)
+        rows_updated, iterations = update_fn(chunk_size=2, explain=False)
         self.assertEqual(3, rows_updated)
         self.assertEqual(3, iterations)  # 2 with updates + 1 with no updates
         self.assertFalse(MessagingSubEvent.objects.filter(date_last_activity=None).exists())
