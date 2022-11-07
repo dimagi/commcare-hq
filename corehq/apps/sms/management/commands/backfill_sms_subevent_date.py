@@ -52,6 +52,12 @@ class Command(BaseCommand):
 
 
 def update_subevent_date_from_emails(chunk_size, explain):
+    count_query = """
+        select count(*) from sms_messagingsubevent se
+            join sms_email em on se.id = em.messaging_subevent_id
+        where se.date_last_activity is null
+    """
+
     query = f"""
         update sms_messagingsubevent set date_last_activity = greatest(
             sms_messagingsubevent.date, em.date, em.date_modified
@@ -64,10 +70,15 @@ def update_subevent_date_from_emails(chunk_size, explain):
             limit {chunk_size}
         )
     """
-    return run_query_until_no_updates("email", query, explain)
+    return run_query_until_no_updates("email", query, count_query, explain)
 
 
 def update_subevent_date_from_sms(chunk_size, explain):
+    count_query = """
+        select count(*) from sms_messagingsubevent se
+            join sms_sms sms on se.id = sms.messaging_subevent_id
+        where se.date_last_activity is null
+    """
     query = f"""
         update sms_messagingsubevent set date_last_activity = greatest(
             sms_messagingsubevent.date, sms.date, sms.date_modified
@@ -80,10 +91,15 @@ def update_subevent_date_from_sms(chunk_size, explain):
             limit {chunk_size}
         )
     """
-    return run_query_until_no_updates("sms", query, explain)
+    return run_query_until_no_updates("sms", query, count_query, explain)
 
 
 def update_subevent_date_from_xform_session(chunk_size, explain):
+    count_query = """
+        select count(*) from sms_messagingsubevent where
+        sms_messagingsubevent.xforms_session_id is not null
+        and sms_messagingsubevent.date_last_activity is null
+    """
     query = f"""
         update sms_messagingsubevent set date_last_activity = greatest(
             sms_messagingsubevent.date, sess.modified_time
@@ -96,33 +112,49 @@ def update_subevent_date_from_xform_session(chunk_size, explain):
             limit {chunk_size}
         )
     """
-    return run_query_until_no_updates("xform_session", query, explain)
+    return run_query_until_no_updates("xform_session", query, count_query, explain)
 
 
-def run_query_until_no_updates(slug, query, explain):
-    total_rows = 0
-    iterations = 0
+def run_query_until_no_updates(slug, query, count_query, explain):
     if explain:
-        print(f"Running 'explain' for {slug} query:\n")
-        query = f"explain {query}"
-    else:
-        print(f"Running backfill for {slug} query:\n")
+        explain_query_until_no_updates(slug, query)
+        return 0, 0
+
+    return run_query_until_no_updates_(slug, query, count_query)
+
+
+def run_query_until_no_updates_(slug, query, count_query):
+    total_rows_updated = 0
+    iterations = 0
+
+    with connections["default"].cursor() as cursor:
+        cursor.execute(count_query)
+        total_rows = cursor.fetchone()[0]
+
+    print(f"Running backfill for {slug} query. {total_rows} to update")
+
     while True:
         with transaction.atomic(using='default'), connections["default"].cursor() as cursor:
             cursor.execute(query)
             rowcount = cursor.rowcount
-            if explain:
-                for row in cursor.fetchall():
-                    print(row)
-                print()
-                return
 
-        total_rows += rowcount
+        total_rows_updated += rowcount
         iterations += 1
 
-        print(f"[{slug}] Updated {rowcount} ({total_rows}) subevent rows")
+        if rowcount != 0 or total_rows_updated == 0:
+            print(f"[{slug}] Updated {rowcount} ({total_rows_updated} / {total_rows}) subevent rows")
 
         if rowcount == 0:
             break
 
-    return total_rows, iterations
+    return total_rows_updated, iterations
+
+
+def explain_query_until_no_updates(slug, query):
+    print(f"Running 'explain' for {slug} query:\n")
+    query = f"explain {query}"
+    with transaction.atomic(using='default'), connections["default"].cursor() as cursor:
+        cursor.execute(query)
+        for row in cursor.fetchall():
+            print(row)
+        print()
