@@ -12,7 +12,7 @@ from corehq.apps.domain_migration_flags.exceptions import (
 )
 from corehq.apps.domain_migration_flags.models import MigrationStatus
 
-CHUNK_SIZE = 500000
+CHUNK_SIZE = 100000
 
 MIGRATION_SLUG = "sms_messagingsubevent_date_last_activity_backfill"
 
