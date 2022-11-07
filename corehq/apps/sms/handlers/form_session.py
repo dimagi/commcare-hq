@@ -59,7 +59,6 @@ def form_session_handler(verified_number, text, msg):
                         "message_id": msg.couch_id
                     })
                     session.mark_completed(False)  # this will also release the channel
-                    session.save()
                     send_sms_to_verified_number(
                         verified_number, get_message(MSG_GENERIC_ERROR, verified_number)
                     )
@@ -124,7 +123,6 @@ def get_single_open_session_or_close_multiple(domain, contact_id):
     if count > 1:
         for session in sessions:
             session.mark_completed(False)
-            session.save()
         return (True, None)
 
     session = sessions[0] if count == 1 else None
