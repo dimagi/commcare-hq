@@ -1130,6 +1130,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     }
     multi_select = params.get('multi_select', None)
     auto_select = params.get('auto_select', None)
+    max_select_value = params.get('max_select_value', None)
 
     app = get_app(domain, app_id)
 
@@ -1152,6 +1153,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         detail.short.columns = list(map(DetailColumn.from_json, short))
         detail.short.multi_select = multi_select
         detail.short.auto_select = auto_select
+        detail.short.max_select_value = max_select_value
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml

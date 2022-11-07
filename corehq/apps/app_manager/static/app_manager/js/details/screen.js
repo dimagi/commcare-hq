@@ -79,7 +79,7 @@ hqDefine("app_manager/js/details/screen", function () {
             }
             self.fireChange();
         });
-        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value) || hqImport("cloudcare/js/formplayer/constants").MULTI_SELECT_MAX_SELECT_VALUE;
+        self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
         self.maxSelectValue.subscribe(function () {
             self.fireChange();
         });
