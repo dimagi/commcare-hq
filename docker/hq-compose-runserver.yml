@@ -1,10 +1,11 @@
 version: '2.3'
 
+volumes:
+  shared_files: {}
+
 # x-anchors are ignored by Docker, are used for DRYness here
 x-commcarehq_base: &commcarehq_base
-  build:
-    context: .
-    dockerfile: "${DOCKERFILE}"
+  image: commcarehq_incl:latest
   environment: &environment_base
     COMMCAREHQ_BOOTSTRAP: "yes"
     DEPENDENT_SERVICES: "couch:5984 postgres:5432 redis:6379 elasticsearch2:9200 minio:9980 kafka:9092"
@@ -22,13 +23,12 @@ x-commcarehq_base: &commcarehq_base
     - zookeeper
     - minio
   volumes:
-    - ..:/mnt/commcare-hq-ro:ro
-    - ${VOLUME_PREFIX}lib:/mnt/lib
+    - shared_files:/sharedfiles
 
 services:
   web:
     <<: *commcarehq_base
-    command: [runserver]
+    command: 'docker/start-web.sh'
     expose:
       - 8000
     ports:
@@ -36,14 +36,18 @@ services:
 
   celery:
     <<: *commcarehq_base
-    command: [runcelery]
+    depends_on:
+      - web
+    command: 'celery -A corehq worker -l info'
 
   pillowtop:
     <<: *commcarehq_base
     environment:
       <<: *environment_base
       KAFKA_ADVERTISED_HOST_NAME: kafka
-    command: [runpillowtop]
+    depends_on:
+      - web
+    command: './manage.py run_ptop --all --processor-chunk-size=1'
 
   formplayer:
     extends:
