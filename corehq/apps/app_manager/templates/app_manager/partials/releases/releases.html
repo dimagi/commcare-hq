@@ -57,6 +57,7 @@
         {% endif %}
         {% if build_profile_access %}
           <li><a href="#profiles-tab" data-toggle="tab">{% trans "Application Profiles" %}</a></li>
+          <li><a href="#release-logs-tab" data-toggle="tab">{% trans "Application Release Logs" %}</a></li>
         {% endif %}
       </ul>
       <div class="spacer"></div>
@@ -73,6 +74,9 @@
         {% if build_profile_access %}
           <div id="profiles-tab" class="tab-pane">
             {% include 'app_manager/partials/releases/build_profiles.html' %}
+          </div>
+          <div id="release-logs-tab" class="tab-pane">
+            {% include 'app_manager/partials/releases/app_release_logs.html' %}
           </div>
         {% endif %}
       </div>
