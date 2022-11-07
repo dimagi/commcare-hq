@@ -53,9 +53,11 @@ class Command(BaseCommand):
 
 def update_subevent_date_from_emails(chunk_size, explain):
     query = f"""
-        update sms_messagingsubevent set date_last_activity = greatest(se.date, em.date, em.date_modified)
-        from sms_messagingsubevent se join sms_email em on se.id = em.messaging_subevent_id
-        where sms_messagingsubevent.id in (
+        update sms_messagingsubevent set date_last_activity = greatest(
+            sms_messagingsubevent.date, em.date, em.date_modified
+        )
+        from sms_email em where sms_messagingsubevent.id = em.messaging_subevent_id
+        and sms_messagingsubevent.id in (
             select se.id from sms_messagingsubevent se
                 join sms_email em on se.id = em.messaging_subevent_id
             where se.date_last_activity is null
@@ -67,10 +69,12 @@ def update_subevent_date_from_emails(chunk_size, explain):
 
 def update_subevent_date_from_sms(chunk_size, explain):
     query = f"""
-        update sms_messagingsubevent set date_last_activity = greatest(se.date, sms.date, sms.date_modified)
-        from sms_messagingsubevent se join sms_sms sms on se.id = sms.messaging_subevent_id
-        where sms_messagingsubevent.id in (
-            select count(*) from sms_messagingsubevent se
+        update sms_messagingsubevent set date_last_activity = greatest(
+            sms_messagingsubevent.date, sms.date, sms.date_modified
+        )
+        from sms_sms sms where sms_messagingsubevent.id = sms.messaging_subevent_id
+        and sms_messagingsubevent.id in (
+            select se.id from sms_messagingsubevent se
                 join sms_sms sms on se.id = sms.messaging_subevent_id
             where se.date_last_activity is null
             limit {chunk_size}
@@ -81,9 +85,11 @@ def update_subevent_date_from_sms(chunk_size, explain):
 
 def update_subevent_date_from_xform_session(chunk_size, explain):
     query = f"""
-        update sms_messagingsubevent set date_last_activity = greatest(se.date, sess.modified_time)
-        from sms_messagingsubevent se join smsforms_sqlxformssession sess on se.xforms_session_id = sess.id
-        where sms_messagingsubevent.id in (
+        update sms_messagingsubevent set date_last_activity = greatest(
+            sms_messagingsubevent.date, sess.modified_time
+        )
+        from smsforms_sqlxformssession sess where sms_messagingsubevent.xforms_session_id = sess.id
+        and sms_messagingsubevent.id in (
             select id from sms_messagingsubevent where
             sms_messagingsubevent.xforms_session_id is not null
             and sms_messagingsubevent.date_last_activity is null
