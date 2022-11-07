@@ -108,7 +108,9 @@ class KafkaCheckpointTest(TestCase):
         original_kafka_offsets = feed.get_latest_offsets()
         current_kafka_offsets = deepcopy(original_kafka_offsets)
         self.assertEqual(feed.get_current_checkpoint_offsets(), {})
-        self.assertEqual(pillow.get_last_checkpoint_sequence(), {})
+        self.assertEqual(
+            pillow.get_last_checkpoint_sequence(), {(topics.COMMCARE_USER, 0): 0, (topics.WEB_USER, 0): 0}
+        )
 
         publish_stub_change(topics.COMMCARE_USER)
         # the following line causes tests to fail if you have multiple partitions
