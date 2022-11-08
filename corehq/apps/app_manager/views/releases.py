@@ -59,6 +59,7 @@ from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
     Application,
     AppReleaseByLocation,
+    ApplicationReleaseLog,
     BuildProfile,
     LatestEnabledBuildProfiles,
     SavedAppBuild,
@@ -275,6 +276,15 @@ def release_build(request, domain, app_id, saved_app_id):
         if saved_app.build_profiles and domain_has_privilege(domain, privileges.BUILD_PROFILES):
             create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
+
+    app_release_log = ApplicationReleaseLog()
+    app_release_log.user_email = request.couch_user.get_email()
+    app_release_log.is_released = is_released
+    app_release_log.version = saved_app.version
+    app_release_log.app_id = app_id
+    app_release_log.user_id = request.couch_user.get_id
+
+    app_release_log.save()
 
     if ajax:
         return json_response({
