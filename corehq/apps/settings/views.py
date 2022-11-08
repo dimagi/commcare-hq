@@ -10,6 +10,7 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
@@ -63,12 +64,13 @@ from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
 from corehq.apps.users.util import log_user_change
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import USER_CHANGE_VIA_WEB, USER_DATETIME_FORMAT
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
 )
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 
 
 @login_and_domain_required
@@ -640,7 +642,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         key_id = self.parameters.get('id')
         api_key = self.base_query.get(pk=key_id)
         api_key.is_active = is_active
-        api_key.deactivated_on = None if is_active else datetime.now()
+        api_key.deactivated_on = None if is_active else timezone.now()
         api_key.save()
         return {'success': True, 'itemData': self._to_json(api_key)}
 
@@ -664,6 +666,12 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Actions"),
         ]
 
+    def _to_user_time(self, value):
+        return (ServerTime(value)
+                .user_time(self.request.couch_user.get_time_zone())
+                .done()
+                .strftime(USER_DATETIME_FORMAT)) if value else '-'
+
     @property
     def page_context(self):
         return self.pagination_context
@@ -676,8 +684,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 "template": "base-user-api-key-template",
             }
 
-    @staticmethod
-    def _to_json(api_key, unredacted=False):
+    def _to_json(self, api_key, unredacted=False):
         if unredacted:
             copy_msg = _("Copy this in a secure place. It will not be shown again.")
             key = f"{new_api_key.key} ({copy_msg})",
@@ -692,8 +699,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 ", ".join(api_key.ip_allowlist)
                 if api_key.ip_allowlist else _("All IP Addresses")
             ),
-            "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
-            "deactivated_on": api_key.deactivated_on.strftime('%Y-%m-%d %H:%M:%S') if api_key.deactivated_on else None,
+            "created": self._to_user_time(api_key.created),
+            "deactivated_on": self._to_user_time(api_key.deactivated_on),
             "is_active": api_key.is_active,
         }
 
