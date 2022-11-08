@@ -57,7 +57,7 @@
                     <p class="help-block" data-bind="visible: appearance() == 'daterange'">
                       {% trans 'In "YYYY-MM-DD to YYYY-MM-DD" format' %}
                     </p>
-                    <p class="help-block" data-bind="visible: (appearanceFinal() == 'fixture' || appearanceFinal() == 'checkbox') && isMultiselect()">
+                    <p class="help-block" data-bind="visible: (appearanceFinal() == 'fixture' && isMultiselect()) || appearanceFinal() == 'checkbox'">
                       {% trans 'e.g. Use #,# as separator to select multiple values' %}
                     </p>
                   </div>
@@ -97,7 +97,8 @@
                           {% trans "Allow multiple selections" %}
                       </label>
                       <div class="col-xs-12 col-sm-9">
-                          <input type="checkbox" data-bind="checked: isMultiselect"/>
+                          <input type="checkbox" data-bind="visible: appearanceFinal() != 'checkbox', checked: isMultiselect"/>
+                          <input type="checkbox" checked disabled data-bind="visible: appearanceFinal() == 'checkbox'"/>
                       </div>
                   </div>
                 {% endif %}
