@@ -152,12 +152,16 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
-        if not instance.metadata:
+        if instance.metadata and (not instance.metadata.userID or not instance.metadata.instanceID):
+            metrics_counter('commcare.xform_submissions.partial_metadata', tags={
+                'domain': instance.domain,
+            })
+        elif not instance.metadata:
             metrics_counter('commcare.xform_submissions.no_metadata', tags={
                 'domain': instance.domain,
             })
             return '   √   '
-        elif instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
         messages = []
