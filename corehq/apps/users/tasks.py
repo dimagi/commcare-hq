@@ -231,7 +231,8 @@ def _rebuild_case_with_retries(self, domain, case_id, detail):
             self.retry(exc=exc)
         except MaxRetriesExceededError:
             notify_exception(
-                "Maximum Retries Exceeded while rebuilding case {} during deletion.".format(case_id)
+                None,
+                f"Maximum Retries Exceeded while rebuilding case {case_id} during deletion.",
             )
 
 

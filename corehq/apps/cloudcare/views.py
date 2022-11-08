@@ -70,7 +70,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.decorators import (
     use_daterangepicker,
-    use_datatables,
     use_jquery_ui,
     waf_allow,
 )
@@ -100,7 +99,6 @@ class FormplayerMain(View):
     urlname = 'formplayer_main'
 
     @use_daterangepicker
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -243,7 +241,6 @@ class FormplayerPreviewSingleApp(View):
 
     urlname = 'formplayer_single_app'
 
-    @use_datatables
     @use_jquery_ui
     @method_decorator(require_cloudcare_access)
     @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
@@ -381,54 +378,6 @@ def _format_app_doc(doc):
     context = {key: doc.get(key) for key in keys}
     context['imageUri'] = doc.get('logo_refs', {}).get('hq_logo_web_apps', {}).get('path', '')
     return context
-
-
-@login_and_domain_required
-@requires_privilege_for_commcare_user(privileges.CLOUDCARE)
-def form_context(request, domain, app_id, module_id, form_id):
-    app = Application.get(app_id)
-    form_url = '{}{}'.format(
-        settings.CLOUDCARE_BASE_URL or get_url_base(),
-        reverse('download_xform', args=[domain, app_id, module_id, form_id])
-    )
-    case_id = request.GET.get('case_id')
-    instance_id = request.GET.get('instance_id')
-    try:
-        form = app.get_module(module_id).get_form(form_id)
-    except (FormNotFoundException, ModuleNotFoundException):
-        raise Http404()
-
-    form_name = list(form.name.values())[0]
-
-    # make the name for the session we will use with the case and form
-    session_name = '{app} > {form}'.format(
-        app=app.name,
-        form=form_name,
-    )
-
-    if case_id:
-        case = CommCareCase.objects.get_case(case_id, domain)
-        session_name = '{0} - {1}'.format(session_name, case.name)
-
-    root_context = {
-        'form_url': form_url,
-        'formplayer_url': get_formplayer_url(for_js=True),
-    }
-    if instance_id:
-        try:
-            root_context['instance_xml'] = XFormInstance.objects.get_form(instance_id, domain).get_xml()
-        except XFormNotFound:
-            raise Http404()
-
-    session_extras = {'session_name': session_name, 'app_id': app._id}
-    session_extras.update(get_cloudcare_session_data(domain, form, request.couch_user))
-
-    delegation = request.GET.get('task-list') == 'true'
-    session_helper = CaseSessionDataHelper(domain, request.couch_user, case_id, app, form, delegation=delegation)
-    return json_response(session_helper.get_full_context(
-        root_context,
-        session_extras
-    ))
 
 
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)

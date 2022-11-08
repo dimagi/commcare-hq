@@ -3,7 +3,7 @@ from collections import defaultdict
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_items_for_data_type
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -79,10 +79,13 @@ def get_custom_data_models(domain, limit_types=None):
 
 
 def get_fixture(domain, tag):
-    data_type = get_fixture_data_type_by_tag(domain, tag)
+    data_type = LookupTable.objects.by_domain_tag(domain, tag)
     return {
         "data_type": data_type,
-        "data_items": get_fixture_items_for_data_type(domain, data_type._id),
+        "data_items": list(LookupTableRow.objects.filter(
+            domain=domain,
+            table_id=data_type.id,
+        )),
     }
 
 

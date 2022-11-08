@@ -19,7 +19,6 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import AuditEvent
-from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
@@ -54,15 +53,6 @@ DOC_TYPES_BY_NAME = {
     "apps": {
         "type": Application,
         "use_domain": True,
-    },
-    "auditcare": {
-        "type": AuditEvent,
-        "use_domain": True,
-        "view": "auditcare/all_events",
-    },
-    "fixtures": {
-        "type": FixtureDataType,
-        "use_domain": True
     },
     "receiver_wrapper_repeaters": {
         "type": Repeater,

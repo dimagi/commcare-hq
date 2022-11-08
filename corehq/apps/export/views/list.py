@@ -497,6 +497,7 @@ class BaseExportListView(BaseProjectDataView):
         for use in third-party data analysis tools.
     '''))
     is_odata = False
+    page_title = gettext_lazy("Export Form Data")
 
     @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
@@ -1050,3 +1051,17 @@ class ODataFeedListView(BaseExportListView, ODataFeedListHelper):
             context['create_url'] = '#odataFeedLimitReachedModal'
             context['odata_feeds_over_limit'] = True
         return context
+
+
+@location_safe
+@method_decorator(toggles.SUPERSET_ANALYTICS.required_decorator(), name='dispatch')
+class CommCareAnalyticsListView(BaseProjectDataView):
+    urlname = 'commcare_analytics'
+    page_title = gettext_lazy("CommCare Analytics")
+    template_name = 'export/commcare_analytics.html'
+
+    @property
+    def page_context(self):
+        return {
+            "analytics_redirect_url": settings.COMMCARE_ANALYTICS_HOST
+        }

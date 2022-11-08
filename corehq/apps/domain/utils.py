@@ -158,3 +158,8 @@ def log_domain_changes(user, domain, new_obj, old_obj):
 def encrypt_account_confirmation_info(commcare_user):
     data = {"user_id": commcare_user.get_id, "time": int(time.time())}
     return b64_aes_encrypt(json.dumps(data))
+
+
+def is_domain_in_use(domain_name):
+    domain_obj = Domain.get_by_name(domain_name)
+    return domain_obj and not domain_obj.doc_type.endswith('-Deleted')

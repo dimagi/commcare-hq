@@ -126,6 +126,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('products.SQLProduct', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('reports.TableauServer', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('reports.TableauVisualization', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('reports.TableauConnectedApp', SimpleFilter('server__domain')),
+    FilteredModelIteratorBuilder('reports.TableauUser', SimpleFilter('server__domain')),
+    FilteredModelIteratorBuilder('reports.TableauGroup', SimpleFilter('server__domain')),
     FilteredModelIteratorBuilder('smsforms.SQLXFormsSession', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('parent__domain')),
@@ -191,6 +194,9 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('fixtures.LookupTableRow', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('fixtures.LookupTableRowOwner', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('generic_inbound.ConfigurableAPI', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('generic_inbound.ConfigurableApiValidation', SimpleFilter('api__domain')),
+    FilteredModelIteratorBuilder('generic_inbound.RequestLog', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('generic_inbound.ProcessingAttempt', SimpleFilter('log__domain')),
 ]]
 
 

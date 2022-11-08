@@ -73,6 +73,8 @@ def get_event_schema() -> dict:
             SchemaOptional("providedElsewhere"): bool,
             SchemaOptional("storedBy"): str,
             "value": object,
+            SchemaOptional("lastUpdatedByUserInfo"): user_info_schema,
+            SchemaOptional("createdByUserInfo"): user_info_schema,
         }],
         SchemaOptional("deleted"): bool,
         SchemaOptional("dueDate"): date_schema,
@@ -109,23 +111,16 @@ def get_note_schema() -> dict:
 
 
 def get_relationship_schema() -> dict:
-    program_owner_schema = get_program_owner_schema()
     return {
         "relationshipType": id_schema,
         SchemaOptional("relationshipName"): str,
         SchemaOptional("relationship"): id_schema,
         SchemaOptional("bidirectional"): bool,
         "from": {
-            "trackedEntityInstance": {
-                "trackedEntityInstance": id_schema,
-                SchemaOptional("programOwners"): [program_owner_schema],
-            }
+            "trackedEntityInstance": get_tracked_entity_instance_schema()
         },
         "to": {
-            "trackedEntityInstance": {
-                "trackedEntityInstance": id_schema,
-                SchemaOptional("programOwners"): [program_owner_schema],
-            }
+            "trackedEntityInstance": get_tracked_entity_instance_schema()
         },
         SchemaOptional("created"): datetime_schema,
         SchemaOptional("lastUpdated"): datetime_schema,
@@ -216,4 +211,12 @@ def get_program_owner_schema():
         "ownerOrgUnit": id_schema,
         "program": id_schema,
         "trackedEntityInstance": id_schema,
+    }
+
+
+def get_tracked_entity_instance_schema():
+    return {
+        "trackedEntityInstance": id_schema,
+        SchemaOptional("programOwners"): [get_program_owner_schema()],
+        SchemaOptional("potentialDuplicate"): bool,
     }

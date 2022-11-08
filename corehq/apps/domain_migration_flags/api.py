@@ -14,6 +14,10 @@ from .models import DomainMigrationProgress, MigrationStatus
 
 log = logging.getLogger(__name__)
 
+# This 'domain' key can be used for migrations that are not domain specific.
+# These migrations will not block any domain activity.
+ALL_DOMAINS = "*"
+
 
 def set_migration_started(domain, slug, dry_run=False):
     progress, _ = DomainMigrationProgress.objects.get_or_create(domain=domain, migration_slug=slug)

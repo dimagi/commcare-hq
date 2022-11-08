@@ -20,20 +20,17 @@
         {% include "analytics/forms/hubspot_cta_form.html" %}
       </div>
 
-      {# Schedule Once Demo #}
-      <div id="get-demo-cta-calendar-content"
-           class="modal-body form-horizontal"
-           style="display: none;">
-        <p>
-          {% blocktrans %}
-            Select a time to see CommCare in action and review
-            questions with our team.
-          {% endblocktrans %}
-        </p>
-        <div id="SOIDIV_commcaredemoform"
-             data-so-page="commcaredemoform"
-             data-style="border: 1px solid #d8d8d8; min-width: 290px; max-width: 900px;"
-             data-psz="11"></div>
+      <div id="get-demo-cta-success" style="display: none;">
+        <div class="modal-body">
+          <p>
+            {% blocktrans %}
+              Thank you! A member of our team will be in touch to schedule a time with you.
+            {% endblocktrans %}
+          </p>
+        </div>
+        <div class="modal-footer">
+          <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Done" %}</a>
+        </div>
       </div>
 
     </div>
