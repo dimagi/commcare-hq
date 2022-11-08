@@ -20,6 +20,7 @@ class ConfigurableAPICreateForm(forms.ModelForm):
         fields = [
             "name",
             "description",
+            "filter_expression",
             "transform_expression",
         ]
         widgets = {
@@ -29,15 +30,16 @@ class ConfigurableAPICreateForm(forms.ModelForm):
     def __init__(self, request, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain = request.domain
-        self.fields['transform_expression'] = forms.ModelChoiceField(
-            queryset=UCRExpression.objects.get_expressions_for_domain(self.domain)
-        )
+        transform_expression_field = self.fields['transform_expression']
+        transform_expression_field.queryset = UCRExpression.objects.get_expressions_for_domain(self.domain)
+        self.fields['filter_expression'].queryset = UCRExpression.objects.get_filters_for_domain(self.domain)
         self.helper = HQFormHelper()
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 self.fieldset_title,
                 crispy.Field('name'),
                 crispy.Field('description'),
+                crispy.Field('filter_expression'),
                 crispy.Field('transform_expression'),
             )
         )

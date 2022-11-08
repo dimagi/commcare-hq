@@ -60,26 +60,27 @@ branches:
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
     - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - mjr/report-logging-verification # Matt July 20
-    - ml/limit-superuser-changes # Minha July 25
-    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
-    # - ad/remove-entered-wrap-functions # Addison Aug 22
-    - ce/api-rate-limits # Cal Aug 23
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
-    - cs/SC-2135-hourly-reports-not-respecting-timezones # Charl 1 Sept
     - do/migrate-apps # Dominic Sep 2
     # - akj/abdm-api # Akash Sep 5
     # - sk/webapps-update-url # Simon Sep 13
     - ap/sql-repeater/phase-2 # Amit Sep 16
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - rc/update-case-search-settings-mapping # Robert Sept 20
     - rp/mobile-worker-validation # Rynhard Sept 21
-    # - jt/ush-2147_improve_print_css #Jonathan T. Sept 22
     # - mp/mobile_fix-2fa # Marco Sep 26
-    - dm/sql-lookup-tables-pr2 # Daniel Sept 27
-    - jls/new-instance-connectors # Jenny Sept 27
+    #- jls/new-instance-connectors # Jenny Sept 27
     - akj/abdm-api-for-mobile-app # Akash Sep 28
-    - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC)
-    - bmb/remove-oidc-dev-notice  # Biyeun Sep 29
     - gh/replace-base-crud-view # Graham Sep 29
+    - akj/release-mode-toggle # Akash 7 Oct
+    - akj/migrations-fix # Akash Oct 11
+    - ml/lookup-table-UI # Minha Oct 19
+    - gh/add-history-tab # Graham Oct 20
+    - ad/tableau-connected-app # Addison Oct 26
+    - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
+    - em/case-search-checkbox # Evan Oct 27
+    - cs/sc-2369/shadow_module_fix # Chris Oct 31
+    - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
+    - smh/auto-select-app-config # Steph Nov 2
+    - smh/auto-select-xml # Steph Nov 2
+    - ml/submission-api-datadog-metric # Minha Nov 3
 submodules: { }

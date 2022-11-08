@@ -125,6 +125,18 @@
   pip install psycopg2-binary
   ```
 
+### M1 Issues
+
+- `gevent` may present errors when installing with Python <3.9. For this reason, you should avoid using an older version of Python unless it is required.
+
+- `pynacl` will likely install but may throw an error `symbol not found in flat namespace '_ffi_prep_closure'` when attempting to run, particularly when setting up CommCare-Cloud.
+
+  This can be fixed by installing a version of `pynacl` specific to the system architecture:
+  ```sh
+  arch -arm64 pip install --upgrade --force-reinstall pynacl
+  ```
+
+
 ## Docker
 
 Docker images that will not run on Mac OS (Intel or M1):
@@ -163,6 +175,26 @@ NOTE: Make sure that `/path/to` is replaced with the actual path!
 
 After this you can open a new terminal window and run elasticsearch with `elasticsearch`.
 
+#### Install Elasticsearch plugins
+
+Now that you have Elasticsearch running you will need to install the necessary plugins:
+
+1. Install the plugin
+
+    ```shell
+    $ plugin install analysis-phonetic
+    ```
+
+    (If the `plugin` command is not found you will need to use the full path `<es home>/bin/plugin`).
+
+2. Restart the service
+
+3. Verify the plugin was correctly installed
+
+    ```shell
+    $ curl "localhost:9200/_cat/plugins?s=component&h=component,version
+    analysis-phonetic 2.4.6
+    ```
 
 ## Fixing ImportError with `libmagic`
 

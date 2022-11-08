@@ -526,11 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
-
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -1107,9 +1102,6 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1257,7 +1249,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1418,7 +1410,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -1573,7 +1565,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),

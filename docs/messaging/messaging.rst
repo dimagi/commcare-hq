@@ -1,7 +1,7 @@
-Messaging in CommCareHQ
-=======================
+Messaging in CommCare HQ
+========================
 
-The term "messaging" in CommCareHQ commonly refers to the set of frameworks that allow the following types of use
+The term "messaging" in CommCare HQ commonly refers to the set of frameworks that allow the following types of use
 cases:
 
 * sending SMS to contacts
@@ -12,9 +12,9 @@ cases:
 * collecting data via SMS surveys
 * sending email alerts to contacts
 
-The purpose of this documentation is to show how all of those use cases are performed technically by CommCareHQ.
+The purpose of this documentation is to show how all of those use cases are performed technically by CommCare HQ.
 The topics below cover this material and should be followed in the order presented below if you have no prior
-knowledge of the messaging frameworks used in CommCareHQ.
+knowledge of the messaging frameworks used in CommCare HQ.
 
  .. toctree::
     :maxdepth: 2

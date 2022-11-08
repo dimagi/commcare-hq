@@ -126,6 +126,8 @@ This should contain:
 
   * This should be trivial, since all the work is done in the populate command from the previous PR.
 
+  * The migration does an automatic completeness check by comparing the number of documents in Couch to the number of rows in SQL. If the counts do not match then the migration is considered incomplete, and the migration will calculate the difference and either migrate the remaining documents automatically or prompt for manual action. **NOTE**: if the automatic migration route is chosen (in the case of a small difference) the migration may still take a long time if the total number of documents in Couch is large since the migration must check every document in Couch (of the relevant doc type) to see if it has been migrated to SQL. A count mismatch is more likely when documents are written (created and/or deleted) frequently. One way to work around this is to use the ``--override-is-migration-completed`` option of ``PopulateSQLCommand`` to force the migration into a completed state. **WARNING**: careless use of that option may result in an incomplete migration. It is recommended to only force a completed state just before the migration is applied (e.g., just before deploying), and after checking the counts with ``--override-is-migration-completed=check``.
+
   * `Sample migration for RegistrationRequest <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/registration/migrations/0003_populate_sqlregistrationrequest.py>`_.
 
 * Replacements of all code that reads from the couch document to instead read from SQL. This is the hard part: finding **all** usages of the couch model and updating them as needed to work with the sql model. Some patterns are:

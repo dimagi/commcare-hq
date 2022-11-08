@@ -132,6 +132,7 @@ auditcare
  0004_add_couch_id
  0005_auditcaremigrationmeta
  0006_auto_20210811_1215
+ 0007_delete_auditcaremigrationmeta
 auth
  0001_initial
  0002_alter_permission_name_max_length
@@ -285,6 +286,8 @@ data_interfaces
  0027_auto_20220511_2017
  0028_auto_20220420_1301
  0029_locationfilterdefinition_include_child_locations
+ 0030_add_workflow_choices
+ 0031_add_domaincaserulerun_status_choices
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -375,6 +378,7 @@ fixtures
  0005_lookuptablemodels
  0006_index_row_id
  0007_db_cascade
+ 0008_sqllookuptables
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -478,6 +482,7 @@ generic_inbound
  0001_initial
  0002_configurableapivalidation
  0003_add_logging_models
+ 0004_add_filter_expression
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -698,6 +703,8 @@ reports
  0008_tableauvisualization_title
  0009_remove_tableauserver_domain_username
  0010_delete_reportssidebarordering
+ 0011_tableauconnectedapp
+ 0012_tableaugroup_tableauuser
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -792,6 +799,8 @@ sms
  0049_auto_enable_turnio_ff
  0050_sms_email_date_modified
  0051_reset_modified_on
+ 0052_messagingsubevent_date_last_activity
+ 0053_alter_messagingsubevent_date_last_activity
 smsbillables
  0001_initial
  0002_bootstrap
@@ -892,6 +901,7 @@ sql_accessors
  0065_get_ledger_values_for_cases_3
  0066_drop_unused_function
  0067_livequery_sql
+ 0067_livequery_sql_include_deleted_indices
 sql_proxy_accessors
  0001_initial
  0002_add_sync_functions
@@ -956,6 +966,7 @@ stock
  0001_squashed_0002_stockreport_server_date
  0002_delete_stocktransaction
  0003_delete_stock_models
+ 0004_drop_unused_stock_tables
 tastypie
  0001_initial
  0002_api_access_url_length
