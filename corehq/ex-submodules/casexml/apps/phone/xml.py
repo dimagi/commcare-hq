@@ -9,8 +9,7 @@ import six
 
 from casexml.apps.phone.exceptions import RestoreException
 
-from corehq import toggles
-from custom.abdm.milestone_one.utils.user_util import get_abdm_api_token
+from corehq import extensions
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
@@ -112,10 +111,10 @@ def get_casedb_element(case):
     return CaseDBXMLGenerator(case).get_element()
 
 
-def get_registration_element(restore_user, domain=None):
+def get_registration_element(restore_user):
     root = safe_element("Registration")
     root.set("xmlns", USER_REGISTRATION_XMLNS)
-    for key, value in get_registration_element_data(restore_user, domain=domain).items():
+    for key, value in get_registration_element_data(restore_user).items():
         if isinstance(value, str) or value is None:
             root.append(safe_element(key, value))
         elif isinstance(value, dict):
@@ -125,21 +124,31 @@ def get_registration_element(restore_user, domain=None):
     return root
 
 
-def get_registration_element_data(restore_user, domain=None):
+def get_registration_element_data(restore_user):
     return {
         "username": restore_user.username,
         "password": restore_user.password,
         "uuid": restore_user.user_id,
         "date": date_to_xml_string(restore_user.date_joined),
-        "user_data": get_session_data_with_abdm_token(restore_user, domain)
+        "user_data": get_user_data_for_restore(restore_user)
     }
 
 
-def get_session_data_with_abdm_token(restore_user, domain):
-    user_data = restore_user.user_session_data
-    if domain and toggles.RESTORE_ADD_ABDM_TOKEN.enabled(domain):
-        user_data.update({"abdm_api_token": get_abdm_api_token(restore_user.username)})
+def get_user_data_for_restore(restore_user):
+    user_data = {}
+    for custom_user_data in get_custom_user_data_for_restore(restore_user):
+        user_data.update(custom_user_data)
+    user_data.update(restore_user.user_session_data)
     return user_data
+
+
+@extensions.extension_point
+def get_custom_user_data_for_restore(restore_user):
+    """
+    Get additional user data for restore
+    :returns: Dict of user data
+    """
+    pass
 
 
 # Case registration blocks do not have a password
