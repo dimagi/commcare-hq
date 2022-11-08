@@ -165,7 +165,7 @@ def _make_simple_consumer(filter_name, model_filter_arg, validator=None):
 
 COMPOUND_FILTERS = [
     _get_date_filter_consumer("date"),
-    _get_date_filter_consumer("date_last_activity", "date_last_activity_computed"),
+    _get_date_filter_consumer("date_last_activity"),
 ]
 
 SIMPLE_FILTERS = {
