@@ -6247,6 +6247,18 @@ class LatestEnabledBuildProfiles(models.Model):
         return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
 
 
+class ApplicationReleaseLog(models.Model):
+    user_email = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_released = models.BooleanField()
+    version = models.CharField(max_length=255)
+    app_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+
+    def save(self, *args, **kwargs):
+        super(ApplicationReleaseLog, self).save(*args, **kwargs)
+        print("Saved App release log")
+
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
 FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
