@@ -69,11 +69,9 @@ branches:
     - rp/mobile-worker-validation # Rynhard Sept 21
     # - mp/mobile_fix-2fa # Marco Sep 26
     #- jls/new-instance-connectors # Jenny Sept 27
-    - akj/abdm-api-for-mobile-app # Akash Sep 28
     - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - ml/lookup-table-UI # Minha Oct 19
     - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
     - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
@@ -83,4 +81,7 @@ branches:
     - smh/auto-select-app-config # Steph Nov 2
     - smh/auto-select-xml # Steph Nov 2
     - ml/submission-api-datadog-metric # Minha Nov 3
+    - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
+    - akj/abdm-api-for-mobile-app # Akash Sep 28
+    - ml/lookup-table-UI # Minha Oct 19
 submodules: { }
