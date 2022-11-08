@@ -18,10 +18,10 @@
     </td>
     <td>
 
-      <button class="btn btn-default" data-action="deactivate" data-bind="visible: is_active">
+      <button class="btn btn-default" data-bind="visible: is_active, click: $root.deactivate">
         <i class="fa fa-pause"></i> {% trans "Deactivate" %}
       </button>
-      <button class="btn btn-default" data-action="activate" data-bind="hidden: is_active">
+      <button class="btn btn-default" data-bind="hidden: is_active, click: $root.activate">
         <i class="fa fa-toggle-right"></i> {% trans "Activate" %}
       </button>
 

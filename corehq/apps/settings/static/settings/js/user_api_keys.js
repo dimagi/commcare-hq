@@ -12,48 +12,50 @@ hqDefine("settings/js/user_api_keys", [
     CRUDPaginatedList
 ) {
 
-    var updateApiKey = function (action, apiKey) {
-        $.ajax({
-            url: "",
-            type: "POST",
-            dataType: 'json',
-            data: {
-                action: action,
-                id: apiKey.itemId,
-            },
-            success: function (data) {
-                apiKey.itemData(data.itemData);
-            },
-        });
-    };
+    var ApiKeyListModel = function () {
+        var self = CRUDPaginatedList.CRUDPaginatedListModel(
+            initialPageData.get('total'),
+            initialPageData.get('limit'),
+            initialPageData.get('page'),
+            {
+                statusCodeText: initialPageData.get('status_codes'),
+                allowItemCreation: initialPageData.get('allow_item_creation'),
+                createItemForm: initialPageData.get('create_item_form'),
+                createItemFormClass: initialPageData.get('create_item_form_class'),
+            }
+        );
 
-    var ApiKeyModel = function (itemSpec, initRow) {
-        return CRUDPaginatedList.PaginatedItem(itemSpec, function (rowElems, apiKey) {
-            initRow(rowElems, apiKey);
-
-            $(rowElems).find("button[data-action]").click(function () {
-                updateApiKey($(this).data("action"), apiKey);
+        updateApiKey = function (action, apiKeyId) {
+            $.ajax({
+                url: "",
+                type: "POST",
+                dataType: 'json',
+                data: {
+                    action: action,
+                    id: apiKeyId,
+                },
+                success: function (data) {
+                    var apiKey = _.find(self.paginatedList(), function (item) {
+                        return item.itemId == apiKeyId;
+                    });
+                    apiKey.itemData(data.itemData);
+                },
             });
-        });
+        };
+        self.deactivate = function (apiKey) {
+            updateApiKey('deactivate', apiKey.id);
+        };
+        self.activate = function (apiKey) {
+            updateApiKey('activate', apiKey.id);
+        };
+        return self;
     };
-
-    var paginatedListModel = CRUDPaginatedList.CRUDPaginatedListModel(
-        initialPageData.get('total'),
-        initialPageData.get('limit'),
-        initialPageData.get('page'),
-        {
-            statusCodeText: initialPageData.get('status_codes'),
-            allowItemCreation: initialPageData.get('allow_item_creation'),
-            createItemForm: initialPageData.get('create_item_form'),
-            createItemFormClass: initialPageData.get('create_item_form_class'),
-        },
-        ApiKeyModel
-    );
 
     $(function () {
+        var paginatedListModel = ApiKeyListModel();
         ko.applyBindings(paginatedListModel, $('#editable-paginated-list').get(0));
         paginatedListModel.init();
     });
 
-    return {'paginatedListModel': paginatedListModel};
+    return 1;
 });
