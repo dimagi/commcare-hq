@@ -43,7 +43,7 @@
             <%- itemsetChoices[i] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input == "select") { %>
     <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
@@ -52,7 +52,7 @@
             <%- itemsetChoices[i] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input === "date") { %>
     <div class="input-group">
@@ -70,6 +70,19 @@
            class="daterange query-field form-control"
            value="<%- value %>"
            <% if (required) { %> aria-required="true"<% } %>>
+
+    <% } else if (input === "checkbox") { %>
+    <fieldset multiple class="query-field" id="<%- text ? text : "" %>" <% if (required) { %> aria-required="true"<% } %>>
+      <legend class="sr-only"><%- text ? text : "" %></legend>
+      <% for (var i = 0; i < itemsetChoices.length; i++) { %>
+      <div id="<%- text ? text : "checkbox" %>-<%- i %>" class="checkbox">
+        <label>
+          <input type="checkbox" value="<%- i %>" <% if (value && value.indexOf(String(i)) !== -1) { %>checked<% } %>>
+          <%- itemsetChoices[i] %>
+        </label>
+      </div>
+      <% } %>
+    </fieldset>
 
     <% } else if (input == "address") { %>
     <div class="query-field" value="<%- value %>" id="<%- id %>_mapbox" data-address="<%- id %>">
