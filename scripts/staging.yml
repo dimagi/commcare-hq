@@ -69,7 +69,6 @@ branches:
     - rp/mobile-worker-validation # Rynhard Sept 21
     # - mp/mobile_fix-2fa # Marco Sep 26
     #- jls/new-instance-connectors # Jenny Sept 27
-    - gh/replace-base-crud-view # Graham Sep 29
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - gh/add-history-tab # Graham Oct 20
