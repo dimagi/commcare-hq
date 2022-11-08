@@ -20,7 +20,7 @@
 {% block page_content %}
   {% initial_page_data 'renderReportTables' 1 %}
   {% initial_page_data 'dataTablesOptions' data_tables_options %}
-  {% if not table_not_selected %}
+  {% if not table_not_selected and table_description %}
     <h4>{{ table_description }}</h4>
   {% endif %}
 
@@ -56,12 +56,14 @@
         </div>
       </div>
       {% if not table_not_selected %}
+        <!-- need to look at this styling again -->
+        <div class="panel-heading"
+             style="position: sticky; top: 0; z-index:100; background-color: #ffffff; width:100%;">
+          <h2 class="panel-title">
+            {% blocktrans %}Table {% endblocktrans %}'{{ selected_table }}'
+          </h2>
+        </div>
         <div class="panel panel-default">
-          <div class="panel-heading">
-            <h2 class="panel-title">
-              {% blocktrans %}Table {% endblocktrans %}'{{ selected_table }}'
-            </h2>
-          </div>
           <div class="panel-body-datatable">
             <table id="report_table_{{ report.slug }}" class="table table-striped datatable" {% if pagination.filter %} data-filter="true"{% endif %}>
               <thead>

@@ -2379,3 +2379,10 @@ RESTORE_ADD_ABDM_TOKEN = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='Adds ABDM API access token to the restore data of the mobile user.',
 )
+
+COMBINE_LOOKUP_TABLES = StaticToggle(
+    'combine_lookup_tables',
+    "Combines lookup table exports into one master sheet",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
