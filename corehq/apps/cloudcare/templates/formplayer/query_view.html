@@ -43,7 +43,7 @@
             <%- itemsetChoices[i] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input == "select") { %>
     <select multiple class="query-field form-control hqwebapp-select2" data-receive="<%- receive %>"<% if (required) { %> aria-required="true"<% } %>>
@@ -52,7 +52,7 @@
             <%- itemsetChoices[i] %>
         </option>
         <% } %>
-    <select>
+    </select>
 
     <% } else if (input === "date") { %>
     <div class="input-group">
