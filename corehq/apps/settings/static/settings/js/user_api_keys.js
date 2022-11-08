@@ -34,6 +34,7 @@ hqDefine("settings/js/user_api_keys", [
                     action: action,
                     id: apiKeyId,
                 },
+                statusCode: self.handleStatusCode,
                 success: function (data) {
                     var apiKey = _.find(self.paginatedList(), function (item) {
                         return item.itemId == apiKeyId;
