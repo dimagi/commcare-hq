@@ -3,11 +3,13 @@ from xml.sax import saxutils
 from lxml import etree as ElementTree
 from casexml.apps.case import const
 from casexml.apps.case.xml import check_version, V1
-from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
+from casexml.apps.case.xml.generator import get_generator, date_to_xml_string, \
     safe_element, CaseDBXMLGenerator
 import six
 
 from casexml.apps.phone.exceptions import RestoreException
+
+from corehq import toggles
 from custom.abdm.milestone_one.utils.user_util import get_abdm_api_token
 
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
@@ -37,7 +39,6 @@ def get_sync_element(restore_id=None):
 
 
 def get_case_element(case, updates, version=V1):
-
     check_version(version)
 
     if case is None:
@@ -51,7 +52,7 @@ def get_case_element(case, updates, version=V1):
     # update block
     do_create = const.CASE_ACTION_CREATE in updates
     do_update = const.CASE_ACTION_UPDATE in updates
-    do_index = do_update # NOTE: we may want to differentiate this eventually
+    do_index = do_update  # NOTE: we may want to differentiate this eventually
     do_attach = do_update
     do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
     if do_create:
@@ -111,10 +112,10 @@ def get_casedb_element(case):
     return CaseDBXMLGenerator(case).get_element()
 
 
-def get_registration_element(restore_user):
+def get_registration_element(restore_user, domain=None):
     root = safe_element("Registration")
     root.set("xmlns", USER_REGISTRATION_XMLNS)
-    for key, value in get_registration_element_data(restore_user).items():
+    for key, value in get_registration_element_data(restore_user, domain=domain).items():
         if isinstance(value, str) or value is None:
             root.append(safe_element(key, value))
         elif isinstance(value, dict):
@@ -124,19 +125,20 @@ def get_registration_element(restore_user):
     return root
 
 
-def get_registration_element_data(restore_user):
+def get_registration_element_data(restore_user, domain=None):
     return {
         "username": restore_user.username,
         "password": restore_user.password,
         "uuid": restore_user.user_id,
         "date": date_to_xml_string(restore_user.date_joined),
-        "user_data": get_session_data_with_abdm_token(restore_user)
+        "user_data": get_session_data_with_abdm_token(restore_user, domain)
     }
 
 
-def get_session_data_with_abdm_token(restore_user):
-    user_data = {"abdm_api_token": get_abdm_api_token(restore_user.username)}
-    user_data.update(restore_user.user_session_data)
+def get_session_data_with_abdm_token(restore_user, domain):
+    user_data = restore_user.user_session_data
+    if domain and toggles.RESTORE_ADD_ABDM_TOKEN.enabled(domain):
+        user_data.update({"abdm_api_token": get_abdm_api_token(restore_user.username)})
     return user_data
 
 

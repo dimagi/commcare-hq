@@ -42,7 +42,7 @@ class RegistrationElementProvider(RestoreDataProvider):
     """
 
     def get_elements(self, restore_state):
-        yield xml.get_registration_element(restore_state.restore_user)
+        yield xml.get_registration_element(restore_state.restore_user, domain=restore_state.domain)
 
 
 class FixtureElementProvider(RestoreDataProvider):
