@@ -677,12 +677,16 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             }
 
     @staticmethod
-    def _to_json(api_key):
-        redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+    def _to_json(api_key, unredacted=False):
+        if unredacted:
+            copy_msg = _("Copy this in a secure place. It will not be shown again.")
+            key = f"{new_api_key.key} ({copy_msg})",
+        else:
+            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
         return {
             "id": api_key.id,
             "name": api_key.name,
-            "key": redacted_key,
+            "key": key,
             "domain": api_key.domain or _('All Projects'),
             "ip_allowlist": (
                 ", ".join(api_key.ip_allowlist)
@@ -708,18 +712,8 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             new_api_key = create_form.create_key(self.request.user)
         except DuplicateApiKeyName:
             return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
-        copy_key_message = _("Copy this in a secure place. It will not be shown again.")
         return {
-            'itemData': {
-                'id': new_api_key.id,
-                'name': new_api_key.name,
-                'key': f"{new_api_key.key} ({copy_key_message})",
-                "domain": new_api_key.domain or _('All Projects'),
-                'ip_allowlist': new_api_key.ip_allowlist,
-                'created': new_api_key.created.isoformat(),
-                "deactivated_on": None,
-                'is_active': None,
-            },
+            'itemData': self._to_json(new_api_key, unredacted=True),
             'template': 'new-user-api-key-template',
         }
 

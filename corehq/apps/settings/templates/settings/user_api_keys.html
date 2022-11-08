@@ -76,7 +76,9 @@
     <td data-bind="text: domain"></td>
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
-    <td data-bind="text: is_active"></td>
+    <td>
+      <span class="label label-success">{% trans "Active" %}</span>
+    </td>
     <td></td>
   </script>
 {% endblock %}
