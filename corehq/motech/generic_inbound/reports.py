@@ -81,8 +81,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
             queryset = queryset.filter(status__in=status)
         input_form_id = self.request.GET.get('form_id')
         if input_form_id:
-            attempts = ProcessingAttempt.objects.filter(xform_id=input_form_id)
-            queryset = queryset.filter(id__in=[attempt.log for attempt in attempts])
+            queryset = queryset.filter(processingattempt__xform_id=input_form_id)
         return queryset
 
     @property
