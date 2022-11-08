@@ -197,7 +197,8 @@ class TestAppReleaseModeSettingForm(TestCase):
 
     def setUp(self) -> None:
         domain = Domain.generate_name('test_domain')
-        self.domain_obj = Domain(name=domain).save()
+        self.domain_obj = Domain(name=domain)
+        self.domain_obj.save()
 
     def test_release_mode_settings_present_when_domain_eligible(self):
         form = self.create_form(domain=self.domain_obj)
@@ -206,7 +207,8 @@ class TestAppReleaseModeSettingForm(TestCase):
     def test_release_mode_settings_hidden_after_enabling(self):
         # Enable release mode setting for the domain
         form = self.create_form(domain=self.domain_obj, release_mode_visibility=True)
-        form.save()
+        form.full_clean()
+        form.save(Mock(), self.domain_obj)
 
         form = self.create_form(domain=self.domain_obj)
         self.assertTrue('release_mode_visibility' not in form.fields)
@@ -223,6 +225,3 @@ class TestAppReleaseModeSettingForm(TestCase):
         if domain is None:
             domain = self.domain_obj
         return DomainGlobalSettingsForm(data, domain=domain)
-
-    def tearDown(self):
-        self.domain_obj.delete()
