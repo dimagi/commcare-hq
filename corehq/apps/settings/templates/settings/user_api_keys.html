@@ -12,8 +12,8 @@
     <td data-bind="text: ip_allowlist"></td>
     <td data-bind="text: created"></td>
     <td>
-      <span class="label label-success" data-bind="visible: is_active">Active</span>
-      <span class="label label-danger" data-bind="hidden: is_active">Inactive</span>
+      <span class="label label-success" data-bind="visible: is_active">{% trans "Active" %}</span>
+      <span class="label label-danger" data-bind="hidden: is_active">{% trans "Inactive" %}</span>
       <small class="help-block" data-bind="hidden: is_active, text: deactivated_on" />
     </td>
     <td>
