@@ -54,6 +54,7 @@ from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDuplicate,
+    DomainCaseRuleRun,
 )
 from corehq.apps.data_interfaces.tasks import (
     bulk_form_management_async,
@@ -659,6 +660,7 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
+            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()]
         })
         return context
 
@@ -676,13 +678,26 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'name': rule.name,
             'case_type': rule.case_type,
             'active': rule.active,
-            'last_run': (ServerTime(rule.last_run)
-                         .user_time(get_timezone_for_user(None, self.domain))
-                         .done()
-                         .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
+            'last_run': self._convert_to_user_time(rule.last_run),
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
         }
+
+    def _format_rule_run(self, rule_run):
+        return {
+            'case_type': rule_run.case_type,
+            'status': rule_run.get_status_display(),
+            'started_on': self._convert_to_user_time(rule_run.started_on),
+            'finished_on': self._convert_to_user_time(rule_run.finished_on),
+            'cases_updated': rule_run.num_updates,
+            'cases_closed': rule_run.num_closes,
+        }
+
+    def _convert_to_user_time(self, value):
+        return (ServerTime(value)
+                .user_time(get_timezone_for_user(None, self.domain))
+                .done()
+                .strftime(SERVER_DATETIME_FORMAT)) if value else '-'
 
     @memoized
     def _rules(self):
@@ -691,6 +706,13 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             self.rule_workflow,
             active_only=False,
         ).order_by('name', 'id')
+
+    @memoized
+    def _rule_runs(self):
+        return DomainCaseRuleRun.objects.filter(
+            domain=self.domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        ).order_by('-started_on', '-finished_on')
 
     def _update_rule(self, rule_id, action):
         rule, error = self._get_rule(rule_id)
