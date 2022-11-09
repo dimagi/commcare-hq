@@ -70,13 +70,7 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
         self.multiSelectEnabled.subscribe(function () {
-            if (!self.multiSelectEnabled()) {
-                document.getElementById("auto-select-checkbox").checked = false;
-                self.autoSelectEnabled();
-            }
-            else {
-                document.getElementById("auto-select-checkbox").checked = self.autoSelectEnabled();
-            }
+            self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled())
             self.fireChange();
         });
         self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
@@ -346,7 +340,7 @@ hqDefine("app_manager/js/details/screen", function () {
             }
             data[self.columnKey + '_custom_variables'] = self.customVariablesViewModel.xml();
             data.multi_select = self.multiSelectEnabled();
-            data.auto_select = self.autoSelectEnabled() && self.multiSelectEnabled();
+            data.auto_select = self.autoSelectEnabled();
             data.max_select_value = self.maxSelectValue();
             if (self.containsSearchConfiguration) {
                 data.search_properties = JSON.stringify(self.config.search.serialize());

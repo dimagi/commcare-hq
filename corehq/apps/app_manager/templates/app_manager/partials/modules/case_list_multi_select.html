@@ -20,7 +20,7 @@
           </div>
           <div class="checkbox">
             <label>
-              <input type="checkbox" id="auto-select-checkbox" data-bind="checked: autoSelectEnabled, disable: !multiSelectEnabled()"/>
+              <input type="checkbox" data-bind="checked: autoSelectEnabled, enable: multiSelectEnabled()"/>
               {% trans "Enable auto select" %}
             </label>
           </div>
