@@ -45,14 +45,14 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
     var appReleaseLogsModel = function () {
         let self = {};
-        self.releaseLogs = ko.observableArray()
-        self.fetchLimit = ko.observable()
-        self.totalItems = ko.observable()
-        self.fetchState = ko.observable()
+        self.releaseLogs = ko.observableArray();
+        self.fetchLimit = ko.observable();
+        self.totalItems = ko.observable();
+        self.fetchState = ko.observable();
 
         self.onPaginationLoad = function () {
-            self.goToPage(1)
-        }
+            self.goToPage(1);
+        };
 
         self.goToPage = function (page) {
             if (self.fetchState() === 'pending') {
@@ -71,16 +71,17 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                         _.map(data.app_release_logs, function (log) {
                             log.status = log.is_released ? "Released" : "Testing";
                             log.timestamp = new Date(log.timestamp).toLocaleString();
-                            return ko.mapping.fromJS(log)
-                        }))
-                    self.totalItems(data.pagination.total)
+                            return ko.mapping.fromJS(log);
+                        })
+                    );
+                    self.totalItems(data.pagination.total);
                     self.fetchState('');
                 },
                 error: function () {
                     self.fetchState('error');
                 },
             });
-        }
+        };
         self.reverse = function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
@@ -88,15 +89,15 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
         };
 
-        self.showPaginationSpinner = ko.observable()
+        self.showPaginationSpinner = ko.observable();
         return self;
-    }
+    };
 
-    var $releaseLogsTab = $('#release-logs-tab')
-    if($releaseLogsTab.length) {
-        var appReleaseLogModel = appReleaseLogsModel()
+    var $releaseLogsTab = $('#release-logs-tab');
+    if ($releaseLogsTab.length) {
+        var appReleaseLogModel = appReleaseLogsModel();
 
-        $releaseLogsTab.koApplyBindings(appReleaseLogModel)
+        $releaseLogsTab.koApplyBindings(appReleaseLogModel);
     }
 
     $(function () {
