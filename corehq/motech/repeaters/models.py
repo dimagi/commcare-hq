@@ -278,9 +278,12 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     options = JSONField(default=dict)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     objects = RepeaterManager()
     all_objects = models.Manager()
@@ -351,7 +354,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                 raise e
 
     def get_url(self, record):
-        return self.repeater.get_url(record)
+        return self.connection_settings.url
 
     @classmethod
     @property
@@ -363,6 +366,10 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     def repeat_records_ready(self):
         return self.repeat_records.filter(state__in=(RECORD_PENDING_STATE,
                                                      RECORD_FAILURE_STATE))
+
+    @property
+    def name(self):
+        return self.connection_settings.name
 
     @property
     def is_ready(self):
@@ -386,6 +393,13 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
+    def get_attempt_info(self, repeat_record):
+        return None
+
+    @property
+    def verify(self):
+        return not self.connection_settings.skip_cert_verify
+
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
@@ -401,7 +415,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type,
+            'doc_type': self.repeater_type,
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
@@ -421,15 +435,15 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         return True
 
     def pause(self):
-        self.paused = True
+        self.is_paused = True
         self.save()
 
     def resume(self):
-        self.paused = False
+        self.is_paused = False
         self.save()
 
     def retire(self, sync_to_couch=True):
-        self.paused = False
+        self.is_paused = False
         self.is_deleted = True
         self.save(sync_to_couch=False)
         if sync_to_couch:
@@ -476,7 +490,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
-            verify=self.verify,
+            verify=not self.connection_settings.skip_cert_verify,
             notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
             method=self.request_method,
@@ -623,7 +637,7 @@ class SQLFormRepeater(SQLRepeater):
             return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
         headers.update({
             "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
@@ -701,6 +715,8 @@ class SQLCaseRepeater(SQLRepeater):
 class SQLCreateCaseRepeater(SQLCaseRepeater):
     class Meta:
         proxy = True
+
+    friendly_name = _("Forward Cases on Creation Only")
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -1623,6 +1639,17 @@ def get_all_repeater_types():
     ])
 
 
+def get_all_sqlrepeater_types():
+    # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
+    return OrderedDict([
+        (
+            to_function(class_path, failhard=True).__name__,
+            to_function(class_path, failhard=True)._migration_get_sql_model_class()
+        )
+        for class_path in settings.REPEATER_CLASSES
+    ])
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -1706,9 +1733,15 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.get(self.repeater_id)
-        except ResourceNotFound:
+            return SQLRepeater.objects.get(repeater_id=self.repeater_id)
+        except SQLRepeater.DoesNotExist:
             return None
+
+    def is_repeater_deleted(self):
+        try:
+            return SQLRepeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+        except SQLRepeater.DoesNotExist:
+            return True
 
     @property
     def url(self):
