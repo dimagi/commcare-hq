@@ -684,12 +684,12 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
                 "template": "base-user-api-key-template",
             }
 
-    def _to_json(self, api_key, unredacted=False):
-        if unredacted:
-            copy_msg = _("Copy this in a secure place. It will not be shown again.")
-            key = f"{new_api_key.key} ({copy_msg})",
-        else:
+    def _to_json(self, api_key, redacted=True):
+        if redacted:
             key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+        else:
+            copy_msg = _("Copy this in a secure place. It will not be shown again.")
+            key = f"{api_key.key} ({copy_msg})",
         return {
             "id": api_key.id,
             "name": api_key.name,
@@ -720,7 +720,7 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
         except DuplicateApiKeyName:
             return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
         return {
-            'itemData': self._to_json(new_api_key, unredacted=True),
+            'itemData': self._to_json(new_api_key, redacted=False),
             'template': 'new-user-api-key-template',
         }
 
