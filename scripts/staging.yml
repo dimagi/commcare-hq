@@ -58,7 +58,6 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
@@ -83,4 +82,5 @@ branches:
     - akj/abdm-api-for-mobile-app # Akash Sep 28
     - ml/lookup-table-UI # Minha Oct 19
     - em/case-search-checkbox # Evan Oct 27
+    - gh/resolve-remote-link-issue # Graham Nov 9
 submodules: { }
