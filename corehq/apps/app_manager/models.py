@@ -6259,6 +6259,16 @@ class ApplicationReleaseLog(models.Model):
         super(ApplicationReleaseLog, self).save(*args, **kwargs)
         print("Saved App release log")
 
+    def to_json(self):
+        return {
+            "user_email": self.user_email,
+            "timestamp": self.timestamp,
+            "is_released": self.is_released,
+            "version": self.version,
+            "app_id": self.app_id,
+            "user_id": self.user_id
+        }
+
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
 FormBase.get_locale_id = lambda self: id_strings.form_locale(self)

@@ -15,6 +15,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
+from django.core.paginator import Paginator
 
 import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
@@ -659,3 +660,28 @@ def toggle_build_profile(request, domain, build_id, build_profile_id):
                 build.build_profiles[build_profile_id].name
             ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
+
+
+@require_deploy_apps
+def paginate_release_logs(request, domain, app_id):
+    limit = request.GET.get('limit')
+    page = int(request.GET.get('page', 1))
+    page = max(page, 1)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = 10
+
+    app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-timestamp')
+    paginator = Paginator(object_list=app_release_logs, per_page=limit)
+    current_page = paginator.get_page(page)
+
+    return json_response({
+        'app_release_logs': list(current_page),
+        'pagination': {
+            'total': paginator.count,
+            'num_pages': paginator.num_pages,
+            'current_page': page,
+            'more': page * limit < 10,
+        }
+    })
