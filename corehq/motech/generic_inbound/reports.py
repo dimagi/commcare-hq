@@ -21,10 +21,10 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
         return RequestLog.Status.choices
 
 
-class FormIdFilter(BaseSimpleFilter):
-    slug = "form_id"
-    label = gettext_lazy("Form ID")
-    help_inline = gettext_lazy("Enter a form id to filter results")
+class ApiFilter(BaseSimpleFilter):
+    slug = "api_name"
+    label = gettext_lazy("API")
+    help_inline = gettext_lazy("Enter an api name to filter results")
 
 
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
@@ -39,7 +39,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     fields = [
         'corehq.apps.reports.filters.dates.DatespanFilter',
         'corehq.motech.generic_inbound.reports.RequestStatusFilter',
-        'corehq.motech.generic_inbound.reports.FormIdFilter',
+        'corehq.motech.generic_inbound.reports.ApiFilter',
     ]
 
     toggles = [GENERIC_INBOUND_API]
@@ -56,7 +56,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     def shared_pagination_GET_params(self):
         return [
             {'name': param, 'value': self.request.GET.getlist(param)}
-            for param in ['request_status', 'startdate', 'enddate', 'form_id']
+            for param in ['request_status', 'startdate', 'enddate', 'api_name']
         ]
 
     @property
@@ -66,7 +66,6 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("Status")),
             DataTablesColumn(_("Response")),
-            DataTablesColumn(_("Form ID")),
         )
 
     @cached_property
@@ -79,21 +78,18 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         status = self.request.GET.getlist('request_status')
         if status:
             queryset = queryset.filter(status__in=status)
-        input_form_id = self.request.GET.get('form_id')
-        if input_form_id:
-            queryset = queryset.filter(processingattempt__xform_id=input_form_id)
+        api_name = self.request.GET.get('api_name')
+        if api_name:
+            queryset = queryset.filter(api__name__contains=api_name)
         return queryset
 
     @property
     def rows(self):
         status_labels = dict(RequestLog.Status.choices)
         for log in self._queryset[self.pagination.start:self.pagination.end]:
-            processing_attempt = log.processingattempt_set.get(log=log.id)
-            xform_id = processing_attempt.xform_id
             yield [
                 log.api.name,
                 log.timestamp,
                 status_labels[log.status],
                 log.response_status,
-                xform_id,
             ]
