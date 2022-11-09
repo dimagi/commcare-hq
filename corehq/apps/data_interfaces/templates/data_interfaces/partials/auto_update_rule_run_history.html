@@ -6,6 +6,11 @@
 
   <div class="panel panel-default">
     <div class="panel-body">
+      <search-box data-apply-bindings="false"
+          params="value: caseTypeQuery,
+                  action: filter,
+                  immediate: true,
+                  placeholder: '{% trans_html_attr "Search Rule Runs By Case Type..." %}'"></search-box>
       <table class="table table-striped table-hover">
         <thead>
         <tr>
