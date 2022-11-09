@@ -6248,6 +6248,7 @@ class LatestEnabledBuildProfiles(models.Model):
 
 
 class ApplicationReleaseLog(models.Model):
+    domain = models.CharField(max_length=255, null=False)
     user_email = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_released = models.BooleanField()

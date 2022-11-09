@@ -279,6 +279,7 @@ def release_build(request, domain, app_id, saved_app_id):
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
     app_release_log = ApplicationReleaseLog()
+    app_release_log.domain = domain
     app_release_log.user_email = request.couch_user.get_email()
     app_release_log.is_released = is_released
     app_release_log.version = saved_app.version
