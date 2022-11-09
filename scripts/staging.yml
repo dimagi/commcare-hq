@@ -70,7 +70,6 @@ branches:
     #- jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
     - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
     - cs/sc-2369/shadow_module_fix # Chris Oct 31
