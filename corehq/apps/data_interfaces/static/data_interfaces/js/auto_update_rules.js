@@ -4,7 +4,7 @@ hqDefine("data_interfaces/js/auto_update_rules", [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'analytix/js/google',
-    'hqwebapp/js/components.ko', // for pagination
+    'hqwebapp/js/components.ko', // for pagination and search box
 ], function (
     $,
     ko,
@@ -98,10 +98,51 @@ hqDefine("data_interfaces/js/auto_update_rules", [
         return self;
     };
 
+    var RuleRunHistoryViewModel = function (ruleRuns) {
+        var self = {};
+        self.ruleRuns = ko.mapping.fromJS(ruleRuns);
+        self.paginatedRuleRuns = ko.observableArray([]);
+
+        // search box
+        self.caseTypeQuery = ko.observable();
+        self.filteredRuleRuns = ko.observableArray([]);
+        self.matchesQuery = function (ruleRun) {
+            return !self.caseTypeQuery() || ruleRun.case_type().toLowerCase().indexOf(self.caseTypeQuery().toLowerCase()) !== -1;
+        };
+        self.filter = function () {
+            self.filteredRuleRuns(_.filter(self.ruleRuns(), self.matchesQuery));
+            self.goToPage(1);
+        };
+
+        // pagination
+        self.itemsPerPage = ko.observable(25);
+        self.totalItems = ko.computed(function () {
+            return self.caseTypeQuery() ? self.filteredRuleRuns().length : self.ruleRuns().length;
+        });
+        self.currentPage = 1;
+
+        self.goToPage = function (page) {
+            self.currentPage = page;
+            self.paginatedRuleRuns.removeAll();
+            var skip = (self.currentPage - 1) * self.itemsPerPage();
+            var visibleRuleRuns = self.caseTypeQuery() ? self.filteredRuleRuns() : self.ruleRuns();
+            self.paginatedRuleRuns(visibleRuleRuns.slice(skip, skip + self.itemsPerPage()));
+        };
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+        return self;
+    };
+
     $(function () {
         var rules = initialPageData.get('rules');
-        var viewModel = RuleListViewModel(rules);
-        $("#ko-auto-update-rules").koApplyBindings(viewModel);
+        var ruleListViewModel = RuleListViewModel(rules);
+        $("#ko-tabs-update-rules").koApplyBindings(ruleListViewModel);
+
+        var ruleRuns = initialPageData.get('rule_runs');
+        var ruleRunHistoryViewModel = RuleRunHistoryViewModel(ruleRuns);
+        $("#ko-tabs-rule-run-history").koApplyBindings(ruleRunHistoryViewModel);
 
         $("#add-new").click(function () {
             googleAnalytics.track.event('Automatic Case Closure', 'Rules', 'Set Rule');
