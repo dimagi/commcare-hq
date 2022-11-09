@@ -1496,7 +1496,11 @@ def report_config_id_is_static(config_id):
     )
 
 
-def is_data_registry_report(report_config, datasource):
+def is_data_registry_report(report_config, datasource=None):
+    """
+    The optional datasource parameter is useful when checking a report config fetched from a remote server
+    """
+    datasource = datasource or report_config.config
     return isinstance(report_config, RegistryReportConfiguration) or datasource.meta.build.registry_slug
 
 
