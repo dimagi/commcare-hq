@@ -63,7 +63,7 @@ def create_linked_ucr(domain_link, report_config_id):
             raise DataSourceConfigurationNotFoundError(_(
                 'The data source referenced by this report could not be found.'
             ))
-    if is_data_registry_report(report_config):
+    if is_data_registry_report(report_config, datasource):
         try:
             DataRegistry.objects.accessible_to_domain(domain_link.linked_domain, slug=report_config.registry_slug)
         except DataRegistry.DoesNotExist:
