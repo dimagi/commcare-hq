@@ -6255,10 +6255,6 @@ class ApplicationReleaseLog(models.Model):
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
 
-    def save(self, *args, **kwargs):
-        super(ApplicationReleaseLog, self).save(*args, **kwargs)
-        print("Saved App release log")
-
     def to_json(self):
         return {
             "user_email": self.user_email,

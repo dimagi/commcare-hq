@@ -3,101 +3,40 @@
 
 <div class="panel panel-appmanager">
   <div class="panel-body">
-    <table class="table table-profiles">
+    <table id="release-logs-table" class="table table-profiles" >
       <thead>
-      <tr class="row form-group">
-        <th>{% trans "Version Number" %}</th>
-        <th>{% trans "Update Type" %}</th>
-        <th>{% trans "Time" %}</th>
-        <th>{% trans "User" %}</th>
-      </tr>
+        <tr class="row form-group">
+          <th>{% trans "Version Number" %}</th>
+          <th>{% trans "Update Type" %}</th>
+          <th>{% trans "Time" %}</th>
+          <th>{% trans "User" %}</th>
+        </tr>
       </thead>
-      <tbody>
-      <tr class="row" style="height:20px;">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
-      <tr class="row">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
-      <tr class="row">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
-      <tr class="row">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
-      <tr class="row">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
-      <tr class="row">
-        <td class="col-sm-3">
-          213
-        </td>
-        <td class="col-sm-3">
-          Released
-        </td>
-        <td class="col-sm-3">
-          Aug 18 1999
-        </td>
-        <td class="col-sm-3">
-          pverma@dimagi.com
-        </td>
-      </tr>
+      <tbody data-bind="foreach: releaseLogs">
+        <tr class="row">
+          <td class="col-sm-3">
+            <span data-bind="text: version"></span>
+          </td>
+          <td class="col-sm-3">
+            <span data-bind="text: status"></span>
+          </td>
+          <td class="col-sm-3">
+            <span data-bind="text: timestamp"></span>
+          </td>
+          <td class="col-sm-3">
+            <span data-bind="text: user_email"></span>
+          </td>
+        </tr>
       </tbody>
     </table>
+
+    <pagination data-apply-bindings="false"
+                params="goToPage: goToPage,
+                        perPage: fetchLimit,
+                        slug: 'release-logs-table',
+                        totalItems: totalItems,
+                        onLoad: onPaginationLoad,
+                        showSpinner: showPaginationSpinner"></pagination>
+
   </div>
 </div>
