@@ -2371,3 +2371,18 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
 )
+
+RESTORE_ADD_ABDM_TOKEN = StaticToggle(
+    'restore_add_abdm_token',
+    'Add ABDM API token to restore data',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='Adds ABDM API access token to the restore data of the mobile user.',
+)
+
+COMBINE_LOOKUP_TABLES = StaticToggle(
+    'combine_lookup_tables',
+    "Combines lookup table exports into one master sheet",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
