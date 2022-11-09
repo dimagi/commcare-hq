@@ -351,11 +351,11 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
 
     def send_request(self, repeat_record, payload):
         value_source_configs: Iterable[JsonDict] = chain(
-            self.openmrs_config.case_config.patient_identifiers.values(),
-            self.openmrs_config.case_config.person_properties.values(),
-            self.openmrs_config.case_config.person_preferred_name.values(),
-            self.openmrs_config.case_config.person_preferred_address.values(),
-            self.openmrs_config.case_config.person_attributes.values(),
+            self.openmrs_config['case_config']['patient_identifiers'].values(),
+            self.openmrs_config['case_config']['person_properties'].values(),
+            self.openmrs_config['case_config']['person_preferred_name'].values(),
+            self.openmrs_config['case_config']['person_preferred_address'].values(),
+            self.openmrs_config['case_config']['person_attributes'].values(),
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
@@ -476,7 +476,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(OpenmrsRepeater, xform)
+    create_repeat_records(SQLOpenmrsRepeater, xform)
 
 
 successful_form_received.connect(create_openmrs_repeat_records)

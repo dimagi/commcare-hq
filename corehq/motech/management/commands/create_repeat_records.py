@@ -8,7 +8,7 @@ from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.management.commands.find_missing_repeat_records import (
     get_repeaters_for_type_in_domain,
 )
-from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
+from corehq.motech.repeaters.models import SQLRepeater, get_all_repeater_types, get_all_sqlrepeater_types
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 
@@ -40,9 +40,9 @@ class Command(BaseCommand):
             repeater_name_re = re.compile(options['repeater_name'])
 
         if repeater_id:
-            repeater = Repeater.get(repeater_id)
-            if repeater_type and repeater_type != repeater.doc_type:
-                raise CommandError(f"Repeater type does not match: {repeater_type} != {repeater.doc_type}")
+            repeater = SQLRepeater.objects.get(repeater_id=repeater_id)
+            if repeater_type and repeater_type != repeater.repeater_type:
+                raise CommandError(f"Repeater type does not match: {repeater_type} != {repeater.repeater_type}")
             if repeater_name_re and not repeater_name_re.match(repeater.name):
                 raise CommandError(f"Repeater name does not match: {repeater.name}")
 
@@ -54,8 +54,8 @@ class Command(BaseCommand):
 
             def _get_repeaters(doc):
                 if doc.domain not in by_domain:
-                    repeater_class = get_all_repeater_types()[repeater_type] if repeater_type else None
-                    repeaters = get_repeaters_for_type_in_domain(doc.domain, repeater_class)
+                    repeater_class = get_all_sqlrepeater_types()[repeater_type] if repeater_type else None
+                    repeaters = get_repeaters_for_type_in_domain(doc.domain, [repeater_class._repeater_type])
                     if repeater_name_re:
                         repeaters = [r for r in repeaters if repeater_name_re.match(r.name)]
 
