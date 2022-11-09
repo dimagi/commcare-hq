@@ -9,7 +9,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.toggles import GENERIC_INBOUND_API
 
-from .models import RequestLog, ProcessingAttempt
+from .models import RequestLog
 
 
 class RequestStatusFilter(BaseMultipleOptionFilter):
