@@ -103,6 +103,7 @@ from corehq.apps.domain.models import (
     RESTRICTED_UCR_EXPRESSIONS,
     SUB_AREA_CHOICES,
     AllowedUCRExpressionSettings,
+    AppReleaseModeSetting,
     OperatorCallLimitSettings,
     SMSAccountConfirmationSettings,
     TransferDomainRequest,
@@ -420,6 +421,12 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=gettext_lazy("Name of the project to be used in SMS sent for account confirmation to users.")
     )
 
+    release_mode_visibility = BooleanField(
+        label=gettext_lazy("Enable Release Mode"),
+        required=False,
+        help_text=gettext_lazy("Check this box to enable release mode in the app settings.")
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -428,6 +435,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper = hqcrispy.HQFormHelper(self)
         self.helper[5] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[6] = twbscrispy.PrependedText('call_center_enabled', '')
+        self.helper[14] = twbscrispy.PrependedText('release_mode_visibility', '')
         self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
@@ -462,6 +470,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
+        self._handle_release_mode_setting_visibility()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -490,6 +499,13 @@ class DomainGlobalSettingsForm(forms.Form):
             OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
         )
 
+    def _handle_release_mode_setting_visibility(self):
+        release_mode_setting = AppReleaseModeSetting.get_settings(domain=self.domain)
+        if release_mode_setting.is_visible is True:
+            del self.fields['release_mode_visibility']
+            return
+        self.fields['release_mode_visibility'].initial = release_mode_setting.is_visible
+
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
         min_validator = MinValueValidator(min_value)
@@ -515,6 +531,12 @@ class DomainGlobalSettingsForm(forms.Form):
     def clean_operator_call_limit(self):
         data = self.cleaned_data['operator_call_limit']
         return DomainGlobalSettingsForm.validate_integer_value(data, "Operator call limit")
+
+    def clean_release_mode_visibility(self):
+        data = self.cleaned_data['release_mode_visibility']
+        if data not in [True, False]:
+            raise forms.ValidationError(_("Release Mode Visibility should be a boolean."))
+        return data
 
     @staticmethod
     def validate_integer_value(value, value_name):
@@ -596,6 +618,14 @@ class DomainGlobalSettingsForm(forms.Form):
             settings.confirmation_link_expiry_time = self.cleaned_data.get('confirmation_link_expiry')
             settings.save()
 
+    def _save_release_mode_setting(self, domain):
+        if self.cleaned_data.get("release_mode_visibility"):
+            setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
+            setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
+            print(f"000000 {self.cleaned_data.get('release_mode_visibility')}")
+            setattr(setting_obj, "release_mode_visibility", self.cleaned_data.get("release_mode_visibility"))
+            setting_obj.save()
+
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
@@ -612,6 +642,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
         self._save_account_confirmation_settings(domain)
+        self._save_release_mode_setting(domain)
         domain.save()
         return True
 
