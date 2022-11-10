@@ -567,7 +567,7 @@ def _prepare_fixture_collated(table_ids, domain, task=None):
                         extra_props = max_field_prop_combos[field_name] - len(item_row.fields[field_name])
                         if extra_props > 0:
                             field_prop_vals.extend(
-                                empty_padding_list(extra_props * (max_field_prop_combos[field_name]) + 1))
+                                empty_padding_list(extra_props * len(field_properties[field_name]) + 1))
                     else:
                         field_prop_vals.extend(empty_padding_list((len(field_properties[field_name]) + 1)
                                                * max_field_prop_combos[field_name]))

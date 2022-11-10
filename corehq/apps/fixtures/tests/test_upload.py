@@ -248,6 +248,16 @@ validation_test_cases = [
             ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: property 1'),
             ('N', 'things', 'yes', 'name', 'lang')
         ]
+    }),
+    ("sheets_have_been_combined", [
+        "Cannot upload a lookup table created using the Combine Sheets feature."
+    ], {
+        'things': [('UID', 'Delete(Y/N)', 'field: name'), (None, 'N', 'apple')],
+        'types': [
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1'),
+            ('N', 'things', 'yes', 'name'),
+            ('N', 'combined_sheet_via_feature_flag', 'no')
+        ]
     })
 ]
 
