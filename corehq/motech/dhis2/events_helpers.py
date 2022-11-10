@@ -48,13 +48,13 @@ def get_event(domain, config, form_json=None, info=None):
 
 
 def _get_program(config, case_trigger_info):
-    return {'program': config.program_id}
+    return {'program': config['program_id']}
 
 
 def _get_program_stage(config, case_trigger_info):
     program_stage_id = None
-    if config.program_stage_id:
-        program_stage_id = get_value(config.program_stage_id, case_trigger_info)
+    if config['program_stage_id']:
+        program_stage_id = get_value(config['program_stage_id'], case_trigger_info)
     if program_stage_id:
         return {'programStage': program_stage_id}
     return {}
@@ -62,27 +62,27 @@ def _get_program_stage(config, case_trigger_info):
 
 def _get_org_unit(config, case_trigger_info):
     org_unit_id = None
-    if config.org_unit_id:
-        org_unit_id = get_value(config.org_unit_id, case_trigger_info)
+    if config['org_unit_id']:
+        org_unit_id = get_value(config['org_unit_id'], case_trigger_info)
     if org_unit_id:
         return {'orgUnit': org_unit_id}
     return {}
 
 
 def _get_event_date(config, case_trigger_info):
-    event_date = get_value(config.event_date, case_trigger_info)
+    event_date = get_value(config['event_date'], case_trigger_info)
     return {'eventDate': event_date}
 
 
 def _get_event_status(config, case_trigger_info):
-    event_status = get_value(config.event_status, case_trigger_info)
+    event_status = get_value(config['event_status'], case_trigger_info)
     return {'status': event_status}
 
 
 def _get_completed_date(config, case_trigger_info):
     completed_date = None
-    if config.completed_date:
-        completed_date = get_value(config.completed_date, case_trigger_info)
+    if config['completed_date']:
+        completed_date = get_value(config['completed_date'], case_trigger_info)
     if completed_date:
         return {'completedDate': completed_date}
     return {}
@@ -90,19 +90,19 @@ def _get_completed_date(config, case_trigger_info):
 
 def _get_datavalues(config, case_trigger_info):
     values = []
-    for data_value in config.datavalue_maps:
-        value = get_value(data_value.value, case_trigger_info)
+    for data_value in config['datavalue_maps']:
+        value = get_value(data_value['value'], case_trigger_info)
         if value is not None:
             values.append({
-                'dataElement': data_value.data_element_id,
+                'dataElement': data_value['data_element_id'],
                 'value': value
             })
     return {'dataValues': values}
 
 
 def _get_coordinate(config, case_trigger_info):
-    if config.event_location:
-        location_string = get_value(config.event_location, case_trigger_info)
+    if config['event_location']:
+        location_string = get_value(config['event_location'], case_trigger_info)
 
         if location_string:
             (lat, lon) = _dhis2_geolocation(location_string)
