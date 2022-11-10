@@ -76,7 +76,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m0_case_short"
-                                  detail-confirm="m0_case_long"/>
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -88,6 +89,71 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
             suite,
             "./remote-request",
+        )
+
+    def test_multi_select_case_list_auto_select_true(self):
+        self.module.case_details.short.auto_select = True
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="selected_cases"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"
+                                  autoselect="true"
+                                  max-select-value="100"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
+        )
+        self.assertXmlPartialEqual(
+            self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
+            suite,
+            "./remote-request",
+        )
+
+    def test_multi_select_case_list_modified_max_select_value(self):
+        self.module.case_details.short.max_select_value = 15
+        print(self.module.case_details.short)
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="selected_cases"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="15"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
         )
 
     def test_session_schema(self):
@@ -206,7 +272,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -269,7 +336,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
