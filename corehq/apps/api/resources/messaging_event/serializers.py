@@ -10,7 +10,7 @@ def serialize_event(event):
         "id": event.id,
         "content_type": MessagingEvent.CONTENT_TYPE_SLUGS.get(event.content_type, "unknown"),
         "date": event.date.isoformat(),
-        "date_last_activity": event.date_last_activity_computed.isoformat(),
+        "date_last_activity": event.date_last_activity.isoformat(),
         "case_id": event.case_id,
         "domain": event.parent.domain,
         "error": _serialize_event_error(event),
