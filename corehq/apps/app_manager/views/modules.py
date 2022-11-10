@@ -911,13 +911,14 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
-        'auto_select',
         'print_template',
         'search_properties',
         'search_default_properties',
         'search_claim_options',
     }
     short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
+    if 'multi_select' in short_attrs:
+        short_attrs.update({'auto_select', 'max_select_value'})
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
@@ -974,6 +975,8 @@ def _update_module_short_detail(src_module, dest_module, attrs):
     if src_module.module_type == "shadow":
         if 'multi_select' in attrs:
             src_detail.multi_select = src_module.is_multi_select()
+            src_detail.auto_select = src_module.is_auto_select()
+            src_detail.max_select_value = src_module.max_select_value
 
     if attrs:
         dest_detail = getattr(dest_module.case_details, "short")
