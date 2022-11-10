@@ -6,16 +6,20 @@ from django.urls import reverse
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
+from corehq.apps.userreports.const import (
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
+)
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
+    ConfigurableApiValidation,
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.util.test_utils import privilege_enabled, flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @privilege_enabled(privileges.API_ACCESS)
@@ -33,11 +37,21 @@ class TestGenericInboundAPIView(TestCase):
 
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=cls.user.get_django_user())
 
-    def _make_api(self, property_expressions):
-        return ConfigurableAPI.objects.create(
+    def _make_api(self, property_expressions, filter_expression=None, validation_expression=None):
+        api = ConfigurableAPI.objects.create(
             domain=self.domain_name,
+            filter_expression=self._make_filter(filter_expression),
             transform_expression=self._make_expression(property_expressions)
         )
+
+        if validation_expression:
+            ConfigurableApiValidation.objects.create(
+                api=api,
+                name="test validation",
+                expression=self._make_filter(validation_expression),
+                message="Invalid request"
+            )
+        return api
 
     def _make_expression(self, property_expressions):
         return UCRExpression.objects.create(
@@ -45,6 +59,16 @@ class TestGenericInboundAPIView(TestCase):
             domain=self.domain_name,
             expression_type=UCR_NAMED_EXPRESSION,
             definition=self._get_ucr_case_expression(property_expressions)
+        )
+
+    def _make_filter(self, filter_expression):
+        if not filter_expression:
+            return
+        return UCRExpression.objects.create(
+            name='api_filter',
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_FILTER,
+            definition=filter_expression
         )
 
     def _get_ucr_case_expression(self, property_expressions):
@@ -109,22 +133,31 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(response_json['cases'][0]['properties']['prop_from_query'], 'value')
 
     def _test_generic_api(self, properties_expression, query_params=None):
-        generic_api = self._make_api(properties_expression)
+        response = self._call_api(properties_expression, query_params)
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertItemsEqual(response_json.keys(), ['cases', 'form_id'])
+        self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
+        return response_json
+
+    def _call_api(
+        self,
+        properties_expression,
+        query_params=None,
+        filter_expression=None,
+        validation_expression=None
+    ):
+        generic_api = self._make_api(properties_expression, filter_expression, validation_expression)
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         if query_params:
             url = f"{url}?{urlencode(query_params)}"
-
         data = json.dumps(self.example_post_data)
         response = self.client.post(
             url, data=data, content_type="application/json",
             HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
             HTTP_USER_AGENT="user agent string",
         )
-        self.assertEqual(response.status_code, 200, response.content)
-        response_json = response.json()
-        self.assertItemsEqual(response_json.keys(), ['cases', 'form_id'])
-        self.assertEqual(response_json['cases'][0]['owner_id'], self.user.get_id)
-        return response_json
+        return response
 
     def test_logging(self):
         query_params = {"param": "value"}
@@ -158,3 +191,59 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(attempt.raw_response, response_json)
         self.assertEqual(attempt.xform_id, response_json.get('form_id'))
         self.assertEqual(attempt.case_ids, [response_json.get('cases')[0]['case_id']])
+
+    def test_logging_filtered_request(self):
+        query_params = {"is_test": "1"}
+        properties_expression = {'prop': 'const'}
+        filter_expression = {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "request.query.is_test"
+            },
+            "property_value": None
+        }
+        response = self._call_api(properties_expression, query_params, filter_expression)
+
+        self.assertEqual(response.status_code, 204, response.content)
+        self.assertEqual(response.content, b'')
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.domain, self.domain_name)
+        self.assertEqual(log.status, RequestLog.Status.FILTERED)
+        self.assertEqual(log.attempts, 1)
+        self.assertEqual(log.response_status, 204)
+        self.assertEqual(log.error_message, '')
+
+        attempt = ProcessingAttempt.objects.last()
+        self.assertEqual(attempt.is_retry, False)
+        self.assertEqual(attempt.response_status, 204)
+
+    def test_logging_validated_request(self):
+        properties_expression = {'prop': 'const'}
+        validation_expression = {
+            "type": "boolean_expression",
+            "operator": "in",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "body.name"
+            },
+            "property_value": ["tennis", "hockey"]
+        }
+        response = self._call_api(properties_expression, validation_expression=validation_expression)
+
+        self.assertEqual(response.status_code, 400, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json['error'], 'validation error')
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.domain, self.domain_name)
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        self.assertEqual(log.attempts, 1)
+        self.assertEqual(log.response_status, 400)
+        self.assertEqual(log.error_message, '{"error": "validation error", "errors": ["Invalid request"]}')
+
+        attempt = ProcessingAttempt.objects.last()
+        self.assertEqual(attempt.is_retry, False)
+        self.assertEqual(attempt.response_status, 400)

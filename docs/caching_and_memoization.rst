@@ -1,7 +1,7 @@
 Caching and Memoization
 =======================
 
-There are two primary ways of caching in CommCareHQ - using the decorators
+There are two primary ways of caching in CommCare HQ - using the decorators
 ``@quickcache`` and ``@memoized``. At their core, these both do the same sort of
 thing - they store the results of function, like this simplified version:
 

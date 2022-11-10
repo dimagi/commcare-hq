@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass, field
 
-from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
+from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.hqcase.api.core import UserError, serialize_es_case
 from corehq.apps.hqcase.api.get_list import MAX_PAGE_SIZE
 
@@ -46,7 +46,7 @@ def get_bulk(domain, case_ids=None, external_ids=None):
 
 
 def _get_cases_by_id(domain, case_ids):
-    es_results = ElasticCaseSearch().get_docs(case_ids)
+    es_results = case_search_adapter.get_docs(case_ids)
     return _prepare_result(
         domain, es_results, case_ids,
         es_id_field='_id', serialized_id_field='case_id'
