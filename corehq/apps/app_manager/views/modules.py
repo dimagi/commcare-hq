@@ -974,6 +974,8 @@ def _update_module_short_detail(src_module, dest_module, attrs):
     if src_module.module_type == "shadow":
         if 'multi_select' in attrs:
             src_detail.multi_select = src_module.is_multi_select()
+            src_detail.auto_select = src_module.is_auto_select()
+            src_detail.max_select_value = src_module.max_select_value
 
     if attrs:
         dest_detail = getattr(dest_module.case_details, "short")
