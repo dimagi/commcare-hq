@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import AppStructureRepeater
+from corehq.motech.repeaters.models import SQLAppStructureRepeater
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -75,7 +75,7 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
             )
             self.assertEqual(response.status_code, 200)
 
-            app_structure_repeaters = AppStructureRepeater.by_domain(self.domain.name)
+            app_structure_repeaters = SQLAppStructureRepeater.objects.by_domain(self.domain.name)
             self.assertEqual(len(app_structure_repeaters), 1)
 
             for app_structure_repeater in app_structure_repeaters:
