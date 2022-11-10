@@ -18,7 +18,8 @@
             <span data-bind="text: version"></span>
           </td>
           <td class="col-sm-3">
-            <span data-bind="text: status"></span>
+            <span data-bind="visible: is_released()">{% trans "Released" %}</span>
+            <span data-bind="visible: !is_released()">{% trans "In Test" %}</span>
           </td>
           <td class="col-sm-3">
             <span data-bind="text: timestamp"></span>

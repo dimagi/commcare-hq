@@ -677,8 +677,11 @@ def paginate_release_logs(request, domain, app_id):
     paginator = Paginator(object_list=app_release_logs, per_page=limit)
     current_page = paginator.get_page(page)
 
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    transformed_logs = list(log.localize_timestamp(timezone) for log in current_page)
+
     return json_response({
-        'app_release_logs': list(current_page),
+        'app_release_logs': transformed_logs,
         'pagination': {
             'total': paginator.count,
             'num_pages': paginator.num_pages,

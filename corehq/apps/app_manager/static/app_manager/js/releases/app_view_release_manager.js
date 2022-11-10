@@ -60,7 +60,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             }
             self.fetchState('pending');
             $.ajax({
-                url: self.reverse("paginate_release_logs"),
+                url: self.getApiEndpoint("paginate_release_logs"),
                 dataType: 'json',
                 data: {
                     page: page,
@@ -69,8 +69,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                 success: function (data) {
                     self.releaseLogs(
                         _.map(data.app_release_logs, function (log) {
-                            log.status = log.is_released ? "Released" : "Testing";
-                            log.timestamp = new Date(log.timestamp).toLocaleString();
                             return ko.mapping.fromJS(log);
                         })
                     );
@@ -82,7 +80,8 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                 },
             });
         };
-        self.reverse = function () {
+
+        self.getApiEndpoint = function () {
             for (var i = 1; i < arguments.length; i++) {
                 arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }

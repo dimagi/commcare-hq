@@ -6256,6 +6256,13 @@ class ApplicationReleaseLog(models.Model):
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
 
+    def localize_timestamp(self, timezone):
+        timestamp = ServerTime(self.timestamp).user_time(timezone)
+        timestamp_date = timestamp.ui_string(USER_DATE_FORMAT)
+        timestamp_time = timestamp.ui_string(USER_TIME_FORMAT)
+        self.timestamp = "{} {}".format(timestamp_date, timestamp_time)
+        return self
+
     def to_json(self):
         return {
             "user_email": self.user_email,
