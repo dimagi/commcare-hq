@@ -25,7 +25,7 @@ hqDefine("settings/js/user_api_keys", [
             }
         );
 
-        updateApiKey = function (action, apiKeyId) {
+        var updateApiKey = function (action, apiKeyId) {
             $.ajax({
                 url: "",
                 type: "POST",
@@ -37,7 +37,7 @@ hqDefine("settings/js/user_api_keys", [
                 statusCode: self.handleStatusCode,
                 success: function (data) {
                     var apiKey = _.find(self.paginatedList(), function (item) {
-                        return item.itemId == apiKeyId;
+                        return item.itemId === apiKeyId;
                     });
                     apiKey.itemData(data.itemData);
                 },
