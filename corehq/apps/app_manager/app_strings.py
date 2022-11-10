@@ -347,6 +347,11 @@ def _create_case_search_app_strings(
             if app.enable_case_search_title_translation:
                 yield id_strings.case_search_title_translation(module), title_label
 
+            yield (
+                id_strings.case_search_description_locale(module),
+                clean_trans(module.search_config.description_text, langs)
+            )
+
             # search again label
             yield (
                 id_strings.case_search_again_locale(module),
@@ -370,6 +375,10 @@ def _create_case_search_app_strings(
             yield(
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
+            )
+            yield(
+                id_strings.case_search_description_locale(module),
+                clean_trans(CaseSearch.description_text.default(), langs)
             )
             yield (
                 id_strings.case_search_locale(module),
