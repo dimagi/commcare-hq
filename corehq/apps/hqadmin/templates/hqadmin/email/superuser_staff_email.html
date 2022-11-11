@@ -7,6 +7,7 @@
       <td><u>Users</u></td>
       <td><u>is Staff</u></td>
       <td><u>is Superuser</u></td>
+      <td><u>can assign Superuser</u></td>
     </tr>
     {% for user_change in user_changes %}
       <tr>
@@ -20,6 +21,12 @@
           <td><s>{{ user_change.is_superuser|yesno:"False,True" }}</s> → <b>{{ user_change.is_superuser }}</b></td>
         {% elif 'same_superuser' in user_change %}
           <td>{{ user_change.same_superuser }}</td>
+        {% endif %}
+        {% if 'can_assign_superuser' in user_change %}
+          <td><s>{{ user_change.can_assign_superuser|yesno:"False,True" }}</s> →
+            <b>{{ user_change.can_assign_superuser }}</b></td>
+        {% elif 'same_management_privilege' in user_change %}
+          <td>{{ user_change.same_management_privilege }}</td>
         {% endif %}
       </tr>
     {% endfor %}

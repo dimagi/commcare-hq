@@ -87,12 +87,15 @@ def _try_date_conversion(date_or_string):
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
-
     # Used when the rule spawns schedule instances in the scheduling framework
     WORKFLOW_SCHEDULING = 'SCHEDULING'
-
     # Used when the rule runs a deduplication workflow to find duplicate cases
     WORKFLOW_DEDUPLICATE = 'DEDUPLICATE'
+    WORKFLOW_CHOICES = (
+        (WORKFLOW_CASE_UPDATE, gettext_lazy('Case Update')),
+        (WORKFLOW_DEDUPLICATE, gettext_lazy('Deduplicate')),
+        (WORKFLOW_SCHEDULING, gettext_lazy('Scheduling')),
+    )
 
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
@@ -101,6 +104,7 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
+    workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
 
     class CriteriaOperator(models.TextChoices):
         ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
@@ -117,10 +121,6 @@ class AutomaticUpdateRule(models.Model):
     # number of days old that a case's server_modified_on date must be
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
-
-    # One of the WORKFLOW_* constants on this class describing the workflow
-    # that this rule belongs to.
-    workflow = models.CharField(max_length=126)
 
     upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
@@ -1594,12 +1594,19 @@ class DomainCaseRuleRun(models.Model):
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
     STATUS_HAD_ERRORS = 'E'
+    STATUS_CHOICES = (
+        (STATUS_RUNNING, gettext_lazy("Running")),
+        (STATUS_FINISHED, gettext_lazy("Finished")),
+        (STATUS_HALTED, gettext_lazy("Stopped")),
+        (STATUS_HAD_ERRORS, gettext_lazy("Error")),
+    )
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
-    status = models.CharField(max_length=1)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+    workflow = models.CharField(max_length=126, choices=AutomaticUpdateRule.WORKFLOW_CHOICES, null=True)
 
     cases_checked = models.IntegerField(default=0)
     num_updates = models.IntegerField(default=0)

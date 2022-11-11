@@ -23,10 +23,9 @@ from django_prbac.utils import has_privilege
 from dimagi.utils.web import json_handler
 
 from corehq import privileges
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
-from corehq.util.soft_assert import soft_assert
 
 register = template.Library()
 
@@ -39,11 +38,9 @@ def JSON(obj):
     try:
         return escape_script_tags(json.dumps(obj, default=json_handler))
     except TypeError as e:
-        msg = ("Unserializable data was sent to the `|JSON` template tag.  "
-               "If DEBUG is off, Django will silently swallow this error.  "
+        msg = ("Unserializable data was sent to a template tag that expectes JSON. "
                "{}".format(str(e)))
-        soft_assert(notify_admins=True)(False, msg)
-        raise e
+        raise TemplateTagJSONException(msg)
 
 
 def escape_script_tags(unsafe_str):
@@ -393,20 +390,14 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert(request, dismissable=True):
-    alert = MaintenanceAlert.get_latest_alert()
-    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
-        return format_html(
-            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
-            ' hide' if dismissable else '',
-            alert.id,
-            mark_safe(  # nosec: no user input
-                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
-            ) if dismissable else '',
-            alert.html
-        )
-    else:
-        return ''
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    domain = getattr(request, 'domain', None)
+    return [
+        alert for alert in active_alerts
+        if (not alert.domains
+            or domain in alert.domains)
+    ]
 
 
 @register.simple_tag
@@ -595,10 +586,19 @@ def _create_page_data(parser, token, node_slug):
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
+        # must mock token or error handling code will fail and not reveal real error
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
+
         def render(self, context):
             resolved = value.resolve(context)
+            try:
+                resolved_json = html_attr(resolved)
+            except TemplateTagJSONException as e:
+                msg = ("Error in initial page data key '{}'. "
+                       "{}".format(name, str(e)))
+                raise TemplateTagJSONException(msg)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, html_attr(resolved)))
+                    .format(name, resolved_json))
 
     nodelist = NodeList([FakeNode()])
 

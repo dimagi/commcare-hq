@@ -43,17 +43,14 @@ class MaintenanceAlert(models.Model):
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
 
     def save(self, *args, **kwargs):
-        MaintenanceAlert.get_latest_alert.clear(MaintenanceAlert)
+        MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
     @quickcache([], timeout=60 * 60)
-    def get_latest_alert(cls):
+    def get_active_alerts(cls):
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
-        if active_alerts:
-            return active_alerts[0]
-        else:
-            return ''
+        return active_alerts
 
 
 class UserAgent(models.Model):

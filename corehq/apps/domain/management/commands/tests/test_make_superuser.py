@@ -37,4 +37,5 @@ def get_fake_superuser(username):
     # set these to True so Command.handle() doesn't call couch_user.save()
     fake_user.is_superuser = True
     fake_user.is_staff = True
+    fake_user.can_assign_superuser = True
     return fake_user

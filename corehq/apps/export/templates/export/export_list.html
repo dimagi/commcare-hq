@@ -6,6 +6,10 @@
 
 {% requirejs_main 'export/js/export_list_main' %}
 
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
 {% block page_content %}
   {% initial_page_data 'bulk_download_url' bulk_download_url %}
   {% initial_page_data 'exports' exports %}

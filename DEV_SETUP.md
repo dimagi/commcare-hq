@@ -612,6 +612,8 @@ To be able to use CommCare, you'll want to create a superuser, which you can do 
 
 This can also be used to promote a user created by signing up to a superuser.
 
+Note that promoting a user to superuser status using this command will also give them the
+ability to assign other users as superuser in the in-app Superuser Management page.
 
 ### Step 11: Running CommCare HQ
 

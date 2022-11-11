@@ -20,12 +20,16 @@ describe('Utils', function () {
         it('should retrieve saved display options', function () {
             let options = { option: 'yes' };
             Utils.saveDisplayOptions(options);
-            assert.deepEqual(Utils.getSavedDisplayOptions(), options);
+            $.when(Utils.getSavedDisplayOptions(), function (response) {
+                assert.deepEqual(response, options);
+            });
         });
 
         it('should not fail on bad json saved', function () {
             localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-            assert.deepEqual(Utils.getSavedDisplayOptions(), {});
+            $.when(Utils.getSavedDisplayOptions(), function (response) {
+                assert.deepEqual(response, {});
+            });
         });
 
     });

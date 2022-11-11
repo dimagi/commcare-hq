@@ -54,7 +54,7 @@ from .const import (
     ConvFactorGaps,
     FctGaps,
 )
-from .fixtures import FixtureAccessor
+from .fixtures import FixtureAccessor, Food
 
 IN_UCR = 'in_ucr'
 IN_FOOD_FIXTURE = 'in_food_fixture'
@@ -317,7 +317,14 @@ class FoodRow:
                 # If it's an indicator that hasn't been explicitly set, check if it can
                 # be pulled from the food fixture or from the parent food case's UCR
                 if indicator.in_food_fixture:
-                    return getattr(self.fixtures.foods[self.food_code], indicator.slug)
+                    try:
+                        fixture_food = self.fixtures.foods[self.food_code]
+                    except KeyError as err:
+                        raise KeyError(
+                            f"Food code {self.food_code!r} not found in "
+                            f"fixture '{Food.table_name}'."
+                        ) from err
+                    return getattr(fixture_food, indicator.slug)
                 if indicator.is_recall_meta:
                     return self.ucr_row[indicator.slug]
                 return None

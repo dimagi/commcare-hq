@@ -145,18 +145,20 @@ def check_repeaters_in_partition(partition):
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def process_repeat_record(repeat_record_id):
+def process_repeat_record(repeat_record_id, domain):
     """
     NOTE: Keep separate from retry_process_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
     """
     repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)
 
 
 @task(queue=settings.CELERY_REPEAT_RECORD_QUEUE)
-def retry_process_repeat_record(repeat_record_id):
+def retry_process_repeat_record(repeat_record_id, domain):
     """
     NOTE: Keep separate from process_repeat_record for monitoring purposes
+    Domain is present here for domain tagging in datadog
     """
     repeat_record = RepeatRecord.get(repeat_record_id)
     _process_repeat_record(repeat_record)

@@ -1,4 +1,4 @@
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.util.soft_assert import soft_assert
@@ -85,14 +85,14 @@ def _get_message_bank_content_new_framework(fixture_name, recipient, schedule_in
 
 def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, current_event_num, num_events,
         recipient):
-    message_bank = FixtureDataType.by_domain_tag(domain, fixture_name).first()
-
-    if not message_bank:
+    try:
+        message_bank = LookupTable.objects.by_domain_tag(domain, fixture_name)
+    except LookupTable.DoesNotExist:
         message = "Lookup Table {} not found in {}".format(fixture_name, domain)
         notify_dimagi_project_admins(domain, message=message)
         return None
 
-    fields = message_bank.fields_without_attributes
+    fields = {f.name for f in message_bank.fields}
 
     if any(field not in fields for field in REQUIRED_FIXTURE_FIELDS):
         message = "{} in {} must have {}".format(
@@ -115,13 +115,13 @@ def _get_message_bank_content(fixture_name, domain, schedule_iteration_num, curr
         return None
 
     current_message_seq_num = str(
-        ((schedule_iteration_num - 1) * num_events) +
-        current_event_num + 1
+        ((schedule_iteration_num - 1) * num_events) + current_event_num + 1
     )
-    custom_messages = FixtureDataItem.by_field_value(
-        domain, message_bank, RISK_PROFILE_FIELD, risk_profile
+    custom_messages = LookupTableRow.objects.with_value(
+        domain, message_bank.id, RISK_PROFILE_FIELD, risk_profile
     )
-    custom_messages = [m for m in custom_messages if m.fields_without_attributes['sequence'] == current_message_seq_num]
+    custom_messages = [m for m in custom_messages
+        if m.fields_without_attributes['sequence'] == current_message_seq_num]
 
     if len(custom_messages) != 1:
         if not custom_messages:

@@ -50,10 +50,12 @@ class Command(BaseCommand):
 
         is_superuser_changed = not couch_user.is_superuser
         is_staff_changed = not couch_user.is_staff
+        can_assign_superuser_changed = not couch_user.can_assign_superuser
         couch_user.is_superuser = True
         couch_user.is_staff = True
+        couch_user.can_assign_superuser = True
 
-        if is_superuser_changed or is_staff_changed:
+        if is_superuser_changed or is_staff_changed or can_assign_superuser_changed:
             couch_user.save()
 
         fields_changed = {'email': couch_user.username}
@@ -71,5 +73,12 @@ class Command(BaseCommand):
         else:
             logger.info("✓ User {} can access django admin".format(couch_user.username))
             fields_changed['same_staff'] = couch_user.is_staff
+
+        if can_assign_superuser_changed:
+            logger.info("→ User {} can now assign superuser privilege".format(couch_user.username))
+            fields_changed['can_assign_superuser'] = couch_user.can_assign_superuser
+        else:
+            logger.info("✓ User {} can assign superuser privilege".format(couch_user.username))
+            fields_changed['same_management_privilege'] = couch_user.can_assign_superuser
 
         send_email_notif([fields_changed], changed_by_user='The make_superuser command')

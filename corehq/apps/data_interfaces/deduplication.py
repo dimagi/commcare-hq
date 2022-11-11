@@ -154,6 +154,7 @@ def backfill_deduplicate_rule(domain, rule):
             started_on=now,
             status=DomainCaseRuleRun.STATUS_RUNNING,
             case_type=rule.case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
         )
         action = CaseDeduplicationActionDefinition.from_rule(rule)
         case_iterator = AutomaticUpdateRule.iter_cases(

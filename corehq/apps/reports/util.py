@@ -17,7 +17,6 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
-from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
@@ -353,14 +352,6 @@ def get_INFilter_element_bindparam(base_name, index):
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
-
-
-def validate_xform_for_edit(xform):
-    for node in xform.bind_nodes:
-        if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
-            raise EditFormValidationError(_('Form cannot be edited because it will create a new case'))
-
-    return None
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)

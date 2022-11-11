@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import UUID
 
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
+from couchdbkit.exceptions import ResourceNotFound
 from memoized import memoized
 
 from dimagi.ext.couchdbkit import (
@@ -15,27 +15,9 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.couch.migration import SyncCouchToSQLMixin
 
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types,
-    get_fixture_items_for_data_type,
-    get_owner_ids_by_type,
-)
-from corehq.apps.fixtures.exceptions import (
-    FixtureException,
-    FixtureTypeCheckError,
-    FixtureVersionError,
-)
-from corehq.apps.fixtures.utils import (
-    get_fields_without_attributes,
-    remove_deleted_ownerships,
-)
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_type
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
@@ -80,7 +62,7 @@ class FixtureTypeField(DocumentSchema):
         )
 
 
-class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
+class FixtureDataType(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
@@ -102,6 +84,10 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
             obj['item_attributes'] = []
 
         return super(FixtureDataType, cls).wrap(obj)
+
+    @property
+    def _migration_couch_id(self):
+        return self._id
 
     @classmethod
     def _migration_get_fields(cls):
@@ -132,58 +118,29 @@ class FixtureDataType(QuickCachedDocumentMixin, SyncCouchToSQLMixin, Document):
     # support for old fields
     @property
     def fields_without_attributes(self):
-        return get_fields_without_attributes(self.fields)
+        raise NotImplementedError("no longer used")
 
     @property
     def is_indexed(self):
         return any(f.is_indexed for f in self.fields)
 
     @classmethod
-    def total_by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import count_fixture_data_types
-        return count_fixture_data_types(domain)
-
-    @classmethod
-    def by_domain(cls, domain, **kw):
-        from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-        return get_fixture_data_types(domain, **kw)
+    def by_domain(cls, domain):
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_domain_tag(cls, domain, tag):
-        return cls.view(
-            'fixtures/data_types_by_domain_tag',
-            key=[domain, tag],
-            reduce=False,
-            include_docs=True,
-            descending=True,
-        )
-
-    @classmethod
-    def fixture_tag_exists(cls, domain, tag):
-        fdts = FixtureDataType.by_domain(domain)
-        for fdt in fdts:
-            if tag == fdt.tag:
-                return fdt
-        return False
+        raise NotImplementedError("no longer used")
 
     def recursive_delete(self, transaction):
         item_ids = []
-        for item in FixtureDataItem.by_data_type(self.domain, self.get_id, bypass_cache=True):
+        for item in get_fixture_items_for_data_type(self.domain, self.get_id):
             transaction.delete(item)
             item_ids.append(item.get_id)
         for item_id_chunk in chunked(item_ids, 1000):
             transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
         transaction.delete(self)
         # NOTE cache must be invalidated after transaction commit
-
-    @classmethod
-    def delete_fixtures_by_domain(cls, domain, transaction):
-        for type in FixtureDataType.by_domain(domain):
-            type.recursive_delete(transaction)
-
-    def clear_caches(self):
-        super(FixtureDataType, self).clear_caches()
-        get_fixture_data_types.clear(self.domain)
 
 
 class FixtureItemField(DocumentSchema):
@@ -308,6 +265,10 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
         return super(FixtureDataItem, cls).wrap(obj)
 
+    @property
+    def _migration_couch_id(self):
+        return self._id
+
     @classmethod
     def _migration_get_fields(cls):
         return ["domain"]
@@ -350,241 +311,87 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
 
     @property
     def fields_without_attributes(self):
-        fields = {}
-        for field in self.fields:
-            # if the field has properties, a unique field_val can't be generated for FixtureItem
-            if len(self.fields[field].field_list) > 1:
-                raise FixtureVersionError("This method is not supported for fields with properties."
-                                          " field '%s' has properties" % field)
-            fields[field] = self.fields[field].field_list[0].field_value
-        return fields
+        raise NotImplementedError("no longer used")
 
     @property
     def try_fields_without_attributes(self):
-        """This is really just for the API"""
-        try:
-            return self.fields_without_attributes
-        except FixtureVersionError:
-            return {key: value.to_api_json()
-                    for key, value in self.fields.items()}
-
-    @property
-    def data_type(self):
-        if not hasattr(self, '_data_type'):
-            self._data_type = FixtureDataType.get(self.data_type_id)
-        return self._data_type
+        raise NotImplementedError("no longer used")
 
     def add_owner(self, owner, owner_type, transaction=None):
-        assert(owner.domain == self.domain)
-        with transaction or CouchTransaction() as transaction:
-            o = FixtureOwnership(
-                domain=self.domain,
-                owner_type=owner_type,
-                owner_id=owner.get_id,
-                data_item_id=self.get_id,
-            )
-            transaction.save(o)
-        return o
+        raise NotImplementedError("no longer used")
 
     def remove_owner(self, owner, owner_type):
-        for ownership in FixtureOwnership.view('fixtures/ownership',
-            key=[self.domain, 'by data_item and ' + owner_type, self.get_id, owner.get_id],
-            reduce=False,
-            include_docs=True
-        ):
-            try:
-                ownership.delete()
-            except ResourceNotFound:
-                # looks like it was already deleted
-                pass
-            except ResourceConflict:
-                raise FixtureException((
-                    "couldn't remove ownership {owner_id} for item {fixture_id} of type "
-                    "{data_type_id} in domain {domain}. It was updated elsewhere"
-                ).format(
-                    owner_id=ownership._id,
-                    fixture_id=self._id,
-                    data_type_id=self.data_type_id,
-                    domain=self.domain
-                ))
+        raise NotImplementedError("no longer used")
 
     def add_user(self, user, transaction=None):
-        return self.add_owner(user, 'user', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_user(self, user):
-        return self.remove_owner(user, 'user')
+        raise NotImplementedError("no longer used")
 
     def add_group(self, group, transaction=None):
-        return self.add_owner(group, 'group', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_group(self, group):
-        return self.remove_owner(group, 'group')
+        raise NotImplementedError("no longer used")
 
     def add_location(self, location, transaction=None):
-        return self.add_owner(location, 'location', transaction=transaction)
+        raise NotImplementedError("no longer used")
 
     def remove_location(self, location):
-        return self.remove_owner(location, 'location')
-
-    def type_check(self):
-        fields = set(self.fields.keys())
-        for field in self.data_type.fields:
-            if field.field_name in fields:
-                fields.remove(field)
-            else:
-                raise FixtureTypeCheckError(
-                    f"field {field.field_name} not in fixture data {self.get_id}")
-        if fields:
-            raise FixtureTypeCheckError(
-                f"fields {', '.join(fields)} from fixture data {self.get_id} not in fixture data type")
+        raise NotImplementedError("no longer used")
 
     def get_groups(self, wrap=True):
-        group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
-        if wrap:
-            return set(Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True,
-            ))
-        else:
-            return set(group_ids)
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized
     def groups(self):
-        return self.get_groups()
+        raise NotImplementedError("no longer used")
 
     def get_users(self, wrap=True, include_groups=False):
-        user_ids = set(get_owner_ids_by_type(self.domain, 'user', self.get_id))
-        if include_groups:
-            group_ids = self.get_groups(wrap=False)
-        else:
-            group_ids = set()
-        users_in_groups = [
-            group.get_users(only_commcare=True)
-            for group in Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True)]
-        if wrap:
-            return set(CommCareUser.view(
-                '_all_docs',
-                keys=list(user_ids),
-                include_docs=True
-            )).union(*users_in_groups)
-        else:
-            return user_ids | set([user.get_id for user in users_in_groups])
+        raise NotImplementedError("no longer used")
 
     def get_all_users(self, wrap=True):
-        return self.get_users(wrap=wrap, include_groups=True)
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized
     def users(self):
-        return self.get_users()
+        raise NotImplementedError("no longer used")
 
     @property
     @memoized
     def locations(self):
-        loc_ids = get_owner_ids_by_type(self.domain, 'location', self.get_id)
-        return SQLLocation.objects.filter(location_id__in=loc_ids)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_user(cls, user, include_docs=True):
-        """
-        This method returns all fixture data items owned by the user, their location, or their group.
-
-        :param include_docs: whether to return the fixture data item dicts or just a set of ids
-        """
-        group_ids = Group.by_user_id(user.user_id, wrap=False)
-        loc_ids = user.sql_location.path if user.sql_location else []
-
-        def make_keys(owner_type, ids):
-            return [[user.domain, 'data_item by {}'.format(owner_type), id_]
-                    for id_ in ids]
-
-        fixture_ids = set(
-            FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=(make_keys('user', [user.user_id])
-                      + make_keys('group', group_ids)
-                      + make_keys('location', loc_ids)),
-                reduce=False,
-                wrapper=lambda r: r['value'],
-            )
-        )
-        if include_docs:
-            results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
-
-            # sort the results into those corresponding to real documents
-            # and those corresponding to deleted or non-existent documents
-            docs = []
-            deleted_fixture_ids = set()
-
-            for result in results:
-                if result.get('doc'):
-                    docs.append(result['doc'])
-                elif result.get('error'):
-                    assert result['error'] == 'not_found'
-                    deleted_fixture_ids.add(result['key'])
-                else:
-                    assert result['value']['deleted'] is True
-                    deleted_fixture_ids.add(result['id'])
-            if deleted_fixture_ids:
-                # delete ownership documents pointing deleted/non-existent fixture documents
-                # this cleanup is necessary since we used to not do this
-                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
-            return docs
-        else:
-            return fixture_ids
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_group(cls, group, wrap=True):
-        fixture_ids = cls.get_db().view('fixtures/ownership',
-            key=[group.domain, 'data_item by group', group.get_id],
-            reduce=False,
-            wrapper=lambda r: r['value'],
-            descending=True
-        ).all()
-
-        return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):
-        return get_fixture_items_for_data_type(domain, _id_from_doc(data_type), bypass_cache)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type',
-            startkey=[domain, {}],
-            endkey=[domain],
-            reduce=False,
-            include_docs=True,
-            descending=True
-        )
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def by_field_value(cls, domain, data_type, field_name, field_value):
-        data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
-                        reduce=False, include_docs=True)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def get_item_list(cls, domain, tag, **kw):
-        data_type = FixtureDataType.by_domain_tag(domain, tag).one()
-        return cls.by_data_type(domain, data_type, **kw)
+        raise NotImplementedError("no longer used")
 
     @classmethod
     def get_indexed_items(cls, domain, tag, index_field):
-        """
-        Looks up an item list and converts to mapping from `index_field`
-        to a dict of all fields for that item.
-
-            fixtures = FixtureDataItem.get_indexed_items('my_domain',
-                'item_list_tag', 'index_field')
-            result = fixtures['index_val']['result_field']
-        """
-        fixtures = cls.get_item_list(domain, tag)
-        return dict((f.fields_without_attributes[index_field], f.fields_without_attributes) for f in fixtures)
+        raise NotImplementedError("no longer used")
 
     def delete_ownerships(self, transaction):
         ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
@@ -595,19 +402,15 @@ class FixtureDataItem(SyncCouchToSQLMixin, Document):
         transaction.delete(self)
 
 
-def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, str):
-        doc_id = doc_or_doc_id
-    else:
-        doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None
-    return doc_id
-
-
 class FixtureOwnership(SyncCouchToSQLMixin, Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
     owner_type = StringProperty(choices=['user', 'group', 'location'])
+
+    @property
+    def _migration_couch_id(self):
+        return self._id
 
     @classmethod
     def _migration_get_fields(cls):

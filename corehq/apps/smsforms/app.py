@@ -59,7 +59,6 @@ def start_session(session, domain, contact, app, form, case_id=None, yield_respo
 
     if len(responses) > 0 and responses[0].status == 'http-error':
         session.mark_completed(False)
-        session.save()
         raise TouchformsError('Cannot connect to touchforms.')
 
     # Prevent future update conflicts by getting the session again from the db

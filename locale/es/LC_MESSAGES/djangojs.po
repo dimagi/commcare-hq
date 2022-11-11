@@ -146,7 +146,7 @@ msgid "We are sorry, but something unexpected has occurred."
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
-msgid "Book a Time"
+msgid "Submit Request"
 msgstr ""
 
 #: corehq/apps/analytics/static/analytix/js/hubspot.js
@@ -2819,6 +2819,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
+msgid "You have been logged out because of inactivity."
+msgstr ""
+
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/errors.js
 msgid ""
 "An unknown error occurred. If you have problems filling in the rest of your "
 "form please submit an issue. Technical Details: "
@@ -2858,16 +2862,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/form_ui.js
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
 msgid "This answer is outside the allowed range."
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid ""
-"Looks like you got logged out because of inactivity, but your work is safe. "
-"<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/utils.js
-msgid "You have been logged out because of inactivity."
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/web_form_session.js
@@ -2954,6 +2948,10 @@ msgstr ""
 msgid "Switching project spaces..."
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/utils.js
+msgid "Fetching your location..."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
 msgid "Page <%-num%>"
 msgstr ""
@@ -3011,14 +3009,6 @@ msgstr ""
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/utils.js
 msgid "Confirm?"
 msgstr "¿Corfirmar?"
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "Form successfully submitted!"
-msgstr ""
-
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer_inline.js
-msgid "An unexpected error occurred!"
-msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/utils.js
 msgid "Error saving!"
@@ -3192,6 +3182,12 @@ msgid ""
 "continue?"
 msgstr ""
 
+#: corehq/apps/data_interfaces/static/data_interfaces/js/auto_update_rules.js
+#: corehq/apps/data_interfaces/static/data_interfaces/js/deduplication_rules.js
+#: corehq/apps/users/static/users/js/mobile_workers.js
+msgid "Issue communicating with server. Try again."
+msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
+
 #: corehq/apps/data_interfaces/static/data_interfaces/js/case_dedupe_main.js
 msgid "OR"
 msgstr ""
@@ -3261,11 +3257,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/static/data_interfaces/js/find_by_id.js
 msgid "Form submission found!"
 msgstr ""
-
-#: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js
-#: corehq/apps/users/static/users/js/mobile_workers.js
-msgid "Issue communicating with server. Try again."
-msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js
 msgid "Sorry, it looks like the upload failed."
@@ -3842,10 +3833,6 @@ msgstr ""
 #: corehq/apps/registration/static/registration/js/password.js
 msgid "Good Job! Your password is strong!"
 msgstr "¡Bien Hecho! ¡Su contraseña es segura!"
-
-#: corehq/apps/registration/static/registration/js/register_new_user.js
-msgid "Choose a time for your CommCare trial setup"
-msgstr ""
 
 #: corehq/apps/registry/static/registry/js/registry_actions.js
 msgid "An unknown error occurred. Please try again or report an issue."
@@ -4885,7 +4872,7 @@ msgstr ""
 msgid "Unable to save form configs"
 msgstr ""
 
-#: corehq/motech/generic_inbound/static/generic_inbound/js/api_edit.js
+#: corehq/motech/generic_inbound/static/generic_inbound/js/copy_data.js
 msgid "URL Copied"
 msgstr ""
 

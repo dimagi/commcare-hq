@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
 
@@ -214,7 +215,7 @@ def get_releases_context(request, domain, app_id):
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
         })
-        if app.version == 1:
+        if app.version == 1 and len(app.modules) == 0:
             context.update({'intro_only': True})
 
         # Multimedia is not supported for remote applications at this time.
@@ -520,7 +521,7 @@ def _get_app_diffs(first_app, second_app):
     file_pairs = _get_file_pairs(first_app, second_app)
     diffs = []
     for name, files in file_pairs.items():
-        diff_html = ghdiff.diff(files[0], files[1], n=4, css=False)
+        diff_html = mark_safe(ghdiff.diff(files[0], files[1], n=4, css=False))  # nosec: ghdiff produces HTML
         additions, deletions = _get_change_counts(diff_html)
         if additions == 0 and deletions == 0:
             diff_html = ""

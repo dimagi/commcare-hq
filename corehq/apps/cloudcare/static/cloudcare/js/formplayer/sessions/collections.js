@@ -1,9 +1,11 @@
 /*global Backbone */
 
 hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
+    var Models = hqImport("cloudcare/js/formplayer/sessions/models"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var session = Backbone.Collection.extend({
-        model: hqImport("cloudcare/js/formplayer/sessions/models"),
+        model: Models,
 
         parse: function (response) {
             this.totalSessions = response.total_records;
@@ -11,7 +13,7 @@ hqDefine("cloudcare/js/formplayer/sessions/collections", function () {
         },
 
         fetch: function (options) {
-            hqImport("cloudcare/js/formplayer/utils/utils").setCrossDomainAjaxOptions(options);
+            utils.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.fetch.call(this, options);
         },
     });

@@ -129,6 +129,7 @@ class PillowChangeProviderReindexer(Reindexer):
         self.change_provider = change_provider
 
     def reindex(self):
+        total_docs = 0
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
                 # below works because signature is same for pillow and processor
@@ -136,8 +137,11 @@ class PillowChangeProviderReindexer(Reindexer):
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
-            if i % 1000 == 0:
+            if i > 0 and i % 1000 == 0:
                 pillow_logging.info("Processed %s docs", i)
+            total_docs = i
+
+        pillow_logging.info("Processed %s docs", total_docs)
 
 
 def clean_index(es, index_info):

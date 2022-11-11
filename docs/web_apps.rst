@@ -75,7 +75,7 @@ working with multiple repositories, in multiple languages, which may have differ
 
 As an example, consider `registration from the case list <https://confluence.dimagi.com/display/commcarepublic/Minimize+Duplicates+Method+1%3A+Registration+From+the+Case+List>`_:
 
-* A CommCareHQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
+* A CommCare HQ user goes to the module settings page in app builder and turns on the feature, selecting the registration form they want to be accessible from the case list.
 
    * This adds a new attribute to their ``Application`` document - specifically, it populates ``case_list_form`` on a ``Module``.
 

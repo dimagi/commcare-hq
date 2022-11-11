@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from corehq.apps.es.client import ElasticManageAdapter
+from corehq.apps.es.client import manager
 from corehq.apps.es.const import SCROLL_KEEPALIVE
 from corehq.apps.es.transient_util import doc_adapter_from_alias
 
@@ -14,16 +14,11 @@ class ElasticsearchInterface:
         #       a real client (would indicate the caller is not compliant).
         self.es = es
 
-    @cached_property
-    def manager(self):
-        # lazy-load the manage adapter only if needed
-        return ElasticManageAdapter()
-
     def get_aliases(self):
-        return self.manager.get_aliases()
+        return manager.get_aliases()
 
     def put_mapping(self, doc_type, mapping, index):
-        return self.manager.index_put_mapping(index, doc_type, mapping)
+        return manager.index_put_mapping(index, doc_type, mapping)
 
     def _verify_is_alias(self, alias):
         """Verify that an alias is one of a registered index"""
@@ -31,10 +26,10 @@ class ElasticsearchInterface:
         verify_alias(alias)
 
     def update_index_settings_reindex(self, index):
-        self.manager.index_configure_for_reindex(index)
+        manager.index_configure_for_reindex(index)
 
     def update_index_settings_standard(self, index):
-        self.manager.index_configure_for_standard_ops(index)
+        manager.index_configure_for_standard_ops(index)
 
     def doc_exists(self, index_alias, doc_id, doc_type):
         doc_adapter = self._get_doc_adapter(index_alias, doc_type)

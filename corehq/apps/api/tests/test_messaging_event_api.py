@@ -1,6 +1,7 @@
 import json
 import urllib.parse
 from datetime import datetime, timedelta
+from operator import attrgetter
 from urllib.parse import urlencode
 
 from django.urls import reverse
@@ -81,7 +82,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_date_last_activity_ordering(self):
         sms = _create_sms_messages(self.domain, 5, randomize=True)
-        sms[0].save()  # this should move this one to the end of the list
+        sms[0].messaging_subevent.save()  # this should move this one to the end of the list
 
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date_last_activity')
         self.assertEqual(response.status_code, 200, response.content)
@@ -89,7 +90,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self.assertEqual(5, len(ordered_data))
         dates = [r['date_last_activity'] for r in ordered_data]
         expected_order = sms[1:] + [sms[0]]  # modification order
-        self.assertEqual(dates, [s.date_modified.isoformat() for s in expected_order])
+        self.assertEqual(dates, [s.messaging_subevent.date_last_activity.isoformat() for s in expected_order])
 
         response = self._auth_get_resource(f'{self.list_endpoint}?order_by=-date_last_activity')
         self.assertEqual(response.status_code, 200, response.content)
@@ -211,7 +212,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
             "case_id": None,
             "content_type": "sms",
             "date": "2016-01-01T12:00:00",
-            "date_last_activity": sms.date_modified.isoformat(),
+            "date_last_activity": event.date_last_activity.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": None,
@@ -258,11 +259,13 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         self.addCleanup(event.delete)  # cascades to subevent
         self.addCleanup(sms.delete)
 
+        subevent = event.subevents[0]
+
         expected = {
             "case_id": None,
             "content_type": "ivr-survey",
             "date": "2016-01-01T12:00:00",
-            "date_last_activity": sms.date_modified.isoformat(),
+            "date_last_activity": subevent.date_last_activity.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": {
@@ -315,7 +318,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
             "case_id": None,
             "content_type": "email",
             "date": event.date.isoformat(),
-            "date_last_activity": email.date_modified.isoformat(),
+            "date_last_activity": event.date_last_activity.isoformat(),
             "domain": "qwerty",
             "error": None,
             "form": None,
@@ -367,7 +370,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         data = json.loads(response.content)['objects']
         self.assertEqual(1, len(data))
         for result in data:
-            self.assertEqual(result["date_last_activity"], event.date.isoformat())
+            self.assertEqual(result["date_last_activity"], event.date_last_activity.isoformat())
             self.assertIsNone(result["messages"][0]["date_modified"])
 
     def test_cursor(self):
@@ -532,21 +535,18 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
             user = CommCareUser.create(self.domain.name, f"bob{i}", "123", None, None, email=f"bob{i}@email.com")
             self.addCleanup(user.delete, self.domain.name, deleted_by=None)
             user_ids.append(user.get_id)
-        events = make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
-
-        emails = [
-            Email.objects.get(messaging_subevent=events[user_id]) for user_id in user_ids
-        ]
-        emails[0].save()  # update date_modified
-        expected_order = emails[1:] + [emails[0]]  # modification order
-        dates = [email.date_modified for email in expected_order]
+        events_by_user = make_email_event_for_test(self.domain.name, "test broadcast", user_ids)
+        events = list(sorted(events_by_user.values(), key=attrgetter('date_last_activity')))
+        events[0].save()  # update date_last_activity
+        expected_order = events[1:] + [events[0]]  # modification order
+        dates = [event.date_last_activity for event in expected_order]
 
         self._check_date_filtering_response({
             f"{self.field}.lt": dates[3].isoformat()
         }, [d.isoformat() for d in dates[:3]])
 
     def test_survey_date_last_activity_filter(self):
-        sessions = []
+        events = []
         messages = []
         for i in range(5):
             rule, xforms_session, event, sms = make_survey_sms_for_test(
@@ -556,15 +556,14 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
             self.addCleanup(xforms_session.delete)
             self.addCleanup(event.delete)  # cascades to subevent
             self.addCleanup(sms.delete)
-            sessions.append(xforms_session)
+            events.append(event.subevents[0])
             messages.append(sms)
 
         # update modified time for 1st session to move it to the end of the list
-        sessions[0].modified_time = datetime.utcnow()
-        sessions[0].save()
+        events[0].save()
 
-        # last_activity_date will be the max date so use sms dates except for the session that was updated
-        dates = [sms.date_modified for sms in messages[1:]] + [sessions[0].modified_time]  # modification order
+        expected_order = events[1:] + [events[0]]  # modification order
+        dates = [event.date_last_activity for event in expected_order]
 
         self._check_date_filtering_response({
             f"{self.field}.lt": dates[3].isoformat()
@@ -572,10 +571,10 @@ class TestDateLastActivityFilter(BaseMessagingEventResourceTest, DateFilteringTe
 
     def _setup_for_date_filter_test(self):
         results = _create_sms_messages(self.domain, 5, randomize=True)
-        results[0].save()  # update modification date
+        results[0].messaging_subevent.save()  # update modification date
         expected_order = results[1:] + [results[0]]  # modification order
         return list(
-            sms.date_modified for sms in expected_order
+            sms.messaging_subevent.date_last_activity for sms in expected_order
         )
 
 
@@ -592,7 +591,7 @@ def _serialized_messaging_event(sms):
         "id": sms.messaging_subevent_id,
         "content_type": "sms",
         "date": "2016-01-01T12:00:00",
-        "date_last_activity": sms.date_modified.isoformat() if sms.date_modified else "2016-01-01T12:00:00",
+        "date_last_activity": sms.messaging_subevent.date_last_activity.isoformat(),
         "case_id": None,
         "domain": "qwerty",
         "error": None,

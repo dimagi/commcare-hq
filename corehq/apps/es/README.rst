@@ -94,21 +94,22 @@ Design Details
 Reindex Procedure Details
 '''''''''''''''''''''''''
 
-1. Configure multiplexing on an index.
+1. Configure multiplexing on an index by passing in `secondary` index name to `create_document_adapter`.
 
-   - Configure the document adapter for the index with a "secondary index name".
-     This will cause the adapter to use multiplexing logic instead of a single
-     index.
-
-     **Note**: The multiplexing logic required for this operation is not yet
-     implemented. The multiplexing adapter will most likely delegate to two
-     document adapters configured for separate indexes. Suffice it to say that
-     when a secondary index is defined for an adapter, it effectively becomes a
-     multiplexing adapter (which to the consumer, is indistinguishable from a
-     "standard" adapter).
-
+   - Ensure that there is a migration in place for creating the index.
+   **Note** Tooling around this is a WIP
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
+    **Note** Currently the Adapter will not support reindexing on specific environments but it would be compatible to accommodate it in future. This support will be added once we get to V5 of ES.
+   - Configure `create_document_adapter` to return an instance of `ElasticMultiplexAdapter` by passing in `secondary` index name.
+    ```python
+    case_adapter = create_document_adapter(
+      ElasticCase,
+      "hqcases_2016-03-04",
+      "case",
+      secondary="hqcase_2022-10-20"
+    )
+    ```
    - Add a migration which performs all cluster-level operations required for
      the new (secondary) index. For example:
 
@@ -203,7 +204,9 @@ The ``corehq.apps.es.client`` module encapsulates the CommCare HQ Elasticsearch
 client adapters. It implements a high-level Elasticsearch client protocol
 necessary to accomplish all interactions with the backend Elasticsearch cluster.
 Client adapters are split into two usage patterns, the "Management Adapter" and
-"Document Adapters".
+"Document Adapters".  Client adapters are instantiated at import time in order
+to perform index verification when Django starts.  Downstream code needing an
+adapter import and use the adapter instance.
 
 .. toctree::
 
@@ -215,10 +218,11 @@ Client adapters are split into two usage patterns, the "Management Adapter" and
 Management Adapter
 ''''''''''''''''''
 
-There is only one management adapter, ``ElasticManageAdapter``. This adapter is
-used for performing all cluster management tasks such as creating and updating
-indices and their mappings, changing index settings, changing cluster settings,
-etc.  This functionality is split into a separate class for a few reasons:
+There is only one management adapter, ``corehq.apps.es.client.manager``. This
+adapter is used for performing all cluster management tasks such as creating and
+updating indices and their mappings, changing index settings, changing cluster
+settings, etc.  This functionality is split into a separate class for a few
+reasons:
 
 1. The management adapter is responsible for low-level Elastic operations which
    document adapters should never be performing because the scope of a document
@@ -227,21 +231,19 @@ etc.  This functionality is split into a separate class for a few reasons:
    operations a connection can be used for. The separation in these client
    adapter classes is designed to fit into that model.
 
-The management adapter does not need any special parameters to work with, and
-can be instantiated and used directly:
-
 .. code-block:: python
 
-    adapter = ElasticManageAdapter()
-    adapter.index_create("books")
+    from corehq.apps.es.client import manager
+
+    manager.index_create("books")
     mapping = {"properties": {
         "author": {"type": "text"},
         "title": {"type": "text"},
         "published": {"type": "date"},
     }}
-    adapter.index_put_mapping("books", "book", mapping)
-    adapter.index_refresh("books")
-    adapter.index_delete("books")
+    manager.index_put_mapping("books", "book", mapping)
+    manager.index_refresh("books")
+    manager.index_delete("books")
 
 
 Document Adapters
@@ -252,13 +254,8 @@ properties and functionality necessary for maintaining a single type of "model"
 document in a single index.  Each index in Elasticsearch needs to have a
 cooresponding ``ElasticDocumentAdapter`` subclass which defines how the Python
 model is applied to that specific index.  At the very least, a document adapter
-must define the following:
+subclass must define the following:
 
-- An ``_index_name`` attribute whose value is the name of the Elastic index
-  used by the adapter. This attribute must be private to support proper index
-  naming between production code and tests.
-- A ``type`` attribute whose value is the name is the Elastic ``_type`` for
-  documents used by the adapter.
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
 - A ``from_python()`` classmethod which can convert a Python model object into the
@@ -287,8 +284,6 @@ A simple example of a document model and its cooresponding adapter:
 
     class ElasticBook(ElasticDocumentAdapter):
 
-        _index_name = "books"
-        type = "book"
         mapping = {"properties": {
             "author": {"type": "text"},
             "title": {"type": "text"},
@@ -304,11 +299,13 @@ A simple example of a document model and its cooresponding adapter:
             }
             return book.isbn, source
 
+    books_adapter = ElasticBook(index_name="books", type_="book")
+
+
 Using this adapter in practice might look as follows:
 
 .. code-block:: python
 
-    adapter = ElasticBook()
     # index new
     new_book = Book(
         "978-1491946008",
@@ -316,10 +313,38 @@ Using this adapter in practice might look as follows:
         "Fluent Python: Clear, Concise, and Effective Programming",
         datetime.date(2015, 2, 10),
     )
-    adapter.index(new_book)
+    books_adapter.index(new_book)
     # fetch existing
-    classic_book = adapter.fetch("978-0345391803")
+    classic_book = books_adapter.fetch("978-0345391803")
 
+
+Tombstone
+'''''''''
+
+The concept of Tombstone in the ES mulitplexer is there to be placeholder for the docs that are deleted in the primary index. It means that whenever an adapter is multiplexed and a document is deleted from the primary index, then the secondary index will create tombstone entry for that document. The python class defined to represent these tombstones is  `corehq.apps.es.client.Tombstone`
+
+Scenario without tomstones: If a multiplexing adapter deletes a document in the secondary index (which turns out to be a no-op because the document does not exist there yet), and then that same document is copied to the secondary index by the reindexer, then it will exist indefinitely in the secondary even though it has been deleted in the primary.
+
+Put another way:
+
+- Reindexer: gets batch of objects from primary index to copy to secondary.
+- Multiplexer: deletes a document in that batch (in both primary and secondary indexes).
+- Reindexer: writes deleted (now stale) document into secondary index.
+- Result: secondary index contains a document that has been deleted.
+
+With tombstsones: this will not happen because the reindexer uses a "ignore existing documents" copy mode, so it will never overwrite a tombstone with a stale (deleted) document.
+
+The tombstones would **only exist** in the secondary index and would be deleted when we are switching from primary to secondary.
+
+A sample tombstone document would look like
+
+```
+{
+  "__is_tombstone__" : True
+}
+```
+
+Current mapping does not index `__is_tombstone__` property but it would be added to mappings before we start reindexing. This would help us in ensuring that we can ignore them in the ES queries.
 
 Code Documentation
 ''''''''''''''''''

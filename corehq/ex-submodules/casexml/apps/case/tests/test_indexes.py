@@ -102,7 +102,7 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             create=True,
-            index={'dad': ('father-case', self.FATHER_CASE_ID)},
+            index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
             date_opened=now.date()
         ).as_xml()

@@ -1,6 +1,7 @@
 import json
 from contextlib import contextmanager
 from random import randint
+from unittest.mock import patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -12,6 +13,7 @@ from corehq.apps.domain.utils import (
     get_serializable_wire_invoice_general_credit,
     guess_domain_language,
     guess_domain_language_for_sms,
+    is_domain_in_use,
 )
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt
@@ -174,3 +176,41 @@ class TestGetDomainURLSlug(SimpleTestCase):
     ])
     def test_stop_words_excluded(self, hr_name, max_length, expected):
         self.assertEqual(expected, get_domain_url_slug(hr_name, max_length=max_length))
+
+
+class IsDomainInUseTests(SimpleTestCase):
+
+    def test_domain_in_use_returns_true(self):
+        self.mock_get_by_name.return_value = self.domain_actively_in_use
+        self.assertTrue(is_domain_in_use(self.domain_actively_in_use.name))
+
+    def test_paused_domain_returns_true(self):
+        self.mock_get_by_name.return_value = self.paused_domain
+        self.assertTrue(is_domain_in_use(self.paused_domain.name))
+
+    def test_deleted_domain_returns_false(self):
+        self.mock_get_by_name.return_value = self.deleted_domain
+        self.assertFalse(is_domain_in_use(self.deleted_domain.name))
+
+    def test_active_deleted_domain_returns_false(self):
+        # should not be possible to get into this state (active + deleted)
+        self.mock_get_by_name.return_value = self.active_deleted_domain
+        self.assertFalse(is_domain_in_use(self.active_deleted_domain.name))
+
+    def test_non_existent_domain_returns_false(self):
+        self.mock_get_by_name.return_value = None
+        self.assertFalse(is_domain_in_use('non-existent-domain'))
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_actively_in_use = Domain(doc_type="Domain", name="domain-in-use", is_active=True)
+        cls.paused_domain = Domain(doc_type="Domain", name="domain-paused", is_active=False)
+        cls.deleted_domain = Domain(doc_type="Domain-Deleted", name="domain-deleted", is_active=False)
+        # should not be possible to get into this state
+        cls.active_deleted_domain = Domain(doc_type="Domain-Deleted", name="domain-deleted", is_active=True)
+
+    def setUp(self):
+        self.get_by_name_patcher = patch('corehq.apps.domain.utils.Domain.get_by_name')
+        self.mock_get_by_name = self.get_by_name_patcher.start()
+        self.addCleanup(self.get_by_name_patcher.stop)

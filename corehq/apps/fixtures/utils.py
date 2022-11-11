@@ -40,10 +40,7 @@ def is_identifier_invalid(name):
 
 
 def get_fields_without_attributes(fields):
-    fields_without_attributes = []
-    for fixture_field in fields:
-        fields_without_attributes.append(fixture_field.field_name)
-    return fields_without_attributes
+    return [f.field_name for f in fields]
 
 
 def get_index_schema_node(fixture_id, attrs_to_index):

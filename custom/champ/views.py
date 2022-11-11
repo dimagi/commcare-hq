@@ -9,7 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic.base import View
 
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.fixtures.models import FixtureDataItem
+from corehq.apps.fixtures.models import LookupTableRow
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from custom.champ.sqldata import TargetsDataSource, UICFromEPMDataSource, UICFromCCDataSource, \
@@ -427,10 +427,10 @@ class OrganizationsFilter(View):
 class HierarchyFilter(View):
     def get(self, request, *args, **kwargs):
         domain = self.kwargs['domain']
-        districts = FixtureDataItem.get_item_list(domain, 'district')
-        cbos = FixtureDataItem.get_item_list(domain, 'cbo')
-        clienttypes = FixtureDataItem.get_item_list(domain, 'clienttype')
-        userpls = FixtureDataItem.get_item_list(domain, 'userpl')
+        districts = LookupTableRow.objects.iter_rows(domain, tag='district')
+        cbos = LookupTableRow.objects.iter_rows(domain, tag='cbo')
+        clienttypes = LookupTableRow.objects.iter_rows(domain, tag='clienttype')
+        userpls = LookupTableRow.objects.iter_rows(domain, tag='userpl')
 
         def to_filter_format(data, parent_key=None):
             locations = [dict(
@@ -438,13 +438,13 @@ class HierarchyFilter(View):
                 text='All'
             )]
             for row in data:
-                loc_id = row.fields['id'].field_list[0].field_value
+                loc_id = row.fields['id'][0].value
                 loc = dict(
                     id=loc_id,
                     text=loc_id
                 )
                 if parent_key:
-                    parent_id = row.fields[parent_key].field_list[0].field_value
+                    parent_id = row.fields[parent_key][0].value
                     loc.update({'parent_id': parent_id})
                 locations.append(loc)
             return locations
