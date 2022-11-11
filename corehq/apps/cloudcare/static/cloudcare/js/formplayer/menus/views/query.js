@@ -389,6 +389,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         templateContext: function () {
             return {
                 title: this.options.title,
+                description: DOMPurify.sanitize(this.options.collection.description),
             };
         },
 
