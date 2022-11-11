@@ -342,7 +342,7 @@ class AdminRestoreView(TemplateView):
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
-                xml_payload = E.error(response.content)
+                xml_payload = E.error(response.content.decode())
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
                 xml_payload = etree.fromstring(response.content)
