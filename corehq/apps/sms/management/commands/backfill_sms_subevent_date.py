@@ -42,6 +42,8 @@ class Command(BaseCommand):
         update_subevent_date_from_emails(chunk_size, explain)
         update_subevent_date_from_sms(chunk_size, explain)
         update_subevent_date_from_xform_session(chunk_size, explain)
+        # this one must always run last
+        update_subevent_date_from_subevent(chunk_size, explain)
 
         if not explain:
             try:
@@ -113,6 +115,27 @@ def update_subevent_date_from_xform_session(chunk_size, explain):
         )
     """
     return run_query_until_no_updates("xform_session", query, count_query, explain)
+
+
+def update_subevent_date_from_subevent(chunk_size, explain):
+    """This updates all remaining events that haven't had a date populated.
+    The majority of these represent errors, but I've found that there are
+    a number of places in code where a message is updated in code without
+    being saved to the DB immediately which leaves scope for the message never
+    being updated.
+    """
+    # this count will only be correct after the other backfills have run
+    count_query = """
+        select count(*) from sms_messagingsubevent where date_last_activity is null
+    """
+    query = f"""
+        update sms_messagingsubevent set date_last_activity = sms_messagingsubevent.date
+        where sms_messagingsubevent.id in (
+            select se.id from sms_messagingsubevent se where se.date_last_activity is null
+            limit {chunk_size}
+        )
+    """
+    return run_query_until_no_updates("subevent", query, count_query, explain)
 
 
 def run_query_until_no_updates(slug, query, count_query, explain):

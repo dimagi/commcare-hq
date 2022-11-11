@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 
 from corehq.apps.accounting.models import Subscription
@@ -5,12 +7,14 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.sms.management.commands.backfill_sms_subevent_date import (
     update_subevent_date_from_emails,
     update_subevent_date_from_sms,
+    update_subevent_date_from_subevent,
     update_subevent_date_from_xform_session,
 )
 from corehq.apps.sms.models import MessagingSubEvent
 from corehq.apps.sms.tests.data_generator import (
     create_fake_sms,
     make_email_event_for_test,
+    make_events_for_test,
     make_survey_sms_for_test,
 )
 from corehq.apps.users.models import CommCareUser
@@ -34,6 +38,10 @@ class TestBackfillSubeventDate(TestCase):
     def test_update_from_xform_session(self):
         self._setup_survey_data()
         self._do_backfill_validate_result(update_subevent_date_from_xform_session)
+
+    def test_update_from_subevent(self):
+        self._setup_subevent_data()
+        self._do_backfill_validate_result(update_subevent_date_from_subevent)
 
     def _do_backfill_validate_result(self, update_fn):
         rows_updated, iterations = update_fn(chunk_size=2, explain=False)
@@ -61,6 +69,12 @@ class TestBackfillSubeventDate(TestCase):
     def _setup_survey_data(self):
         for i in range(4):
             make_survey_sms_for_test(self.domain.name, "test survey")
+
+        self._reset_dates_and_check()
+
+    def _setup_subevent_data(self):
+        for i in range(4):
+            make_events_for_test(self.domain.name, datetime.datetime.utcnow())
 
         self._reset_dates_and_check()
 
