@@ -21,6 +21,9 @@ import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
+from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
@@ -280,7 +283,6 @@ def release_build(request, domain, app_id, saved_app_id):
 
     app_release_log = ApplicationReleaseLog()
     app_release_log.domain = domain
-    app_release_log.user_email = request.couch_user.get_email()
     app_release_log.is_released = is_released
     app_release_log.version = saved_app.version
     app_release_log.app_id = app_id
@@ -671,16 +673,16 @@ def paginate_release_logs(request, domain, app_id):
     try:
         limit = int(limit)
     except (TypeError, ValueError):
-        limit = 10
+        limit = 5
 
     app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-timestamp')
     paginator = Paginator(object_list=app_release_logs, per_page=limit)
     current_page = paginator.get_page(page)
 
     timezone = get_timezone_for_user(request.couch_user, domain)
-    transformed_logs = list(log.localize_timestamp(timezone) for log in current_page)
+    transformed_logs = list(populate_data_app_release_logs(log, timezone) for log in current_page)
 
-    return json_response({
+    return JsonResponse({
         'app_release_logs': transformed_logs,
         'pagination': {
             'total': paginator.count,
@@ -689,3 +691,12 @@ def paginate_release_logs(request, domain, app_id):
             'more': page * limit < 10,
         }
     })
+
+
+def populate_data_app_release_logs(log, timezone):
+    timestamp = ServerTime(log.timestamp).user_time(timezone)
+    timestamp_date = timestamp.ui_string(USER_DATE_FORMAT)
+    timestamp_time = timestamp.ui_string(USER_TIME_FORMAT)
+    log.timestamp = "{} {}".format(timestamp_date, timestamp_time)
+    log.user_email = cached_user_id_to_user_display(log.user_id)
+    return log.to_json()
