@@ -140,7 +140,7 @@ def update_subevent_date_from_subevent(chunk_size, explain):
 
 def run_query_until_no_updates(slug, query, count_query, explain):
     if explain:
-        explain_query_until_no_updates(slug, query)
+        explain_query_until_no_updates(slug, query, count_query)
         return 0, 0
 
     return run_query_until_no_updates_(slug, query, count_query)
@@ -150,9 +150,7 @@ def run_query_until_no_updates_(slug, query, count_query):
     total_rows_updated = 0
     iterations = 0
 
-    with connections["default"].cursor() as cursor:
-        cursor.execute(count_query)
-        total_rows = cursor.fetchone()[0]
+    total_rows = _get_count(count_query)
 
     if total_rows == 0:
         print(f"Skipping backfill for '{slug}', no rows to update.")
@@ -177,8 +175,16 @@ def run_query_until_no_updates_(slug, query, count_query):
     return total_rows_updated, iterations
 
 
-def explain_query_until_no_updates(slug, query):
-    print(f"Running 'explain' for {slug} query:\n")
+def _get_count(count_query):
+    with connections["default"].cursor() as cursor:
+        cursor.execute(count_query)
+        total_rows = cursor.fetchone()[0]
+    return total_rows
+
+
+def explain_query_until_no_updates(slug, query, count_query):
+    total_rows = _get_count(count_query)
+    print(f"Running 'explain' for {slug} query: total rows to update = {total_rows}\n")
     query = f"explain {query}"
     with transaction.atomic(using='default'), connections["default"].cursor() as cursor:
         cursor.execute(query)
