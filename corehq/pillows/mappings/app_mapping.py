@@ -1,10 +1,10 @@
-from corehq.apps.es.apps import ElasticApp
+from corehq.apps.es.apps import app_adapter
 from corehq.util.elastic import prefix_for_tests
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from pillowtop.es_utils import ElasticsearchIndexInfo, APP_HQ_INDEX_NAME
 
-APP_INDEX = ElasticApp.index_name
-APP_ES_TYPE = ElasticApp.type
+APP_INDEX = app_adapter.index_name
+APP_ES_TYPE = app_adapter.type
 APP_ES_ALIAS = prefix_for_tests("hqapps")
 
 APP_MAPPING = {

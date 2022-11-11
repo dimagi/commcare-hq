@@ -127,6 +127,8 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('reports.TableauServer', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('reports.TableauVisualization', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('reports.TableauConnectedApp', SimpleFilter('server__domain')),
+    FilteredModelIteratorBuilder('reports.TableauUser', SimpleFilter('server__domain')),
+    FilteredModelIteratorBuilder('reports.TableauGroup', SimpleFilter('server__domain')),
     FilteredModelIteratorBuilder('smsforms.SQLXFormsSession', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('parent__domain')),

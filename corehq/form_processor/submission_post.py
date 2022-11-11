@@ -460,13 +460,13 @@ class SubmissionPost(object):
             return
 
         from corehq.pillows.case_search import transform_case_for_elasticsearch
-        from corehq.apps.es.case_search import ElasticCaseSearch
+        from corehq.apps.es.case_search import case_search_adapter
         actions = [
             BulkActionItem.index(transform_case_for_elasticsearch(case_model.to_json()))
             for case_model in case_models
         ]
         try:
-            _, errors = ElasticCaseSearch().bulk(actions, raise_on_error=False, raise_on_exception=False)
+            _, errors = case_search_adapter.bulk(actions, raise_on_error=False, raise_on_exception=False)
         except Exception as e:
             errors = [str(e)]
 

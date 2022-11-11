@@ -12,6 +12,7 @@ from django.utils.translation import gettext_lazy, gettext_noop
 
 from dimagi.ext.couchdbkit import IntegerProperty
 
+from corehq.apps.reports.const import TABLEAU_ROLES
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
 
@@ -145,18 +146,6 @@ class AppNotFound(Exception):
     pass
 
 
-def _apply_mapping(export_tables, mapping_dict):
-    def _clean(tabledata):
-        def _clean_tablename(tablename):
-            return mapping_dict.get(tablename, tablename)
-        return (_clean_tablename(tabledata[0]), tabledata[1])
-    return list(map(_clean, export_tables))
-
-
-def _apply_removal(export_tables, removal_list):
-    return [tabledata for tabledata in export_tables if not tabledata[0] in removal_list]
-
-
 class TableauServer(models.Model):
     SERVER_TYPES = (
         ('server', gettext_lazy('Tableau Server')),
@@ -236,3 +225,18 @@ class TableauConnectedApp(models.Model):
             }
         )
         return token
+
+
+class TableauGroup(models.Model):
+    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
+    name = models.CharField(max_length=64)
+    group_id = models.CharField(max_length=32)
+
+
+class TableauUser(models.Model):
+    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
+    username = models.CharField(max_length=255)
+    role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
+    groups = models.ManyToManyField(TableauGroup)
+    tableau_user_id = models.CharField(max_length=64)
+    last_synced = models.DateTimeField(auto_now=True)

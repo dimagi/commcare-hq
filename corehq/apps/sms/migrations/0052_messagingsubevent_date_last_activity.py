@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='messagingsubevent',
             name='date_last_activity',
-            field=models.DateTimeField(auto_now=True, db_index=True, null=True),
+            field=models.DateTimeField(db_index=True, null=True),
         ),
     ]

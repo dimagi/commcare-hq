@@ -13,7 +13,7 @@ depending on the finished migration, so it must be applied to all environments
 before that can happen.
 
 However, it would be tedious and error prone to require everyone running smaller
-CommCareHQ environments, including developers who are working on other parts of
+CommCare HQ environments, including developers who are working on other parts of
 the project, to learn about and follow the painstaking manual process used to
 migrate large environments. This document outlines a pattern that can be used to
 ensure a smooth rollout to everyone running any size environment with minimal
@@ -70,12 +70,12 @@ did it run successfully?) can be performed in the context of a Django migration.
     AUTO_MIGRATE_ITEMS_LIMIT = 10000
     AUTO_MIGRATE_FAILED_MESSAGE = """
     A migration must be performed before this environment can be upgraded to the
-    latest version of CommCareHQ. Instructions for running the migration can be
+    latest version of CommCare HQ. Instructions for running the migration can be
     found at this link:
 
     https://github.com/dimagi/commcare-cloud/blob/master/docs/changelog/0000-example-entry.md
 
-    You will need to checkout an older version of CommCareHQ first if you are
+    You will need to checkout an older version of CommCare HQ first if you are
     unable to run the management command because it has been deleted:
 
     git checkout {commit}
