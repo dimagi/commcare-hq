@@ -398,7 +398,7 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
         for case_config in self.dhis2_entity_config['case_configs']:
             value_source_configs.append(case_config['org_unit_id'])
             value_source_configs.append(case_config['tei_id'])
-            for value_source_config in case_config.attributes.values():
+            for value_source_config in case_config['attributes'].values():
                 value_source_configs.append(value_source_config)
 
         case_trigger_infos = get_relevant_case_updates_from_form_json(
