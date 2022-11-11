@@ -911,6 +911,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'custom_xml',
         'case_tile_configuration',
         'multi_select',
+        'auto_select',
         'print_template',
         'search_properties',
         'search_default_properties',
@@ -973,6 +974,8 @@ def _update_module_short_detail(src_module, dest_module, attrs):
     if src_module.module_type == "shadow":
         if 'multi_select' in attrs:
             src_detail.multi_select = src_module.is_multi_select()
+            src_detail.auto_select = src_module.is_auto_select()
+            src_detail.max_select_value = src_module.max_select_value
 
     if attrs:
         dest_detail = getattr(dest_module.case_details, "short")
@@ -1130,6 +1133,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'long': params.get("long_custom_variables", None)
     }
     multi_select = params.get('multi_select', None)
+    auto_select = params.get('auto_select', None)
+    max_select_value = params.get('max_select_value', None)
 
     app = get_app(domain, app_id)
 
@@ -1151,6 +1156,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
         detail.short.multi_select = multi_select
+        detail.short.auto_select = auto_select
+        detail.short.max_select_value = max_select_value
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
