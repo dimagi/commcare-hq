@@ -11,6 +11,7 @@ from django.utils.translation import gettext_lazy
 import jsonfield
 import pytz
 from dateutil.parser import parse
+from field_audit import audit_fields
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
     BooleanProperty,
@@ -84,6 +85,7 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@audit_fields("active", "deleted")
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
