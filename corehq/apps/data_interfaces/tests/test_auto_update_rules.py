@@ -1,4 +1,4 @@
-from django.test.testcases import TestCase
+from django.test import TestCase
 
 from field_audit.models import AuditEvent
 
@@ -14,9 +14,8 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
             active=True,
             workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
         )
-        event = AuditEvent.objects.first()
-        self.assertEqual(event.object_class_path, 'corehq.apps.data_interfaces.models.AutomaticUpdateRule')
-        self.assertEqual(event.delta, {'active': {'new': True}, 'deleted': {'new': False}})
+        audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).first()
+        self.assertEqual(audit_event.delta, {'active': {'new': True}, 'deleted': {'new': False}})
 
     def test_active_field_for_rule_is_audited_when_updated(self):
         # create rule
@@ -29,9 +28,8 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
         rule.active = False
         rule.save()
 
-        event = AuditEvent.objects.last()
-        self.assertEqual(event.object_class_path, 'corehq.apps.data_interfaces.models.AutomaticUpdateRule')
-        self.assertEqual(event.delta, {'active': {'old': True, 'new': False}})
+        audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
+        self.assertEqual(audit_event.delta, {'active': {'old': True, 'new': False}})
 
     def test_deleted_field_for_rule_is_audited_when_deleted(self):
         # create rule
@@ -44,6 +42,6 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
         rule.deleted = True
         rule.save()
 
-        event = AuditEvent.objects.last()
-        self.assertEqual(event.object_class_path, 'corehq.apps.data_interfaces.models.AutomaticUpdateRule')
-        self.assertEqual(event.delta, {'deleted': {'old': False, 'new': True}})
+        audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
+        self.assertEqual(audit_event.object_class_path, 'corehq.apps.data_interfaces.models.AutomaticUpdateRule')
+        self.assertEqual(audit_event.delta, {'deleted': {'old': False, 'new': True}})
