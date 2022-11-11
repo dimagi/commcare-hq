@@ -101,10 +101,8 @@ did it run successfully?) can be performed in the context of a Django migration.
 
         if num_items < AUTO_MIGRATE_ITEMS_LIMIT:
             try:
-                call_command(
-                    AUTO_MIGRATE_COMMAND_NAME,
-                    dbname=schema_editor.connection.alias,
-                )
+                # add args and kwargs here as needed
+                call_command(AUTO_MIGRATE_COMMAND_NAME)
                 migrated = count_items_to_be_migrated(schema_editor.connection) == 0
                 if not migrated:
                     print("Automatic migration failed")
