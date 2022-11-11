@@ -80,7 +80,5 @@ branches:
     - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     - akj/abdm-api-for-mobile-app # Akash Sep 28
     - ml/lookup-table-UI # Minha Oct 19
-    - em/case-search-checkbox # Evan Oct 27
     - es/disable-tokens  # Ethan Nov 9
-    - sk/messaging-api-new-date-field  # Simon Nov 10
 submodules: { }
