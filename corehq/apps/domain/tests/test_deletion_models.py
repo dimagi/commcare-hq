@@ -39,6 +39,7 @@ IGNORE_APPS = {
     'toggle_ui',
     'sso',
     'oauth_integrations',
+    'rest_framework',
 }
 
 IGNORE_MODELS = {
@@ -65,6 +66,7 @@ IGNORE_MODELS = {
     'util.TransientBounceEmail',
     'registration.AsyncSignupRequest',
     'users.UserHistory',
+    'custom.abdm.models.ABDMUser',
 }
 
 
