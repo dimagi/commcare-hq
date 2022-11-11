@@ -244,7 +244,7 @@ class AdminRestoreView(TemplateView):
             return HttpResponseBadRequest(msg)
 
         if not self._validate_user_access(self.user):
-            raise Http404()
+            return HttpResponseNotFound('User %s not found.' % full_username)
 
         self.app_id = kwargs.get('app_id', None)
 
