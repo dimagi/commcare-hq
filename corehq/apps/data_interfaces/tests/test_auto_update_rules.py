@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from field_audit.models import AuditEvent
+from field_audit.models import AuditEvent, AuditAction
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
@@ -45,3 +45,13 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
         audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
         self.assertEqual(audit_event.object_class_path, 'corehq.apps.data_interfaces.models.AutomaticUpdateRule')
         self.assertEqual(audit_event.delta, {'deleted': {'old': False, 'new': True}})
+
+    def test_bulk_delete_is_audited(self):
+        AutomaticUpdateRule.objects.create(
+            domain='test',
+            active=True,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+        )
+        AutomaticUpdateRule.objects.all().delete(audit_action=AuditAction.AUDIT)
+        audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
+        self.assertEqual({'active': {'old': True}, 'deleted': {'old': False}}, audit_event.delta)
