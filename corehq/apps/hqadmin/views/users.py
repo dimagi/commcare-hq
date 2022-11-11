@@ -262,9 +262,11 @@ class AdminRestoreView(TemplateView):
         return super(AdminRestoreView, self).get(request, *args, **kwargs)
 
     def _get_restore_response(self):
+        params = get_restore_params(self.request, self.domain)
+        params['as_user'] = self.user.username
         return get_restore_response(
-            self.domain, self.user, app_id=self.app_id,
-            **get_restore_params(self.request, self.domain)
+            self.domain, self.request.couch_user, app_id=self.app_id,
+            **params
         )
 
     @staticmethod
