@@ -30,6 +30,9 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.settings.views import BaseProjectDataView
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import HqPermissions
+
 from corehq.motech.fhir.const import SUPPORTED_FHIR_RESOURCE_TYPES
 from corehq.motech.fhir.utils import (
     load_fhir_resource_mappings,
@@ -332,6 +335,7 @@ class DataDictionaryView(BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(require_permission(HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 

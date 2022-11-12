@@ -643,7 +643,12 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if toggles.DATA_DICTIONARY.enabled(self.domain):
+        from corehq.apps.users.models import HqPermissions
+        has_view_data_dict_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_data_dict)
+        )
+        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission:
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
