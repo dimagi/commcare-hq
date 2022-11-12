@@ -259,10 +259,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Any active automatic case update rules should be deactivated.
         """
         try:
-            AutomaticUpdateRule.by_domain(
-                domain.name,
-                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            ).update(active=False)
+            # NOTE: AuditAction.AUDIT for bulk updates has not been implemented in django-field-audit yet
+            for rule in AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE):
+                rule.update(active=False)
             AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
             return True
         except Exception:
