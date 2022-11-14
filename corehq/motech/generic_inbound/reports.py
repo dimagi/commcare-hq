@@ -72,6 +72,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
             DataTablesColumn(_("Timestamp")),
             DataTablesColumn(_("Status")),
             DataTablesColumn(_("Response")),
+            DataTablesColumn(_("Details")),
         )
 
     @cached_property
@@ -94,9 +95,10 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         for log in self._queryset[self.pagination.start:self.pagination.end]:
             yield [
                 log.api.name,
-                _to_link(log),
+                log.timestamp,
                 log.get_status_display(),
                 log.response_status,
+                _to_link(log),
             ]
 
 
@@ -104,9 +106,8 @@ def _to_link(log):
     return format_html(
         "<a href={}>{}</a>",
         reverse(ApiLogDetailView.urlname, args=[log.domain, log.id]),
-        log.timestamp,
+        _("View Details"),
     )
-
 
 
 @method_decorator([GENERIC_INBOUND_API.required_decorator(), domain_admin_required], name='dispatch')
