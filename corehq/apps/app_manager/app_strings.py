@@ -376,7 +376,7 @@ def _create_case_search_app_strings(
                 id_strings.case_search_title_translation(module),
                 clean_trans(CaseSearch.title_label.default(), langs)
             )
-            yield(
+            yield (
                 id_strings.case_search_description_locale(module),
                 clean_trans(CaseSearch.description_text.default(), langs)
             )
