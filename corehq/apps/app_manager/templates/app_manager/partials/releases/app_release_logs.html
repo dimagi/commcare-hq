@@ -18,11 +18,10 @@
             <span data-bind="text: version"></span>
           </td>
           <td class="col-sm-3">
-            <span data-bind="visible: is_released()">{% trans "Released" %}</span>
-            <span data-bind="visible: !is_released()">{% trans "In Test" %}</span>
+            <span data-bind="text: action"></span>
           </td>
           <td class="col-sm-3">
-            <span data-bind="text: timestamp"></span>
+            <span data-bind="text: created_at_string"></span>
           </td>
           <td class="col-sm-3">
             <span data-bind="text: user_email"></span>

@@ -5,6 +5,7 @@ from math import ceil
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.http.response import Http404, HttpResponse, JsonResponse
@@ -15,15 +16,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.cache import cache_control
 from django.views.generic import View
-from django.core.paginator import Paginator
 
 import ghdiff
 from couchdbkit import NoResultFound, ResourceNotFound
 from django_prbac.decorators import requires_privilege
 from django_prbac.utils import has_privilege
-from corehq.apps.users.util import cached_user_id_to_user_display
-from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime
 
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.web import json_response
@@ -35,6 +32,7 @@ from corehq.apps.analytics.tasks import (
     track_built_app_on_hubspot,
     track_workflow,
 )
+from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -62,8 +60,8 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
     Application,
-    AppReleaseByLocation,
     ApplicationReleaseLog,
+    AppReleaseByLocation,
     BuildProfile,
     LatestEnabledBuildProfiles,
     SavedAppBuild,
@@ -94,7 +92,10 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -281,14 +282,13 @@ def release_build(request, domain, app_id, saved_app_id):
             create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
-    app_release_log = ApplicationReleaseLog()
-    app_release_log.domain = domain
-    app_release_log.is_released = is_released
-    app_release_log.version = saved_app.version
-    app_release_log.app_id = app_id
-    app_release_log.user_id = request.couch_user.get_id
-
-    app_release_log.save()
+    ApplicationReleaseLog.objects.create(
+        domain=domain,
+        action=ApplicationReleaseLog.ACTION_RELEASED if is_released else ApplicationReleaseLog.ACTION_IN_TEST,
+        version=saved_app.version,
+        app_id=app_id,
+        user_id=request.couch_user.get_id
+    )
 
     if ajax:
         return json_response({
@@ -673,9 +673,9 @@ def paginate_release_logs(request, domain, app_id):
     try:
         limit = int(limit)
     except (TypeError, ValueError):
-        limit = 5
+        limit = DEFAULT_PAGE_LIMIT
 
-    app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-timestamp')
+    app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-created_at')
     paginator = Paginator(object_list=app_release_logs, per_page=limit)
     current_page = paginator.get_page(page)
 
@@ -694,9 +694,8 @@ def paginate_release_logs(request, domain, app_id):
 
 
 def populate_data_app_release_logs(log, timezone):
-    timestamp = ServerTime(log.timestamp).user_time(timezone)
-    timestamp_date = timestamp.ui_string(USER_DATE_FORMAT)
-    timestamp_time = timestamp.ui_string(USER_TIME_FORMAT)
-    log.timestamp = "{} {}".format(timestamp_date, timestamp_time)
-    log.user_email = cached_user_id_to_user_display(log.user_id)
-    return log.to_json()
+    timestamp = ServerTime(log.created_at).user_time(timezone)
+    return_log = log.to_json()
+    return_log["created_at_string"] = timestamp.ui_string(USER_DATETIME_FORMAT)
+    return_log["user_email"] = cached_user_id_to_user_display(log.user_id)
+    return return_log
