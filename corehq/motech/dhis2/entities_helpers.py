@@ -157,7 +157,7 @@ def update_tracked_entity_instance(
     attempt=1
 ):
     case_updates = {}
-    for attr_id, value_source_config in case_config.attributes.items():
+    for attr_id, value_source_config in case_config['attributes'].items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
         )
@@ -219,12 +219,12 @@ def update_enrollments(
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     case_updates = {}
     tracked_entity = {
-        "trackedEntityType": case_config.te_type_id,
-        "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
+        "trackedEntityType": case_config['te_type_id'],
+        "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
         "attributes": [],
     }
 
-    for attr_id, value_source_config in case_config.attributes.items():
+    for attr_id, value_source_config in case_config['attributes'].items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
         )
@@ -263,14 +263,14 @@ def create_relationships(
     subcase-to-supercase relationship, and the other corresponding to a
     supercase-to-subcase relationship.
     """
-    subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
+    subcase_tei_id = get_value(subcase_config['tei_id'], subcase_trigger_info)
     if not subcase_tei_id:
         raise Dhis2Exception(_(
             'Unable to create DHIS2 relationship: The case {case} is not '
             'registered in DHIS2.'
         ).format(case=subcase_trigger_info))
 
-    for rel_config in subcase_config.relationships_to_export:
+    for rel_config in subcase_config['relationships_to_export']:
         supercase = get_supercase(subcase_trigger_info, rel_config)
         if not supercase:
             # There is no parent case to export a relationship for
@@ -289,26 +289,26 @@ def create_relationships(
                      supercase_type=supercase.type))
         supercase_info = get_case_trigger_info_for_case(
             supercase,
-            [supercase_config.tei_id],
+            [supercase_config['tei_id']],
         )
-        supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
+        supercase_tei_id = get_value(supercase_config['tei_id'], supercase_info)
         if not supercase_tei_id:
             # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
             ).format(case=supercase_info))
-        if rel_config.supercase_to_subcase_dhis2_id:
+        if rel_config['supercase_to_subcase_dhis2_id']:
             create_relationship(
                 requests,
-                rel_config.supercase_to_subcase_dhis2_id,
+                rel_config['supercase_to_subcase_dhis2_id'],
                 supercase_tei_id,
                 subcase_tei_id,
             )
-        if rel_config.subcase_to_supercase_dhis2_id:
+        if rel_config['subcase_to_supercase_dhis2_id']:
             create_relationship(
                 requests,
-                rel_config.subcase_to_supercase_dhis2_id,
+                rel_config['subcase_to_supercase_dhis2_id'],
                 subcase_tei_id,
                 supercase_tei_id,
             )
@@ -318,9 +318,9 @@ def get_supercase(case_trigger_info, relationship_config):
     case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
     for index in case.live_indices:
         index_matches_config = (
-            index.identifier == relationship_config.identifier
-            and index.referenced_type == relationship_config.referenced_type
-            and index.relationship == relationship_config.relationship
+            index.identifier == relationship_config['identifier']
+            and index.referenced_type == relationship_config['referenced_type']
+            and index.relationship == relationship_config['relationship']
         )
         if index_matches_config:
             return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
@@ -413,7 +413,7 @@ def get_enrollments(case_trigger_info, case_config):
     for that. Cases/TEIs are enrolled in a program when the first event
     in that program occurs.
     """
-    case_org_unit = get_value(case_config.org_unit_id, case_trigger_info)
+    case_org_unit = get_value(case_config['org_unit_id'], case_trigger_info)
     programs_by_id = get_programs_by_id(case_trigger_info, case_config)
     enrollments = []
     for program_id, program in programs_by_id.items():

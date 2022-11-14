@@ -597,7 +597,7 @@ class UpdatePersonAddressTask(WorkflowTask):
 
     def run(self):
         export_data = get_export_data(
-            self.openmrs_config.case_config.person_preferred_address,
+            self.openmrs_config['case_config']['person_preferred_address'],
             ADDRESS_PROPERTIES,
             self.info,
         )

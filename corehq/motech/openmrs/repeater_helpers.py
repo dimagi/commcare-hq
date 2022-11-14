@@ -197,7 +197,7 @@ def create_patient(requests, info, case_config):
 
     def get_identifiers():
         identifiers = []
-        for patient_identifier_type, value_source_config in case_config.patient_identifiers.items():
+        for patient_identifier_type, value_source_config in case_config['patient_identifiers'].items():
             value_source = as_value_source(value_source_config)
             if (
                 patient_identifier_type != PERSON_UUID_IDENTIFIER_TYPE_ID
@@ -216,21 +216,21 @@ def create_patient(requests, info, case_config):
 
     person = {}
     name = get_export_data(
-        case_config.person_preferred_name,
+        case_config['person_preferred_name'],
         NAME_PROPERTIES,
         info,
     )
     if name:
         person['names'] = [name]
     address = get_export_data(
-        case_config.person_preferred_address,
+        case_config['person_preferred_address'],
         ADDRESS_PROPERTIES,
         info,
     )
     if address:
         person['addresses'] = [address]
     properties = get_export_data(
-        case_config.person_properties,
+        case_config['person_properties'],
         PERSON_PROPERTIES,
         info,
     )
