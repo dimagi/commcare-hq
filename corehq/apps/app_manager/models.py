@@ -6248,21 +6248,33 @@ class LatestEnabledBuildProfiles(models.Model):
 
 
 class ApplicationReleaseLog(models.Model):
+    ACTION_RELEASED = "released"
+    ACTION_IN_TEST = "in_test"
+
+    ACTION_DISPLAY = {
+        ACTION_RELEASED: _("Released"),
+        ACTION_IN_TEST: _("In Test")
+    }
+
     domain = models.CharField(max_length=255, null=False, default='')
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_released = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=255)
     version = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
 
+    @property
+    def action_string(self):
+        return self.ACTION_DISPLAY[self.action]
+
     def to_json(self):
         return {
-            "user_email": self.user_email,
-            "timestamp": self.timestamp,
-            "is_released": self.is_released,
+            "created_at": self.created_at,
+            "action": self.action_string,
             "version": self.version,
-            "user_id": self.user_id
+            "user_id": self.user_id,
         }
+
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
