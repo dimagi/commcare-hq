@@ -101,6 +101,10 @@
         </tr>
         </tbody>
       </table>
+      <!-- ko if: flagEnabled -->
+      <input type="checkbox" data-bind="checked: combineSheets" />
+      {% trans "Combine sheets" %}
+      <!-- /ko -->
     </div>
   </div>
   <div class="row">
