@@ -4,10 +4,11 @@ from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSimpleFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.toggles import GENERIC_INBOUND_API
+from corehq.motech.generic_inbound.models import ConfigurableAPI
 
 from .models import RequestLog
 
@@ -21,11 +22,14 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
         return RequestLog.Status.choices
 
 
-class ApiFilter(BaseSimpleFilter):
+class ApiFilter(BaseMultipleOptionFilter):
     slug = "api_name"
     label = gettext_lazy("API")
-    help_inline = gettext_lazy("Enter an api name to filter results")
 
+    @property
+    def options(self):
+        api_list = [(api.name, api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
+        return api_list
 
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     name = gettext_lazy('Inbound API Request Logs')
