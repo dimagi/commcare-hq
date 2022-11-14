@@ -108,6 +108,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                       <locale id="case_search.m0.inputs"/>
                     </text>
                   </title>
+                  <description>
+                    <text>
+                      <locale id="case_search.m0.description"/>
+                    </text>
+                  </description>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -150,6 +155,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                         <locale id="case_search.m0.inputs"/>
                     </text>
                   </title>
+                  <description>
+                    <text>
+                        <locale id="case_search.m0.description"/>
+                    </text>
+                  </description>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -203,6 +213,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                         <locale id="case_search.m0.inputs"/>
                     </text>
                   </title>
+                  <description>
+                    <text>
+                        <locale id="case_search.m0.description"/>
+                    </text>
+                  </description>
                   <data key="case_type" ref="'case'"/>
                   <prompt key="name">
                     <display>
@@ -396,6 +411,11 @@ class InlineSearchSuiteTest(SimpleTestCase, SuiteMixin):
                       <locale id="case_search.m0.inputs"/>
                   </text>
                 </title>
+                <description>
+                  <text>
+                      <locale id="case_search.m0.description"/>
+                  </text>
+                </description>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
@@ -564,6 +584,11 @@ class InlineSearchChildModuleTest(SimpleTestCase, SuiteMixin):
                       <locale id="case_search.m1.inputs"/>
                   </text>
                 </title>
+                <description>
+                  <text>
+                      <locale id="case_search.m1.description"/>
+                  </text>
+                </description>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                   <display>
