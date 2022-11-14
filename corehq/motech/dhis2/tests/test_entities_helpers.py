@@ -238,7 +238,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -271,7 +271,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -313,7 +313,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -453,7 +453,7 @@ class TestRequests(TestCase):
         repeater = Mock()
         repeater.dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[self.subcase_config, self.supercase_config]
-        )
+        ).to_json()
         requests = Requests(
             DOMAIN,
             'https://dhis2.example.com/',
