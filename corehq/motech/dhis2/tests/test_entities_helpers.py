@@ -17,7 +17,6 @@ from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import (
     Dhis2CaseConfig,
     Dhis2EntityConfig,
-    Dhis2FormConfig,
     RelationshipConfig,
 )
 from corehq.motech.dhis2.entities_helpers import (
