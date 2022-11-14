@@ -95,7 +95,6 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
     var $releaseLogsTab = $('#release-logs-tab');
     if ($releaseLogsTab.length) {
         var appReleaseLogModel = appReleaseLogsModel();
-
         $releaseLogsTab.koApplyBindings(appReleaseLogModel);
     }
 
