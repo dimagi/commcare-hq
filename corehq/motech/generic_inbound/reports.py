@@ -23,13 +23,14 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
 
 
 class ApiFilter(BaseMultipleOptionFilter):
-    slug = "api_name"
-    label = gettext_lazy("API")
+    slug = 'api_id'
+    label = gettext_lazy('API')
 
     @property
     def options(self):
-        api_list = [(api.name, api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
+        api_list = [(api.id, api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
         return api_list
+
 
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     name = gettext_lazy('Inbound API Request Logs')
@@ -60,7 +61,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     def shared_pagination_GET_params(self):
         return [
             {'name': param, 'value': self.request.GET.getlist(param)}
-            for param in ['request_status', 'startdate', 'enddate', 'api_name']
+            for param in ['request_status', 'startdate', 'enddate', 'api_id']
         ]
 
     @property
@@ -82,9 +83,9 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         status = self.request.GET.getlist('request_status')
         if status:
             queryset = queryset.filter(status__in=status)
-        api_name = self.request.GET.get('api_name')
-        if api_name:
-            queryset = queryset.filter(api__name__contains=api_name)
+        api_ids = self.request.GET.getlist('api_id')
+        if api_ids:
+            queryset = queryset.filter(api__id__in=api_ids)
         return queryset
 
     @property
