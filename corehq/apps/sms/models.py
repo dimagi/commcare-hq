@@ -1552,7 +1552,7 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
     parent = models.ForeignKey('MessagingEvent', on_delete=models.CASCADE)
     domain = models.CharField(max_length=126, null=True)
     date = models.DateTimeField(null=False, db_index=True)
-    date_last_activity = models.DateTimeField(null=True, db_index=True, auto_now=True)
+    date_last_activity = models.DateTimeField(null=True, auto_now=True)
     recipient_type = models.CharField(max_length=3, choices=RECIPIENT_CHOICES, null=False)
     recipient_id = models.CharField(max_length=126, null=True)
     content_type = models.CharField(max_length=3, choices=MessagingEvent.CONTENT_CHOICES, null=False)
@@ -1571,6 +1571,10 @@ class MessagingSubEvent(models.Model, MessagingStatusMixin):
 
     class Meta(object):
         app_label = 'sms'
+        index_together = (
+            # used by the messaging-event api
+            ('domain', 'date_last_activity', 'id'),
+        )
 
     def save(self, *args, **kwargs):
         super(MessagingSubEvent, self).save(*args, **kwargs)
