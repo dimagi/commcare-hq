@@ -148,7 +148,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_error_code_filtering(self):
         _create_sms_messages(self.domain, 2, True)
-        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1 = MessagingSubEvent.objects.filter(domain=self.domain.name)[0]
         e1.error_code = MessagingEvent.ERROR_CANNOT_FIND_FORM
         e1.save()
         url = f'{self.list_endpoint}?error_code=CANNOT_FIND_FORM'
@@ -159,7 +159,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_case_id_filter(self):
         _create_sms_messages(self.domain, 2, True)
-        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1 = MessagingSubEvent.objects.filter(domain=self.domain.name)[0]
         e1.case_id = "123"
         e1.save()
         url = f'{self.list_endpoint}?case_id=123'
@@ -513,7 +513,7 @@ class TestDateFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
     def _setup_for_date_filter_test(self):
         _create_sms_messages(self.domain, 5, randomize=True)
         return list(
-            MessagingSubEvent.objects.filter(parent__domain=self.domain.name)
+            MessagingSubEvent.objects.filter(domain=self.domain.name)
             .order_by('date')
             .values_list('date', flat=True)
         )

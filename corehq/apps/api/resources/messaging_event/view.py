@@ -56,4 +56,4 @@ def _get_list(request):
 
 
 def _get_base_query(domain):
-    return MessagingSubEvent.objects.select_related("parent").filter(parent__domain=domain)
+    return MessagingSubEvent.objects.select_related("parent").filter(domain=domain)
