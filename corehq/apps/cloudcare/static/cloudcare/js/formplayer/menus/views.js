@@ -362,6 +362,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             self.styles = options.styles;
             self.hasNoItems = options.collection.length === 0;
             self.redoLast = options.redoLast;
+            self.maxSelectValue = options.maxSelectValue;
             if (sessionStorage.selectedValues !== undefined) {
                 let parsedSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
                 self.selectedCaseIds = parsedSelectedValues !== undefined && parsedSelectedValues !== '' ? parsedSelectedValues.split(',') : [];
@@ -550,6 +551,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Update state of Continue button
             self.ui.continueButtonText.text(self.selectedCaseIds.length);
             self.ui.continueButton.prop("disabled", !self.selectedCaseIds.length);
+            self.ui.continueButton.prop("disabled", self.selectedCaseIds.length > self.maxSelectValue);
 
             // Reconcile state of "select all" checkbox
             self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
