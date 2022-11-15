@@ -86,10 +86,10 @@ INACTIVITY_TIMEOUT = 60 * 24 * 365
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
 ######## Email setup ########
-# email settings: these ones are the custom hq ones
-EMAIL_LOGIN = "notifications@dimagi.com"
+
+EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
-EMAIL_SMTP_HOST = "smtp.gmail.com"
+EMAIL_SMTP_HOST = "smtp.example.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
