@@ -86,6 +86,7 @@ def get_case_config_for_case_type(case_type, dhis2_entity_config):
     for case_config in dhis2_entity_config.case_configs:
         if case_config.case_type == case_type:
             return case_config
+    return None
 
 
 def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
@@ -271,20 +272,28 @@ def create_relationships(
 
     for rel_config in subcase_config.relationships_to_export:
         supercase = get_supercase(subcase_trigger_info, rel_config)
+        if not supercase:
+            # There is no parent case to export a relationship for
+            continue
         supercase_config = get_case_config_for_case_type(
             supercase.type,
             dhis2_entity_config,
         )
+        if not supercase_config:
+            # The parent case type is not configured for integration
+            raise ConfigurationError(_(
+                "A relationship is configured for the {subcase_type} case "
+                "type, but there is no CaseConfig for the {supercase_type} "
+                "case type."
+            ).format(subcase_type=subcase_trigger_info.type,
+                     supercase_type=supercase.type))
         supercase_info = get_case_trigger_info_for_case(
             supercase,
             [supercase_config.tei_id],
         )
         supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
         if not supercase_tei_id:
-            # The problem could be that the relationship is configured
-            # in the CaseConfig for the subcase's case type, but there
-            # is no CaseConfig for the supercase's case type.
-            # Alternatively, registering the supercase in DHIS2 failed.
+            # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
@@ -315,6 +324,7 @@ def get_supercase(case_trigger_info, relationship_config):
         )
         if index_matches_config:
             return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
+    return None
 
 
 def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
