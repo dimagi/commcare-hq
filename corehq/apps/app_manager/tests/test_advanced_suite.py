@@ -393,6 +393,11 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
                         <locale id="case_search.m0.inputs"/>
                     </text>
                 </title>
+                <description>
+                    <text>
+                        <locale id="case_search.m0.description"/>
+                    </text>
+                </description>
                 <data key="case_type" ref="'patient'"/>
                 <prompt key="name">
                   <display>

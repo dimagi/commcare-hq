@@ -20,6 +20,11 @@
             <locale id="case_search.m1.inputs"/>
           </text>
         </title>
+        <description>
+          <text>
+            <locale id="case_search.m1.description"/>
+          </text>
+        </description>
         <data key="case_type" ref="'leaf'"/>
         <data key="x_commcare_data_registry" ref="'a_registry'"/>
         <prompt key="name">

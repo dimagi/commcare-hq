@@ -348,6 +348,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("search_label", "list", "Find a Mother", "Mère!"),
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
             ("title_label", "list", "Find a Mom", "Maman!"),
+            ("description_text", "list", "More information", "Plus d'information"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -401,6 +402,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
           ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
           ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
+          ("menu1", "description_text", "list", "More information", "Plus d'information", "", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -780,6 +782,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.assertEqual(module.search_config.search_label.label, {'en': 'Search All Cases'})
         self.assertEqual(module.search_config.search_again_label.label, {'en': 'Search Again'})
         self.assertEqual(module.search_config.title_label, {})
+        self.assertEqual(module.search_config.description_text, {})
 
         self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
 
@@ -787,6 +790,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         self.assertEqual(module.search_config.search_again_label.label,
                          {'en': 'Find Another Mother', 'fra': 'Mère! Encore!'})
         self.assertEqual(module.search_config.title_label, {'en': 'Find a Mom', 'fra': 'Maman!'})
+        self.assertEqual(module.search_config.description_text,
+                         {'en': 'More information', 'fra': "Plus d'information"})
 
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
@@ -1076,7 +1081,8 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),
                           ('search_again_label', 'list', 'Find Another Mother'),
-                          ('title_label', 'list', 'Find a Mom')])
+                          ('title_label', 'list', 'Find a Mom'),
+                          ('description_text', 'list', 'More information')])
 
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     def test_module_case_search_rows(self):
