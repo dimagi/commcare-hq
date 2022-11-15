@@ -59,5 +59,3 @@ RUN npm shrinkwrap && \
 COPY . /vendor/
 COPY docker/min_settings.py /vendor/localsettings.py
 RUN python manage.py collectstatic --noinput
-
-# TODO: Fix settings for log files

@@ -4,6 +4,7 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SHARED_FILES_DIR = '/sharedfiles'
 
 DATABASES = {
     'default': {
@@ -111,7 +112,15 @@ JAR_SIGN = {
 
 SECRET_KEY = 'you should really change this'
 
-# No logging
+LOG_HOME = os.path.join(SHARED_FILES_DIR, 'log')
+COUCH_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.couch.log")
+DJANGO_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.analytics.log")
+FORMPLAYER_TIMING_FILE = os.path.join(LOG_HOME, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = os.path.join(LOG_HOME, "formplayer.diff.log")
+SOFT_ASSERTS_LOG_FILE = os.path.join(LOG_HOME, "soft_asserts.log")
+MAIN_COUCH_SQL_DATAMIGRATION = os.path.join(LOG_HOME, "main_couch_sql_datamigration.log")
 
 LOCAL_LOGGING_CONFIG = {
     'loggers': {
