@@ -62,6 +62,7 @@ def make_events_for_test(
     )
     subevent = MessagingSubEvent.objects.create(
         parent=event,
+        domain=domain,
         date=message_date,
         recipient_type=recipient_type,
         recipient_id=None,

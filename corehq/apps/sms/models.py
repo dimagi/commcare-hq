@@ -1196,6 +1196,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     def create_structured_sms_subevent(self, case_id):
         obj = MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=self.recipient_type,
             recipient_id=self.recipient_id,
@@ -1212,6 +1213,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             recipient_id=None, case=None, completed=False):
         obj = MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.get_recipient_type_from_doc_type(recipient_doc_type),
             recipient_id=recipient_id,
@@ -1381,6 +1383,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
 
         return MessagingSubEvent.objects.create(
             parent=self,
+            domain=self.domain,
             date=datetime.utcnow(),
             recipient_type=recipient_type,
             recipient_id=contact.get_id if recipient_type else None,
