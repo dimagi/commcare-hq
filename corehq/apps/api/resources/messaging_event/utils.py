@@ -39,7 +39,7 @@ def get_order_by_field(request_params):
     order_by = request_params.get("order_by")
 
     if not order_by:
-        return "date"
+        return "date_last_activity"
 
     if order_by not in ("date", "-date", "date_last_activity", "-date_last_activity"):
         raise BadRequest(_("No matching '{field_name}' field for ordering").format(field_name=order_by))
