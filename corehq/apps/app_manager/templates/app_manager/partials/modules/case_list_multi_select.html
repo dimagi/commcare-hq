@@ -24,7 +24,7 @@
               {% trans "Enable auto select" %}
             </label>
           </div>
-          <div data-bind="visible: multiSelectEnabled()">
+          <div data-bind="visible: multiSelectEnabled() && autoSelectEnabled()">
             <label class="control-label {% css_label_class %}">
                 {% trans "Maximum selected value" %}
                 <span class="hq-help-template" data-title="{% trans 'Maximum Selected Value' %}"

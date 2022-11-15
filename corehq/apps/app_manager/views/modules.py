@@ -39,6 +39,7 @@ from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_TYPE,
+    MULTI_SELECT_MAX_SELECT_VALUE,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
@@ -1133,8 +1134,9 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     }
     multi_select = params.get('multi_select', None)
     auto_select = params.get('auto_select', None)
-    max_select_value = params.get('max_select_value', None)
-
+    max_select_value = params.get('max_select_value', MULTI_SELECT_MAX_SELECT_VALUE)
+    if max_select_value == '':
+        max_select_value = MULTI_SELECT_MAX_SELECT_VALUE
     app = get_app(domain, app_id)
 
     try:
