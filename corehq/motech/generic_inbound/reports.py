@@ -85,7 +85,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
             queryset = queryset.filter(status__in=status)
         api_ids = self.request.GET.getlist('api_id')
         if api_ids:
-            queryset = queryset.filter(api__id__in=api_ids)
+            queryset = queryset.filter(api_id__in=api_ids)
         return queryset
 
     @property
