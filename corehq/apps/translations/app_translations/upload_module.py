@@ -30,6 +30,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.search_label = None
         self.search_again_label = None
         self.title_label = None
+        self.description_text = None
         self.tab_headers = None
 
     def update(self, rows):
@@ -94,6 +95,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.title_label:
             self._update_translation(self.title_label, self.module.search_config.title_label)
+
+        if self.description_text:
+            self._update_translation(self.description_text, self.module.search_config.description_text)
 
         self._update_case_search_labels(rows)
 
@@ -199,6 +203,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.search_label = None
         self.search_again_label = None
         self.title_label = None
+        self.description_text = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
         index_of_last_graph_in_condensed = -1
@@ -256,6 +261,8 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self.search_again_label = row
             elif row['case_property'] == 'title_label':
                 self.title_label = row
+            elif row['case_property'] == 'description_text':
+                self.description_text = row
 
             # If it's a tab header, don't add it to condensed rows
             elif re.search(r'^Tab \d+$', row['case_property']):
