@@ -138,6 +138,21 @@ def update_subevent_date_from_subevent(chunk_size, explain):
     return run_query_until_no_updates("subevent", query, count_query, explain)
 
 
+def update_subevent_domain_from_parent(chunk_size, explain):
+    count_query = "select count(*) from sms_messagingsubevent where domain is null"
+
+    query = f"""
+        update sms_messagingsubevent set domain = parent.domain
+        from sms_messagingevent parent where sms_messagingsubevent.parent_id = parent.id
+        and sms_messagingsubevent.id in (
+            select id from sms_messagingsubevent where
+            sms_messagingsubevent.domain is null
+            limit {chunk_size}
+        )
+    """
+    return run_query_until_no_updates("domain", query, count_query, explain)
+
+
 def run_query_until_no_updates(slug, query, count_query, explain):
     if explain:
         explain_query_until_no_updates(slug, query, count_query)
