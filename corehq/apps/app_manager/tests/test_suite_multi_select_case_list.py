@@ -120,11 +120,6 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./entry",
         )
-        self.assertXmlPartialEqual(
-            self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
-            suite,
-            "./remote-request",
-        )
 
     def test_multi_select_case_list_modified_max_select_value(self):
         self.module.case_details.short.max_select_value = 15
