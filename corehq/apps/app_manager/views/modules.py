@@ -1134,9 +1134,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     }
     multi_select = params.get('multi_select', None)
     auto_select = params.get('auto_select', None)
-    max_select_value = params.get('max_select_value', MULTI_SELECT_MAX_SELECT_VALUE)
-    if max_select_value == '':
-        max_select_value = MULTI_SELECT_MAX_SELECT_VALUE
+    max_select_value = params.get('max_select_value') or MULTI_SELECT_MAX_SELECT_VALUE
     app = get_app(domain, app_id)
 
     try:
