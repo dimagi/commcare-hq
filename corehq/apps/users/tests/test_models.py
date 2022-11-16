@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.users.models import (
+    HqPermissions,
     CommCareUser,
     CouchUser,
     Invitation,
@@ -11,6 +12,35 @@ from corehq.apps.users.models import (
 )
 
 from corehq.apps.domain.models import Domain
+
+
+class HqPermissionsTest(SimpleTestCase):
+
+    def setUp(self):
+        self.hq_permissions = HqPermissions()
+        self.permission_names = self.hq_permissions.permission_names()
+        self.permissions = {name: getattr(self.hq_permissions, name) for name in self.permission_names}
+
+    def test_permissions_default_false(self):
+        default_true_permissions = ['access_all_locations', 'report_an_issue']
+        for name, value in self.permissions.items():
+            if name not in default_true_permissions:
+                self.assertFalse(value)
+
+    def test_view_allowed_when_edit_allowed(self):
+        edit_view_permission_dict = {
+            'edit_web_users': 'view_web_users',
+            'edit_commcare_users': 'view_commcare_users',
+            'edit_groups': 'view_groups',
+            'edit_locations': 'view_locations',
+            'edit_data_dict': 'view_data_dict',
+            'edit_apps': 'view_apps',
+        }
+        for edit_permission_name in edit_view_permission_dict:
+            setattr(self.hq_permissions, edit_permission_name, True)
+        self.hq_permissions.normalize()
+        for view_permission_name in edit_view_permission_dict.values():
+            self.assertTrue(getattr(self.hq_permissions, view_permission_name))
 
 
 class CouchUserTest(SimpleTestCase):
