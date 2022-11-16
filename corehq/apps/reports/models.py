@@ -222,7 +222,7 @@ class TableauConnectedApp(models.Model):
                 "exp": datetime.utcnow() + timedelta(minutes=5),
                 "jti": str(uuid.uuid4()),
                 "aud": "tableau",
-                "sub": "username",
+                "sub": "HQ_integration_admin",
                 "scp": connected_app_permissions
             },
             self.plaintext_secret_value,
@@ -295,29 +295,13 @@ class TableauAPISession(object):
             raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}")
 
     def sign_in(self):
-        # JWT sign in (preferred, but doesn't work at the moment)
-        # response_body = self._make_request(
-        #     'POST',
-        #     'Sign In',
-        #     self.base_url + '/auth/signin',
-        #     {
-        #         "credentials": {
-        #             "jwt": self.tableau_connected_app.create_jwt(),
-        #             "site": {
-        #                 "contentUrl": self.tableau_connected_app.server.target_site
-        #             }
-        #         }
-        #     }
-        # )
-        # Token sign in (temporary workaround)
         response_body = self._make_request(
             self.POST,
             'Sign In',
             self.base_url + '/auth/signin',
             {
                 "credentials": {
-                    "personalAccessTokenName": self.tableau_connected_app.app_client_id,  # TEMP
-                    "personalAccessTokenSecret": self.tableau_connected_app.secret_id,  # TEMP
+                    "jwt": self.tableau_connected_app.create_jwt(),
                     "site": {
                         "contentUrl": self.tableau_connected_app.server.target_site
                     }
@@ -393,7 +377,7 @@ class TableauAPISession(object):
         page_number = 1
         total_users = sys.maxsize
         tableau_users = []
-        while(page_size * (page_number - 1) < total_users):
+        while (page_size * (page_number - 1) < total_users):
             response_body = self._make_request(
                 self.GET,
                 'Get Users in Group',
