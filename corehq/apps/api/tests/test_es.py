@@ -1,17 +1,15 @@
 from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.client import ElasticManageAdapter
-from corehq.apps.es.cases import ElasticCase
+from corehq.apps.es.client import manager
+from corehq.apps.es.cases import ElasticCase, case_adapter
 from corehq.util.es.elasticsearch import TransportError
 
 from ..es import CaseESView
 
 
 class ElasticCase2(ElasticCase):
-
-    type = "type2"
-    mapping = ElasticCase().mapping  # TODO: remove with transient_util
+    mapping = case_adapter.mapping
 
 
 @es_test
@@ -19,21 +17,15 @@ class TestESView(SimpleTestCase):
 
     def setUp(self):
         super().setUp()
-        self.manager = ElasticManageAdapter()
-        self.cases = ElasticCase()
-        self._purge_indices()
-        self.manager.index_create(self.cases.index_name)
-        self.manager.index_put_mapping(self.cases.index_name, self.cases.type,
-                                       self.cases.mapping)
-        self.manager.index_put_alias(self.cases.index_name, CaseESView.es_alias)
-
-    def tearDown(self):
-        self._purge_indices()
-        super().tearDown()
+        self.cases = case_adapter
+        manager.index_create(self.cases.index_name)
+        self.addCleanup(self._purge_indices)
+        manager.index_put_mapping(self.cases.index_name, self.cases.type, self.cases.mapping)
+        manager.index_put_alias(self.cases.index_name, CaseESView.es_alias)
 
     def _purge_indices(self):
         try:
-            self.manager.index_delete(self.cases.index_name)
+            manager.index_delete(self.cases.index_name)
         except TransportError:
             # TransportError(404, 'index_not_found_exception', 'no such index')
             pass
@@ -63,8 +55,8 @@ class TestESView(SimpleTestCase):
         self.assertEqual(doc_ny, to_dict(view.get_document(doc_id)))
 
         # index a doc with a new _type ('type2')
-        cases_type2 = ElasticCase2()
-        self.manager.index_put_mapping(cases_type2.index_name, cases_type2.type,
+        cases_type2 = ElasticCase2(case_adapter.index_name, "type2")
+        manager.index_put_mapping(cases_type2.index_name, cases_type2.type,
                                        cases_type2.mapping)
         doc_dc = mk_doc(doc_id, "DC")
         cases_type2.index(doc_dc, refresh=True)
