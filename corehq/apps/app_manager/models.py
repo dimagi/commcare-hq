@@ -2080,6 +2080,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)
 
+    # If True, enables auto selection of cases in a multi-select case list
+    auto_select = BooleanProperty(default=False)
+
+    # Sets a maximum selected value for manual and auto select multi-select case lists
+    max_select_value = IntegerProperty(default=100)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
@@ -6245,6 +6251,31 @@ class LatestEnabledBuildProfiles(models.Model):
     def to_json(self, app_names):
         from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
         return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
+
+class ApplicationReleaseLog(models.Model):
+    ACTION_RELEASED = "released"
+    ACTION_IN_TEST = "in_test"
+
+    ACTION_DISPLAY = {
+        ACTION_RELEASED: _("Released"),
+        ACTION_IN_TEST: _("In Test")
+    }
+
+    domain = models.CharField(max_length=255, null=False, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=255)
+    version = models.IntegerField()
+    app_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+
+    def to_json(self):
+        return {
+            "created_at": self.created_at,
+            "action": self.ACTION_DISPLAY[self.action],
+            "version": self.version,
+            "user_id": self.user_id,
+        }
 
 
 # backwards compatibility with suite-1.0.xml

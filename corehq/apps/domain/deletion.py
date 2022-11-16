@@ -316,6 +316,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
+    ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
