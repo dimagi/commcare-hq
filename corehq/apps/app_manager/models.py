@@ -6263,14 +6263,10 @@ class ApplicationReleaseLog(models.Model):
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
 
-    @property
-    def action_string(self):
-        return self.ACTION_DISPLAY[self.action]
-
     def to_json(self):
         return {
             "created_at": self.created_at,
-            "action": self.action_string,
+            "action": self.ACTION_DISPLAY[self.action],
             "version": self.version,
             "user_id": self.user_id,
         }

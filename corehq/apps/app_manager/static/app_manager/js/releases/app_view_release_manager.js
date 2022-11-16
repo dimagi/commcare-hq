@@ -59,8 +59,9 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                 return false;
             }
             self.fetchState('pending');
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("paginate_release_logs");
             $.ajax({
-                url: self.getApiEndpoint("paginate_release_logs"),
+                url: url,
                 dataType: 'json',
                 data: {
                     page: page,
@@ -81,14 +82,17 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             });
         };
 
-        self.getApiEndpoint = function () {
-            for (var i = 1; i < arguments.length; i++) {
-                arguments[i] = ko.utils.unwrapObservable(arguments[i]);
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.fetchState.subscribe(function (newValue) {
+            if (newValue === 'pending') {
+                self.showPaginationSpinner(true);
+            } else {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
             }
-            return hqImport("hqwebapp/js/initial_page_data").reverse.apply(null, arguments);
-        };
+        });
 
-        self.showPaginationSpinner = ko.observable();
         return self;
     };
 
