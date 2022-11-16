@@ -152,8 +152,6 @@ def textarea_trans(name, langs=None, input_name='name', input_id=None, data_bind
         "data_bind_attribute": data_bind_attribute
     })
 
-    print(options)
-
     template = '''
         <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
                     class="form-control vertical-resize"

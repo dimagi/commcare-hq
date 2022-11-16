@@ -349,7 +349,7 @@ def _create_case_search_app_strings(
 
             yield (
                 id_strings.case_search_description_locale(module),
-                clean_trans(module.search_config.description_text, langs)
+                clean_trans(module.search_config.description, langs)
             )
 
             # search again label
@@ -378,7 +378,7 @@ def _create_case_search_app_strings(
             )
             yield (
                 id_strings.case_search_description_locale(module),
-                clean_trans(CaseSearch.description_text.default(), langs)
+                clean_trans(CaseSearch.description.default(), langs)
             )
             yield (
                 id_strings.case_search_locale(module),

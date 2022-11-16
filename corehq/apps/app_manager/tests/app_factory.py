@@ -230,7 +230,7 @@ class AppFactory(object):
         case_module.search_config.title_label = {
             'en': 'Find a Mom',
         }
-        case_module.search_config.description_text = {
+        case_module.search_config.description = {
             'en': 'More information',
         }
         case_module.search_config.properties = [CaseSearchProperty(
