@@ -23865,6 +23865,7 @@ define('vellum/richText',[
                 var xpath = extractXPathInfo($(this)).value;
                 return widget.mug.form.normalizeHashtag(xpath);
             });
+            description = xml.normalize(description)
 
             // Remove ckeditor-supplied title attributes, which will otherwise override popover title
             $imgs.removeAttr("title");
@@ -23877,13 +23878,13 @@ define('vellum/richText',[
                 html: true,
                 sanitize: false,  // bootstrap, don't remove data-ufid attribute
                 content: easy_reference_popover({
-                    text: description.text(),
+                    text: description,
                     ufid: labelMug ? labelMug.ufid : "",
                 }),
                 template: '<div contenteditable="false" class="popover rich-text-popover">' +
                     '<div class="popover-inner">' +
                     '<div class="popover-title"></div>' +
-                    (labelMug || description.text() ?
+                    (labelMug || description ?
                         '<div class="popover-content"><p></p></div>' : '') +
                     '</div></div>',
                 delay: {
