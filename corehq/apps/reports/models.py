@@ -290,3 +290,222 @@ class TableauAPISession(object):
                 return body
         else:
             raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}")
+
+    def sign_in(self):
+        # JWT sign in (preferred, but doesn't work at the moment)
+        # response_body = self._make_request(
+        #     'POST',
+        #     'Sign In',
+        #     self.base_url + '/auth/signin',
+        #     {
+        #         "credentials": {
+        #             "jwt": self.tableau_connected_app.create_jwt(),
+        #             "site": {
+        #                 "contentUrl": self.tableau_connected_app.server.target_site
+        #             }
+        #         }
+        #     }
+        # )
+        # Token sign in (temporary workaround)
+        response_body = self._make_request(
+            self.POST,
+            'Sign In',
+            self.base_url + '/auth/signin',
+            {
+                "credentials": {
+                    "personalAccessTokenName": self.tableau_connected_app.app_client_id,  # TEMP
+                    "personalAccessTokenSecret": self.tableau_connected_app.secret_id,  # TEMP
+                    "site": {
+                        "contentUrl": self.tableau_connected_app.server.target_site
+                    }
+                }
+            }
+        )
+        auth_token = response_body['credentials']['token']
+        self.headers.update({'X-Tableau-Auth': auth_token})
+        self.site_id = response_body['credentials']['site']['id']
+        self.signed_in = True
+
+    def _verify_signed_in(self):
+        if not self.signed_in:
+            raise TableauAPIError("You must be signed in to the API to call that method.")
+
+    def sign_out(self):
+        self._make_request(
+            self.POST,
+            'Sign Out',
+            self.base_url + '/auth/signout',
+            {}
+        )
+        self.signed_in = False
+        del self.headers['X-Tableau-Auth']
+        self.site_id = None
+
+    def query_groups(self, name=None):
+        '''
+        Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
+        Exclude the `name` arg to get a list of all groups on the site.
+
+        Each group dict returned has this format, at a minumum:
+        {
+            "domain": {
+                "name": ...
+            },
+            "id": ...,
+            "name": ...
+        }
+        '''
+        url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000'
+        if name:
+            url += f'&filter=name:eq:{name}'
+        response_body = self._make_request(
+            self.GET,
+            'Query Groups',
+            url,
+            {}
+        )
+        if name:
+            return response_body['groups']['group'][0]
+        else:
+            if 1000 < int(response_body['pagination']['totalAvailable']):
+                raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
+            return response_body['groups']['group']
+
+    def get_users_in_group(self, group_id):
+        '''
+        Returns a list of users in the group with the given ID. Return value format:
+        [
+            {
+                "externalAuthUserId': "",
+                "id": ...,
+                "name": ...,
+                "siteRole": ...,
+                "locale": ...,
+                "language": ...},
+            },
+            ...
+        ]
+        '''
+        page_size = 100
+        page_number = 1
+        total_users = sys.maxsize
+        tableau_users = []
+        while(page_size * (page_number - 1) < total_users):
+            response_body = self._make_request(
+                self.GET,
+                'Get Users in Group',
+                (self.base_url
+                + f'/sites/{self.site_id}/groups/{group_id}/users?pageSize={page_size}&pageNumber={page_number}'),
+                {}
+            )
+            tableau_users += response_body['users']['user']
+            if page_number == 1:
+                total_users = int(response_body['pagination']['totalAvailable'])
+            page_number += 1
+        return tableau_users
+
+    def create_group(self, group_name, min_site_role):
+        '''
+        Creates a Tableau group with the given name, and assigns the given role to the group.
+        Returns the group ID.
+        '''
+        response_body = self._make_request(
+            self.POST,
+            'Create Group',
+            self.base_url + f'/sites/{self.site_id}/groups',
+            {
+                "group": {
+                    "name": f"{group_name}",
+                    "minimumSiteRole": f"{min_site_role}"
+                }
+            }
+        )
+        return response_body['group']['id']
+
+    def add_user_to_group(self, user_id, group_id):
+        '''
+        Adds the Tableau user with the given ID to the group with the given ID.
+        '''
+        self._make_request(
+            self.POST,
+            'Add User to Group',
+            self.base_url + f'/sites/{self.site_id}/groups/{group_id}/users',
+            {
+                "user": {
+                    "id": f"{user_id}"
+                }
+            }
+        )
+        return True
+
+    def get_groups_for_user_id(self, id):
+        '''
+        Returns the list of groups that the user with the given ID belongs to. Return value format:
+        [
+            {
+                "domain": {
+                    "name": ... # The group's domain's name
+                },
+                "id": ...,
+                "name": ... # The group's actual name
+            },
+            ...
+        ]
+        '''
+        page_size = 1000
+        page_number = 1
+        response_body = self._make_request(
+            self.GET,
+            'Get Groups for User',
+            (self.base_url
+            + f'/sites/{self.site_id}/users/{id}/groups?pageSize={page_size}&pageNumber={page_number}'),
+            {}
+        )
+        if 1000 < int(response_body['pagination']['totalAvailable']):
+            raise TableauAPIError("Error: API does not work where a user belongs to more than 1000 groups.")
+        return response_body['groups']['group']
+
+    def create_user(self, username, role):
+        '''
+        Adds a user to Tableau with the given username and role. Returns the ID of the created user.
+        '''
+        response_body = self._make_request(
+            self.POST,
+            'Create User',
+            self.base_url + f'/sites/{self.site_id}/users',
+            {
+                "user": {
+                    "name": f"{username}",
+                    "siteRole": f"{role}"
+                }
+            }
+        )
+        return response_body['user']['id']
+
+    def update_user(self, id, role):
+        '''
+        Updates the user with the given ID to have the given role.
+        '''
+        self._make_request(
+            self.PUT,
+            'Update User',
+            self.base_url + f'/sites/{self.site_id}/users/{id}',
+            {
+                "user": {
+                    "siteRole": f"{role}"
+                }
+            }
+        )
+        return True
+
+    def delete_user(self, id):
+        '''
+        Deletes the user with the given ID.
+        '''
+        self._make_request(
+            self.DELETE,
+            'Delete User',
+            self.base_url + f'/sites/{self.site_id}/users/{id}',
+            {}
+        )
+        return True
