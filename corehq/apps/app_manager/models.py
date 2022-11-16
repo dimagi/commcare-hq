@@ -6259,7 +6259,7 @@ class ApplicationReleaseLog(models.Model):
     domain = models.CharField(max_length=255, null=False, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     action = models.CharField(max_length=255)
-    version = models.CharField(max_length=255)
+    version = models.IntegerField()
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
 
