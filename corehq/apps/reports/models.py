@@ -213,6 +213,9 @@ class TableauConnectedApp(models.Model):
         self.encrypted_secret_value = b64_aes_encrypt(plaintext)
 
     def create_jwt(self):
+        connected_app_permissions = ["tableau:users:read", "tableau:users:create", "tableau:users:update",
+                                     "tableau:users:delete", "tableau:groups:read", "tableau:groups:create",
+                                     "tableau:groups:update", "tableau:groups:delete"]
         token = jwt.encode(
             {
                 "iss": self.app_client_id,
@@ -220,7 +223,7 @@ class TableauConnectedApp(models.Model):
                 "jti": str(uuid.uuid4()),
                 "aud": "tableau",
                 "sub": "username",
-                "scp": ["tableau:views:embed", "tableau:metrics:embed"]
+                "scp": connected_app_permissions
             },
             self.plaintext_secret_value,
             algorithm="HS256",
