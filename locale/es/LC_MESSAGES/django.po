@@ -1531,6 +1531,7 @@ msgstr "Número de Estado"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/incremental.py
@@ -1548,6 +1549,7 @@ msgstr "Número de Estado"
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/generic_inbound/reports.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html
 #: corehq/motech/templates/motech/logs.html
@@ -7472,6 +7474,7 @@ msgstr "Etiqueta del Caso"
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -9047,6 +9050,12 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 msgid "e.g. Use #,# as separator to select multiple values"
 msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Check"
+msgid "Checkbox"
+msgstr "Revisar"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/export/forms.py corehq/apps/reports/daterange.py
@@ -10812,9 +10821,9 @@ msgstr ""
 #: corehq/apps/app_manager/views/modules.py
 msgid ""
 "\n"
-"                    The case search property '{}' is missing the following "
+"                The case search property '{}' is missing the following "
 "lookup table attributes: {}\n"
-"                "
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
@@ -13565,6 +13574,12 @@ msgstr ""
 msgid "Automatic Update Rules"
 msgstr ""
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#, fuzzy
+#| msgid "Case History"
+msgid "Rule Run History"
+msgstr "Historial del Caso"
+
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 msgid "NOTE: A system administrator is required to edit this rule."
 msgstr "NOTA: Se necesita que un administrador de sistema edite esta regla."
@@ -13951,19 +13966,42 @@ msgid "Last Run"
 msgstr "Última Ejecución"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "                            Snapshot of %(snap_name)s\n"
-#| "                        "
 msgid ""
 "\n"
 "                          Are you sure you want to <strong>delete</strong> "
 "this rule?\n"
 "                        "
 msgstr ""
-"\n"
-"Captura Instantánea de  %(snap_name)s"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+msgid ""
+"All rules for a specific case type are run together and are referred to as "
+"rule runs. This table displays information associated with each rule run."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "Created On"
+msgid "Started On"
+msgstr "Creado En..."
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "Finish"
+msgid "Finished On"
+msgstr "Finalice"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "# Cases Created"
+msgid "# of Cases Updated"
+msgstr "# Casos Creados"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "# Cases Closed"
+msgid "# of Cases Closed"
+msgstr "# Casos Cerrados"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -17641,7 +17679,8 @@ msgstr ""
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 #: corehq/apps/locations/views.py corehq/apps/registry/views.py
-#: corehq/reports.py corehq/tabs/tabclasses.py
+#: corehq/motech/generic_inbound/reports.py corehq/reports.py
+#: corehq/tabs/tabclasses.py
 msgid "Project Settings"
 msgstr "Configuraciones del Proyecto"
 
@@ -27370,6 +27409,7 @@ msgstr "Ejemplo de Mensaje Estructurado"
 
 #: corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
+#: corehq/motech/generic_inbound/reports.py
 msgid "Response"
 msgstr "Respuesta"
 
@@ -27703,38 +27743,28 @@ msgid "Explorer - Can Publish"
 msgstr ""
 
 #: corehq/apps/reports/const.py
-#, fuzzy
-#| msgid "Project Administration"
 msgid "Server Administrator"
-msgstr "Administración del Proyecto"
+msgstr ""
 
 #: corehq/apps/reports/const.py
 msgid "Site Administrator - Explorer"
 msgstr ""
 
 #: corehq/apps/reports/const.py
-#, fuzzy
-#| msgid "Administrative Operations"
 msgid "Site Administrator - Creator"
-msgstr "Operaciones Administrativas"
+msgstr ""
 
 #: corehq/apps/reports/const.py
-#, fuzzy
-#| msgid "License"
 msgid "Unlicensed"
-msgstr "Licencia"
+msgstr ""
 
 #: corehq/apps/reports/const.py
-#, fuzzy
-#| msgid "Cases Only"
 msgid "Read Only"
-msgstr "Solo Casos"
+msgstr "Solo Lectura"
 
 #: corehq/apps/reports/const.py
-#, fuzzy
-#| msgid "View"
 msgid "Viewer"
-msgstr "Vista"
+msgstr ""
 
 #: corehq/apps/reports/daterange.py
 msgid "Last N Days"
@@ -28993,6 +29023,7 @@ msgstr "Registro de Mensaje"
 
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/standard/users/reports.py
+#: corehq/motech/generic_inbound/reports.py
 #: corehq/motech/templates/motech/log_detail.html
 #: corehq/motech/templates/motech/logs.html corehq/motech/views.py
 msgid "Timestamp"
@@ -40349,6 +40380,13 @@ msgstr ""
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
 msgid ""
+"A relationship is configured for the {subcase_type} case type, but there is "
+"no CaseConfig for the {supercase_type} case type."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
 "DHIS2 created {n} relationships. Errors from DHIS2 can be found in Remote "
 "API Logs: {url}"
 msgstr ""
@@ -40788,6 +40826,22 @@ msgstr "Validación Fallida"
 
 #: corehq/motech/generic_inbound/models.py
 msgid "Reverted"
+msgstr ""
+
+#: corehq/motech/generic_inbound/reports.py
+#, fuzzy
+#| msgid "Request Sent"
+msgid "Request Status"
+msgstr "Solicitud Enviada"
+
+#: corehq/motech/generic_inbound/reports.py
+#, fuzzy
+#| msgid "API Key"
+msgid "API"
+msgstr "Clave API"
+
+#: corehq/motech/generic_inbound/reports.py
+msgid "Inbound API Request Logs"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
