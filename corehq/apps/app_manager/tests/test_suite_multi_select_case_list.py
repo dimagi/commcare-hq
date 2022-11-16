@@ -76,8 +76,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m0_case_short"
-                                  detail-confirm="m0_case_long"
-                                  max-select-value="100"/>
+                                  detail-confirm="m0_case_long"/>
                 </session>
               </entry>
             </partial>
@@ -120,13 +119,9 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             suite,
             "./entry",
         )
-        self.assertXmlPartialEqual(
-            self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
-            suite,
-            "./remote-request",
-        )
 
     def test_multi_select_case_list_modified_max_select_value(self):
+        self.module.case_details.short.auto_select = True
         self.module.case_details.short.max_select_value = 15
         print(self.module.case_details.short)
         suite = self.factory.app.create_suite()
@@ -147,6 +142,7 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   value="./@case_id"
                                   detail-select="m0_case_short"
                                   detail-confirm="m0_case_long"
+                                  autoselect="true"
                                   max-select-value="15"/>
                 </session>
               </entry>
@@ -272,8 +268,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"
-                                  max-select-value="100"/>
+                                  detail-confirm="m1_case_long"/>
                 </session>
               </entry>
             </partial>
@@ -336,8 +331,7 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"
-                                  max-select-value="100"/>
+                                  detail-confirm="m1_case_long"/>
                 </session>
               </entry>
             </partial>
