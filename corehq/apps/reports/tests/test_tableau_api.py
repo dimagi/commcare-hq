@@ -216,23 +216,27 @@ class TestTableauAPI(TestCase):
         self.test_server = TableauServer(
             domain=self.domain,
             server_type='server',
-            server_name='server name',
+            server_name='test_server',
             validate_hostname='host name',
             target_site='target site'
         )
-        self.test_connected_app = TableauConnectedApp(
+        self.test_server.save()
+        self.connected_app = TableauConnectedApp(
             app_client_id='asdf1234',
             secret_id='zxcv5678',
             server=self.test_server
         )
-        super(TestTableauConnectedApp, self).setUp()
+        self.connected_app.save()
+        self.tableau_instance = FakeTableauInstance()
+        super(TestTableauAPI, self).setUp()
 
-    def test_encryption(self):
-        self.test_connected_app.plaintext_secret_value = 'qwer1234'
+    def test_connected_app_encryption(self):
+        self.connected_app.plaintext_secret_value = 'qwer1234'
+        self.connected_app.save()
 
-        self.assertNotEqual(self.test_connected_app.encrypted_secret_value, 'qwer1234')
-        self.assertEqual(self.test_connected_app.plaintext_secret_value, 'qwer1234')
-        self.assertEqual(len(self.test_connected_app.encrypted_secret_value), 24)
+        self.assertNotEqual(self.connected_app.encrypted_secret_value, 'qwer1234')
+        self.assertEqual(self.connected_app.plaintext_secret_value, 'qwer1234')
+        self.assertEqual(len(self.connected_app.encrypted_secret_value), 24)
 
     def test_jwt(self):
         # Just test that creating the JWT doesn't error out. Tests for actual funcationality of the JWT can be \
