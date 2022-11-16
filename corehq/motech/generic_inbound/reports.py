@@ -9,10 +9,11 @@ from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
-from corehq.apps.reports.filters.base import BaseMultipleOptionFilter, BaseSimpleFilter
+from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
 from corehq.toggles import GENERIC_INBOUND_API
+from corehq.motech.generic_inbound.models import ConfigurableAPI
 from corehq.util import reverse
 
 from .models import RequestLog
@@ -27,10 +28,14 @@ class RequestStatusFilter(BaseMultipleOptionFilter):
         return RequestLog.Status.choices
 
 
-class ApiFilter(BaseSimpleFilter):
-    slug = "api_name"
-    label = gettext_lazy("API")
-    help_inline = gettext_lazy("Enter an api name to filter results")
+class ApiFilter(BaseMultipleOptionFilter):
+    slug = 'api_id'
+    label = gettext_lazy('API')
+
+    @property
+    def options(self):
+        api_list = [(api.id, api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
+        return api_list
 
 
 class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
@@ -62,7 +67,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
     def shared_pagination_GET_params(self):
         return [
             {'name': param, 'value': self.request.GET.getlist(param)}
-            for param in ['request_status', 'startdate', 'enddate', 'api_name']
+            for param in ['request_status', 'startdate', 'enddate', 'api_id']
         ]
 
     @property
@@ -85,9 +90,9 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         status = self.request.GET.getlist('request_status')
         if status:
             queryset = queryset.filter(status__in=status)
-        api_name = self.request.GET.get('api_name')
-        if api_name:
-            queryset = queryset.filter(api__name__contains=api_name)
+        api_ids = self.request.GET.getlist('api_id')
+        if api_ids:
+            queryset = queryset.filter(api_id__in=api_ids)
         return queryset
 
     @property
