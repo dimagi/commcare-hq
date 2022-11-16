@@ -1,4 +1,9 @@
+from corehq.apps.reports.exceptions import TableauAPIError
 import jwt
+import json
+import logging
+import requests
+import sys
 import uuid
 
 from datetime import datetime, timedelta
@@ -240,3 +245,48 @@ class TableauUser(models.Model):
     groups = models.ManyToManyField(TableauGroup)
     tableau_user_id = models.CharField(max_length=64)
     last_synced = models.DateTimeField(auto_now=True)
+
+
+logger = logging.getLogger('tableau_api')
+logger.setLevel('DEBUG')
+
+
+class TableauAPISession(object):
+
+    GET = 'GET'
+    POST = 'POST'
+    PUT = 'PUT'
+    DELETE = 'DELETE'
+
+    def __init__(self, connected_app):
+        self.tableau_connected_app = connected_app
+        self.headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        api_version = self._get_api_version(self.tableau_connected_app)
+        self.base_url = f'https://{connected_app.server.server_name}/api/{api_version}'
+        self.signed_in = False
+        self.site_id = None
+
+    def _get_api_version(self, connected_app):
+        response_body = self._make_request(
+            self.GET,
+            'Get API version',
+            f'https://{connected_app.server.server_name}/api/2.4/serverinfo',
+            {}
+        )
+        return response_body['serverInfo']['restApiVersion']
+
+    def _make_request(self, method, request_name, url, data):
+        if request_name not in ['Get API version', 'Sign In']:
+            self._verify_signed_in()
+        logger.info(f"Making Tableau API request '{request_name}'.")
+        response = requests.request(method, url, data=json.dumps(data), headers=self.headers)
+        if response.ok:
+            logger.info(f"Tableau API request '{request_name}' was succussful.")
+            if response.text:
+                body = json.loads(response.text)
+                return body
+        else:
+            raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}")

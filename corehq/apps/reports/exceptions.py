@@ -14,3 +14,7 @@ class InvalidDaterangeException(Exception):
 
 class TooMuchDataError(Exception):
     pass
+
+
+class TableauAPIError(Exception):
+    pass
