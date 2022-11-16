@@ -70,7 +70,7 @@ hqDefine("app_manager/js/details/screen", function () {
         });
         self.multiSelectEnabled = ko.observable(spec[self.columnKey].multi_select);
         self.multiSelectEnabled.subscribe(function () {
-            self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled())
+            self.autoSelectEnabled(self.multiSelectEnabled() && self.autoSelectEnabled());
             self.fireChange();
         });
         self.maxSelectValue = ko.observable(spec[self.columnKey].max_select_value);
