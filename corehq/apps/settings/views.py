@@ -1,7 +1,6 @@
 import json
 import re
 from base64 import b64encode
-from datetime import datetime
 from io import BytesIO
 
 from django.conf import settings
