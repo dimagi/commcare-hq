@@ -202,7 +202,7 @@ class RemoteRequestFactory(object):
                 storage_instance=self.storage_instance,
                 template='case',
                 title=self.build_title() if self.app.enable_case_search_title_translation else None,
-                description=self.build_description(),
+                description=self.build_description() if self.module.search_config.description != {} else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,

@@ -107,11 +107,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                         <locale id="case_search.m0.inputs"/>
                     </text>
                 </title>
-                <description>
-                  <text>
-                    <locale id="case_search.m0.description"/>
-                  </text>
-                </description>
               <data key="case_type" ref="'case'"/>
               <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
               <prompt key="name">
@@ -559,11 +554,6 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
                       <locale id="case_search.m0.inputs"/>
                     </text>
                   </title>
-                  <description>
-                    <text>
-                      <locale id="case_search.m0.description"/>
-                    </text>
-                  </description>
                   <data key="case_type" ref="'case'"/>
                   <data key="{CASE_SEARCH_REGISTRY_ID_KEY}" ref="'myregistry'"/>
                   <prompt key="name">

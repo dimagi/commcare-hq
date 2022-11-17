@@ -15,11 +15,6 @@
                 <locale id="case_search.m0.inputs"/>
               </text>
             </title>
-            <description>
-              <text>
-                <locale id="case_search.m0.description"/>
-              </text>
-            </description>
             <data key="case_type" ref="'case'"/>
             <data key="x_commcare_data_registry" ref="'myregistry'"/>
             <prompt key="name">

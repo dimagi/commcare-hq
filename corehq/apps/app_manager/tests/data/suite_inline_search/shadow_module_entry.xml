@@ -21,11 +21,6 @@
                         <locale id="case_search.m1.inputs"/>
                     </text>
                 </title>
-                <description>
-                    <text>
-                        <locale id="case_search.m1.description"/>
-                    </text>
-                </description>
                 <data key="case_type" ref="'case'"/>
                 <prompt key="name">
                     <display>
