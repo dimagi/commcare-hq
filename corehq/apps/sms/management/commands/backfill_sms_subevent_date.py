@@ -42,8 +42,11 @@ class Command(BaseCommand):
         update_subevent_date_from_emails(chunk_size, explain)
         update_subevent_date_from_sms(chunk_size, explain)
         update_subevent_date_from_xform_session(chunk_size, explain)
-        # this one must always run last
+        # this one must always run after all the other date back-filling
         update_subevent_date_from_subevent(chunk_size, explain)
+
+        # back-fill domain
+        update_subevent_domain_from_parent(chunk_size, explain)
 
         if not explain:
             try:
