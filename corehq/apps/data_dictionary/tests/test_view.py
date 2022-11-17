@@ -177,6 +177,8 @@ class DataDictionaryViewTest(TestCase):
         cls.web_user_data_dict_access = cls.make_web_user_with_data_dict_role('has_data_dict@ex.com', cls.domain,
                                                                             has_data_dict_access=True)
         cls.web_user_no_data_dict_access = cls.make_web_user_with_data_dict_role('no_data_dict@ex.com', cls.domain)
+        cls.client = Client()
+        cls.url = reverse('data_dictionary', args=[cls.domain_name])
 
     @classmethod
     def tearDownClass(cls):
@@ -184,10 +186,6 @@ class DataDictionaryViewTest(TestCase):
         cls.web_user_no_data_dict_access.delete(cls.domain_name, deleted_by=None)
         cls.domain.delete()
         super(DataDictionaryViewTest, cls).tearDownClass()
-
-    def setUp(self):
-        self.url = reverse('data_dictionary', args=[self.domain_name])
-        self.client = Client()
 
     def test_has_view_access(self):
         self.client.login(username='has_data_dict@ex.com', password='foobar')
