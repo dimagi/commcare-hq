@@ -644,14 +644,11 @@ class ProjectDataTab(UITab):
                 request=self._request, domain=self.domain))
 
         from corehq.apps.users.models import HqPermissions
-        has_edit_or_view_data_dict_permission = self.couch_user.has_permission(
-            self.domain,
-            get_permission_name(HqPermissions.edit_data_dict)
-        ) or self.couch_user.has_permission(
+        has_view_data_dict_permission = self.couch_user.has_permission(
             self.domain,
             get_permission_name(HqPermissions.view_data_dict)
         )
-        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_edit_or_view_data_dict_permission:
+        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission:
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
