@@ -335,7 +335,8 @@ class DataDictionaryView(BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
-    @method_decorator(require_permission(HqPermissions.view_data_dict))
+    @method_decorator(require_permission(HqPermissions.edit_data_dict,
+                        view_only_permission=HqPermissions.view_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(DataDictionaryView, self).dispatch(request, *args, **kwargs)
 
