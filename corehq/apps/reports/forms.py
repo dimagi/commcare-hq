@@ -386,3 +386,46 @@ class TableauVisualizationForm(forms.ModelForm):
     def save(self, commit=True):
         self.instance.domain = self.domain
         return super().save(commit)
+
+
+class UpdateTableauVisualizationForm(TableauVisualizationForm):
+    id = forms.CharField(widget=forms.HiddenInput())
+
+    class Meta:
+        model = TableauVisualization
+        fields = [
+            'id',
+            'title',
+            'server',
+            'view_url',
+        ]
+
+    @property
+    def helper(self):
+        helper = HQFormHelper()
+        helper.form_style = 'default'
+        helper.form_show_labels = True
+        helper.layout = crispy.Layout(
+            crispy.Div(
+                crispy.Field('id'),
+                crispy.Field('title'),
+                crispy.Field('server'),
+                crispy.Field('view_url'),
+                css_class='modal-body',
+            ),
+            FormActions(
+                StrictButton(
+                    _("Update"),
+                    css_class='btn btn-primary',
+                    type='submit',
+                ),
+                crispy.Button(
+                    'cancel',
+                    _("Cancel"),
+                    css_class="btn btn-default",
+                    data_dismiss="modal",
+                ),
+                css_class='modal-footer',
+            ),
+        )
+        return helper

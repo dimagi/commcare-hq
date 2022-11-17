@@ -24,6 +24,7 @@ from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.http import (
@@ -130,6 +131,7 @@ from .forms import (
     SavedReportConfigForm,
     TableauServerForm,
     TableauVisualizationForm,
+    UpdateTableauVisualizationForm,
 )
 from .lookup import ReportLookup, get_full_report_name
 from .models import TableauServer, TableauVisualization
@@ -1125,7 +1127,8 @@ def render_full_report_notification(request, content, email=None, report_notific
         })
 
     return render(request, "reports/report_email.html", {
-        'email_content': content,
+        # TODO: move the responsibility for safety up the chain, to scheduled reports, etc
+        'email_content': mark_safe(content),  # nosec: content is expected to be the report's HTML
         'unsub_link': unsub_link
     })
 
@@ -1834,6 +1837,9 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
             'title': tableau_visualization.title,
             'server': tableau_visualization.server.server_name,
             'view_url': tableau_visualization.view_url,
+            'updateForm': self.get_update_form_response(
+                self.get_update_form(tableau_visualization)
+            ),
         }
         return data
 
@@ -1846,6 +1852,23 @@ class TableauVisualizationListView(BaseProjectReportSectionView, CRUDPaginatedVi
         return {
             'itemData': self._get_item_data(tableau_viz),
             'template': 'tableau-visualization-deleted-template',
+        }
+
+    def get_update_form(self, instance=None):
+        if instance is None:
+            instance = TableauVisualization.objects.get(
+                pk=self.request.POST.get("id"),
+                domain=self.domain,
+            )
+        if self.request.method == 'POST' and self.action == 'update':
+            return UpdateTableauVisualizationForm(self.domain, self.request.POST, instance=instance)
+        return UpdateTableauVisualizationForm(self.domain, instance=instance)
+
+    def get_updated_item_data(self, update_form):
+        tableau_viz = update_form.save()
+        return {
+            "itemData": self._get_item_data(tableau_viz),
+            "template": "tableau-visualization-template",
         }
 
     def post(self, *args, **kwargs):

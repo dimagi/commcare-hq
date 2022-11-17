@@ -101,7 +101,7 @@ library <http://www.voidspace.org.uk/python/mock/>`_. A good rule of thumb is to
 tests that utilize ``SimpleTestCase``, and then 20% of your tests be integration tests that utilize the
 database and ``TestCase``.
 
-CommCareHQ also has some custom in mocking tools.
+CommCare HQ also has some custom in mocking tools.
 
 - `Fake Couch <https://github.com/dimagi/fakecouch>`_ - Fake implementation of CouchDBKit api for testing purposes.
 - `ESQueryFake <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/es/fake/es_query_fake.py>`_ - For faking ES queries.

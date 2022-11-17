@@ -450,6 +450,7 @@ msgstr "Un nom est requis pour ce nouveau rôle."
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/admin/commtrack_action_table.html
 #: corehq/apps/enterprise/enterprise.py
@@ -1045,9 +1046,9 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/partials/payment_modal.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
@@ -1117,7 +1118,6 @@ msgid "New"
 msgstr "Nouveau"
 
 #: corehq/apps/accounting/templates/accounting/accounting_admins.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 msgid "Removed"
 msgstr "Supprimé"
@@ -1551,6 +1551,8 @@ msgstr "État Numero"
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.html
 #: corehq/apps/accounting/templates/accounting/email/invoice_autopayment.txt
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py corehq/apps/domain/forms.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/enterprise/enterprise.py corehq/apps/export/views/incremental.py
@@ -1568,6 +1570,7 @@ msgstr "État Numero"
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+#: corehq/motech/generic_inbound/reports.py
 #: corehq/motech/repeaters/views/repeat_records.py
 #: corehq/motech/templates/motech/log_detail.html
 #: corehq/motech/templates/motech/logs.html
@@ -3298,6 +3301,7 @@ msgstr "Ajouter les utilisateurs:"
 
 #: corehq/apps/accounting/views.py
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_lookup.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
@@ -7066,9 +7070,9 @@ msgstr ""
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/modal_delete.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/profiles_tab.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/explore_case_data.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/domain/templates/domain/stripe_cards.html
 #: corehq/apps/export/templates/export/dialogs/delete_custom_export_dialog.html
 #: corehq/apps/export/templates/export/incremental_export.html
@@ -7353,6 +7357,8 @@ msgstr "Étiquette de dossier"
 #: corehq/apps/data_dictionary/views.py corehq/apps/data_interfaces/forms.py
 #: corehq/apps/data_interfaces/interfaces.py
 #: corehq/apps/data_interfaces/templates/data_interfaces/edit_deduplication_rule.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/export/templates/export/customize_export_new.html
 #: corehq/apps/export/templates/export/partials/table.html
@@ -8934,6 +8940,12 @@ msgid "e.g. Use #,# as separator to select multiple values"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
+#, fuzzy
+#| msgid "Check"
+msgid "Checkbox"
+msgstr "Cocher"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_property.html
 #: corehq/apps/export/forms.py corehq/apps/reports/daterange.py
 #: corehq/apps/reports/filters/dates.py
 #: corehq/apps/reports/templates/reports/reports_home.html
@@ -10108,7 +10120,8 @@ msgstr ""
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/integration/forms.py
 #: corehq/apps/locations/templates/locations/manage/location.html
-#: corehq/apps/reports/filters/users.py
+#: corehq/apps/reports/filters/users.py corehq/apps/reports/forms.py
+#: corehq/apps/reports/templates/reports/tableau_visualization.html
 #: corehq/apps/translations/templates/app_translations.html
 #: corehq/apps/users/models.py
 #: corehq/messaging/scheduling/templates/scheduling/dashboard.html
@@ -10683,9 +10696,9 @@ msgstr ""
 #: corehq/apps/app_manager/views/modules.py
 msgid ""
 "\n"
-"                    The case search property '{}' is missing the following "
+"                The case search property '{}' is missing the following "
 "lookup table attributes: {}\n"
-"                "
+"            "
 msgstr ""
 
 #: corehq/apps/app_manager/views/modules.py
@@ -12097,12 +12110,12 @@ msgstr ""
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid ""
 "\n"
-"                Please correct the answers below before submitting.\n"
-"                <br>\n"
-"                You can use the <strong><i class='fa fa-fast-forward'></i> "
+"                  Please correct the answers below before submitting.\n"
+"                  <br>\n"
+"                  You can use the <strong><i class='fa fa-fast-forward'></i> "
 "Next Error</strong> button on the left-hand side of the screen to navigate "
 "between required fields.\n"
-"              "
+"                "
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -13415,6 +13428,36 @@ msgstr "Erreur"
 msgid "No Forms are supplied"
 msgstr "Aucun formulaire n'a été fourni"
 
+#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+msgid ""
+"\n"
+"            Automatically update or close cases from CommCare HQ\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#, python-format
+msgid ""
+"\n"
+"            Create rules for updating or closing cases from CommCare HQ.\n"
+"            All rules run every day at %(time)s GMT.\n"
+"            For more information, see the <a href=\"https://confluence."
+"dimagi.com/display/commcarepublic/Automatically+Close+Cases\">Help Site</"
+"a>.\n"
+"          "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#: corehq/apps/linked_domain/const.py
+msgid "Automatic Update Rules"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
+#, fuzzy
+#| msgid "Case History"
+msgid "Rule Run History"
+msgstr "Historique de dossier"
+
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 msgid "NOTE: A system administrator is required to edit this rule."
 msgstr ""
@@ -13645,82 +13688,6 @@ msgstr "Transférer"
 msgid "Case Reassignment"
 msgstr "Transfert de dossier"
 
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#, python-format
-msgid ""
-"\n"
-"          Create rules for updating or closing cases from CommCare HQ.\n"
-"          All rules run every day at %(time)s GMT.\n"
-"          For more information, see the <a href=\"%(help_site_url)s\">Help "
-"Site</a>.\n"
-"        "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-msgid "Add Automatic Case Update Rule"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/export/views/incremental.py
-#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
-#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Active"
-msgstr "Actif"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/domain/forms.py
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/messaging/scheduling/forms.py
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Inactive"
-msgstr "Inactif "
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Activate"
-msgstr "Activer"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-#: corehq/apps/registry/templates/registry/registry_edit.html
-#: corehq/apps/users/templates/users/mobile_workers.html
-#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
-#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
-msgid "Deactivate"
-msgstr "Désactiver"
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid "Delete this rule?"
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid ""
-"\n"
-"                  Are you sure you want to <strong>delete</strong> this "
-"rule?\n"
-"                "
-msgstr ""
-
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_automatic_update_rules.html
-#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
-msgid "Delete Rule"
-msgstr "Supprimer la règle "
-
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_case_groups.html
 msgid ""
 "\n"
@@ -13768,8 +13735,68 @@ msgid "Add Deduplication Rule"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/export/templates/export/incremental_export.html
+#: corehq/apps/export/views/incremental.py
+#: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
+#: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Active"
+msgstr "Actif"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/domain/forms.py
+#: corehq/apps/export/templates/export/incremental_export.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/messaging/scheduling/forms.py
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Inactive"
+msgstr "Inactif "
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 msgid "Explore Duplicates"
 msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Activate"
+msgstr "Activer"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+#: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/users/templates/users/mobile_workers.html
+#: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
+#: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
+msgid "Deactivate"
+msgstr "Désactiver"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Delete this rule?"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+msgid ""
+"\n"
+"                  Are you sure you want to <strong>delete</strong> this "
+"rule?\n"
+"                "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Delete Rule"
+msgstr "Supprimer la règle "
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
 #, python-format
@@ -13808,6 +13835,52 @@ msgstr "Dossier retiré"
 #: corehq/apps/data_interfaces/templates/data_interfaces/manage_case_groups.html
 msgid "Bulk upload cases to group"
 msgstr "Uploader les dossiers en bloc au groupe"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Add Automatic Case Update Rule"
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid "Last Run"
+msgstr "Dernière exécution"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
+msgid ""
+"\n"
+"                          Are you sure you want to <strong>delete</strong> "
+"this rule?\n"
+"                        "
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+msgid ""
+"All rules for a specific case type are run together and are referred to as "
+"rule runs. This table displays information associated with each rule run."
+msgstr ""
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "Created On"
+msgid "Started On"
+msgstr "Créé le"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "Finish"
+msgid "Finished On"
+msgstr "Fin"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "# Cases Created"
+msgid "# of Cases Updated"
+msgstr "Nb. de dossiers créés"
+
+#: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
+#, fuzzy
+#| msgid "# Cases Closed"
+msgid "# of Cases Closed"
+msgstr "Nb. de dossiers fermés"
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -14197,10 +14270,6 @@ msgstr ""
 #: corehq/apps/data_interfaces/views.py
 msgid "midnight"
 msgstr ""
-
-#: corehq/apps/data_interfaces/views.py
-msgid "Last Run"
-msgstr "Dernière exécution"
 
 #: corehq/apps/data_interfaces/views.py
 msgid "Please provide an id."
@@ -17501,7 +17570,8 @@ msgstr ""
 #: corehq/apps/domain/views/settings.py
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 #: corehq/apps/locations/views.py corehq/apps/registry/views.py
-#: corehq/reports.py corehq/tabs/tabclasses.py
+#: corehq/motech/generic_inbound/reports.py corehq/reports.py
+#: corehq/tabs/tabclasses.py
 msgid "Project Settings"
 msgstr "Paramètres de projet"
 
@@ -23735,10 +23805,6 @@ msgstr ""
 msgid "User Roles"
 msgstr ""
 
-#: corehq/apps/linked_domain/const.py
-msgid "Automatic Update Rules"
-msgstr ""
-
 #: corehq/apps/linked_domain/const.py corehq/tabs/tabclasses.py
 msgid "Feature Flags"
 msgstr "Fanions de fonctionnalité"
@@ -27275,6 +27341,7 @@ msgstr "Exemple d'un message structuré"
 
 #: corehq/apps/reminders/forms.py
 #: corehq/apps/reports/templates/reports/form/partials/readable_form.html
+#: corehq/motech/generic_inbound/reports.py
 msgid "Response"
 msgstr "Réponse"
 
@@ -27597,6 +27664,34 @@ msgstr "adéquat"
 #: corehq/apps/reports/commtrack/standard.py
 msgid "over-stock"
 msgstr "Surstock"
+
+#: corehq/apps/reports/const.py
+msgid "Explorer - Can Publish"
+msgstr ""
+
+#: corehq/apps/reports/const.py
+msgid "Server Administrator"
+msgstr ""
+
+#: corehq/apps/reports/const.py
+msgid "Site Administrator - Explorer"
+msgstr ""
+
+#: corehq/apps/reports/const.py
+msgid "Site Administrator - Creator"
+msgstr ""
+
+#: corehq/apps/reports/const.py
+msgid "Unlicensed"
+msgstr ""
+
+#: corehq/apps/reports/const.py
+msgid "Read Only"
+msgstr "Lecture seule"
+
+#: corehq/apps/reports/const.py
+msgid "Viewer"
+msgstr ""
 
 #: corehq/apps/reports/daterange.py
 msgid "Last N Days"
@@ -28861,6 +28956,7 @@ msgstr "Journal de message"
 
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/standard/users/reports.py
+#: corehq/motech/generic_inbound/reports.py
 #: corehq/motech/templates/motech/log_detail.html
 #: corehq/motech/templates/motech/logs.html corehq/motech/views.py
 msgid "Timestamp"
@@ -30140,6 +30236,10 @@ msgstr "Erreur dans le retraitement du formulaire "
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
 #: corehq/apps/reports/views.py
 msgid "Tableau Visualizations"
+msgstr ""
+
+#: corehq/apps/reports/templates/reports/tableau_visualization.html
+msgid "Update Tableau Visualization"
 msgstr ""
 
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
@@ -39482,15 +39582,7 @@ msgid ""
 msgstr ""
 
 #: corehq/messaging/scheduling/views.py
-msgid ""
-"\n"
-"            For information on Conditional Alerts, see the\n"
-"            <a target=\"_blank\" href=\"https://confluence.dimagi.com/"
-"display/commcarepublic/Conditional+Alerts\">\n"
-"                Conditional Alerts\n"
-"            </a>\n"
-"            help page.\n"
-"        "
+msgid "For information on Conditional Alerts, see the {} help page."
 msgstr ""
 
 #: corehq/messaging/scheduling/views.py
@@ -39499,12 +39591,8 @@ msgstr ""
 
 #: corehq/messaging/scheduling/views.py
 msgid ""
-"\n"
-"            <br>\n"
-"            Editing a conditional alert will cause it to process each case "
-"of the alert's case type.\n"
-"            This may take some time.\n"
-"        "
+"Editing a conditional alert will cause it to process each case of the "
+"alert's case type. This may take some time."
 msgstr ""
 
 #: corehq/messaging/scheduling/views.py
@@ -40224,6 +40312,13 @@ msgstr ""
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
 msgid ""
+"A relationship is configured for the {subcase_type} case type, but there is "
+"no CaseConfig for the {supercase_type} case type."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
 "DHIS2 created {n} relationships. Errors from DHIS2 can be found in Remote "
 "API Logs: {url}"
 msgstr ""
@@ -40663,6 +40758,22 @@ msgstr "Echec de validation"
 
 #: corehq/motech/generic_inbound/models.py
 msgid "Reverted"
+msgstr ""
+
+#: corehq/motech/generic_inbound/reports.py
+#, fuzzy
+#| msgid "Request Sent"
+msgid "Request Status"
+msgstr "Demande envoyé"
+
+#: corehq/motech/generic_inbound/reports.py
+#, fuzzy
+#| msgid "API Key"
+msgid "API"
+msgstr "Clé API"
+
+#: corehq/motech/generic_inbound/reports.py
+msgid "Inbound API Request Logs"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
