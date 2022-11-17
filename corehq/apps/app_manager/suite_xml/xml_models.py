@@ -529,12 +529,13 @@ class QueryPrompt(DisplayNode):
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('title', 'data', 'prompts')
+    ORDER = ('title', 'description', 'data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
     template = StringField('@template')
     title = NodeField('title', DisplayNode)
+    description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
