@@ -251,7 +251,6 @@ class TableauUser(models.Model):
 
 
 logger = logging.getLogger('tableau_api')
-logger.setLevel('DEBUG')
 
 
 class TableauAPISession(object):
@@ -277,12 +276,13 @@ class TableauAPISession(object):
             self.GET,
             'Get API version',
             f'https://{connected_app.server.server_name}/api/2.4/serverinfo',
-            {}
+            {},
+            requires_sign_in=False
         )
         return response_body['serverInfo']['restApiVersion']
 
-    def _make_request(self, method, request_name, url, data):
-        if request_name not in ['Get API version', 'Sign In']:
+    def _make_request(self, method, request_name, url, data, requires_sign_in=True):
+        if requires_sign_in:
             self._verify_signed_in()
         logger.info(f"Making Tableau API request '{request_name}'.")
         response = requests.request(method, url, data=json.dumps(data), headers=self.headers)
@@ -306,7 +306,8 @@ class TableauAPISession(object):
                         "contentUrl": self.tableau_connected_app.server.target_site
                     }
                 }
-            }
+            },
+            requires_sign_in=False
         )
         auth_token = response_body['credentials']['token']
         self.headers.update({'X-Tableau-Auth': auth_token})
