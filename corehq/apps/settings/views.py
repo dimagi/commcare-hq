@@ -4,8 +4,8 @@ from base64 import b64encode
 from io import BytesIO
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -15,10 +15,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
+import langcodes
 import qrcode
 from memoized import memoized
 from two_factor.models import PhoneDevice
-from two_factor.utils import default_device, backup_phones
+from two_factor.utils import backup_phones, default_device
 from two_factor.views import (
     BackupTokensView,
     DisableView,
@@ -29,25 +30,25 @@ from two_factor.views import (
     SetupView,
 )
 
-from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.forms import clean_password
-from corehq.apps.domain.models import Domain
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.hqwebapp.views import not_found
 from dimagi.utils.web import json_response
 
-import langcodes
+from corehq import toggles
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_required,
     require_superuser,
     two_factor_exempt,
 )
-from corehq import toggles
+from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.forms import clean_password
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.utils import sign
-from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.views import (
+    BaseSectionPageView,
+    CRUDPaginatedViewMixin,
+    not_found,
+)
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
     HQApiKeyForm,
@@ -59,9 +60,11 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.util import log_user_change
 from corehq.const import USER_CHANGE_VIA_WEB, USER_DATETIME_FORMAT
 from corehq.mobile_flags import (
@@ -89,8 +92,8 @@ def redirect_domain_settings(request, domain, old_url=""):
 
 @require_superuser
 def project_id_mapping(request, domain):
-    from corehq.apps.users.models import CommCareUser
     from corehq.apps.groups.models import Group
+    from corehq.apps.users.models import CommCareUser
 
     users = CommCareUser.by_domain(domain)
     groups = Group.by_domain(domain)
