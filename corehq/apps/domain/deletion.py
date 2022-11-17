@@ -298,7 +298,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('ivr', 'Call', 'domain'),
     ModelDeletion('sms', 'Keyword', 'domain', ['KeywordAction']),
     ModelDeletion('sms', 'PhoneNumber', 'domain'),
-    ModelDeletion('sms', 'MessagingSubEvent', 'domain'),
+    ModelDeletion('sms', 'MessagingSubEvent', 'parent__domain'),
     ModelDeletion('sms', 'MessagingEvent', 'domain'),
     ModelDeletion('sms', 'QueuedSMS', 'domain'),
     ModelDeletion('sms', 'PhoneBlacklist', 'domain'),
