@@ -74,7 +74,7 @@ def count_items_to_be_migrated(connection):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sms', '0053_alter_messagingsubevent_date_last_activity'),
+        ('sms', '0055_messagingsubevent_index_domain_date_id'),
     ]
 
     operations = [
