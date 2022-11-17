@@ -180,7 +180,7 @@ class DataDictionaryViewTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.web_user_has_data_dict_access.delete(cls.domain_name, deleted_by=None)
+        cls.web_user_data_dict_access.delete(cls.domain_name, deleted_by=None)
         cls.web_user_no_data_dict_access.delete(cls.domain_name, deleted_by=None)
         cls.domain.delete()
         super(DataDictionaryViewTest, cls).tearDownClass()
@@ -192,11 +192,9 @@ class DataDictionaryViewTest(TestCase):
     def test_has_view_access(self):
         self.client.login(username='has_data_dict@ex.com', password='foobar')
         response = self.client.get(self.url)
-        print('test 1 response.status_code is', response.status_code)
         self.assertEqual(response.status_code, 200)
 
     def test_no_view_access(self):
         self.client.login(username='no_data_dict@ex.com', password='foobar')
         response = self.client.get(self.url)
-        print('test 2response.status_code is', response.status_code)
         self.assertEqual(response.status_code, 403)
