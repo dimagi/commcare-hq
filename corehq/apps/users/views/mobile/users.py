@@ -5,6 +5,7 @@ import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -34,8 +35,11 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
+    DefaultProductPlan,
     EntryPoint,
+    Subscription,
 )
+from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -146,6 +150,8 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
+ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                            "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
 DEFAULT_USER_LIST_LIMIT = 10
 BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
@@ -756,6 +762,39 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        user_rate = plan_version.feature_rates.all()[0]
+        plan_limit = user_rate.monthly_limit
+
+        def send_email_to_admins_and_billing(at_capacity):
+            users = CouchUser.by_domain(self.domain)
+            recipients = []
+            for user in users:
+                if user.role_label(self.domain) == 'Billing Admin' or user.role_label(self.domain) == 'Admin':
+                    recipients.append(user.username)
+            if at_capacity:
+                subject = _("User count has reached the Plan limit for {}").format(self.domain)
+            else:
+                subject = _("User count has reached 90% of the Plan limit for ({})").format(self.domain)
+            send_HTML_email(
+                subject,
+                recipients,
+                render_to_string('users/templates/users/email/user_limit_notice.html', context={
+                    'at_capacity': at_capacity,
+                    'url': ADDITIONAL_USERS_PRICING
+                }),
+            )
+            return None
+
+        if plan_limit != -1:
+            user_count = FeatureUsageCalculator(user_rate, self.domain).get_usage()
+            if user_count == plan_limit:
+                send_email_to_admins_and_billing(at_capacity=True)
+            elif plan_limit > user_count >= (0.9 * plan_limit) > (user_count - 1):
+                send_email_to_admins_and_billing(at_capacity=False)
+
         return {
             'success': True,
             'user_id': couch_user.userID,
