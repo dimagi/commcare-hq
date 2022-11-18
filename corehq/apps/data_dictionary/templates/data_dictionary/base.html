@@ -109,7 +109,9 @@
   {% registerurl 'update_case_property' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
-  <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
+  {% if not request.is_view_only %}
+    <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
+  {% endif %}
   <div class="row">
     <div class="col-md-12">
       <h3 data-bind="text: $root.activeCaseType()"></h3>
@@ -138,10 +140,12 @@
         <i class="fa fa-cloud-download"></i>
         {% trans "Export to Excel" %}
       </a>
-      <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
-        <i class="fa fa-cloud-upload"></i>
-        {% trans "Import from Excel" %}
-      </a>
+      {% if not request.is_view_only %}
+        <a class="btn btn-default" href="{% url "upload_data_dict" domain %}">
+          <i class="fa fa-cloud-upload"></i>
+          {% trans "Import from Excel" %}
+        </a>
+      {% endif %}
       <div  data-bind="visible: $root.activeCaseType()">
       <button data-bind="click: $root.showDeprecated, visible: !showAll()" class="btn btn-default pull-right">{% trans "Show Deprecated Properties" %}</button>
       <button data-bind="click: $root.hideDeprecated, visible: showAll" class="btn btn-default pull-right">{% trans "Hide Deprecated Properties" %}</button>
