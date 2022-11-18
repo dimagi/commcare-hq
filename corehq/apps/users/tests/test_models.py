@@ -4,7 +4,6 @@ from unittest.mock import patch
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.users.models import (
-    HqPermissions,
     CommCareUser,
     CouchUser,
     Invitation,
@@ -12,6 +11,7 @@ from corehq.apps.users.models import (
 )
 
 from corehq.apps.domain.models import Domain
+
 
 class CouchUserTest(SimpleTestCase):
 
