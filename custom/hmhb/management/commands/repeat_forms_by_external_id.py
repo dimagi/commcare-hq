@@ -21,7 +21,7 @@ Iterate them, and run this command for each one::
 from django.core.management.base import BaseCommand
 
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.models import SQLRepeater
 
 
 class Command(BaseCommand):
@@ -35,7 +35,7 @@ class Command(BaseCommand):
         parser.add_argument('case_type')
 
     def handle(self, *args, **options):
-        repeater = Repeater.get(options['repeater_id'])
+        repeater = SQLRepeater.objects.get(repeater_id=options['repeater_id'])
         assert repeater.domain == options['domain'], 'Repeater not found'
 
         case = CommCareCase.objects.get_case_by_external_id(
