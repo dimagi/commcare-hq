@@ -189,7 +189,7 @@
                     data-content="{% trans_html_attr "Define descriptive text displayed on the search screen. Use text formatting to <strong>bold</strong> and <em>italicize</em> words, use bulleted lists, and <a target='_blank' href='https://help.commcarehq.org/display/commcarepublic/Text+Formatting'>more</a>." %}">
             </label>
             <div class="{% css_field_class %}">
-              {% textarea_trans module.search_config.description langs input_name='description' input_id='description' data_bind="value: description" %}
+              {% input_trans module.search_config.description langs input_name='description' input_id='description' data_bind="value: description" element_type="textarea" %}
             </div>
           </div>
           {% endif %}

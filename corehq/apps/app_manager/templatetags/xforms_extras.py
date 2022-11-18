@@ -118,7 +118,7 @@ def html_name(name):
 
 
 @register.simple_tag
-def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
+def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=None, element_type='input_text'):
     options = _get_dynamic_input_trans_options(name, langs=langs)
     input_id_attribute = format_html("id='{}'", input_id) if input_id else ""
     data_bind_attribute = format_html("data-bind='{}'", data_bind) if data_bind else ""
@@ -129,35 +129,21 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
         "data_bind_attribute": data_bind_attribute
     })
 
-    template = '''
-        <input type="text"
-               name="{input_name}" {input_id_attribute} {data_bind_attribute}
-               class="form-control"
-               value="{value}"
-               placeholder="{placeholder}" />
-    '''
-
-    return format_html(template, **options)
-
-
-@register.simple_tag
-def textarea_trans(name, langs=None, input_name='name', input_id=None, data_bind=None):
-    options = _get_dynamic_input_trans_options(name, langs=langs)
-    input_id_attribute = format_html("id='{}'", input_id) if input_id else ""
-    data_bind_attribute = format_html("data-bind='{}'", data_bind) if data_bind else ""
-
-    options.update({
-        "input_name": input_name,
-        "input_id_attribute": input_id_attribute,
-        "data_bind_attribute": data_bind_attribute
-    })
-
-    template = '''
-        <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
-                    class="form-control vertical-resize"
-                    value="{value}" />
-                    placeholder="{placeholder}" />
-    '''
+    if element_type == 'input_text':
+        template = '''
+            <input type="text"
+                   name="{input_name}" {input_id_attribute} {data_bind_attribute}
+                   class="form-control"
+                   value="{value}"
+                   placeholder="{placeholder}" />
+        '''
+    elif element_type == 'textarea':
+        template = '''
+            <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
+                      class="form-control vertical-resize"
+                      value="{value}"
+            ></textarea>
+        '''
 
     return format_html(template, **options)
 
