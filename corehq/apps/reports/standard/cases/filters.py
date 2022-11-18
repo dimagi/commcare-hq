@@ -90,7 +90,11 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = gettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = ['@case_type', 'case_name', 'last_modified']
+    DEFAULT_COLUMNS = [
+        {'name': '@case_type', 'label': '@case_type'},
+        {'name': 'case_name', 'label': 'case_name'},
+        {'name': 'last_modified', 'label': 'last_modified'}
+    ]
 
     @property
     def filter_context(self):
