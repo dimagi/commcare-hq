@@ -182,7 +182,7 @@ class CreateVisitsEncountersObsTask(WorkflowTask):
             # OpenMRS, but it breaks Bahmni. Bahmni has an "Unknown
             # Location". Use that, if it exists.
         )
-        for form_config in self.openmrs_config.form_configs:
+        for form_config in self.openmrs_config['form_configs']:
             if form_config['xmlns'] == self.form_json['form']['@xmlns']:
                 start_datetime, stop_datetime = self._get_start_stop_datetime(form_config)
                 subtasks.append(
