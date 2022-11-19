@@ -4,8 +4,12 @@ from base64 import urlsafe_b64encode
 
 from django.utils.translation import gettext as _
 
+import attr
+
 from casexml.apps.phone.xml import get_registration_element_data
+
 from corehq.apps.userreports.specs import EvaluationContext
+from corehq.apps.users.models import CouchUser
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 
 
@@ -14,23 +18,46 @@ def make_url_key():
     return raw_key.removesuffix("==")
 
 
-def get_context_from_request(request):
-    try:
-        body = json.loads(request.body.decode('utf-8'))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        raise GenericInboundUserError(_("Payload must be valid JSON"))
+@attr.s(kw_only=True, frozen=True, auto_attribs=True)
+class RequestData:
+    domain: str
+    couch_user: CouchUser  # Is this correct?
+    request_method: str
+    user_agent: str
+    json: dict
+    query: dict  # querystring key val pairs, vals are lists
+    headers: dict
 
-    couch_user = request.couch_user
-    restore_user = couch_user.to_ota_restore_user(request.domain, request_user=couch_user)
+    @classmethod
+    def from_request(cls, request):
+        try:
+            request_json = json.loads(request.body.decode('utf-8'))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise GenericInboundUserError(_("Payload must be valid JSON"))
+        return cls(
+            domain=request.domain,
+            couch_user=request.couch_user,
+            request_method=request.method,
+            user_agent=request.META.get('HTTP_USER_AGENT'),
+            json=request_json,
+            query=dict(request.GET.lists()),
+            headers=dict(request.headers),
+        )
 
-    query = dict(request.GET.lists())
-    return get_evaluation_context(
-        restore_user,
-        request.method,
-        query,
-        dict(request.headers),
-        body
-    )
+    @classmethod
+    def from_log(cls, request_log):
+        ...
+
+    def to_context(self):
+        restore_user = self.couch_user.to_ota_restore_user(
+            self.domain, request_user=self.couch_user)
+        return get_evaluation_context(
+            restore_user,
+            self.request_method,
+            self.query,
+            self.headers,
+            self.json,
+        )
 
 
 def get_evaluation_context(restore_user, method, query, headers, body):

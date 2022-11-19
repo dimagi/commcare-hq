@@ -42,7 +42,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import get_context_from_request
+from corehq.motech.generic_inbound.utils import RequestData
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
@@ -191,17 +191,17 @@ def generic_inbound_api(request, domain, api_id):
 
 def _generic_inbound_api(api, request):
     try:
-        context = get_context_from_request(request)
+        request_data = RequestData.from_request(request)
     except GenericInboundUserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
     try:
         response = execute_generic_api(
-            request.domain,
-            request.couch_user,
-            request.META.get('HTTP_USER_AGENT'),
-            context,
-            api
+            request_data.domain,
+            request_data.couch_user,
+            request_data.user_agent,
+            request_data.to_context(),
+            api,
         )
     except BadSpecError as e:
         return JsonResponse({'error': str(e)}, status=500)
