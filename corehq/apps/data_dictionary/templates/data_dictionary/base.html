@@ -24,12 +24,12 @@
     </li>
     <!-- /ko -->
     {% if not request.is_view_only %}
-    <li>
-      <a href="#" data-bind="openModal: 'create-case-type'">
-        <i class="fa fa-plus"></i>
-        {% trans "Add Case Type" %}
-      </a>
-    </li>
+      <li>
+        <a href="#" data-bind="openModal: 'create-case-type'">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Case Type" %}
+        </a>
+      </li>
     {% endif %}
   </ul>
 
@@ -162,7 +162,7 @@
           {% endif %}
           <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
           {% if not request.is_view_only %}
-          <th></th>
+            <th></th>
           {% endif %}
           </thead>
           <tbody data-bind="sortable: casePropertyList">
@@ -174,7 +174,7 @@
             <td></td>
             <td></td>
             {% if not request.is_view_only %}
-            <td></td>
+              <td></td>
             {% endif %}
             {% if fhir_integration_enabled %}
               <td></td>
@@ -185,7 +185,7 @@
           <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
             <td>
               {% if not request.is_view_only %}
-              <i class="sortable-handle fa fa-arrows-v"></i>
+                <i class="sortable-handle fa fa-arrows-v"></i>
               {% endif %}
             </td>
             <td data-bind="text: name"></td>
@@ -226,51 +226,51 @@
               </div>
             </td>
             {% if not request.is_view_only %}
-            <td>
-              <!-- ko if: !deprecated() -->
-              <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
-              <!-- /ko -->
-              <!-- ko if: deprecated() -->
-              <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
-              <!-- /ko -->
-            </td>
+              <td>
+                <!-- ko if: !deprecated() -->
+                <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
+                <!-- /ko -->
+                <!-- ko if: deprecated() -->
+                <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
+                <!-- /ko -->
+              </td>
             {% endif %}
           </tr>
           <!-- /ko -->
           </tbody>
         </table>
         {% if not request.is_view_only %}
-        <form class="form-inline">
-          <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
-          <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
-            <i class="fa fa-plus"></i>
-            {% trans "Add Case Property" %}
-          </button>
-        </form>
-        <br />
-        <form class="form-inline">
-          <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
-          <button class="btn btn-default" data-bind="click: $root.newGroup">
-            <i class="fa fa-plus"></i>
-            {% trans "Add Case Property Group" %}
-          </button>
-        </form>
+          <form class="form-inline">
+            <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
+            <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Case Property" %}
+            </button>
+          </form>
+          <br />
+          <form class="form-inline">
+            <input class="form-control" placeholder="Group Name" data-bind="value: newGroupName">
+            <button class="btn btn-default" data-bind="click: $root.newGroup">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Case Property Group" %}
+            </button>
+          </form>
         {% endif %}
       </div>
       {% if not request.is_view_only %}
-      <p class="help-block">
-        {% url 'generate_data_dictionary' domain as refresh_url %}
-        {% blocktrans %}
-        Missing properties or case types? <a href="{{ refresh_url }}" target="_blank">Click to sync</a>
-        (opens in a new tab, may be slow...)
-        {% endblocktrans %}
-      </p>
-      <div data-bind="hidden: $root.caseTypes().length > 0">
-        <button class="btn btn-primary" data-bind="openModal: 'create-case-type'">
-          <i class="fa fa-plus"></i>
-          {% trans "Add a new Case Type" %}
-        </button>
-      </div>
+        <p class="help-block">
+          {% url 'generate_data_dictionary' domain as refresh_url %}
+          {% blocktrans %}
+          Missing properties or case types? <a href="{{ refresh_url }}" target="_blank">Click to sync</a>
+          (opens in a new tab, may be slow...)
+          {% endblocktrans %}
+        </p>
+        <div data-bind="hidden: $root.caseTypes().length > 0">
+          <button class="btn btn-primary" data-bind="openModal: 'create-case-type'">
+            <i class="fa fa-plus"></i>
+            {% trans "Add a new Case Type" %}
+          </button>
+        </div>
       {% endif %}
     </div>
   </div>
