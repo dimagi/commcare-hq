@@ -1,5 +1,4 @@
 import json
-from typing import Any, Dict
 import requests
 
 from django.conf import settings
@@ -16,7 +15,7 @@ def get_access_token():
         return resp.json().get("accessToken")
 
 
-def get_response_http_post(api_url, payload, additional_headers):
+def get_response_http_post(api_url, payload, additional_headers=None):
     req_url = base_url + api_url
     headers = {"Content-Type": "application/json"}
     token = get_access_token()
