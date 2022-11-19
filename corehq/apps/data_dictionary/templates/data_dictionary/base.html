@@ -23,12 +23,14 @@
       <a data-bind="text: $data.name, attr: {href: $data.url}"></a>
     </li>
     <!-- /ko -->
+    {% if not request.is_view_only %}
     <li>
       <a href="#" data-bind="openModal: 'create-case-type'">
         <i class="fa fa-plus"></i>
         {% trans "Add Case Type" %}
       </a>
     </li>
+    {% endif %}
   </ul>
 
   <script type="text/html" id="create-case-type">
@@ -229,6 +231,7 @@
           <!-- /ko -->
           </tbody>
         </table>
+        {% if not request.is_view_only %}
         <form class="form-inline">
           <input class="form-control" placeholder="Case Property" data-bind="value: newPropertyName">
           <button class="btn btn-default" data-bind="click: $root.newCaseProperty">
@@ -244,7 +247,9 @@
             {% trans "Add Case Property Group" %}
           </button>
         </form>
+        {% endif %}
       </div>
+      {% if not request.is_view_only %}
       <p class="help-block">
         {% url 'generate_data_dictionary' domain as refresh_url %}
         {% blocktrans %}
@@ -258,6 +263,7 @@
           {% trans "Add a new Case Type" %}
         </button>
       </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}
