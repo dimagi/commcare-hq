@@ -66,20 +66,6 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         result = data[0]
         self.assertEqual(_serialized_messaging_event(sms), result)
 
-    def test_date_ordering(self):
-        _create_sms_messages(self.domain, 5, randomize=True)
-        response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date')
-        self.assertEqual(response.status_code, 200, response.content)
-        ordered_data = json.loads(response.content)['objects']
-        self.assertEqual(5, len(ordered_data))
-        dates = [r['date'] for r in ordered_data]
-        self.assertEqual(dates, sorted(dates))
-
-        response = self._auth_get_resource(f'{self.list_endpoint}?order_by=-date')
-        self.assertEqual(response.status_code, 200, response.content)
-        reverse_ordered_data = json.loads(response.content)['objects']
-        self.assertEqual(ordered_data, list(reversed(reverse_ordered_data)))
-
     def test_date_last_activity_ordering(self):
         sms = _create_sms_messages(self.domain, 5, randomize=True)
         sms[0].messaging_subevent.save()  # this should move this one to the end of the list
@@ -99,10 +85,10 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_domain_filter(self):
         _create_sms_messages('different-one', 5, randomize=True)
-        response = self._auth_get_resource(f'{self.list_endpoint}?order_by=date')
+        response = self._auth_get_resource(f'{self.list_endpoint}')
         self.assertEqual(response.status_code, 200, response.content)
-        ordered_data = json.loads(response.content)['objects']
-        self.assertEqual(0, len(ordered_data))
+        data = json.loads(response.content)['objects']
+        self.assertEqual(0, len(data))
 
     def test_source_filtering(self):
         sources = [
@@ -113,7 +99,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         for source in sources:
             make_events_for_test(self.domain.name, datetime.utcnow(), source=source)
 
-        url = f'{self.list_endpoint}?order_by=date&source=keyword,reminder'
+        url = f'{self.list_endpoint}?source=keyword,reminder'
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         actual = {event["source"]["type"] for event in json.loads(response.content)['objects']}
@@ -128,7 +114,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
         for content_type in content_types:
             make_events_for_test(self.domain.name, datetime.utcnow(), content_type=content_type)
 
-        url = f'{self.list_endpoint}?order_by=date&content_type=ivr-survey,sms'
+        url = f'{self.list_endpoint}?content_type=ivr-survey,sms'
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
         actual = {event["content_type"] for event in json.loads(response.content)['objects']}
@@ -148,7 +134,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_error_code_filtering(self):
         _create_sms_messages(self.domain, 2, True)
-        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1 = MessagingSubEvent.objects.filter(domain=self.domain.name)[0]
         e1.error_code = MessagingEvent.ERROR_CANNOT_FIND_FORM
         e1.save()
         url = f'{self.list_endpoint}?error_code=CANNOT_FIND_FORM'
@@ -159,7 +145,7 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
     def test_case_id_filter(self):
         _create_sms_messages(self.domain, 2, True)
-        e1 = MessagingSubEvent.objects.filter(parent__domain=self.domain.name)[0]
+        e1 = MessagingSubEvent.objects.filter(domain=self.domain.name)[0]
         e1.case_id = "123"
         e1.save()
         url = f'{self.list_endpoint}?case_id=123'
@@ -381,7 +367,8 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
             _, subevent, _ = make_events_for_test(self.domain.name, date)
             ids_and_dates.append((subevent.id, date.isoformat()))
 
-        content = self._test_cursor_response(ids_and_dates[:2], extra_params={"limit": 2, "order_by": "date"})
+        content = self._test_cursor_response(ids_and_dates[:2], extra_params={
+            "limit": 2, "order_by": "date_last_activity"})
         content = self._test_cursor_response(ids_and_dates[2:4], previous_content=content)
         self._test_cursor_response([ids_and_dates[-1]], previous_content=content)
 
@@ -395,7 +382,8 @@ class TestMessagingEventResource(BaseMessagingEventResourceTest):
 
         ids_and_dates = list(reversed(ids_and_dates))
 
-        content = self._test_cursor_response(ids_and_dates[:2], extra_params={"limit": 2, "order_by": "-date"})
+        content = self._test_cursor_response(ids_and_dates[:2], extra_params={
+            "limit": 2, "order_by": "-date_last_activity"})
         content = self._test_cursor_response(ids_and_dates[2:4], previous_content=content)
         self._test_cursor_response([ids_and_dates[-1]], previous_content=content)
 
@@ -512,17 +500,16 @@ class TestDateFilter(BaseMessagingEventResourceTest, DateFilteringTestMixin):
 
     def _setup_for_date_filter_test(self):
         _create_sms_messages(self.domain, 5, randomize=True)
-        return list(
-            MessagingSubEvent.objects.filter(parent__domain=self.domain.name)
-            .order_by('date')
+        return list(sorted(
+            MessagingSubEvent.objects.filter(domain=self.domain.name)
             .values_list('date', flat=True)
-        )
+        ))
 
     def _check_date_filtering_response(self, filters, expected):
-        url = f'{self.list_endpoint}?order_by=date&' + urllib.parse.urlencode(filters)
+        url = f'{self.list_endpoint}?' + urllib.parse.urlencode(filters)
         response = self._auth_get_resource(url)
         self.assertEqual(response.status_code, 200, response.content)
-        actual = [event["date"] for event in json.loads(response.content)['objects']]
+        actual = list(sorted(event["date"] for event in json.loads(response.content)['objects']))
         self.assertEqual(actual, expected)
 
 

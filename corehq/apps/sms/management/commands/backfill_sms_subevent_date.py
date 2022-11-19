@@ -42,6 +42,11 @@ class Command(BaseCommand):
         update_subevent_date_from_emails(chunk_size, explain)
         update_subevent_date_from_sms(chunk_size, explain)
         update_subevent_date_from_xform_session(chunk_size, explain)
+        # this one must always run after all the other date back-filling
+        update_subevent_date_from_subevent(chunk_size, explain)
+
+        # back-fill domain
+        update_subevent_domain_from_parent(chunk_size, explain)
 
         if not explain:
             try:
@@ -115,9 +120,45 @@ def update_subevent_date_from_xform_session(chunk_size, explain):
     return run_query_until_no_updates("xform_session", query, count_query, explain)
 
 
+def update_subevent_date_from_subevent(chunk_size, explain):
+    """This updates all remaining events that haven't had a date populated.
+    The majority of these represent errors, but I've found that there are
+    a number of places in code where a message is updated in code without
+    being saved to the DB immediately which leaves scope for the message never
+    being updated.
+    """
+    # this count will only be correct after the other backfills have run
+    count_query = """
+        select count(*) from sms_messagingsubevent where date_last_activity is null
+    """
+    query = f"""
+        update sms_messagingsubevent set date_last_activity = sms_messagingsubevent.date
+        where sms_messagingsubevent.id in (
+            select se.id from sms_messagingsubevent se where se.date_last_activity is null
+            limit {chunk_size}
+        )
+    """
+    return run_query_until_no_updates("subevent", query, count_query, explain)
+
+
+def update_subevent_domain_from_parent(chunk_size, explain):
+    count_query = "select count(*) from sms_messagingsubevent where domain is null"
+
+    query = f"""
+        update sms_messagingsubevent set domain = parent.domain
+        from sms_messagingevent parent where sms_messagingsubevent.parent_id = parent.id
+        and sms_messagingsubevent.id in (
+            select id from sms_messagingsubevent where
+            sms_messagingsubevent.domain is null
+            limit {chunk_size}
+        )
+    """
+    return run_query_until_no_updates("domain", query, count_query, explain)
+
+
 def run_query_until_no_updates(slug, query, count_query, explain):
     if explain:
-        explain_query_until_no_updates(slug, query)
+        explain_query_until_no_updates(slug, query, count_query)
         return 0, 0
 
     return run_query_until_no_updates_(slug, query, count_query)
@@ -127,9 +168,7 @@ def run_query_until_no_updates_(slug, query, count_query):
     total_rows_updated = 0
     iterations = 0
 
-    with connections["default"].cursor() as cursor:
-        cursor.execute(count_query)
-        total_rows = cursor.fetchone()[0]
+    total_rows = _get_count(count_query)
 
     if total_rows == 0:
         print(f"Skipping backfill for '{slug}', no rows to update.")
@@ -154,8 +193,16 @@ def run_query_until_no_updates_(slug, query, count_query):
     return total_rows_updated, iterations
 
 
-def explain_query_until_no_updates(slug, query):
-    print(f"Running 'explain' for {slug} query:\n")
+def _get_count(count_query):
+    with connections["default"].cursor() as cursor:
+        cursor.execute(count_query)
+        total_rows = cursor.fetchone()[0]
+    return total_rows
+
+
+def explain_query_until_no_updates(slug, query, count_query):
+    total_rows = _get_count(count_query)
+    print(f"Running 'explain' for {slug} query: total rows to update = {total_rows}\n")
     query = f"explain {query}"
     with transaction.atomic(using='default'), connections["default"].cursor() as cursor:
         cursor.execute(query)
