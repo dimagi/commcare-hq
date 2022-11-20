@@ -86,7 +86,7 @@ def accept_all_invitations(request):
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 
-@quickcache(['couch_user.username'])
+@quickcache(['couch_user.username', 'view_name'])
 def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
     return _domains_to_links(Domain.active_for_user(couch_user), view_name)
