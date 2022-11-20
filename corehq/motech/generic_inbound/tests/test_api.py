@@ -286,9 +286,7 @@ class TestGenericInboundAPIView(TestCase):
 
         for k, original_value in attrs.asdict(original_data).items():
             log_value = getattr(log_data, k)
-            if k == 'headers':
-                ...  # TODO request.META vs request.headers
-            elif k == 'couch_user':
+            if k == 'couch_user':
                 self.assertEqual(original_value.username, log_value.username)
             else:
                 self.assertEqual(original_value, log_value)

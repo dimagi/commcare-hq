@@ -9,6 +9,7 @@ import attr
 
 from casexml.apps.phone.xml import get_registration_element_data
 
+from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
@@ -42,7 +43,7 @@ class RequestData:
             user_agent=request.META.get('HTTP_USER_AGENT'),
             json=request_json,
             query=dict(request.GET.lists()),
-            headers=dict(request.headers),
+            headers=get_standard_headers(request.META)
         )
 
     @classmethod
