@@ -2,6 +2,7 @@ import json
 import uuid
 from base64 import urlsafe_b64encode
 
+from django.http import QueryDict
 from django.utils.translation import gettext as _
 
 import attr
@@ -45,8 +46,20 @@ class RequestData:
         )
 
     @classmethod
-    def from_log(cls, request_log):
-        ...
+    def from_log(cls, log):
+        try:
+            request_json = json.loads(log.request_body)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            raise GenericInboundUserError(_("Payload must be valid JSON"))
+        return cls(
+            domain=log.domain,
+            couch_user=CouchUser.get_by_username(log.username),
+            request_method=log.request_method,
+            user_agent=log.request_headers.get('HTTP_USER_AGENT'),
+            json=request_json,
+            query=dict(QueryDict(log.request_query).lists()),
+            headers=dict(log.request_headers),
+        )
 
     def to_context(self):
         restore_user = self.couch_user.to_ota_restore_user(

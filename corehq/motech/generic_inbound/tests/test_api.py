@@ -4,6 +4,8 @@ from urllib.parse import urlencode
 from django.test import TestCase
 from django.urls import reverse
 
+import attrs
+
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import (
@@ -19,6 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
+from corehq.motech.generic_inbound.utils import RequestData
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
@@ -266,3 +269,26 @@ class TestGenericInboundAPIView(TestCase):
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
         self.assertEqual(attempt.response_status, 400)
+
+    def test_request_data(self):
+        query_params = {"param": "value"}
+        properties_expression = {
+            'prop_from_query': {
+                'type': 'jsonpath',
+                'jsonpath': 'request.query.param[0]',
+            }
+        }
+        request = self._call_api(properties_expression, query_params).wsgi_request
+        log = RequestLog.objects.last()
+
+        original_data = RequestData.from_request(request)
+        log_data = RequestData.from_log(log)
+
+        for k, original_value in attrs.asdict(original_data).items():
+            log_value = getattr(log_data, k)
+            if k == 'headers':
+                ...  # TODO request.META vs request.headers
+            elif k == 'couch_user':
+                self.assertEqual(original_value.username, log_value.username)
+            else:
+                self.assertEqual(original_value, log_value)
