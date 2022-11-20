@@ -69,8 +69,8 @@ def select(request, do_not_redirect=False, next_view=None):
                 or domain_obj.is_snapshot
             ):
                 try:
-                    return HttpResponseRedirect(reverse(next_view or 'dashboard_default',
-                                                args=[last_visited_domain]))
+                    return HttpResponseRedirect(
+                        reverse(next_view, args=[last_visited_domain]))
                 except Http404:
                     pass
 
