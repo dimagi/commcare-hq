@@ -1,16 +1,13 @@
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.urls import Resolver404, resolve, reverse
 from django.utils.translation import gettext as _
 
 from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
-from corehq.apps.domain.decorators import (
-    login_required,
-    LoginAndDomainMixin,
-)
+from corehq.apps.domain.decorators import LoginAndDomainMixin, login_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -157,3 +154,15 @@ class BaseDomainView(LoginAndDomainMixin, BillingModalsMixin, BaseSectionPageVie
     def page_url(self):
         if self.urlname:
             return reverse(self.urlname, args=[self.domain])
+
+
+def redirect_to_domain(request):
+    """Allows us to use eg commcarehq.org/a/DOMAIN/settings/users/web
+    in documentation and have it redirect to the user's domain"""
+    # switch out the DOMAIN placeholder so it doesn't match this view
+    resolvable_path = '/a/example/' + request.path.removeprefix('/a/DOMAIN/')
+    try:
+        match = resolve(resolvable_path)
+    except Resolver404:
+        raise Http404()
+    return select(request, next_view=match.url_name)
