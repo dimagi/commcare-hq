@@ -80,4 +80,5 @@ branches:
     - em/case-search-subtitle # Evan Nov 14
     - pv/applicationReleaseLogs # Pawan Nov 16
     - ml/user-limit-emails # Minha Nov 18
+    - es/redirect-domain  # Ethan Nov 21
 submodules: { }
