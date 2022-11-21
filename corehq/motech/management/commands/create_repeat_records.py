@@ -43,8 +43,8 @@ class Command(BaseCommand):
             repeater = Repeater.get(repeater_id)
             if repeater_type and repeater_type != repeater.doc_type:
                 raise CommandError(f"Repeater type does not match: {repeater_type} != {repeater.doc_type}")
-            if repeater_name_re and not repeater_name_re.match(repeater.name):
-                raise CommandError(f"Repeater name does not match: {repeater.name}")
+            if repeater_name_re and not repeater_name_re.match(repeater.repeater_name):
+                raise CommandError(f"Repeater name does not match: {repeater.repeater_name}")
 
             def _get_repeaters(doc):
                 assert doc.domain == repeater.domain
