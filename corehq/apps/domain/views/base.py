@@ -34,9 +34,8 @@ def select(request, always_show_list=False, next_view=None):
         return redirect('registration_domain')
 
     # next_view must be a url that expects exactly one parameter, a domain name
-    next_view = next_view or request.GET.get('next_view')
     show_invitations = False
-    if not next_view:
+    if next_view is None:
         next_view = "domain_homepage"
         show_invitations = True
     domain_links = get_domain_links(request.couch_user, view_name=next_view)
