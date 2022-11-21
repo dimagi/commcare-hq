@@ -283,13 +283,14 @@ def release_build(request, domain, app_id, saved_app_id):
             create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
 
-    ApplicationReleaseLog.objects.create(
-        domain=domain,
-        action=ApplicationReleaseLog.ACTION_RELEASED if is_released else ApplicationReleaseLog.ACTION_IN_TEST,
-        version=saved_app.version,
-        app_id=app_id,
-        user_id=request.couch_user.get_id
-    )
+    if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+        ApplicationReleaseLog.objects.create(
+            domain=domain,
+            action=ApplicationReleaseLog.ACTION_RELEASED if is_released else ApplicationReleaseLog.ACTION_IN_TEST,
+            version=saved_app.version,
+            app_id=app_id,
+            user_id=request.couch_user.get_id
+        )
 
     if ajax:
         return json_response({

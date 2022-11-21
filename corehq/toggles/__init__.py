@@ -2376,6 +2376,6 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
     'application_release_logs',
     'Show Application release logs',
     TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
+    namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
 )
