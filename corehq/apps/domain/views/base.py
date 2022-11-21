@@ -22,7 +22,15 @@ def covid19(request):
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, do_not_redirect=False, next_view=None):
+def select(request, always_show_list=False, next_view=None):
+    """
+    Show list of user's domains and open invitations. Can also redirect to
+    specific views and/or auto-select the most recently used domain.
+
+    :param always_show_list: always show list of domains to select (if False,
+    automatically go to last used domain)
+    :param next_view: view to jump to or to link to, defaults to homepage
+    """
     if not hasattr(request, 'couch_user'):
         return redirect('registration_domain')
 
@@ -53,7 +61,7 @@ def select(request, do_not_redirect=False, next_view=None):
     domain_select_template = "domain/select.html"
     last_visited_domain = request.session.get('last_visited_domain')
     if open_invitations \
-       or do_not_redirect \
+       or always_show_list \
        or not last_visited_domain:
         return render(request, domain_select_template, additional_context)
     else:
@@ -165,4 +173,4 @@ def redirect_to_domain(request):
         match = resolve(resolvable_path)
     except Resolver404:
         raise Http404()
-    return select(request, next_view=match.url_name)
+    return select(request, always_show_list=True, next_view=match.url_name)
