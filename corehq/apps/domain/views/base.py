@@ -103,14 +103,12 @@ def get_domain_links(couch_user, get_url=None):
 # Returns domains where given user has access only by virtue of enterprise permissions
 def get_enterprise_links(couch_user, get_url=None):
     from corehq.apps.enterprise.models import EnterprisePermissions
-    domain_links_by_name = {d['name']: d for d in get_domain_links(couch_user)}
-    subdomain_objects_by_name = {}
-    for domain_name in domain_links_by_name:
-        for subdomain in EnterprisePermissions.get_domains(domain_name):
-            if subdomain not in domain_links_by_name:
-                subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
-
-    return _domains_to_links(subdomain_objects_by_name.values(), get_url)
+    user_domains = {d.name for d in Domain.active_for_user(couch_user)}
+    subdomains = {subdomain for domain_name in user_domains
+                  for subdomain in EnterprisePermissions.get_domains(domain_name)}
+    subdomains -= user_domains
+    subdomain_objects = [Domain.get_by_name(d) for d in subdomains]
+    return _domains_to_links(subdomain_objects, get_url)
 
 
 def _domains_to_links(domain_objects, get_url):
