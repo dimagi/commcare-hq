@@ -15,33 +15,37 @@ from corehq.apps.users.models import Invitation
 
 
 def covid19(request):
-    return select(request, next_view="app_exchange")
+    return select(request, get_url=_view_name_to_fn("app_exchange"))
+
+
+def _view_name_to_fn(view_name):
+    def get_url(domain):
+        return reverse(view_name, kwargs={'domain': domain})
+    return get_url
 
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator
 @login_required
-def select(request, always_show_list=False, next_view=None):
+def select(request, always_show_list=False, get_url=None):
     """
     Show list of user's domains and open invitations. Can also redirect to
     specific views and/or auto-select the most recently used domain.
 
     :param always_show_list: always show list of domains to select (if False,
     automatically go to last used domain)
-    :param next_view: view to jump to or to link to, defaults to homepage
+    :param get_url: function which accepts a domain and returns a URL
     """
     if not hasattr(request, 'couch_user'):
         return redirect('registration_domain')
 
-    # next_view must be a url that expects exactly one parameter, a domain name
     show_invitations = False
-    if next_view is None:
-        next_view = "domain_homepage"
+    if get_url is None:
         show_invitations = True
-    domain_links = get_domain_links(request.couch_user, view_name=next_view)
+    domain_links = get_domain_links(request.couch_user, get_url=get_url)
     if not domain_links:
         return redirect('registration_domain')
-    domain_links += get_enterprise_links(request.couch_user, view_name=next_view)
+    domain_links += get_enterprise_links(request.couch_user, get_url=get_url)
     domain_links = sorted(domain_links, key=lambda link: link['display_name'].lower())
 
     email = request.couch_user.get_email()
@@ -71,11 +75,11 @@ def select(request, always_show_list=False, next_view=None):
                 or (request.user.is_superuser and not domain_obj.restrict_superusers)
                 or domain_obj.is_snapshot
             ):
-                try:
-                    return HttpResponseRedirect(
-                        reverse(next_view, args=[last_visited_domain]))
-                except Http404:
-                    pass
+                if get_url is not None:
+                    url = get_url(last_visited_domain)
+                else:
+                    url = reverse('domain_homepage', args=[last_visited_domain])
+                return HttpResponseRedirect(url)
 
         del request.session['last_visited_domain']
         return render(request, domain_select_template, additional_context)
@@ -92,14 +96,12 @@ def accept_all_invitations(request):
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 
-def get_domain_links(couch_user, view_name="domain_homepage"):
-    # Returns dicts with keys 'name', 'display_name', and 'url'
-    return _domains_to_links(Domain.active_for_user(couch_user), view_name)
+def get_domain_links(couch_user, get_url=None):
+    return _domains_to_links(Domain.active_for_user(couch_user), get_url)
 
 
 # Returns domains where given user has access only by virtue of enterprise permissions
-def get_enterprise_links(couch_user, view_name="domain_homepage"):
-    # Returns dicts with keys 'name', 'display_name', and 'url'
+def get_enterprise_links(couch_user, get_url=None):
     from corehq.apps.enterprise.models import EnterprisePermissions
     domain_links_by_name = {d['name']: d for d in get_domain_links(couch_user)}
     subdomain_objects_by_name = {}
@@ -108,14 +110,16 @@ def get_enterprise_links(couch_user, view_name="domain_homepage"):
             if subdomain not in domain_links_by_name:
                 subdomain_objects_by_name[subdomain] = Domain.get_by_name(subdomain)
 
-    return _domains_to_links(subdomain_objects_by_name.values(), view_name)
+    return _domains_to_links(subdomain_objects_by_name.values(), get_url)
 
 
-def _domains_to_links(domain_objects, view_name):
+def _domains_to_links(domain_objects, get_url):
+    if not get_url:
+        get_url = _view_name_to_fn('domain_homepage')
     return sorted([{
         'name': o.name,
         'display_name': o.display_name(),
-        'url': reverse(view_name, args=[o.name]),
+        'url': get_url(o.name),
     } for o in domain_objects if o], key=lambda link: link['display_name'].lower())
 
 
@@ -169,4 +173,7 @@ def redirect_to_domain(request):
         match = resolve(resolvable_path)
     except Resolver404:
         raise Http404()
-    return select(request, always_show_list=True, next_view=match.url_name)
+
+    def get_url(domain):
+        return reverse(match.url_name, kwargs={**match.kwargs, 'domain': domain})
+    return select(request, always_show_list=True, get_url=get_url)
