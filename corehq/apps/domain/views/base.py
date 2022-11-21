@@ -12,7 +12,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.users.models import Invitation
-from corehq.util.quickcache import quickcache
 
 
 def covid19(request):
@@ -40,10 +39,10 @@ def select(request, always_show_list=False, next_view=None):
     if not next_view:
         next_view = "domain_homepage"
         show_invitations = True
-    domain_links = get_domain_links_for_dropdown(request.couch_user, view_name=next_view)
+    domain_links = get_domain_links(request.couch_user, view_name=next_view)
     if not domain_links:
         return redirect('registration_domain')
-    domain_links += get_enterprise_links_for_dropdown(request.couch_user, view_name=next_view)
+    domain_links += get_enterprise_links(request.couch_user, view_name=next_view)
     domain_links = sorted(domain_links, key=lambda link: link['display_name'].lower())
 
     email = request.couch_user.get_email()
@@ -94,18 +93,16 @@ def accept_all_invitations(request):
     return HttpResponseRedirect(reverse('domain_select_redirect'))
 
 
-@quickcache(['couch_user.username', 'view_name'])
-def get_domain_links_for_dropdown(couch_user, view_name="domain_homepage"):
+def get_domain_links(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
     return _domains_to_links(Domain.active_for_user(couch_user), view_name)
 
 
 # Returns domains where given user has access only by virtue of enterprise permissions
-@quickcache(['couch_user.username'])
-def get_enterprise_links_for_dropdown(couch_user, view_name="domain_homepage"):
+def get_enterprise_links(couch_user, view_name="domain_homepage"):
     # Returns dicts with keys 'name', 'display_name', and 'url'
     from corehq.apps.enterprise.models import EnterprisePermissions
-    domain_links_by_name = {d['name']: d for d in get_domain_links_for_dropdown(couch_user)}
+    domain_links_by_name = {d['name']: d for d in get_domain_links(couch_user)}
     subdomain_objects_by_name = {}
     for domain_name in domain_links_by_name:
         for subdomain in EnterprisePermissions.get_domains(domain_name):
