@@ -896,12 +896,15 @@ class ElasticMultiplexAdapter(BaseAdapter):
         super().__init__()
         self.index_name = primary_adapter.index_name
         self.type = primary_adapter.type
-        self.mapping = primary_adapter.mapping
 
         self.primary = primary_adapter
         self.secondary = secondary_adapter
         # TODO document this better
         self.secondary.from_python = self.from_python
+
+    @property
+    def mappings(self):
+        return self.primary.mapping
 
     def export_adapter(self):
         adapter = copy.copy(self)
