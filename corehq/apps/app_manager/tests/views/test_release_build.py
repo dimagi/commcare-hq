@@ -8,6 +8,7 @@ from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_x
 from corehq.apps.app_manager.models import ApplicationReleaseLog
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
+from corehq.util.test_utils import flag_enabled
 
 
 class TestReleaseBuild(TestCase):
@@ -44,6 +45,14 @@ class TestReleaseBuild(TestCase):
         super().tearDownClass()
 
     def test_release_build(self):
+        self.client.login(username=self.username, password=self.password)
+        url = reverse('release_build', args=(self.domain_name, self.app.get_id, self.app_build.get_id))
+        response = self.client.post(url, {'is_released': 'true', 'ajax': 'true'})
+        self.assertEqual(response.json()['is_released'], True)
+        self.assertEqual(response.json()['latest_released_version'], 1)
+
+    @flag_enabled("APPLICATION_RELEASE_LOGS")
+    def test_release_build_app_release_log(self):
         self.client.login(username=self.username, password=self.password)
         url = reverse('release_build', args=(self.domain_name, self.app.get_id, self.app_build.get_id))
         response = self.client.post(url, {'is_released': 'true', 'ajax': 'true'})
