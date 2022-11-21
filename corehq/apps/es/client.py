@@ -903,7 +903,7 @@ class ElasticMultiplexAdapter(BaseAdapter):
         self.secondary.from_python = self.from_python
 
     @property
-    def mappings(self):
+    def mapping(self):
         return self.primary.mapping
 
     def export_adapter(self):
