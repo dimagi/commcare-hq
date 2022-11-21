@@ -42,9 +42,10 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.motech.repeaters.models import (
     CaseRepeater,
     FormRepeater,
-    LocationRepeater,
     Repeater,
     RepeatRecord,
+    SQLCaseRepeater,
+    SQLLocationRepeater,
     SQLRepeater,
     ShortFormRepeater,
     UserRepeater,
@@ -704,7 +705,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_get_payload_exception(self):
         repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
         with self.assertRaises(Exception):
-            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+            with patch.object(SQLCaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
                 repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
@@ -806,7 +807,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
 
-        RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
+        RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator)
         cls.new_generator = NewCaseGenerator
 
     def setUp(self):
@@ -816,16 +817,15 @@ class TestRepeaterFormat(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = CaseRepeater(
+        self.repeater = SQLCaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='new_format',
         )
-        # SQL Repeater Model restricts format and would raise error on unexpected values
-        self.repeater.save(sync_to_sql=False)
+        self.repeater.save()
 
     def tearDown(self):
-        self.repeater.delete(sync_to_sql=False)
+        self.repeater.delete()
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -840,7 +840,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return self.payload
 
         with self.assertRaises(DuplicateFormatException):
-            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
+            RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator)
 
     def test_new_format_second_default(self):
         class NewCaseGenerator(BasePayloadGenerator):
@@ -851,7 +851,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return self.payload
 
         with self.assertRaises(DuplicateFormatException):
-            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
+            RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     def test_new_format_payload(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
@@ -876,9 +876,9 @@ class TestRepeaterFormat(BaseRepeaterTest):
             )
 
     def test_get_format_by_deprecated_name(self):
-        self.assertIsInstance(CaseRepeater(
+        self.assertIsInstance(SQLCaseRepeater(
             domain=self.domain,
-            url='case-repeater-url',
+            connection_settings=self.connx,
             format='new_format_alias',
         ).generator, self.new_generator)
 
@@ -977,7 +977,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             url='super-cool-url',
         )
-        self.repeater = LocationRepeater(
+        self.repeater = SQLLocationRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
         )
@@ -1107,14 +1107,13 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = CaseRepeater(
+        self.repeater = SQLCaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
-        self.repeater = reloaded(self.repeater)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1130,6 +1129,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+            self.repeat_record = reloaded(self.repeat_record)
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
@@ -1140,6 +1140,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
 
         with patch.object(RepeatRecord, 'fire') as mock_fire:
             self.repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
+            self.repeat_record = reloaded(self.repeat_record)
             _process_repeat_record(self.repeat_record)
             self.assertEqual(mock_fire.call_count, 0)
             self.assertEqual(self.repeat_record.doc_type, "RepeatRecord-Deleted")
