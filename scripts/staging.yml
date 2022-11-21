@@ -74,7 +74,6 @@ branches:
 #    - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
     - cs/sc-2369/shadow_module_fix # Chris Oct 31
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
-    - ml/submission-api-datadog-metric # Minha Nov 3
     # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     # - ml/lookup-table-UI # Minha Oct 19
