@@ -52,8 +52,8 @@ class FakeTableauInstance(mock.MagicMock):
         }
         """)
 
-    def query_groups_response(self, **kwargs):
-        if 'group_name' in kwargs:
+    def query_groups_response(self, group_name=None):
+        if group_name:
             return self._create_response("""
                 {
                     "groups": {
@@ -68,7 +68,7 @@ class FakeTableauInstance(mock.MagicMock):
                         ]
                     }
                 }
-                """ % (self.groups[kwargs['group_name']], kwargs['group_name'])
+                """ % (self.groups[group_name], group_name)
             )
         else:
             return self._create_response("""
@@ -99,7 +99,7 @@ class FakeTableauInstance(mock.MagicMock):
                 }
                 """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1]))
 
-    def get_users_in_group_response(self, **kwargs):
+    def get_users_in_group_response(self):
         return self._create_response("""
             {
                 "pagination": {
@@ -130,7 +130,7 @@ class FakeTableauInstance(mock.MagicMock):
             }
             """ % (self.user_ids[0], self.users_names[0], self.user_ids[2], self.users_names[2]))
 
-    def create_group_response(self, **kwargs):
+    def create_group_response(self, name):
         return self._create_response("""
             {
                 "group": {
@@ -138,12 +138,12 @@ class FakeTableauInstance(mock.MagicMock):
                     "name": "%s"
                 }
             }
-        """ % kwargs['name'])
+        """ % name)
 
-    def add_user_to_group_response(self, **kwargs):
+    def add_user_to_group_response(self):
         return self._create_response('')
 
-    def get_groups_for_user_id_response(self, **kwargs):
+    def get_groups_for_user_id_response(self):
         return self._create_response("""
                 {
                     "pagination": {
@@ -184,13 +184,13 @@ class FakeTableauInstance(mock.MagicMock):
             }
         """ % (username, role))
 
-    def update_user_response(self, **kwargs):
+    def update_user_response(self):
         return self._create_response('')
 
-    def delete_user_response(self, **kwargs):
+    def delete_user_response(self):
         return self._create_response('')
 
-    def sign_out_response(self, **kwargs):
+    def sign_out_response(self):
         return self._create_response('')
 
     def failure_response(self):
@@ -241,88 +241,115 @@ class TestTableauAPI(TestCase):
     def _assert_subset(self, d1, d2):
         self.assertTrue(set(d1.items()).issubset(set(d2.items())))
 
-    def test_tableau_API_session(self):
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def _create_session(self, mock_request):
+        mock_request.return_value = self.tableau_instance.API_version_response()
+        return TableauAPISession(self.connected_app)
 
-        self._API_method(method='create_session')
-        self.assertFalse(self.api_session.signed_in)
-        self.assertEqual(self.api_session.base_url, 'https://test_server/api/3.15')
-        self._assert_subset({'Content-Type': 'application/json'}, self.api_session.headers)
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def _sign_in(self, mock_request, api_session=None):
+        mock_request.return_value = self.tableau_instance.sign_in_response()
+        api_session.sign_in()
+        return api_session
 
-        self._API_method(method='sign_in')
-        self.assertTrue(self.api_session.signed_in)
-        self.assertEqual(self.api_session.site_id, 'asdfasdf-1234-5678-90as-0s0s0s0s0s0s')
-        self._assert_subset({'X-Tableau-Auth': 'aaaaaaaaaaaaaaaaaaaaaa22222222222222222222222'},
-                            self.api_session.headers)
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def _sign_out(self, mock_request, api_session=None):
+        mock_request.return_value = self.tableau_instance.sign_out_response()
+        api_session.sign_out()
+        return api_session
 
-        group1 = self._API_method(method='query_groups', group_name='group1')
+    def test_create_session_and_sign_in(self):
+        api_session = self._create_session()
+        self._sign_in(api_session=api_session)
+        self.assertTrue(api_session.signed_in)
+        self.assertEqual(api_session.base_url, 'https://test_server/api/3.15')
+        self._assert_subset({'Content-Type': 'application/json'}, api_session.headers)
+        api_session = self._sign_out(api_session=api_session)
+        self.assertFalse(api_session.signed_in)
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_query_groups(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        group_1_name = 'group1'
+        mock_request.return_value = self.tableau_instance.query_groups_response(group_1_name)
+        group1 = api_session.query_groups(group_1_name)
         self.assertEqual(group1['id'], '1a2b3')
-        groups = self._API_method(method='query_groups')
+        mock_request.return_value = self.tableau_instance.query_groups_response()
+        groups = api_session.query_groups()
         self.assertEqual(len(groups), 2)
         self.assertEqual(groups[1]['id'], 'c4d5e')
+        self._sign_out(api_session=api_session)
 
-        users = self._API_method(method='get_users_in_group', group_id=self.tableau_instance.groups['group1'])
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_get_users_in_group(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        mock_request.return_value = self.tableau_instance.get_users_in_group_response()
+        users = api_session.get_users_in_group(self.tableau_instance.groups['group1'])
         self.assertEqual(len(users), 2)
         self.assertEqual(users[1]['id'], 'ty78ui')
+        self._sign_out(api_session=api_session)
 
-        group_id = self._API_method(method='create_group', name='group3', min_site_role='Viewer')
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_create_group(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        name = 'group3'
+        mock_request.return_value = self.tableau_instance.create_group_response(name)
+        group_id = api_session.create_group(name, 'Viewer')
         self.assertEqual(group_id, 'nm12zx')
+        self._sign_out(api_session=api_session)
 
-        self._API_method(method='add_user_to_group', user_id='uip12', group_id='1a2b3')
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_add_user_to_group(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        user_id = 'uip12'
+        group_id = '1a2b3'
+        mock_request.return_value = self.tableau_instance.add_user_to_group_response()
+        api_session.add_user_to_group(user_id, group_id)
+        self._sign_out(api_session=api_session)
 
-        jeff_groups = self._API_method(method='get_groups_for_user_id', id='uip12')
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_get_groups_for_user_id(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        mock_request.return_value = self.tableau_instance.get_groups_for_user_id_response()
+        jeff_groups = api_session.get_groups_for_user_id('uip12')
         self.assertEqual(len(jeff_groups), 2)
         self.assertEqual(jeff_groups[1]['id'], 'c4d5e')
+        self._sign_out(api_session=api_session)
 
-        new_user_id = self._API_method(method="create_user", username='ricardo@company.com', role='Viewer')
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_create_user(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        username = 'ricardo@company.com'
+        role = 'Viewer'
+        mock_request.return_value = self.tableau_instance.create_user_response(username, role)
+        new_user_id = api_session.create_user(username, role)
         self.assertEqual(new_user_id, 'gh23jk')
-
-        self._API_method(method="update_user", id='uip12', role='Explorer')
-        self._API_method(method="delete_user", id='uip12')
-
-        self._API_method(method="sign_out", id='uip12')
-        self.assertFalse(self.api_session.signed_in)
-
-        self._test_failure()
+        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
-    def _API_method(self, mock_request, method=None, **kwargs):
-        if method == 'create_session':
-            mock_request.return_value = self.tableau_instance.API_version_response()
-            self.api_session = TableauAPISession(self.connected_app)
-        elif method == 'sign_in':
-            mock_request.return_value = self.tableau_instance.sign_in_response()
-            self.api_session.sign_in()
-        elif method == 'query_groups':
-            mock_request.return_value = self.tableau_instance.query_groups_response(**kwargs)
-            return self.api_session.query_groups(kwargs['group_name'] if 'group_name' in kwargs else None)
-        elif method == 'get_users_in_group':
-            mock_request.return_value = self.tableau_instance.get_users_in_group_response(**kwargs)
-            return self.api_session.get_users_in_group(kwargs['group_id'])
-        elif method == 'create_group':
-            mock_request.return_value = self.tableau_instance.create_group_response(**kwargs)
-            return self.api_session.create_group(kwargs['name'], kwargs['min_site_role'])
-        elif method == 'add_user_to_group':
-            mock_request.return_value = self.tableau_instance.add_user_to_group_response(**kwargs)
-            return self.api_session.add_user_to_group(kwargs['user_id'], kwargs['group_id'])
-        elif method == 'get_groups_for_user_id':
-            mock_request.return_value = self.tableau_instance.get_groups_for_user_id_response(**kwargs)
-            return self.api_session.get_groups_for_user_id(kwargs['id'])
-        elif method == 'create_user':
-            mock_request.return_value = self.tableau_instance.create_user_response(**kwargs)
-            return self.api_session.create_user(kwargs['username'], kwargs['role'])
-        elif method == 'update_user':
-            mock_request.return_value = self.tableau_instance.update_user_response(**kwargs)
-            return self.api_session.update_user(kwargs['id'], kwargs['role'])
-        elif method == 'delete_user':
-            mock_request.return_value = self.tableau_instance.delete_user_response(**kwargs)
-            return self.api_session.delete_user(kwargs['id'])
-        elif method == 'sign_out':
-            mock_request.return_value = self.tableau_instance.sign_out_response()
-            self.api_session.sign_out()
-        else:
-            raise Exception('API method not tested.')
+    def test_update_user(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        mock_request.return_value = self.tableau_instance.update_user_response()
+        api_session.update_user('uip12', 'Explorer')
+        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
-    def _test_failure(self, mock_request):
+    def test_delete_user(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        mock_request.return_value = self.tableau_instance.delete_user_response()
+        api_session.delete_user('uip12')
+        self._sign_out(api_session=api_session)
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_failure(self, mock_request):
+        api_session = self._create_session()
         mock_request.return_value = self.tableau_instance.failure_response()
-        self.assertRaises(TableauAPIError, self.api_session.create_user, 'jamie@company.com', 'Viewer')
+        self.assertRaises(TableauAPIError, api_session.create_user, 'jamie@company.com', 'Viewer')
