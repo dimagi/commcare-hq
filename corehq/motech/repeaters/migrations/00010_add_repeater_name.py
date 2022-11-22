@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('repeaters', '0007_migrate_to_sql'),
+        ('repeaters', '0009_add_create_update_info'),
     ]
 
     operations = [
