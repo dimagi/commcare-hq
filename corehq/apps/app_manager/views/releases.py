@@ -690,7 +690,6 @@ def paginate_release_logs(request, domain, app_id):
             'total': paginator.count,
             'num_pages': paginator.num_pages,
             'current_page': page,
-            'more': page * limit < 10,
         }
     })
 
