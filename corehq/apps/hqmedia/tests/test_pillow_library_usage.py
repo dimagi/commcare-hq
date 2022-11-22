@@ -38,6 +38,6 @@ def test_image_ops_fit():
     target_logo = ImageOps.fit(
         logo,
         (200, 100),
-        method=Image.BICUBIC
+        method=Image.Resampling.BICUBIC
     )
     eq(target_logo.size, (200, 100))
