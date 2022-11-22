@@ -15,7 +15,7 @@ def test_thumbnail_resize_works():
     logo = _get_logo()
     logo.load()
     logo.thumbnail(THUMBNAIL_SIZE)
-    logo.thumbnail(THUMBNAIL_SIZE, Image.ANTIALIAS)
+    logo.thumbnail(THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
 
 
 def test_rgb_conversion():
