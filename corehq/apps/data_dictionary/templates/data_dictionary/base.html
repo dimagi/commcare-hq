@@ -161,7 +161,9 @@
             <th>{% trans "FHIR Resource Property Path" %}</th>
           {% endif %}
           <th>{% include "data_dictionary/partials/valid_values_th_content.html" %}</th>
+          {% if not request.is_view_only %}
           <th></th>
+          {% endif %}
           </thead>
           <tbody data-bind="sortable: casePropertyList">
           <!-- ko if: isGroup -->
@@ -171,7 +173,9 @@
             <td>{% trans "Case Property Group" %}</td>
             <td></td>
             <td></td>
+            {% if not request.is_view_only %}
             <td></td>
+            {% endif %}
             {% if fhir_integration_enabled %}
               <td></td>
             {% endif %}
@@ -179,8 +183,10 @@
           <!-- /ko -->
           <!-- ko if: !isGroup -->
           <tr data-bind="visible: expanded() && (!deprecated() || $root.showAll()), attr: {'data-order': _sortableOrder}">
-            <td class="sortable-handle">
-              <i class="fa fa-arrows-v"></i>
+            <td>
+              {% if not request.is_view_only %}
+              <i class="sortable-handle fa fa-arrows-v"></i>
+              {% endif %}
             </td>
             <td data-bind="text: name"></td>
             <td>
@@ -219,6 +225,7 @@
                 {% trans "YYYY-MM-DD" %}
               </div>
             </td>
+            {% if not request.is_view_only %}
             <td>
               <!-- ko if: !deprecated() -->
               <button title="{% trans_html_attr 'Deprecate Property' %}"  data-bind="click: deprecateProperty" class="fa fa-archive"></button>
@@ -227,6 +234,7 @@
               <button title="{% trans_html_attr 'Restore Property' %}" data-bind="click: restoreProperty" class="fa fa-undo"></button>
               <!-- /ko -->
             </td>
+            {% endif %}
           </tr>
           <!-- /ko -->
           </tbody>
