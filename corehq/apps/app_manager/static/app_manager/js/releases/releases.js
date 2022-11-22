@@ -199,6 +199,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             hqImport('analytix/js/kissmetrix').track.event('Clicked Deploy');
             $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
+            self.releaseLocked(true);
         };
 
         self.clickScan = function () {
@@ -249,6 +250,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
+        self.releasesEnabled = ko.observable(true);
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -376,6 +378,13 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
 
+        self.releaseModeVisible = ko.observable(true);
+        self.releaseLocked = ko.observable(true);
+
+        self.toggleReleaseMode = function () {
+            self.releaseLocked(!self.releaseLocked);
+        };
+
         self.toggleRelease = function (savedApp, event) {
             $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var isReleased = savedApp.is_released();
@@ -401,6 +410,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            self.releaseLocked(data.is_released);
                         }
                     },
                     error: function () {
@@ -494,6 +504,10 @@ hqDefine('app_manager/js/releases/releases', function () {
                     }
                 },
             });
+        };
+
+        self.toggleReleasesControl = function (enableRelease) {
+            self.releasesEnabled(enableRelease);
         };
 
         return self;
