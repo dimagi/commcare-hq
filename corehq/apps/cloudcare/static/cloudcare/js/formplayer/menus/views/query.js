@@ -380,7 +380,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         tagName: "div",
         template: _.template($("#query-view-list-template").html() || ""),
         childView: QueryView,
-        childViewContainer: "tbody",
+        childViewContainer: "#query-properties",
         childViewOptions: function () { return {parentView: this}; },
 
         initialize: function (options) {
