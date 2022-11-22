@@ -63,3 +63,4 @@ class TestReleaseBuild(TestCase):
         logs = ApplicationReleaseLog.objects.filter(app_id=self.app.get_id).first()
         self.assertEqual(logs.action, ApplicationReleaseLog.ACTION_RELEASED)
         self.assertEqual(logs.version, self.app.version)
+        self.assertEqual(logs.user_id, self.user.user_id)
