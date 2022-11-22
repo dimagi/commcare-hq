@@ -111,6 +111,7 @@
   {% registerurl 'update_case_property' domain %}
   {% initial_page_data 'typeChoices' question_types %}
   {% initial_page_data 'fhirResourceTypes' fhir_resource_types %}
+  {% initial_page_data 'read_only_mode' request.is_view_only %}
   {% if not request.is_view_only %}
     <div data-bind="saveButton: saveButton, visible: $root.activeCaseType()"></div>
   {% endif %}
@@ -189,7 +190,7 @@
               {% endif %}
             </td>
             <td data-bind="text: name"></td>
-            <td>
+            <td class="main-form">
               <select class="form-control"
                       data-bind="
                                   options: $root.availableDataTypes,
@@ -199,7 +200,7 @@
                                   value: dataType,
                               "></select>
             </td>
-            <td>
+            <td class="main-form">
                               <textarea class="form-control vertical-resize" data-bind="
                                 value: $data.description,
                                 rows: 1,

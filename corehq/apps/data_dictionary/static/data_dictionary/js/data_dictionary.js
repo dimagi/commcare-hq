@@ -9,6 +9,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
+    "data_interfaces/js/make_read_only",
 ], function (
     $,
     ko,
