@@ -8714,10 +8714,8 @@ msgid "Enable multi-select case list"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_multi_select.html
-#, fuzzy
-#| msgid "Enable Case Search"
 msgid "Enable auto select"
-msgstr "Activer la recherche de dossiers"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_multi_select.html
 msgid "Maximum selected value"
@@ -9609,16 +9607,12 @@ msgid "Form and Case Changes"
 msgstr "Modifications de formulaire et de dossier"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Verify Phone Numbers"
 msgid "Version Number"
-msgstr "Vérifiez les numéros de téléphone"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Rate Type"
 msgid "Update Type"
-msgstr "Type de taux "
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
@@ -9728,10 +9722,8 @@ msgid "Application Profiles"
 msgstr "Profiles d'application"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#, fuzzy
-#| msgid "Application Users"
 msgid "Application Release Logs"
-msgstr "Utilisateurs de l'application"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
@@ -40803,10 +40795,8 @@ msgid "Inbound API Request Logs"
 msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
-#, fuzzy
-#| msgid "Request body"
 msgid "API Request Log"
-msgstr "Organisme de requête"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
@@ -40834,22 +40824,16 @@ msgid "Add Validation"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Metadata"
 msgid "Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Responses"
 msgid "Response Details"
-msgstr "Réponses"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Processing"
 msgid "Processing Attempts"
-msgstr "Traitement"
+msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"

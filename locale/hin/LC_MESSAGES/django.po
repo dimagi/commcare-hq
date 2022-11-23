@@ -9173,10 +9173,8 @@ msgid "Version Number"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Case Type:"
 msgid "Update Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
@@ -39387,16 +39385,12 @@ msgid "Add Validation"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Metadata"
 msgid "Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Details"
 msgid "Response Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Processing Attempts"

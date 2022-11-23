@@ -9224,16 +9224,12 @@ msgid "Form and Case Changes"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Version Summary"
 msgid "Version Number"
-msgstr "Resumo de Versão"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Rate Type"
 msgid "Update Type"
-msgstr "Tipo de taxa"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
@@ -9343,10 +9339,8 @@ msgid "Application Profiles"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-#, fuzzy
-#| msgid "Application Users"
 msgid "Application Release Logs"
-msgstr "Usuários da Aplicação"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
@@ -39596,10 +39590,8 @@ msgid "Inbound API Request Logs"
 msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
-#, fuzzy
-#| msgid "Request Quote"
 msgid "API Request Log"
-msgstr "Requisitar cotação"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
@@ -39627,22 +39619,16 @@ msgid "Add Validation"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Metadata"
 msgid "Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Details"
 msgid "Response Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Process complete."
 msgid "Processing Attempts"
-msgstr "Processo completo"
+msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
