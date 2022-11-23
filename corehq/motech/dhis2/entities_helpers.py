@@ -95,11 +95,11 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
     its ETag, or (None, None) if a corresponding Tracked Entity was not
     found.
 
-    Raises BadTrackedEntityInstanceID if a Tracked Entity ID believed to
-    have been issued by the DHIS2 server is not found on that server.
-
-    Raises MultipleInstancesFound if unable to select a
-    corresponding Tracked Entity from multiple available candidates.
+    Raises:
+        BadTrackedEntityInstanceID: if a Tracked Entity ID believed to
+            have been issued by the DHIS2 server is not found on that server.
+        MultipleInstancesFound: if unable to select a
+            corresponding Tracked Entity from multiple available candidates.
     """
     tei_id = get_tracked_entity_instance_id(case_trigger_info, case_config)
     if not tei_id:
