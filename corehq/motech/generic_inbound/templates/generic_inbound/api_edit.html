@@ -9,6 +9,8 @@
 {% block page_content %}
 {% initial_page_data "filters" filter_expressions %}
 {% initial_page_data "validations" validations %}
+{% registerurl 'edit_ucr_expression' domain '---' %}
+{% registerurl 'ucr_expressions' domain %}
 <div id="edit-api">
   <div class="row">
     <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8">
@@ -53,15 +55,20 @@
                 </span>
               </td>
               <td data-bind="css: {'has-error': expressionError}">
-                <select class="select form-control" required data-bind="
-                  value: expression_id,
-                  valueAllowUnset: true,
-                  options: $root.filters,
-                  optionsText: 'label',
-                  optionsValue: 'id',
-                  attr: {name: `validations-${$index()}-expression`},
-                  ">
-                  </select>
+                <div class="input-group">
+                  <select class="select form-control" required data-bind="
+                    value: expression_id,
+                    valueAllowUnset: true,
+                    options: $root.filters,
+                    optionsText: 'label',
+                    optionsValue: 'id',
+                    attr: {name: `validations-${$index()}-expression`},
+                    ">
+                    </select>
+                    <div class="input-group-addon">
+                      <a data-bind="attr: {href: editUrl}" target="_blank"><i class="fa fa-external-link"></i></a>
+                    </div>
+                </div>
                   <span class='help-block' data-bind="visible: expressionError">
                     {% translate "Expression is required" %}
                   </span>
