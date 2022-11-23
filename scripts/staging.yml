@@ -80,5 +80,4 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
-    - gh/bump-django-field-audit # Graham Nov 22
 submodules: { }
