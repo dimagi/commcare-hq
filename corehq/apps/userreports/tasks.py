@@ -95,9 +95,7 @@ def rebuild_indicators(indicator_config_id, initiated_by=None, limit=-1, source=
 
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
-    send = False
-    if limit == -1:
-        send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
+    send = limit == -1
     with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
         adapter = get_indicator_adapter(config)
 
@@ -131,8 +129,7 @@ def rebuild_indicators_in_place(indicator_config_id, initiated_by=None, source=N
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
-    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
-    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         adapter = get_indicator_adapter(config)
         if not id_is_static(indicator_config_id):
             config.meta.build.initiated_in_place = datetime.utcnow()
@@ -149,8 +146,7 @@ def resume_building_indicators(indicator_config_id, initiated_by=None):
     config = get_ucr_datasource_config_by_id(indicator_config_id)
     success = _('Your UCR table {} has finished rebuilding in {}').format(config.table_id, config.domain)
     failure = _('There was an error rebuilding Your UCR table {} in {}.').format(config.table_id, config.domain)
-    send = toggles.SEND_UCR_REBUILD_INFO.enabled(initiated_by)
-    with notify_someone(initiated_by, success_message=success, error_message=failure, send=send):
+    with notify_someone(initiated_by, success_message=success, error_message=failure, send=True):
         resume_helper = DataSourceResumeHelper(config)
         adapter = get_indicator_adapter(config)
         adapter.log_table_build(
