@@ -4,6 +4,11 @@
 {% load i18n %}
 
 {% block page_content %}
+  {% if data_source.is_rebuild_in_progress %}
+        <div id="built-warning" class="alert alert-warning">
+          <h4><i class="fa fa-exclamation-triangle"></i> {% trans "Please note that this datasource is being rebuilt." %}</h4>
+        </div>
+  {% endif %}
   {% if data_source.get_id %}
     <div class="btn-toolbar pull-right">
         <div class="btn-group">
