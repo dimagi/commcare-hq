@@ -2,19 +2,12 @@ hqDefine('generic_inbound/js/api_edit', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'generic_inbound/js/manage_links',
     'generic_inbound/js/copy_data',
-], function (_, ko, initialPageData) {
+], function (_, ko, initialPageData, manageLinks) {
 
     const VALIDATION_DEFAULTS = {
         "name": "", "expression_id": null, "message": "", "id": null, "toDelete": false,
-    };
-
-    const getExpressionUrl = function (expressionId) {
-        if (expressionId) {
-            return initialPageData.reverse('edit_ucr_expression', expressionId);
-        } else {
-            return initialPageData.reverse('ucr_expressions');
-        }
     };
 
     let ValidationModel = function (data) {
@@ -29,7 +22,7 @@ hqDefine('generic_inbound/js/api_edit', [
         });
 
         self.editUrl = ko.computed(() => {
-            return getExpressionUrl(self.expression_id());
+            return manageLinks.getExpressionUrl(self.expression_id());
         });
 
         self.messageError = ko.computed(() => {
@@ -66,29 +59,6 @@ hqDefine('generic_inbound/js/api_edit', [
 
         self.filters = initialPageData.get("filters");
         self.validations = SubModelWrapper(ValidationModel, validations, VALIDATION_DEFAULTS);
-
-        // update the links based on selection
-        const filterLinkEl = $('#div_id_filter_expression .input-group-addon a');
-        const transformLinkEl = $('#div_id_transform_expression .input-group-addon a');
-        const filterSelect = $('#id_filter_expression');
-        const transformSelect = $('#id_transform_expression');
-
-        const updateLink = function (selectEl, element) {
-            let optionSelected = selectEl.find("option:selected");
-            element.attr('href', getExpressionUrl(optionSelected.val()));
-        };
-
-        filterSelect.change(function () {
-            updateLink($(this), filterLinkEl);
-        });
-
-        transformSelect.change(function () {
-            updateLink($(this), transformLinkEl);
-        });
-
-        // update based on initial values
-        updateLink(filterSelect, filterLinkEl);
-        updateLink(transformSelect, transformLinkEl);
 
         self.validateForm = function () {
             return self.validations.allValid();
