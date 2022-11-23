@@ -1,6 +1,7 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load timezone_tags %}
 
 {% block page_content %}
 
@@ -38,7 +39,7 @@
         </tr>
         <tr>
           <th>timestamp</th>
-          <td>{{ log.timestamp }}</td>
+          <td>{% utc_to_timezone log.timestamp timezone %}</td>
         </tr>
         <tr>
           <th>username</th>
@@ -133,7 +134,7 @@
       <tbody>
         {% for attempt in log.processingattempt_set.all %}
         <tr>
-          <td>{{ attempt.timestamp }}</td>
+          <td>{% utc_to_timezone attempt.timestamp timezone %}</td>
           <td>{{ attempt.is_retry }}</td>
           <td>{{ attempt.response_status }}</td>
           <td><code>{{ attempt.response_body }}</code></td>

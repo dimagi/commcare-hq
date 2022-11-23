@@ -111,6 +111,22 @@ class TestGenericInboundAPIView(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_post_results_in_bad_type(self):
+        expression = UCRExpression.objects.create(
+            name="bad type",
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={"type": "property_name", "property_name": "name"}
+        )
+        api = ConfigurableAPI.objects.create(
+            domain=self.domain_name,
+            transform_expression=expression
+        )
+        response = self._call_api_advanced(api)
+        self.assertEqual(response.status_code, 500, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json, {"error": "Unexpected type for transformed request"})
+
     def test_post(self):
         response_json = self._test_generic_api({
             'is_team_sport': {
@@ -148,7 +164,10 @@ class TestGenericInboundAPIView(TestCase):
         validation_expression=None
     ):
         generic_api = self._make_api(properties_expression, filter_expression, validation_expression)
-        url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
+        return self._call_api_advanced(generic_api, query_params)
+
+    def _call_api_advanced(self, api, query_params=None):
+        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
         if query_params:
             url = f"{url}?{urlencode(query_params)}"
         data = json.dumps(self.example_post_data)

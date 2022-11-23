@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import messages
-from django.http import Http404, JsonResponse, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
@@ -27,6 +27,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.generic_inbound.core import execute_generic_api
 from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundApiError,
     GenericInboundRequestFiltered,
     GenericInboundUserError,
     GenericInboundValidationError,
@@ -210,6 +211,8 @@ def _generic_inbound_api(api, request):
         return HttpResponse(status=204)  # no body for 204 (RFC 7230)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
+    except GenericInboundApiError as e:
+        return JsonResponse({'error': str(e)}, status=500)
     except SubmissionError as e:
         return JsonResponse({
             'error': str(e),
