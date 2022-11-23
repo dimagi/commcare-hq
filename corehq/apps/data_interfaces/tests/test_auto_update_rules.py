@@ -55,3 +55,19 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
         AutomaticUpdateRule.objects.all().delete(audit_action=AuditAction.AUDIT)
         audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
         self.assertEqual({'active': {'old': True}, 'deleted': {'old': False}}, audit_event.delta)
+
+    def test_queryset_update_is_audited(self):
+        for _ in range(2):
+            AutomaticUpdateRule.objects.create(
+                domain='test',
+                active=True,
+                workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            )
+
+        AutomaticUpdateRule.by_domain(
+            'test', workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING
+        ).update(active=False, audit_action=AuditAction.AUDIT)
+
+        audit_events = AuditEvent.objects.by_model(AutomaticUpdateRule).filter(is_create=False)
+        for event in audit_events:
+            self.assertEqual({'active': {'old': True, 'new': False}}, event.delta)
