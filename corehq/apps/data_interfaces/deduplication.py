@@ -171,10 +171,8 @@ def backfill_deduplicate_rule(domain, rule):
         )
     finally:
         progress_helper.set_rule_complete()
-        AutomaticUpdateRule.objects.filter(pk=rule.pk).update(
-            locked_for_editing=False,
-            last_run=now,
-        )
+        rule.last_run = now
+        rule.save(update_fields=['last_run'])
 
 
 def get_dedupe_xmlns(rule):
