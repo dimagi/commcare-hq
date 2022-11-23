@@ -709,6 +709,9 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
                          'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        if amount < 0:
+            message = (_('There was an error processing your request. Please try again.'))
+            return json_response({'error': {'message': message}})
         general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
