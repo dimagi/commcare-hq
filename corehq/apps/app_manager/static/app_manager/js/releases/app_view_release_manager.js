@@ -5,6 +5,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
     // Main releases content
     var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
+    var updatePubSub = new ko.subscribable();
     var o = {
         currentAppVersion: initial_page_data('app_version') || -1,
         recipient_contacts: initial_page_data('sms_contacts'),
@@ -12,6 +13,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         latestReleasedVersion: initial_page_data('latestReleasedVersion'),
         upstreamBriefs: initial_page_data('upstream_briefs'),
         upstreamUrl: initial_page_data('upstream_url'),
+        updatePubSub,
     };
     var el = $('#releases-table');
     if (el.length) {
@@ -92,6 +94,9 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
                 self.showPaginationSpinner(false);
             }
         });
+        updatePubSub.subscribe(() => {
+            self.goToPage(1);
+        }, self, "refreshAppLogs");
 
         return self;
     };

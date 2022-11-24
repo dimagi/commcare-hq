@@ -252,7 +252,10 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
-
+        self.updatePubSub = o.updatePubSub;
+        self.savedApps.subscribe(() => {
+            self.updatePubSub.notifySubscribers("", "refreshAppLogs");
+        });
         // Spinner behavior
         self.showLoadingSpinner = ko.observable(true);
         self.showPaginationSpinner = ko.observable(false);
@@ -401,6 +404,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
+                            self.updatePubSub.notifySubscribers("", "refreshAppLogs");
                         }
                     },
                     error: function () {
