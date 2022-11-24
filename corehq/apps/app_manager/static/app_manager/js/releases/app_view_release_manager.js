@@ -18,8 +18,34 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         var releasesMain = releasesMainModel(o);
         el.koApplyBindings(releasesMain);
         _.defer(function () { releasesMain.goToPage(1); });
-    }
 
+        var releaseControlEl = $('#release-control');
+        if (releaseControlEl.length) {
+
+            releasesMain.releasesEnabled(false);
+
+            var setReleaseLockButtons = function () {
+                if (releasesMain.releasesEnabled()) {
+                    $("#btn-release-unlocked").show();
+                    $("#btn-release-locked").hide();
+                } else {
+                    $("#btn-release-unlocked").hide();
+                    $("#btn-release-locked").show();
+                }
+            };
+
+            $("#btn-release-unlocked").click(function () {
+                releasesMain.toggleReleasesControl(false);
+                setReleaseLockButtons();
+            });
+            $("#btn-release-locked").click(function () {
+                releasesMain.toggleReleasesControl(true);
+                setReleaseLockButtons();
+            });
+
+            setReleaseLockButtons();
+        }
+    }
     // View changes / app diff
     var appDiff = hqImport('app_manager/js/releases/app_diff').init('#app-diff-modal .modal-body');
     $('#recent-changes-btn').on('click', function () {
