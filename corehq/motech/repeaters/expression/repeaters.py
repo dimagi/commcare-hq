@@ -149,6 +149,10 @@ class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
         app_label = 'repeaters'
         proxy = True
 
+    @property
+    def form_class_name(self):
+        return 'CaseExpressionRepeater'
+
     @memoized
     def payload_doc(self, repeat_record):
         return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain).to_json()
