@@ -6277,10 +6277,16 @@ class LatestEnabledBuildProfiles(models.Model):
 class ApplicationReleaseLog(models.Model):
     ACTION_RELEASED = "released"
     ACTION_IN_TEST = "in_test"
+    ACTION_CREATED = "created"
+    ACTION_REVERTED = "reverted"
+    ACTION_DELETED = "deleted"
 
     ACTION_DISPLAY = {
         ACTION_RELEASED: _("Released"),
-        ACTION_IN_TEST: _("In Test")
+        ACTION_IN_TEST: _("In Test"),
+        ACTION_CREATED: _("Created"),
+        ACTION_REVERTED: _("Reverted"),
+        ACTION_DELETED: _("Deleted")
     }
 
     domain = models.CharField(max_length=255, null=False, default='')
