@@ -9,7 +9,8 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        md = window.markdownit();
 
     var separator = " to ",
         dateFormat = "YYYY-MM-DD";
@@ -385,7 +386,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         tagName: "div",
         template: _.template($("#query-view-list-template").html() || ""),
         childView: QueryView,
-        childViewContainer: "tbody",
+        childViewContainer: "#query-properties",
         childViewOptions: function () { return {parentView: this}; },
 
         initialize: function (options) {
@@ -393,8 +394,10 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         },
 
         templateContext: function () {
+            var description = md.render(this.options.collection.description);
             return {
                 title: this.options.title,
+                description: DOMPurify.sanitize(description),
             };
         },
 
