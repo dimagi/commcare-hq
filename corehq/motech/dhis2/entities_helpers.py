@@ -53,9 +53,9 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
         try:
             create_relationships(
                 requests,
-                info,
-                case_config,
-                repeater.dhis2_entity_config,
+                subcase_trigger_info=info,
+                subcase_config=case_config,
+                dhis2_entity_config=repeater.dhis2_entity_config,
             )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
@@ -263,15 +263,15 @@ def create_relationships(
     subcase-to-supercase relationship, and the other corresponding to a
     supercase-to-subcase relationship.
     """
-    subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
-    if not subcase_tei_id:
+    subcase_tracked_entity_instance_id = get_value(subcase_config.tei_id, subcase_trigger_info)
+    if not subcase_tracked_entity_instance_id:
         raise Dhis2Exception(_(
             'Unable to create DHIS2 relationship: The case {case} is not '
             'registered in DHIS2.'
         ).format(case=subcase_trigger_info))
 
-    for rel_config in subcase_config.relationships_to_export:
-        supercase = get_supercase(subcase_trigger_info, rel_config)
+    for relationship_config in subcase_config.relationships_to_export:
+        supercase = get_supercase(subcase_trigger_info, relationship_config)
         if not supercase:
             # There is no parent case to export a relationship for
             continue
@@ -287,32 +287,32 @@ def create_relationships(
                 "case type."
             ).format(subcase_type=subcase_trigger_info.type,
                      supercase_type=supercase.type))
-        supercase_info = get_case_trigger_info_for_case(
+        supercase_trigger_info = get_case_trigger_info_for_case(
             supercase,
             [supercase_config.tei_id],
         )
-        supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
-        if not supercase_tei_id:
+        supercase_tracked_entity_instance_id = get_value(supercase_config.tei_id, supercase_trigger_info)
+        if not supercase_tracked_entity_instance_id:
             # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
-            ).format(case=supercase_info))
-        if rel_config.supercase_to_subcase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.supercase_to_subcase_dhis2_id,
-                supercase_tei_id,
-                subcase_tei_id,
-            )
-        if rel_config.subcase_to_supercase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.subcase_to_supercase_dhis2_id,
-                subcase_tei_id,
-                supercase_tei_id,
-            )
+            ).format(case=supercase_trigger_info))
 
+        if relationship_config.supercase_to_subcase_dhis2_id:
+            create_relationship(
+                requests=requests,
+                relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
+                from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+                to_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
+            )
+        if relationship_config.subcase_to_supercase_dhis2_id:
+            create_relationship(
+                requests=requests,
+                relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
+                from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
+                to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+            )
 
 def get_supercase(case_trigger_info, relationship_config):
     case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
@@ -327,17 +327,22 @@ def get_supercase(case_trigger_info, relationship_config):
     return None
 
 
-def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
+def create_relationship(
+    requests,
+    relationship_type_id,
+    from_tracked_entity_intance_id,
+    to_tracked_entity_intance_id
+):
     relationship = {
-        'relationshipType': rel_type_id,
+        'relationshipType': relationship_type_id,
         'from': {
             'trackedEntityInstance': {
-                'trackedEntityInstance': from_tei_id
+                'trackedEntityInstance': from_tracked_entity_intance_id
             }
         },
         'to': {
             'trackedEntityInstance': {
-                'trackedEntityInstance': to_tei_id
+                'trackedEntityInstance': to_tracked_entity_intance_id
             }
         }
     }
