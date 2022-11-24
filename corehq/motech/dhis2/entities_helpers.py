@@ -80,12 +80,12 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
 
-
     if errors:
         errors_str = f"Errors sending to {repeater}: " + pformat_json([str(e) for e in errors])
         requests.notify_error(errors_str)
         return RepeaterResponse(400, 'Bad Request', errors_str)
     return RepeaterResponse(200, "OK")
+
 
 def _get_tracked_entity_relationship_specs(tracked_entity):
     """Returns a list of RelationshipSpec objects that represents the relationships that already exist on a tracked
@@ -102,6 +102,7 @@ def _get_tracked_entity_relationship_specs(tracked_entity):
         )
         tracked_entity_relationships.append(spec)
     return tracked_entity_relationships
+
 
 def _get_info_config_pairs(repeater, case_trigger_infos):
     info_config_pairs = []
@@ -139,9 +140,7 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
     """
     tei_id = get_tracked_entity_instance_id(case_trigger_info, case_config)
     if not tei_id:
-        tracked_entities = find_tracked_entity_instances(
-            requests, case_trigger_info, case_config
-        )
+        tracked_entities = find_tracked_entity_instances(requests, case_trigger_info, case_config)
         if not tracked_entities:
             return (None, None)
         if len(tracked_entities) > 1:
@@ -149,9 +148,7 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
                 '{n} tracked entity instances were found for case {case}'
             ).format(n=len(tracked_entities), case=case_trigger_info))
         tei_id = tracked_entities[0]["trackedEntityInstance"]
-    return get_tracked_entity_instance_and_etag_by_id(
-        requests, tei_id, case_trigger_info
-    )
+    return get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
 
 
 def get_tracked_entity_instance_id(case_trigger_info, case_config):
@@ -188,15 +185,10 @@ def find_tracked_entity_instances(requests, case_trigger_info, case_config):
     return finder.find_tracked_entity_instances(case_trigger_info)
 
 
-def update_tracked_entity_instance(
-    requests, tracked_entity, etag, case_trigger_info, case_config,
-    attempt=1
-):
+def update_tracked_entity_instance(requests, tracked_entity, etag, case_trigger_info, case_config, attempt=1):
     case_updates = {}
     for attr_id, value_source_config in case_config.attributes.items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
+        value, case_update = get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info)
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
     enrollments_with_new_events = get_enrollments(
@@ -204,9 +196,7 @@ def update_tracked_entity_instance(
         case_config,
     )
     if enrollments_with_new_events:
-        tracked_entity["enrollments"] = update_enrollments(
-            tracked_entity, enrollments_with_new_events
-        )
+        tracked_entity["enrollments"] = update_enrollments(tracked_entity, enrollments_with_new_events)
     validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
@@ -219,12 +209,9 @@ def update_tracked_entity_instance(
     if response.status_code == 412 and attempt <= 3:
         # Precondition failed: etag does not match. tracked_entity has
         # been changed since we fetched their details. Try again.
-        tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(
-            requests, tei_id, case_trigger_info
-        )
+        tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(requests, tei_id, case_trigger_info)
         update_tracked_entity_instance(
-            requests, tracked_entity, etag, case_trigger_info, case_config,
-            attempt=attempt + 1
+            requests, tracked_entity, etag, case_trigger_info, case_config, attempt=attempt + 1
         )
     else:
         response.raise_for_status()
@@ -261,9 +248,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     }
 
     for attr_id, value_source_config in case_config.attributes.items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
+        value, case_update = get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info)
         set_te_attr(tracked_entity["attributes"], attr_id, value)
         case_updates.update(case_update)
     enrollments = get_enrollments(case_trigger_info, case_config)
@@ -289,11 +274,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
 
 
 def create_relationships(
-    requests,
-    subcase_trigger_info,
-    subcase_config,
-    dhis2_entity_config,
-    tracked_entity_relationships
+    requests, subcase_trigger_info, subcase_config, dhis2_entity_config, tracked_entity_relationships
 ):
     """
     Creates two relationships in DHIS2; one corresponding to a
@@ -336,15 +317,15 @@ def create_relationships(
                 'registered in DHIS2.'
             ).format(case=supercase_trigger_info))
         supercase_to_subcase_relationship_spec = RelationshipSpec(
-                relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
-                from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
-                to_tracked_entity_instance_id=subcase_tracked_entity_instance_id
-            )
+            relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
+            from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+            to_tracked_entity_instance_id=subcase_tracked_entity_instance_id
+        )
         subcase_to_supercase_relationship_spec = RelationshipSpec(
-                relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
-                from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
-                to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
-            )
+            relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
+            from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
+            to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+        )
         ensure_relationship_exists(
             requests=requests,
             relationship_spec=supercase_to_subcase_relationship_spec,
@@ -355,6 +336,7 @@ def create_relationships(
             relationship_spec=subcase_to_supercase_relationship_spec,
             existing_relationships=tracked_entity_relationships
         )
+
 
 def ensure_relationship_exists(requests, relationship_spec, existing_relationships):
     """Checks to see if `relationship_spec` is in `existing_relationships`. If not, we try to create the
@@ -367,6 +349,7 @@ def ensure_relationship_exists(requests, relationship_spec, existing_relationshi
 
     if relationship_spec.relationship_type_id:
         create_relationship(requests, relationship_spec)
+
 
 def get_supercase(case_trigger_info, relationship_config):
     case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
@@ -381,10 +364,7 @@ def get_supercase(case_trigger_info, relationship_config):
     return None
 
 
-def create_relationship(
-    requests,
-    relationship_spec
-):
+def create_relationship(requests, relationship_spec):
     endpoint = '/api/relationships/'
     response = requests.post(endpoint, json=relationship_spec.as_dict(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
@@ -444,8 +424,7 @@ def generate_value(requests, attr_id, generator_params, case_trigger_info):
     """
     params = {name: get_value(vsc, case_trigger_info) for name, vsc in generator_params.items()}
     response = requests.get(
-        f"/api/trackedEntityAttributes/{attr_id}/generate",
-        params=params, raise_for_status=True
+        f"/api/trackedEntityAttributes/{attr_id}/generate", params=params, raise_for_status=True
     )
     return response.json()["value"]
 
@@ -514,20 +493,11 @@ def save_case_updates(domain, case_id, case_updates):
             kwargs[case_property] = value
         else:
             case_update[case_property] = value
-    case_block = CaseBlock(
-        case_id=case_id,
-        create=False,
-        update=case_update,
-        **kwargs
-    )
+    case_block = CaseBlock(case_id=case_id, create=False, update=case_update, **kwargs)
     submit_case_blocks([case_block.as_text()], domain, xmlns=XMLNS_DHIS2)
 
 
-def set_te_attr(
-    attributes: List[Dict[str, Any]],
-    attr_id: str,
-    value: Any
-):
+def set_te_attr(attributes: List[Dict[str, Any]], attr_id: str, value: Any):
     """
     Updates a list of tracked entity attributes by reference
 
@@ -543,9 +513,7 @@ def set_te_attr(
             attr["value"] = value
             break
     else:
-        attributes.append(
-            {"attribute": attr_id, "value": value}
-        )
+        attributes.append({"attribute": attr_id, "value": value})
 
 
 def validate_tracked_entity(tracked_entity):
@@ -569,11 +537,5 @@ def get_geo_json(form_config, case_trigger_info):
     coordinate_dict = _get_coordinate(form_config, case_trigger_info)
     if coordinate_dict.get('coordinate'):
         point = coordinate_dict['coordinate']
-        return {
-            'type': 'Point',
-            'coordinates': [
-                point['latitude'],
-                point['longitude']
-            ]
-        }
+        return {'type': 'Point', 'coordinates': [point['latitude'], point['longitude']]}
     return {}
