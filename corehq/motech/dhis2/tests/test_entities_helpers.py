@@ -3,6 +3,8 @@ import json
 from unittest.mock import Mock, call, patch
 from uuid import uuid4
 
+from corehq.motech.dhis2 import entities_helpers
+from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 from fakecouch import FakeCouchDb
@@ -54,11 +56,7 @@ class ValidateTrackedEntityTests(SimpleTestCase):
         validate_tracked_entity(tracked_entity)
 
     def test_extra_key(self):
-        tracked_entity = {
-            "orgUnit": "abc123",
-            "trackedEntityType": "def456",
-            "hasWensleydale": False
-        }
+        tracked_entity = {"orgUnit": "abc123", "trackedEntityType": "def456", "hasWensleydale": False}
         with self.assertRaises(ConfigurationError):
             validate_tracked_entity(tracked_entity)
 
@@ -70,10 +68,7 @@ class ValidateTrackedEntityTests(SimpleTestCase):
             validate_tracked_entity(tracked_entity)
 
     def test_bad_data_type(self):
-        tracked_entity = {
-            "orgUnit": 0xabc123,
-            "trackedEntityType": 0xdef456
-        }
+        tracked_entity = {"orgUnit": 0xabc123, "trackedEntityType": 0xdef456}
         with self.assertRaises(ConfigurationError):
             validate_tracked_entity(tracked_entity)
 
@@ -137,32 +132,34 @@ class TestDhis2EntitiesHelpers(TestCase):
             "received_on": "2017-05-26T09:17:23.692083Z",
         }
         config = {
-            'form_configs': json.dumps([{
-                'xmlns': 'test_xmlns',
-                'program_id': program_id,
-                'event_status': 'COMPLETED',
-                'event_location': {
-                    'form_question': '/data/event_location'
-                },
-                'completed_date': {
-                    'doc_type': 'FormQuestion',
-                    'form_question': '/data/completed_date',
-                    'external_data_type': DHIS2_DATA_TYPE_DATE
-                },
-                'org_unit_id': {
-                    'doc_type': 'FormUserAncestorLocationField',
-                    'form_user_ancestor_location_field': LOCATION_DHIS_ID
-                },
-                'datavalue_maps': [
-                    {
+            'form_configs':
+                json.dumps([{
+                    'xmlns':
+                        'test_xmlns',
+                    'program_id':
+                        program_id,
+                    'event_status':
+                        'COMPLETED',
+                    'event_location': {
+                        'form_question': '/data/event_location'
+                    },
+                    'completed_date': {
+                        'doc_type': 'FormQuestion',
+                        'form_question': '/data/completed_date',
+                        'external_data_type': DHIS2_DATA_TYPE_DATE
+                    },
+                    'org_unit_id': {
+                        'doc_type': 'FormUserAncestorLocationField',
+                        'form_user_ancestor_location_field': LOCATION_DHIS_ID
+                    },
+                    'datavalue_maps': [{
                         'data_element_id': 'dhis2_element_id',
                         'value': {
                             'doc_type': 'FormQuestion',
                             'form_question': '/data/name'
                         }
-                    }
-                ]
-            }])
+                    }]
+                }])
         }
         config_form = Dhis2ConfigForm(data=config)
         self.assertTrue(config_form.is_valid())
@@ -184,8 +181,10 @@ class TestDhis2EntitiesHelpers(TestCase):
         programs = get_programs_by_id(info, repeater.dhis2_config)
 
         self.assertDictEqual(
-            programs[program_id]['geometry'],
-            {'type': 'Point', 'coordinates': [-33.6543, 19.1234]}
+            programs[program_id]['geometry'], {
+                'type': 'Point',
+                'coordinates': [-33.6543, 19.1234]
+            }
         )
 
 
@@ -210,8 +209,12 @@ class TestCreateRelationships(TestCase):
         self.supercase_config = Dhis2CaseConfig.wrap({
             'case_type': 'mother',
             'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {},
             'form_configs': [],
             'finder_config': {},
@@ -220,14 +223,23 @@ class TestCreateRelationships(TestCase):
     def test_no_relationships(self):
         requests = object()
         case_trigger_info = get_case_trigger_info_for_case(
-            self.child_case,
-            [{'case_property': 'external_id'}, {'case_property': 'dhis2_org_unit_id'}]
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
         )
         subcase_config = Dhis2CaseConfig.wrap({
-            'case_type': 'child',
-            'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {},
             'form_configs': [],
             'finder_config': {},
@@ -237,30 +249,31 @@ class TestCreateRelationships(TestCase):
                 # No DHIS2 relationship types configured
             }]
         })
-        dhis2_entity_config = Dhis2EntityConfig(
-            case_configs=[subcase_config, self.supercase_config]
-        )
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
 
-        create_relationships(
-            requests,
-            case_trigger_info,
-            subcase_config,
-            dhis2_entity_config,
-        )
+        create_relationships(requests, case_trigger_info, subcase_config, dhis2_entity_config, [])
         self.create_relationship_func.assert_not_called()
 
     def test_one_relationship_given(self):
         requests = object()
         case_trigger_info = get_case_trigger_info_for_case(
-            self.child_case,
-            [{'case_property': 'external_id'},
-             {'case_property': 'dhis2_org_unit_id'}]
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
         )
         subcase_config = Dhis2CaseConfig.wrap({
-            'case_type': 'child',
-            'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {},
             'form_configs': [],
             'finder_config': {},
@@ -270,35 +283,38 @@ class TestCreateRelationships(TestCase):
                 'subcase_to_supercase_dhis2_id': 'b2a12345678',
             }]
         })
-        dhis2_entity_config = Dhis2EntityConfig(
-            case_configs=[subcase_config, self.supercase_config]
-        )
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
 
-        create_relationships(
-            requests,
-            case_trigger_info,
-            subcase_config,
-            dhis2_entity_config,
-        )
+        create_relationships(requests, case_trigger_info, subcase_config, dhis2_entity_config, [])
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
 
     def test_index_given_twice(self):
         requests = object()
         case_trigger_info = get_case_trigger_info_for_case(
-            self.child_case,
-            [{'case_property': 'external_id'},
-             {'case_property': 'dhis2_org_unit_id'}]
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
         )
         subcase_config = Dhis2CaseConfig.wrap({
-            'case_type': 'child',
-            'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {},
             'form_configs': [],
             'finder_config': {},
@@ -312,41 +328,46 @@ class TestCreateRelationships(TestCase):
                 'supercase_to_subcase_dhis2_id': 'a2b12345678',
             }]
         })
-        dhis2_entity_config = Dhis2EntityConfig(
-            case_configs=[subcase_config, self.supercase_config]
-        )
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
 
-        create_relationships(
-            requests,
-            case_trigger_info,
-            subcase_config,
-            dhis2_entity_config,
-        )
+        create_relationships(requests, case_trigger_info, subcase_config, dhis2_entity_config, [])
         self.create_relationship_func.assert_any_call(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
 
     def test_both_relationships_given(self):
         requests = object()
         case_trigger_info = get_case_trigger_info_for_case(
-            self.child_case,
-            [{'case_property': 'external_id'},
-             {'case_property': 'dhis2_org_unit_id'}]
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
         )
         subcase_config = Dhis2CaseConfig.wrap({
-            'case_type': 'child',
-            'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {},
             'form_configs': [],
             'finder_config': {},
@@ -357,28 +378,77 @@ class TestCreateRelationships(TestCase):
                 'supercase_to_subcase_dhis2_id': 'a2b12345678',
             }]
         })
-        dhis2_entity_config = Dhis2EntityConfig(
-            case_configs=[subcase_config, self.supercase_config]
-        )
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
 
-        create_relationships(
-            requests,
-            case_trigger_info,
-            subcase_config,
-            dhis2_entity_config,
-        )
+        create_relationships(requests, case_trigger_info, subcase_config, dhis2_entity_config, [])
         self.create_relationship_func.assert_any_call(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
+
+    def test_existing_relationship_not_created_again(self):
+        """Test that we don't try to create a relationship that already exists"""
+        requests = object()
+        case_trigger_info = get_case_trigger_info_for_case(
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
+        )
+        subcase_config = Dhis2CaseConfig.wrap({
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            'relationships_to_export': [{
+                'identifier': 'parent',
+                'referenced_type': 'mother',
+                'subcase_to_supercase_dhis2_id': 'b2a12345678',
+                'supercase_to_subcase_dhis2_id': 'a2b12345678',
+            }]
+        })
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
+        # Set up a pre-existing relationship which we received from DHIS2
+        tracked_entity_relationship_specs = [
+            entities_helpers.RelationshipSpec(
+                relationship_type_id="b2a12345678",
+                from_tracked_entity_instance_id="johnny12345",
+                to_tracked_entity_instance_id="alice123456"
+            )
+        ]
+
+        create_relationships(
+            requests, case_trigger_info, subcase_config, dhis2_entity_config, tracked_entity_relationship_specs
+        )
+
+        # Only once of the two relationships should trigger a call to create, since the other already exists
+        self.create_relationship_func.assert_called_once()
+        # Ensure that the correct relationship triggered a create call
+        _requests, relationship_created = self.create_relationship_func.call_args[0]
+        existing_relationship = tracked_entity_relationship_specs[0]
+        assert relationship_created.relationship_type_id != existing_relationship.relationship_type_id
 
 
 class TestRequests(TestCase):
@@ -402,8 +472,12 @@ class TestRequests(TestCase):
         self.supercase_config = Dhis2CaseConfig.wrap({
             'case_type': 'mother',
             'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {
                 'w75KJ2mc4zz': {
                     'case_property': 'first_name'
@@ -416,10 +490,16 @@ class TestRequests(TestCase):
             'finder_config': {},
         })
         self.subcase_config = Dhis2CaseConfig.wrap({
-            'case_type': 'child',
-            'te_type_id': 'person12345',
-            'tei_id': {'case_property': 'external_id'},
-            'org_unit_id': {'case_property': 'dhis2_org_unit_id'},
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
             'attributes': {
                 'w75KJ2mc4zz': {
                     'case_property': 'first_name'
@@ -444,28 +524,48 @@ class TestRequests(TestCase):
         self.post_func = patcher.start()
         self.addCleanup(patcher.stop)
         self.post_func.side_effect = [
-            Response({'response': {'importSummaries': [{'reference': 'ParentTEI12'}]}}),
-            Response({'response': {'importSummaries': [{'reference': 'ChildTEI123'}]}}),
-            Response({'response': {'imported': 1}}),
-            Response({'response': {'imported': 1}}),
+            Response({'response': {
+                'importSummaries': [{
+                    'reference': 'ParentTEI12'
+                }]
+            }}),
+            Response({'response': {
+                'importSummaries': [{
+                    'reference': 'ChildTEI123'
+                }]
+            }}),
+            Response({'response': {
+                'imported': 1
+            }}),
+            Response({'response': {
+                'imported': 1
+            }}),
         ]
 
     def test_requests(self):
         repeater = Mock()
-        repeater.dhis2_entity_config = Dhis2EntityConfig(
-            case_configs=[self.subcase_config, self.supercase_config]
-        )
+        repeater.dhis2_entity_config = Dhis2EntityConfig(case_configs=[self.subcase_config, self.supercase_config])
         requests = Requests(
             DOMAIN,
             'https://dhis2.example.com/',
             auth_manager=AuthManager(),
         )
         value_source_configs = [
-            {'case_property': 'external_id'},
-            {'case_property': 'first_name'},
-            {'case_property': 'last_name'},
-            {'case_property': 'date_of_birth'},
-            {'case_property': 'dhis2_org_unit_id'},
+            {
+                'case_property': 'external_id'
+            },
+            {
+                'case_property': 'first_name'
+            },
+            {
+                'case_property': 'last_name'
+            },
+            {
+                'case_property': 'date_of_birth'
+            },
+            {
+                'case_property': 'dhis2_org_unit_id'
+            },
         ]
         case_trigger_infos = [
             get_case_trigger_info_for_case(self.parent_case, value_source_configs),
@@ -476,24 +576,40 @@ class TestRequests(TestCase):
             call(
                 '/api/trackedEntityInstances/',
                 json={
-                    'trackedEntityType': 'person12345',
-                    'orgUnit': 'abcdef12345',
-                    'attributes': [
-                        {'attribute': 'w75KJ2mc4zz', 'value': 'Alice'},
-                        {'attribute': 'zDhUuAYrxNC', 'value': 'Appleseed'}
-                    ]
+                    'trackedEntityType':
+                        'person12345',
+                    'orgUnit':
+                        'abcdef12345',
+                    'attributes': [{
+                        'attribute': 'w75KJ2mc4zz',
+                        'value': 'Alice'
+                    }, {
+                        'attribute': 'zDhUuAYrxNC',
+                        'value': 'Appleseed'
+                    }]
                 },
                 raise_for_status=True,
             ),
             call(
                 '/api/trackedEntityInstances/',
                 json={
-                    'trackedEntityType': 'person12345',
-                    'orgUnit': 'abcdef12345',
+                    'trackedEntityType':
+                        'person12345',
+                    'orgUnit':
+                        'abcdef12345',
                     'attributes': [
-                        {'attribute': 'w75KJ2mc4zz', 'value': 'Johnny'},
-                        {'attribute': 'zDhUuAYrxNC', 'value': 'Appleseed'},
-                        {'attribute': 'iESIqZ0R0R0', 'value': '2021-08-27'},
+                        {
+                            'attribute': 'w75KJ2mc4zz',
+                            'value': 'Johnny'
+                        },
+                        {
+                            'attribute': 'zDhUuAYrxNC',
+                            'value': 'Appleseed'
+                        },
+                        {
+                            'attribute': 'iESIqZ0R0R0',
+                            'value': '2021-08-27'
+                        },
                     ]
                 },
                 raise_for_status=True,
@@ -502,8 +618,16 @@ class TestRequests(TestCase):
                 '/api/relationships/',
                 json={
                     'relationshipType': 'a2b12345678',
-                    'from': {'trackedEntityInstance': {'trackedEntityInstance': 'ParentTEI12'}},
-                    'to': {'trackedEntityInstance': {'trackedEntityInstance': 'ChildTEI123'}},
+                    'from': {
+                        'trackedEntityInstance': {
+                            'trackedEntityInstance': 'ParentTEI12'
+                        }
+                    },
+                    'to': {
+                        'trackedEntityInstance': {
+                            'trackedEntityInstance': 'ChildTEI123'
+                        }
+                    },
                 },
                 raise_for_status=True,
             ),
@@ -511,8 +635,16 @@ class TestRequests(TestCase):
                 '/api/relationships/',
                 json={
                     'relationshipType': 'b2a12345678',
-                    'from': {'trackedEntityInstance': {'trackedEntityInstance': 'ChildTEI123'}},
-                    'to': {'trackedEntityInstance': {'trackedEntityInstance': 'ParentTEI12'}},
+                    'from': {
+                        'trackedEntityInstance': {
+                            'trackedEntityInstance': 'ChildTEI123'
+                        }
+                    },
+                    'to': {
+                        'trackedEntityInstance': {
+                            'trackedEntityInstance': 'ParentTEI12'
+                        }
+                    },
                 },
                 raise_for_status=True,
             )
@@ -539,26 +671,28 @@ def set_up_cases(factory, with_dhis2_id=True):
                     'dhis2_org_unit_id': 'abcdef12345',
                 },
             },
-            indices=[CaseIndex(
-                CaseStructure(
-                    case_id=parent_id,
-                    attrs={
-                        'create': True,
-                        'case_type': 'mother',
-                        'case_name': 'Alice APPLESEED',
-                        'owner_id': 'b0b',
-                        'external_id': 'alice123456' if with_dhis2_id else '',
-                        'update': {
-                            'first_name': 'Alice',
-                            'last_name': 'Appleseed',
-                            'dhis2_org_unit_id': 'abcdef12345',
+            indices=[
+                CaseIndex(
+                    CaseStructure(
+                        case_id=parent_id,
+                        attrs={
+                            'create': True,
+                            'case_type': 'mother',
+                            'case_name': 'Alice APPLESEED',
+                            'owner_id': 'b0b',
+                            'external_id': 'alice123456' if with_dhis2_id else '',
+                            'update': {
+                                'first_name': 'Alice',
+                                'last_name': 'Appleseed',
+                                'dhis2_org_unit_id': 'abcdef12345',
+                            },
                         },
-                    },
-                ),
-                relationship='child',
-                related_type='mother',
-                identifier='parent',
-            )],
+                    ),
+                    relationship='child',
+                    related_type='mother',
+                    identifier='parent',
+                )
+            ],
         )
     )
     return child, parent
@@ -594,10 +728,55 @@ class TestGetSupercase(TestCase):
 
 
 def test_doctests():
-    from corehq.motech.dhis2 import entities_helpers
-
     results = doctest.testmod(entities_helpers)
     assert results.failed == 0
+
+
+def test_get_tracked_entity_relationship_specs():
+    relationship_type_id = "TDEdu7DAEQL"
+    from_tracked_entity_instance_id = "2adsD3da"
+    to_tracked_entity_instance_id = "DD8jasd"
+
+    existing_relationships = [{
+        "bidirectional": False,
+        "created": "2022-11-23T06:57:52.492",
+        "from": {
+            "trackedEntityInstance": {
+                "potentialDuplicate": False,
+                "programOwners": [],
+                "trackedEntityInstance": from_tracked_entity_instance_id
+            }
+        },
+        "lastUpdated": "2022-11-23T09:30:24.210",
+        "relationship": "fb5opUN667Q",
+        "relationshipName": "TJ-HMHB - Mother/Child (MNCH)",
+        "relationshipType": relationship_type_id,
+        "to": {
+            "trackedEntityInstance": {
+                "potentialDuplicate": False,
+                "programOwners": [],
+                "trackedEntityInstance": to_tracked_entity_instance_id
+            }
+        }
+    }]
+    tracked_entity = _get_tracked_entity_instance_with_relationship_json(existing_relationships)
+
+    relationship_specs = entities_helpers._get_tracked_entity_relationship_specs(tracked_entity)
+    relationship_spec = relationship_specs[0]
+    assert len(relationship_specs) == 1
+    assert isinstance(relationship_spec, entities_helpers.RelationshipSpec)
+    assert relationship_spec.relationship_type_id == relationship_type_id
+    assert relationship_spec.from_tracked_entity_instance_id == from_tracked_entity_instance_id
+    assert relationship_spec.to_tracked_entity_instance_id == to_tracked_entity_instance_id
+
+
+def _get_tracked_entity_instance_with_relationship_json(existing_relationships):
+    DATA_DIR = settings.BASE_DIR + '/corehq/motech/dhis2/tests/data/'
+    filename = DATA_DIR + 'tracked_entity_instance_1.json'
+    with open(filename) as fp:
+        doc = json.load(fp)
+        doc["relationships"] = existing_relationships
+        return doc
 
 
 def are_cases_equal(a, b):  # or at least equal enough for our test
