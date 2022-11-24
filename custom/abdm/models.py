@@ -7,7 +7,7 @@ from django.db import models
 class ABDMUser(models.Model):
     username = models.CharField(max_length=100, primary_key=True)
     access_token = models.CharField(max_length=2000, null=True, blank=True)
-    domain = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100, default="")
 
     def save(self, *args, **kwargs):
         if not self.access_token:
