@@ -1,14 +1,5 @@
-from collections import defaultdict
-from typing import Any, Dict, List
-
-from django.urls import reverse
-from django.utils.translation import gettext as _
-
-from requests import HTTPError
-from schema import Schema, SchemaError
-
 from casexml.apps.case.mock import CaseBlock
-
+from collections import defaultdict
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
@@ -27,6 +18,34 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_value,
 )
+from dataclasses import dataclass
+from django.urls import reverse
+from django.utils.translation import gettext as _
+from requests import HTTPError
+from schema import Schema, SchemaError
+from typing import Any, Dict, List
+
+
+@dataclass
+class RelationshipSpec:
+    relationship_type_id: str
+    from_tracked_entity_instance_id: str
+    to_tracked_entity_instance_id: str
+
+    def as_json(self):
+        return {
+            'relationshipType': self.relationship_type_id,
+            'from': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.from_tracked_entity_intance_id
+                }
+            },
+            'to': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.to_tracked_entity_intance_id
+                }
+            }
+        }
 
 
 def send_dhis2_entities(requests, repeater, case_trigger_infos):
@@ -300,18 +319,24 @@ def create_relationships(
             ).format(case=supercase_trigger_info))
 
         if relationship_config.supercase_to_subcase_dhis2_id:
-            create_relationship(
-                requests=requests,
+            relationship_spec = RelationshipSpec(
                 relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
                 from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
-                to_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
+                to_tracked_entity_instance_id=subcase_tracked_entity_instance_id
+            )
+            create_relationship_at_dhis2(
+                requests=requests,
+                relationship_spec=relationship_spec
             )
         if relationship_config.subcase_to_supercase_dhis2_id:
-            create_relationship(
-                requests=requests,
+            relationship_spec = RelationshipSpec(
                 relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
                 from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
                 to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+            )
+            create_relationship_at_dhis2(
+                requests=requests,
+                relationship_spec=relationship_spec
             )
 
 def get_supercase(case_trigger_info, relationship_config):
@@ -327,27 +352,12 @@ def get_supercase(case_trigger_info, relationship_config):
     return None
 
 
-def create_relationship(
+def create_relationship_at_dhis2(
     requests,
-    relationship_type_id,
-    from_tracked_entity_intance_id,
-    to_tracked_entity_intance_id
+    relationship_spec
 ):
-    relationship = {
-        'relationshipType': relationship_type_id,
-        'from': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': from_tracked_entity_intance_id
-            }
-        },
-        'to': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': to_tracked_entity_intance_id
-            }
-        }
-    }
     endpoint = '/api/relationships/'
-    response = requests.post(endpoint, json=relationship, raise_for_status=True)
+    response = requests.post(endpoint, json=relationship_spec.as_json(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
         from corehq.motech.views import MotechLogListView
