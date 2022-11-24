@@ -4,7 +4,7 @@ from custom.abdm.auth import ABDMUserAuthentication
 
 from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
-from custom.abdm.milestone_one.utils.response_handler import get_response, generate_invalid_req_response
+from custom.abdm.milestone_one.utils.response_util import get_response, generate_invalid_req_response
 
 
 @api_view(["GET"])
