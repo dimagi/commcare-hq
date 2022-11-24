@@ -17,6 +17,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models, router
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.translation import override as override_language
 from django.utils.translation import gettext as _
 
@@ -969,12 +970,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, EulaMixin):
         return user_display_string(self.username, self.first_name, self.last_name)
 
     def html_username(self):
-        username = self.raw_username
-        if '@' in username:
-            html = "<span class='user_username'>%s</span><span class='user_domainname'>@%s</span>" % \
-                   tuple(username.split('@'))
+        username, *remaining = self.raw_username.split('@')
+        if remaining:
+            domain_name = remaining[0]
+            html = format_html(
+                '<span class="user_username">{}</span><span class="user_domainname">@{}</span>',
+                username,
+                domain_name)
         else:
-            html = "<span class='user_username'>%s</span>" % username
+            html = format_html("<span class='user_username'>{}</span>", username)
         return html
 
     @property
@@ -2896,6 +2900,11 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class ApiKeyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
@@ -2904,6 +2913,12 @@ class HQApiKey(models.Model):
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+
+    objects = ApiKeyManager()
+    all_objects = models.Manager()
 
     class Meta(object):
         unique_together = ('user', 'name')

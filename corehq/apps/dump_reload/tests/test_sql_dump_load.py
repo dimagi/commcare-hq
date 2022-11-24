@@ -581,6 +581,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=self.domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,

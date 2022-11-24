@@ -166,6 +166,7 @@ class TestDeleteDomain(TestCase):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,

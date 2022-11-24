@@ -385,7 +385,7 @@ class CommCareImage(CommCareMultimedia):
             image = image.convert("RGB")
         o = BytesIO()
         try:
-            image.thumbnail(size, Image.ANTIALIAS)
+            image.thumbnail(size, Image.Resampling.LANCZOS)
         except IndexError:
             raise ImageThumbnailError()
         image.save(o, format="PNG")

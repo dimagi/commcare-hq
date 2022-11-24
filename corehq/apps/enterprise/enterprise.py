@@ -220,8 +220,7 @@ class EnterpriseFormReport(EnterpriseReport):
         headers = super().headers
         return [_('Form Name'), _('Submitted [UTC]'), _('App Name'), _('Mobile User')] + headers
 
-    @quickcache(['self.account.id', 'domain_name'], timeout=60)
-    def hits(self, domain_name):
+    def _query(self, domain_name):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
 
@@ -234,7 +233,11 @@ class EnterpriseFormReport(EnterpriseReport):
                  .filter(time_filter(gte=datespan.startdate,
                                      lt=datespan.enddate_adjusted))
                  .filter(users_filter))
-        return query.run().hits
+        return query
+
+    @quickcache(['self.account.id', 'domain_name'], timeout=60)
+    def hits(self, domain_name):
+        return self._query(domain_name).run().hits
 
     def rows_for_domain(self, domain_obj):
         apps = get_brief_apps_in_domain(domain_obj.name)
@@ -252,7 +255,7 @@ class EnterpriseFormReport(EnterpriseReport):
         return rows
 
     def total_for_domain(self, domain_obj):
-        return len(self.hits(domain_obj.name))
+        return self._query(domain_obj.name).count()
 
 
 class EnterpriseODataReport(EnterpriseReport):
