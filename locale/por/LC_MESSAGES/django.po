@@ -1451,7 +1451,7 @@ msgstr "# de Extracto"
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/reports/templates/reports/messaging/survey_detail.html
 #: corehq/apps/settings/templates/settings/my_projects.html
-#: corehq/apps/sms/filters.py
+#: corehq/apps/settings/views.py corehq/apps/sms/filters.py
 #: corehq/apps/sms/templates/sms/whatsapp_templates.html
 #: corehq/apps/sms/views.py corehq/apps/sso/forms.py
 #: corehq/apps/users/templates/users/mobile_workers.html
@@ -2525,6 +2525,7 @@ msgid "Reason"
 msgstr "Razão"
 
 #: corehq/apps/accounting/templates/accounting/invoice.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/domain/templates/domain/admin/recovery_measures_history.html
 #: corehq/apps/hqadmin/reports.py corehq/apps/linked_domain/views.py
 #: corehq/apps/registry/templates/registry/partials/audit_logs.html
@@ -4038,6 +4039,16 @@ msgstr ""
 msgid ""
 "Latest version available for this profile is {}, which is higher than this "
 "version. Disable any higher versions first."
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "Released"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
+msgid "In Test"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py
@@ -5671,7 +5682,7 @@ msgstr "Organizador das Visitas"
 #: corehq/apps/data_interfaces/views.py
 #: corehq/apps/registry/templates/registry/registry_edit.html
 #: corehq/apps/reports/templates/reports/partials/scheduled_reports_table.html
-#: corehq/apps/sms/views.py
+#: corehq/apps/settings/views.py corehq/apps/sms/views.py
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/userreports/views.py
 #: corehq/apps/users/templates/users/edit_commcare_user.html
@@ -6795,7 +6806,6 @@ msgstr ""
 #: corehq/apps/reports/templates/reports/reports_home.html
 #: corehq/apps/reports/templates/reports/tableau_visualization.html
 #: corehq/apps/settings/templates/settings/user_api_keys.html
-#: corehq/apps/settings/views.py
 #: corehq/apps/sms/templates/sms/gateway_list.html
 #: corehq/apps/sms/templates/sms/global_gateway_list.html
 #: corehq/apps/translations/templates/app_translations.html
@@ -8347,6 +8357,18 @@ msgstr ""
 msgid "Enable multi-select case list"
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_multi_select.html
+msgid "Enable auto select"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_multi_select.html
+msgid "Maximum selected value"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_multi_select.html
+msgid "Maximum Selected Value"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_list_properties.html
 msgid "Case Tile Mapping"
 msgstr ""
@@ -9201,6 +9223,25 @@ msgstr ""
 msgid "Form and Case Changes"
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#, fuzzy
+#| msgid "Version Summary"
+msgid "Version Number"
+msgstr "Resumo de Versão"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#, fuzzy
+#| msgid "Rate Type"
+msgid "Update Type"
+msgstr "Tipo de taxa"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/builds/templates/builds/all.html
+#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
+#: corehq/apps/reports/forms.py
+msgid "Time"
+msgstr "Hora"
+
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Current Profiles"
 msgstr ""
@@ -9300,6 +9341,12 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
 msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+#, fuzzy
+#| msgid "Application Users"
+msgid "Application Release Logs"
+msgstr "Usuários da Aplicação"
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
 msgid ""
@@ -9510,14 +9557,6 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
 #: corehq/apps/hqmedia/templates/hqmedia/translations_coverage.html
 msgid "Latest"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-msgid "Released"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
-msgid "In Test"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_table.html
@@ -10589,12 +10628,6 @@ msgstr ""
 msgid "Build Number"
 msgstr ""
 
-#: corehq/apps/builds/templates/builds/all.html
-#: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
-#: corehq/apps/reports/forms.py
-msgid "Time"
-msgstr "Hora"
-
 #: corehq/apps/builds/templates/builds/edit_menu.html
 msgid "Editing CommCare Builds"
 msgstr ""
@@ -11056,6 +11089,7 @@ msgstr "Carregamentos Recentes"
 
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html
+#: corehq/motech/generic_inbound/reports.py
 msgid "Details"
 msgstr ""
 
@@ -12989,10 +13023,8 @@ msgid "Automatic Update Rules"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/auto_update_rules.html
-#, fuzzy
-#| msgid "Messaging History"
 msgid "Rule Run History"
-msgstr "Histórico de Mensagens"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/case_rule.html
 msgid "NOTE: A system administrator is required to edit this rule."
@@ -13276,6 +13308,7 @@ msgstr ""
 #: corehq/apps/export/views/incremental.py
 #: corehq/apps/hqadmin/templates/hqadmin/offboarding_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/sso/templates/sso/enterprise_admin/manage_sso.html
 #: corehq/apps/users/views/mobile/users.py corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
@@ -13288,6 +13321,7 @@ msgstr ""
 #: corehq/apps/domain/forms.py
 #: corehq/apps/export/templates/export/incremental_export.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/forms.py
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -13301,6 +13335,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 msgid "Activate"
@@ -13309,6 +13344,7 @@ msgstr ""
 #: corehq/apps/data_interfaces/templates/data_interfaces/list_deduplication_rules.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_list.html
 #: corehq/apps/registry/templates/registry/registry_edit.html
+#: corehq/apps/settings/templates/settings/user_api_keys.html
 #: corehq/apps/users/templates/users/mobile_workers.html
 #: corehq/messaging/scheduling/templates/scheduling/broadcasts_list.html
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
@@ -13394,26 +13430,20 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
-#, fuzzy
-#| msgid "Start Date"
 msgid "Started On"
-msgstr "Data de início"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
 msgid "Finished On"
 msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
-#, fuzzy
-#| msgid "# Cases Created"
 msgid "# of Cases Updated"
-msgstr "# Casos Criados"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/auto_update_rule_run_history.html
-#, fuzzy
-#| msgid "# Cases Closed"
 msgid "# of Cases Closed"
-msgstr "# Casos Encerrados"
+msgstr ""
 
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_actions.html
 #: corehq/apps/data_interfaces/templates/data_interfaces/partials/case_rule_criteria.html
@@ -19254,6 +19284,7 @@ msgid "Download File"
 msgstr ""
 
 #: corehq/apps/export/views/incremental.py
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Request Details"
 msgstr ""
 
@@ -28044,6 +28075,7 @@ msgstr ""
 
 #: corehq/apps/reports/standard/sms.py
 #: corehq/apps/users/templates/users/roles_and_permissions.html
+#: corehq/motech/generic_inbound/reports.py
 msgid "View Details"
 msgstr ""
 
@@ -29931,16 +29963,16 @@ msgid "IP Allowlist"
 msgstr ""
 
 #: corehq/apps/settings/views.py
+msgid "Copy this in a secure place. It will not be shown again."
+msgstr ""
+
+#: corehq/apps/settings/views.py
 msgid "All IP Addresses"
 msgstr ""
 
 #: corehq/apps/settings/views.py
 msgid ""
 "Api Key with name \"{create_form.cleaned_data['name']}\" already exists."
-msgstr ""
-
-#: corehq/apps/settings/views.py
-msgid "Copy this in a secure place. It will not be shown again."
 msgstr ""
 
 #: corehq/apps/sms/api.py
@@ -39552,10 +39584,8 @@ msgid "Reverted"
 msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
-#, fuzzy
-#| msgid "Request Quote"
 msgid "Request Status"
-msgstr "Requisitar cotação"
+msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
 msgid "API"
@@ -39564,6 +39594,12 @@ msgstr ""
 #: corehq/motech/generic_inbound/reports.py
 msgid "Inbound API Request Logs"
 msgstr ""
+
+#: corehq/motech/generic_inbound/reports.py
+#, fuzzy
+#| msgid "Request Quote"
+msgid "API Request Log"
+msgstr "Requisitar cotação"
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_list.html
@@ -39589,6 +39625,24 @@ msgstr ""
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
 msgid "Add Validation"
 msgstr ""
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+#, fuzzy
+#| msgid "Case Metadata"
+msgid "Metadata"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+#, fuzzy
+#| msgid "Case Details"
+msgid "Response Details"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+#, fuzzy
+#| msgid "Process complete."
+msgid "Processing Attempts"
+msgstr "Processo completo"
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"

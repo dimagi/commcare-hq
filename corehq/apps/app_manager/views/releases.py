@@ -5,6 +5,7 @@ from math import ceil
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.http.response import Http404, HttpResponse, JsonResponse
@@ -32,6 +33,7 @@ from corehq.apps.analytics.tasks import (
     track_built_app_on_hubspot,
     track_workflow,
 )
+from corehq.apps.app_manager.const import DEFAULT_PAGE_LIMIT
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_app_cached,
@@ -59,6 +61,7 @@ from corehq.apps.app_manager.exceptions import (
 from corehq.apps.app_manager.forms import PromptUpdateSettingsForm
 from corehq.apps.app_manager.models import (
     Application,
+    ApplicationReleaseLog,
     AppReleaseByLocation,
     BuildProfile,
     LatestEnabledBuildProfiles,
@@ -90,7 +93,10 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.models import CommCareUser, CouchUser
+from corehq.apps.users.util import cached_user_id_to_user_display
+from corehq.const import USER_DATETIME_FORMAT
 from corehq.toggles import toggles_enabled_for_request
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import reverse
 
@@ -276,6 +282,15 @@ def release_build(request, domain, app_id, saved_app_id):
         if saved_app.build_profiles and domain_has_privilege(domain, privileges.BUILD_PROFILES):
             create_build_files_for_all_app_profiles.delay(domain, saved_app_id)
         _track_build_for_app_preview(domain, request.couch_user, app_id, 'User starred a build')
+
+    if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+        ApplicationReleaseLog.objects.create(
+            domain=domain,
+            action=ApplicationReleaseLog.ACTION_RELEASED if is_released else ApplicationReleaseLog.ACTION_IN_TEST,
+            version=saved_app.version,
+            app_id=app_id,
+            user_id=request.couch_user.get_id
+        )
 
     if ajax:
         return json_response({
@@ -650,3 +665,38 @@ def toggle_build_profile(request, domain, build_id, build_profile_id):
                 build.build_profiles[build_profile_id].name
             ))
     return HttpResponseRedirect(reverse('download_index', args=[domain, build_id]))
+
+
+@require_deploy_apps
+def paginate_release_logs(request, domain, app_id):
+    limit = request.GET.get('limit')
+    page = int(request.GET.get('page', 1))
+    page = max(page, 1)
+    try:
+        limit = int(limit)
+    except (TypeError, ValueError):
+        limit = DEFAULT_PAGE_LIMIT
+
+    app_release_logs = ApplicationReleaseLog.objects.filter(app_id=app_id).order_by('-created_at')
+    paginator = Paginator(object_list=app_release_logs, per_page=limit)
+    current_page = paginator.get_page(page)
+
+    timezone = get_timezone_for_user(request.couch_user, domain)
+    transformed_logs = list(populate_data_app_release_logs(log, timezone) for log in current_page)
+
+    return JsonResponse({
+        'app_release_logs': transformed_logs,
+        'pagination': {
+            'total': paginator.count,
+            'num_pages': paginator.num_pages,
+            'current_page': page,
+        }
+    })
+
+
+def populate_data_app_release_logs(log, timezone):
+    timestamp = ServerTime(log.created_at).user_time(timezone)
+    return_log = log.to_json()
+    return_log["created_at_string"] = timestamp.ui_string(USER_DATETIME_FORMAT)
+    return_log["user_email"] = cached_user_id_to_user_display(log.user_id)
+    return return_log

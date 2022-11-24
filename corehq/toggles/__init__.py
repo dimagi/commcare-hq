@@ -2372,6 +2372,14 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
                 'to Tableau to get the embedded report.',
 )
 
+APPLICATION_RELEASE_LOGS = StaticToggle(
+    'application_release_logs',
+    'Show Application release logs',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature provides the release logs for application.'
+)
+
 RESTORE_ADD_ABDM_TOKEN = StaticToggle(
     'restore_add_abdm_token',
     'Add ABDM API token to restore data',

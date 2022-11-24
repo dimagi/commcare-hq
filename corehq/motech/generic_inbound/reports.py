@@ -12,9 +12,11 @@ from corehq.apps.reports.dispatcher import DomainReportDispatcher
 from corehq.apps.reports.filters.base import BaseMultipleOptionFilter
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import DatespanMixin
-from corehq.toggles import GENERIC_INBOUND_API
 from corehq.motech.generic_inbound.models import ConfigurableAPI
+from corehq.toggles import GENERIC_INBOUND_API
 from corehq.util import reverse
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone
 
 from .models import RequestLog
 
@@ -100,7 +102,7 @@ class ApiRequestLogReport(DatespanMixin, GenericTabularReport):
         for log in self._queryset[self.pagination.start:self.pagination.end]:
             yield [
                 log.api.name,
-                log.timestamp,
+                ServerTime(log.timestamp).user_time(self.timezone).ui_string(),
                 log.get_status_display(),
                 log.response_status,
                 _to_link(log),
@@ -132,5 +134,6 @@ class ApiLogDetailView(BaseProjectSettingsView):
     @property
     def page_context(self):
         return {
-            'log': self.log
+            'log': self.log,
+            'timezone': get_timezone(self.request, self.domain)
         }

@@ -1,6 +1,9 @@
+from django.utils.translation import gettext as _
+
 from corehq.apps.hqcase.api.core import serialize_case
 from corehq.apps.hqcase.api.updates import handle_case_update
 from corehq.motech.generic_inbound.exceptions import (
+    GenericInboundApiError,
     GenericInboundRequestFiltered,
     GenericInboundValidationError,
 )
@@ -15,6 +18,9 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
     if not isinstance(data, list):
         # the bulk API always requires a list
         data = [data]
+
+    if not all(isinstance(item, dict) for item in data):
+        raise GenericInboundApiError(_("Unexpected type for transformed request"))
 
     xform, case_or_cases = handle_case_update(
         domain=domain,
