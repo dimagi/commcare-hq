@@ -343,8 +343,7 @@ def ensure_relationship_exists(requests, relationship_spec, existing_relationshi
     relationship represented by `relationship_spec`.
     """
     for existing_spec in existing_relationships:
-        relationships_match = relationship_spec.as_dict() == existing_spec.as_dict()
-        if relationships_match:
+        if relationship_spec.as_dict() == existing_spec.as_dict():
             return None
 
     if relationship_spec.relationship_type_id:
