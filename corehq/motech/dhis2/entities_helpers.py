@@ -316,26 +316,30 @@ def create_relationships(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
             ).format(case=supercase_trigger_info))
-        supercase_to_subcase_relationship_spec = RelationshipSpec(
-            relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
-            from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
-            to_tracked_entity_instance_id=subcase_tracked_entity_instance_id
-        )
-        subcase_to_supercase_relationship_spec = RelationshipSpec(
-            relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
-            from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
-            to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
-        )
-        ensure_relationship_exists(
-            requests=requests,
-            relationship_spec=supercase_to_subcase_relationship_spec,
-            existing_relationships=tracked_entity_relationships
-        )
-        ensure_relationship_exists(
-            requests=requests,
-            relationship_spec=subcase_to_supercase_relationship_spec,
-            existing_relationships=tracked_entity_relationships
-        )
+
+        if relationship_config.supercase_to_subcase_dhis2_id:
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=relationship_config.supercase_to_subcase_dhis2_id,
+                from_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+                to_tracked_entity_instance_id=subcase_tracked_entity_instance_id
+            )
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
+            )
+
+        if relationship_config.subcase_to_supercase_dhis2_id:
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=relationship_config.subcase_to_supercase_dhis2_id,
+                from_tracked_entity_instance_id=subcase_tracked_entity_instance_id,
+                to_tracked_entity_instance_id=supercase_tracked_entity_instance_id,
+            )
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
+            )
 
 
 def ensure_relationship_exists(requests, relationship_spec, existing_relationships):
