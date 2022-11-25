@@ -771,7 +771,7 @@ def test_get_tracked_entity_relationship_specs_should_return_a_valid_instance():
 
 
 def test_get_tracked_entity_relationship_specs_should_return_empty_array():
-    actual_output = _get_tracked_entity_instance_with_relationship_json(None)
+    actual_output = entities_helpers._get_tracked_entity_relationship_specs(None)
     assert actual_output == []
 
 
