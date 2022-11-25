@@ -732,7 +732,7 @@ def test_doctests():
     assert results.failed == 0
 
 
-def test_get_tracked_entity_relationship_specs():
+def test_get_tracked_entity_relationship_specs_should_return_a_valid_instance():
     relationship_type_id = "TDEdu7DAEQL"
     from_tracked_entity_instance_id = "2adsD3da"
     to_tracked_entity_instance_id = "DD8jasd"
@@ -768,6 +768,11 @@ def test_get_tracked_entity_relationship_specs():
     assert relationship_spec.relationship_type_id == relationship_type_id
     assert relationship_spec.from_tracked_entity_instance_id == from_tracked_entity_instance_id
     assert relationship_spec.to_tracked_entity_instance_id == to_tracked_entity_instance_id
+
+
+def test_get_tracked_entity_relationship_specs_should_return_empty_array():
+    actual_output = _get_tracked_entity_instance_with_relationship_json(None)
+    assert actual_output == []
 
 
 def _get_tracked_entity_instance_with_relationship_json(existing_relationships):
