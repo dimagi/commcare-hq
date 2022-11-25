@@ -348,7 +348,7 @@ def ensure_relationship_exists(requests, relationship_spec, existing_relationshi
     """
     for existing_spec in existing_relationships:
         if relationship_spec.as_dict() == existing_spec.as_dict():
-            return None
+            return
 
     if relationship_spec.relationship_type_id:
         create_relationship(requests, relationship_spec)
