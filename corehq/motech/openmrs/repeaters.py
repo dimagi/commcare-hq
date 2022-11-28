@@ -206,8 +206,6 @@ class OpenmrsRepeater(CaseRepeater):
         try:
             response = send_openmrs_data(
                 requests,
-                self.domain,
-                payload,
                 self.openmrs_config,
                 case_trigger_infos,
             )
@@ -393,7 +391,7 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         return OpenmrsRepeater
 
 
-def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
+def send_openmrs_data(requests, openmrs_config, case_trigger_infos):
     """
     Updates an OpenMRS patient and (optionally) creates visits.
 
@@ -413,7 +411,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         try:
-            patient = get_patient(requests, domain, info, openmrs_config)
+            patient = get_patient(requests, info, openmrs_config)
         except (RequestException, HTTPError) as err:
             errors.append(_(
                 "Unable to create an OpenMRS patient for case "
@@ -453,7 +451,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             )
         workflow.append(
             CreateVisitsEncountersObsTask(
-                requests, domain, info, form_json, openmrs_config, patient['person']['uuid']
+                requests, info, openmrs_config, patient['person']['uuid']
             ),
         )
 

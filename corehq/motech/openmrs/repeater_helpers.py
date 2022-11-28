@@ -400,7 +400,7 @@ def find_or_create_patient(requests, domain, info, openmrs_config):
         return patient
 
 
-def get_patient(requests, domain, info, openmrs_config):
+def get_patient(requests, info, openmrs_config):
     for id_ in openmrs_config.case_config.match_on_ids:
         identifier_config: JsonDict = openmrs_config.case_config.patient_identifiers[id_]
         identifier_case_property = identifier_config["case_property"]
@@ -412,9 +412,9 @@ def get_patient(requests, domain, info, openmrs_config):
                 # The patient associated with the case has been merged with
                 # another patient in OpenMRS, or deleted. Delete the OpenMRS
                 # identifier on the case, and try again.
-                delete_case_property(domain, info.case_id, identifier_case_property)
+                delete_case_property(info.domain, info.case_id, identifier_case_property)
                 info.extra_fields[identifier_case_property] = None
-                return get_patient(requests, domain, info, openmrs_config)
+                return get_patient(requests, info, openmrs_config)
             return patient
 
     # Definitive IDs did not match a patient in OpenMRS.

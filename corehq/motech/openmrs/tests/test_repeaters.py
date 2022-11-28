@@ -714,7 +714,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
         voided_patient = self.get_json("voided_patient")
         get_patient_mock.return_value = voided_patient
 
-        patient = get_patient(requests, DOMAIN, info, openmrs_config)
+        patient = get_patient(requests, info, openmrs_config)
 
         self.assertEqual(info.extra_fields, {"external_id": None})
         case_block_re = strip_xml(f"""

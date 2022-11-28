@@ -11,7 +11,10 @@ from corehq.motech.openmrs.workflow_tasks import (
     CreateVisitsEncountersObsTask,
     get_values_for_concept,
 )
-from corehq.motech.value_source import CaseTriggerInfo
+from corehq.motech.value_source import (
+    CaseTriggerInfo,
+    get_form_question_values,
+)
 
 
 def test_concept_directions():
@@ -27,12 +30,9 @@ def test_concept_directions():
     info = CaseTriggerInfo(
         domain="test-domain",
         case_id="c0ffee",
-        form_question_values={
-            "/data/pneumonia": "no",
-            "/data/malnutrition": "no",
-        }
+        form_question_values=get_form_question_values(form_json),
     )
-    task = get_task(info, form_json, form_config_dict)
+    task = get_task(info, form_config_dict)
     values_for_concepts = get_values_for_concept(form_config, task.info)
     eq(values_for_concepts, {
         # "direction": "out"
@@ -59,12 +59,9 @@ def test_start_stop_datetime_export():
     info = CaseTriggerInfo(
         domain="test-domain",
         case_id="c0ffee",
-        form_question_values={
-            "/data/visit_datetime": "2018-01-01T12:00:00.00000Z",
-            "/metadata/timeEnd": "2019-12-16T12:36:00.00000Z",
-        }
+        form_question_values=get_form_question_values(form_json),
     )
-    task = get_task(info, form_json, form_config_dict)
+    task = get_task(info, form_config_dict)
     start_datetime, stop_datetime = task._get_start_stop_datetime(
         OpenmrsFormConfig.wrap(form_config_dict)
     )
@@ -87,8 +84,12 @@ def test_start_stop_datetime_import():
             "meta": {"timeEnd": "2019-12-16T12:36:00.00000Z"},
         }
     }
-    info = CaseTriggerInfo(domain="test-domain", case_id="c0ffee")
-    task = get_task(info, form_json, form_config_dict)
+    info = CaseTriggerInfo(
+        domain="test-domain",
+        case_id="c0ffee",
+        form_question_values=get_form_question_values(form_json),
+    )
+    task = get_task(info, form_config_dict)
     start_datetime, stop_datetime = task._get_start_stop_datetime(
         OpenmrsFormConfig.wrap(form_config_dict)
     )
@@ -234,12 +235,10 @@ def get_form_config_dict():
     }
 
 
-def get_task(info, form_json, form_config_dict):
+def get_task(info, form_config_dict):
     return CreateVisitsEncountersObsTask(
         requests=None,
-        domain="test-domain",
         info=info,
-        form_json=form_json,
         openmrs_config=OpenmrsConfig.wrap({
             "case_config": {},
             "form_configs": [form_config_dict],
