@@ -184,6 +184,27 @@ class DataSourceBuildInformation(DocumentSchema):
     initiated_in_place = DateTimeProperty()
     rebuilt_asynchronously = BooleanProperty(default=False)
 
+    @property
+    def is_rebuilding(self):
+        return (
+            self.initiated
+            and (
+                not self.finished
+                and not self.rebuilt_asynchronously
+            )
+        )
+
+    @property
+    def is_rebuilding_in_place(self):
+        return (
+            self.initiated_in_place
+            and not self.finished_in_place
+        )
+
+    @property
+    def is_rebuild_in_progress(self):
+        return self.is_rebuilding or self.is_rebuilding_in_place
+
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
@@ -540,21 +561,6 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     def data_domains(self):
         return [self.domain]
-
-    @property
-    def is_rebuild_in_progress(self):
-        return (
-            not self.is_static
-            and (
-                self.meta.build.initiated
-                or self.meta.build.initiated_in_place
-            )
-            and (
-                not self.meta.build.finished
-                and not self.meta.build.finished_in_place
-                and not self.meta.build.rebuilt_asynchronously
-            )
-        )
 
     def _verify_contains_allowed_expressions(self):
         """
