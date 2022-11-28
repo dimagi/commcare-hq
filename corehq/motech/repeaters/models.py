@@ -282,11 +282,6 @@ class SQLRepeater(RepeaterSuperProxy):
 
     _has_config = False
 
-    @property
-    def repeater_name(self):
-        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
-        # time. This method/property will be removed in a subsequent PR.
-        return self.connection_settings.name
 
     @cached_property
     def _optionvalue_fields(self):
