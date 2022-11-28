@@ -301,12 +301,6 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     _has_config = False
 
     @property
-    def repeater_name(self):
-        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
-        # time. This method/property will be removed in a subsequent PR.
-        return self.connection_settings.name
-
-    @property
     @memoized
     def repeater(self):
         return Repeater.get(self.repeater_id)
@@ -960,10 +954,10 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     _has_config = False
 
     def __str__(self):
-        return f'{self.__class__.__name__}: {self.repeater_name}'
+        return f'{self.__class__.__name__}: {self.name}'
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self._id} {self.repeater_name!r}>"
+        return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
 
     @property
     def connection_settings(self):
@@ -980,12 +974,6 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     @property
     def sql_repeater(self):
         return SQLRepeater.objects.get(repeater_id=self._id)
-
-    @property
-    def repeater_name(self):
-        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
-        # time. This method/property will be removed in a subsequent PR.
-        return self.connection_settings.name
 
     @property
     def is_paused(self):

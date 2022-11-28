@@ -193,7 +193,7 @@ class TestRepeaterName(RepeaterTestCase):
         """
         connection_settings = self.repeater.connection_settings
         self.assertEqual(connection_settings.name, self.repeater.url)
-        self.assertEqual(self.repeater.repeater_name, connection_settings.name)
+        self.assertEqual(self.repeater.name, connection_settings.name)
 
     def test_repeater_name(self):
         connection_settings = ConnectionSettings.objects.create(
@@ -204,7 +204,7 @@ class TestRepeaterName(RepeaterTestCase):
         self.repeater.connection_settings_id = connection_settings.id
         self.repeater.save()
 
-        self.assertEqual(self.repeater.repeater_name, connection_settings.name)
+        self.assertEqual(self.repeater.name, connection_settings.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):
