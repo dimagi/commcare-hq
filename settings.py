@@ -1119,6 +1119,7 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -2061,4 +2062,3 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
-COMMCARE_ANALYTICS_HOST = ""
