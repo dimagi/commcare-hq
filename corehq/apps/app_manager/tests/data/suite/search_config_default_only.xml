@@ -17,6 +17,7 @@
     <instance id="ledgerdb" src="jr://instance/ledgerdb"/>
     <instance id="locations" src="jr://fixture/locations"/>
     <instance id="reports" src="jr://fixture/commcare:reports"/>
+    <instance id="results" src="jr://instance/remote/results"/>
     <session>
       <query url="https://www.example.com/a/test_domain/phone/search/123/"
              default_search="false"
