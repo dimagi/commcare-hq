@@ -180,6 +180,11 @@ class RemoteRequestFactory(object):
             text=Text(locale_id=id_strings.case_search_title_translation(self.module))
         )
 
+    def build_description(self):
+        return Display(
+            text=Text(locale_id=id_strings.case_search_description_locale(self.module))
+        )
+
     @cached_property
     def _details_helper(self):
         return DetailsHelper(self.app)
@@ -197,6 +202,7 @@ class RemoteRequestFactory(object):
                 storage_instance=self.storage_instance,
                 template='case',
                 title=self.build_title() if self.app.enable_case_search_title_translation else None,
+                description=self.build_description() if self.module.search_config.description != {} else None,
                 data=self._remote_request_query_datums,
                 prompts=self.build_query_prompts(),
                 default_search=self.module.search_config.default_search,

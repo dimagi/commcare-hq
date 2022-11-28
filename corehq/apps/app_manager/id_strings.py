@@ -436,6 +436,11 @@ def case_search_title_translation(module):
     return "case_search.m{module.id}.inputs".format(module=module)
 
 
+@pattern('case_search.m%d.description')
+def case_search_description_locale(module):
+    return "case_search.m{module.id}.description".format(module=module)
+
+
 def detail(module, detail_type):
     return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
