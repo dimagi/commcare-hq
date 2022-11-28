@@ -370,11 +370,7 @@ def ensure_relationship_exists(requests, relationship_spec, existing_relationshi
     """Checks to see if `relationship_spec` is in `existing_relationships`. If not, we try to create the
     relationship represented by `relationship_spec`.
     """
-    for existing_spec in existing_relationships:
-        if relationship_spec.as_dict() == existing_spec.as_dict():
-            return
-
-    if relationship_spec.relationship_type_id:
+    if (relationship_spec not in existing_relationships) and relationship_spec.relationship_type_id:
         create_relationship(requests, relationship_spec)
 
 
