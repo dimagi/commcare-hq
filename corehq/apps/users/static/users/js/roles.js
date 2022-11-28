@@ -233,7 +233,7 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
                     },
                     {
-                        showOption: true,
+                        showOption: toggles.toggleEnabled("DATA_DICTIONARY"),
                         editPermission: self.permissions.edit_data_dict,
                         viewPermission: self.permissions.view_data_dict,
                         text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),

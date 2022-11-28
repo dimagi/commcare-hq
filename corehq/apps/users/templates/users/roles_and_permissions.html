@@ -87,9 +87,11 @@
           <th class="text-center">
             {% trans "Locations" %}
           </th>
+          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
           <th class="text-center">
             {% trans "Data Dictionary" %}
           </th>
+          {% endif %}
           <th class="text-center">
             {% trans "Data" %}
           </th>
