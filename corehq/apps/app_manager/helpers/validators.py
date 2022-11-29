@@ -933,9 +933,27 @@ class FormBaseValidator(object):
                 if form_link.form_id:
                     try:
                         linked_form = self.form.get_app().get_form(form_link.form_id)
-                        linked_module = linked_form.get_module()
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
+                        continue
+
+                    if form_link.form_module_id:
+                        try:
+                            linked_module = self.form.get_app().get_module_by_unique_id(form_link.form_module_id)
+                        except ModuleNotFoundException:
+                            errors.append(dict(type='bad form link', **meta))
+                            continue
+
+                        # linked_module must belong to the form or be a shadow module of the form's module
+                        # This is purely for safety as it shouldn't be possible to get into this state.
+                        if linked_module.module_type == "shadow":
+                            if linked_module.source_module_id != linked_form.get_module().unique_id:
+                                errors.append(dict(type='bad form link', **meta))
+                        elif linked_module.unique_id != linked_form.get_module().unique_id:
+                            errors.append(dict(type='bad form link', **meta))
+                    else:
+                        linked_module = linked_form.get_module()
+
                 else:
                     try:
                         linked_module = self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
