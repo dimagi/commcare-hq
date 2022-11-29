@@ -21,7 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import RequestData
+from corehq.motech.generic_inbound.utils import RequestData, retry
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
@@ -290,3 +290,33 @@ class TestGenericInboundAPIView(TestCase):
                 self.assertEqual(original_value.username, log_value.username)
             else:
                 self.assertEqual(original_value, log_value)
+
+    def test_retry(self):
+        properties_expression = {'prop': 'const'}
+        validation_expression = {
+            "type": "boolean_expression",
+            "operator": "in",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "body.name"
+            },
+            "property_value": ["tennis", "hockey"]
+        }
+        response = self._call_api(properties_expression, validation_expression=validation_expression)
+        self.assertEqual(response.status_code, 400, response.content)
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+
+        # Delete the validation condition that caused it to fail
+        api = ConfigurableAPI.objects.last()
+        api.validations.all().delete()
+
+        retry(log)
+        log.refresh_from_db()
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+        self.assertEqual(log.processingattempt_set.count(), 2)
+
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.is_retry, True)
+        self.assertEqual(attempt.response_status, 200)

@@ -2,6 +2,7 @@ import json
 import uuid
 from base64 import urlsafe_b64encode
 
+from django.db import transaction
 from django.http import QueryDict
 from django.utils.translation import gettext as _
 
@@ -80,6 +81,22 @@ class ApiResponse:
     json: dict = None
 
 
+def make_processing_attempt(response, request_log, is_retry=False):
+    from corehq.motech.generic_inbound.models import ProcessingAttempt
+
+    response_json = response.json or {}
+    case_ids = [c['case_id'] for c in response_json.get('cases', [])]
+    ProcessingAttempt.objects.create(
+        is_retry=is_retry,
+        log=request_log,
+        response_status=response.status,
+        # response_body=response_body,
+        raw_response=response_json,
+        xform_id=response_json.get('form_id'),
+        case_ids=case_ids,
+    )
+
+
 def get_evaluation_context(restore_user, method, query, headers, body):
     return EvaluationContext({
         'request': {
@@ -90,3 +107,18 @@ def get_evaluation_context(restore_user, method, query, headers, body):
         'body': body,
         'user': get_registration_element_data(restore_user)
     })
+
+
+def retry(request_log):
+    from corehq.motech.generic_inbound.models import RequestLog
+    from corehq.motech.generic_inbound.core import execute_generic_api
+
+    request_data = RequestData.from_log(request_log)
+    response = execute_generic_api(request_log.api, request_data)
+
+    with transaction.atomic():
+        request_log.status = RequestLog.Status.from_status_code(response.status)
+        request_log.response_status = response.status
+        # request_log.error_message = response_body if not is_success else ''
+        request_log.save()
+        make_processing_attempt(response, request_log, is_retry=True)

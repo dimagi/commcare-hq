@@ -33,7 +33,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import ApiResponse, RequestData
+from corehq.motech.generic_inbound.utils import ApiResponse, RequestData, make_processing_attempt
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
@@ -207,16 +207,4 @@ def _log_api_request(api, request, response):
         request_ip=get_ip(request),
     )
 
-    response_json = response.json or {}
-    if is_success and response_json:
-        case_ids = [c['case_id'] for c in response_json['cases']]
-    else:
-        case_ids = []
-    ProcessingAttempt.objects.create(
-        log=log,
-        response_status=response.status,
-        # response_body=response_body,
-        raw_response=response_json,
-        xform_id=response_json.get('form_id'),
-        case_ids=case_ids,
-    )
+    make_processing_attempt(response, log)
