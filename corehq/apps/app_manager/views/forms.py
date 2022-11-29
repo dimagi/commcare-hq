@@ -380,7 +380,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
             and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+        form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
@@ -389,15 +389,27 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ],
         )
         module_unique_ids = [m.unique_id for m in app.get_modules()]
-        form.form_links = [FormLink(
-            xpath=link[0],
-            form_id=link[1] if link[1] not in module_unique_ids else None,
-            module_unique_id=link[1] if link[1] in module_unique_ids else None,
-            datums=[
-                FormDatum(name=datum['name'], xpath=datum['xpath'])
-                for datum in link[2]
-            ]
-        ) for link in form_links]
+        form_links = []
+        for link in form_link_data:
+            xpath, unique_id, datums = link
+            if '.' in unique_id:
+                form_module_id, form_id = unique_id.split('.')
+                module_unique_id = None
+            else:
+                form_id = unique_id if unique_id not in module_unique_ids else None
+                module_unique_id = unique_id if unique_id in module_unique_ids else None
+                form_module_id = None
+            form_links.append(FormLink(
+                xpath=xpath,
+                form_id=form_id,
+                form_module_id=form_module_id,
+                module_unique_id=module_unique_id,
+                datums=[
+                    FormDatum(name=datum['name'], xpath=datum['xpath'])
+                    for datum in datums
+                ]
+            ))
+        form.form_links = form_links
 
     if should_edit('post_form_workflow_fallback'):
         form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
