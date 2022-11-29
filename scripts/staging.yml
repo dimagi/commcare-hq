@@ -61,10 +61,9 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    # - akj/abdm-api # Akash Sep 5
     - ap/sql-repeater/phase-2 # Amit Sep 16
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    #- jls/new-instance-connectors # Jenny Sept 27
+    - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - ad/tableau-connected-app # Addison Oct 26
@@ -77,4 +76,5 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
+    - cs/fix-settings-position-in-file # Charl Nov 28
 submodules: { }
