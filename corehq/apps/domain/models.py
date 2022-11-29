@@ -1154,5 +1154,4 @@ class AppReleaseModeSetting(models.Model):
     @staticmethod
     def get_settings(domain):
         domain_obj, created = AppReleaseModeSetting.objects.get_or_create(domain=domain)
-        print(f"$$$$$$$$$$$$$$$$ geting obj for {domain} created {created}")
         return domain_obj

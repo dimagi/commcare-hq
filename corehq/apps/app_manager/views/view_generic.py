@@ -343,7 +343,6 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
     context.update({'confirm': confirm})
 
     release_control_visible = AppReleaseModeSetting.get_settings(domain)
-    print(f"release enabled {release_control_visible.is_visible}")
     context.update({'show_release_mode': release_control_visible.is_visible})
 
     response = render(request, template, context)

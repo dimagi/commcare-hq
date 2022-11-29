@@ -622,7 +622,6 @@ class DomainGlobalSettingsForm(forms.Form):
         if self.cleaned_data.get("release_mode_visibility"):
             setting_obj = AppReleaseModeSetting.get_settings(domain=domain.name)
             setting_obj.is_visible = self.cleaned_data.get("release_mode_visibility")
-            print(f"000000 {self.cleaned_data.get('release_mode_visibility')}")
             setattr(setting_obj, "release_mode_visibility", self.cleaned_data.get("release_mode_visibility"))
             setting_obj.save()
 
