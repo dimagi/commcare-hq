@@ -423,7 +423,8 @@ def revert_to_copy(request, domain, app_id):
                 action=ApplicationReleaseLog.ACTION_REVERTED,
                 version=app.version,
                 app_id=app_id,
-                user_id=user_id
+                user_id=user_id,
+                info=_(f"Reverted to version {copy_build_comment_params['old_version']}")
             )
     except AppValidationError:
         messages.error(
