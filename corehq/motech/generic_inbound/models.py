@@ -113,6 +113,14 @@ class RequestLog(models.Model):
         ERROR = 'error', _('Error')
         REVERTED = 'reverted', _('Reverted')
 
+        @classmethod
+        def from_status_code(cls, code):
+            return {
+                200: cls.SUCCESS,
+                204: cls.FILTERED,
+                400: cls.VALIDATION_FAILED,
+            }.get(code, cls.ERROR)
+
     class RequestMethod(models.TextChoices):
         POST = 'POST'
         PUT = 'PUT'

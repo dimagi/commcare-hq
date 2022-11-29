@@ -189,25 +189,14 @@ def generic_inbound_api(request, domain, api_id):
 
 
 def _log_api_request(api, request, response):
-    if response.status == 200:
-        is_success = True
-        status = RequestLog.Status.SUCCESS
-    elif response.status == 204:
-        is_success = True
-        status = RequestLog.Status.FILTERED
-    elif response.status == 400:
-        is_success = False
-        status = RequestLog.Status.VALIDATION_FAILED
-    else:
-        is_success = False
-        status = RequestLog.Status.ERROR
+    is_success = 200 <= response.status < 300
 
     # TODO, revisit this
     # response_body = response.content.decode('utf-8')
     log = RequestLog.objects.create(
         domain=request.domain,
         api=api,
-        status=status,
+        status=RequestLog.Status.from_status_code(response.status),
         response_status=response.status,
         # error_message=response_body if not is_success else '',
         username=request.couch_user.username,
