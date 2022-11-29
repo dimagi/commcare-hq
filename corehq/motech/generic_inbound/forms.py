@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 from django.urls import reverse
+from django.utils.safestring import SafeString
 from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import layout as crispy
@@ -71,7 +72,9 @@ ApiValidationFormSet = inlineformset_factory(
 
 
 def _expression_link(domain):
-    return '<a href="{url}" target="_blank" title="{title}"><i class="fa fa-external-link"></i></a>'.format(
-        url=reverse('ucr_expressions', args=(domain,)),
-        title=_("Filters and Expressions")
+    return SafeString(
+        '<a href="{url}" target="_blank" title="{title}"><i class="fa fa-external-link"></i></a>'.format(
+            url=reverse('ucr_expressions', args=(domain,)),
+            title=_("Filters and Expressions")
+        )
     )

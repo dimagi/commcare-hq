@@ -17,9 +17,9 @@
 
         <div class="controls {{ field_class }}">
           {% if pre_addon or post_addon %}<div class="input-group">{% endif %}
-            {% if pre_addon %}<div class="input-group-addon">{{ pre_addon|safe }}</div>{% endif %}
+            {% if pre_addon %}<div class="input-group-addon">{{ pre_addon }}</div>{% endif %}
             {% crispy_field field %}
-            {% if post_addon %}<div class="input-group-addon">{{ post_addon|safe }}</div>{% endif %}
+            {% if post_addon %}<div class="input-group-addon">{{ post_addon }}</div>{% endif %}
           {% if pre_addon or post_addon %}</div>{% endif %}
           {% include 'bootstrap3/layout/help_text_and_errors.html' %}
         </div>
