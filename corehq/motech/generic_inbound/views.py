@@ -242,13 +242,14 @@ def _log_api_request(api, request, response):
         is_success = False
         status = RequestLog.Status.ERROR
 
-    response_body = response.content.decode('utf-8')
+    # TODO, revisit this
+    # response_body = response.content.decode('utf-8')
     log = RequestLog.objects.create(
         domain=request.domain,
         api=api,
         status=status,
         response_status=response.status_code,
-        error_message=response_body if not is_success else '',
+        # error_message=response_body if not is_success else '',
         username=request.couch_user.username,
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),
@@ -266,7 +267,7 @@ def _log_api_request(api, request, response):
     ProcessingAttempt.objects.create(
         log=log,
         response_status=response.status_code,
-        response_body=response_body,
+        # response_body=response_body,
         raw_response=response_json,
         xform_id=response_json.get('form_id'),
         case_ids=case_ids,
