@@ -829,6 +829,7 @@ def validate_property(property, allow_parents=True):
 class FormBaseValidator(object):
     def __init__(self, form):
         self.form = form
+        self.app = form.get_app()
 
     def error_meta(self, module=None):
         if not module:
@@ -932,14 +933,14 @@ class FormBaseValidator(object):
                 linked_module = None
                 if form_link.form_id:
                     try:
-                        linked_form = self.form.get_app().get_form(form_link.form_id)
+                        linked_form = self.app.get_form(form_link.form_id)
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
                         continue
 
                     if form_link.form_module_id:
                         try:
-                            linked_module = self.form.get_app().get_module_by_unique_id(form_link.form_module_id)
+                            linked_module = self.app.get_module_by_unique_id(form_link.form_module_id)
                         except ModuleNotFoundException:
                             errors.append(dict(type='bad form link', **meta))
                             continue
@@ -956,7 +957,7 @@ class FormBaseValidator(object):
 
                 else:
                     try:
-                        linked_module = self.form.get_app().get_module_by_unique_id(form_link.module_unique_id)
+                        linked_module = self.app.get_module_by_unique_id(form_link.module_unique_id)
                     except ModuleNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
                 if linked_module:
@@ -988,7 +989,7 @@ class FormBaseValidator(object):
 class IndexedFormBaseValidator(FormBaseValidator):
     @property
     def timing_context(self):
-        return self.form.get_app().timing_context
+        return self.app.timing_context
 
     def check_case_properties(self, all_names=None, subcase_names=None, case_tag=None):
         all_names = all_names or []
@@ -1020,7 +1021,7 @@ class IndexedFormBaseValidator(FormBaseValidator):
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': str(e)})
         else:
-            no_multimedia = not self.form.get_app().enable_multimedia_case_property
+            no_multimedia = not self.app.enable_multimedia_case_property
             for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
