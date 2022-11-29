@@ -150,6 +150,27 @@ def human_readable_seconds(duration):
 
 
 class Command(BaseCommand):
+    """
+    ES sync management command. It can be used to manage reindex processes on HQ indices.
+    The command requires the index to be multiplexed before the reindex is started.
+    This management command currently supports three subcommands
+
+    ```bash
+    ./manage.py elastic_sync_multiplexed start <index_cname>
+    ```
+    <index_cname> is the hq cannoical name for an index like forms, cases
+
+    ```bash
+    ./manage.py elastic_sync_multiplexed cancel <task_id>
+    ```
+
+    ```bash
+    ./manage.py elastic_sync_multiplexed status <task_id>
+    ```
+
+    <task_id> is the reindex operation id that would be printed by start command
+
+    """
 
     help = ("Reindex management command to sync Multiplexed HQ indices")
 
