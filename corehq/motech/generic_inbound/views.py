@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect
@@ -19,19 +17,12 @@ from corehq.apps.api.decorators import allow_cors, api_throttle
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
-from corehq.apps.hqcase.api.core import SubmissionError, UserError
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
-from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
 from corehq.motech.generic_inbound.core import execute_generic_api
-from corehq.motech.generic_inbound.exceptions import (
-    GenericInboundApiError,
-    GenericInboundRequestFiltered,
-    GenericInboundUserError,
-    GenericInboundValidationError,
-)
+from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.motech.generic_inbound.forms import (
     ApiValidationFormSet,
     ConfigurableAPICreateForm,
@@ -184,51 +175,17 @@ def generic_inbound_api(request, domain, api_id):
     except ConfigurableAPI.DoesNotExist:
         raise Http404
 
-    response = _generic_inbound_api(api, request)
+    try:
+        request_data = RequestData.from_request(request)
+    except GenericInboundUserError as e:
+        response = ApiResponse(status=400, json={'error': str(e)})
+    else:
+        response = execute_generic_api(api, request_data)
     _log_api_request(api, request, response)
 
     if response.status == 204:
         return HttpResponse(status=204)  # no body for 204 (RFC 7230)
     return JsonResponse(response.json, status=response.status)
-
-
-def _generic_inbound_api(api, request):
-    try:
-        request_data = RequestData.from_request(request)
-    except GenericInboundUserError as e:
-        return ApiResponse(status=400, json={'error': str(e)})
-
-    try:
-        response_json = execute_generic_api(
-            request_data.domain,
-            request_data.couch_user,
-            request_data.user_agent,
-            request_data.to_context(),
-            api,
-        )
-    except BadSpecError as e:
-        return ApiResponse(status=500, json={'error': str(e)})
-    except UserError as e:
-        return ApiResponse(status=400, json={'error': str(e)})
-    except GenericInboundRequestFiltered:
-        return ApiResponse(status=204)
-    except GenericInboundValidationError as e:
-        return _get_validation_error_response(e.errors)
-    except GenericInboundApiError as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    except SubmissionError as e:
-        return ApiResponse(status=400, json={
-            'error': str(e),
-            'form_id': e.form_id,
-        })
-    return ApiResponse(status=200, json=response_json)
-
-
-def _get_validation_error_response(errors):
-    return ApiResponse(status=400, json={
-        'error': 'validation error',
-        'errors': [error['message'] for error in errors],
-    })
 
 
 def _log_api_request(api, request, response):
