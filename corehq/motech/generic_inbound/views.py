@@ -42,7 +42,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import RequestData
+from corehq.motech.generic_inbound.utils import ApiResponse, RequestData
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
@@ -186,17 +186,20 @@ def generic_inbound_api(request, domain, api_id):
 
     response = _generic_inbound_api(api, request)
     _log_api_request(api, request, response)
-    return response
+
+    if response.status == 204:
+        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
+    return JsonResponse(response.json, status=response.status)
 
 
 def _generic_inbound_api(api, request):
     try:
         request_data = RequestData.from_request(request)
     except GenericInboundUserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return ApiResponse(status=400, json={'error': str(e)})
 
     try:
-        response = execute_generic_api(
+        response_json = execute_generic_api(
             request_data.domain,
             request_data.couch_user,
             request_data.user_agent,
@@ -204,38 +207,38 @@ def _generic_inbound_api(api, request):
             api,
         )
     except BadSpecError as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return ApiResponse(status=500, json={'error': str(e)})
     except UserError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return ApiResponse(status=400, json={'error': str(e)})
     except GenericInboundRequestFiltered:
-        return HttpResponse(status=204)  # no body for 204 (RFC 7230)
+        return ApiResponse(status=204)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except GenericInboundApiError as e:
         return JsonResponse({'error': str(e)}, status=500)
     except SubmissionError as e:
-        return JsonResponse({
+        return ApiResponse(status=400, json={
             'error': str(e),
             'form_id': e.form_id,
-        }, status=400)
-
-    return JsonResponse(response)
+        })
+    return ApiResponse(status=200, json=response_json)
 
 
 def _get_validation_error_response(errors):
-    return JsonResponse({'error': 'validation error', 'errors': [
-        error['message'] for error in errors
-    ]}, status=400)
+    return ApiResponse(status=400, json={
+        'error': 'validation error',
+        'errors': [error['message'] for error in errors],
+    })
 
 
 def _log_api_request(api, request, response):
-    if response.status_code == 200:
+    if response.status == 200:
         is_success = True
         status = RequestLog.Status.SUCCESS
-    elif response.status_code == 204:
+    elif response.status == 204:
         is_success = True
         status = RequestLog.Status.FILTERED
-    elif response.status_code == 400:
+    elif response.status == 400:
         is_success = False
         status = RequestLog.Status.VALIDATION_FAILED
     else:
@@ -248,7 +251,7 @@ def _log_api_request(api, request, response):
         domain=request.domain,
         api=api,
         status=status,
-        response_status=response.status_code,
+        response_status=response.status,
         # error_message=response_body if not is_success else '',
         username=request.couch_user.username,
         request_method=request.method,
@@ -258,15 +261,14 @@ def _log_api_request(api, request, response):
         request_ip=get_ip(request),
     )
 
-    if is_success and response.content:
-        response_json = json.loads(response.content)
+    response_json = response.json or {}
+    if is_success and response_json:
         case_ids = [c['case_id'] for c in response_json['cases']]
     else:
-        response_json = {}
         case_ids = []
     ProcessingAttempt.objects.create(
         log=log,
-        response_status=response.status_code,
+        response_status=response.status,
         # response_body=response_body,
         raw_response=response_json,
         xform_id=response_json.get('form_id'),

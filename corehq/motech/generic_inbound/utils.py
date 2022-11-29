@@ -74,6 +74,12 @@ class RequestData:
         )
 
 
+@attr.s(kw_only=True, frozen=True, auto_attribs=True)
+class ApiResponse:
+    status: int
+    json: dict = None
+
+
 def get_evaluation_context(restore_user, method, query, headers, body):
     return EvaluationContext({
         'request': {
