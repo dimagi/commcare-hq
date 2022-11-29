@@ -108,6 +108,11 @@ class ESSyncUtil:
         return task_id
 
 
+    def reindex_status(self, task_id):
+        check_task_progress(self.es, task_id)
+
+
+
 
 class Command(BaseCommand):
 
@@ -129,6 +134,15 @@ class Command(BaseCommand):
             'index_cname',
             choices=INDEXES,
             help="""Cannonical Name of the index that need to be synced""",
+        )
+
+        # Get ReIndex Process Status
+        status_cmd = subparsers.add_parser("status")
+        status_cmd.set_defaults(func=self.es_helper.reindex_status)
+        status_cmd.add_argument(
+            "task_id",
+            help="""Check the status of active reindex process.
+            """
         )
 
     def handle(self, **options):
