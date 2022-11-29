@@ -131,6 +131,19 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
             []
         )
 
+    def test_human_readable_seconds(self):
+        duration = human_readable_seconds(5)
+        self.assertEqual(duration, '5 seconds')
+
+        duration = human_readable_seconds(5.1 * 60)
+        self.assertEqual(duration, '5 minutes')
+
+        duration = human_readable_seconds(5.8 * 60 * 60)
+        self.assertEqual(duration, '5 hours')
+
+        duration = human_readable_seconds(5.1 * 60 * 60 * 24)
+        self.assertEqual(duration, '5 days')
+
 
 def _index_tombstones(secondary_adapter, quantity):
     tombstone_ids = [str(i) for i in list(range(1, quantity))]
