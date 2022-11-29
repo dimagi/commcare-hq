@@ -909,8 +909,8 @@ def _get_form_link_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
-    def _form_name(form):
-        module_name = _module_name(form.get_module())
+    def _form_name(module, form):
+        module_name = _module_name(module)
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
@@ -943,8 +943,9 @@ def _get_form_link_context(module, langs):
             case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
-                'unique_id': candidate_form.unique_id,
-                'name': _form_name(candidate_form),
+                # this is necessary to disambiguate forms in shadow modules
+                'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
+                'name': _form_name(candidate_module, candidate_form),
                 'auto_link': case_type_match or is_parent,
                 'allow_manual_linking': True,
             })
