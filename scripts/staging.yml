@@ -65,8 +65,8 @@ branches:
     - ap/sql-repeater/phase-2 # Amit Sep 16
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - jls/new-instance-connectors # Jenny Sept 27
-    - akj/release-mode-toggle # Akash 7 Oct
-    - akj/migrations-fix # Akash Oct 11
+    # - akj/release-mode-toggle # Akash 7 Oct
+    # - akj/migrations-fix # Akash Oct 11
     - ad/tableau-connected-app # Addison Oct 26
     - cs/sc-2369/shadow_module_fix # Chris Oct 31
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
