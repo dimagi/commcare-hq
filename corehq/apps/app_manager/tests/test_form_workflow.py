@@ -524,6 +524,32 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
         """
         self.assertXmlPartialEqual(expected, suite_xml, "./entry[2]/stack")
 
+    def test_form_links_to_shadow_module(self):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('parent', 'mother')
+        m1, m1f0 = factory.new_basic_module('other', 'mother')
+        m2 = factory.new_shadow_module('shadow_module', m1, with_form=False)
+
+        #link from m0-f0 to m1-f0 (in the shadow module)
+        m0f0.post_form_workflow = WORKFLOW_FORM
+        m0f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m2.unique_id)]
+
+        suite_xml = factory.app.create_suite()
+
+        print(suite_xml.decode())
+        # In m0, the regular module, EOF nav goes back to m0
+        expected = """
+        <partial>
+            <stack>
+                <create if="true()">
+                    <command value="'m2'"/>
+                    <command value="'m2-f0'"/>
+                </create>
+            </stack>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite_xml, "./entry[1]/stack")
+
     def test_form_links_other_child_module(self):
         # This test demonstrates current behavior that I believe to be flawed
 
