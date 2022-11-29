@@ -259,8 +259,7 @@ def _log_api_request(api, request, response):
 
     if is_success and response.content:
         response_json = json.loads(response.content)
-        case_ids = [c['case_id'] for c in
-                    response_json.get('cases', [response_json.get('case')])]
+        case_ids = [c['case_id'] for c in response_json['cases']]
     else:
         response_json = {}
         case_ids = []

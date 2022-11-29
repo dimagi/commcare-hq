@@ -22,7 +22,7 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
     if not all(isinstance(item, dict) for item in data):
         raise GenericInboundApiError(_("Unexpected type for transformed request"))
 
-    xform, case_or_cases = handle_case_update(
+    xform, cases = handle_case_update(
         domain=domain,
         data=data,
         user=couch_user,
@@ -30,14 +30,9 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
         is_creation=None,
     )
 
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
     return {
         'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
+        'cases': [serialize_case(case) for case in cases],
     }
 
 
