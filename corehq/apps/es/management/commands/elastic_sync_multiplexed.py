@@ -107,11 +107,46 @@ class ESSyncUtil:
         task_id = self.es.reindex(reindex_body, wait_for_completion=False)
         return task_id
 
+    def cancel_reindex(self, task_id):
+        result = self.es.tasks.cancel(task_id)
+        node_failures = result.get('node_failure', None)
+        if node_failures:
+            raise CommandError(f"No Reindes process with {task_id} found")
+        node_id = task_id.split(':')[0]
+        task_info = result['nodes'][node_id]['tasks'][task_id]
+
+        start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
+        running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
+        duration = human_readable_seconds(running_duration_seconds)
+
+        print(f"Reindex task {task_id} cancelled!")
+        print(f"Task was started at {start_time} and ran for {duration}")
 
     def reindex_status(self, task_id):
         check_task_progress(self.es, task_id)
 
 
+def human_readable_seconds(duration):
+    """
+    :param duration int: Duration in seconds
+    :returns a formatted string with correct time unit
+    """
+    seconds_in_minute = 60
+    seconds_in_hour = 60 * seconds_in_minute
+    seconds_in_day = 24 * seconds_in_hour
+
+    if duration < seconds_in_minute:
+        duration = math.floor(duration)
+        return f"{duration} seconds"
+    if duration < seconds_in_hour:
+        duration = math.floor(duration / seconds_in_minute)
+        return f"{duration} minutes"
+    if duration < seconds_in_day:
+        duration = math.floor(duration / seconds_in_hour)
+        return f"{duration} hours"
+    else:
+        duration = math.floor(duration / seconds_in_day)
+        return f"{duration} days"
 
 
 class Command(BaseCommand):
@@ -145,9 +180,22 @@ class Command(BaseCommand):
             """
         )
 
+        # Cancel Reindex Process
+        cancel_cmd = subparsers.add_parser("cancel")
+        cancel_cmd.set_defaults(func=self.es_helper.cancel_reindex)
+        cancel_cmd.add_argument(
+            "task_id",
+            help="""Cancels an ongoing reindex process""",
+        )
+
     def handle(self, **options):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
             cmd_func(options['index_cname'])
         else:
+            cmd_func(options['task_id'])
+
+
+class IndexNotMultiplexedException(Exception):
+    pass
