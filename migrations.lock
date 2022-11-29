@@ -126,6 +126,7 @@ app_manager
  0021_migrate_case_search_itemset_ids
  0022_migrate_to_conditional_case_update
  0023_applicationreleaselog
+ 0024_applicationreleaselog_info
 auditcare
  0001_sqlmodels
  0002_uniques

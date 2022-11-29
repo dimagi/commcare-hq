@@ -6295,6 +6295,7 @@ class ApplicationReleaseLog(models.Model):
     version = models.IntegerField()
     app_id = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255)
+    info = models.TextField()
 
     def to_json(self):
         return {
@@ -6302,6 +6303,7 @@ class ApplicationReleaseLog(models.Model):
             "action": self.ACTION_DISPLAY[self.action],
             "version": self.version,
             "user_id": self.user_id,
+            "info": self.info
         }
 
 
