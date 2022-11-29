@@ -276,11 +276,25 @@ class FieldWithExtras(Field):
 
 
 class FieldWithHelpBubble(FieldWithExtras):
+    """Add a help bubble after the field label.
+
+    Provide the help text using the `help_bubble_text` kwarg.
+    """
     template = "hqwebapp/crispy/field_with_help_bubble.html"
     extra_context = ['help_bubble_text']
 
 
 class FieldWithAddons(FieldWithExtras):
+    """Add 'input-group-addon' divs before / after the input
+    element. This is mostly only useful with inputs of type
+    'text' and 'select'.
+
+    The addon element must be provided using the `pre_addon`
+    and `post_addon` kwargs. The value should be a string or
+    'SafeString' (to prevent HTML escaping).
+
+    See the Bootstrap docs for addon examples.
+    """
     template = "hqwebapp/crispy/field_with_addons.html"
     extra_context = ['pre_addon', 'post_addon']
 
