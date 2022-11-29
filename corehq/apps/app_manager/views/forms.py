@@ -937,7 +937,7 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-        for candidate_form in candidate_module.get_forms():
+        for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
             case_type_match = candidate_module.case_type == module.case_type
