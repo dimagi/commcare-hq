@@ -156,7 +156,7 @@ class TableauServer(models.Model):
         ('server', gettext_lazy('Tableau Server')),
         ('online', gettext_lazy('Tableau Online')),
     )
-    domain = models.CharField(max_length=64, default='')
+    domain = models.CharField(max_length=64, default='', unique=True)
     server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
@@ -195,7 +195,7 @@ class TableauVisualization(models.Model):
 
 
 class TableauConnectedApp(models.Model):
-    app_client_id = models.CharField(max_length=32)
+    app_client_id = models.CharField(max_length=64)
     secret_id = models.CharField(max_length=64)
     encrypted_secret_value = models.CharField(max_length=64)
     server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
@@ -235,17 +235,10 @@ class TableauConnectedApp(models.Model):
         return token
 
 
-class TableauGroup(models.Model):
-    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
-    name = models.CharField(max_length=64)
-    group_id = models.CharField(max_length=32)
-
-
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255)
+    username = models.CharField(max_length=255, unique=True)
     role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
-    groups = models.ManyToManyField(TableauGroup)
     tableau_user_id = models.CharField(max_length=64)
     last_synced = models.DateTimeField(auto_now=True)
 
