@@ -285,7 +285,9 @@ class TableauAPISession(object):
                 body = json.loads(response.text)
                 return body
         else:
-            raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}")
+            error_code = json.loads(response.text)['error']['code']
+            raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}",
+                                    error_code)
 
     def sign_in(self):
         response_body = self._make_request(
