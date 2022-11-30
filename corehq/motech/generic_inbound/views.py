@@ -38,7 +38,13 @@ from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
-@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
+def can_administer_generic_inbound(view_fn):
+    return toggles.GENERIC_INBOUND_API.required_decorator()(
+        require_permission(HqPermissions.edit_motech)(view_fn)
+    )
+
+
+@method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
     page_title = gettext_lazy("Inbound API Configurations")
     urlname = "configurable_api_list"
@@ -99,7 +105,7 @@ class ConfigurableAPIListView(BaseProjectSettingsView, CRUDPaginatedViewMixin):
         }
 
 
-@method_decorator(toggles.GENERIC_INBOUND_API.required_decorator(), name='dispatch')
+@method_decorator(can_administer_generic_inbound, name='dispatch')
 class ConfigurableAPIEditView(BaseProjectSettingsView):
     page_title = gettext_lazy("Edit API Configuration")
     urlname = "configurable_api_edit"

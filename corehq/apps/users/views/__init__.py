@@ -708,7 +708,8 @@ class ListRolesView(BaseRoleAccessView):
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
                 toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
-                toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                toggles.DHIS2_INTEGRATION.enabled(self.domain) or
+                toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
