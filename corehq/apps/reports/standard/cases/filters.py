@@ -90,7 +90,11 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = gettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = ['@case_type', 'case_name', 'last_modified']
+    DEFAULT_COLUMNS = [
+        {'name': '@case_type', 'label': '@case_type'},
+        {'name': 'case_name', 'label': 'case_name'},
+        {'name': 'last_modified', 'label': 'last_modified'}
+    ]
 
     @property
     def filter_context(self):
@@ -117,7 +121,16 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     @classmethod
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
-        return json.loads(value or "[]")
+        ret = json.loads(value or "[]")
+
+        # convert legacy list of strings to list of dicts
+        if ret and type(ret[0]) == str:
+            ret = [{
+                'name': prop_name,
+                'label': prop_name
+            } for prop_name in ret]
+
+        return ret
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):
