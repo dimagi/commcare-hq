@@ -18,7 +18,6 @@ from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import (
     Dhis2CaseConfig,
     Dhis2EntityConfig,
-    Dhis2FormConfig,
     RelationshipConfig,
 )
 from corehq.motech.dhis2.entities_helpers import (
@@ -29,7 +28,7 @@ from corehq.motech.dhis2.entities_helpers import (
     validate_tracked_entity,
 )
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater, SQLDhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -168,10 +167,10 @@ class TestDhis2EntitiesHelpers(TestCase):
         config_form = Dhis2ConfigForm(data=config)
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
-        repeater = Dhis2Repeater(domain=DOMAIN)
+        repeater = SQLDhis2Repeater(domain=DOMAIN)
         conn = ConnectionSettings(domain=DOMAIN, url="http://dummy.com")
         conn.save()
-        repeater.dhis2_config.form_configs = [Dhis2FormConfig.wrap(fc) for fc in data['form_configs']]
+        repeater.dhis2_config['form_configs'] = data['form_configs']
         repeater.connection_settings_id = conn.id
         repeater.save()
 
@@ -240,7 +239,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -274,7 +273,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -319,7 +318,7 @@ class TestCreateRelationships(TestCase):
         })
         dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[subcase_config, self.supercase_config]
-        )
+        ).to_json()
 
         create_relationships(
             requests,
@@ -521,7 +520,7 @@ class TestRequests(TestCase):
         repeater = Mock()
         repeater.dhis2_entity_config = Dhis2EntityConfig(
             case_configs=[self.subcase_config, self.supercase_config]
-        )
+        ).to_json()
         requests = Requests(
             DOMAIN,
             'https://dhis2.example.com/',
