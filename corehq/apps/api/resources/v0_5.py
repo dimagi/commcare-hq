@@ -16,6 +16,7 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
+from tastypie.throttle import BaseThrottle
 from tastypie.utils import dict_strip_unicode_keys
 
 from phonelog.models import DeviceReportEntry
@@ -302,6 +303,7 @@ class AdminWebUserResource(v0_1.UserResource):
         authentication = AdminAuthentication()
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
+        throttle = BaseThrottle()
 
 
 class GroupResource(v0_4.GroupResource):

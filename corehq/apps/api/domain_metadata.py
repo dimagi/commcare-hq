@@ -3,6 +3,7 @@ import logging
 from tastypie import fields
 from tastypie.exceptions import NotFound
 from tastypie.resources import ModelResource, Resource
+from tastypie.throttle import BaseThrottle
 
 from dimagi.utils.dates import force_to_datetime
 
@@ -117,6 +118,7 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
         object_class = Domain
         resource_name = 'project_space_metadata'
         serializer = XFormInstanceSerializer(formats=['json'])
+        throttle = BaseThrottle()
 
 
 class MaltResource(ModelResource):
@@ -160,3 +162,4 @@ class GIRResource(ModelResource):
             'month': ['gt', 'gte', 'lt', 'lte'],
             'domain_name': ['exact']
         }
+        throttle = BaseThrottle()

@@ -2,6 +2,7 @@ from django_prbac.models import Role
 from tastypie import fields
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
+from tastypie.throttle import BaseThrottle
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -49,6 +50,7 @@ class AccountingResourceMeta(CustomResourceMeta):
         'last_modified': ['gt', 'gte', 'lt', 'lte'],
         'date_updated': ['gt', 'gte', 'lt', 'lte']
     }
+    throttle = BaseThrottle()
 
 
 class FeatureResource(ModelResource):
