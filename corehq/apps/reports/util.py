@@ -9,7 +9,6 @@ from django.core.cache import cache
 from django.http import Http404
 from django.utils.translation import gettext as _
 
-import pytz
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
@@ -24,7 +23,6 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.utils import get_timezone_for_user
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
