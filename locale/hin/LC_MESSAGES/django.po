@@ -8426,6 +8426,10 @@ msgid "Search Screen Title Translation"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Search Screen Subtitle"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search Filter"
 msgstr ""
 
@@ -9173,10 +9177,8 @@ msgid "Version Number"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
-#, fuzzy
-#| msgid "Case Type:"
 msgid "Update Type"
-msgstr "Manejo de Casos"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 #: corehq/apps/builds/templates/builds/all.html
@@ -39325,6 +39327,10 @@ msgstr ""
 msgid "Auth type '{}' requires a username."
 msgstr ""
 
+#: corehq/motech/generic_inbound/core.py
+msgid "Unexpected type for transformed request"
+msgstr ""
+
 #: corehq/motech/generic_inbound/forms.py
 msgid "Create a new API"
 msgstr ""
@@ -39387,16 +39393,12 @@ msgid "Add Validation"
 msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Metadata"
 msgid "Metadata"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
-#, fuzzy
-#| msgid "Case Details"
 msgid "Response Details"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Processing Attempts"

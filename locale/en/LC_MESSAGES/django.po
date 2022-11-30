@@ -8411,6 +8411,10 @@ msgid "Search Screen Title Translation"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
+msgid "Search Screen Subtitle"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/case_search_properties.html
 msgid "Search Filter"
 msgstr ""
 
@@ -39308,6 +39312,10 @@ msgstr ""
 
 #: corehq/motech/forms.py
 msgid "Auth type '{}' requires a username."
+msgstr ""
+
+#: corehq/motech/generic_inbound/core.py
+msgid "Unexpected type for transformed request"
 msgstr ""
 
 #: corehq/motech/generic_inbound/forms.py
