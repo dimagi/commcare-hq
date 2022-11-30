@@ -542,12 +542,14 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form0.form_links = [FormLink(
             xpath="true()",
             form_id=form1.unique_id,    # can't link *to* multi-select form
+            form_module_id=self.single_loner.unique_id
         )]
 
         form1.post_form_workflow = WORKFLOW_FORM    # can't link *from* multi-select form
         form1.form_links = [FormLink(
             xpath="true()",
             form_id=form0.unique_id,
+            form_module_id=self.multi_loner.unique_id
         )]
 
         form2.post_form_workflow = WORKFLOW_FORM    # can't link *to* multi-select module
@@ -591,6 +593,7 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form.form_links = [FormLink(
             xpath="true()",
             form_id=form.unique_id,
+            form_module_id=self.single_child.unique_id
         )]
         self.assertIn({
             'type': 'parent multi select form links',
