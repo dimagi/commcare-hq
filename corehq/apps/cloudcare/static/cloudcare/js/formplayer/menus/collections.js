@@ -15,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'appVersion',
             'breadcrumbs',
             'clearSession',
+            'description',
             'notification',
             'persistentCaseTile',
             'queryKey',
