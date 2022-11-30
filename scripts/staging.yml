@@ -68,7 +68,6 @@ branches:
     - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - ad/tableau-connected-app # Addison Oct 26
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
@@ -79,4 +78,5 @@ branches:
     - cs/fix-settings-position-in-file # Charl Nov 28
     - sk/shadow-module-form-links # Simon Nov 30
     - gh/audit-conditional-alerts # Graham Nov 30
+    - ad/taleau-syncing-util-functions # Addison Nov 30
 submodules: { }
