@@ -341,9 +341,9 @@ def create_relationships(
                 'registered in DHIS2.'
             ).format(case=supercase_info))
 
-        if rel_config.supercase_to_subcase_dhis2_id:
+        if rel_config['supercase_to_subcase_dhis2_id']:
             relationship_spec = RelationshipSpec(
-                relationship_type_id=rel_config.supercase_to_subcase_dhis2_id,
+                relationship_type_id=rel_config['supercase_to_subcase_dhis2_id'],
                 from_tracked_entity_instance_id=supercase_tei_id,
                 to_tracked_entity_instance_id=subcase_tei_id
             )
@@ -353,9 +353,9 @@ def create_relationships(
                 existing_relationships=tracked_entity_relationships
             )
 
-        if rel_config.subcase_to_supercase_dhis2_id:
+        if rel_config['subcase_to_supercase_dhis2_id']:
             relationship_spec = RelationshipSpec(
-                relationship_type_id=rel_config.subcase_to_supercase_dhis2_id,
+                relationship_type_id=rel_config['subcase_to_supercase_dhis2_id'],
                 from_tracked_entity_instance_id=subcase_tei_id,
                 to_tracked_entity_instance_id=supercase_tei_id,
             )
