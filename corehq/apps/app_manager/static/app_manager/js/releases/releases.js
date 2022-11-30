@@ -254,7 +254,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.async_downloader = asyncDownloader(self.download_modal);
         self.updatePubSub = o.updatePubSub;
         self.savedApps.subscribe(() => {
-            self.updatePubSub.notifySubscribers("", "refreshAppLogs");
+            self.refreshAppLogs && self.refreshAppLogs();
         });
         // Spinner behavior
         self.showLoadingSpinner = ko.observable(true);
@@ -404,7 +404,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                             savedApp.is_released(data.is_released);
                             self.latestReleasedVersion(data.latest_released_version);
                             $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
-                            self.updatePubSub.notifySubscribers("", "refreshAppLogs");
+                            self.refreshAppLogs && self.refreshAppLogs();
                         }
                     },
                     error: function () {
