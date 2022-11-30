@@ -4,7 +4,10 @@ from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.apps.es.transient_util import (
+    index_info_from_cname,
+    iter_index_cnames,
+)
 from corehq.elastic import get_es_export
 from pillowtop.es_utils import initialize_index, set_index_reindex_settings
 
@@ -22,7 +25,7 @@ class Command(BaseCommand):
             help="Index to be used as the source",
         )
         parser.add_argument(
-            "target_index_name", choices=get_registry().keys(),
+            "target_index_name", choices=list(iter_index_cnames()),
             help="Index to be used as the target"
         )
         parser.add_argument(
@@ -42,7 +45,7 @@ class Command(BaseCommand):
         if not es.indices.exists(source_index):
             raise CommandError(f"Source index does not exist: '{source_index}'")
 
-        target_index_info = registry_entry(target_index_name)
+        target_index_info = index_info_from_cname(target_index_name)
         target_index = target_index_info.index
         _initialize_target(es, target_index_info)
 

@@ -18,11 +18,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
 from ..client import ElasticDocumentAdapter, manager
-from ..registry import (
-    register,
-    deregister,
-    registry_entry,
-)
+from ..transient_util import index_info_from_cname
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -226,7 +222,7 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
-    index_info = registry_entry(index_cname)
+    index_info = index_info_from_cname(index_cname)
     es = get_es_new()
     with trap_extra_setup(ConnectionError):
         initialize_index_and_mapping(es, index_info)
