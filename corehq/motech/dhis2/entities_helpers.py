@@ -71,7 +71,7 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
     # Create relationships after handling tracked entity instances, to
     # ensure that both the instances in the relationship have been created.
     for info, case_config in info_config_pairs:
-        if not case_config['relationships_to_export']:
+        if not case_config.relationships_to_export:
             continue
         try:
             create_relationships(
@@ -124,8 +124,8 @@ def _get_info_config_pairs(repeater, case_trigger_infos):
 
 
 def get_case_config_for_case_type(case_type, dhis2_entity_config):
-    for case_config in dhis2_entity_config['case_configs']:
-        if case_config['case_type'] == case_type:
+    for case_config in dhis2_entity_config.case_configs:
+        if case_config.case_type == case_type:
             return case_config
     return None
 
@@ -164,7 +164,7 @@ def get_tracked_entity_instance_id(case_trigger_info, case_config):
     Return the Tracked Entity instance ID stored in a case property (or
     other value source like a form question or a constant).
     """
-    tei_id_value_source = case_config['tei_id']
+    tei_id_value_source = case_config.tei_id
     return get_value(tei_id_value_source, case_trigger_info)
 
 
@@ -198,7 +198,7 @@ def update_tracked_entity_instance(
     attempt=1
 ):
     case_updates = {}
-    for attr_id, value_source_config in case_config['attributes'].items():
+    for attr_id, value_source_config in case_config.attributes.items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
         )
@@ -260,12 +260,12 @@ def update_enrollments(
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     case_updates = {}
     tracked_entity = {
-        "trackedEntityType": case_config['te_type_id'],
-        "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
+        "trackedEntityType": case_config.te_type_id,
+        "orgUnit": get_value(case_config.org_unit_id, case_trigger_info),
         "attributes": [],
     }
 
-    for attr_id, value_source_config in case_config['attributes'].items():
+    for attr_id, value_source_config in case_config.attributes.items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
         )
@@ -305,14 +305,14 @@ def create_relationships(
     subcase-to-supercase relationship, and the other corresponding to a
     supercase-to-subcase relationship.
     """
-    subcase_tei_id = get_value(subcase_config['tei_id'], subcase_trigger_info)
+    subcase_tei_id = get_value(subcase_config.tei_id, subcase_trigger_info)
     if not subcase_tei_id:
         raise Dhis2Exception(_(
             'Unable to create DHIS2 relationship: The case {case} is not '
             'registered in DHIS2.'
         ).format(case=subcase_trigger_info))
 
-    for rel_config in subcase_config['relationships_to_export']:
+    for rel_config in subcase_config.relationships_to_export:
         supercase = get_supercase(subcase_trigger_info, rel_config)
         if not supercase:
             # There is no parent case to export a relationship for
@@ -331,9 +331,9 @@ def create_relationships(
                      supercase_type=supercase.type))
         supercase_info = get_case_trigger_info_for_case(
             supercase,
-            [supercase_config['tei_id']],
+            [supercase_config.tei_id],
         )
-        supercase_tei_id = get_value(supercase_config['tei_id'], supercase_info)
+        supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
         if not supercase_tei_id:
             # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
@@ -341,9 +341,9 @@ def create_relationships(
                 'registered in DHIS2.'
             ).format(case=supercase_info))
 
-        if rel_config['supercase_to_subcase_dhis2_id']:
+        if rel_config.supercase_to_subcase_dhis2_id:
             relationship_spec = RelationshipSpec(
-                relationship_type_id=rel_config['supercase_to_subcase_dhis2_id'],
+                relationship_type_id=rel_config.supercase_to_subcase_dhis2_id,
                 from_tracked_entity_instance_id=supercase_tei_id,
                 to_tracked_entity_instance_id=subcase_tei_id
             )
@@ -353,9 +353,9 @@ def create_relationships(
                 existing_relationships=tracked_entity_relationships
             )
 
-        if rel_config['subcase_to_supercase_dhis2_id']:
+        if rel_config.subcase_to_supercase_dhis2_id:
             relationship_spec = RelationshipSpec(
-                relationship_type_id=rel_config['subcase_to_supercase_dhis2_id'],
+                relationship_type_id=rel_config.subcase_to_supercase_dhis2_id,
                 from_tracked_entity_instance_id=subcase_tei_id,
                 to_tracked_entity_instance_id=supercase_tei_id,
             )
@@ -378,9 +378,9 @@ def get_supercase(case_trigger_info, relationship_config):
     case = CommCareCase.objects.get_case(case_trigger_info.case_id, case_trigger_info.domain)
     for index in case.live_indices:
         index_matches_config = (
-            index.identifier == relationship_config['identifier']
-            and index.referenced_type == relationship_config['referenced_type']
-            and index.relationship == relationship_config['relationship']
+            index.identifier == relationship_config.identifier
+            and index.referenced_type == relationship_config.referenced_type
+            and index.relationship == relationship_config.relationship
         )
         if index_matches_config:
             return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
@@ -460,7 +460,7 @@ def get_enrollments(case_trigger_info, case_config):
     for that. Cases/TEIs are enrolled in a program when the first event
     in that program occurs.
     """
-    case_org_unit = get_value(case_config['org_unit_id'], case_trigger_info)
+    case_org_unit = get_value(case_config.org_unit_id, case_trigger_info)
     programs_by_id = get_programs_by_id(case_trigger_info, case_config)
     enrollments = []
     for program_id, program in programs_by_id.items():
@@ -482,15 +482,15 @@ def get_enrollments(case_trigger_info, case_config):
 
 def get_programs_by_id(case_trigger_info, case_config):
     programs_by_id = defaultdict(lambda: {"events": []})
-    for form_config in case_config['form_configs']:
-        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config['xmlns']:
+    for form_config in case_config.form_configs:
+        if case_trigger_info.form_question_values['/metadata/xmlns'] != form_config.xmlns:
             continue
         event = get_event(case_trigger_info.domain, form_config, info=case_trigger_info)
         if event:
             program = programs_by_id[event["program"]]
             program["events"].append(event)
-            program["orgUnit"] = get_value(form_config['org_unit_id'], case_trigger_info)
-            program["status"] = get_value(form_config['program_status'], case_trigger_info)
+            program["orgUnit"] = get_value(form_config.org_unit_id, case_trigger_info)
+            program["status"] = get_value(form_config.program_status, case_trigger_info)
             program["geometry"] = get_geo_json(form_config, case_trigger_info)
             program.update(get_program_dates(form_config, case_trigger_info))
     return programs_by_id
@@ -498,12 +498,12 @@ def get_programs_by_id(case_trigger_info, case_config):
 
 def get_program_dates(form_config, case_trigger_info):
     program = {}
-    if form_config['enrollment_date']:
-        enrollment_date = get_value(form_config['enrollment_date'], case_trigger_info)
+    if form_config.enrollment_date:
+        enrollment_date = get_value(form_config.enrollment_date, case_trigger_info)
         if enrollment_date:
             program["enrollmentDate"] = enrollment_date
-    if form_config['incident_date']:
-        incident_date = get_value(form_config['incident_date'], case_trigger_info)
+    if form_config.incident_date:
+        incident_date = get_value(form_config.incident_date, case_trigger_info)
         if incident_date:
             program["incidentDate"] = incident_date
     return program

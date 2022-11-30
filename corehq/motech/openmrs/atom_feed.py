@@ -51,15 +51,13 @@ from corehq.motech.openmrs.openmrs_config import (
     get_property_map,
 )
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.value_source import (
     ValueSource,
     as_value_source,
     deserialize,
     get_import_value,
 )
-from corehq.util.dates import iso_string_to_datetime
-from dimagi.utils.parsing import json_format_datetime
 
 CASE_BLOCK_ARGS = ("case_name", "owner_id")
 
@@ -212,7 +210,7 @@ def get_feed_updates(repeater, feed_name):
         return not last_polled_at or get_timestamp(element, xpath) > last_polled_at
 
     assert feed_name in ATOM_FEED_NAMES
-    atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus().to_json())
+    atom_feed_status = repeater.atom_feed_status.get(feed_name, AtomFeedStatus())
     last_polled_at = atom_feed_status['last_polled_at']
     page = atom_feed_status['last_page']
     get_uuid = get_patient_uuid if feed_name == ATOM_FEED_NAME_PATIENT else get_encounter_uuid
@@ -222,7 +220,6 @@ def get_feed_updates(repeater, feed_name):
     # set to a UTC timestamp (datetime.utcnow()), but the timezone gets
     # dropped because it is stored as a jsonobject DateTimeProperty.
     # This sets it as a UTC timestamp again:
-    last_polled_at = iso_string_to_datetime(last_polled_at) if type(last_polled_at) is str else last_polled_at
     last_polled_at = pytz.utc.localize(last_polled_at) if last_polled_at else None
     try:
         while True:
@@ -252,18 +249,17 @@ def get_feed_updates(repeater, feed_name):
     except OpenmrsFeedRuntimeException:
         # Reset feed status so that polling will start at the beginning
         # of the feed.
-        repeater.atom_feed_status[feed_name] = AtomFeedStatus().to_json()
+        repeater.atom_feed_status[feed_name] = AtomFeedStatus()
         repeater.save()
     except (OpenmrsException, RequestException, HTTPError):
         # Don't update repeater if OpenMRS is offline, or XML cannot be
         # parsed.
         return
     else:
-        repeater.atom_feed_status[feed_name] = {
-            'last_polled_at': json_format_datetime(datetime.utcnow()),
-            'last_page': page,
-            'doc_type': 'AtomFeedStatus',  # Needed for syncing to Couch
-        }
+        repeater.atom_feed_status[feed_name] = AtomFeedStatus(
+            last_polled_at=datetime.utcnow(),
+            last_page=page,
+        )
         repeater.save()
 
 
@@ -271,7 +267,7 @@ def get_addpatient_caseblock(
     case_type: str,
     default_owner: Optional[CommCareUser],
     patient: dict,
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
 ) -> CaseBlock:
 
     case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater)
@@ -302,7 +298,7 @@ def get_updatepatient_caseblock(case, patient, repeater):
 
 
 def get_case_block_kwargs_from_patient(patient, repeater, case=None):
-    property_map = get_property_map(repeater.openmrs_config['case_config'])
+    property_map = get_property_map(repeater.openmrs_config.case_config)
     case_block_kwargs = {
         "case_name": patient['person']['display'],
         "update": {}
@@ -361,7 +357,7 @@ def update_patient(repeater, patient_uuid):
         case_type=case_type,
     )
     if error == LookupErrors.NotFound:
-        if not repeater.openmrs_config['case_config']['import_creates_cases']:
+        if not repeater.openmrs_config.case_config.import_creates_cases:
             # We can't create cases via the Atom feed, just update them.
             # Nothing to do here.
             return
@@ -388,7 +384,7 @@ def update_patient(repeater, patient_uuid):
             [case_block.as_text()],
             repeater.domain,
             xmlns=XMLNS_OPENMRS,
-            device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.repeater_id,
+            device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
         )
 
 
@@ -420,7 +416,7 @@ def import_encounter(repeater, encounter_uuid):
 
 
 def get_case_block_kwargs_from_encounter(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     encounter: dict,
     patient_case_id: str,
     default_owner_id: str,
@@ -489,7 +485,7 @@ def get_encounter(repeater, encounter_uuid):
 
 
 def get_case_id_owner_id_case_block(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> Tuple[Optional[str], Optional[str], Optional[CaseBlock]]:
     """
@@ -501,7 +497,7 @@ def get_case_id_owner_id_case_block(
     case = get_case(repeater, patient_uuid)
     if case:
         return case.case_id, case.owner_id, None
-    if not repeater.openmrs_config['case_config']['import_creates_cases']:
+    if not repeater.openmrs_config.case_config.import_creates_cases:
         # We cannot create new cases for patients in the Atom feed.
         return None, None, None
     case_block = create_case(repeater, patient_uuid)
@@ -509,7 +505,7 @@ def get_case_id_owner_id_case_block(
 
 
 def get_case(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> Union[CommCareCase, None]:
 
@@ -530,7 +526,7 @@ def get_case(
 
 
 def create_case(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> CaseBlock:
 
@@ -542,19 +538,19 @@ def create_case(
 
 
 def get_observation_mappings(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> DefaultDict[str, List[ObservationMapping]]:
     obs_mappings = defaultdict(list)
-    for form_config in repeater.openmrs_config['form_configs']:
-        for obs_mapping in form_config['openmrs_observations']:
-            value_source = as_value_source(obs_mapping['value'])
+    for form_config in repeater.openmrs_config.form_configs:
+        for obs_mapping in form_config.openmrs_observations:
+            value_source = as_value_source(obs_mapping.value)
             if (
                 value_source.can_import
-                and (obs_mapping.get('case_property') or obs_mapping.get('indexed_case_mapping'))
+                and (obs_mapping.case_property or obs_mapping.indexed_case_mapping)
             ):
                 # If obs_mapping.concept is "" or None, the mapping
                 # should apply to any concept
-                concept = obs_mapping['concept'] or None
+                concept = obs_mapping.concept or None
 
                 # It's possible that an OpenMRS concept appears more
                 # than once in form_configs. We are using a
@@ -565,27 +561,27 @@ def get_observation_mappings(
 
 
 def get_diagnosis_mappings(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> DefaultDict[str, List[ObservationMapping]]:
     diag_mappings = defaultdict(list)
-    for form_config in repeater.openmrs_config['form_configs']:
-        for diag_mapping in form_config['bahmni_diagnoses']:
-            value_source = as_value_source(diag_mapping['value'])
+    for form_config in repeater.openmrs_config.form_configs:
+        for diag_mapping in form_config.bahmni_diagnoses:
+            value_source = as_value_source(diag_mapping.value)
             if (
                 value_source.can_import
-                and (diag_mapping.get('case_property') or diag_mapping.get('indexed_case_mapping'))
+                and (diag_mapping.case_property or diag_mapping.indexed_case_mapping)
             ):
-                concept = diag_mapping.get('concept', None)
+                concept = diag_mapping.concept or None
                 diag_mappings[concept].append(diag_mapping)
     return diag_mappings
 
 
 def get_encounter_datetime_value_sources(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> List[ValueSource]:
     value_sources = []
-    for form_config in repeater.openmrs_config['form_configs']:
-        encounter_datetime_config = form_config['openmrs_start_datetime']
+    for form_config in repeater.openmrs_config.form_configs:
+        encounter_datetime_config = form_config.openmrs_start_datetime
         if encounter_datetime_config and "case_property" in encounter_datetime_config:
             value_source = as_value_source(encounter_datetime_config)
             if value_source.can_import:
@@ -605,7 +601,7 @@ def update_case(repeater, case_id, case_block_kwargs, case_blocks):
         [cb.as_text() for cb in case_blocks],
         repeater.domain,
         xmlns=XMLNS_OPENMRS,
-        device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.repeater_id,
+        device_id=OPENMRS_ATOM_FEED_DEVICE_ID + repeater.get_id,
     )
 
 
@@ -692,12 +688,12 @@ def get_case_block_kwargs_from_concepts(
                 mappings.get(ALL_CONCEPTS, []),
             )
             for mapping in obs_mappings:
-                if mapping.get('case_property'):
+                if mapping.case_property:
                     more_kwargs = get_case_block_kwargs_for_case_property(
                         mapping, obs, fallback_value=fallback_value_func(obs)
                     )
                     deep_update(case_block_kwargs, more_kwargs)
-                if mapping.get('indexed_case_mapping'):
+                if mapping.indexed_case_mapping:
                     case_block = get_case_block_for_indexed_case(
                         mapping, obs, case_attrs,
                     )
@@ -712,14 +708,14 @@ def get_case_block_kwargs_for_case_property(
 ) -> dict:
     case_block_kwargs = {"update": {}}
     try:
-        value = get_import_value(mapping.get('value'), external_data)
+        value = get_import_value(mapping.value, external_data)
     except (ConfigurationError, JsonpathError):
         # mapping.value isn't configured to parse external_data
-        value = deserialize(mapping.get('value'), fallback_value)
-    if mapping.get('case_property') in CASE_BLOCK_ARGS:
-        case_block_kwargs[mapping['case_property']] = value
+        value = deserialize(mapping.value, fallback_value)
+    if mapping.case_property in CASE_BLOCK_ARGS:
+        case_block_kwargs[mapping.case_property] = value
     else:
-        case_block_kwargs["update"][mapping['case_property']] = value
+        case_block_kwargs["update"][mapping.case_property] = value
     return case_block_kwargs
 
 
@@ -730,10 +726,10 @@ def get_case_block_for_indexed_case(
 ) -> CaseBlock:
     parent_case_id, parent_case_type, default_owner_id = parent_case_attrs
 
-    relationship = mapping['indexed_case_mapping']['relationship']
+    relationship = mapping.indexed_case_mapping.relationship
     case_block_kwargs = {
         "index": {
-            mapping['indexed_case_mapping']['identifier']: IndexAttrs(
+            mapping.indexed_case_mapping.identifier: IndexAttrs(
                 parent_case_type,
                 parent_case_id,
                 relationship,
@@ -741,7 +737,7 @@ def get_case_block_for_indexed_case(
         },
         "update": {}
     }
-    for value_source_config in mapping['indexed_case_mapping']['case_properties']:
+    for value_source_config in mapping.indexed_case_mapping.case_properties:
         value_source = as_value_source(value_source_config)
         value = value_source.get_import_value(external_data)
         if value_source.case_property in CASE_BLOCK_ARGS:
@@ -750,7 +746,7 @@ def get_case_block_for_indexed_case(
             case_block_kwargs["update"][value_source.case_property] = value
 
     case_id = uuid.uuid4().hex
-    case_type = mapping['indexed_case_mapping']['case_type']
+    case_type = mapping.indexed_case_mapping.case_type
     case_block_kwargs.setdefault("owner_id", default_owner_id)
     if not case_block_kwargs["owner_id"]:
         raise ConfigurationError(_(

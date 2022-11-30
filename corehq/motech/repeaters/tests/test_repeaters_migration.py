@@ -50,7 +50,6 @@ class TestMigrationCommand(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        super().setUpClass()
         cls.conn = ConnectionSettings(url="http://url.com", domain='rtest')
         cls.conn.save()
         cls.couch_repeaters = []
@@ -59,6 +58,7 @@ class TestMigrationCommand(TestCase):
             r.connection_settings_id = cls.conn.id
             r.save(sync_to_sql=False)
             cls.couch_repeaters.append(r)
+        return super().setUpClass()
 
     @classmethod
     def tearDownClass(cls) -> None:

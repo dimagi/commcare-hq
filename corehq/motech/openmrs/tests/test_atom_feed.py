@@ -12,7 +12,6 @@ import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
 from nose.tools import assert_equal, assert_is_none, assert_raises
-from corehq.motech.models import ConnectionSettings
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -33,10 +32,7 @@ from corehq.motech.openmrs.exceptions import (
     OpenmrsFeedRuntimeException,
     OpenmrsFeedSyntaxError,
 )
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater, SQLOpenmrsRepeater
-from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
-from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
 
@@ -156,10 +152,10 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             type='patient',
             owner_id='123456'
         )
-        self.connx = ConnectionSettings.objects.create(url='abcd', domain='test_domain')
 
     def tearDown(self):
-        self.connx.delete()
+        self.repeater.connection_settings.delete()
+        self.repeater.delete()
 
     def setUpRepeater(self):
         observations = [
@@ -215,7 +211,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 "case_property": "hypothermia_date"
             }
         ]
-        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -296,13 +292,15 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 }
             }
         ]
-        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
+        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
 
     def get_repeater_dict(self, observations, diagnoses):
         return {
+            "_id": "123456",
             "domain": "test_domain",
-            "repeater_id": "123456",
-            "connection_settings": self.connx,
+            "url": "https://example.com/openmrs/",
+            "username": "foo",
+            "password": "bar",
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
                 "form_configs": [{
@@ -585,37 +583,3 @@ def test_status_defaults():
 def test_doctests():
     results = doctest.testmod(corehq.motech.openmrs.atom_feed)
     assert results.failed == 0
-
-
-class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
-
-    file_path = ('data',)
-    root = os.path.dirname(__file__)
-
-    def setUp(self):
-        super().setUp()
-        self.conn = ConnectionSettings.objects.create(
-            id=1,
-            url="http://abc.com",
-            name="http://abc.com"
-        )
-        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
-        self.repeater = OpenmrsRepeater.wrap(openmrs_repeater).save()
-
-        self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
-        self.encounter_feed_elem = etree.XML(self.encounter_feed_xml.encode('utf-8'))
-
-        self.patient_feed_xml = inspect.cleandoc(PATIENT_FEED_XML)
-        self.patient_feed_elem = etree.XML(self.patient_feed_xml.encode('utf-8'))
-
-    def tearDown(self):
-        delete_all_repeaters()
-        return super().tearDown()
-
-    @patch('corehq.motech.openmrs.atom_feed.get_feed_xml')
-    @patch('corehq.motech.openmrs.atom_feed.get_patient_by_uuid')
-    @patch('corehq.motech.openmrs.atom_feed.get_encounter')
-    def test_poll_openmrs_atom_feeds(self, get_encounter, get_patient, get_feed_xml):
-        get_feed_xml.side_effect = [self.patient_feed_elem, self.encounter_feed_elem]
-        get_encounter.return_value = self.get_json('encounter')
-        poll_openmrs_atom_feeds('test_openmrs')
