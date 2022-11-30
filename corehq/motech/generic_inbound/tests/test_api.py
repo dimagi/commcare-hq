@@ -21,7 +21,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import RequestData, retry
+from corehq.motech.generic_inbound.utils import ApiRequest, retry
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
@@ -281,8 +281,8 @@ class TestGenericInboundAPIView(TestCase):
         request = self._call_api(properties_expression, query_params).wsgi_request
         log = RequestLog.objects.last()
 
-        original_data = RequestData.from_request(request)
-        log_data = RequestData.from_log(log)
+        original_data = ApiRequest.from_request(request)
+        log_data = ApiRequest.from_log(log)
 
         for k, original_value in attrs.asdict(original_data).items():
             log_value = getattr(log_data, k)

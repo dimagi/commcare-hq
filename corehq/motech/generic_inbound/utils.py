@@ -22,7 +22,7 @@ def make_url_key():
 
 
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)
-class RequestData:
+class ApiRequest:
     domain: str
     couch_user: CouchUser  # Is this correct?
     request_method: str
@@ -113,7 +113,7 @@ def retry(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
     from corehq.motech.generic_inbound.core import execute_generic_api
 
-    request_data = RequestData.from_log(request_log)
+    request_data = ApiRequest.from_log(request_log)
     response = execute_generic_api(request_log.api, request_data)
 
     with transaction.atomic():

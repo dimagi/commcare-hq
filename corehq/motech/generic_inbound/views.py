@@ -33,7 +33,7 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import ApiResponse, RequestData, make_processing_attempt
+from corehq.motech.generic_inbound.utils import ApiResponse, ApiRequest, make_processing_attempt
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
@@ -176,7 +176,7 @@ def generic_inbound_api(request, domain, api_id):
         raise Http404
 
     try:
-        request_data = RequestData.from_request(request)
+        request_data = ApiRequest.from_request(request)
     except GenericInboundUserError as e:
         response = ApiResponse(status=400, data={'error': str(e)})
     else:
