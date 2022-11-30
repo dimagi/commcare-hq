@@ -264,6 +264,14 @@ class TableauAPISession(object):
         self.signed_in = False
         self.site_id = None
 
+    @classmethod
+    def create_session_for_domain(cls, domain):
+        server = TableauServer.objects.get(domain=domain)
+        connected_app = TableauConnectedApp.objects.get(server=server)
+        session = cls(connected_app)
+        session.sign_in()
+        return session
+
     def _get_api_version(self, connected_app):
         response_body = self._make_request(
             self.GET,
@@ -327,7 +335,7 @@ class TableauAPISession(object):
     def query_groups(self, name=None):
         '''
         Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
-        Exclude the `name` arg to get a list of all groups on the site.
+        Exclude the `name` arg to get a list of all groups on the site, sorted by name.
 
         Each group dict returned has this format, at a minumum:
         {
@@ -341,6 +349,8 @@ class TableauAPISession(object):
         url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000'
         if name:
             url += f'&filter=name:eq:{name}'
+        else:
+            url += '&sort=name:asc'
         response_body = self._make_request(
             self.GET,
             'Query Groups',
@@ -418,6 +428,18 @@ class TableauAPISession(object):
                     "id": f"{user_id}"
                 }
             }
+        )
+        return True
+
+    def remove_user_from_group(self, user_id, group_id):
+        '''
+        Removes the Tableau user with the given ID from the group with the given ID.
+        '''
+        self._make_request(
+            self.DELETE,
+            'Remove User from Group',
+            self.base_url + f'/sites/{self.site_id}/groups/{group_id}/users/{user_id}',
+            {}
         )
         return True
 

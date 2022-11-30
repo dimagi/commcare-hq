@@ -269,6 +269,15 @@ class TestTableauAPISession(TestCase):
         api_session.sign_out()
         return api_session
 
+    def test_create_session_and_sign_in(self):
+        api_session = self._create_session()
+        self._sign_in(api_session=api_session)
+        self.assertTrue(api_session.signed_in)
+        self.assertEqual(api_session.base_url, 'https://test_server/api/3.15')
+        self._assert_subset({'Content-Type': 'application/json'}, api_session.headers)
+        api_session = self._sign_out(api_session=api_session)
+        self.assertFalse(api_session.signed_in)
+
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_query_groups(self, mock_request):
         api_session = self._create_session()
@@ -311,6 +320,16 @@ class TestTableauAPISession(TestCase):
         group_id = '1a2b3'
         mock_request.return_value = self.tableau_instance.add_user_to_group_response()
         api_session.add_user_to_group(user_id, group_id)
+        self._sign_out(api_session=api_session)
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_remove_user_from_group(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        user_id = 'uip12'
+        group_id = '1a2b3'
+        mock_request.return_value = self.tableau_instance.remove_user_from_group_response()
+        api_session.remove_user_from_group(user_id, group_id)
         self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
