@@ -53,8 +53,6 @@ function setup {
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         yarn install --progress=false --frozen-lockfile
     fi
-
-    /mnt/wait.sh
 }
 
 function python_preheat {
