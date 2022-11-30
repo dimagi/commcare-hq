@@ -13,6 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import WebUser
 from corehq.motech.auth import AuthManager
+from corehq.motech.dhis2 import entities_helpers
 from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.dhis2_config import (
     Dhis2CaseConfig,
@@ -245,6 +246,7 @@ class TestCreateRelationships(TestCase):
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_not_called()
 
@@ -278,12 +280,15 @@ class TestCreateRelationships(TestCase):
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
 
     def test_index_given_twice(self):
@@ -320,18 +325,23 @@ class TestCreateRelationships(TestCase):
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_any_call(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
 
     def test_both_relationships_given(self):
@@ -365,19 +375,76 @@ class TestCreateRelationships(TestCase):
             case_trigger_info,
             subcase_config,
             dhis2_entity_config,
+            []
         )
         self.create_relationship_func.assert_any_call(
             requests,
-            'a2b12345678',
-            'alice123456',
-            'johnny12345',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='a2b12345678',
+                from_tracked_entity_instance_id='alice123456',
+                to_tracked_entity_instance_id='johnny12345'
+            )
         )
         self.create_relationship_func.assert_called_with(
             requests,
-            'b2a12345678',
-            'johnny12345',
-            'alice123456',
+            entities_helpers.RelationshipSpec(
+                relationship_type_id='b2a12345678',
+                from_tracked_entity_instance_id='johnny12345',
+                to_tracked_entity_instance_id='alice123456'
+            )
         )
+
+    def test_existing_relationship_not_created_again(self):
+        """Test that we don't try to create a relationship that already exists"""
+        requests = object()
+        case_trigger_info = get_case_trigger_info_for_case(
+            self.child_case, [{
+                'case_property': 'external_id'
+            }, {
+                'case_property': 'dhis2_org_unit_id'
+            }]
+        )
+        subcase_config = Dhis2CaseConfig.wrap({
+            'case_type':
+                'child',
+            'te_type_id':
+                'person12345',
+            'tei_id': {
+                'case_property': 'external_id'
+            },
+            'org_unit_id': {
+                'case_property': 'dhis2_org_unit_id'
+            },
+            'attributes': {},
+            'form_configs': [],
+            'finder_config': {},
+            'relationships_to_export': [{
+                'identifier': 'parent',
+                'referenced_type': 'mother',
+                'subcase_to_supercase_dhis2_id': 'b2a12345678',
+                'supercase_to_subcase_dhis2_id': 'a2b12345678',
+            }]
+        })
+        dhis2_entity_config = Dhis2EntityConfig(case_configs=[subcase_config, self.supercase_config])
+        # Set up a pre-existing relationship which we received from DHIS2
+        tracked_entity_relationship_specs = [
+            entities_helpers.RelationshipSpec(
+                relationship_type_id="b2a12345678",
+                from_tracked_entity_instance_id="johnny12345",
+                to_tracked_entity_instance_id="alice123456"
+            )
+        ]
+
+        create_relationships(
+            requests, case_trigger_info, subcase_config, dhis2_entity_config, tracked_entity_relationship_specs
+        )
+
+        # Only once of the two relationships should trigger a call to create, since the other already exists
+        self.create_relationship_func.assert_called_once()
+        # Ensure that the correct relationship triggered a create call
+        _requests, relationship_created = self.create_relationship_func.call_args[0]
+        existing_relationship = tracked_entity_relationship_specs[0]
+        assert relationship_created.relationship_type_id != existing_relationship.relationship_type_id
 
 
 class TestRequests(TestCase):
@@ -593,8 +660,6 @@ class TestGetSupercase(TestCase):
 
 
 def test_doctests():
-    from corehq.motech.dhis2 import entities_helpers
-
     results = doctest.testmod(entities_helpers)
     assert results.failed == 0
 

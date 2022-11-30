@@ -138,7 +138,7 @@ django-crispy-forms==1.10.0
     # via -r base-requirements.in
 django-cte==1.2.0
     # via -r base-requirements.in
-django-field-audit==1.2.3
+django-field-audit==1.2.4
     # via -r base-requirements.in
 django-formtools==2.3
     # via
@@ -192,7 +192,7 @@ eulxml==1.1.3
     # via -r base-requirements.in
 executing==0.8.3
     # via stack-data
-flower==1.2.0
+flower @ git+https://github.com/mher/flower@a4fc7c97d897a3172d1058d5269115eb88d811de
     # via -r prod-requirements.in
 future==0.18.2
     # via pyjwkest
@@ -323,7 +323,7 @@ pickle5==0.0.11
     # via -r base-requirements.in
 pickleshare==0.7.5
     # via ipython
-pillow==9.0.1
+pillow==9.3.0
     # via
     #   -r base-requirements.in
     #   reportlab

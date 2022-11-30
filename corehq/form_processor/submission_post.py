@@ -35,6 +35,7 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
+from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
 from corehq.util.timer import TimingContext
@@ -151,7 +152,16 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
-        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if instance.metadata and (not instance.metadata.userID or not instance.metadata.instanceID):
+            metrics_counter('commcare.xform_submissions.partial_metadata', tags={
+                'domain': instance.domain,
+            })
+        elif not instance.metadata:
+            metrics_counter('commcare.xform_submissions.no_metadata', tags={
+                'domain': instance.domain,
+            })
+            return '   √   '
+        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
         messages = []
