@@ -487,21 +487,30 @@ class TableauAPISession(object):
         )
         return response_body['user']['id']
 
-    def update_user(self, id, role):
+    def update_user(self, id, role, username=''):
         '''
         Updates the user with the given ID to have the given role.
+
+        Due to a bug in the Tableau REST API, this currently requires a workaround of removing and adding the
+        user. Because doing so changes the ID, it is returned from this method so that the local object can be
+        updated.
         '''
-        self._make_request(
-            self.PUT,
-            'Update User',
-            self.base_url + f'/sites/{self.site_id}/users/{id}',
-            {
-                "user": {
-                    "siteRole": f"{role}"
-                }
-            }
-        )
-        return True
+        # Code that will work if the Tableau team fixes the bug.
+        # self._make_request(
+        #     self.PUT,
+        #     'Update User',
+        #     self.base_url + f'/sites/{self.site_id}/users/{id}',
+        #     {
+        #         "user": {
+        #             "siteRole": f"{role}"
+        #         }
+        #     }
+        # )
+        # return True
+
+        # Workaround code
+        self.delete_user(id)
+        return self.create_user(username, role)
 
     def delete_user(self, id):
         '''
