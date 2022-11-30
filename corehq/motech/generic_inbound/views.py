@@ -178,14 +178,14 @@ def generic_inbound_api(request, domain, api_id):
     try:
         request_data = RequestData.from_request(request)
     except GenericInboundUserError as e:
-        response = ApiResponse(status=400, json={'error': str(e)})
+        response = ApiResponse(status=400, data={'error': str(e)})
     else:
         response = execute_generic_api(api, request_data)
     _log_api_request(api, request, response)
 
     if response.status == 204:
         return HttpResponse(status=204)  # no body for 204 (RFC 7230)
-    return JsonResponse(response.json, status=response.status)
+    return JsonResponse(response.data, status=response.status)
 
 
 def _log_api_request(api, request, response):

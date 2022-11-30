@@ -25,25 +25,25 @@ def execute_generic_api(api_model, request_data):
             api_model,
         )
     except BadSpecError as e:
-        return ApiResponse(status=500, json={'error': str(e)})
+        return ApiResponse(status=500, data={'error': str(e)})
     except UserError as e:
-        return ApiResponse(status=400, json={'error': str(e)})
+        return ApiResponse(status=400, data={'error': str(e)})
     except GenericInboundRequestFiltered:
         return ApiResponse(status=204)
     except GenericInboundValidationError as e:
         return _get_validation_error_response(e.errors)
     except GenericInboundApiError as e:
-        return ApiResponse(status=500, json={'error': str(e)})
+        return ApiResponse(status=500, data={'error': str(e)})
     except SubmissionError as e:
-        return ApiResponse(status=400, json={
+        return ApiResponse(status=400, data={
             'error': str(e),
             'form_id': e.form_id,
         })
-    return ApiResponse(status=200, json=response_json)
+    return ApiResponse(status=200, data=response_json)
 
 
 def _get_validation_error_response(errors):
-    return ApiResponse(status=400, json={
+    return ApiResponse(status=400, data={
         'error': 'validation error',
         'errors': [error['message'] for error in errors],
     })

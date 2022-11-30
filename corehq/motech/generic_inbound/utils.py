@@ -27,7 +27,7 @@ class RequestData:
     couch_user: CouchUser  # Is this correct?
     request_method: str
     user_agent: str
-    json: dict
+    data: dict
     query: dict  # querystring key val pairs, vals are lists
     headers: dict
 
@@ -42,7 +42,7 @@ class RequestData:
             couch_user=request.couch_user,
             request_method=request.method,
             user_agent=request.META.get('HTTP_USER_AGENT'),
-            json=request_json,
+            data=request_json,
             query=dict(request.GET.lists()),
             headers=get_standard_headers(request.META)
         )
@@ -58,7 +58,7 @@ class RequestData:
             couch_user=CouchUser.get_by_username(log.username),
             request_method=log.request_method,
             user_agent=log.request_headers.get('HTTP_USER_AGENT'),
-            json=request_json,
+            data=request_json,
             query=dict(QueryDict(log.request_query).lists()),
             headers=dict(log.request_headers),
         )
@@ -71,28 +71,28 @@ class RequestData:
             self.request_method,
             self.query,
             self.headers,
-            self.json,
+            self.data,
         )
 
 
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)
 class ApiResponse:
     status: int
-    json: dict = None
+    data: dict = None
 
 
 def make_processing_attempt(response, request_log, is_retry=False):
     from corehq.motech.generic_inbound.models import ProcessingAttempt
 
-    response_json = response.json or {}
-    case_ids = [c['case_id'] for c in response_json.get('cases', [])]
+    response_data = response.data or {}
+    case_ids = [c['case_id'] for c in response_data.get('cases', [])]
     ProcessingAttempt.objects.create(
         is_retry=is_retry,
         log=request_log,
         response_status=response.status,
         # response_body=response_body,
-        raw_response=response_json,
-        xform_id=response_json.get('form_id'),
+        raw_response=response_data,
+        xform_id=response_data.get('form_id'),
         case_ids=case_ids,
     )
 
