@@ -21,7 +21,10 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import ApiRequest, retry
+from corehq.motech.generic_inbound.utils import (
+    ApiRequest,
+    reprocess_api_request,
+)
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
@@ -312,7 +315,7 @@ class TestGenericInboundAPIView(TestCase):
         api = ConfigurableAPI.objects.last()
         api.validations.all().delete()
 
-        retry(log)
+        reprocess_api_request(log)
         log.refresh_from_db()
         self.assertEqual(log.status, RequestLog.Status.SUCCESS)
         self.assertEqual(log.processingattempt_set.count(), 2)

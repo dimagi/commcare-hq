@@ -109,7 +109,7 @@ def get_evaluation_context(restore_user, method, query, headers, body):
     })
 
 
-def retry(request_log):
+def reprocess_api_request(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
     from corehq.motech.generic_inbound.core import execute_generic_api
 
