@@ -1,4 +1,5 @@
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from django.urls import reverse
@@ -12,7 +13,7 @@ from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.dhis2.const import XMLNS_DHIS2
-from corehq.motech.dhis2.events_helpers import get_event, _get_coordinate
+from corehq.motech.dhis2.events_helpers import _get_coordinate, get_event
 from corehq.motech.dhis2.exceptions import (
     BadTrackedEntityInstanceID,
     Dhis2Exception,
@@ -27,6 +28,28 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_value,
 )
+
+
+@dataclass
+class RelationshipSpec:
+    relationship_type_id: str
+    from_tracked_entity_instance_id: str
+    to_tracked_entity_instance_id: str
+
+    def as_dict(self):
+        return {
+            'relationshipType': self.relationship_type_id,
+            'from': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.from_tracked_entity_instance_id
+                }
+            },
+            'to': {
+                'trackedEntityInstance': {
+                    'trackedEntityInstance': self.to_tracked_entity_instance_id
+                }
+            }
+        }
 
 
 def send_dhis2_entities(requests, repeater, case_trigger_infos):
@@ -56,6 +79,7 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
                 info,
                 case_config,
                 repeater.dhis2_entity_config,
+                tracked_entity_relationships=_get_tracked_entity_relationship_specs(tracked_entity)
             )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
@@ -65,6 +89,23 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
         requests.notify_error(errors_str)
         return RepeaterResponse(400, 'Bad Request', errors_str)
     return RepeaterResponse(200, "OK")
+
+
+def _get_tracked_entity_relationship_specs(tracked_entity):
+    """Returns a list of RelationshipSpec objects that represents the relationships that already exist on a tracked
+    entity instance"""
+    if not tracked_entity:
+        return []
+
+    tracked_entity_relationships = []
+    for relationship in tracked_entity.get("relationships", []):
+        spec = RelationshipSpec(
+            relationship_type_id=relationship["relationshipType"],
+            to_tracked_entity_instance_id=relationship["to"]["trackedEntityInstance"]["trackedEntityInstance"],
+            from_tracked_entity_instance_id=relationship["from"]["trackedEntityInstance"]["trackedEntityInstance"]
+        )
+        tracked_entity_relationships.append(spec)
+    return tracked_entity_relationships
 
 
 def _get_info_config_pairs(repeater, case_trigger_infos):
@@ -86,6 +127,7 @@ def get_case_config_for_case_type(case_type, dhis2_entity_config):
     for case_config in dhis2_entity_config.case_configs:
         if case_config.case_type == case_type:
             return case_config
+    return None
 
 
 def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
@@ -256,6 +298,7 @@ def create_relationships(
     subcase_trigger_info,
     subcase_config,
     dhis2_entity_config,
+    tracked_entity_relationships
 ):
     """
     Creates two relationships in DHIS2; one corresponding to a
@@ -271,38 +314,64 @@ def create_relationships(
 
     for rel_config in subcase_config.relationships_to_export:
         supercase = get_supercase(subcase_trigger_info, rel_config)
+        if not supercase:
+            # There is no parent case to export a relationship for
+            continue
         supercase_config = get_case_config_for_case_type(
             supercase.type,
             dhis2_entity_config,
         )
+        if not supercase_config:
+            # The parent case type is not configured for integration
+            raise ConfigurationError(_(
+                "A relationship is configured for the {subcase_type} case "
+                "type, but there is no CaseConfig for the {supercase_type} "
+                "case type."
+            ).format(subcase_type=subcase_trigger_info.type,
+                     supercase_type=supercase.type))
         supercase_info = get_case_trigger_info_for_case(
             supercase,
             [supercase_config.tei_id],
         )
         supercase_tei_id = get_value(supercase_config.tei_id, supercase_info)
         if not supercase_tei_id:
-            # The problem could be that the relationship is configured
-            # in the CaseConfig for the subcase's case type, but there
-            # is no CaseConfig for the supercase's case type.
-            # Alternatively, registering the supercase in DHIS2 failed.
+            # Registering the supercase in DHIS2 failed.
             raise ConfigurationError(_(
                 'Unable to create DHIS2 relationship: The case {case} is not '
                 'registered in DHIS2.'
             ).format(case=supercase_info))
+
         if rel_config.supercase_to_subcase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.supercase_to_subcase_dhis2_id,
-                supercase_tei_id,
-                subcase_tei_id,
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=rel_config.supercase_to_subcase_dhis2_id,
+                from_tracked_entity_instance_id=supercase_tei_id,
+                to_tracked_entity_instance_id=subcase_tei_id
             )
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
+            )
+
         if rel_config.subcase_to_supercase_dhis2_id:
-            create_relationship(
-                requests,
-                rel_config.subcase_to_supercase_dhis2_id,
-                subcase_tei_id,
-                supercase_tei_id,
+            relationship_spec = RelationshipSpec(
+                relationship_type_id=rel_config.subcase_to_supercase_dhis2_id,
+                from_tracked_entity_instance_id=subcase_tei_id,
+                to_tracked_entity_instance_id=supercase_tei_id,
             )
+            ensure_relationship_exists(
+                requests=requests,
+                relationship_spec=relationship_spec,
+                existing_relationships=tracked_entity_relationships
+            )
+
+
+def ensure_relationship_exists(requests, relationship_spec, existing_relationships):
+    """Checks to see if `relationship_spec` is in `existing_relationships`. If not, we try to create the
+    relationship represented by `relationship_spec`.
+    """
+    if (relationship_spec not in existing_relationships) and relationship_spec.relationship_type_id:
+        create_relationship(requests, relationship_spec)
 
 
 def get_supercase(case_trigger_info, relationship_config):
@@ -315,24 +384,12 @@ def get_supercase(case_trigger_info, relationship_config):
         )
         if index_matches_config:
             return CommCareCase.objects.get_case(index.referenced_id, case_trigger_info.domain)
+    return None
 
 
-def create_relationship(requests, rel_type_id, from_tei_id, to_tei_id):
-    relationship = {
-        'relationshipType': rel_type_id,
-        'from': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': from_tei_id
-            }
-        },
-        'to': {
-            'trackedEntityInstance': {
-                'trackedEntityInstance': to_tei_id
-            }
-        }
-    }
+def create_relationship(requests, relationship_spec):
     endpoint = '/api/relationships/'
-    response = requests.post(endpoint, json=relationship, raise_for_status=True)
+    response = requests.post(endpoint, json=relationship_spec.as_dict(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
         from corehq.motech.views import MotechLogListView

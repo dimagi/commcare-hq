@@ -58,29 +58,25 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    # - akj/abdm-api # Akash Sep 5
-    # - sk/webapps-update-url # Simon Sep 13
+    - ap/sql-repeater/phase-2+cs/fix/duplicate_relationships # Chris Nov 30
     - ap/sql-repeater/phase-2 # Amit Sep 16
+    - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - rp/mobile-worker-validation # Rynhard Sept 21
-    # - mp/mobile_fix-2fa # Marco Sep 26
-    #- jls/new-instance-connectors # Jenny Sept 27
+    - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - gh/add-history-tab # Graham Oct 20
     - ad/tableau-connected-app # Addison Oct 26
-    - cs/SC-2350_disable-ucr-location-auto-drilldown # Charl Oct 27
-    - cs/sc-2369/shadow_module_fix # Chris Oct 31
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
-    - smh/auto-select-app-config # Steph Nov 2
-    - smh/auto-select-xml # Steph Nov 2
-    - ml/submission-api-datadog-metric # Minha Nov 3
-    - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
-    - akj/abdm-api-for-mobile-app # Akash Sep 28
-    - ml/lookup-table-UI # Minha Oct 19
-    - em/case-search-checkbox # Evan Oct 27
+    # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
+    # - akj/abdm-api-for-mobile-app # Akash Sep 28
+    # - ml/lookup-table-UI # Minha Oct 19
+    - em/case-search-subtitle # Evan Nov 14
+    - ml/user-limit-emails # Minha Nov 18
+    - es/redirect-domain  # Ethan Nov 21
+    - pkv/case-list-explorer-labels # Pawan Nov 22
+    - cs/fix-settings-position-in-file # Charl Nov 28
+    - sk/shadow-module-form-links # Simon Nov 30
 submodules: { }

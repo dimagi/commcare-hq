@@ -2067,10 +2067,14 @@ def _get_integration_section(domain, couch_user):
 
     if toggles.GENERIC_INBOUND_API.enabled(domain):
         from corehq.motech.generic_inbound.views import ConfigurableAPIListView
-        integration.append({
+        from corehq.motech.generic_inbound.reports import ApiRequestLogReport
+        integration.extend([{
             'title': ConfigurableAPIListView.page_title,
             'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
-        })
+        }, {
+            'title': ApiRequestLogReport.name,
+            'url': ApiRequestLogReport.get_url(domain),
+        }])
 
     return integration
 

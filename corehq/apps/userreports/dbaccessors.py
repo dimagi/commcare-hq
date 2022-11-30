@@ -147,7 +147,7 @@ def delete_all_ucr_tables_for_domain(domain):
     For a given domain, delete all the known UCR data source tables
 
     This only deletes "known" data sources for the domain.
-    To identify "orphaned" tables, see the prune_old_datasources management command.
+    To identify "orphaned" tables, see the delete_orphanced_ucrs management command.
     """
     for config in get_datasources_for_domain(domain):
         adapter = get_indicator_adapter(config)
