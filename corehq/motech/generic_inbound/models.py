@@ -134,7 +134,6 @@ class RequestLog(models.Model):
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
     attempts = models.PositiveSmallIntegerField(default=1)
     response_status = models.PositiveSmallIntegerField()
-    error_message = models.TextField()
 
     username = models.CharField(max_length=128)
     request_method = models.CharField(max_length=32, choices=RequestMethod.choices)

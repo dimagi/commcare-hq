@@ -197,14 +197,11 @@ def generic_inbound_api(request, domain, api_id):
 def _log_api_request(api, request, response):
     is_success = 200 <= response.status < 300
 
-    # TODO, revisit this
-    # response_body = response.content.decode('utf-8')
     log = RequestLog.objects.create(
         domain=request.domain,
         api=api,
         status=RequestLog.Status.from_status_code(response.status),
         response_status=response.status,
-        # error_message=response_body if not is_success else '',
         username=request.couch_user.username,
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),

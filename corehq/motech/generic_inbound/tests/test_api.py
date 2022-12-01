@@ -200,7 +200,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.SUCCESS)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 200)
-        # self.assertEqual(log.error_message, '')
         self.assertEqual(log.username, self.user.username)
         self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
         self.assertEqual(log.request_query, 'param=value')
@@ -239,7 +238,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.FILTERED)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 204)
-        # self.assertEqual(log.error_message, '')
 
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
@@ -267,7 +265,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 400)
-        # self.assertEqual(log.error_message, '{"error": "validation error", "errors": ["Invalid request"]}')
 
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)

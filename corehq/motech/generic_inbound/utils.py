@@ -119,6 +119,5 @@ def reprocess_api_request(request_log):
     with transaction.atomic():
         request_log.status = RequestLog.Status.from_status_code(response.status)
         request_log.response_status = response.status
-        # request_log.error_message = response_body if not is_success else ''
         request_log.save()
         make_processing_attempt(response, request_log, is_retry=True)
