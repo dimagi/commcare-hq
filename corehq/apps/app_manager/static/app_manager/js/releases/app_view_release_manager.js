@@ -43,6 +43,65 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         $profilesTab.koApplyBindings(profileManager);
     }
 
+    var appReleaseLogsModel = function () {
+        let self = {};
+        self.releaseLogs = ko.observableArray();
+        self.fetchLimit = ko.observable();
+        self.totalItems = ko.observable();
+        self.fetchState = ko.observable();
+
+        self.onPaginationLoad = function () {
+            self.goToPage(1);
+        };
+
+        self.goToPage = function (page) {
+            if (self.fetchState() === 'pending') {
+                return false;
+            }
+            self.fetchState('pending');
+            var url = hqImport("hqwebapp/js/initial_page_data").reverse("paginate_release_logs");
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                data: {
+                    page: page,
+                    limit: self.fetchLimit,
+                },
+                success: function (data) {
+                    self.releaseLogs(
+                        _.map(data.app_release_logs, function (log) {
+                            return ko.mapping.fromJS(log);
+                        })
+                    );
+                    self.totalItems(data.pagination.total);
+                    self.fetchState('');
+                },
+                error: function () {
+                    self.fetchState('error');
+                },
+            });
+        };
+
+        self.showLoadingSpinner = ko.observable(true);
+        self.showPaginationSpinner = ko.observable(false);
+        self.fetchState.subscribe(function (newValue) {
+            if (newValue === 'pending') {
+                self.showPaginationSpinner(true);
+            } else {
+                self.showLoadingSpinner(false);
+                self.showPaginationSpinner(false);
+            }
+        });
+
+        return self;
+    };
+
+    var $releaseLogsTab = $('#release-logs-tab');
+    if ($releaseLogsTab.length) {
+        var appReleaseLogModel = appReleaseLogsModel();
+        $releaseLogsTab.koApplyBindings(appReleaseLogModel);
+    }
+
     $(function () {
         if (initial_page_data('intro_only')) {
             hqImport('app_manager/js/preview_app').forceShowPreview();
