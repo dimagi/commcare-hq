@@ -36,7 +36,7 @@ class ApiFilter(BaseMultipleOptionFilter):
 
     @property
     def options(self):
-        api_list = [(api.id, api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
+        api_list = [(str(api.id), api.name) for api in ConfigurableAPI.objects.filter(domain=self.domain)]
         return api_list
 
 
