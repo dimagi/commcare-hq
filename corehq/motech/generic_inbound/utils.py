@@ -90,7 +90,6 @@ def make_processing_attempt(response, request_log, is_retry=False):
         is_retry=is_retry,
         log=request_log,
         response_status=response.status,
-        # response_body=response_body,
         raw_response=response_data,
         xform_id=response_data.get('form_id'),
         case_ids=case_ids,

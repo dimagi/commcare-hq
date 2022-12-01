@@ -121,7 +121,6 @@
           <th>timestamp</th>
           <th>is_retry</th>
           <th>response_status</th>
-          <th>response_body</th>
           <th>raw_response</th>
           <th>xform_id</th>
           <th>case_ids</th>
@@ -133,7 +132,6 @@
           <td>{% utc_to_timezone attempt.timestamp timezone %}</td>
           <td>{{ attempt.is_retry }}</td>
           <td>{{ attempt.response_status }}</td>
-          <td><code>{{ attempt.response_body }}</code></td>
           <td><code>{{ attempt.raw_response }}</code></td>
           <td>
             {% if attempt.xform_id %}

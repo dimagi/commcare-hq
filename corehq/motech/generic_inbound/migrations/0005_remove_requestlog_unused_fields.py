@@ -9,6 +9,10 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
+            model_name='processingattempt',
+            name='response_body',
+        ),
+        migrations.RemoveField(
             model_name='requestlog',
             name='error_message',
         ),

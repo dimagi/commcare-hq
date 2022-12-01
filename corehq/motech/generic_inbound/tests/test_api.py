@@ -211,7 +211,6 @@ class TestGenericInboundAPIView(TestCase):
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
         self.assertEqual(attempt.response_status, 200)
-        # self.assertEqual(json.loads(attempt.response_body), response_json)
         self.assertEqual(attempt.raw_response, response_json)
         self.assertEqual(attempt.xform_id, response_json.get('form_id'))
         self.assertEqual(attempt.case_ids, [response_json.get('cases')[0]['case_id']])

@@ -158,7 +158,6 @@ class ProcessingAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
     is_retry = models.BooleanField(default=False)
     response_status = models.PositiveSmallIntegerField(db_index=True)
-    response_body = models.TextField()
     raw_response = models.JSONField(default=dict)
 
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)
