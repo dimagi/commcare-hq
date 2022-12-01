@@ -6,14 +6,14 @@ from django.test import SimpleTestCase
 import lxml
 from memoized import memoized
 
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_PREVIOUS,
-)
-from corehq.apps.app_manager.app_schemas.session_schema import (
-    get_session_schema,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -21,10 +21,13 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     ConditionalCaseUpdate,
+    FormDatum,
     FormLink,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSIONS
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSIONS,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -538,14 +541,14 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form1 = self.single_loner.get_form(0)
         form2 = self.single_parent.get_form(0)
 
-        form0.post_form_workflow = WORKFLOW_FORM
+        form0.post_form_workflow = WORKFLOW_FORM  # can link *from* multi-select form
         form0.form_links = [FormLink(
             xpath="true()",
-            form_id=form1.unique_id,    # can't link *to* multi-select form
+            form_id=form1.unique_id,
             form_module_id=self.single_loner.unique_id
         )]
 
-        form1.post_form_workflow = WORKFLOW_FORM    # can't link *from* multi-select form
+        form1.post_form_workflow = WORKFLOW_FORM  # can't link *to* multi-select form
         form1.form_links = [FormLink(
             xpath="true()",
             form_id=form0.unique_id,
@@ -564,12 +567,6 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             'form_type': 'module_form',
             'module': {'id': 0, 'unique_id': 'Single Loner_module', 'name': {'en': 'Single Loner module'}},
             'form': {'id': 0, 'name': {'en': 'Single Loner form 0'}, 'unique_id': 'Single Loner_form_0'}
-        }, errors)
-        self.assertIn({
-            'type': 'multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
-            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'},
         }, errors)
         self.assertIn({
             'type': 'multi select form links',
@@ -653,4 +650,34 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             """,
             self.factory.app.create_suite(),
             "./entry[4]/stack",
+        )
+
+    def test_eof_nav_form_link_multi_to_single(self, *args):
+        m1f0 = self.multi_loner.get_form(0)
+        m0f0 = self.single_loner.get_form(0)
+
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [FormLink(
+            form_id=m0f0.unique_id,
+            form_module_id=self.single_loner.unique_id,
+            datums=[FormDatum(
+                name="case_id",
+                xpath="instance('selected_cases')/results/value[1]"
+            )]
+        )]
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m0'"/>
+                  <datum id="case_id" value="instance('selected_cases')/results/value[1]"/>
+                  <command value="'m0-f0'"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[2]/stack",
         )
