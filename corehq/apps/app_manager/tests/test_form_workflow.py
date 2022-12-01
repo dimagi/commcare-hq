@@ -548,7 +548,6 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
 
         suite_xml = factory.app.create_suite()
 
-        print(suite_xml.decode())
         # In m0, the regular module, EOF nav goes back to m0
         expected = """
         <partial>
