@@ -174,6 +174,9 @@ class HqPermissions(DocumentSchema):
     view_locations = BooleanProperty(default=False)
     edit_users_in_locations = BooleanProperty(default=False)
 
+    view_data_dict = BooleanProperty(default=False)
+    edit_data_dict = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -232,6 +235,8 @@ class HqPermissions(DocumentSchema):
             self.view_roles = False
             self.edit_reports = False
             self.edit_billing = False
+            self.edit_data_dict = False
+            self.view_data_dict = False
 
         if self.edit_web_users:
             self.view_web_users = True
@@ -248,6 +253,9 @@ class HqPermissions(DocumentSchema):
             self.view_locations = True
         else:
             self.edit_users_in_locations = False
+
+        if self.edit_data_dict:
+            self.view_data_dict = True
 
         if self.edit_apps:
             self.view_apps = True
