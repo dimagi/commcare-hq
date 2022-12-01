@@ -13,9 +13,16 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
             domain='test',
             active=True,
             workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            name='test-rule',
+            case_type='person'
         )
         audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).first()
-        self.assertEqual(audit_event.delta, {'active': {'new': True}, 'deleted': {'new': False}})
+        self.assertEqual(audit_event.delta,
+                         {'active': {'new': True},
+                          'case_type': {'new': 'person'},
+                          'deleted': {'new': False}, 'domain': {'new': 'test'},
+                          'name': {'new': 'test-rule'},
+                          'workflow': {'new': 'SCHEDULING'}})
 
     def test_active_field_for_rule_is_audited_when_updated(self):
         # create rule
@@ -51,10 +58,17 @@ class AutomaticUpdateRuleAuditingTests(TestCase):
             domain='test',
             active=True,
             workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            name='test-rule',
+            case_type='person'
         )
         AutomaticUpdateRule.objects.all().delete(audit_action=AuditAction.AUDIT)
         audit_event = AuditEvent.objects.by_model(AutomaticUpdateRule).last()
-        self.assertEqual({'active': {'old': True}, 'deleted': {'old': False}}, audit_event.delta)
+        self.assertEqual(audit_event.delta,
+                         {'active': {'old': True},
+                          'case_type': {'old': 'person'},
+                          'deleted': {'old': False}, 'domain': {'old': 'test'},
+                          'name': {'old': 'test-rule'},
+                          'workflow': {'old': 'SCHEDULING'}})
 
     def test_queryset_update_is_audited(self):
         for _ in range(2):

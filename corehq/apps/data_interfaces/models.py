@@ -86,7 +86,8 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
-@audit_fields("active", "deleted", audit_special_queryset_writes=True)
+@audit_fields("active", "case_type", "deleted", "domain", "name", "workflow",
+              audit_special_queryset_writes=True)
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
