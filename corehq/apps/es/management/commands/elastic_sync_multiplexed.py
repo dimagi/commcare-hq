@@ -1,16 +1,14 @@
-import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.es.client import (
-    BulkActionItem,
     ElasticMultiplexAdapter,
     Tombstone,
     get_client,
 )
-from corehq.apps.es.registry import get_registry
-from corehq.apps.es.transient_util import _DOC_ADAPTERS_BY_INDEX
+from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.hqcase.management.commands.reindex_es_native import (
     check_task_progress,
 )
@@ -45,8 +43,8 @@ class ESSyncUtil:
         self.perform_cleanup()
 
     def get_adapter(self, cname):
-        index_name = get_registry()[cname].index
-        return _DOC_ADAPTERS_BY_INDEX[index_name]
+        index_info = registry_entry(cname)
+        return doc_adapter_from_info(index_info)
 
     def get_source_destination_indexes(self, adapter):
         return adapter.primary.index_name, adapter.secondary.index_name
@@ -70,9 +68,7 @@ class ESSyncUtil:
         # https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
         # when on ES version >= 5
         tombstone_ids = self._get_tombstone_ids(secondary_adapter)
-        actions = [BulkActionItem.delete_id(doc_id=t_id)
-        for t_id in tombstone_ids]
-        secondary_adapter.bulk(actions, refresh=True)
+        secondary_adapter.bulk_delete(tombstone_ids, refresh=True)
 
     def _get_tombstone_ids(self, secondary_adapter):
         query = {
@@ -117,36 +113,13 @@ class ESSyncUtil:
 
         start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
-        duration = human_readable_seconds(running_duration_seconds)
+        duration = timedelta(running_duration_seconds)
 
         print(f"Reindex task {task_id} cancelled!")
         print(f"Task was started at {start_time} and ran for {duration}")
 
     def reindex_status(self, task_id):
         check_task_progress(self.es, task_id)
-
-
-def human_readable_seconds(duration):
-    """
-    :param duration int: Duration in seconds
-    :returns a formatted string with correct time unit
-    """
-    seconds_in_minute = 60
-    seconds_in_hour = 60 * seconds_in_minute
-    seconds_in_day = 24 * seconds_in_hour
-
-    if duration < seconds_in_minute:
-        duration = math.floor(duration)
-        return f"{duration} seconds"
-    if duration < seconds_in_hour:
-        duration = math.floor(duration / seconds_in_minute)
-        return f"{duration} minutes"
-    if duration < seconds_in_day:
-        duration = math.floor(duration / seconds_in_hour)
-        return f"{duration} hours"
-    else:
-        duration = math.floor(duration / seconds_in_day)
-        return f"{duration} days"
 
 
 class Command(BaseCommand):
