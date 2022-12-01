@@ -84,7 +84,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.reg_form.actions.open_case.condition.type = 'always'
         self.reg_form.post_form_workflow = WORKFLOW_FORM
         self.reg_form.form_links = [
-            FormLink(form_id=self.form.get_unique_id(), form_module_id=self.module.unique_id)
+            FormLink(form_id=self.form.get_unique_id())
         ]
 
         # wrap to have assign_references called
@@ -472,7 +472,7 @@ class RemoteRequestSuiteFormLinkChildModuleTest(SimpleTestCase, SuiteMixin):
 
         # link from f1 to f2 (both in the child module)
         f1.post_form_workflow = WORKFLOW_FORM
-        f1.form_links = [FormLink(form_id=f2.get_unique_id(), form_module_id=m1.unique_id)]
+        f1.form_links = [FormLink(form_id=f2.get_unique_id())]
 
         factory.app._id = "123"
         # wrap to have assign_references called
