@@ -7,6 +7,7 @@ from corehq.apps.es.client import (
     Tombstone,
     get_client,
 )
+from corehq.apps.es.exceptions import IndexNotMultiplexedException
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.hqcase.management.commands.reindex_es_native import (
@@ -189,7 +190,3 @@ class Command(BaseCommand):
             cmd_func(options['index_cname'])
         else:
             cmd_func(options['task_id'])
-
-
-class IndexNotMultiplexedException(Exception):
-    pass
