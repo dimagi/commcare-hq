@@ -927,8 +927,6 @@ class FormBaseValidator(object):
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
-            if self.form.get_module().is_multi_select():
-                errors.append(dict(type="multi select form links", **meta))
             for form_link in self.form.form_links:
                 linked_module = None
                 if form_link.form_id:
