@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase
+from corehq.apps.es.exceptions import IndexNotMultiplexedException
 
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
@@ -12,9 +13,7 @@ from corehq.apps.es.client import (
     manager,
 )
 from corehq.apps.es.management.commands.elastic_sync_multiplexed import (
-    ESSyncUtil,
-    IndexNotMultiplexedException,
-    human_readable_seconds,
+    ESSyncUtil
 )
 from corehq.apps.es.registry import deregister, register
 from corehq.apps.es.tests.utils import TestDoc, TestDocumentAdapter
@@ -96,7 +95,7 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         sync_mock.return_value = {
             "task": "task_key"
         }
-        call_command(COMMAND_NAME, 'start', 'cases')
+        call_command(COMMAND_NAME, 'start', ReIndexTestHelper.cname)
 
     def test_reindex_command_copies_all_documents(self):
         self.adapter.primary.index(TestDoc('key_2', 'val'))
@@ -130,19 +129,6 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
             self.util._get_tombstone_ids(self.adapter.secondary),
             []
         )
-
-    def test_human_readable_seconds(self):
-        duration = human_readable_seconds(5)
-        self.assertEqual(duration, '5 seconds')
-
-        duration = human_readable_seconds(5.1 * 60)
-        self.assertEqual(duration, '5 minutes')
-
-        duration = human_readable_seconds(5.8 * 60 * 60)
-        self.assertEqual(duration, '5 hours')
-
-        duration = human_readable_seconds(5.1 * 60 * 60 * 24)
-        self.assertEqual(duration, '5 days')
 
 
 def _index_tombstones(secondary_adapter, quantity):
