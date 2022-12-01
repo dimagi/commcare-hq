@@ -21,10 +21,11 @@ def test_form_linking_multiple_case_types():
 
     m0f0.post_form_workflow = WORKFLOW_FORM
     m0f0.form_links = [
-        FormLink(form_id=m1f0.unique_id, form_module_id=m1.unique_id),
+        FormLink(form_id=m1f0.unique_id),
     ]
 
     suite = factory.app.create_suite()
+    print(suite.decode('utf8'))
 
     # ensure that target datum contains both case types
     datum = extract_xml_partial(suite, "./entry[2]/session/datum[@id='case_id']", wrap=False).decode('utf8')
@@ -58,10 +59,11 @@ def test_form_linking_multiple_case_types_child_module():
 
     m1f0.post_form_workflow = WORKFLOW_FORM
     m1f0.form_links = [
-        FormLink(form_id=m2f0.unique_id, form_module_id=m2.unique_id),
+        FormLink(form_id=m2f0.unique_id),
     ]
 
     suite = factory.app.create_suite()
+    print(suite.decode('utf8'))
 
     expected_stack = """
     <partial>

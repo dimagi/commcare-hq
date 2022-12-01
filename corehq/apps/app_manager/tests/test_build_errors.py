@@ -7,7 +7,6 @@ from django.test import SimpleTestCase
 from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
-    WORKFLOW_FORM,
     WORKFLOW_MODULE,
 )
 from corehq.apps.app_manager.models import (
@@ -17,7 +16,6 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     DetailColumn,
-    FormLink,
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -281,78 +279,4 @@ class BuildErrorsTest(SimpleTestCase):
             'form_type': 'module_form',
             'module': {'id': 1, 'name': {'en': 'shadow module'}},
             'form': {'id': 0, 'name': {'en': 'register form 0'}},
-        }, errors)
-
-    @flag_enabled('FORM_LINK_WORKFLOW')
-    def test_form_link_validation_ok(self, *args):
-        factory = AppFactory(build_version='2.24.0', include_xmlns=True)
-        m0, m0f0 = factory.new_basic_module('m0', 'frog')
-        m1, m1f0 = factory.new_basic_module('m1', 'frog')
-
-        m0f0.post_form_workflow = WORKFLOW_FORM
-        m0f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id),
-            FormLink(xpath="true()", form_id=m1f0.unique_id)  # legacy data
-        ]
-
-        errors = factory.app.validate_app()
-        self.assertNotIn('bad form link', [error['type'] for error in errors])
-
-    @flag_enabled('FORM_LINK_WORKFLOW')
-    def test_form_link_validation_mismatched_module(self, *args):
-        factory = AppFactory(build_version='2.24.0', include_xmlns=True)
-        m0, m0f0 = factory.new_basic_module('m0', 'frog')
-        m1, m1f0 = factory.new_basic_module('m1', 'frog')
-
-        m0f0.post_form_workflow = WORKFLOW_FORM
-        m0f0.form_links = [
-            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m0.unique_id)
-        ]
-
-        errors = factory.app.validate_app()
-
-        self._clean_unique_id(errors)
-        self.assertIn({
-            'type': 'bad form link',
-            'form_type': 'module_form',
-            'module': {'id': 0, 'name': {'en': 'm0 module'}},
-            'form': {'id': 0, 'name': {'en': 'm0 form 0'}},
-        }, errors)
-
-    @flag_enabled('FORM_LINK_WORKFLOW')
-    def test_form_link_validation_shadow_module_ok(self, *args):
-        factory = AppFactory(build_version='2.9.0')
-        m0, m0f0 = factory.new_basic_module('parent', 'mother')
-        m1, m1f0 = factory.new_basic_module('other', 'mother')
-        m2 = factory.new_shadow_module('shadow_module', m1, with_form=False)
-
-        m0f0.post_form_workflow = WORKFLOW_FORM
-        m0f0.form_links = [
-            FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m1.unique_id),
-            FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m2.unique_id),
-        ]
-
-        errors = factory.app.validate_app()
-        self.assertNotIn('bad form link', [error['type'] for error in errors])
-
-    @flag_enabled('FORM_LINK_WORKFLOW')
-    def test_form_link_validation_mismatched_shadow_module(self, *args):
-        factory = AppFactory(build_version='2.9.0')
-        m0, m0f0 = factory.new_basic_module('m0', 'mother')
-        m1, m1f0 = factory.new_basic_module('m1', 'mother')
-        factory.new_shadow_module('shadow_module', m1, with_form=False)
-
-        # link from m0-f0 to m1-f0 (in the shadow module)
-        m0f0.post_form_workflow = WORKFLOW_FORM
-        # module_id is incorrect - it should be either m1 or m2 but not m0
-        m0f0.form_links = [FormLink(xpath='true()', form_id=m1f0.unique_id, form_module_id=m0.unique_id)]
-
-        errors = factory.app.validate_app()
-
-        self._clean_unique_id(errors)
-        self.assertIn({
-            'type': 'bad form link',
-            'form_type': 'module_form',
-            'module': {'id': 0, 'name': {'en': 'm0 module'}},
-            'form': {'id': 0, 'name': {'en': 'm0 form 0'}},
         }, errors)
