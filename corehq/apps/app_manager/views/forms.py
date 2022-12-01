@@ -808,7 +808,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled(domain)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -862,7 +862,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
+    if allow_form_workflow:
         context.update(_get_form_link_context(module, langs))
 
     if isinstance(form, AdvancedForm):
