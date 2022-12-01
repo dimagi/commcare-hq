@@ -252,7 +252,6 @@ hqDefine('app_manager/js/releases/releases', function () {
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
-        self.updatePubSub = o.updatePubSub;
         self.savedApps.subscribe(() => {
             self.refreshAppLogs && self.refreshAppLogs();
         });

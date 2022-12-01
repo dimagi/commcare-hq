@@ -424,7 +424,9 @@ def revert_to_copy(request, domain, app_id):
                 version=app.version,
                 app_id=app_id,
                 user_id=user_id,
-                info=_(f"Reverted to version {copy_build_comment_params['old_version']}")
+                info={
+                    'version': copy_build_comment_params['old_version']
+                }
             )
     except AppValidationError:
         messages.error(
@@ -725,4 +727,7 @@ def populate_data_app_release_logs(log, timezone):
     return_log = log.to_json()
     return_log["created_at_string"] = timestamp.ui_string(USER_DATETIME_FORMAT)
     return_log["user_email"] = cached_user_id_to_user_display(log.user_id)
+    return_log["info"] = ""
+    if log.action == ApplicationReleaseLog.ACTION_REVERTED:
+        return_log["info"] = _(f"Reverted to version {log.info['version']}")
     return return_log
