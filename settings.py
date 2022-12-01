@@ -1115,6 +1115,7 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "mvp.commcare_extensions",
     "custom.nutrition_project.commcare_extensions",
     "custom.samveg.commcare_extensions",
+    "custom.abdm.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
