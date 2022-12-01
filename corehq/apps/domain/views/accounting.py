@@ -1421,6 +1421,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                     ) % self.account.name
                 )
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+            if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
             next_subscription = self.current_subscription.next_subscription
