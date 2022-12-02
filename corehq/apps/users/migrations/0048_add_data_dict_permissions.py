@@ -3,6 +3,7 @@
 from django.db import migrations
 from django.db.models import Q
 
+from dimagi.utils.chunked import chunked
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.models_role import Permission, UserRole
 from corehq.toggles import DATA_DICTIONARY, DATA_FILE_DOWNLOAD
@@ -47,21 +48,26 @@ def role_can_view_data_tab():
 
 @skip_on_fresh_install
 def add_data_dict_permissions(apps, schema_editor):
+    num_roles_modified = 0
     view_data_dict_permission, created = Permission.objects.get_or_create(value='view_data_dict')
     edit_data_dict_permission, created = Permission.objects.get_or_create(value='edit_data_dict')
-
     data_dict_domains = DATA_DICTIONARY.get_enabled_domains()
+
     for domain in data_dict_domains:
-        user_roles = (UserRole.objects
+        user_roles_can_view_data_tab_id = (UserRole.objects
             .filter(domain=domain)
             .filter(role_can_view_data_tab())
             .distinct()
+            .values_list("id", flat=True)
         )
-        for role in user_roles:
-            role.rolepermission_set.get_or_create(permission_fk=view_data_dict_permission, defaults={"allow_all": True})
-            role.rolepermission_set.get_or_create(permission_fk=edit_data_dict_permission, defaults={"allow_all": True})
-
-
+        for chunk in chunked(user_roles_can_view_data_tab_id, 1000):
+            for role in UserRole.objects.filter(id__in=chunk):
+                role.rolepermission_set.get_or_create(permission_fk=view_data_dict_permission, defaults={"allow_all": True})
+                rp, created = role.rolepermission_set.get_or_create(permission_fk=edit_data_dict_permission, defaults={"allow_all": True})
+                if created:
+                    num_roles_modified += 1
+                if num_roles_modified % 5000 == 0:
+                    print("Updated {} roles".format(num_roles_modified))
 class Migration(migrations.Migration):
 
     dependencies = [
