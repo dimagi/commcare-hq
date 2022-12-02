@@ -90,11 +90,9 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
 
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.check_task_progress')
     @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.ESSyncUtil.perform_cleanup')
-    @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.ESSyncUtil.start_reindex_in_es')
+    @patch('corehq.apps.es.management.commands.elastic_sync_multiplexed.es_manager.reindex')
     def test_pass_multiplexed_index_raise_no_errors(self, sync_mock, cleanup_mock, _):
-        sync_mock.return_value = {
-            "task": "task_key"
-        }
+        sync_mock.return_value = "task_key"
         call_command(COMMAND_NAME, 'start', ReIndexTestHelper.cname)
 
     def test_reindex_command_copies_all_documents(self):
