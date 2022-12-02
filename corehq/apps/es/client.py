@@ -296,6 +296,35 @@ class ElasticManageAdapter(BaseAdapter):
         return self._es.indices.put_mapping(type_, {type_: mapping}, index,
                                             expand_wildcards="none")
 
+    def reindex(self, source, dest, wait_for_completion=False, **kwargs):
+        """
+        Starts the reindex process in elastic search cluster
+
+        :param source: ``str`` name of the source index
+        :param dest: ``str`` name of the destination index
+        :param wait_for_completion: ``bool``
+
+        :returns: None if wait_for_completion is True else would return task_id of reindex task
+        """
+
+        # More info on "op_type" and "version_type"
+        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+
+        reindex_body = {
+            "source": {
+                "index": source,
+            },
+            "dest": {
+                "index": dest,
+                "op_type": "create",
+                "version_type": "external"
+            },
+            "conflicts": "proceed"
+        }
+        reindex_info = self._es.reindex(reindex_body, wait_for_completion=wait_for_completion, **kwargs)
+        if not wait_for_completion:
+            return reindex_info['task']
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index
