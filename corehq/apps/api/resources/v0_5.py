@@ -39,7 +39,7 @@ from corehq.apps.api.resources.auth import (
     ODataAuthentication,
     RequirePermissionAuthentication,
 )
-from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.meta import AdminResourceMeta, CustomResourceMeta
 from corehq.apps.api.resources.serializers import ListToSingleObjectSerializer
 from corehq.apps.api.util import get_obj
 from corehq.apps.app_manager.models import Application
@@ -299,11 +299,12 @@ class AdminWebUserResource(v0_1.UserResource):
             return [WebUser.get_by_username(bundle.request.GET['username'])]
         return [WebUser.wrap(u) for u in UserES().web_users().run().hits]
 
-    class Meta(WebUserResource.Meta):
-        authentication = AdminAuthentication()
+    class Meta(AdminResourceMeta):
         detail_allowed_methods = ['get']
         list_allowed_methods = ['get']
-        throttle = BaseThrottle()
+        object_class = WebUser
+        resource_name = 'web-user'
+
 
 
 class GroupResource(v0_4.GroupResource):
