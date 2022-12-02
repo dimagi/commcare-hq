@@ -87,22 +87,6 @@ class ESSyncUtil:
         tombstone_ids = [doc['_id'] for doc in scroll_iter]
         return tombstone_ids
 
-    def start_reindex_in_es(self, source, dest):
-        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
-        reindex_body = {
-            "source": {
-                "index": source,
-            },
-            "dest": {
-                "index": dest,
-                "op_type": "create",
-                "version_type": "external"
-            },
-            "conflicts": "proceed"
-        }
-        task_id = self.es.reindex(reindex_body, wait_for_completion=False)
-        return task_id
-
     def cancel_reindex(self, task_id):
         result = self.es.tasks.cancel(task_id)
         node_failures = result.get('node_failure', None)
