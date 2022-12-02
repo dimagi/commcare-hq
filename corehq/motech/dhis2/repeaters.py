@@ -21,7 +21,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.form_processor.models import XFormInstance
-from corehq.motech.dhis2.const import DHIS2_MAX_VERSION, XMLNS_DHIS2
+from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
@@ -78,7 +78,7 @@ class Dhis2Instance(Document):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_VERSION:
+        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
@@ -268,7 +268,7 @@ class SQLDhis2Instance(object):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_VERSION:
+        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
