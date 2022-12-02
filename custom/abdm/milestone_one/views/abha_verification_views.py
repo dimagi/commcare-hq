@@ -16,7 +16,7 @@ def get_auth_methods(request):
         error_msg = "Missing required parameter in the request param: health_id"
         return generate_invalid_req_response(error_msg)
     resp = abdm_util.search_by_health_id(health_id)
-    auth_methods = resp.get("authMethods")
+    auth_methods = resp.get("auth_methods")
     resp = {"auth_methods": auth_methods}
     return get_response(resp)
 
