@@ -418,6 +418,29 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
 
+    def test_reindex(self):
+        all_ids = set([str(i) for i in range(1, 10)])
+        SECONDARY_INDEX = 'secondary_index'
+
+        def _index_test_docs():
+            for i in all_ids:
+                doc = TestDoc(str(i), f"val_{i}")
+                test_adapter.index(doc, refresh=True)
+
+        def get_all_doc_ids_in_secondary():
+            docs = test_adapter._es.search(SECONDARY_INDEX, body={}, _source=False)
+            return set([doc['_id'] for doc in docs['hits']['hits']])
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            _index_test_docs()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                manager.reindex(test_adapter.index_name, SECONDARY_INDEX, wait_for_completion=True, refresh=True)
+
+                self.assertEqual(get_all_doc_ids_in_secondary(), all_ids)
+
     def test_indices_refresh(self):
         def get_search_hits():
             return test_adapter.search({})["hits"]["hits"]
