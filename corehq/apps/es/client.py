@@ -296,6 +296,28 @@ class ElasticManageAdapter(BaseAdapter):
         return self._es.indices.put_mapping(type_, {type_: mapping}, index,
                                             expand_wildcards="none")
 
+    @staticmethod
+    def _validate_single_index(index):
+        """Verify that the provided index is a valid, single index
+
+        - is non-zero
+        - is not ``_all``
+        - does not contain commas (``,``)
+        - does not contain wildcards (i.e. asterisks, ``*``).
+
+        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params  # noqa: E501
+
+        :param index: index name or alias
+        """
+        if not index:
+            raise ValueError(f"invalid index: {index}")
+        elif index == "_all":
+            raise ValueError("refusing to operate on all indices")
+        elif "," in index:
+            raise ValueError(f"refusing to operate on multiple indices: {index}")
+        elif "*" in index:
+            raise ValueError(f"refusing to operate with index wildcards: {index}")
+
     def reindex(self, source, dest, wait_for_completion=False, **kwargs):
         """
         Starts the reindex process in elastic search cluster
@@ -324,28 +346,6 @@ class ElasticManageAdapter(BaseAdapter):
         reindex_info = self._es.reindex(reindex_body, wait_for_completion=wait_for_completion, **kwargs)
         if not wait_for_completion:
             return reindex_info['task']
-
-    @staticmethod
-    def _validate_single_index(index):
-        """Verify that the provided index is a valid, single index
-
-        - is non-zero
-        - is not ``_all``
-        - does not contain commas (``,``)
-        - does not contain wildcards (i.e. asterisks, ``*``).
-
-        See: https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-get-index.html#get-index-api-path-params  # noqa: E501
-
-        :param index: index name or alias
-        """
-        if not index:
-            raise ValueError(f"invalid index: {index}")
-        elif index == "_all":
-            raise ValueError("refusing to operate on all indices")
-        elif "," in index:
-            raise ValueError(f"refusing to operate on multiple indices: {index}")
-        elif "*" in index:
-            raise ValueError(f"refusing to operate with index wildcards: {index}")
 
 
 class ElasticDocumentAdapter(BaseAdapter):

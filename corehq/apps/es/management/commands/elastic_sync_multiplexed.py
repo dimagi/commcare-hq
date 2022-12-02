@@ -7,6 +7,7 @@ from corehq.apps.es.client import (
     Tombstone,
     get_client,
 )
+from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
@@ -34,12 +35,10 @@ class ESSyncUtil:
 
         self.source, self.dest = self.get_source_destination_indexes(self.adapter)
 
-        result_info = self.start_reindex_in_es(self.source, self.dest)
-
-        task_id = result_info["task"]
+        task_id = es_manager.reindex(self.source, self.dest)
 
         # This would display progress untill reindex process is completed
-        check_task_progress(self.es, task_id)
+        check_task_progress(task_id)
 
         self.perform_cleanup()
 
