@@ -3,10 +3,13 @@ import time
 from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
+from corehq.apps.es.exceptions import TaskError, TaskMissing
 
+from pillowtop.es_utils import initialize_index, set_index_reindex_settings
+
+from corehq.apps.es.client import manager
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.elastic import get_es_export
-from pillowtop.es_utils import initialize_index, set_index_reindex_settings
 
 USAGE = """Reindex data from one ES index into another ES index using Elasticsearch reindex API
     https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html#reindex-from-remote.
@@ -122,27 +125,26 @@ def start_reindex(es, source_index, target_index):
         "conflicts": "proceed"
     }
 
-    result = es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
+    result = manager.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
     task_id = result["task"]
     return task_id
 
 
-def check_task_progress(es, task_id):
+def check_task_progress(task_id, just_once=False):
     node_id = task_id.split(':')[0]
-    node_name = es.nodes.info(node_id, metric="name")["nodes"][node_id]["name"]
-    print(f"Task with ID '{task_id}' running on '{node_name}'")
+    node_name = manager.get_node_info(node_id, metric="name")
+    print(f"Looking for task with ID '{task_id}' running on '{node_name}'")
     progress_data = []
     while True:
-        result = es.tasks.list(task_id=task_id, detailed=True)
-        if not result["nodes"]:
-            node_failure = result["node_failures"][0]
-            error = node_failure["caused_by"]["type"]
-            if error == "resource_not_found_exception":
+        try:
+            task_details = manager.get_task(task_id=task_id)
+        except TaskMissing:
+            if not just_once:
                 return  # task completed
-            else:
-                raise CommandError(f"Fetching task failed: {node_failure}")
+            raise CommandError(f"Task with id {task_id} not found")
+        except TaskError as err:
+            raise CommandError(f"Fetching task failed: {err}")
 
-        task_details = result["nodes"][node_id]["tasks"][task_id]
         status = task_details["status"]
         total = status["total"]
         if total:  # total can be 0 initially
@@ -178,7 +180,8 @@ def check_task_progress(es, task_id):
                   f"Estimated remaining time: "
                   f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
                   f"(recent average = {_format_timedelta(remaining_time_relative)})")
-
+        if just_once:
+            return
         time.sleep(10)
 
 
