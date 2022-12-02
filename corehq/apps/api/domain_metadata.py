@@ -120,7 +120,6 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
 class MaltResource(ModelResource):
 
     class Meta(AdminResourceMeta):
-        authentication = AdminAuthentication()
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
         queryset = MALTRow.objects.all().order_by('pk')
