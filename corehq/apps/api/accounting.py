@@ -2,7 +2,6 @@ from django_prbac.models import Role
 from tastypie import fields
 from tastypie.fields import ToManyField
 from tastypie.resources import ModelResource
-from tastypie.throttle import BaseThrottle
 
 from corehq.apps.accounting.models import (
     BillingAccount,
@@ -26,8 +25,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionAdjustment,
 )
-from corehq.apps.api.resources.auth import AdminAuthentication
-from corehq.apps.api.resources.meta import CustomResourceMeta
+from corehq.apps.api.resources.meta import AdminResourceMeta
 
 
 class AccToManyField(ToManyField):
@@ -41,8 +39,7 @@ class AccToManyField(ToManyField):
         return only_ids
 
 
-class AccountingResourceMeta(CustomResourceMeta):
-    authentication = AdminAuthentication()
+class AccountingResourceMeta(AdminResourceMeta):
     list_allowed_methods = ['get']
     detail_allowed_methods = ['get']
     include_resource_uri = False
@@ -50,7 +47,6 @@ class AccountingResourceMeta(CustomResourceMeta):
         'last_modified': ['gt', 'gte', 'lt', 'lte'],
         'date_updated': ['gt', 'gte', 'lt', 'lte']
     }
-    throttle = BaseThrottle()
 
 
 class FeatureResource(ModelResource):
