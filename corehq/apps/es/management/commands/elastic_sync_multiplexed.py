@@ -103,7 +103,7 @@ class ESSyncUtil:
         print(f"Task was started at {start_time} and ran for {duration}")
 
     def reindex_status(self, task_id):
-        check_task_progress(self.es, task_id)
+        check_task_progress(task_id, just_once=True)
 
 
 class Command(BaseCommand):
