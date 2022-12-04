@@ -4,12 +4,10 @@ from django.core.management.base import BaseCommand, CommandError
 
 from corehq.apps.es.client import (
     ElasticMultiplexAdapter,
-    Tombstone,
     get_client,
 )
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
-from corehq.apps.es.filters import term
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.hqcase.management.commands.reindex_es_native import (
@@ -63,22 +61,6 @@ class ESSyncUtil:
         # Would be used to mark the secondary index eligible to be primary.
         # This would be implemented when supporting models are created.
         pass
-
-    def delete_tombstones(self, secondary_adapter):
-        # This should be replaced by delete_by_query
-        # https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
-        # when on ES version >= 5
-        tombstone_ids = self._get_tombstone_ids(secondary_adapter)
-        secondary_adapter.bulk_delete(tombstone_ids, refresh=True)
-
-    def _get_tombstone_ids(self, secondary_adapter):
-        query = {
-            "query": term(Tombstone.PROPERTY_NAME, True),
-            "_source": False
-        }
-        scroll_iter = secondary_adapter.scroll(query, size=1000)
-        tombstone_ids = [doc['_id'] for doc in scroll_iter]
-        return tombstone_ids
 
     def cancel_reindex(self, task_id):
         try:
