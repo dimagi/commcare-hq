@@ -731,6 +731,11 @@ class ESTestHelpers:
         exc_args = (f"_shards: {json.dumps(shards_obj)}",)
         return exc_args, wrapper
 
+    def _index_tombstones(self, quantity):
+        tombstone_ids = [str(i) for i in list(range(1, quantity))]
+        for tombstone_id in tombstone_ids:
+            self.adapter._index(tombstone_id, Tombstone.create_document(), True)
+
 
 @es_test
 class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
@@ -1284,6 +1289,23 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test__report_and_fail_on_shard_failures_with_invalid_result_raises_valueerror(self):
         with self.assertRaises(ValueError):
             self.adapter._report_and_fail_on_shard_failures([])
+
+    def test_get_all_tombstones(self):
+        self._index_tombstones(10)
+        es_tombstone_ids = self.adapter._get_tombstone_ids()
+        es_tombstone_ids.sort()
+        self.assertEqual(
+            [str(i) for i in list(range(1, 10))],
+            es_tombstone_ids
+        )
+
+    def test_delete_tombstones(self):
+        self._index_tombstones(10)
+        self.adapter.delete_tombstones()
+        self.assertEqual(
+            self.adapter._get_tombstone_ids(),
+            []
+        )
 
 
 @es_test
