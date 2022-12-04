@@ -9,6 +9,7 @@ from corehq.apps.es.client import (
 )
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
+from corehq.apps.es.filters import term
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.hqcase.management.commands.reindex_es_native import (
@@ -72,16 +73,8 @@ class ESSyncUtil:
 
     def _get_tombstone_ids(self, secondary_adapter):
         query = {
-            "query": {
-                "bool": {
-                    "must": {
-                        "match": {
-                            Tombstone.PROPERTY_NAME: True
-                        }
-                    }
-                }
-            },
-            "_source": False,
+            "query": term(Tombstone.PROPERTY_NAME, True),
+            "_source": False
         }
         scroll_iter = secondary_adapter.scroll(query, size=1000)
         tombstone_ids = [doc['_id'] for doc in scroll_iter]
