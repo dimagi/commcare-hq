@@ -291,6 +291,58 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             patched.assert_called_once_with(task_id=task_id, detailed=True)
             self.assertIn("running_time_in_nanos", task)
 
+    def test_cancel_task_with_invalid_task_id(self):
+        host, task = 'eCjqYKEeRAasMPL5hN6hsg', '280170'
+        task_id = f'{host}:{task}'
+        # Task failure response for ES 2.4
+        # TODO - Verify for future ES versions
+        response = {
+            'node_failures': [
+                {
+                    'type': 'failed_node_exception',
+                    'reason': f'Failed node [{host}]',
+                    'caused_by': {
+                        'type': 'resource_not_found_exception',
+                        'reason': f"task [{task_id}] doesn't support cancellation"
+                    }
+                }
+            ],
+            'nodes': {}
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            with self.assertRaises(TaskMissing):
+                self.adapter.cancel_task(task_id)
+
+    def test_cancel_task_with_valid_task_id(self):
+        task_id = 'eCjqYKEeRAasMPL5hN6hsg:281173'
+        task_info = {
+            'node': 'eCjqYKEeRAasMPL5hN6hsg',
+            'id': 281173,
+            'type': 'transport',
+            'action': 'indices:data/write/reindex',
+            'start_time_in_millis': 1669719946726,
+            'running_time_in_nanos': 7948360400
+        }
+        # Cancel Task success response for ES 2.4
+        # TODO - Verify for future ES versions
+
+        response = {
+            'nodes': {
+                'eCjqYKEeRAasMPL5hN6hsg': {
+                    'name': 'Scarlet Beetle',
+                    'transport_address': '172.18.0.6:9300',
+                    'host': '172.18.0.6',
+                    'ip': '172.18.0.6:9300',
+                    'tasks': {
+                        'eCjqYKEeRAasMPL5hN6hsg:281173': task_info
+                    }
+                }
+            }
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            result = self.adapter.cancel_task(task_id)
+            self.assertEqual(result, task_info)
+
     @contextmanager
     def _mock_single_task_response(self):
         """A context manager that fetches a real list of all tasks from

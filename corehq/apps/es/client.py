@@ -149,6 +149,17 @@ class ElasticManageAdapter(BaseAdapter):
         return self._parse_task_result(self._es.tasks.list(task_id=task_id,
                                                            detailed=True))
 
+    def cancel_task(self, task_id):
+        """
+        Cancells a running task in ES
+
+        :param task_id: ``str`` ID of the task
+        :returns: ``dict`` of task details
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
+        """
+        result = self._es.tasks.cancel(task_id)
+        return self._parse_task_result(result)
+
     @staticmethod
     def _parse_task_result(result, *, _return_one=True):
         """Parse the ``tasks.list()`` output and return a dictionary of task
