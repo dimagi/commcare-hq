@@ -8,7 +8,7 @@ from corehq.apps.es.client import (
     get_client,
 )
 from corehq.apps.es.client import manager as es_manager
-from corehq.apps.es.exceptions import IndexNotMultiplexedException
+from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.apps.hqcase.management.commands.reindex_es_native import (
@@ -88,12 +88,10 @@ class ESSyncUtil:
         return tombstone_ids
 
     def cancel_reindex(self, task_id):
-        result = self.es.tasks.cancel(task_id)
-        node_failures = result.get('node_failure', None)
-        if node_failures:
-            raise CommandError(f"No Reindes process with {task_id} found")
-        node_id = task_id.split(':')[0]
-        task_info = result['nodes'][node_id]['tasks'][task_id]
+        try:
+            task_info = es_manager.cancel_task(task_id)
+        except TaskMissing:
+            raise CommandError(f"No Reindex process with {task_id} found")
 
         start_time = datetime.utcfromtimestamp(task_info['start_time_in_millis'] / 1000)
         running_duration_seconds = task_info['running_time_in_nanos'] / 10**9
