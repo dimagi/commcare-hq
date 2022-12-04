@@ -7,7 +7,6 @@ from corehq.apps.es.exceptions import IndexNotMultiplexedException
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
 from corehq.apps.es.client import (
-    Tombstone,
     create_document_adapter,
     get_client,
     manager,
@@ -110,27 +109,3 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
     def test_get_correct_adapter_with_cname(self):
         adapter = self.util.get_adapter('test_reindex')
         self.assertEqual(adapter.index_name, f"test_{ReIndexTestHelper.index}")
-
-    def test_get_all_tombstones(self):
-        _index_tombstones(self.adapter.secondary, 10)
-        es_tombstone_ids = self.util._get_tombstone_ids(self.adapter.secondary)
-        es_tombstone_ids.sort()
-        self.assertEqual(
-            [str(i) for i in list(range(1, 10))],
-            es_tombstone_ids
-        )
-
-    def test_delete_tombstones(self):
-        _index_tombstones(self.adapter.secondary, 10)
-        self.util.delete_tombstones(self.adapter.secondary)
-        self.assertEqual(
-            self.util._get_tombstone_ids(self.adapter.secondary),
-            []
-        )
-
-
-def _index_tombstones(secondary_adapter, quantity):
-    tombstone_ids = [str(i) for i in list(range(1, quantity))]
-    for tombstone_id in tombstone_ids:
-        id, doc = secondary_adapter.from_python(Tombstone(tombstone_id))
-        secondary_adapter._index(id, doc, True)
