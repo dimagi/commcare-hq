@@ -10,6 +10,7 @@ from django.conf import settings
 from django.utils.functional import classproperty
 
 from memoized import memoized
+from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
@@ -863,6 +864,25 @@ class ElasticDocumentAdapter(BaseAdapter):
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])
             raise ESShardFailure(f"_shards: {shard_info}")
+
+    def delete_tombstones(self):
+        """
+        Deletes all tombstones documents present in the index
+
+        TODO:  This should be replaced by delete_by_query
+         https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
+         when on ES version >= 5
+        """
+        tombstone_ids = self._get_tombstone_ids()
+        self.bulk_delete(tombstone_ids, refresh=True)
+
+    def _get_tombstone_ids(self):
+        query = {
+            "query": term(Tombstone.PROPERTY_NAME, True),
+            "_source": False
+        }
+        scroll_iter = self.scroll(query, size=1000)
+        return [doc['_id'] for doc in scroll_iter]
 
     def __repr__(self):
         return f"<{self.__class__.__name__} index={self.index_name!r}, type={self.type!r}>"
