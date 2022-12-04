@@ -49,10 +49,10 @@ class ESSyncUtil:
         return adapter.primary.index_name, adapter.secondary.index_name
 
     def perform_cleanup(self):
-        print("\n\tPerforming Cleanup:")
+        print("\nPerforming Cleanup:")
 
         print("\nDeleting Tombstones")
-        self.delete_tombstones(self.adapter.secondary)
+        self.adapter.secondary.delete_tombstones()
 
         print("\nMarking Index eligible to upgrade to primary")
         self.mark_primary_eligible()
