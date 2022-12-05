@@ -237,10 +237,13 @@ class TableauConnectedApp(models.Model):
 
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
-    username = models.CharField(max_length=255, unique=True)
+    username = models.CharField(max_length=255)
     role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
     tableau_user_id = models.CharField(max_length=64)
     last_synced = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['server', 'username']
 
 
 logger = logging.getLogger('tableau_api')
@@ -266,8 +269,7 @@ class TableauAPISession(object):
 
     @classmethod
     def create_session_for_domain(cls, domain):
-        server = TableauServer.objects.get(domain=domain)
-        connected_app = TableauConnectedApp.objects.get(server=server)
+        connected_app = TableauConnectedApp.objects.get(server__domain=domain)
         session = cls(connected_app)
         session.sign_in()
         return session
