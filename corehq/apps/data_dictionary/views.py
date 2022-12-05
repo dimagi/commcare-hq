@@ -65,6 +65,7 @@ data_dictionary_rebuild_rate_limiter = RateLimiter(
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
 def generate_data_dictionary(request, domain):
     if data_dictionary_rebuild_rate_limiter.allow_usage(domain):
         data_dictionary_rebuild_rate_limiter.report_usage(domain)
@@ -119,6 +120,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
 
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
 def create_case_type(request, domain):
     name = request.POST.get("name")
     description = request.POST.get("description")
@@ -139,6 +141,7 @@ def create_case_type(request, domain):
 @atomic
 @login_and_domain_required
 @toggles.DATA_DICTIONARY.required_decorator()
+@require_permission(HqPermissions.edit_data_dict)
 def update_case_property(request, domain):
     fhir_resource_type_obj = None
     errors = []
@@ -365,6 +368,7 @@ class UploadDataDictionaryView(BaseProjectDataView):
     @method_decorator(login_and_domain_required)
     @use_jquery_ui
     @method_decorator(toggles.DATA_DICTIONARY.required_decorator())
+    @method_decorator(require_permission(HqPermissions.edit_data_dict))
     def dispatch(self, request, *args, **kwargs):
         return super(UploadDataDictionaryView, self).dispatch(request, *args, **kwargs)
 
