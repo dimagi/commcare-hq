@@ -9,7 +9,7 @@ class FakeTableauInstance(mock.MagicMock):
 
     def __init__(self):
         super(FakeTableauInstance, self).__init__()
-        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e'}
+        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n'}
         self.users = {'angie@dimagi.com': 'zx8cv', 'jeff@company.com': 'uip12', 'steve@company.com': 'ty78ui'}
         self.group_names = list(self.groups.keys())
         self.group_ids = list(self.groups.values())
@@ -93,11 +93,19 @@ class FakeTableauInstance(mock.MagicMock):
                                 },
                                 "id": "%s",
                                 "name": "%s"
+                            },
+                            {
+                                "domain": {
+                                    "name": "local"
+                                },
+                                "id": "%s",
+                                "name": "%s"
                             }
                         ]
                     }
                 }
-                """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1]))
+                """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1],
+                       self.group_ids[2], self.group_names[2]))
 
     def get_users_in_group_response(self):
         return self._create_response("""
@@ -129,6 +137,9 @@ class FakeTableauInstance(mock.MagicMock):
                 }
             }
             """ % (self.user_ids[0], self.users_names[0], self.user_ids[2], self.users_names[2]))
+
+    def remove_user_from_group_response(self):
+        return self._create_response('')
 
     def create_group_response(self, name):
         return self._create_response("""
@@ -209,7 +220,7 @@ class FakeTableauInstance(mock.MagicMock):
         return mock_response
 
 
-class TestTableauAPI(TestCase):
+class TestTableauAPISession(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain-name'
@@ -228,7 +239,7 @@ class TestTableauAPI(TestCase):
         )
         self.connected_app.save()
         self.tableau_instance = FakeTableauInstance()
-        super(TestTableauAPI, self).setUp()
+        super(TestTableauAPISession, self).setUp()
 
     def test_connected_app_encryption(self):
         self.connected_app.plaintext_secret_value = 'qwer1234'
@@ -277,7 +288,7 @@ class TestTableauAPI(TestCase):
         self.assertEqual(group1['id'], '1a2b3')
         mock_request.return_value = self.tableau_instance.query_groups_response()
         groups = api_session.query_groups()
-        self.assertEqual(len(groups), 2)
+        self.assertEqual(len(groups), 3)
         self.assertEqual(groups[1]['id'], 'c4d5e')
         self._sign_out(api_session=api_session)
 
@@ -312,6 +323,16 @@ class TestTableauAPI(TestCase):
         self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_remove_user_from_group(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
+        user_id = 'uip12'
+        group_id = '1a2b3'
+        mock_request.return_value = self.tableau_instance.remove_user_from_group_response()
+        api_session.remove_user_from_group(user_id, group_id)
+        self._sign_out(api_session=api_session)
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
     def test_get_groups_for_user_id(self, mock_request):
         api_session = self._create_session()
         api_session = self._sign_in(api_session=api_session)
@@ -336,8 +357,10 @@ class TestTableauAPI(TestCase):
     def test_update_user(self, mock_request):
         api_session = self._create_session()
         api_session = self._sign_in(api_session=api_session)
-        mock_request.return_value = self.tableau_instance.update_user_response()
-        api_session.update_user('uip12', 'Explorer')
+        mock_request.side_effect = [self.tableau_instance.delete_user_response(),
+                                    self.tableau_instance.create_user_response('jeff@company.com', 'Explorer')]
+        new_id = api_session.update_user('uip12', 'Explorer', username='jeff@company.com')
+        self.assertEqual(new_id, 'gh23jk')
         self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
