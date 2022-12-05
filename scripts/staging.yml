@@ -78,6 +78,6 @@ branches:
     - gh/audit-conditional-alerts # Graham Nov 30
     - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
     - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
-    - jt/data_dict_migration_USH-2678 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
+    - dm/sql-lookup-tables # Daniel Dec 5
 submodules: { }
