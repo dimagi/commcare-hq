@@ -8,6 +8,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
 import six
+from corehq.toggles import USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY
 
 # relationship = "child" for index to a parent case (default)
 # relationship = "extension" for index to a host case
@@ -25,7 +26,7 @@ class CaseBlock(object):
     def __init__(self, case_id, date_modified=None, user_id=undefined,
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False):
+                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False, domain=None):
         """
         When `date_opened_deprecated_behavior`, a date_opened YYYY-MM-DD value is inserted on new cases.
         This is deprecated behavior, because it prevents the superior default behavior from kicking in.
@@ -56,6 +57,7 @@ class CaseBlock(object):
             self._check_for_duplicate_properties()
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
+        self.domain = domain
 
     @classmethod
     def deprecated_init(cls, *args, **kwargs):
@@ -98,8 +100,13 @@ class CaseBlock(object):
             'update': self.update,
         }
 
+        external_id = self.external_id
+        # This is probably not the best way, but is needed currently.
+        if self.domain and USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY.enabled(self.domain):
+            external_id = self.update.get('external_id', external_id)
+
         result['update'].update({
-            'external_id': self.external_id,
+            'external_id': external_id,
             'date_opened': self.date_opened,
         })
 
