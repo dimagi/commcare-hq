@@ -377,9 +377,7 @@ fixtures
  0002_rm_blobdb_domain_fixtures
  0003_rm_blobdb_domain_fixtures
  0004_userlookuptablestatus
- 0005_lookuptablemodels
- 0006_index_row_id
- 0007_db_cascade
+ 0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
 form_processor
  0001_initial

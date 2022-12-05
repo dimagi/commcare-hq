@@ -54,7 +54,7 @@ class TestLookupTableManager(TestCase):
             fields=[],
             item_attributes=[],
         )
-        table.save(sync_to_couch=False)
+        table.save()
 
 
 class TestLookupTable(TestCase):
@@ -73,7 +73,7 @@ class TestLookupTable(TestCase):
         table = LookupTable(domain="test", tag="x", fields=[TypeField("vera")])
         self.assertEqual(table.fields[0].name, "vera")
         self.assertEqual(table.fields[0].properties, [])
-        table.save(sync_to_couch=False)
+        table.save()
         new = LookupTable.objects.get(id=table.id)
         self.assertEqual(new.fields, table.fields)
         self.assertIsNot(new.fields, table.fields)
@@ -114,7 +114,7 @@ class TestLookupTableRowManager(TestCase):
             tag="pink",
             fields=[TypeField("vera")],
         )
-        cls.table.save(sync_to_couch=False)
+        cls.table.save()
 
     def test_iter_rows(self):
         self.create_rows(10)
@@ -204,7 +204,7 @@ class TestLookupTableRowManager(TestCase):
             table=blue_table,
             sort_key=10,
         )
-        blue_row.save(sync_to_couch=False)
+        blue_row.save()
 
         # create rows with higher table_id and lower sort_key than pink_rows
         # requires table_id in
@@ -287,8 +287,8 @@ class TestLookupTableRow(TestCase):
         row = self.make_row(save=False)
         self.assertEqual(row.fields["vera"][0].value, "What has become of you?")
         self.assertEqual(row.fields["vera"][0].properties, {})
-        row.table.save(sync_to_couch=False)
-        row.save(sync_to_couch=False)
+        row.table.save()
+        row.save()
         new = LookupTableRow.objects.get(id=row.id)
         self.assertEqual(new.fields, row.fields)
         self.assertIsNot(new.fields, row.fields)
@@ -335,8 +335,8 @@ class TestLookupTableRow(TestCase):
             "vera": [Field("What has become of you?")],
         }, sort_key=0)
         if save:
-            row.table.save(sync_to_couch=False)
-            row.save(sync_to_couch=False)
+            row.table.save()
+            row.save()
         return row
 
 
