@@ -775,7 +775,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
-        if Tombstone.PROPERTY_NAME in source:
+        if Tombstone.PROPERTY_NAME in source and source[Tombstone.PROPERTY_NAME]:
             raise ValueError(f"property {Tombstone.PROPERTY_NAME} is reserved")
 
     @staticmethod
