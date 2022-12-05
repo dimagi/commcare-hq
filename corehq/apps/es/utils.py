@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 from django.conf import settings
 from django.core.management.base import CommandError
 
-from corehq.apps.es.client import manager
 from corehq.apps.es.exceptions import TaskError, TaskMissing
 from corehq.util.es.elasticsearch import SerializationError
 from corehq.util.json import CommCareJSONEncoder
@@ -99,6 +98,8 @@ def check_task_progress(task_id, just_once=False):
     A util to be used in management commands to check the state of a task in ES.
     If just_once is set to False it will continuoslly poll for task stats until task is completed.
     """
+    from corehq.apps.es.client import manager
+
     node_id = task_id.split(':')[0]
     node_name = manager.get_node_info(node_id, metric="name")
     print(f"Looking for task with ID '{task_id}' running on '{node_name}'")
