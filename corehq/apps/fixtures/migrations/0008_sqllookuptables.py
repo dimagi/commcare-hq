@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.db import migrations
+from corehq.util.django_migrations import prompt_for_historical_migration, get_migration_name
 
 
 class Migration(migrations.Migration):
@@ -9,4 +10,7 @@ class Migration(migrations.Migration):
         ('fixtures', '0007_db_cascade'),
     ]
 
-    operations = []
+    operations = [
+        prompt_for_historical_migration(
+            "fixtures", get_migration_name(__file__), "10f1b20a33ea07371e2b94c37e16ea81cfabcd53"),
+    ]
