@@ -1,3 +1,4 @@
+from corehq.apps.es.client import Tombstone
 from corehq.apps.es.forms import form_adapter
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings.const import NULL_VALUE
@@ -215,6 +216,9 @@ XFORM_MAPPING = {
                 }
             },
             "type": "multi_field"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }

@@ -1,4 +1,5 @@
 from corehq.apps.es.case_search import case_adapter
+from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
@@ -225,6 +226,9 @@ CASE_MAPPING = {
         "xform_ids": {
             "index": "not_analyzed",
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }

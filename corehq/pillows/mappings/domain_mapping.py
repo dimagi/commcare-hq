@@ -1,3 +1,4 @@
+from corehq.apps.es.client import Tombstone
 from corehq.apps.es.domains import domain_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
@@ -618,6 +619,9 @@ DOMAIN_MAPPING = {
         },
         "yt_id": {
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }

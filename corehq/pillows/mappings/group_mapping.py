@@ -1,3 +1,4 @@
+from corehq.apps.es.client import Tombstone
 from corehq.apps.es.groups import group_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR
 from corehq.util.elastic import prefix_for_tests
@@ -58,6 +59,9 @@ GROUP_MAPPING = {
         },
         "users": {
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }
