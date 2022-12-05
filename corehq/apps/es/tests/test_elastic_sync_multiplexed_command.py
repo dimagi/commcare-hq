@@ -98,12 +98,30 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         self.adapter.primary.index(TestDoc('key_2', 'val'))
         self.adapter.primary.index(TestDoc('key', 'value'))
 
+        # Test No documents present in secondary index
+        self.assertEqual(
+            self.adapter.secondary.count({}),
+            0
+        )
+        self.es.indices.refresh(self.adapter.index_name)
+
         call_command(COMMAND_NAME, 'start', ReIndexTestHelper.cname)
         self.es.indices.refresh(self.adapter.secondary.index_name)
 
+        primary_index_docs = self.adapter.search({})['hits']['hits']
+        secondary_index_docs = self.adapter.secondary.search({})['hits']['hits']
+
+        primary_ids = {doc['_id'] for doc in primary_index_docs}
+        secondary_ids = {doc['_id'] for doc in secondary_index_docs}
+
+        # Test both the documents were copied successfully
+        self.assertEqual(
+            primary_ids,
+            secondary_ids
+        )
         self.assertEqual(
             self.adapter.secondary.count({}),
-            self.adapter.primary.count({})
+            2
         )
 
     def test_get_correct_adapter_with_cname(self):
