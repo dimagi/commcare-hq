@@ -105,7 +105,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
 
-        input_patcher = patch('corehq.apps.userreports.management.commands.delete_orphaned_ucrs.get_input')
+        input_patcher = patch('corehq.apps.userreports.management.commands.delete_orphaned_ucrs.input')
         mock_input = input_patcher.start()
         mock_input.return_value = 'y'
         cls.addClassCleanup(input_patcher.stop)
