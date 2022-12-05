@@ -2,17 +2,12 @@ from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand, CommandError
 
-from corehq.apps.es.client import (
-    ElasticMultiplexAdapter,
-    get_client,
-)
+from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
 from corehq.apps.es.registry import get_registry, registry_entry
 from corehq.apps.es.transient_util import doc_adapter_from_info
-from corehq.apps.hqcase.management.commands.reindex_es_native import (
-    check_task_progress,
-)
+from corehq.apps.es.utils import check_task_progress
 
 
 class ESSyncUtil:

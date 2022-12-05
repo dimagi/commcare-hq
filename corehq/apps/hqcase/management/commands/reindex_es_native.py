@@ -1,9 +1,8 @@
 import inspect
 import time
-from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
-from corehq.apps.es.exceptions import TaskError, TaskMissing
+from corehq.apps.es.utils import check_task_progress
 
 from pillowtop.es_utils import initialize_index, set_index_reindex_settings
 
@@ -130,66 +129,6 @@ def start_reindex(es, source_index, target_index):
     return task_id
 
 
-def check_task_progress(task_id, just_once=False):
-    node_id = task_id.split(':')[0]
-    node_name = manager.get_node_info(node_id, metric="name")
-    print(f"Looking for task with ID '{task_id}' running on '{node_name}'")
-    progress_data = []
-    while True:
-        try:
-            task_details = manager.get_task(task_id=task_id)
-        except TaskMissing:
-            if not just_once:
-                return  # task completed
-            raise CommandError(f"Task with id {task_id} not found")
-        except TaskError as err:
-            raise CommandError(f"Fetching task failed: {err}")
-
-        status = task_details["status"]
-        total = status["total"]
-        if total:  # total can be 0 initially
-            created, updated, deleted = status["created"], status["updated"], status["deleted"]
-            progress = created + updated + deleted
-            progress_percent = progress / total * 100
-
-            running_time_nanos = task_details["running_time_in_nanos"]
-            run_time = timedelta(microseconds=running_time_nanos / 1000)
-
-            remaining_time_absolute = 'unknown'
-            remaining_time_relative = ''
-            if progress:
-                progress_data.append({
-                    "progress": progress,
-                    "time": time.monotonic() * 1000000000
-                })
-
-                remaining = total - progress
-                # estimate based on progress since beginning of task
-                remaining_nanos_absolute = running_time_nanos / progress * remaining
-                remaining_time_absolute = timedelta(microseconds=remaining_nanos_absolute / 1000)
-                if len(progress_data) > 1:
-                    # estimate based on last 12 loops of data
-                    progress_nanos = progress_data[-1]["time"] - progress_data[0]["time"]
-                    progress_diff = progress_data[-1]["progress"] - progress_data[0]["progress"]
-                    progress_data = progress_data[-12:]  # truncate progress data
-                    remaining_nanos = progress_nanos / progress_diff * remaining
-                    remaining_time_relative = timedelta(microseconds=remaining_nanos / 1000)
-
-            print(f"Progress {progress_percent:.2f}% ({progress} / {total}). "
-                  f"Elapsed time: {_format_timedelta(run_time)}. "
-                  f"Estimated remaining time: "
-                  f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
-                  f"(recent average = {_format_timedelta(remaining_time_relative)})")
-        if just_once:
-            return
-        time.sleep(10)
-
-
 def _get_doc_count(es, index):
     es.indices.refresh(index)
     return es.indices.stats(index=index)['indices'][index]['primaries']['docs']['count']
-
-
-def _format_timedelta(td):
-    out = str(td)
-    return out.split(".")[0]
