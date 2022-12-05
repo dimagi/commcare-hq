@@ -1,8 +1,9 @@
+from pillowtop.es_utils import GROUP_HQ_INDEX_NAME, ElasticsearchIndexInfo
+
 from corehq.apps.es.client import Tombstone
 from corehq.apps.es.groups import group_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, GROUP_HQ_INDEX_NAME
 
 GROUP_INDEX = group_adapter.index_name
 GROUP_ES_ALIAS = prefix_for_tests('hqgroups')

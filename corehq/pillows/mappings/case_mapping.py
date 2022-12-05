@@ -1,9 +1,10 @@
+from pillowtop.es_utils import CASE_HQ_INDEX_NAME, ElasticsearchIndexInfo
+
 from corehq.apps.es.case_search import case_adapter
 from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_HQ_INDEX_NAME
 
 CASE_INDEX = case_adapter.index_name
 CASE_ES_TYPE = case_adapter.type
