@@ -14,7 +14,6 @@ from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.users.models import CommCareUser
 
 from .. import download as mod
-from ..dbaccessors import delete_all_fixture_data
 from ..models import LookupTable, LookupTableRow, OwnerType, TypeField
 from ..upload.run_upload import _run_upload
 from ..upload.workbook import get_workbook
@@ -62,9 +61,6 @@ class TestLookupTableOwners(TestCase):
         cls.loc2.save()
         cls.loc3 = SQLLocation(domain=cls.domain, name="3", location_type=cls.region)
         cls.loc3.save()
-
-    def tearDown(self):
-        delete_all_fixture_data(self.domain)
 
     def test_download(self):
         self.upload([
