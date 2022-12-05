@@ -16,7 +16,6 @@ from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest, ImmediateHttpResponse, NotFound
 from tastypie.http import HttpForbidden, HttpUnauthorized
 from tastypie.resources import ModelResource, Resource, convert_post_to_patch
-from tastypie.throttle import BaseThrottle
 from tastypie.utils import dict_strip_unicode_keys
 
 from phonelog.models import DeviceReportEntry
