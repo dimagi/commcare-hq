@@ -80,4 +80,5 @@ branches:
     - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     - dm/sql-lookup-tables # Daniel Dec 5
+    - ad/taleau-syncing-util-functions # Addison Dec 5
 submodules: { }
