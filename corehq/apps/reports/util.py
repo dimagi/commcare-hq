@@ -6,6 +6,7 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.transaction import atomic
 from django.http import Http404
 from django.utils.translation import gettext as _
 
@@ -445,6 +446,7 @@ def get_tableau_groups_for_user(domain, username):
     return _group_json_to_tuples(group_json)
 
 
+@atomic
 def add_tableau_user(domain, username):
     '''
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
@@ -461,6 +463,7 @@ def add_tableau_user(domain, username):
     user.save()
 
 
+@atomic
 def delete_tableau_user(domain, username):
     '''
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
@@ -476,6 +479,7 @@ def delete_tableau_user(domain, username):
     user.delete()
 
 
+@atomic
 def update_tableau_user(domain, username, role=None, groups=[]):
     '''
     Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
