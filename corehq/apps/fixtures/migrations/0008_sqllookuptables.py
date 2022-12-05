@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('fixtures', '0007_db_cascade'),
+        ('fixtures', '0005_sqllookuptablemodels'),
     ]
 
     operations = [

@@ -233,7 +233,7 @@ class LookupTableRow(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     domain = CharIdField(max_length=126, db_index=True, default=None)
-    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE)
+    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE, db_constraint=False)
     fields = AttrsDict(list_of(Field), default=dict)
     item_attributes = models.JSONField(default=dict)
     sort_key = models.IntegerField()
@@ -276,7 +276,7 @@ class LookupTableRowOwner(models.Model):
     domain = CharIdField(max_length=126, default=None)
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
-    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE)
+    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
     couch_id = CharIdField(max_length=126, null=True, db_index=True)
 
     class Meta:
