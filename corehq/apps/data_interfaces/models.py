@@ -11,6 +11,8 @@ from django.utils.translation import gettext_lazy
 import jsonfield
 import pytz
 from dateutil.parser import parse
+from field_audit import audit_fields
+from field_audit.models import AuditingManager
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
     BooleanProperty,
@@ -84,6 +86,8 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@audit_fields("active", "case_type", "deleted", "domain", "name", "workflow",
+              audit_special_queryset_writes=True)
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
@@ -105,6 +109,8 @@ class AutomaticUpdateRule(models.Model):
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
     workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
+
+    objects = AuditingManager()
 
     class CriteriaOperator(models.TextChoices):
         ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
