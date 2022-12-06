@@ -637,6 +637,13 @@ LAZY_LOAD_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY = StaticToggle(
+    'custom-external_id-case-property',
+    'eCHIS: Use the user defined external_id case property when running auto case update rules.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
