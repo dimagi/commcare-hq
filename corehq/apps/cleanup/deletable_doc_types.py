@@ -39,4 +39,7 @@ DELETABLE_COUCH_DOC_TYPES = {
     'CDotWeeklySchedule': (MAIN_DB,),
     'CObservation': (MAIN_DB,),
     'CObservationAddendum': (MAIN_DB,),
+    'FixtureDataType': (MAIN_DB,),
+    'FixtureDataItem': (MAIN_DB,),
+    'FixtureOwnership': (MAIN_DB,),
 }
