@@ -341,9 +341,7 @@ def view_generic(request, domain, app_id, module_id=None, form_id=None,
 
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
-
-    release_control_visible = AppReleaseModeSetting.get_settings(domain)
-    context.update({'show_release_mode': release_control_visible.is_visible})
+    context.update({'show_release_mode': AppReleaseModeSetting.get_settings(domain).is_visible})
 
     response = render(request, template, context)
 
