@@ -65,7 +65,7 @@ branches:
     - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - jls/new-instance-connectors # Jenny Sept 27
-    - akj/release-mode-toggle # Akash 7 Oct
+    # - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
@@ -81,4 +81,5 @@ branches:
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     - dm/sql-lookup-tables # Daniel Dec 5
     - ad/taleau-syncing-util-functions # Addison Dec 5
+    - pkv/application-release-logs-2
 submodules: { }
