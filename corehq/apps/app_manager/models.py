@@ -2287,7 +2287,8 @@ class CaseSearch(DocumentSchema):
     def get_search_title_label(self, app, lang, for_default=False):
         if for_default:
             lang = app.default_language
-        return self.title_label.get(lang, '')
+        # Some apps have undefined labels incorrectly set to None, normalize here
+        return self.title_label.get(lang) or ''
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
