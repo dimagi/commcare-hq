@@ -21,7 +21,7 @@ from dimagi.ext.couchdbkit import (
 )
 
 from corehq.form_processor.models import XFormInstance
-from corehq.motech.dhis2.const import DHIS2_MAX_VERSION, XMLNS_DHIS2
+from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
 from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
@@ -78,7 +78,7 @@ class Dhis2Instance(Document):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_VERSION:
+        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
@@ -268,7 +268,7 @@ class SQLDhis2Instance(object):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_VERSION:
+        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
@@ -331,8 +331,8 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         self.get_api_version()
 
         requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        for form_config in self.dhis2_config.form_configs:
-            if form_config.xmlns == payload['form']['@xmlns']:
+        for form_config in self.dhis2_config['form_configs']:
+            if form_config['xmlns'] == payload['form']['@xmlns']:
                 try:
                     return send_dhis2_event(
                         requests,
@@ -395,10 +395,10 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
         self.get_api_version()
 
         value_source_configs = []
-        for case_config in self.dhis2_entity_config.case_configs:
-            value_source_configs.append(case_config.org_unit_id)
-            value_source_configs.append(case_config.tei_id)
-            for value_source_config in case_config.attributes.values():
+        for case_config in self.dhis2_entity_config['case_configs']:
+            value_source_configs.append(case_config['org_unit_id'])
+            value_source_configs.append(case_config['tei_id'])
+            for value_source_config in case_config['attributes'].values():
                 value_source_configs.append(value_source_config)
 
         case_trigger_infos = get_relevant_case_updates_from_form_json(
@@ -471,11 +471,11 @@ def fetch_metadata(requests):
 
 
 def create_dhis2_event_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(Dhis2Repeater, xform)
+    create_repeat_records(SQLDhis2Repeater, xform)
 
 
 def create_dhis2_entity_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(Dhis2EntityRepeater, xform)
+    create_repeat_records(SQLDhis2EntityRepeater, xform)
 
 
 successful_form_received.connect(create_dhis2_event_repeat_records)
