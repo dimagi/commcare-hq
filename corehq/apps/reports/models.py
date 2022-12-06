@@ -156,7 +156,7 @@ class TableauServer(models.Model):
         ('server', gettext_lazy('Tableau Server')),
         ('online', gettext_lazy('Tableau Online')),
     )
-    domain = models.CharField(max_length=64, default='')
+    domain = models.CharField(max_length=64, default='', unique=True)
     server_type = models.CharField(max_length=6, choices=SERVER_TYPES, default='server')
     server_name = models.CharField(max_length=128)
     validate_hostname = models.CharField(max_length=128, default='', blank=True)
@@ -195,7 +195,7 @@ class TableauVisualization(models.Model):
 
 
 class TableauConnectedApp(models.Model):
-    app_client_id = models.CharField(max_length=32)
+    app_client_id = models.CharField(max_length=64)
     secret_id = models.CharField(max_length=64)
     encrypted_secret_value = models.CharField(max_length=64)
     server = models.OneToOneField(TableauServer, on_delete=models.CASCADE)
@@ -235,19 +235,15 @@ class TableauConnectedApp(models.Model):
         return token
 
 
-class TableauGroup(models.Model):
-    server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
-    name = models.CharField(max_length=64)
-    group_id = models.CharField(max_length=32)
-
-
 class TableauUser(models.Model):
     server = models.ForeignKey(TableauServer, on_delete=models.CASCADE)
     username = models.CharField(max_length=255)
     role = models.CharField(max_length=32, choices=TABLEAU_ROLES)
-    groups = models.ManyToManyField(TableauGroup)
     tableau_user_id = models.CharField(max_length=64)
     last_synced = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['server', 'username']
 
 
 logger = logging.getLogger('tableau_api')
@@ -271,6 +267,13 @@ class TableauAPISession(object):
         self.signed_in = False
         self.site_id = None
 
+    @classmethod
+    def create_session_for_domain(cls, domain):
+        connected_app = TableauConnectedApp.objects.get(server__domain=domain)
+        session = cls(connected_app)
+        session.sign_in()
+        return session
+
     def _get_api_version(self, connected_app):
         response_body = self._make_request(
             self.GET,
@@ -292,7 +295,11 @@ class TableauAPISession(object):
                 body = json.loads(response.text)
                 return body
         else:
-            raise TableauAPIError(f"Tableau API request '{request_name}' failed. Response body: {response.text}")
+            error_code = json.loads(response.text)['error']['code']
+            raise TableauAPIError(
+                f"Tableau API request '{request_name}' failed. Response body: {response.text}",
+                error_code
+            )
 
     def sign_in(self):
         response_body = self._make_request(
@@ -332,7 +339,7 @@ class TableauAPISession(object):
     def query_groups(self, name=None):
         '''
         Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
-        Exclude the `name` arg to get a list of all groups on the site.
+        Exclude the `name` arg to get a list of all groups on the site, sorted by name.
 
         Each group dict returned has this format, at a minumum:
         {
@@ -346,6 +353,8 @@ class TableauAPISession(object):
         url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000'
         if name:
             url += f'&filter=name:eq:{name}'
+        else:
+            url += '&sort=name:asc'
         response_body = self._make_request(
             self.GET,
             'Query Groups',
@@ -426,6 +435,18 @@ class TableauAPISession(object):
         )
         return True
 
+    def remove_user_from_group(self, user_id, group_id):
+        '''
+        Removes the Tableau user with the given ID from the group with the given ID.
+        '''
+        self._make_request(
+            self.DELETE,
+            'Remove User from Group',
+            self.base_url + f'/sites/{self.site_id}/groups/{group_id}/users/{user_id}',
+            {}
+        )
+        return True
+
     def get_groups_for_user_id(self, id):
         '''
         Returns the list of groups that the user with the given ID belongs to. Return value format:
@@ -470,21 +491,30 @@ class TableauAPISession(object):
         )
         return response_body['user']['id']
 
-    def update_user(self, id, role):
+    def update_user(self, id, role, username=''):
         '''
         Updates the user with the given ID to have the given role.
+
+        Due to a bug in the Tableau REST API, this currently requires a workaround of removing and adding the
+        user. Because doing so changes the ID, it is returned from this method so that the local object can be
+        updated.
         '''
-        self._make_request(
-            self.PUT,
-            'Update User',
-            self.base_url + f'/sites/{self.site_id}/users/{id}',
-            {
-                "user": {
-                    "siteRole": f"{role}"
-                }
-            }
-        )
-        return True
+        # Code that will work if the Tableau team fixes the bug.
+        # self._make_request(
+        #     self.PUT,
+        #     'Update User',
+        #     self.base_url + f'/sites/{self.site_id}/users/{id}',
+        #     {
+        #         "user": {
+        #             "siteRole": f"{role}"
+        #         }
+        #     }
+        # )
+        # return True
+
+        # Workaround code
+        self.delete_user(id)
+        return self.create_user(username, role)
 
     def delete_user(self, id):
         '''
