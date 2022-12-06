@@ -764,45 +764,59 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
 
-        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        data = self.get_plan_and_user_count_by_domain(self.domain)
+        self.check_and_send_limit_email(self.domain, data['plan_limit'], data['user_count'])
+        return {
+            'success': True,
+            'user_id': couch_user.userID,
+        }
+
+    @staticmethod
+    def get_plan_and_user_count_by_domain(domain):
+        subscription = Subscription.get_active_subscription_by_domain(domain)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         for rate in plan_version.feature_rates.all():
             if 'User' in rate.feature.name:
                 user_rate = rate
                 break
-        plan_limit = user_rate.monthly_limit
+        return {
+            'plan_limit': user_rate.monthly_limit,
+            'user_count': FeatureUsageCalculator(user_rate, domain).get_usage()
+        }
 
-        def send_email_to_admins_and_billing(at_capacity):
-            users = WebUser.by_domain(self.domain)
-            recipients = []
-            for user in users:
-                if user.role_label(self.domain) == 'Billing Admin' or user.role_label(self.domain) == 'Admin':
-                    recipients.append(user.username)
-            if at_capacity:
-                subject = _("User count has reached the Plan limit for {}").format(self.domain)
-            else:
-                subject = _("User count has reached 90% of the Plan limit for ({})").format(self.domain)
-            send_HTML_email(
-                subject,
-                recipients,
-                render_to_string('users/email/user_limit_notice.html', context={
-                    'at_capacity': at_capacity,
-                    'url': ADDITIONAL_USERS_PRICING
-                }),
-            )
+    @staticmethod
+    def check_and_send_limit_email(domain, plan_limit, user_count, prev_count=None):
+        if plan_limit == -1:
             return None
 
-        if plan_limit != -1:
-            user_count = FeatureUsageCalculator(user_rate, self.domain).get_usage()
-            if user_count == plan_limit:
-                send_email_to_admins_and_billing(at_capacity=True)
-            elif plan_limit > user_count >= (0.9 * plan_limit) > (user_count - 1):
-                send_email_to_admins_and_billing(at_capacity=False)
+        if prev_count is None:
+            prev_count = user_count - 1
 
-        return {
-            'success': True,
-            'user_id': couch_user.userID,
-        }
+        if user_count >= plan_limit > prev_count:
+            at_capacity = True
+        elif plan_limit > user_count >= (0.9 * plan_limit) > prev_count:
+            at_capacity = False
+        else:
+            return None
+
+        users = WebUser.by_domain(domain)
+        recipients = []
+        for user in users:
+            if user.role_label(domain) == 'Billing Admin' or user.role_label(domain) == 'Admin':
+                recipients.append(user.username)
+        if at_capacity:
+            subject = _("User count has reached the Plan limit for {}").format(domain)
+        else:
+            subject = _("User count has reached 90% of the Plan limit for ({})").format(domain)
+        send_HTML_email(
+            subject,
+            recipients,
+            render_to_string('users/email/user_limit_notice.html', context={
+                'at_capacity': at_capacity,
+                'url': ADDITIONAL_USERS_PRICING
+            }),
+        )
+        return None
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
