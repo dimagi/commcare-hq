@@ -94,7 +94,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
                 throw new Error("URL '" + name + "' not found in registry");
             }
         }
-        return urls[name].replace(/---/g, function () {
+        return urls[name].replace(/(---)|(000)/g, function () {
             return args[index++];
         });
     };

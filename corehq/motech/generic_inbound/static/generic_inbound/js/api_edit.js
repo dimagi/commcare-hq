@@ -2,8 +2,9 @@ hqDefine('generic_inbound/js/api_edit', [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
+    'generic_inbound/js/manage_links',
     'generic_inbound/js/copy_data',
-], function (_, ko, initialPageData) {
+], function (_, ko, initialPageData, manageLinks) {
 
     const VALIDATION_DEFAULTS = {
         "name": "", "expression_id": null, "message": "", "id": null, "toDelete": false,
@@ -18,6 +19,10 @@ hqDefine('generic_inbound/js/api_edit', [
 
         self.expressionError = ko.computed(() => {
             return self.expression_id() === null;
+        });
+
+        self.editUrl = ko.computed(() => {
+            return manageLinks.getExpressionUrl(self.expression_id());
         });
 
         self.messageError = ko.computed(() => {
