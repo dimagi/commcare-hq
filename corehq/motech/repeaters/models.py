@@ -560,7 +560,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         (Most classes that extend CaseRepeater, and all classes that
         extend FormRepeater, use the same form.)
         """
-        return self.__class__.__name__
+        return self._repeater_type
 
     def _wrap_schema_attrs(self, couch_object):
         pass
