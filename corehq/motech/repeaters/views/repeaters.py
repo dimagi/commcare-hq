@@ -108,11 +108,11 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     @memoized
     def repeater_class(self):
         try:
-            return get_all_repeater_types()[self.repeater_type]
+            return get_all_sqlrepeater_types()[self.repeater_type]
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, list(get_all_repeater_types())
+                    self.repeater_type, list(get_all_sqlrepeater_types())
                 )
             )
 
