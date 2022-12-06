@@ -36,11 +36,8 @@ def datespan_in_request(from_param="from", to_param="to",
                         return datetime.strptime(date, format_string) if date else None
                     except ValueError:
                         return None
-                try:
-                    startdate = date_or_nothing(from_param)
-                    enddate = date_or_nothing(to_param)
-                except ValueError as e:
-                    return HttpResponseBadRequest(six.text_type(e))
+                startdate = date_or_nothing(from_param)
+                enddate = date_or_nothing(to_param)
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, format_string)
                 else:
