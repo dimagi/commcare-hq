@@ -428,7 +428,7 @@ class DomainGlobalSettingsForm(forms.Form):
             """
             Check this box to enable release mode setting on the app release page.
             Enabled setting restricts user to directly mark a version 'released'
-            and allows users to so only when they are in 'Release Mode' on the
+            and allows users to do so only when they are in 'Release Mode' on the
             release page of applications.
             """
         )
