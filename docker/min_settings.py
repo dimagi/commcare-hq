@@ -1,7 +1,9 @@
-####### Configuration for CommCareHQ Running in docker #######
-
+# Settings for CommCare HQ containers that do not need dev or test
+# requirements.
 
 import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASES = {
     'default': {
@@ -17,53 +19,7 @@ DATABASES = {
     },
 }
 
-USE_PARTITIONED_DATABASE = os.environ.get('USE_PARTITIONED_DATABASE', 'no') == 'yes'
-if USE_PARTITIONED_DATABASE:
-    DATABASES.update({
-        'proxy': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'commcarehq_proxy',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
-            'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
-            'PLPROXY': {
-                'PROXY': True,
-                'PLPROXY_HOST': 'localhost'
-            }
-        },
-        'p1': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'commcarehq_p1',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
-            'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
-            'PLPROXY': {
-                'SHARDS': [0, 1],
-            }
-        },
-        'p2': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'commcarehq_p2',
-            'USER': 'commcarehq',
-            'PASSWORD': 'commcarehq',
-            'HOST': 'postgres',
-            'PORT': '5432',
-            'TEST': {
-                'SERIALIZE': False,
-            },
-            'PLPROXY': {
-                'SHARDS': [2, 3],
-            }
-        },
-    })
+USE_PARTITIONED_DATABASE = False
 
 ####### Couch Config ###### noqa: E266
 COUCH_DATABASES = {
@@ -123,21 +79,19 @@ KAFKA_BROKERS = ['kafka:9092']
 SHARED_DRIVE_ROOT = '/sharedfiles'
 
 ALLOWED_HOSTS = ['*']
-#FIX_LOGGER_ERROR_OBFUSCATION = True
 
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365
-SHARED_DRIVE_ROOT = '/sharedfiles'
 
 BASE_ADDRESS = '{}:8000'.format(os.environ.get('HQ_PORT_8000_TCP_ADDR', 'localhost'))
 
 ######## Email setup ########
-# email settings: these ones are the custom hq ones
-EMAIL_LOGIN = "notifications@dimagi.com"
+
+EMAIL_LOGIN = "notifications@example.com"
 EMAIL_PASSWORD = "******"
-EMAIL_SMTP_HOST = "smtp.gmail.com"
+EMAIL_SMTP_HOST = "smtp.example.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
@@ -147,18 +101,25 @@ BITLY_OAUTH_TOKEN = None
 
 ####### Jar signing config ########
 
-_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 JAR_SIGN = {
-    "jad_tool": os.path.join(_ROOT_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
-    "key_store": os.path.join(_ROOT_DIR, "InsecureTestingKeyStore"),
+    "jad_tool": os.path.join(BASE_DIR, "corehq", "apps", "app_manager", "JadTool.jar"),
+    "key_store": os.path.join(BASE_DIR, "InsecureTestingKeyStore"),
     "key_alias": "javarosakey",
     "store_pass": "onetwothreefourfive",
     "key_pass": "onetwothreefourfive",
 }
 
-SECRET_KEY = 'secrettravis'
+SECRET_KEY = 'you should really change this'
 
-# No logging
+LOG_HOME = os.path.join(BASE_DIR, 'log')
+COUCH_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.couch.log")
+DJANGO_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.django.log")
+ACCOUNTING_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.accounting.log")
+ANALYTICS_LOG_FILE = os.path.join(LOG_HOME, "commcarehq.analytics.log")
+FORMPLAYER_TIMING_FILE = os.path.join(LOG_HOME, "formplayer.timing.log")
+FORMPLAYER_DIFF_FILE = os.path.join(LOG_HOME, "formplayer.diff.log")
+SOFT_ASSERTS_LOG_FILE = os.path.join(LOG_HOME, "soft_asserts.log")
+MAIN_COUCH_SQL_DATAMIGRATION = os.path.join(LOG_HOME, "main_couch_sql_datamigration.log")
 
 LOCAL_LOGGING_CONFIG = {
     'loggers': {
@@ -201,26 +162,24 @@ TESTS_SHOULD_TRACK_CLEANLINESS = True
 # see also corehq.apps.sms.tests.util.TouchformsTestCase
 SKIP_TOUCHFORMS_TESTS = True
 
-UNIT_TESTING = True
-
 PILLOWTOP_MACHINE_ID = 'testhq'
 
 CACHE_REPORTS = True
 
-if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
-    UNIT_TESTING = False
-    ADMINS = (('Admin', 'admin@example.com'),)
+UNIT_TESTING = False
+ADMINS = (('Admin', 'admin@example.com'),)
 
-    COMPRESS_OFFLINE = False
+COMPRESS_OFFLINE = False
 
-    FORMPLAYER_URL = 'http://formplayer:8080'
-    FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
+FORMPLAYER_URL = 'http://formplayer:8080'
+FORMPLAYER_URL_WEBAPPS = 'http://localhost:8080'
+FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
 
-    CCHQ_API_THROTTLE_REQUESTS = 200
-    CCHQ_API_THROTTLE_TIMEFRAME = 10
+CCHQ_API_THROTTLE_REQUESTS = 200
+CCHQ_API_THROTTLE_TIMEFRAME = 10
 
-    RESTORE_PAYLOAD_DIR_NAME = 'restore'
-    SHARED_TEMP_DIR_NAME = 'temp'
+RESTORE_PAYLOAD_DIR_NAME = 'restore'
+SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
 
