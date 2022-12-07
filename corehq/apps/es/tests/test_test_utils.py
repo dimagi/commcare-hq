@@ -1,4 +1,5 @@
 from django.test import SimpleTestCase
+from nose.tools import assert_raises_regex
 from testil import assert_raises
 from unittest.mock import patch
 
@@ -132,30 +133,20 @@ class TestNoSetupTeardownMethods:
 
 @es_test_attr
 def test_setup_class_expects_classmethod():
-    try:
+    with assert_raises_regex(ValueError, "^'setup_class' expects a classmethod"):
         @es_test(requires=[pigs_adapter], setup_class=True)
         class TestExpectsClassmethod:
-
             def setUpClass(self):
                 pass
-
-        assert False, "ValueError not raised"
-    except ValueError as exc:
-        assert str(exc).startswith("'setup_class' expects a classmethod"), str(exc)
 
 
 @es_test_attr
 def test_teardown_class_expects_classmethod():
-    try:
+    with assert_raises_regex(ValueError, "^'setup_class' expects a classmethod"):
         @es_test(requires=[pigs_adapter], setup_class=True)
         class TestExpectsClassmethod:
-
             def tearDownClass(self):
                 pass
-
-        assert False, "ValueError not raised"
-    except ValueError as exc:
-        assert str(exc).startswith("'setup_class' expects a classmethod"), str(exc)
 
 
 @es_test
