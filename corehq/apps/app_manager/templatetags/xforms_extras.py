@@ -141,8 +141,7 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
         template = '''
             <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
                       class="form-control vertical-resize"
-                      value="{value}"
-            ></textarea>
+                      >{value}</textarea>
         '''
 
     return format_html(template, **options)
