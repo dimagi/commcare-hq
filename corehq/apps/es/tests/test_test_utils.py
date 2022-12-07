@@ -6,43 +6,41 @@ from .utils import TestDocumentAdapter, es_test, es_test_attr, temporary_index
 from ..client import manager
 
 
-def test_no_setup():
-    test = es_test(TestSimpleTestCase)()
-    with patch.object(manager, "index_create") as mock:
-        test.setUp()
-    mock.assert_not_called()
-    test.tearDown()
+class TestSetupAndTeardown(SimpleTestCase):
 
+    class TestSimpleTestCase(SimpleTestCase):
+        """Use a subclass of ``SimpleTestCase`` for making discrete calls to
+        {setUp,tearDown}Class so we can't break other tests if we use it in a
+        non-standard way.
+        """
 
-def test_no_teardown():
-    test = es_test(TestSimpleTestCase)()
-    test.setUp()
-    with patch.object(manager, "index_delete") as mock:
+    def test_no_setup(self):
+        test = es_test(self.TestSimpleTestCase)()
+        with patch.object(manager, "index_create") as mock:
+            test.setUp()
+        mock.assert_not_called()
         test.tearDown()
-    mock.assert_not_called()
 
+    def test_no_teardown(self):
+        test = es_test(self.TestSimpleTestCase)()
+        test.setUp()
+        with patch.object(manager, "index_delete") as mock:
+            test.tearDown()
+        mock.assert_not_called()
 
-def test_no_class_setup():
-    Test = es_test(TestSimpleTestCase)
-    with patch.object(manager, "index_create") as mock:
-        Test.setUpClass()
-    mock.assert_not_called()
-    Test.tearDownClass()
-
-
-def test_no_class_teardown():
-    Test = es_test(TestSimpleTestCase)
-    Test.setUpClass()
-    with patch.object(manager, "index_delete") as mock:
+    def test_no_class_setup(self):
+        Test = es_test(self.TestSimpleTestCase)
+        with patch.object(manager, "index_create") as mock:
+            Test.setUpClass()
+        mock.assert_not_called()
         Test.tearDownClass()
-    mock.assert_not_called()
 
-
-class TestSimpleTestCase(SimpleTestCase):
-    """Use a subclass of ``SimpleTestCase`` for making discrete calls to
-    {setUp,tearDown}Class so we can't break other tests if we use it in a
-    non-standard way.
-    """
+    def test_no_class_teardown(self):
+        Test = es_test(self.TestSimpleTestCase)
+        Test.setUpClass()
+        with patch.object(manager, "index_delete") as mock:
+            Test.tearDownClass()
+        mock.assert_not_called()
 
 
 cats_adapter = TestDocumentAdapter("cats", "cat")
