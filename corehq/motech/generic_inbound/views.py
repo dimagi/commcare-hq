@@ -195,8 +195,6 @@ def generic_inbound_api(request, domain, api_id):
 
 
 def _log_api_request(api, request, response):
-    is_success = 200 <= response.status < 300
-
     log = RequestLog.objects.create(
         domain=request.domain,
         api=api,
@@ -209,5 +207,4 @@ def _log_api_request(api, request, response):
         request_headers=get_standard_headers(request.META),
         request_ip=get_ip(request),
     )
-
     make_processing_attempt(response, log)
