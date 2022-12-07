@@ -6,7 +6,6 @@ from django.utils.translation import gettext as _
 from django.db import transaction
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import iter_couch_docs
 
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
@@ -29,7 +28,6 @@ from corehq.apps.integration.models import (
     GaenOtpServerSettings,
     HmacCalloutSettings,
 )
-from corehq.apps.fixtures.dbaccessors import delete_fixture_items_for_data_type
 from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
@@ -233,7 +231,10 @@ def update_fixture(domain_link, tag):
 
     # Re-create relevant data items
     if is_existing_table:
-        delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._migration_couch_id)
+        LookupTableRow.objects.filter(
+            domain=domain_link.linked_domain,
+            table_id=linked_data_type.id
+        ).delete()
     ignore_fields = {"id", "domain", "table", "table_id"}
     row_fields = [field.attname
         for field in LookupTableRow._meta.fields
@@ -243,10 +244,8 @@ def update_fixture(domain_link, tag):
         table_id=linked_data_type.id,
         **{f: getattr(master_item, f) for f in row_fields}
     ) for master_item in master_results["data_items"])
-    save_to_couch = LookupTableRow._migration_get_couch_model_class().bulk_save
     for chunk in chunked(rows, 1000, list):
         LookupTableRow.objects.bulk_create(chunk)
-        save_to_couch(list(iter_couch_docs(LookupTableRow, chunk)))
 
     clear_fixture_cache(domain_link.linked_domain)
 

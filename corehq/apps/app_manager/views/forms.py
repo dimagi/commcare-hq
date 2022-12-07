@@ -380,7 +380,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
             and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+        form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
@@ -389,15 +389,27 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ],
         )
         module_unique_ids = [m.unique_id for m in app.get_modules()]
-        form.form_links = [FormLink(
-            xpath=link[0],
-            form_id=link[1] if link[1] not in module_unique_ids else None,
-            module_unique_id=link[1] if link[1] in module_unique_ids else None,
-            datums=[
-                FormDatum(name=datum['name'], xpath=datum['xpath'])
-                for datum in link[2]
-            ]
-        ) for link in form_links]
+        form_links = []
+        for link in form_link_data:
+            xpath, unique_id, datums = link
+            if '.' in unique_id:
+                form_module_id, form_id = unique_id.split('.')
+                module_unique_id = None
+            else:
+                form_id = unique_id if unique_id not in module_unique_ids else None
+                module_unique_id = unique_id if unique_id in module_unique_ids else None
+                form_module_id = None
+            form_links.append(FormLink(
+                xpath=xpath,
+                form_id=form_id,
+                form_module_id=form_module_id,
+                module_unique_id=module_unique_id,
+                datums=[
+                    FormDatum(name=datum['name'], xpath=datum['xpath'])
+                    for datum in datums
+                ]
+            ))
+        form.form_links = form_links
 
     if should_edit('post_form_workflow_fallback'):
         form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
@@ -909,8 +921,8 @@ def _get_form_link_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
-    def _form_name(form):
-        module_name = _module_name(form.get_module())
+    def _form_name(module, form):
+        module_name = _module_name(module)
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
@@ -937,14 +949,15 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-        for candidate_form in candidate_module.get_forms():
+        for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
             case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
-                'unique_id': candidate_form.unique_id,
-                'name': _form_name(candidate_form),
+                # this is necessary to disambiguate forms in shadow modules
+                'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
+                'name': _form_name(candidate_module, candidate_form),
                 'auto_link': case_type_match or is_parent,
                 'allow_manual_linking': True,
             })
@@ -969,7 +982,7 @@ def get_form_datums(request, domain, app_id):
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ]
-    return JsonResponse(datums)
+    return JsonResponse(datums, safe=False)
 
 
 @require_GET

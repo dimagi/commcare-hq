@@ -637,6 +637,13 @@ LAZY_LOAD_MULTIMEDIA = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY = StaticToggle(
+    'custom-external_id-case-property',
+    'eCHIS: Use the user defined external_id case property when running auto case update rules.',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
 APP_BUILDER_ADVANCED = StaticToggle(
     'advanced-app-builder',
     'Advanced Module in App-Builder',
@@ -1427,14 +1434,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
     namespaces=[NAMESPACE_DOMAIN]
-)
-
-SEND_UCR_REBUILD_INFO = StaticToggle(
-    'send_ucr_rebuild_info',
-    'Notify when UCR rebuilds finish or error.',
-    TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    parent_toggles=[USER_CONFIGURABLE_REPORTS]
 )
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
