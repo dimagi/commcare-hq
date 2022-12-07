@@ -424,7 +424,14 @@ class DomainGlobalSettingsForm(forms.Form):
     release_mode_visibility = BooleanField(
         label=gettext_lazy("Enable Release Mode"),
         required=False,
-        help_text=gettext_lazy("Check this box to enable release mode in the app settings.")
+        help_text=gettext_lazy(
+            """
+            Check this box to enable release mode setting on the app release page.
+            Enabled setting restricts user to directly mark a version 'released'
+            and allows users to so only when they are in 'Release Mode' on the
+            release page of applications.
+            """
+        )
     )
 
     def __init__(self, *args, **kwargs):
