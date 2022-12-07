@@ -45,18 +45,16 @@ RUN groupadd -r cchq && \
     chown cchq:cchq /vendor /sharedfiles
 USER cchq:cchq
 
-#COPY requirements/prod-requirements.txt /vendor/requirements.txt
-# TODO: manage.py appears to need nose. How does prod avoid this?
-COPY requirements/dev-requirements.txt /vendor/requirements.txt
+COPY --chown=cchq:cchq requirements/prod-requirements.txt /vendor/requirements.txt
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt --user --upgrade && \
     pip cache purge
 
-COPY package.json /vendor/
+COPY --chown=cchq:cchq package.json /vendor/
 RUN npm shrinkwrap && \
     yarn global add phantomjs-prebuilt
 
-COPY . /vendor/
-COPY docker/min_settings.py /vendor/localsettings.py
+COPY --chown=cchq:cchq . /vendor/
+COPY --chown=cchq:cchq docker/min_settings.py /vendor/localsettings.py
 RUN mkdir /vendor/log
 RUN python manage.py collectstatic --noinput
