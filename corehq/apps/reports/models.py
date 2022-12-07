@@ -325,6 +325,8 @@ class TableauAPISession(object):
         if not self.signed_in:
             raise TableauAPIError("You must be signed in to the API to call that method.")
 
+# Signing out after authenticating with a JWT currently doesn't work and is an open bug with Tableau Support.
+# Sessions are instead ended by an expiration time or when another session is started.
     def sign_out(self):
         self._make_request(
             self.POST,
