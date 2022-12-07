@@ -74,11 +74,10 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
-    - revert-32380-revert-32369-sk/shadow-module-form-links # Simon Nov 30
     - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
     - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - dm/sql-lookup-tables # Daniel Dec 5
     - ad/taleau-syncing-util-functions # Addison Dec 5
     #- pkv/application-release-logs-2
+    - sk/multi-select-eof-nav  # Simon Dec 7
 submodules: { }
