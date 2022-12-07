@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -33,7 +33,13 @@ from corehq.motech.generic_inbound.models import (
     ProcessingAttempt,
     RequestLog,
 )
-from corehq.motech.generic_inbound.utils import ApiResponse, ApiRequest, make_processing_attempt
+from corehq.motech.generic_inbound.reports import ApiLogDetailView
+from corehq.motech.generic_inbound.utils import (
+    ApiRequest,
+    ApiResponse,
+    make_processing_attempt,
+    reprocess_api_request,
+)
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
@@ -208,3 +214,10 @@ def _log_api_request(api, request, response):
         request_ip=get_ip(request),
     )
     make_processing_attempt(response, log)
+
+
+@can_administer_generic_inbound
+def retry_api_request(request, domain, log_id):
+    request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
+    reprocess_api_request(request_log)
+    return redirect(ApiLogDetailView.urlname, domain, log_id)
