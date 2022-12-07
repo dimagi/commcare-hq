@@ -21,33 +21,33 @@ class ESSyncUtil:
 
     def start_reindex(self, cname):
 
-        self.adapter = self.get_adapter(cname)
+        adapter = self._get_adapter(cname)
 
-        if not isinstance(self.adapter, ElasticMultiplexAdapter):
+        if not isinstance(adapter, ElasticMultiplexAdapter):
             raise IndexNotMultiplexedException("""Index not multiplexed!
             Sync can only be run on multiplexed indices""")
 
-        self.source, self.dest = self.get_source_destination_indexes(self.adapter)
+        self.source, self.dest = self._get_source_destination_indexes(adapter)
 
         task_id = es_manager.reindex(self.source, self.dest)
 
         # This would display progress untill reindex process is completed
         check_task_progress(task_id)
 
-        self.perform_cleanup()
+        self.perform_cleanup(adapter)
 
-    def get_adapter(self, cname):
+    def _get_adapter(self, cname):
         index_info = registry_entry(cname)
         return doc_adapter_from_info(index_info)
 
-    def get_source_destination_indexes(self, adapter):
+    def _get_source_destination_indexes(self, adapter):
         return adapter.primary.index_name, adapter.secondary.index_name
 
-    def perform_cleanup(self):
+    def perform_cleanup(self, adapter):
         print("\nPerforming Cleanup:")
 
         print("\nDeleting Tombstones")
-        self.adapter.secondary.delete_tombstones()
+        adapter.secondary.delete_tombstones()
 
         print("\nMarking Index eligible to upgrade to primary")
         self.mark_primary_eligible()
