@@ -125,5 +125,5 @@ class TestElasticSyncMultiplexedCommand(SimpleTestCase):
         )
 
     def test_get_correct_adapter_with_cname(self):
-        adapter = self.util.get_adapter('test_reindex')
+        adapter = self.util._get_adapter('test_reindex')
         self.assertEqual(adapter.index_name, f"test_{ReIndexTestHelper.index}")
