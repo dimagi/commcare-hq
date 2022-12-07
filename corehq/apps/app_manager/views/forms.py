@@ -378,8 +378,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 status_code=400
             )
     if (should_edit("form_links_xpath_expressions")
-            and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+            and should_edit("form_links_form_ids")):
         form_links = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -796,7 +795,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = not form.get_module().is_multi_select()
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -842,6 +841,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
         'module_is_multi_select': module.is_multi_select(),
         'module_loads_registry_case': module_loads_registry_case(module),
+        'linkable_forms': _get_form_link_context(module, langs),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -849,9 +849,6 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
-
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        context.update(_get_form_link_context(module, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -948,11 +945,7 @@ def _get_form_link_context(module, langs):
                 'auto_link': case_type_match or is_parent,
                 'allow_manual_linking': True,
             })
-
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
-
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 @require_can_edit_apps
 def get_form_datums(request, domain, app_id):

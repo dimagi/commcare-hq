@@ -260,7 +260,6 @@ class BuildErrorsTest(SimpleTestCase):
             [error['type'] for error in factory.app.validate_app()]
         )
 
-    @flag_enabled('FORM_LINK_WORKFLOW')
     def test_form_module_validation(self, *args):
         factory = AppFactory(build_version='2.24.0')
         app = factory.app

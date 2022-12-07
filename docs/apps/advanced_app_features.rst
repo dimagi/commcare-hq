@@ -71,7 +71,7 @@ End of form navigation ("EOF nav") allows for a couple of specific locations, su
 parent module. EOF nav also has a "previous screen" option this is particularly fragile, since it requires HQ to
 replicate CommCare's UI logic.
 
-Form linking, which is behind the ``FORM_LINK_WORKFLOW`` flag, allows the user to select a form as the destination.
+Form linking under EOF nav, allows the user to select a form as the destination.
 Form linking allows the user to link to multiple forms, depending on the value of an XPath expression.
 
 Most forms can be linked "automatically", meaning that it's easy for HQ to determine what datums are needed.
