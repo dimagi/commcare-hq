@@ -7,31 +7,42 @@ from ..client import manager
 
 
 def test_no_setup():
-    Test = es_test(SimpleTestCase)
+    test = es_test(TestSimpleTestCase)()
     with patch.object(manager, "index_create") as mock:
-        Test().setUp()
-        mock.assert_not_called()
+        test.setUp()
+    mock.assert_not_called()
+    test.tearDown()
 
 
 def test_no_teardown():
-    Test = es_test(SimpleTestCase)
+    test = es_test(TestSimpleTestCase)()
+    test.setUp()
     with patch.object(manager, "index_delete") as mock:
-        Test().tearDown()
-        mock.assert_not_called()
+        test.tearDown()
+    mock.assert_not_called()
 
 
 def test_no_class_setup():
-    Test = es_test(SimpleTestCase, setup_class=True)
+    Test = es_test(TestSimpleTestCase)
     with patch.object(manager, "index_create") as mock:
         Test.setUpClass()
-        mock.assert_not_called()
+    mock.assert_not_called()
+    Test.tearDownClass()
 
 
 def test_no_class_teardown():
-    Test = es_test(SimpleTestCase, setup_class=True)
+    Test = es_test(TestSimpleTestCase)
+    Test.setUpClass()
     with patch.object(manager, "index_delete") as mock:
         Test.tearDownClass()
-        mock.assert_not_called()
+    mock.assert_not_called()
+
+
+class TestSimpleTestCase(SimpleTestCase):
+    """Use a subclass of ``SimpleTestCase`` for making discrete calls to
+    {setUp,tearDown}Class so we can't break other tests if we use it in a
+    non-standard way.
+    """
 
 
 cats_adapter = TestDocumentAdapter("cats", "cat")
