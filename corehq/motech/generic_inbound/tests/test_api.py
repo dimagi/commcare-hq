@@ -319,3 +319,27 @@ class TestGenericInboundAPIView(TestCase):
         attempt = log.processingattempt_set.last()
         self.assertEqual(attempt.is_retry, True)
         self.assertEqual(attempt.response_status, 200)
+
+    def test_retry_bad_json(self):
+        api = self._make_api({'prop': 'const'})
+        response = self.client.post(
+            reverse('generic_inbound_api', args=[self.domain_name, api.url_key]),
+            data='This is not JSON!',
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.raw_response, {"error": "Payload must be valid JSON"})
+
+        reprocess_api_request(log)
+        log.refresh_from_db()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        self.assertEqual(log.processingattempt_set.count(), 2)
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.is_retry, True)
+        self.assertEqual(attempt.raw_response, {"error": "Payload must be valid JSON"})

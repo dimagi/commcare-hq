@@ -112,8 +112,12 @@ def reprocess_api_request(request_log):
     from corehq.motech.generic_inbound.models import RequestLog
     from corehq.motech.generic_inbound.core import execute_generic_api
 
-    request_data = ApiRequest.from_log(request_log)
-    response = execute_generic_api(request_log.api, request_data)
+    try:
+        request_data = ApiRequest.from_log(request_log)
+    except GenericInboundUserError as e:
+        response = ApiResponse(status=400, data={'error': str(e)})
+    else:
+        response = execute_generic_api(request_log.api, request_data)
 
     with transaction.atomic():
         request_log.status = RequestLog.Status.from_status_code(response.status)
