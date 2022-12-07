@@ -56,6 +56,6 @@ urlpatterns = [
     url(r'^export/', include('corehq.apps.export.urls')),
     url(r'^find/$', find_by_id, name="data_find_by_id"),
     url(r'^ucr_expressions/$', UCRExpressionListView.as_view(), name=UCRExpressionListView.urlname),
-    url(r'^ucr_expressions/(?P<expression_id>\d+)/$', UCRExpressionEditView.as_view(),
+    url(r'^ucr_expressions/(?P<expression_id>[\d-]+)/$', UCRExpressionEditView.as_view(),
         name=UCRExpressionEditView.urlname),
 ]
