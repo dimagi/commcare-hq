@@ -32,16 +32,19 @@ class TestCaseListExplorer(TestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
+        cls.domain.delete()
 
     @flag_enabled('CASE_LIST_EXPLORER')
     def test_with_explorer_columns_legacy(self):
         legacy_columns = ['@case_type', 'case_name', 'last_modified']
-        q_dict_get = QueryDict('', mutable=True)
+        get_query_dict = QueryDict('', mutable=True)
         report_slugs = ['project_data']
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        q_dict_get['explorer_columns'] = json.dumps(legacy_columns)
+        get_query_dict.setlist('case_list_filter', report_slugs)
 
-        self.request.GET = q_dict_get
+        # CaseListExplorerColumns expects an encoded json string
+        get_query_dict['explorer_columns'] = json.dumps(legacy_columns)
+
+        self.request.GET = get_query_dict
         cle = CaseListExplorer(self.request, domain=self.domain_name)
 
         header_names = []
@@ -62,12 +65,12 @@ class TestCaseListExplorer(TestCase):
             {'name': 'case_name', 'label': 'case_name'},
             {'name': 'last_modified', 'label': 'last_modified'}
         ]
-        q_dict_get = QueryDict('', mutable=True)
+        get_query_dict = QueryDict('', mutable=True)
         report_slugs = ['project_data']
-        q_dict_get.setlist('case_list_filter', report_slugs)
-        q_dict_get['explorer_columns'] = json.dumps(columns)
+        get_query_dict.setlist('case_list_filter', report_slugs)
+        get_query_dict['explorer_columns'] = json.dumps(columns)
 
-        self.request.GET = q_dict_get
+        self.request.GET = get_query_dict
         cle = CaseListExplorer(self.request, domain=self.domain_name)
 
         header_names = []
