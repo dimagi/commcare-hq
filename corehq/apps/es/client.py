@@ -330,13 +330,14 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
-    def reindex(self, source, dest, wait_for_completion=False, **kwargs):
+    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
         """
         Starts the reindex process in elastic search cluster
 
         :param source: ``str`` name of the source index
         :param dest: ``str`` name of the destination index
-        :param wait_for_completion: ``bool``
+        :param wait_for_completion: ``bool`` would block the request until reindex is complete
+        :param refresh: ``bool`` refreshes index
 
         :returns: None if wait_for_completion is True else would return task_id of reindex task
         """
@@ -355,7 +356,11 @@ class ElasticManageAdapter(BaseAdapter):
             },
             "conflicts": "proceed"
         }
-        reindex_info = self._es.reindex(reindex_body, wait_for_completion=wait_for_completion, **kwargs)
+        reindex_info = self._es.reindex(
+            reindex_body,
+            wait_for_completion=wait_for_completion,
+            refresh=refresh
+        )
         if not wait_for_completion:
             return reindex_info['task']
 
