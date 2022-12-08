@@ -306,6 +306,7 @@ class TestGenericInboundAPIView(TestCase):
 
         log = RequestLog.objects.last()
         self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        self.assertEqual(log.attempts, 1)
 
         # Delete the validation condition that caused it to fail
         api = ConfigurableAPI.objects.last()
@@ -314,6 +315,7 @@ class TestGenericInboundAPIView(TestCase):
         reprocess_api_request(log)
         log.refresh_from_db()
         self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+        self.assertEqual(log.attempts, 2)
         self.assertEqual(log.processingattempt_set.count(), 2)
 
         attempt = log.processingattempt_set.last()
