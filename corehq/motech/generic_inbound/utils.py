@@ -24,7 +24,7 @@ def make_url_key():
 @attr.s(kw_only=True, frozen=True, auto_attribs=True)
 class ApiRequest:
     domain: str
-    couch_user: CouchUser  # Is this correct?
+    couch_user: CouchUser
     request_method: str
     user_agent: str
     data: dict
