@@ -124,7 +124,7 @@ def start_reindex(es, source_index, target_index):
         "conflicts": "proceed"
     }
 
-    result = manager.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
+    result = manager.reindex(reindex_query, wait_for_completion=False)
     task_id = result["task"]
     return task_id
 
