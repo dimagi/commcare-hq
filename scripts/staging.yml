@@ -79,5 +79,4 @@ branches:
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     - ad/taleau-syncing-util-functions # Addison Dec 5
     #- pkv/application-release-logs-2
-    - sk/multi-select-eof-nav  # Simon Dec 7
 submodules: { }
