@@ -133,8 +133,8 @@ class CaseListExplorer(CaseListReport):
 
         return persistent_cols + [
             DataTablesColumn(
-                column,
-                prop_name=column,
+                column["label"],
+                prop_name=column["name"],
                 sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
