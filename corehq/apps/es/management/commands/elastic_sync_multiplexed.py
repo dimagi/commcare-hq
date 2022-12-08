@@ -13,7 +13,10 @@ from corehq.apps.es.utils import check_task_progress
 class ESSyncUtil:
 
     """
-    This class contains methods to support the reindex process of multiplexed indices in HQ
+    This class contains methods to support the reindex process of multiplexed indices in HQ.
+
+    ** NOTE ** If this util is used somewhere else in future it should be moved to ES utils
+    rather than importing it from this management command.
     """
 
     def __init__(self):
