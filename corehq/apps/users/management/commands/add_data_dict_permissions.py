@@ -4,6 +4,7 @@ from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
+from corehq.apps.users.models import RolePermission, HqPermissions
 from corehq.apps.users.models_role import Permission, UserRole
 from corehq.toggles import DATA_DICTIONARY, DATA_FILE_DOWNLOAD
 
@@ -54,15 +55,14 @@ def build_role_can_edit_commcare_data_q_object() -> Q:
 
 
 def build_role_can_export_data_q_object() -> Q:
-    view_reports_permission, created = Permission.objects.get_or_create(value='view_reports')
-    can_view_commcare_reports = Q(rolepermission__permission_fk_id=view_reports_permission.id)
-
-    can_view_commcare_export_reports = Q()
+    can_view_commcare_export_reports = Q(allow_all=True)
     for export_permission in EXPORT_PERMISSIONS:
-        can_view_commcare_export_reports.add(Q(rolepermission__allowed_items__contains=[export_permission]),
-                                            Q.OR)
+        can_view_commcare_export_reports.add(Q(allowed_items__contains=[export_permission]), Q.OR)
+    queryset = (RolePermission.objects
+                .filter(permission_fk__value=HqPermissions.view_reports.name)
+                .filter(can_view_commcare_export_reports))
 
-    return can_view_commcare_reports | can_view_commcare_export_reports
+    return Q(rolepermission__in=queryset)
 
 
 def build_role_can_download_data_files_q_object() -> Q:
