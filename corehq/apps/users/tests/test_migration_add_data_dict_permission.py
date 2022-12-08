@@ -8,7 +8,8 @@ from corehq.apps.users.management.commands.add_data_dict_permissions import (
     build_role_can_edit_commcare_data_q_object,
     build_role_can_export_data_q_object,
     build_role_can_download_data_files_q_object,
-    role_can_view_data_tab
+    role_can_view_data_tab,
+    role_already_migrated,
 )
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 
@@ -86,6 +87,14 @@ class TestMigrationQuery(TestCase):
 
         can_not_view_data_tab = ~role_can_view_data_tab()
         queried_role_ids = self._query_role(can_not_view_data_tab)
+        self.assertQuerysetEqual(queried_role_ids, [self.role.id], ordered=False)
+
+    def test_role_already_migrated(self):
+        self.role.rolepermission_set.set([
+            RolePermission(permission=HqPermissions.edit_data_dict.name)
+        ], bulk=False)
+        role_migrated = role_already_migrated()
+        queried_role_ids = self._query_role(role_migrated)
         self.assertQuerysetEqual(queried_role_ids, [self.role.id], ordered=False)
 
     def _query_role(self, filter_query: Q):

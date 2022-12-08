@@ -41,6 +41,10 @@ class Command(BaseCommand):
                         print("Updated {} roles".format(num_roles_modified))
 
 
+def role_already_migrated() -> Q:
+    edit_data_dict_permission = Permission.objects.get(value=HqPermissions.edit_data_dict.name)
+    return Q(rolepermission__permission_fk_id=edit_data_dict_permission.id)
+
 def role_can_view_data_tab() -> Q:
     can_edit_commcare_data = build_role_can_edit_commcare_data_q_object()
     can_export_data = build_role_can_export_data_q_object()
