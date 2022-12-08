@@ -776,7 +776,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         subscription = Subscription.get_active_subscription_by_domain(domain)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         for rate in plan_version.feature_rates.all():
-            if 'User' in rate.feature.name:
+            if rate.feature.feature_type == 'User':
                 user_rate = rate
                 break
         return {
