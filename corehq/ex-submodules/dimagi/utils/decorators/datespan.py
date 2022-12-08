@@ -32,12 +32,12 @@ def datespan_in_request(from_param="from", to_param="to",
                 req_dict = req.POST if req.method == "POST" else req.GET
                 def date_or_nothing(param):
                     date = req_dict.get(param, None)
-                    return datetime.strptime(date, format_string) if date else None
-                try:
-                    startdate = date_or_nothing(from_param)
-                    enddate = date_or_nothing(to_param)
-                except ValueError as e:
-                    return HttpResponseBadRequest(six.text_type(e))
+                    try:
+                        return datetime.strptime(date, format_string) if date else None
+                    except ValueError:
+                        return None
+                startdate = date_or_nothing(from_param)
+                enddate = date_or_nothing(to_param)
                 if startdate or enddate:
                     req.datespan = DateSpan(startdate, enddate, format_string)
                 else:
