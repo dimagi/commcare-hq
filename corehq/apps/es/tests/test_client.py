@@ -8,6 +8,7 @@ import uuid
 from django.test import SimpleTestCase, override_settings
 from nose.tools import nottest
 from unittest.mock import patch
+from corehq.apps.es.utils import check_task_progress
 
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
@@ -470,28 +471,48 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
 
-    def test_reindex(self):
-        all_ids = set([str(i) for i in range(1, 10)])
+    def test_reindex_with_wait_for_completion_is_true(self):
         SECONDARY_INDEX = 'secondary_index'
-
-        def _index_test_docs():
-            for i in all_ids:
-                doc = TestDoc(str(i), f"val_{i}")
-                test_adapter.index(doc, refresh=True)
-
-        def get_all_doc_ids_in_secondary():
-            docs = test_adapter._es.search(SECONDARY_INDEX, body={}, _source=False)
-            return set([doc['_id'] for doc in docs['hits']['hits']])
 
         with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
 
-            _index_test_docs()
+            all_ids = self._index_test_docs_for_reindex()
 
             with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
 
                 manager.reindex(test_adapter.index_name, SECONDARY_INDEX, wait_for_completion=True, refresh=True)
 
-                self.assertEqual(get_all_doc_ids_in_secondary(), all_ids)
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_wait_for_completion_is_false(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                task_id = manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=False, refresh=True
+                )
+
+                check_task_progress(task_id)
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def _index_test_docs_for_reindex(self):
+        all_ids = set([str(i) for i in range(1, 10)])
+
+        for id in all_ids:
+            doc = TestDoc(str(id), f"val_{id}")
+            test_adapter.index(doc, refresh=True)
+        return all_ids
+
+    def _get_all_doc_ids_in_index(self, index):
+        docs = test_adapter._es.search(index, body={}, _source=False)
+        return set([doc['_id'] for doc in docs['hits']['hits']])
 
     def test_indices_refresh(self):
         def get_search_hits():
