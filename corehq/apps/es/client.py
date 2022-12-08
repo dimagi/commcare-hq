@@ -875,8 +875,8 @@ class ElasticDocumentAdapter(BaseAdapter):
         Deletes all tombstones documents present in the index
 
         TODO:  This should be replaced by delete_by_query
-         https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
-         when on ES version >= 5
+        https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
+        when on ES version >= 5
         """
         tombstone_ids = self._get_tombstone_ids()
         self.bulk_delete(tombstone_ids, refresh=True)
