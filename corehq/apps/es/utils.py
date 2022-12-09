@@ -11,6 +11,9 @@ from corehq.util.json import CommCareJSONEncoder
 from corehq.util.metrics import metrics_counter
 
 
+TASK_POLL_DELAY = 10  # number of seconds to sleep between polling for task info
+
+
 class ElasticJSONSerializer(object):
     """Modified version of ``elasticsearch.serializer.JSONSerializer``
     that uses the CommCareJSONEncoder for serializing to JSON.
@@ -141,8 +144,12 @@ def check_task_progress(task_id, just_once=False):
                     progress_nanos = progress_data[-1]["time"] - progress_data[0]["time"]
                     progress_diff = progress_data[-1]["progress"] - progress_data[0]["progress"]
                     progress_data = progress_data[-12:]  # truncate progress data
-                    remaining_nanos = progress_nanos / progress_diff * remaining
-                    remaining_time_relative = timedelta(microseconds=remaining_nanos / 1000)
+                    if progress_diff:
+                        remaining_nanos = progress_nanos / progress_diff * remaining
+                        remaining_time_relative = timedelta(microseconds=remaining_nanos / 1000)
+                    else:
+                        # avoid ZeroDivisionError
+                        remaining_time_relative = ''
 
             print(f"Progress {progress_percent:.2f}% ({progress} / {total}). "
                   f"Elapsed time: {_format_timedelta(run_time)}. "
@@ -151,7 +158,7 @@ def check_task_progress(task_id, just_once=False):
                   f"(recent average = {_format_timedelta(remaining_time_relative)})")
         if just_once:
             return
-        time.sleep(10)
+        time.sleep(TASK_POLL_DELAY)
 
 
 def _format_timedelta(td):

@@ -11,6 +11,7 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
+from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
@@ -116,12 +117,20 @@ def es_test(test=None, requires=[], setup_class=False):
         return es_test_attr(test)
 
     def setup_func():
-        for adapter in adapters:
+        for adapter in iter_all_doc_adapters():
             setup_test_index(adapter)
 
     def teardown_func():
-        for adapter in adapters:
+        for adapter in iter_all_doc_adapters():
             teardown_test_index(adapter)
+
+    def iter_all_doc_adapters():
+        for adapter in adapters:
+            if isinstance(adapter, ElasticMultiplexAdapter):
+                yield adapter.primary
+                yield adapter.secondary
+            else:
+                yield adapter
 
     adapters = list(requires)
     if isclass(test):

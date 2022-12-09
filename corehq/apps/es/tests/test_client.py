@@ -498,7 +498,9 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
                     wait_for_completion=False, refresh=True
                 )
 
-                check_task_progress(task_id)
+                with patch("corehq.apps.es.utils.TASK_POLL_DELAY", 0):
+                    print("")  # improve test output when using --nocapture option
+                    check_task_progress(task_id)
 
                 self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
 
