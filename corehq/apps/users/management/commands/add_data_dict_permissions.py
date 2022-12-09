@@ -14,6 +14,7 @@ class Command(BaseCommand):
     help = "Adds data dictionary permission to user role if not already present and edit tab is viewable."
 
     def handle(self, **options):
+        Permission.create_all()
         num_roles_modified = 0
         view_data_dict_permission, created = Permission.objects.get_or_create(value='view_data_dict')
         edit_data_dict_permission, created = Permission.objects.get_or_create(value='edit_data_dict')
@@ -58,7 +59,7 @@ def role_can_view_data_tab() -> Q:
 
 
 def build_role_can_edit_commcare_data_q_object() -> Q:
-    edit_data_permission, created = Permission.objects.get_or_create(value='edit_data')
+    edit_data_permission, created = Permission.objects.get(value='edit_data')
     return Q(rolepermission__permission_fk_id=edit_data_permission.id)
 
 
@@ -75,8 +76,8 @@ def build_role_can_export_data_q_object() -> Q:
 
 def build_role_can_download_data_files_q_object() -> Q:
     data_file_download_domains = DATA_FILE_DOWNLOAD.get_enabled_domains()
-    view_file_dropzone_permission, created = Permission.objects.get_or_create(value='view_file_dropzone')
-    edit_file_dropzone_permission, created = Permission.objects.get_or_create(value='edit_file_dropzone')
+    view_file_dropzone_permission, created = Permission.objects.get(value='view_file_dropzone')
+    edit_file_dropzone_permission, created = Permission.objects.get(value='edit_file_dropzone')
 
     data_file_download_feat_flag_on = Q(domain__in=data_file_download_domains)
     can_view_file_dropzone = Q(rolepermission__permission_fk_id=view_file_dropzone_permission.id)
