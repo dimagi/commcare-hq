@@ -1241,6 +1241,21 @@ class MaintenanceAlertsView(BasePageView):
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
 
+    @method_decorator(require_superuser)
+    def post(self, request):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+        command = request.POST.get('command')
+        if command == 'activate':
+            ma.active = True
+        elif command == 'deactivate':
+            ma.active = False
+            ma.scheduled = False
+        elif command == 'schedule':
+            ma.scheduled = True
+        ma.save()
+        return HttpResponseRedirect(reverse('alerts'))
+
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
@@ -1291,37 +1306,6 @@ def create_alert(request):
 
     MaintenanceAlert(active=False, text=alert_text, domains=domains,
                      start_time=start_time, end_time=end_time, timezone=timezone).save()
-    return HttpResponseRedirect(reverse('alerts'))
-
-
-@require_POST
-@require_superuser
-def schedule_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.scheduled = True
-    ma.save()
-    return HttpResponseRedirect(reverse('alerts'))
-
-
-@require_POST
-@require_superuser
-def activate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = True
-    ma.save()
-    return HttpResponseRedirect(reverse('alerts'))
-
-
-@require_POST
-@require_superuser
-def deactivate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = False
-    ma.scheduled = False
-    ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
