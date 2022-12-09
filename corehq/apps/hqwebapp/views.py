@@ -101,6 +101,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.timezones.conversions import UserTime
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -1243,14 +1244,16 @@ class MaintenanceAlertsView(BasePageView):
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
+        import pytz
         return {
+            'timezones': pytz.common_timezones,
             'alerts': [{
                 'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-scheduled', '-created')[:20]]
         }
 
     @property
@@ -1262,9 +1265,27 @@ class MaintenanceAlertsView(BasePageView):
 @require_superuser
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
+    import pytz
     alert_text = request.POST.get('alert_text')
     domains = request.POST.get('domains').split() or None
-    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
+
+    start_time = request.POST.get('start_time') or None
+    end_time = request.POST.get('end_time') or None
+    timezone = request.POST.get('timezone') or 'UTC'
+
+    if start_time and end_time:
+        start_time = UserTime(
+            datetime.fromisoformat(start_time), tzinfo=pytz.timezone(timezone)
+        ).server_time().ui_string()
+        end_time = UserTime(
+            datetime.fromisoformat(end_time), tzinfo=pytz.timezone(timezone)
+        ).server_time().ui_string()
+    else:
+        start_time = None
+        end_time = None
+
+    MaintenanceAlert(active=False, text=alert_text, domains=domains,
+                     start_time=start_time, end_time=end_time, timezone=timezone).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
