@@ -2,12 +2,11 @@ import base64
 import json
 import re
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-
-from unittest.mock import patch
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -38,11 +37,10 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.util.test_utils import timelimit, flag_enabled
+from corehq.util.test_utils import flag_enabled, timelimit
 
 from .app_factory import AppFactory
 from .test_form_versioning import INVALID_TEMPLATE
-
 
 User = get_user_model()
 
