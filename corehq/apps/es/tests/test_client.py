@@ -8,6 +8,7 @@ import uuid
 from django.test import SimpleTestCase, override_settings
 from nose.tools import nottest
 from unittest.mock import patch
+from corehq.apps.es.utils import check_task_progress
 
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
@@ -291,6 +292,58 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             patched.assert_called_once_with(task_id=task_id, detailed=True)
             self.assertIn("running_time_in_nanos", task)
 
+    def test_cancel_task_with_invalid_task_id(self):
+        host, task = 'eCjqYKEeRAasMPL5hN6hsg', '280170'
+        task_id = f'{host}:{task}'
+        # Task failure response for ES 2.4
+        # TODO - Verify for future ES versions
+        response = {
+            'node_failures': [
+                {
+                    'type': 'failed_node_exception',
+                    'reason': f'Failed node [{host}]',
+                    'caused_by': {
+                        'type': 'resource_not_found_exception',
+                        'reason': f"task [{task_id}] doesn't support cancellation"
+                    }
+                }
+            ],
+            'nodes': {}
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            with self.assertRaises(TaskMissing):
+                self.adapter.cancel_task(task_id)
+
+    def test_cancel_task_with_valid_task_id(self):
+        task_id = 'eCjqYKEeRAasMPL5hN6hsg:281173'
+        task_info = {
+            'node': 'eCjqYKEeRAasMPL5hN6hsg',
+            'id': 281173,
+            'type': 'transport',
+            'action': 'indices:data/write/reindex',
+            'start_time_in_millis': 1669719946726,
+            'running_time_in_nanos': 7948360400
+        }
+        # Cancel Task success response for ES 2.4
+        # TODO - Verify for future ES versions
+
+        response = {
+            'nodes': {
+                'eCjqYKEeRAasMPL5hN6hsg': {
+                    'name': 'Scarlet Beetle',
+                    'transport_address': '172.18.0.6:9300',
+                    'host': '172.18.0.6',
+                    'ip': '172.18.0.6:9300',
+                    'tasks': {
+                        'eCjqYKEeRAasMPL5hN6hsg:281173': task_info
+                    }
+                }
+            }
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            result = self.adapter.cancel_task(task_id)
+            self.assertEqual(result, task_info)
+
     @contextmanager
     def _mock_single_task_response(self):
         """A context manager that fetches a real list of all tasks from
@@ -417,6 +470,49 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         with patch.object(self.adapter, "indices_refresh") as patched:
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
+
+    def test_reindex_with_wait_for_completion_is_true(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                manager.reindex(test_adapter.index_name, SECONDARY_INDEX, wait_for_completion=True, refresh=True)
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_wait_for_completion_is_false(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                task_id = manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=False, refresh=True
+                )
+
+                check_task_progress(task_id)
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def _index_test_docs_for_reindex(self):
+        all_ids = set([str(i) for i in range(1, 10)])
+
+        for id in all_ids:
+            doc = TestDoc(str(id), f"val_{id}")
+            test_adapter.index(doc, refresh=True)
+        return all_ids
+
+    def _get_all_doc_ids_in_index(self, index):
+        docs = test_adapter._es.search(index, body={}, _source=False)
+        return set([doc['_id'] for doc in docs['hits']['hits']])
 
     def test_indices_refresh(self):
         def get_search_hits():
@@ -655,6 +751,11 @@ class ESTestHelpers:
             return result
         exc_args = (f"_shards: {json.dumps(shards_obj)}",)
         return exc_args, wrapper
+
+    def _index_tombstones(self, quantity):
+        tombstone_ids = [str(i) for i in list(range(1, quantity))]
+        for tombstone_id in tombstone_ids:
+            self.adapter._index(tombstone_id, Tombstone.create_document(), True)
 
 
 @es_test
@@ -1209,6 +1310,23 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test__report_and_fail_on_shard_failures_with_invalid_result_raises_valueerror(self):
         with self.assertRaises(ValueError):
             self.adapter._report_and_fail_on_shard_failures([])
+
+    def test_get_all_tombstones(self):
+        self._index_tombstones(10)
+        es_tombstone_ids = self.adapter._get_tombstone_ids()
+        es_tombstone_ids.sort()
+        self.assertEqual(
+            [str(i) for i in list(range(1, 10))],
+            es_tombstone_ids
+        )
+
+    def test_delete_tombstones(self):
+        self._index_tombstones(10)
+        self.adapter.delete_tombstones()
+        self.assertEqual(
+            self.adapter._get_tombstone_ids(),
+            []
+        )
 
 
 @es_test
