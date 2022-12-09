@@ -117,7 +117,14 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     @classmethod
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
-        return json.loads(value or "[]")
+        ret = json.loads(value or "[]")
+
+        # Support for columns with labels
+        if ret and type(ret[0]) == dict:
+            for index, item in enumerate(ret):
+                ret[index] = item["name"]
+
+        return ret
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):
