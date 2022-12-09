@@ -16,30 +16,33 @@ class Command(BaseCommand):
         num_roles_modified = 0
         view_data_dict_permission, created = Permission.objects.get_or_create(value='view_data_dict')
         edit_data_dict_permission, created = Permission.objects.get_or_create(value='edit_data_dict')
-        data_dict_domains = DATA_DICTIONARY.get_enabled_domains()
 
-        for domain in data_dict_domains:
-            user_roles_can_view_data_tab_id = (UserRole.objects
-                .filter(domain=domain)
-                .filter(self.role_can_view_data_tab())
-                .distinct()
-                .values_list("id", flat=True)
-            )
-            for chunk in chunked(user_roles_can_view_data_tab_id, 1000):
-                for role in UserRole.objects.filter(id__in=chunk):
-                    role.rolepermission_set.get_or_create(
-                        permission_fk=view_data_dict_permission,
-                        defaults={"allow_all": True}
-                    )
-                    rp, created = role.rolepermission_set.get_or_create(
-                        permission_fk=edit_data_dict_permission,
-                        defaults={"allow_all": True}
-                    )
-                    if created:
-                        num_roles_modified += 1
-                    if num_roles_modified % 5000 == 0:
-                        print("Updated {} roles".format(num_roles_modified))
+        user_role_ids_to_migrate = get_user_role_ids_to_migrate()
 
+        for chunk in chunked(user_role_ids_to_migrate, 1000):
+            for role in UserRole.objects.filter(id__in=chunk):
+                role.rolepermission_set.get_or_create(
+                    permission_fk=view_data_dict_permission,
+                    defaults={"allow_all": True}
+                )
+                rp, created = role.rolepermission_set.get_or_create(
+                    permission_fk=edit_data_dict_permission,
+                    defaults={"allow_all": True}
+                )
+                num_roles_modified += 1
+                if num_roles_modified % 5000 == 0:
+                    print("Updated {} roles".format(num_roles_modified))
+
+
+def get_user_role_ids_to_migrate():
+    data_dict_domains = DATA_DICTIONARY.get_enabled_domains()
+
+    return (UserRole.objects
+        .filter(domain__in=data_dict_domains)
+        .exclude(role_already_migrated())
+        .filter(role_can_view_data_tab())
+        .distinct()
+        .values_list("id", flat=True))
 
 def role_already_migrated() -> Q:
     edit_data_dict_permission = Permission.objects.get(value=HqPermissions.edit_data_dict.name)

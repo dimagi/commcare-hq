@@ -10,6 +10,7 @@ from corehq.apps.users.management.commands.add_data_dict_permissions import (
     build_role_can_download_data_files_q_object,
     role_can_view_data_tab,
     role_already_migrated,
+    get_user_role_ids_to_migrate
 )
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 
@@ -22,16 +23,22 @@ class TestMigrationQuery(TestCase):
         Permission.create_all()
 
     def setUp(self):
-        self.patcher = patch(
+        patcher1 = patch(
             ('corehq.apps.users.management.commands.add_data_dict_permissions'
             '.DATA_FILE_DOWNLOAD.get_enabled_domains'),
             return_value=[self.domain]
         )
-        self.patcher.start()
+        patcher2 = patch(
+            ('corehq.apps.users.management.commands.add_data_dict_permissions'
+            '.DATA_DICTIONARY.get_enabled_domains'),
+            return_value=[self.domain]
+        )
+        patcher1.start()
+        patcher2.start()
         self.role = UserRole(domain=self.domain, name="role1")
         self.role.save()
         self.addCleanup(self.role.delete)
-        self.addCleanup(self.patcher.stop)
+        self.addCleanup(patch.stopall)
 
     def test_role_has_edit_data_permission(self):
         self.role.rolepermission_set.set([
@@ -96,6 +103,18 @@ class TestMigrationQuery(TestCase):
         role_migrated = role_already_migrated()
         queried_role_ids = self._query_role(role_migrated)
         self.assertQuerysetEqual(queried_role_ids, [self.role.id], ordered=False)
+
+    def test_get_user_roles_to_migrate(self):
+        perms = HqPermissions.max()
+        self.role.set_permissions(perms.to_list())
+
+        user_roles_to_migrate_ids = get_user_role_ids_to_migrate()
+        self.assertFalse(user_roles_to_migrate_ids.exists())
+
+        setattr(perms, HqPermissions.view_data_dict.name, False)
+        setattr(perms, HqPermissions.edit_data_dict.name, False)
+        self.role.set_permissions(perms.to_list())
+        self.assertCountEqual(user_roles_to_migrate_ids, [self.role.id])
 
     def _query_role(self, filter_query: Q):
         user_roles_can_view_data_tab_id = (UserRole.objects
