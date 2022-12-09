@@ -1,17 +1,34 @@
-/*global DOMPurify, Marionette, moment */
-
-hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
-    // 'hqwebapp/js/hq.helpers' is a dependency. It needs to be added
-    // explicitly when webapps is migrated to requirejs
-    var kissmetrics = hqImport("analytix/js/kissmetrix"),
-        cloudcareUtils = hqImport("cloudcare/js/utils"),
-        constants = hqImport("cloudcare/js/form_entry/const"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        md = window.markdownit();
-
+hqDefine("cloudcare/js/formplayer/menus/views/query", [
+    'jquery',
+    'underscore',
+    'DOMPurify/dist/purify.min',
+    'backbone.marionette',
+    'moment',
+    'markdown-it/dist/markdown-it',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/utils',
+    'cloudcare/js/form_entry/const',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'hqwebapp/js/hq.helpers',   // needed for hqHelp
+    'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+], function (
+    $,
+    _,
+    DOMPurify,
+    Marionette,
+    moment,
+    md,
+    initialPageData,
+    kissmetrics,
+    cloudcareUtils,
+    constants,
+    formEntryUtils,
+    FormplayerFrontend,
+    formplayerUtils,
+) {
     var separator = " to ",
         dateFormat = "YYYY-MM-DD";
     var selectDelimiter = "#,#"; // Formplayer also uses this
