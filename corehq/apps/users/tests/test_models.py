@@ -132,7 +132,7 @@ class DeviceAppMetaMergeTests(SimpleTestCase):
         self.assertEqual(self.original_meta.last_heartbeat, self.current_time)
 
     def test_does_not_overwrite_unspecified_properties(self):
-        self.updates_meta.num_unsent_forms = 5
+        self.original_meta.num_unsent_forms = 5
 
         self.original_meta.merge(self.updates_meta)
         self.assertEqual(self.original_meta.num_unsent_forms, 5)
