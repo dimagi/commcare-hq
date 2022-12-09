@@ -5,8 +5,10 @@ from django.core.management.base import BaseCommand, CommandError
 from corehq.apps.es.client import ElasticMultiplexAdapter, get_client
 from corehq.apps.es.client import manager as es_manager
 from corehq.apps.es.exceptions import IndexNotMultiplexedException, TaskMissing
-from corehq.apps.es.registry import get_registry, registry_entry
-from corehq.apps.es.transient_util import doc_adapter_from_info
+from corehq.apps.es.transient_util import (
+    doc_adapter_from_cname,
+    iter_index_cnames,
+)
 from corehq.apps.es.utils import check_task_progress
 
 
@@ -24,7 +26,7 @@ class ESSyncUtil:
 
     def start_reindex(self, cname):
 
-        adapter = self._get_adapter(cname)
+        adapter = doc_adapter_from_cname(cname)
 
         if not isinstance(adapter, ElasticMultiplexAdapter):
             raise IndexNotMultiplexedException("""Index not multiplexed!
@@ -38,10 +40,6 @@ class ESSyncUtil:
         check_task_progress(task_id)
 
         self.perform_cleanup(adapter)
-
-    def _get_adapter(self, cname):
-        index_info = registry_entry(cname)
-        return doc_adapter_from_info(index_info)
 
     def _get_source_destination_indexes(self, adapter):
         return adapter.primary.index_name, adapter.secondary.index_name
@@ -106,7 +104,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
 
-        INDEXES = list(get_registry().keys())
+        INDEXES = list(iter_index_cnames())
 
         # Setup subparsers
         subparsers = parser.add_subparsers(required=True, dest="sub_command")
