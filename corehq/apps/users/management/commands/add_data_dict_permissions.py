@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from dimagi.utils.chunked import chunked
+from corehq.util.log import with_progress_bar
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.models import RolePermission, HqPermissions
 from corehq.apps.users.models_role import Permission, UserRole
@@ -19,7 +20,7 @@ class Command(BaseCommand):
 
         user_role_ids_to_migrate = get_user_role_ids_to_migrate()
 
-        for chunk in chunked(user_role_ids_to_migrate, 1000):
+        for chunk in with_progress_bar(chunked(user_role_ids_to_migrate, 1000)):
             for role in UserRole.objects.filter(id__in=chunk):
                 role.rolepermission_set.get_or_create(
                     permission_fk=view_data_dict_permission,
