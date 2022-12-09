@@ -41,8 +41,10 @@ def get_user_role_ids_to_migrate():
         .distinct()
         .values_list("id", flat=True))
 
+
 def role_already_migrated() -> Q:
     return Q(rolepermission__permission_fk__value=HqPermissions.edit_data_dict.name)
+
 
 def role_can_view_data_tab() -> Q:
     can_edit_commcare_data = build_role_can_edit_commcare_data_q_object()

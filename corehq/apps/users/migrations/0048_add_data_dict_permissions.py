@@ -14,6 +14,7 @@ def migrate_data_dict_permissions(apps, schema_editor):
     except Exception:
         traceback.print_exc()
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
