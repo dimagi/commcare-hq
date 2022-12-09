@@ -28,6 +28,11 @@ class MaintenanceAlert(models.Model):
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
 
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    timezone = models.CharField(max_length=32, default='UTC')
+    scheduled = models.BooleanField(default=False)
+
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
 
