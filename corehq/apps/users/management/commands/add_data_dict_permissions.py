@@ -15,20 +15,16 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         Permission.create_all()
-        num_roles_modified = 0
 
         user_role_ids_to_migrate = get_user_role_ids_to_migrate()
 
-        for chunk in with_progress_bar(chunked(user_role_ids_to_migrate, 1000)):
+        for chunk in with_progress_bar(chunked(user_role_ids_to_migrate, 1000),
+                                    length=len(user_role_ids_to_migrate)):
             for role in UserRole.objects.filter(id__in=chunk):
                 permissions = role.permissions
                 permissions.edit_data_dict = True
                 permissions.view_data_dict = True
                 role.set_permissions(permissions.to_list())
-
-                num_roles_modified += 1
-                if num_roles_modified % 5000 == 0:
-                    print("Updated {} roles".format(num_roles_modified))
 
 
 def get_user_role_ids_to_migrate():
