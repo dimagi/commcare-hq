@@ -16,21 +16,16 @@ class Command(BaseCommand):
     def handle(self, **options):
         Permission.create_all()
         num_roles_modified = 0
-        view_data_dict_permission, created = Permission.objects.get_or_create(value='view_data_dict')
-        edit_data_dict_permission, created = Permission.objects.get_or_create(value='edit_data_dict')
 
         user_role_ids_to_migrate = get_user_role_ids_to_migrate()
 
         for chunk in with_progress_bar(chunked(user_role_ids_to_migrate, 1000)):
             for role in UserRole.objects.filter(id__in=chunk):
-                role.rolepermission_set.get_or_create(
-                    permission_fk=view_data_dict_permission,
-                    defaults={"allow_all": True}
-                )
-                rp, created = role.rolepermission_set.get_or_create(
-                    permission_fk=edit_data_dict_permission,
-                    defaults={"allow_all": True}
-                )
+                permissions = role.permissions
+                permissions.edit_data_dict = True
+                permissions.view_data_dict = True
+                role.set_permissions(permissions.to_list())
+
                 num_roles_modified += 1
                 if num_roles_modified % 5000 == 0:
                     print("Updated {} roles".format(num_roles_modified))
@@ -47,8 +42,7 @@ def get_user_role_ids_to_migrate():
         .values_list("id", flat=True))
 
 def role_already_migrated() -> Q:
-    edit_data_dict_permission = Permission.objects.get(value=HqPermissions.edit_data_dict.name)
-    return Q(rolepermission__permission_fk_id=edit_data_dict_permission.id)
+    return Q(rolepermission__permission_fk__value=HqPermissions.edit_data_dict.name)
 
 def role_can_view_data_tab() -> Q:
     can_edit_commcare_data = build_role_can_edit_commcare_data_q_object()
@@ -59,8 +53,7 @@ def role_can_view_data_tab() -> Q:
 
 
 def build_role_can_edit_commcare_data_q_object() -> Q:
-    edit_data_permission, created = Permission.objects.get(value='edit_data')
-    return Q(rolepermission__permission_fk_id=edit_data_permission.id)
+    return Q(rolepermission__permission_fk__value=HqPermissions.edit_data.name)
 
 
 def build_role_can_export_data_q_object() -> Q:
@@ -76,11 +69,9 @@ def build_role_can_export_data_q_object() -> Q:
 
 def build_role_can_download_data_files_q_object() -> Q:
     data_file_download_domains = DATA_FILE_DOWNLOAD.get_enabled_domains()
-    view_file_dropzone_permission, created = Permission.objects.get(value='view_file_dropzone')
-    edit_file_dropzone_permission, created = Permission.objects.get(value='edit_file_dropzone')
 
     data_file_download_feat_flag_on = Q(domain__in=data_file_download_domains)
-    can_view_file_dropzone = Q(rolepermission__permission_fk_id=view_file_dropzone_permission.id)
-    can_edit_file_dropzone = Q(rolepermission__permission_fk_id=edit_file_dropzone_permission.id)
+    can_view_file_dropzone = Q(rolepermission__permission_fk__value=HqPermissions.view_file_dropzone.name)
+    can_edit_file_dropzone = Q(rolepermission__permission_fk__value=HqPermissions.edit_file_dropzone.name)
 
     return (data_file_download_feat_flag_on & (can_view_file_dropzone | can_edit_file_dropzone))
