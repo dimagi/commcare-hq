@@ -57,6 +57,19 @@ class MaintenanceAlert(models.Model):
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
         return active_alerts
 
+    @classmethod
+    def update_active_alerts(cls):
+        alerts = cls.objects.filter(scheduled=True)
+        now = datetime.now()
+        for alert in alerts:
+            if alert.end_time <= now:
+                alert.active = False
+                alert.scheduled = False
+                alert.save()
+            elif alert.start_time <= now:
+                alert.active = True
+                alert.save()
+
 
 class UserAgent(models.Model):
     MAX_LENGTH = 255

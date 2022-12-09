@@ -255,3 +255,9 @@ metrics_gauge_task('commcare.maintenance_alerts.active', get_maintenance_alert_a
 def clear_expired_oauth_tokens():
     # https://django-oauth-toolkit.readthedocs.io/en/latest/management_commands.html#cleartokens
     call_command('cleartokens')
+
+
+@periodic_task(run_every=crontab(minute=1))
+def update_active_maintenance_alerts():
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    MaintenanceAlert.update_active_alerts()
