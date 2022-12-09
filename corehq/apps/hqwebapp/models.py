@@ -43,6 +43,21 @@ class MaintenanceAlert(models.Model):
     def html(self):
         return mark_up_urls(self.text)
 
+    @property
+    def status(self):
+        if self.active:
+            status = 'active'
+        elif self.scheduled:
+            status = 'scheduled'
+        elif self.start_time and self.end_time:
+            if self.end_time < datetime.now():
+                status = 'expired'
+            else:
+                status = 'unscheduled'
+        else:
+            status = 'inactive'
+        return status
+
     def __repr__(self):
         return "MaintenanceAlert(text='{}', active='{}', domains='{}')".format(
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")

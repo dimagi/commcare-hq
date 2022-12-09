@@ -161,7 +161,7 @@
               <td>
                 <form method="post"
                       action="{% url 'activate_alert' %}"
-                      data-bind="visible: !active">
+                      data-bind="visible: status === 'inactive'">
                   {% csrf_token %}
                   <input name="alert_id"
                          type="hidden"
@@ -173,7 +173,7 @@
                 </form>
                 <form method="post"
                       action="{% url 'deactivate_alert' %}"
-                      data-bind="visible: active">
+                      data-bind="visible: status === 'active' || status === 'scheduled'">
                   {% csrf_token %}
                   <input name="alert_id"
                          type="hidden"
@@ -183,6 +183,23 @@
                     {% trans "De-activate Alert" %}
                   </button>
                 </form>
+                <form method="post"
+                      action="{% url 'schedule_alert' %}"
+                      data-bind="visible: status === 'unscheduled'">
+                  {% csrf_token %}
+                  <input name="alert_id"
+                         type="hidden"
+                         data-bind="value: id">
+                  <button type="submit"
+                          class="btn btn-primary">
+                    {% trans "Schedule Alert" %}
+                  </button>
+                </form>
+                <button class="btn"
+                        data-bind="visible: status === 'expired'"
+                        disabled>
+                  {% trans "Alert Expired" %}
+                </button>
               </td>
             </tr>
           </tbody>

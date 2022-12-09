@@ -1255,6 +1255,7 @@ class MaintenanceAlertsView(BasePageView):
                                                           .ui_string() if alert.start_time else None,
                 'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
                                                       .ui_string() if alert.end_time else None,
+                'status': alert.status,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-scheduled', '-created')[:20]]
@@ -1295,6 +1296,16 @@ def create_alert(request):
 
 @require_POST
 @require_superuser
+def schedule_alert(request):
+    from corehq.apps.hqwebapp.models import MaintenanceAlert
+    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+    ma.scheduled = True
+    ma.save()
+    return HttpResponseRedirect(reverse('alerts'))
+
+
+@require_POST
+@require_superuser
 def activate_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
@@ -1309,6 +1320,7 @@ def deactivate_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
     ma.active = False
+    ma.scheduled = False
     ma.save()
     return HttpResponseRedirect(reverse('alerts'))
 
