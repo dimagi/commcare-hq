@@ -101,7 +101,7 @@ from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_g
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
 from corehq.util.public_only_requests.public_only_requests import get_public_only_session
-from corehq.util.timezones.conversions import UserTime
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -1251,6 +1251,10 @@ class MaintenanceAlertsView(BasePageView):
                 'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
+                'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
+                                                          .ui_string() if alert.start_time else None,
+                'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
+                                                      .ui_string() if alert.end_time else None,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-scheduled', '-created')[:20]]

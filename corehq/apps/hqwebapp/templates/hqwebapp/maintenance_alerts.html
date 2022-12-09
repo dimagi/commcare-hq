@@ -131,6 +131,12 @@
                 {% trans "Affected domains" %}
               </th>
               <th>
+                {% trans "Scheduled start" %}
+              </th>
+              <th>
+                {% trans "Scheduled end" %}
+              </th>
+              <th>
                 {% trans "Activate or De-activate" %}
               </th>
               <th></th>
@@ -145,6 +151,12 @@
               </td>
               <td>
                 <div data-bind="text: domains"></div>
+              </td>
+              <td>
+                <div data-bind="text: start_time"></div>
+              </td>
+              <td>
+                <div data-bind="text: end_time"></div>
               </td>
               <td>
                 <form method="post"
