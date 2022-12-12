@@ -50,7 +50,7 @@ class MaintenanceAlert(models.Model):
         elif self.scheduled:
             status = 'scheduled'
         elif self.start_time and self.end_time:
-            if self.end_time < datetime.now():
+            if self.end_time < datetime.utcnow():
                 status = 'expired'
             else:
                 status = 'unscheduled'
@@ -75,7 +75,7 @@ class MaintenanceAlert(models.Model):
     @classmethod
     def update_active_alerts(cls):
         alerts = cls.objects.filter(scheduled=True)
-        now = datetime.now()
+        now = datetime.utcnow()
         for alert in alerts:
             if alert.end_time <= now:
                 alert.active = False
