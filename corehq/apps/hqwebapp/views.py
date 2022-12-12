@@ -1290,18 +1290,18 @@ def create_alert(request):
     domains = request.POST.get('domains')
     domains = domains.split() if domains else None
 
-    start_time = request.POST.get('start_time') or None
-    end_time = request.POST.get('end_time') or None
+    start_time = request.POST.get('start_time')
+    end_time = request.POST.get('end_time')
     timezone = request.POST.get('timezone') or 'UTC'
 
-    if start_time and end_time:
+    try:
         start_time = UserTime(
             datetime.fromisoformat(start_time), tzinfo=pytz.timezone(timezone)
         ).server_time().ui_string()
         end_time = UserTime(
             datetime.fromisoformat(end_time), tzinfo=pytz.timezone(timezone)
         ).server_time().ui_string()
-    else:
+    except (TypeError, ValueError):
         start_time = None
         end_time = None
 
