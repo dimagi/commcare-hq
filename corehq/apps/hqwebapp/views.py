@@ -1287,7 +1287,8 @@ def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     import pytz
     alert_text = request.POST.get('alert_text')
-    domains = request.POST.get('domains').split() or None
+    domains = request.POST.get('domains')
+    domains = domains.split() if domains else None
 
     start_time = request.POST.get('start_time') or None
     end_time = request.POST.get('end_time') or None
