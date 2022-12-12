@@ -91,6 +91,8 @@ from copy import deepcopy
 
 from memoized import memoized
 
+from corehq.util.files import TransientTempfile
+
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
 from .exceptions import ESError
@@ -472,6 +474,53 @@ class ESQuery(object):
     def scroll_ids(self):
         """Returns a generator of all matching ids"""
         return self.exclude_source().scroll()
+
+    def scroll_ids_to_disk_and_iter_docs(self):
+        """Returns a ``ScanResult`` for all matched documents.
+
+        Used for iterating docs for a very large query where consuming the docs
+        via ``self.scroll()`` may exceed the amount of time that the scroll
+        context can remain open. This is achieved by:
+
+        1. Fetching the IDs for all matched documents (via ``scroll_ids()``) and
+           caching them in a temporary file on disk, then
+        2. fetching the documents by (chunked blocks of) IDs streamed from the
+           temporary file.
+
+        Original design PR: https://github.com/dimagi/commcare-hq/pull/20282
+
+        Caveats:
+        - There is no guarantee that the returned ScanResult's ``count``
+          property will match the number of yielded docs.
+        - Documents that are present when ``scroll_ids()`` is called, but are
+          deleted prior to being fetched in full will be missing from the
+          results, and this scenario will *not* raise an exception.
+        - If Elastic document ID values are ever reused (i.e. new documents
+          are created with the same ID of a previously-deleted document) then
+          this method would become unsafe because it could yield documents that
+          were not matched by the query.
+        """
+        def iter_export_docs():
+            with TransientTempfile() as temp_path:
+                # Write all ids to disk as quickly as ES scrolls them
+                with open(temp_path, 'w', encoding='utf-8') as stream:
+                    for doc_id in self.scroll_ids():
+                        stream.write(doc_id + '\n')
+                # Stream doc ids from disk and fetch documents from ES in chunks
+                with open(temp_path, 'r', encoding='utf-8') as stream:
+                    doc_ids = (doc_id.strip() for doc_id in stream)
+                    yield from self.adapter.iter_docs(doc_ids)
+        return ScanResult(self.count(), iter_export_docs())
+
+
+class ScanResult(object):
+
+    def __init__(self, count, iterator):
+        self._iterator = iterator
+        self.count = count
+
+    def __iter__(self):
+        yield from self._iterator
 
 
 class ESQuerySet(object):

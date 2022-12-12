@@ -8,7 +8,6 @@ from corehq.apps.es.transient_util import (  # noqa: F401
     doc_adapter_from_info,
     report_and_fail_on_shard_failures,
 )
-from corehq.util.files import TransientTempfile
 
 
 def get_es_new():
@@ -52,39 +51,3 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
 
 def refresh_elasticsearch_index(index_cname):
     manager.index_refresh(doc_adapter_from_cname(index_cname).index_name)
-
-
-def _iter_es_docs(index_cname, ids):
-    """Returns a generator which pulls documents from elasticsearch in chunks"""
-    adapter = doc_adapter_from_cname(index_cname)
-    yield from adapter.iter_docs(ids)
-
-
-def iter_es_docs_from_query(query):
-    """Returns all docs which match query"""
-    scroll_result = query.scroll_ids()
-
-    def iter_export_docs():
-        with TransientTempfile() as temp_path:
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                for doc_id in scroll_result:
-                    f.write(doc_id + '\n')
-
-            # Stream doc ids from disk and fetch documents from ES in chunks
-            with open(temp_path, 'r', encoding='utf-8') as f:
-                doc_ids = (doc_id.strip() for doc_id in f)
-                for doc in _iter_es_docs(query.index, doc_ids):
-                    yield doc
-
-    return ScanResult(query.count(), iter_export_docs())
-
-
-class ScanResult(object):
-
-    def __init__(self, count, iterator):
-        self._iterator = iterator
-        self.count = count
-
-    def __iter__(self):
-        for x in self._iterator:
-            yield x

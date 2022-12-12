@@ -1749,8 +1749,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         chunk_size = 50000
-        from corehq.elastic import iter_es_docs_from_query
-        user_iterator = iter_es_docs_from_query(user_es_query)
+        user_iterator = user_es_query.scroll_ids_to_disk_and_iter_docs()
         for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)

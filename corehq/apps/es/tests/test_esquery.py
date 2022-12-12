@@ -8,7 +8,7 @@ from corehq.apps.es.es_query import HQESQuery, InvalidQueryError
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 
 
-@es_test
+@es_test(requires=[users.user_adapter])
 class TestESQuery(ElasticTestMixin, SimpleTestCase):
     maxDiff = 1000
 
@@ -326,3 +326,25 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             return []
         self.assertNotEqual({}, raw_query_assertions)
         return scroll_query_tester
+
+    def test_scroll_ids_to_disk_and_iter_docs(self):
+        doc = {"_id": "test"}
+        users.user_adapter.index(doc, refresh=True)
+        query = users.UserES().remove_default_filters()
+        self.assertEqual([doc], list(query.scroll_ids_to_disk_and_iter_docs()))
+
+    def test_scroll_ids_to_disk_and_iter_docs_does_not_raise_for_deleted_doc(self):
+
+        def scroll_then_delete_one():
+            results = real_scroll()
+            users.user_adapter.delete(doc2["_id"], refresh=True)
+            return results
+
+        doc1 = {"_id": "test"}
+        doc2 = {"_id": "vanishes"}
+        for doc in [doc1, doc2]:
+            users.user_adapter.index(doc, refresh=True)
+        query = users.UserES().remove_default_filters()
+        real_scroll = query.scroll
+        with patch.object(query, "scroll", scroll_then_delete_one):
+            self.assertEqual([doc1], list(query.scroll_ids_to_disk_and_iter_docs()))
