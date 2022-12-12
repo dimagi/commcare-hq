@@ -7,15 +7,13 @@ from unittest.mock import MagicMock, patch
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
 # handler uses it, not where it's actually defined.  That's quite a gotcha.
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.reports.analytics.esaccessors import get_user_stubs
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import doc_exists_in_es, get_es_new
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.es.elasticsearch import ConnectionError
+from corehq.apps.es.users import user_adapter
 from corehq.util.es.testing import sync_users_to_es
-from corehq.util.test_utils import mock_out_couch, trap_extra_setup
+from corehq.util.test_utils import mock_out_couch
 
 from ..models import CommCareUser, WebUser
 
@@ -33,7 +31,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.send_to_elasticsearch')
+    @patch('corehq.apps.users.signals.user_adapter.index')
     @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
     def test_commcareuser_save(self, _, send_to_es, invalidate,
                                sync_usercases, update_hubspot_properties):
@@ -47,7 +45,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.send_to_elasticsearch')
+    @patch('corehq.apps.users.signals.user_adapter.index')
     @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
     def test_webuser_save(self, _, send_to_es, invalidate,
                           sync_usercases, update_hubspot_properties):
@@ -65,17 +63,8 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
 @patch('corehq.apps.users.signals._should_sync_to_es', return_value=True)
-@es_test
+@es_test(requires=[user_adapter])
 class TestUserSyncToEs(SimpleTestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestUserSyncToEs, cls).setUpClass()
-
-        # create the index
-        cls.es = get_es_new()
-        with trap_extra_setup(ConnectionError):
-            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
 
     @sync_users_to_es()
     def test_sync_to_es_create_update_delete(self, *mocks):
@@ -100,11 +89,11 @@ class TestUserSyncToEs(SimpleTestCase):
         # simulate retire without needing couch
         user.base_doc += DELETED_SUFFIX
         user.save()
-        self.es.indices.refresh(USER_INDEX_INFO.index)
-        self.assertFalse(doc_exists_in_es(USER_INDEX_INFO, user._id))
+        manager.index_refresh(user_adapter.index_name)
+        self.assertFalse(user_adapter.exists(user._id))
 
     def check_user(self, user):
-        self.es.indices.refresh(USER_INDEX_INFO.index)
+        manager.index_refresh(user_adapter.index_name)
         results = get_user_stubs([user._id])
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {

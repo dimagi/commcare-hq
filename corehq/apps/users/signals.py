@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import Signal
 
-from corehq.elastic import send_to_elasticsearch
+from corehq.apps.es.users import user_adapter
 
 commcare_user_post_save = Signal()  # providing args: couch_user
 couch_user_post_save = Signal()  # providing args: couch_user
@@ -27,11 +27,10 @@ def update_user_in_es(sender, couch_user, **kwargs):
     Automatically sync the user to elastic directly on save or delete
     """
     from corehq.pillows.user import transform_user_for_elasticsearch
-    send_to_elasticsearch(
-        "users",
-        transform_user_for_elasticsearch(couch_user.to_json()),
-        delete=couch_user.to_be_deleted()
-    )
+    if couch_user.to_be_deleted():
+        user_adapter.delete(couch_user.user_id)
+    else:
+        user_adapter.index(transform_user_for_elasticsearch(couch_user.to_json()))
 
 
 def apply_correct_demo_mode(sender, couch_user, **kwargs):
