@@ -27,7 +27,7 @@ from .utils import (
 )
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class ElasticPillowTest(SimpleTestCase):
 
     def setUp(self):
@@ -117,7 +117,7 @@ class ElasticPillowTest(SimpleTestCase):
         self.assertEqual([self.index], aliases[TEST_INDEX_INFO.alias])
 
 
-@es_test(index=TEST_INDEX_INFO)
+@es_test
 class TestSendToElasticsearch(SimpleTestCase):
 
     def setUp(self):

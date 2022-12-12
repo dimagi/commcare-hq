@@ -74,8 +74,8 @@ msgid ""
 "p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
 "Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
 "p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact %>'><"
-"%- invoicingContact %></a>.</p>"
+"subscription, please reach out to <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js

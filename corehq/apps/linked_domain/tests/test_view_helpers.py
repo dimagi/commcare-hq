@@ -284,25 +284,25 @@ class TestGetDataModels(BaseLinkedDomainTest):
         self.assertEqual(expected_downstream_ucr_expressions, actual_downstream_ucr_expressions)
 
     def test_get_fixtures_for_upstream_domain(self):
-        expected_upstream_fixtures = [self.original_fixture._migration_couch_id]
+        expected_upstream_fixtures = [self.original_fixture.id]
         expected_downstream_fixtures = []
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(self.upstream_domain, None)
-        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)
 
     def test_get_fixtures_for_downstream_domain(self):
         expected_upstream_fixtures = []
-        expected_downstream_fixtures = [self.original_fixture._migration_couch_id]
+        expected_downstream_fixtures = [self.original_fixture.id]
 
         upstream_fixtures, downstream_fixtures = get_upstream_and_downstream_fixtures(
             self.downstream_domain, self.domain_link
         )
-        actual_upstream_fixtures = [fixture._migration_couch_id for fixture in upstream_fixtures.values()]
-        actual_downstream_fixtures = [fixture._migration_couch_id for fixture in downstream_fixtures.values()]
+        actual_upstream_fixtures = [fixture.id for fixture in upstream_fixtures.values()]
+        actual_downstream_fixtures = [fixture.id for fixture in downstream_fixtures.values()]
 
         self.assertEqual(expected_upstream_fixtures, actual_upstream_fixtures)
         self.assertEqual(expected_downstream_fixtures, actual_downstream_fixtures)

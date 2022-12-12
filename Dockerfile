@@ -1,3 +1,8 @@
+# syntax=docker/dockerfile:1
+
+# This Dockerfile is built as the `dimagi/commcarehq_base` image, which
+# is used for running tests.
+
 FROM python:3.9
 MAINTAINER Dimagi <devops@dimagi.com>
 
