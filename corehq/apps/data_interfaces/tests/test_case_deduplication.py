@@ -25,7 +25,7 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.models import CommCareCase
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
@@ -827,6 +827,17 @@ class DeduplicationPillowTest(TestCase):
         # processor, since they were updates from a duplicate action.
         with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
             self.pillow.process_changes(since=new_kafka_sec, forever=False)
+            p.assert_not_called()
+
+    def test_deleted_form_returns_before_processing(self):
+        case = self.factory.create_case(case_name="test",
+                                        case_type=self.case_type,
+                                        update={"age": 2})
+        kafka_sec = get_topic_offset(topics.FORM_SQL)
+        XFormInstance.objects.hard_delete_forms(self.domain, case.xform_ids)
+
+        with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
+            self.pillow.process_changes(since=kafka_sec, forever=False)
             p.assert_not_called()
 
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
