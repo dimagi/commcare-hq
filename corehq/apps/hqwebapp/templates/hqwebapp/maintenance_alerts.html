@@ -19,10 +19,11 @@
         <p>
           {% blocktrans %}
             Enter alert text below and preview in the table below.
-            Alerts will not be public until the "activate alert" button is
-            pressed. Links will be properly wrapped with anchor tags. Multiple
-            alerts may be shown at a time, and the most recently modified alert
-            will be displayed on top.
+            Alerts will not be public until the "activate alert" button is pressed.
+            Scheduled alerts will become public between the start time and end time
+            after the "schedule alert" button has been pressed. Links will be
+            properly wrapped with anchor tags. Multiple alerts may be shown at a
+            time, and the most recently modified alert will be displayed on top.
           {% endblocktrans %}
         </p>
         <form id="alertForm"
@@ -72,7 +73,7 @@
           <div class="form-group">
             <label for="end-time"
                    class="control-label col-sm-2">
-              {% trans "End time (optional" %}
+              {% trans "End time (optional)" %}
             </label>
             <div class="col-sm-8">
               <input type="datetime-local"
