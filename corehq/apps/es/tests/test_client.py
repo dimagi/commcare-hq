@@ -778,6 +778,10 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
         doc = self._index_new_doc()
         self.assertTrue(self.adapter.exists(doc["_id"]))
 
+    def test_not_exists_returns_bool(self):
+        self.assertEqual([], docs_from_result(self.adapter.search({})))
+        self.assertFalse(self.adapter.exists("does_not_exist"))
+
     def test_get(self):
         doc = self._index_new_doc()
         self.assertEqual(doc, self.adapter.get(doc["_id"]))
