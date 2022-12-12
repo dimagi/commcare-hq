@@ -210,7 +210,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         }
         fields = ['app_id', 'doc_type', 'domain']
         query = forms.FormES()
-        with patch('corehq.apps.es.es_query.run_query', return_value=example_response):
+        with patch.object(query.adapter, "search", return_value=example_response):
             response = query.values_list(*fields)
             self.assertEqual(
                 [
@@ -290,28 +290,28 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
         query = HQESQuery('forms').size(1)
         self.assertEqual(1, query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll())
 
     def test_scroll_without_query_size_uses_default_scroll_size(self):
         query = HQESQuery('forms')
         self.assertIsNone(query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll())
 
     def test_scroll_ids_uses_scroll_size_from_query(self):
         query = HQESQuery('forms').size(1)
         self.assertEqual(1, query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=1)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll_ids())
 
     def test_scroll_ids_without_query_size_uses_default_scroll_size(self):
         query = HQESQuery('forms')
         self.assertIsNone(query._size)
         scroll_query_testfunc = self._scroll_query_mock_assert(size=SCROLL_SIZE)
-        with patch("corehq.apps.es.es_query.scroll_query", scroll_query_testfunc):
+        with patch.object(query.adapter, "scroll", scroll_query_testfunc):
             list(query.scroll_ids())
 
     def test_scroll_with_aggregations_raises(self):
@@ -320,7 +320,7 @@ class TestESQuery(ElasticTestMixin, SimpleTestCase):
             list(query.scroll())
 
     def _scroll_query_mock_assert(self, **raw_query_assertions):
-        def scroll_query_tester(index, raw_query, **kw):
+        def scroll_query_tester(raw_query, **kw):
             for key, value in raw_query_assertions.items():
                 self.assertEqual(value, raw_query[key])
             return []

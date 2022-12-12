@@ -91,15 +91,10 @@ from copy import deepcopy
 
 from memoized import memoized
 
-from corehq.elastic import (
-    ESError,
-    run_query,
-    count_query,
-    scroll_query,
-)
-
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
+from .exceptions import ESError
+from .transient_util import doc_adapter_from_cname
 from .utils import flatten_field_dict, values_list
 
 
@@ -139,11 +134,11 @@ class ESQuery(object):
     }
 
     def __init__(self, index=None, for_export=False):
-        if index is not None:
-            self.index = index
+        if index is None:
+            index = self.index  # use class attribute
+        self.adapter = doc_adapter_from_cname(index, for_export=for_export)
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self.for_export = for_export
         self.es_query = {
             "query": {
                 "bool": {
@@ -208,12 +203,7 @@ class ESQuery(object):
 
     def run(self):
         """Actually run the query.  Returns an ESQuerySet object."""
-        raw = run_query(
-            self.index,
-            self.raw_query,
-            for_export=self.for_export,
-        )
-        return ESQuerySet(raw, self.clone())
+        return ESQuerySet(self.adapter.search(self.raw_query), self.clone())
 
     def scroll(self):
         """
@@ -230,9 +220,8 @@ class ESQuery(object):
         # The '_assemble()' method sets size=SIZE_LIMIT when no query size is
         # configured, and overrides that with size=0 for aggregation queries,
         # neither of which are acceptable for a scroll query.
-        result = scroll_query(self.index, raw_query, for_export=self.for_export)
-        for r in result:
-            yield ESQuerySet.normalize_result(self, r)
+        for result in self.adapter.scroll(raw_query):
+            yield ESQuerySet.normalize_result(self, result)
 
     @property
     def _filters(self):
@@ -472,7 +461,7 @@ class ESQuery(object):
         return values_list(hits, *fields, **kwargs)
 
     def count(self):
-        return count_query(self.index, self.raw_query)
+        return self.adapter.count(self.raw_query)
 
     def get_ids(self):
         """Performs a minimal query to get the ids of the matching documents
