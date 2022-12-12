@@ -153,6 +153,16 @@ class ESQuery(object):
             }
         }
 
+    def clone(self):
+        adapter = self.adapter
+        del self.adapter  # don't deep copy the adapter
+        try:
+            cloned = deepcopy(self)
+        finally:
+            self.adapter = adapter
+        cloned.adapter = adapter
+        return cloned
+
     @property
     def builtin_filters(self):
         """
@@ -203,7 +213,7 @@ class ESQuery(object):
             self.raw_query,
             for_export=self.for_export,
         )
-        return ESQuerySet(raw, deepcopy(self))
+        return ESQuerySet(raw, self.clone())
 
     def scroll(self):
         """
@@ -240,7 +250,7 @@ class ESQuery(object):
         Add the passed-in filter to the query.  All filtering goes through
         this class.
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._filters.append(filter)
         return query
 
@@ -259,12 +269,12 @@ class ESQuery(object):
         """
         Add the passed-in aggregation to the query
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._aggregations.append(aggregation)
         return query
 
     def aggregations(self, aggregations):
-        query = deepcopy(self)
+        query = self.clone()
         query._aggregations.extend(aggregations)
         return query
 
@@ -283,7 +293,7 @@ class ESQuery(object):
         Set the query.  Most stuff we want is better done with filters, but
         if you actually want Levenshtein distance or prefix querying...
         """
-        es = deepcopy(self)
+        es = self.clone()
         es.es_query['query']['bool']['must'] = query
         return es
 
@@ -345,13 +355,13 @@ class ESQuery(object):
                 'include': include,
                 'exclude': exclude
             }
-        query = deepcopy(self)
+        query = self.clone()
         query._source = source
         return query
 
     def start(self, start):
         """Pagination.  Analagous to SQL offset."""
-        query = deepcopy(self)
+        query = self.clone()
         query._start = start
         return query
 
@@ -360,13 +370,13 @@ class ESQuery(object):
         when performing a scroll, in which case this value becomes the number of
         results to fetch per scroll request.
         """
-        query = deepcopy(self)
+        query = self.clone()
         query._size = size
         return query
 
     @property
     def raw_query(self):
-        query = deepcopy(self)
+        query = self.clone()
         query._assemble()
         return query.es_query
 
@@ -397,7 +407,7 @@ class ESQuery(object):
         print(self.dumps(pretty=True))
 
     def _sort(self, sort, reset_sort):
-        query = deepcopy(self)
+        query = self.clone()
         if reset_sort:
             query.es_query['sort'] = [sort]
         else:
@@ -427,19 +437,19 @@ class ESQuery(object):
 
     def set_sorting_block(self, sorting_block):
         """To be used with `get_sorting_block`, which interprets datatables sorting"""
-        query = deepcopy(self)
+        query = self.clone()
         query.es_query['sort'] = sorting_block
         return query
 
     def remove_default_filters(self):
         """Sensible defaults are provided.  Use this if you don't want 'em"""
-        query = deepcopy(self)
+        query = self.clone()
         query._default_filters = {"match_all": filters.match_all()}
         return query
 
     def remove_default_filter(self, default):
         """Remove a specific default filter by passing in its name."""
-        query = deepcopy(self)
+        query = self.clone()
         if default in query._default_filters:
             query._default_filters.pop(default)
         if len(query._default_filters) == 0:
