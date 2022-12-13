@@ -560,7 +560,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = "You have selected more than the maximum selection limit of " + this.maxSelectValue +
-                ". Please uncheck values to continue."
+                ". Please uncheck some values to continue."
                 hqImport('hqwebapp/js/alert_user').alert_user(errorMessage, 'danger');
             }
         }
