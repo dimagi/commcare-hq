@@ -7,7 +7,6 @@ from . import (  # noqa: F401
     exceptions,
     filters,
     queries,
-    registry,
     utils,
     # "model" modules
     apps,

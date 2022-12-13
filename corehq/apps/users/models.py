@@ -759,19 +759,15 @@ class DeviceAppMeta(DocumentSchema):
         if other.last_request <= self.last_request:
             return
 
-        for key, prop in self.properties().items():
+        for key, prop in other.properties().items():
             new_val = getattr(other, key)
-            if new_val:
+            if new_val is not None:
                 old_val = getattr(self, key)
-                if not old_val:
-                    setattr(self, key, new_val)
-                    continue
 
                 prop_is_date = isinstance(prop, DateTimeProperty)
-                if prop_is_date and new_val > old_val:
-                    setattr(self, key, new_val)
-                elif not prop_is_date and old_val != new_val:
-                    setattr(self, key, new_val)
+                if prop_is_date and (old_val and new_val <= old_val):
+                    continue  # do not overwrite dates with older ones
+                setattr(self, key, new_val)
 
         self._update_latest_request()
 
@@ -2908,6 +2904,11 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class ApiKeyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
@@ -2916,6 +2917,12 @@ class HQApiKey(models.Model):
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+
+    objects = ApiKeyManager()
+    all_objects = models.Manager()
 
     class Meta(object):
         unique_together = ('user', 'name')

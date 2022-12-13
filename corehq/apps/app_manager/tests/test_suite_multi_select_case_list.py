@@ -6,14 +6,14 @@ from django.test import SimpleTestCase
 import lxml
 from memoized import memoized
 
+from corehq.apps.app_manager.app_schemas.session_schema import (
+    get_session_schema,
+)
 from corehq.apps.app_manager.const import (
     WORKFLOW_FORM,
     WORKFLOW_MODULE,
     WORKFLOW_PARENT_MODULE,
     WORKFLOW_PREVIOUS,
-)
-from corehq.apps.app_manager.app_schemas.session_schema import (
-    get_session_schema,
 )
 from corehq.apps.app_manager.models import (
     Application,
@@ -21,10 +21,13 @@ from corehq.apps.app_manager.models import (
     CaseSearchLabel,
     CaseSearchProperty,
     ConditionalCaseUpdate,
+    FormDatum,
     FormLink,
     UpdateCaseAction,
 )
-from corehq.apps.app_manager.suite_xml.sections.details import AUTO_LAUNCH_EXPRESSIONS
+from corehq.apps.app_manager.suite_xml.sections.details import (
+    AUTO_LAUNCH_EXPRESSIONS,
+)
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import (
     SuiteMixin,
@@ -76,7 +79,8 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m0_case_short"
-                                  detail-confirm="m0_case_long"/>
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -88,6 +92,66 @@ class MultiSelectCaseListTests(SimpleTestCase, TestXmlMixin):
             self.get_xml('basic_remote_request').decode('utf-8').format(app_id=self.factory.app._id),
             suite,
             "./remote-request",
+        )
+
+    def test_multi_select_case_list_auto_select_true(self):
+        self.module.case_details.short.auto_select = True
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="selected_cases"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"
+                                  autoselect="true"
+                                  max-select-value="100"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
+        )
+
+    def test_multi_select_case_list_modified_max_select_value(self):
+        self.module.case_details.short.max_select_value = 15
+        print(self.module.case_details.short)
+        suite = self.factory.app.create_suite()
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <entry>
+                <form>some-xmlns</form>
+                <command id="m0-f0">
+                  <text>
+                    <locale id="forms.m0f0"/>
+                  </text>
+                </command>
+                <instance id="casedb" src="jr://instance/casedb"/>
+                <session>
+                  <instance-datum id="selected_cases"
+                                  nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                                  value="./@case_id"
+                                  detail-select="m0_case_short"
+                                  detail-confirm="m0_case_long"
+                                  max-select-value="15"/>
+                </session>
+              </entry>
+            </partial>
+            """,
+            suite,
+            "./entry",
         )
 
     def test_session_schema(self):
@@ -206,7 +270,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -269,7 +334,8 @@ class MultiSelectSelectParentFirstTests(SimpleTestCase, TestXmlMixin):
                                   nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
                                   value="./@case_id"
                                   detail-select="m1_case_short"
-                                  detail-confirm="m1_case_long"/>
+                                  detail-confirm="m1_case_long"
+                                  max-select-value="100"/>
                 </session>
               </entry>
             </partial>
@@ -475,16 +541,18 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form1 = self.single_loner.get_form(0)
         form2 = self.single_parent.get_form(0)
 
-        form0.post_form_workflow = WORKFLOW_FORM
+        form0.post_form_workflow = WORKFLOW_FORM  # can link *from* multi-select form
         form0.form_links = [FormLink(
             xpath="true()",
-            form_id=form1.unique_id,    # can't link *to* multi-select form
+            form_id=form1.unique_id,
+            form_module_id=self.single_loner.unique_id
         )]
 
-        form1.post_form_workflow = WORKFLOW_FORM    # can't link *from* multi-select form
+        form1.post_form_workflow = WORKFLOW_FORM  # can't link *to* multi-select form
         form1.form_links = [FormLink(
             xpath="true()",
             form_id=form0.unique_id,
+            form_module_id=self.multi_loner.unique_id
         )]
 
         form2.post_form_workflow = WORKFLOW_FORM    # can't link *to* multi-select module
@@ -499,12 +567,6 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             'form_type': 'module_form',
             'module': {'id': 0, 'unique_id': 'Single Loner_module', 'name': {'en': 'Single Loner module'}},
             'form': {'id': 0, 'name': {'en': 'Single Loner form 0'}, 'unique_id': 'Single Loner_form_0'}
-        }, errors)
-        self.assertIn({
-            'type': 'multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
-            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'},
         }, errors)
         self.assertIn({
             'type': 'multi select form links',
@@ -528,6 +590,7 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form.form_links = [FormLink(
             xpath="true()",
             form_id=form.unique_id,
+            form_module_id=self.single_child.unique_id
         )]
         self.assertIn({
             'type': 'parent multi select form links',
@@ -587,4 +650,34 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             """,
             self.factory.app.create_suite(),
             "./entry[4]/stack",
+        )
+
+    def test_eof_nav_form_link_multi_to_single(self, *args):
+        m1f0 = self.multi_loner.get_form(0)
+        m0f0 = self.single_loner.get_form(0)
+
+        m1f0.post_form_workflow = WORKFLOW_FORM
+        m1f0.form_links = [FormLink(
+            form_id=m0f0.unique_id,
+            form_module_id=self.single_loner.unique_id,
+            datums=[FormDatum(
+                name="case_id",
+                xpath="instance('selected_cases')/results/value[1]"
+            )]
+        )]
+
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m0'"/>
+                  <datum id="case_id" value="instance('selected_cases')/results/value[1]"/>
+                  <command value="'m0-f0'"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[2]/stack",
         )

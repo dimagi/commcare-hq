@@ -64,7 +64,7 @@ DHIS2_UID_MESSAGE = _('A DHIS2 "UID" is exactly 11 alpha-numeric characters '
 # (Used for updating cases with their tracked entity instance ID.)
 XMLNS_DHIS2 = 'http://commcarehq.org/dhis2-integration'
 
-DHIS2_MAX_VERSION = "2.35.1"
+DHIS2_MAX_KNOWN_GOOD_VERSION = "2.39.0"
 
 COMPLETE_DATE_EMPTY = "complete_date_empty"
 COMPLETE_DATE_COLUMN = "complete_date_column"

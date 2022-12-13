@@ -11,7 +11,7 @@ from django.test import SimpleTestCase, TestCase
 from unittest.mock import Mock, patch
 from nose.tools import assert_equal, assert_true
 
-from corehq.motech.dhis2.const import DHIS2_MAX_VERSION
+from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
 from corehq.motech.dhis2.exceptions import Dhis2Exception
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
@@ -226,7 +226,7 @@ class SlowApiVersionTest(TestCase):
             mock_fetch.assert_called()
 
     def test_max_version_exceeded_notifies_admins(self):
-        major_ver, max_api_ver, patch_ver = LooseVersion(DHIS2_MAX_VERSION).version
+        major_ver, max_api_ver, patch_ver = LooseVersion(KNOWN_GOOD).version
         bigly_api_version = max_api_ver + 1
         bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
         with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \

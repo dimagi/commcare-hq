@@ -4,6 +4,8 @@ from urllib.parse import urlencode
 from django.test import TestCase
 from django.urls import reverse
 
+import attrs
+
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import (
@@ -18,6 +20,10 @@ from corehq.motech.generic_inbound.models import (
     ConfigurableApiValidation,
     ProcessingAttempt,
     RequestLog,
+)
+from corehq.motech.generic_inbound.utils import (
+    ApiRequest,
+    reprocess_api_request,
 )
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -111,6 +117,22 @@ class TestGenericInboundAPIView(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_post_results_in_bad_type(self):
+        expression = UCRExpression.objects.create(
+            name="bad type",
+            domain=self.domain_name,
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={"type": "property_name", "property_name": "name"}
+        )
+        api = ConfigurableAPI.objects.create(
+            domain=self.domain_name,
+            transform_expression=expression
+        )
+        response = self._call_api_advanced(api)
+        self.assertEqual(response.status_code, 500, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json, {"error": "Unexpected type for transformed request"})
+
     def test_post(self):
         response_json = self._test_generic_api({
             'is_team_sport': {
@@ -148,7 +170,10 @@ class TestGenericInboundAPIView(TestCase):
         validation_expression=None
     ):
         generic_api = self._make_api(properties_expression, filter_expression, validation_expression)
-        url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
+        return self._call_api_advanced(generic_api, query_params)
+
+    def _call_api_advanced(self, api, query_params=None):
+        url = reverse('generic_inbound_api', args=[self.domain_name, api.url_key])
         if query_params:
             url = f"{url}?{urlencode(query_params)}"
         data = json.dumps(self.example_post_data)
@@ -175,7 +200,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.SUCCESS)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 200)
-        self.assertEqual(log.error_message, '')
         self.assertEqual(log.username, self.user.username)
         self.assertEqual(log.request_method, RequestLog.RequestMethod.POST)
         self.assertEqual(log.request_query, 'param=value')
@@ -187,7 +211,6 @@ class TestGenericInboundAPIView(TestCase):
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
         self.assertEqual(attempt.response_status, 200)
-        self.assertEqual(json.loads(attempt.response_body), response_json)
         self.assertEqual(attempt.raw_response, response_json)
         self.assertEqual(attempt.xform_id, response_json.get('form_id'))
         self.assertEqual(attempt.case_ids, [response_json.get('cases')[0]['case_id']])
@@ -214,7 +237,6 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.FILTERED)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 204)
-        self.assertEqual(log.error_message, '')
 
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
@@ -242,8 +264,84 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
         self.assertEqual(log.attempts, 1)
         self.assertEqual(log.response_status, 400)
-        self.assertEqual(log.error_message, '{"error": "validation error", "errors": ["Invalid request"]}')
 
         attempt = ProcessingAttempt.objects.last()
         self.assertEqual(attempt.is_retry, False)
         self.assertEqual(attempt.response_status, 400)
+
+    def test_request_data(self):
+        query_params = {"param": "value"}
+        properties_expression = {
+            'prop_from_query': {
+                'type': 'jsonpath',
+                'jsonpath': 'request.query.param[0]',
+            }
+        }
+        request = self._call_api(properties_expression, query_params).wsgi_request
+        log = RequestLog.objects.last()
+
+        original_data = ApiRequest.from_request(request)
+        log_data = ApiRequest.from_log(log)
+
+        for k, original_value in attrs.asdict(original_data).items():
+            log_value = getattr(log_data, k)
+            if k == 'couch_user':
+                self.assertEqual(original_value.username, log_value.username)
+            else:
+                self.assertEqual(original_value, log_value)
+
+    def test_retry(self):
+        properties_expression = {'prop': 'const'}
+        validation_expression = {
+            "type": "boolean_expression",
+            "operator": "in",
+            "expression": {
+                "type": "jsonpath",
+                "jsonpath": "body.name"
+            },
+            "property_value": ["tennis", "hockey"]
+        }
+        response = self._call_api(properties_expression, validation_expression=validation_expression)
+        self.assertEqual(response.status_code, 400, response.content)
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        self.assertEqual(log.attempts, 1)
+
+        # Delete the validation condition that caused it to fail
+        api = ConfigurableAPI.objects.last()
+        api.validations.all().delete()
+
+        reprocess_api_request(log)
+        log.refresh_from_db()
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+        self.assertEqual(log.attempts, 2)
+        self.assertEqual(log.processingattempt_set.count(), 2)
+
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.is_retry, True)
+        self.assertEqual(attempt.response_status, 200)
+
+    def test_retry_bad_json(self):
+        api = self._make_api({'prop': 'const'})
+        response = self.client.post(
+            reverse('generic_inbound_api', args=[self.domain_name, api.url_key]),
+            data='This is not JSON!',
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            HTTP_USER_AGENT="user agent string",
+        )
+        self.assertEqual(response.status_code, 400, response.content)
+
+        log = RequestLog.objects.last()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.raw_response, {"error": "Payload must be valid JSON"})
+
+        reprocess_api_request(log)
+        log.refresh_from_db()
+        self.assertEqual(log.status, RequestLog.Status.VALIDATION_FAILED)
+        self.assertEqual(log.processingattempt_set.count(), 2)
+        attempt = log.processingattempt_set.last()
+        self.assertEqual(attempt.is_retry, True)
+        self.assertEqual(attempt.raw_response, {"error": "Payload must be valid JSON"})

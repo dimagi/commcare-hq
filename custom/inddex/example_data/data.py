@@ -8,7 +8,6 @@ from corehq.apps.case_importer.do_import import do_import
 from corehq.apps.case_importer.util import ImporterConfig, WorksheetWrapper
 from corehq.apps.fixtures.models import (
     Field,
-    FixtureDataItem,
     LookupTable,
     LookupTableRow,
     TypeField,
@@ -20,7 +19,6 @@ from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
 from corehq.form_processor.models import CommCareCase
 from corehq.toggles import BULK_UPLOAD_DATE_OPENED, NAMESPACE_DOMAIN
-from corehq.util.couch import IterDB
 from corehq.util.workbook_reading import make_worksheet
 
 PATH = os.path.dirname(__file__)
@@ -122,17 +120,12 @@ def _import_fixtures(domain):
         )
         data_type.save()
 
-        with IterDB(FixtureDataItem.get_db(), chunksize=1000) as iter_db:
-            items = (
-                _mk_fixture_data_item(domain, data_type.id, fields, vals, i)
-                for i, vals in enumerate(rows)
-            )
-            for chunk in chunked(items, 1000, list):
-                LookupTableRow.objects.bulk_create(chunk)
-
-                # save chunk to Couch
-                for row in chunk:
-                    iter_db.save(_to_doc_dict(row))
+        items = (
+            _mk_fixture_data_item(domain, data_type.id, fields, vals, i)
+            for i, vals in enumerate(rows)
+        )
+        for chunk in chunked(items, 1000, list):
+            LookupTableRow.objects.bulk_create(chunk)
 
 
 def _mk_fixture_data_item(domain, table_id, fields, vals, i):
@@ -143,13 +136,6 @@ def _mk_fixture_data_item(domain, table_id, fields, vals, i):
         item_attributes={},
         sort_key=i,
     )
-
-
-def _to_doc_dict(row):
-    couch_class = row._migration_get_couch_model_class()
-    doc = couch_class(_id=row._migration_couch_id)
-    row._migration_sync_to_couch(doc, save=False)
-    return doc.to_json()
 
 
 def _rebuild_datasource(domain):

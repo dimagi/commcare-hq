@@ -1,9 +1,10 @@
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.client import ElasticManageAdapter, get_client
+from corehq.apps.es.client import get_client, manager
 from corehq.apps.es.exceptions import ESError
-from corehq.apps.es.registry import registry_entry
 from corehq.apps.es.transient_util import (  # noqa: F401
+    index_info_from_cname,
+    doc_adapter_from_cname,
     doc_adapter_from_info,
     report_and_fail_on_shard_failures,
 )
@@ -36,7 +37,7 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
     doc_id = doc['_id']
     if isinstance(doc_id, bytes):
         doc_id = doc_id.decode('utf-8')
-    index_info = registry_entry(index_cname)
+    index_info = index_info_from_cname(index_cname)
     return send_to_es(
         index_info=index_info,
         doc_type=index_info.type,
@@ -51,13 +52,11 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
 
 
 def refresh_elasticsearch_index(index_cname):
-    index_info = registry_entry(index_cname)
-    ElasticManageAdapter().index_refresh(index_info.alias)
+    manager.index_refresh(doc_adapter_from_cname(index_cname).index_name)
 
 
 def run_query(index_cname, q, for_export=False):
-    index_info = registry_entry(index_cname)
-    adapter = doc_adapter_from_info(index_info, for_export)
+    adapter = doc_adapter_from_cname(index_cname, for_export)
     try:
         results = adapter.search(q)
     except ElasticsearchException as e:
@@ -67,8 +66,7 @@ def run_query(index_cname, q, for_export=False):
 
 def _iter_es_docs(index_cname, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
-    index_info = registry_entry(index_cname)
-    adapter = doc_adapter_from_info(index_info)
+    adapter = doc_adapter_from_cname(index_cname)
     yield from adapter.iter_docs(ids)
 
 
@@ -106,8 +104,7 @@ def scroll_query(index_cname, query, for_export=False, **kw):
     valid_kw = {"size", "scroll"}
     if not set(kw).issubset(valid_kw):
         raise ValueError(f"invalid keyword args: {set(kw) - valid_kw}")
-    index_info = registry_entry(index_cname)
-    adapter = doc_adapter_from_info(index_info, for_export=for_export)
+    adapter = doc_adapter_from_cname(index_cname, for_export=for_export)
     try:
         yield from adapter.scroll(query, **kw)
     except ElasticsearchException as e:
@@ -115,8 +112,7 @@ def scroll_query(index_cname, query, for_export=False, **kw):
 
 
 def count_query(index_cname, q):
-    index_info = registry_entry(index_cname)
-    adapter = doc_adapter_from_info(index_info)
+    adapter = doc_adapter_from_cname(index_cname)
     return adapter.count(q)
 
 
