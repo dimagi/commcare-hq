@@ -7,12 +7,9 @@ from corehq.util.django_migrations import skip_on_fresh_install
 
 @skip_on_fresh_install
 def migrate_data_dict_permissions(apps, schema_editor):
-    try:
-        call_command(
-            "add_data_dict_permissions",
-        )
-    except Exception:
-        traceback.print_exc()
+    call_command(
+        "add_data_dict_permissions",
+    )
 
 
 class Migration(migrations.Migration):
