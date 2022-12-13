@@ -478,6 +478,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
+                maxSelectValue: this.options.multiSelectMaxSelectValue,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -542,6 +543,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         reconcileMultiSelectUI: function () {
             var self = this;
 
+            self.verifySelectedCaseIdsLessThanMaxSelectValue();
+
             // Update states of row checkboxes
             self.children.each(function (childView) {
                 childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
@@ -554,6 +557,12 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Reconcile state of "select all" checkbox
             self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
+        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
+            if (this.selectedCaseIds.length > this.maxSelectValue) {
+                throw new Error("You have selected more than the Maximum selection limit of " + this.maxSelectValue() +
+                ". Please uncheck values to continue ");
+            }
+        }
     });
 
     // Return a two- or three-length array of case tile CSS styles
