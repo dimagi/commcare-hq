@@ -7,7 +7,6 @@ from functools import cached_property
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
-from django.utils.functional import classproperty
 
 from memoized import memoized
 from corehq.apps.es.filters import term
@@ -392,10 +391,6 @@ class ElasticDocumentAdapter(BaseAdapter):
         adapter = copy.copy(self)
         adapter._es = get_client(for_export=True)
         return adapter
-
-    @classproperty
-    def settings(cls):
-        return settings.ELASTIC_ADAPTER_SETTINGS.get(cls.__name__, {})
 
     @classmethod
     def from_python(cls, doc):
