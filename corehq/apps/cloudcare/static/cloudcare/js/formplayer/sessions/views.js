@@ -8,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/sessions/api',     // deleteSession
 ], function (
     $,
     _,

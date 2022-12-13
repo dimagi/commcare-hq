@@ -14,6 +14,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/apps/api',     // appselect:apps
 ], function (
     $,
     _,

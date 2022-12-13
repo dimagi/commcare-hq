@@ -95,24 +95,27 @@ hqDefine("cloudcare/js/formplayer/app", [
      * The actual mapping is contained in the app Couch document
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
-        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-        if (!currentApp) {
-            console.warn('App is undefined for app_id: ' + appId);
-            console.warn('Not processing resource: ' + resourcePath);
-            return;
-        }
-        if (resourcePath.substring(0, 7) === 'http://') {
-            return resourcePath;
-        } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
-            var resource = currentApp.get('multimedia_map')[resourcePath];
-            if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
+        // TODO: now this is returning a promise, so all the callers need to be fixed. Or move this into a less popular module.
+        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            if (!currentApp) {
+                console.warn('App is undefined for app_id: ' + appId);
+                console.warn('Not processing resource: ' + resourcePath);
                 return;
             }
-            var id = resource.multimedia_id;
-            var name = _.last(resourcePath.split('/'));
-            return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
-        }
+            if (resourcePath.substring(0, 7) === 'http://') {
+                return resourcePath;
+            } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+                var resource = currentApp.get('multimedia_map')[resourcePath];
+                if (!resource) {
+                    console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
+                    return;
+                }
+                var id = resource.multimedia_id;
+                var name = _.last(resourcePath.split('/'));
+                return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
+            }
+        });
     });
 
     FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
@@ -330,9 +333,13 @@ hqDefine("cloudcare/js/formplayer/app", [
         user.formplayer_url = options.formplayer_url;
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
-        user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
+        user.changeFormLanguage = options.changeFormLanguage;
 
-        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+        hqRequire([
+            "cloudcare/js/formplayer/apps/api",
+            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
+        ], function (AppsAPI) {
+            user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
         $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
@@ -349,42 +356,48 @@ hqDefine("cloudcare/js/formplayer/app", [
             });
 
             FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            $.when(
-                FormplayerFrontend.getChannel().request("appselect:apps"),
-                FormplayerFrontend.xsrfRequest
-            ).done(function (appCollection) {
-                var appId;
-                var apps = appCollection.toJSON();
-                if (Backbone.history) {
-                    Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
-                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-                        appId = apps[0]['_id'];
-                    }
+            hqRequire([
+                "cloudcare/js/formplayer/router",
+                "cloudcare/js/formplayer/apps/api",
+            ], function (Router) {
+                FormplayerFrontend.router = Router.start();
+                $.when(
+                    FormplayerFrontend.getChannel().request("appselect:apps"),
+                    FormplayerFrontend.xsrfRequest
+                ).done(function (appCollection) {
+                    var appId;
+                    var apps = appCollection.toJSON();
+                    if (Backbone.history) {
+                        Backbone.history.start();
+                        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+                            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                                UsersViews.RestoreAsBanner({
+                                    model: user,
+                                })
+                            );
+                        });
+                        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                            appId = apps[0]['_id'];
+                        }
 
-                    if (self.getCurrentRoute() === "") {
-                        if (user.displayOptions.singleAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:singleApp", appId);
-                        } else if (user.displayOptions.landingPageAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:landingPageApp", appId);
-                        } else {
-                            FormplayerFrontend.trigger("apps:list", apps);
-                        }
-                        if (user.displayOptions.phoneMode) {
-                            // Refresh on start of preview mode so it ensures we're on the latest app
-                            // since app updates do not work.
-                            FormplayerFrontend.trigger('refreshApplication', appId);
+                        if (self.getCurrentRoute() === "") {
+                            if (user.displayOptions.singleAppMode) {
+                                FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                                FormplayerFrontend.trigger("app:singleApp", appId);
+                            } else if (user.displayOptions.landingPageAppMode) {
+                                FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                                FormplayerFrontend.trigger("app:landingPageApp", appId);
+                            } else {
+                                FormplayerFrontend.trigger("apps:list", apps);
+                            }
+                            if (user.displayOptions.phoneMode) {
+                                // Refresh on start of preview mode so it ensures we're on the latest app
+                                // since app updates do not work.
+                                FormplayerFrontend.trigger('refreshApplication', appId);
+                            }
                         }
                     }
-                }
+                });
             });
         });
 
