@@ -78,4 +78,5 @@ branches:
     - ad/taleau-syncing-util-functions # Addison Dec 5
     #- pkv/application-release-logs-2
     - cs/repeater_name_migration # Chris
+    - smh/multi-select-error-handling # Steph Dec 13
 submodules: { }
