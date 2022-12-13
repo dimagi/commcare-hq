@@ -113,7 +113,6 @@ def require_permission(permission,
                        data=None,
                        login_decorator=login_and_domain_required,
                        view_only_permission=None):
-
     permission = get_permission_name(permission) or permission
     permission_check = lambda couch_user, domain: couch_user.has_permission(domain, permission, data=data)
 
