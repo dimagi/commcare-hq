@@ -22,6 +22,51 @@ thereby preventing Elasticsearch index state drift between maintained CommCare
 HQ deployments.
 
 
+Elastic Index Tuning Configurations
+'''''''''''''''''''''''''''''''''''
+
+CommCare HQ provides a mechanism for individual deployments (environments) to
+tune the performance characteristics of their Elasticsearch indexes via Django
+settings. This mechanism can be used by defining an ``ES_SETTINGS`` dictionary
+in ``localsettings.py`` (or by configuring the requisite Elasticsearch
+parameters in a `CommCare Cloud environment`_). Tuning parameters can be
+specified in one of two ways:
+
+1. **"default"**: configures the tuning settings for *all* indexes in the
+   environment.
+2. **index identifier**: configures the tuning settings for *a specific* index
+   in the environment -- these settings take precedence over "default" settings.
+
+For example, if an environment wishes to explicitly configure the "case_search"
+index with six shards, and all others with only three, the configuration could
+be specified in ``localsettings.py`` as:
+
+.. code-block:: python
+
+   ES_SETTINGS = {
+       "default": {"number_of_shards": 3},
+       "case_search": {"number_of_shards": 6},
+   }
+
+Configuring a tuning setting with the special value ``None`` will result in that
+configuration item being reset to the Elasticsearch cluster default (unless
+superseded by another setting with higher precedence). Refer to
+`corehq/app/es/index/settings.py`_ file for the full details regarding what
+items (index and tunning settings values) are configurable, as well as what
+default tuning settings will be used when not customized by the environment.
+
+**Important note**: These Elasticsearch index tuning settings are not "live".
+That is: changing their values on a deployed environment will not have any
+immediate affect on live indexes in Elasticsearch. Instead, these values are
+only ever used when an index is created (for example, during a fresh CommCare HQ
+installation or when an existing index is reindexed into a new one). This means
+that making new values become "live" requires a update to the CommCare HQ
+codebase.
+
+.. _CommCare Cloud environment: https://commcare-cloud.readthedocs.io/en/latest/reference/1-commcare-cloud/2-configuration.html
+.. _corehq/app/es/index/settings.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/app/es/index/settings.py
+
+
 Adapter Design
 --------------
 

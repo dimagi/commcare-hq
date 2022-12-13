@@ -375,6 +375,7 @@ class ElasticDocumentAdapter(BaseAdapter):
     """
 
     analysis = DEFAULT_ANALYSIS
+    settings_key = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -986,6 +987,10 @@ class ElasticMultiplexAdapter(BaseAdapter):
     @property
     def analysis(self):
         return self.primary.analysis
+
+    @property
+    def settings_key(self):
+        return self.primary.settings_key
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should
