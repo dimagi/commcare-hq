@@ -6,7 +6,9 @@ from django.urls import reverse
 
 from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models_role import UserRole
+
 from corehq.util.test_utils import flag_enabled
 
 
@@ -144,3 +146,53 @@ class UpdateCasePropertyViewTest(TestCase):
         response_data = json.loads(response.content)
         self.assertTrue(response_data["messages"][0].startswith("Unable to save valid values longer than"))
         self._assert_allowed_values(prop, prop_payload)
+
+
+@flag_enabled('DATA_DICTIONARY')
+class DataDictionaryViewTest(TestCase):
+    domain_name = uuid.uuid4().hex
+
+    @classmethod
+    def make_web_user_with_data_dict_role(cls, email, domain, has_data_dict_access=False):
+        web_user = WebUser.create(
+            domain=domain.name,
+            username=email,
+            password="foobar",
+            created_by=None,
+            created_via=None
+        )
+        role = UserRole.create(
+            domain=domain,
+            name='Data Dictionary Access',
+            permissions=HqPermissions(view_data_dict=has_data_dict_access),
+        )
+        web_user.set_role(domain.name, role.get_qualified_id())
+        web_user.save()
+        return web_user
+
+    @classmethod
+    def setUpClass(cls):
+        super(DataDictionaryViewTest, cls).setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.web_user_data_dict_access = cls.make_web_user_with_data_dict_role('has_data_dict@ex.com', cls.domain,
+                                                                            has_data_dict_access=True)
+        cls.web_user_no_data_dict_access = cls.make_web_user_with_data_dict_role('no_data_dict@ex.com', cls.domain)
+        cls.client = Client()
+        cls.url = reverse('data_dictionary', args=[cls.domain_name])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_user_data_dict_access.delete(cls.domain_name, deleted_by=None)
+        cls.web_user_no_data_dict_access.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super(DataDictionaryViewTest, cls).tearDownClass()
+
+    def test_has_view_access(self):
+        self.client.login(username='has_data_dict@ex.com', password='foobar')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_no_view_access(self):
+        self.client.login(username='no_data_dict@ex.com', password='foobar')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
