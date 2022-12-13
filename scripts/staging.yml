@@ -61,8 +61,6 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    - ap/sql-repeater/phase-2+cs/fix/duplicate_relationships # Chris Nov 30
-    - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
@@ -75,8 +73,9 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
     - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
-    - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
+    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     - ad/taleau-syncing-util-functions # Addison Dec 5
     #- pkv/application-release-logs-2
+    - cs/repeater_name_migration # Chris
 submodules: { }
