@@ -266,6 +266,7 @@ class RepeaterManager(models.Manager):
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
+    name = models.CharField(max_length=64, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
         choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
@@ -587,6 +588,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             "domain",
             "format",
             "request_method",
+            "name",
         ]
 
 
@@ -937,6 +939,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
+    name = StringProperty(required=False)
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
@@ -1126,7 +1129,6 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
     @classmethod
     def wrap(cls, data):
-        data.pop('name', None)
         if cls.__name__ == Repeater.__name__:
             cls_ = cls.get_class_from_doc_type(data['doc_type'])
             if cls_:
@@ -1289,6 +1291,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             "format",
             "connection_settings",
             "request_method",
+            "name",
         ]
 
     @classmethod
