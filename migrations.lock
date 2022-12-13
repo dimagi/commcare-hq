@@ -485,6 +485,7 @@ generic_inbound
  0002_configurableapivalidation
  0003_add_logging_models
  0004_add_filter_expression
+ 0005_remove_requestlog_unused_fields
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -696,6 +697,7 @@ repeaters
  0007_migrate_to_sql
  0008_add_related_name_in_connection_settings
  0009_add_create_update_info
+ 00010_add_repeater_name
 reports
  0001_initial
  0002_auto_20171121_1803

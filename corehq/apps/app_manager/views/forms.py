@@ -863,7 +863,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
     if allow_form_workflow:
-        context.update(_get_form_link_context(module, langs))
+        context.update(_get_form_link_context(app, module, form, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -917,7 +917,26 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     return "app_manager/form_view.html", context
 
 
-def _get_form_link_context(module, langs):
+def _get_form_link_context(app, module, form, langs):
+    return {
+        'linkable_forms': _get_linkable_forms_context(module, langs),
+        'form_links': _get_form_links(app, form)
+    }
+
+
+def _get_form_links(app, form):
+    """Augments the form link JSON with the 'unique_id' field
+    which is dynamically generated.
+    """
+    links = []
+    for link in form.form_links:
+        link_context = link.to_json()
+        link_context['uniqueId'] = link.get_unique_id(app)
+        links.append(link_context)
+    return links
+
+
+def _get_linkable_forms_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
@@ -963,9 +982,7 @@ def _get_form_link_context(module, langs):
                 'allow_manual_linking': True,
             })
 
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 
 @require_can_edit_apps
