@@ -29,6 +29,7 @@ django-prbac
 django-redis-sessions
 django-redis
 django-recaptcha
+django-ses
 django-statici18n
 django-tastypie
 django-transfer
