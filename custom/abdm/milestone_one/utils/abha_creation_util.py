@@ -33,6 +33,11 @@ def verify_mobile_otp(otp, txnid):
 
 
 def create_health_id(txnid):
+    """
+    We send empty data in payload as details of these parameters are fetched from
+    aadhaar server by ABDM service, which user has already authenticated using OTP.
+    Info about what things are already authenticated, is tracked using txnId.
+    """
     payload = {
         "email": "",
         "firstName": "",

@@ -15,12 +15,6 @@ class TestABHACreation(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         self.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
 
-    def test_hq_abdm_urls_resolution(self):
-        self.assertEqual("/abdm/api/generate_aadhaar_otp", reverse("generate_aadhaar_otp"))
-        self.assertEqual("/abdm/api/generate_mobile_otp", reverse("generate_mobile_otp"))
-        self.assertEqual("/abdm/api/verify_aadhaar_otp", reverse("verify_aadhaar_otp"))
-        self.assertEqual("/abdm/api/verify_mobile_otp", reverse("verify_mobile_otp"))
-
     def test_aadhaar_otp_generation_success(self):
         abdm_txn_id_mock = {"txnId": "1234"}
         with patch('custom.abdm.milestone_one.views.abha_creation_views.abdm_util.get_response_http_post',

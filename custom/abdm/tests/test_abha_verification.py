@@ -15,13 +15,6 @@ class TestABHAVerification(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + token)
         self.invalid_req_msg = "Unable to process the current request due to incorrect data entered."
 
-    def test_hq_abdm_verification_urls_resolution(self):
-        self.assertEqual("/abdm/api/get_auth_methods", reverse("get_auth_methods"))
-        self.assertEqual("/abdm/api/generate_auth_otp", reverse("generate_auth_otp"))
-        self.assertEqual("/abdm/api/confirm_with_mobile_otp", reverse("confirm_with_mobile_otp"))
-        self.assertEqual("/abdm/api/confirm_with_aadhaar_otp", reverse("confirm_with_aadhaar_otp"))
-        self.assertEqual("/abdm/api/search_health_id", reverse("search_health_id"))
-
     def test_getting_auth_methods_success(self):
         with patch('custom.abdm.milestone_one.views.abha_verification_views.abdm_util.get_response_http_post',
                    side_effect=TestABHAVerification._mock_abdm_http_post):
