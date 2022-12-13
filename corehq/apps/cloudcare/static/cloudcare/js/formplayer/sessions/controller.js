@@ -4,6 +4,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/sessions/views',
+    'cloudcare/js/formplayer/sessions/api', // for sessions
 ], function (
     $,
     constants,

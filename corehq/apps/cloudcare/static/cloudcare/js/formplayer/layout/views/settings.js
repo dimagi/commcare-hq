@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/utils/utils',
     'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
+    'cloudcare/js/formplayer/apps/api',     // appselect:getApp
 ], function (
     $,
     _,

@@ -19,6 +19,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", [
     'cloudcare/js/formplayer/utils/utils',
     'hqwebapp/js/bootstrap3/hq.helpers',   // needed for hqHelp
     'bootstrap-daterangepicker/daterangepicker',  // needed for $.daterangepicker
+    'cloudcare/js/formplayer/menus/api',    // needed for app:select:menus
     'select2/dist/js/select2.full.min',
 ], function (
     $,

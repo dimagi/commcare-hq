@@ -12,6 +12,7 @@ hqDefine("cloudcare/js/formplayer/router", [
     'cloudcare/js/formplayer/sessions/controller',
     'cloudcare/js/formplayer/users/controller',
     'marionette.approuter/lib/marionette.approuter.min',    // for Marionette.AppRouter
+    'cloudcare/js/formplayer/sessions/api',     // for getSession
 ], function (
     _,
     Backbone,
