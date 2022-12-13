@@ -1,15 +1,55 @@
 from django.utils.translation import gettext as _
 
-from corehq.apps.hqcase.api.core import serialize_case
+from corehq.apps.hqcase.api.core import (
+    SubmissionError,
+    UserError,
+    serialize_case,
+)
 from corehq.apps.hqcase.api.updates import handle_case_update
+from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundApiError,
     GenericInboundRequestFiltered,
     GenericInboundValidationError,
 )
+from corehq.motech.generic_inbound.utils import ApiResponse
 
 
-def execute_generic_api(domain, couch_user, device_id, context, api_model):
+def execute_generic_api(api_model, request_data):
+    try:
+        response_json = _execute_generic_api(
+            request_data.domain,
+            request_data.couch_user,
+            request_data.user_agent,
+            request_data.to_context(),
+            api_model,
+        )
+    except BadSpecError as e:
+        return ApiResponse(status=500, data={'error': str(e)})
+    except UserError as e:
+        return ApiResponse(status=400, data={'error': str(e)})
+    except GenericInboundRequestFiltered:
+        return ApiResponse(status=204)
+    except GenericInboundValidationError as e:
+        return _get_validation_error_response(e.errors)
+    except GenericInboundApiError as e:
+        return ApiResponse(status=500, data={'error': str(e)})
+    except SubmissionError as e:
+        return ApiResponse(status=400, data={
+            'error': str(e),
+            'form_id': e.form_id,
+        })
+    return ApiResponse(status=200, data=response_json)
+
+
+def _get_validation_error_response(errors):
+    return ApiResponse(status=400, data={
+        'error': 'validation error',
+        'errors': [error['message'] for error in errors],
+    })
+
+
+def _execute_generic_api(domain, couch_user, device_id, context, api_model):
     _apply_api_filter(api_model, context)
     _validate_api_request(api_model, context)
 
@@ -22,7 +62,7 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
     if not all(isinstance(item, dict) for item in data):
         raise GenericInboundApiError(_("Unexpected type for transformed request"))
 
-    xform, case_or_cases = handle_case_update(
+    xform, cases = handle_case_update(
         domain=domain,
         data=data,
         user=couch_user,
@@ -30,14 +70,9 @@ def execute_generic_api(domain, couch_user, device_id, context, api_model):
         is_creation=None,
     )
 
-    if isinstance(case_or_cases, list):
-        return {
-            'form_id': xform.form_id,
-            'cases': [serialize_case(case) for case in case_or_cases],
-        }
     return {
         'form_id': xform.form_id,
-        'case': serialize_case(case_or_cases),
+        'cases': [serialize_case(case) for case in cases],
     }
 
 

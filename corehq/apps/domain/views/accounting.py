@@ -556,8 +556,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     invoice=invoice
                 ).latest('date_created')
                 if invoice.is_paid:
-                    payment_status = (_("Paid on %s.")
-                                      % invoice.date_paid.strftime(USER_DATE_FORMAT))
+                    payment_status = _("Paid on %s.") % invoice.date_paid.strftime(USER_DATE_FORMAT)
                     payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
@@ -705,10 +704,13 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             except ValidationError:
                 invalid_emails.append(email)
         if invalid_emails:
-            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
-                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        if amount < 0:
+            message = _('There was an error processing your request. Please try again.')
+            return json_response({'error': {'message': message}})
         general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
@@ -1420,6 +1422,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                         "Please reach out to the %s enterprise admin for help."
                     ) % self.account.name
                 )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+            if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']

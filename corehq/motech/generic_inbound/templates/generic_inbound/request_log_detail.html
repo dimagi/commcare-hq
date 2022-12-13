@@ -102,10 +102,6 @@
           <td>{{ log.response_status }}</td>
         </tr>
         <tr>
-          <th>error_message</th>
-          <td><code>{{ log.error_message }}</code></td>
-        </tr>
-        <tr>
           <th>attempts</th>
           <td>{{ log.attempts }}</td>
         </tr>
@@ -125,7 +121,6 @@
           <th>timestamp</th>
           <th>is_retry</th>
           <th>response_status</th>
-          <th>response_body</th>
           <th>raw_response</th>
           <th>xform_id</th>
           <th>case_ids</th>
@@ -137,7 +132,6 @@
           <td>{% utc_to_timezone attempt.timestamp timezone %}</td>
           <td>{{ attempt.is_retry }}</td>
           <td>{{ attempt.response_status }}</td>
-          <td><code>{{ attempt.response_body }}</code></td>
           <td><code>{{ attempt.raw_response }}</code></td>
           <td>
             {% if attempt.xform_id %}
@@ -162,6 +156,17 @@
       </tbody>
     </table>
   </div>
+</div>
+
+<div class="form-actions">
+  {% if log.status != 'success' %}
+    <form action="{% url 'retry_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
+      <button type="submit" class="btn btn-default disable-on-submit" >
+        <i class="fa fa-repeat"></i>
+        {% trans 'Retry' %}
+      </button>
+    </form>
+  {% endif %}
 </div>
 
 {% endblock %}

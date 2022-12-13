@@ -43,8 +43,12 @@ class ProdIndexManagementTest(SimpleTestCase):
     })
     def test_prod_config(self):
         # TODO: implement index verification in a way that is reindex-friendly
-        found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
-        for info in found_prod_indices:
+        found_prod_indices = []
+        for index_info in get_all_expected_es_indices():
+            if index_info.alias == "pillowtop_tests":
+                continue  # skip this one
+            info = index_info.to_json()
+            found_prod_indices.append(info)
             # for now don"t test this property, just ensure it exist
             self.assertTrue(info["mapping"])
             del info["mapping"]

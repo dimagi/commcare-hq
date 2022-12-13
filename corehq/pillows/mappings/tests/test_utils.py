@@ -1,10 +1,6 @@
-import uuid
-
 from django.test import SimpleTestCase
 
-from corehq.apps.es.tests.utils import TEST_ES_INFO, es_test
-from corehq.elastic import get_es_new
-from corehq.util.es.interface import ElasticsearchInterface
+from corehq.apps.es.tests.utils import es_test, test_adapter
 
 from ..utils import fetch_elastic_mapping, sorted_mapping
 
@@ -24,32 +20,12 @@ class TestMappingsUtilsNoIndex(SimpleTestCase):
         self.assertEqual(expected_order, list(mapping["properties"]))
 
 
-@es_test(index=TEST_ES_INFO)
+@es_test(requires=[test_adapter])
 class TestMappingsUtilsWithIndex(SimpleTestCase):
 
-    def setUp(self):
-        self.index = TEST_ES_INFO.alias
-        self.type = TEST_ES_INFO.type
-        self.es = get_es_new()
-        # tweak mapping
-        self.mapping = {"properties": {"message": {"type": "string"}}}
-        meta = {"mapping": self.mapping}
-        # setup index
-        if self.es.indices.exists(self.index):
-            self.es.indices.delete(self.index)
-        self.es.indices.create(index=self.index, body=meta)
-
-        # insert a doc so we get some mapping data
-        interface = ElasticsearchInterface(self.es)
-        ident = uuid.uuid4().hex
-        doc = {"message": "hello"}
-        interface.index_doc(self.index, self.type, ident, doc)
-        self.es.indices.refresh(self.index)
-
-    def tearDown(self):
-        super().tearDown()
-        self.es.indices.delete(self.index)
-
     def test_fetch_elastic_mapping(self):
-        from_elastic = fetch_elastic_mapping(self.index, self.type)
-        self.assertEqual(self.mapping, from_elastic)
+        from_elastic = fetch_elastic_mapping(
+            test_adapter.index_name,
+            test_adapter.type,
+        )
+        self.assertEqual(test_adapter.mapping, from_elastic)
