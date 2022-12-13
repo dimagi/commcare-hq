@@ -478,7 +478,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
-                maxSelectValue: this.options.multiSelectMaxSelectValue,
                 columnSortable: function (index) {
                     return this.sortIndices.indexOf(index) > -1;
                 },
@@ -513,6 +512,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
             var self = this;
+            self.maxSelectValue = options.multiSelectMaxSelectValue;
             // Remove any event handling left over from previous instances of MultiSelectCaseListView.
             // Only one of these views is supporteed on the page at any given time.
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
@@ -559,8 +559,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
-                throw new Error("You have selected more than the Maximum selection limit of " + this.maxSelectValue() +
-                ". Please uncheck values to continue ");
+                let errorMessage = "You have selected more than the maximum selection limit of " + this.maxSelectValue +
+                ". Please uncheck values to continue."
+                hqImport('hqwebapp/js/alert_user').alert_user(errorMessage, 'danger');
             }
         }
     });
