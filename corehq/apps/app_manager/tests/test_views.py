@@ -2,12 +2,11 @@ import base64
 import json
 import re
 from contextlib import contextmanager
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-
-from unittest.mock import patch
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -15,6 +14,8 @@ from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     Application,
+    FormDatum,
+    FormLink,
     Module,
     ReportModule,
     ShadowModule,
@@ -24,7 +25,11 @@ from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
     AppFormSummaryView,
 )
-from corehq.apps.app_manager.views.forms import get_apps_modules
+from corehq.apps.app_manager.views.forms import (
+    _get_form_links,
+    _get_linkable_forms_context,
+    get_apps_modules,
+)
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
@@ -32,10 +37,10 @@ from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
-from corehq.util.test_utils import timelimit, flag_enabled
+from corehq.util.test_utils import flag_enabled, timelimit
 
+from .app_factory import AppFactory
 from .test_form_versioning import INVALID_TEMPLATE
-
 
 User = get_user_model()
 
@@ -280,6 +285,133 @@ class TestViews(TestCase):
             )
             names = sorted([a['name'] for a in apps_modules])
             self.assertEqual(names, ['LinkedApp', 'OtherApp', 'TestApp'])
+
+    def test_form_linking_context(self, _):
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('m0', 'frog')
+        # multiselect module (can't be linked to)
+        m1, m2f0 = factory.new_basic_module('m1', 'frog')
+        m1.case_details.short.multi_select = True
+        # shadow module
+        factory.new_shadow_module('m2', m0, with_form=False)
+        # module with different case type
+        factory.new_basic_module('m3', 'rabbit')
+
+        linkables = _get_linkable_forms_context(m0, factory.app.langs)
+        self.assertEqual(linkables, [
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm0 module',
+                'unique_id': 'm0_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': True,
+                'name': 'm0 module > m0 form 0',
+                'unique_id': 'm0_module.m0_form_0'
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm2 module',
+                'unique_id': 'm2_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': True,
+                'name': 'm2 module > m0 form 0',
+                'unique_id': 'm2_module.m0_form_0'
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm3 module',
+                'unique_id': 'm3_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': False,  # can't autolink to a form with a different case type
+                'name': 'm3 module > m3 form 0',
+                'unique_id': 'm3_module.m3_form_0'
+            }
+        ])
+
+    def test_form_linking_context_multi_select(self, _):
+        factory = AppFactory(build_version='2.9.0')
+        factory.new_basic_module('m0', 'frog')
+
+        # multiselect module (can't be linked to)
+        m1, m2f0 = factory.new_basic_module('m1', 'frog')
+        m1.case_details.short.multi_select = True
+
+        linkables = _get_linkable_forms_context(m1, factory.app.langs)
+
+        # no auto linking allowed
+        self.assertEqual(linkables, [
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm0 module',
+                'unique_id': 'm0_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': False,
+                'name': 'm0 module > m0 form 0',
+                'unique_id': 'm0_module.m0_form_0'
+            }
+        ])
+
+    def test_form_links_context(self, _):
+        self.maxDiff = None
+        factory = AppFactory(build_version='2.9.0')
+        m0, m0f0 = factory.new_basic_module('m0', 'frog')
+        m1, m1f0 = factory.new_basic_module('m1', 'frog')
+        m0f0.form_links = [
+            FormLink(xpath="true()", form_id=m1f0.unique_id, form_module_id=m1.unique_id, datums=[
+                FormDatum(name="case_id", xpath="instance('commcaresession')/session/data/case_id")
+            ]),
+            FormLink(xpath="true()", form_id=m1f0.unique_id),
+            FormLink(module_unique_id=m1.unique_id),
+        ]
+        links = _get_form_links(factory.app, m0f0)
+        self.assertEqual(links, [
+            {
+                'datums': [
+                    {
+                        'doc_type': 'FormDatum',
+                        'name': 'case_id',
+                        'xpath': "instance('commcaresession')/session/data/case_id"
+                    }
+                ],
+                'doc_type': 'FormLink',
+                'form_id': 'm1_form_0',
+                'form_module_id': 'm1_module',
+                'module_unique_id': None,
+                'uniqueId': 'm1_module.m1_form_0',
+                'xpath': 'true()'
+            },
+            # legacy data still produced the correct uniqueId
+            {
+                'datums': [],
+                'doc_type': 'FormLink',
+                'form_id': 'm1_form_0',
+                'form_module_id': None,
+                'module_unique_id': None,
+                'uniqueId': 'm1_module.m1_form_0',
+                'xpath': 'true()'
+            },
+            {
+                'datums': [],
+                'doc_type': 'FormLink',
+                'form_id': None,
+                'form_module_id': None,
+                'module_unique_id': 'm1_module',
+                'uniqueId': 'm1_module',
+                'xpath': None
+            }
+        ])
 
 
 @contextmanager
