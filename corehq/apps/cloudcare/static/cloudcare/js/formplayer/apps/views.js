@@ -6,6 +6,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", [
     'analytix/js/kissmetrix',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',     // appselect:getApp
 ], function (
     $,
     _,
