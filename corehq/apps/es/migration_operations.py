@@ -64,7 +64,22 @@ class CreateIndex(BaseElasticOperation):
 
     @staticmethod
     def render_index_metadata(type_, mapping, analysis, settings_key, comment):
-        # NOTE: mapping might be JsonObject.DictProperty, handle with care
+        # NOTE: mapping might be JsonObject.DictProperty, handle with care:
+        #       Do not make copies of JsonObject properties, those objects have
+        #       some nasty bugs that will bite in really obscure ways.
+        #       For example:
+        # >>> from copy import copy
+        # >>> from corehq.pillows.mappings import GROUP_INDEX_INFO as index_info
+        # >>> list(index_info.meta)
+        # ['settings']
+        # >>> list(index_info.to_json()['meta'])
+        # ['settings']
+        # >>> meta = copy(index_info.meta)
+        # >>> meta.update({'mappings': None})
+        # >>> list(index_info.meta)
+        # ['settings']
+        # >>> list(index_info.to_json()['meta'])
+        # ['settings', 'mappings']
         mapping = dict(mapping)
         mapping["_meta"] = dict(mapping.pop("_meta", {}))
         mapping["_meta"]["created"] = datetime.isoformat(datetime.utcnow())

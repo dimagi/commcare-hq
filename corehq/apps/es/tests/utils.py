@@ -1,6 +1,5 @@
 import json
 from contextlib import contextmanager
-from copy import deepcopy
 from functools import wraps
 from datetime import datetime
 from inspect import isclass
@@ -12,6 +11,7 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
 from corehq.apps.es.client import ElasticMultiplexAdapter
+from corehq.apps.es.migration_operations import CreateIndex
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
@@ -124,8 +124,9 @@ def es_test(test=None, requires=[], setup_class=False):
         return es_test_attr(test)
 
     def setup_func():
+        comment = f"created for {test.__module__}.{test.__qualname__}"
         for adapter in iter_all_doc_adapters():
-            setup_test_index(adapter)
+            setup_test_index(adapter, comment)
 
     def teardown_func():
         for adapter in iter_all_doc_adapters():
@@ -203,14 +204,15 @@ def _add_setup_and_teardown(test_class, setup_class, setup_func, teardown_func):
 
 
 @nottest
-def setup_test_index(adapter):
-    mapping = deepcopy(adapter.mapping)
-    if "_meta" in mapping:
-        # some mappings contain `None` here, which isn't a legal value
-        mapping["_meta"]["created"] = datetime.isoformat(datetime.utcnow())
-    index_settings = {"mappings": {adapter.type: mapping}}
-    manager.index_create(adapter.index_name, index_settings)
-    manager.index_configure_for_standard_ops(adapter.index_name)
+def setup_test_index(adapter, comment):
+    CreateIndex(
+        adapter.index_name,
+        adapter.type,
+        adapter.mapping,
+        adapter.analysis,
+        adapter.settings_key,
+        comment=comment,
+    ).run()
 
 
 @nottest

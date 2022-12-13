@@ -1,10 +1,10 @@
 from copy import deepcopy
-from datetime import datetime
 
 from corehq.apps.es.index.settings import (
     IndexSettingsKey,
     render_index_tuning_settings,
 )
+from corehq.apps.es.migration_operations import CreateIndex
 from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.util.es.elasticsearch import TransportError
 from corehq.util.es.interface import ElasticsearchInterface
@@ -66,31 +66,14 @@ def initialize_index_and_mapping(es, index_info):
 
 
 def initialize_index(es, index_info):
-    # WARNING: Do not make copies of JsonObject properties, those objects have
-    #          some nasty bugs that will bite in really obscure ways.
-    #          For example:
-    # >>> from copy import copy
-    # >>> from corehq.pillows.mappings import GROUP_INDEX_INFO as index_info
-    # >>> list(index_info.meta)
-    # ['settings']
-    # >>> list(index_info.to_json()['meta'])
-    # ['settings']
-    # >>> meta = copy(index_info.meta)
-    # >>> meta.update({'mappings': None})
-    # >>> list(index_info.meta)
-    # ['settings']
-    # >>> list(index_info.to_json()['meta'])
-    # ['settings', 'mappings']
-    index = index_info.index
-    mapping = dict(index_info.mapping)
-    mapping["_meta"] = dict(mapping.pop("_meta", {}))
-    mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-    meta = dict(index_info.meta)
-    meta.update({'mappings': {index_info.type: mapping}})
-
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
-    es.indices.create(index=index, body=meta)
-    set_index_normal_settings(es, index)
+    CreateIndex(
+        index_info.index,
+        index_info.type,
+        index_info.mapping,
+        index_info.meta["settings"]["analysis"],
+        index_info.hq_index_name,
+    ).run()
 
 
 def mapping_exists(es, index_info):
