@@ -9,6 +9,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", [
     'cloudcare/js/formplayer/menus/utils',
     'cloudcare/js/formplayer/menus/views',
     'markdown-it/dist/markdown-it',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
 ], function (
     $,
     _,
