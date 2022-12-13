@@ -78,7 +78,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
             10 /* maxDisplay */
         );
         self.allowedValues.val(allowedValues);
-        if (initialPageData.get('read_only_mode')){
+        if (initialPageData.get('read_only_mode')) {
             self.allowedValues.setEdit(false);
         }
         self.$allowedValues = self.allowedValues.ui;

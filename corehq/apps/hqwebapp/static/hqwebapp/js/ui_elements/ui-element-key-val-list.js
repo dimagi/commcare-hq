@@ -105,7 +105,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-list', [
                         this.$noedit_view.append(createUiInputMapView());
                         this.$edit_view.append(createUiInputMapView());
                     } else if (i === this.max_display) {
-                        let ellipsis = '<div><strong>&hellip;</strong></div>'
+                        let ellipsis = '<div><strong>&hellip;</strong></div>';
                         this.$noedit_view.append(ellipsis);
                         this.$edit_view.append(ellipsis);
                     }
