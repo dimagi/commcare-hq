@@ -6,7 +6,8 @@ hqDefine("cloudcare/js/formplayer/apps/controller", [
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/app',
     'cloudcare/js/formplayer/layout/views/settings',
-    'cloudcare/js/formplayer/apps/views'
+    'cloudcare/js/formplayer/apps/views',
+    'cloudcare/js/formplayer/apps/api'  // appselect:apps
 ], function (
     $,
     Backbone,
