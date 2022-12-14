@@ -22,6 +22,7 @@ from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_s
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -38,7 +39,9 @@ from corehq.form_processor.submission_process_tracker import unfinished_submissi
 from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
+from corehq.util.quickcache import quickcache
 from corehq.util.timer import TimingContext
+from couchdbkit.exceptions import ResourceNotFound
 from couchforms import openrosa_response
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
@@ -164,16 +167,24 @@ class SubmissionPost(object):
         if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
-        messages = [_('Form successfully saved!')]
-        messages.extend(self._success_message_links(instance, cases))
+        user = CouchUser.get_by_user_id(instance.user_id)
+        messages = [_("'{form_name}' successfully saved!")
+                    .format(form_name=self._get_form_name(instance, user))]
+        if user and user.is_web_user():
+            messages.extend(self._success_message_links(user, instance, cases))
         return "\n\n".join(messages)
 
-    def _success_message_links(self, instance, cases):
-        """Yield links to reports/exports, if accessible"""
-        user = CouchUser.get_by_user_id(instance.user_id)
-        if not user or not user.is_web_user():
-            return
+    def _get_form_name(self, instance, user):
+        default_language, names_by_xmlns = _get_form_name_info(instance.domain, instance.build_id)
+        names = names_by_xmlns.get(instance.xmlns, {})
+        if user.language and names.get(user.language):
+            return names[user.language]
+        if names.get(default_language):
+            return names[default_language]
+        return instance.name
 
+    def _success_message_links(self, user, instance, cases):
+        """Yield links to reports/exports, if accessible"""
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
         from corehq.apps.reports.standard.cases.case_data import CaseDataView
@@ -647,3 +658,18 @@ def notify_submission_error(instance, message, exec_info=None):
     }
     request = get_request()
     notify_exception(request, message, details=details, exec_info=exec_info)
+
+
+@quickcache(['domain', 'build_id'])
+def _get_form_name_info(domain, build_id):
+    """
+    :return: (default_language, {'http://my.xmlns': {'en': 'My Form'}})
+    """
+    try:
+        app_build = get_current_app(domain, build_id)
+    except ResourceNotFound:
+        return 'en', {}
+    return (
+        app_build.default_language,
+        {form.xmlns: dict(form.name) for form in app_build.get_forms() if form.form_type != 'shadow_form'}
+    )
