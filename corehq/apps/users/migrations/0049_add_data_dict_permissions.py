@@ -14,7 +14,7 @@ def migrate_data_dict_permissions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0047_rename_sqlpermission_permission'),
+        ('users', '0048_expiring_keys'),
     ]
 
     operations = [
