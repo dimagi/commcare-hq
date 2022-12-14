@@ -49,11 +49,10 @@ class MaintenanceAlert(models.Model):
             status = 'active'
         elif self.scheduled:
             status = 'scheduled'
-        elif self.start_time and self.end_time:
-            if self.end_time < datetime.utcnow():
-                status = 'expired'
-            else:
-                status = 'unscheduled'
+        elif self.end_time and self.end_time < datetime.utcnow():
+            status = 'expired'
+        elif self.start_time:
+            status = 'unscheduled'
         else:
             status = 'inactive'
         return status
@@ -67,23 +66,19 @@ class MaintenanceAlert(models.Model):
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
-    @quickcache([], timeout=60 * 60)
+    @quickcache([], timeout=5 * 60)
     def get_active_alerts(cls):
+        cls._update_active_alerts()
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
         return active_alerts
 
     @classmethod
-    def update_active_alerts(cls):
-        alerts = cls.objects.filter(scheduled=True)
-        now = datetime.utcnow()
-        for alert in alerts:
-            if alert.end_time <= now:
-                alert.active = False
-                alert.scheduled = False
-                alert.save()
-            elif alert.start_time <= now:
-                alert.active = True
-                alert.save()
+    def _update_active_alerts(cls):
+        alerts_to_deactivate = cls.objects.filter(active=True, end_time__lte=datetime.utcnow())
+        alerts_to_deactivate.update(active=False, scheduled=False)
+
+        alerts_to_activate = cls.objects.filter(scheduled=True, start_time__lte=datetime.utcnow())
+        alerts_to_activate.update(active=True)
 
 
 class UserAgent(models.Model):

@@ -41,7 +41,7 @@ class TestMaintenanceAlerts(TestCase):
         alert = MaintenanceAlert.objects.create(**kwargs)
         self.assertFalse(alert.active)
 
-        MaintenanceAlert.update_active_alerts()
+        MaintenanceAlert.get_active_alerts()
         alert = MaintenanceAlert.objects.get(id=alert.id)
         self.assertTrue(alert.active)
 
@@ -56,7 +56,7 @@ class TestMaintenanceAlerts(TestCase):
         }
         alert = MaintenanceAlert.objects.create(**kwargs)
 
-        MaintenanceAlert.update_active_alerts()
+        MaintenanceAlert.get_active_alerts()
         alert = MaintenanceAlert.objects.get(id=alert.id)
         self.assertFalse(alert.active)
         self.assertFalse(alert.scheduled)
