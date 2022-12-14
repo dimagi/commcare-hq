@@ -28,6 +28,11 @@ class MaintenanceAlert(models.Model):
     modified = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=False)
 
+    start_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True)
+    timezone = models.CharField(max_length=32, default='UTC')
+    scheduled = models.BooleanField(default=False)
+
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
 
@@ -38,6 +43,20 @@ class MaintenanceAlert(models.Model):
     def html(self):
         return mark_up_urls(self.text)
 
+    @property
+    def status(self):
+        if self.active:
+            status = 'active'
+        elif self.scheduled:
+            status = 'scheduled'
+        elif self.end_time and self.end_time < datetime.utcnow():
+            status = 'expired'
+        elif self.start_time:
+            status = 'unscheduled'
+        else:
+            status = 'inactive'
+        return status
+
     def __repr__(self):
         return "MaintenanceAlert(text='{}', active='{}', domains='{}')".format(
             self.text, self.active, ", ".join(self.domains) if self.domains else "All Domains")
@@ -47,10 +66,19 @@ class MaintenanceAlert(models.Model):
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
-    @quickcache([], timeout=60 * 60)
+    @quickcache([], timeout=5 * 60)
     def get_active_alerts(cls):
+        cls._update_active_alerts()
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
         return active_alerts
+
+    @classmethod
+    def _update_active_alerts(cls):
+        alerts_to_deactivate = cls.objects.filter(active=True, end_time__lte=datetime.utcnow())
+        alerts_to_deactivate.update(active=False, scheduled=False)
+
+        alerts_to_activate = cls.objects.filter(scheduled=True, start_time__lte=datetime.utcnow())
+        alerts_to_activate.update(active=True)
 
 
 class UserAgent(models.Model):
