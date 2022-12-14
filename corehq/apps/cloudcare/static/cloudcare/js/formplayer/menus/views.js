@@ -558,13 +558,14 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             // Reconcile state of "select all" checkbox
             self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
         },
+
         verifySelectedCaseIdsLessThanMaxSelectValue: function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit of "
                     + this.maxSelectValue + ". Please uncheck some values to continue."));
                 alertUser.alert_user(errorMessage, 'danger');
             }
-        }
+        },
     });
 
     // Return a two- or three-length array of case tile CSS styles
