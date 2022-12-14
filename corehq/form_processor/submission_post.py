@@ -164,10 +164,15 @@ class SubmissionPost(object):
         if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
-        messages = []
+        messages = [_('Form successfully saved!')]
+        messages.extend(self._success_message_links(instance, cases))
+        return "\n\n".join(messages)
+
+    def _success_message_links(self, instance, cases):
+        """Yield links to reports/exports, if accessible"""
         user = CouchUser.get_by_user_id(instance.user_id)
         if not user or not user.is_web_user():
-            return _('Form successfully saved!')
+            return
 
         from corehq.apps.export.views.list import CaseExportListView, FormExportListView
         from corehq.apps.export.views.utils import can_view_case_exports, can_view_form_exports
@@ -190,38 +195,31 @@ class SubmissionPost(object):
         if cases and can_view_case_exports(user, instance.domain):
             case_export_link = reverse(CaseExportListView.urlname, args=[instance.domain])
 
-        # Start with generic message
-        messages.append(_('Form successfully saved!'))
-
         # Add link to form/case if possible
         if form_link and case_link:
             if len(cases) == 1:
-                messages.append(
-                    _("You submitted [this form]({}), which affected [this case]({}).")
-                    .format(form_link, case_link))
+                yield (_("You submitted [this form]({}), which affected [this case]({}).")
+                       .format(form_link, case_link))
             else:
-                messages.append(
-                    _("You submitted [this form]({}), which affected these cases: {}.")
-                    .format(form_link, case_link))
+                yield (_("You submitted [this form]({}), which affected these cases: {}.")
+                       .format(form_link, case_link))
         elif form_link:
-            messages.append(_("You submitted [this form]({}).").format(form_link))
+            yield _("You submitted [this form]({}).").format(form_link)
         elif case_link:
             if len(cases) == 1:
-                messages.append(_("Your form affected [this case]({}).").format(case_link))
+                yield _("Your form affected [this case]({}).").format(case_link)
             else:
-                messages.append(_("Your form affected these cases: {}.").format(case_link))
+                yield _("Your form affected these cases: {}.").format(case_link)
 
         # Add link to all form/case exports
         if form_export_link and case_export_link:
-            messages.append(
-                _("Click to export your [case]({}) or [form]({}) data.")
-                .format(case_export_link, form_export_link))
+            yield (_("Click to export your [case]({}) or [form]({}) data.")
+                   .format(case_export_link, form_export_link))
         elif form_export_link:
-            messages.append(_("Click to export your [form data]({}).").format(form_export_link))
+            yield _("Click to export your [form data]({}).").format(form_export_link)
         elif case_export_link:
-            messages.append(_("Click to export your [case data]({}).").format(case_export_link))
+            yield _("Click to export your [case data]({}).").format(case_export_link)
 
-        return "\n\n".join(messages)
 
     def run(self):
         self.track_load()
