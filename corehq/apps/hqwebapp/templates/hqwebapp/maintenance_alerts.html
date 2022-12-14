@@ -7,9 +7,8 @@
 {% block page_content %}
   {% initial_page_data 'alerts' alerts %}
 
-  <div id="ko-alert-container">
-
-    <div class="panel panel-default">
+  <div>
+    <div id="ko-alert-form" class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans 'Create Alert' %}
@@ -18,12 +17,10 @@
       <div class="panel-body">
         <p>
           {% blocktrans %}
-            Enter alert text below and preview in the table below.
-            Alerts will not be public until the "activate alert" button is pressed.
-            Scheduled alerts will become public between the start time and end time
-            after the "schedule alert" button has been pressed. Links will be
-            properly wrapped with anchor tags. Multiple alerts may be shown at a
-            time, and the most recently modified alert will be displayed on top.
+          Enter alert text here and preview in the table below. Links will be properly wrapped with anchor tags. Alerts
+          will become public when the "activate alert" button is pressed, or during the chosen timeframe after the
+          "schedule alert" button has been pressed. Multiple alerts may be shown to users at a time, and the most
+          recently modified alert will be displayed on top.
           {% endblocktrans %}
         </p>
         <form id="alertForm"
@@ -32,16 +29,17 @@
               action="{% url 'create_alert' %}">
           {% csrf_token %}
           <div class="form-group">
-            <label for="alert_text"
+            <label for="alert-text"
                    class="control-label col-sm-2">
               {% trans "Message" %}
             </label>
             <div class="col-sm-8">
               <textarea name="alert_text"
-                        id="alert_text"
+                        id="alert-text"
                         class="form-control vertical-resize"
                         placeholder="Alert text..."
-                        form="alertForm"></textarea>
+                        data-bind="textInput: text"
+                        required></textarea>
             </div>
           </div>
           <div class="form-group">
@@ -54,7 +52,7 @@
                         id="domains"
                         class="form-control vertical-resize"
                         placeholder="Affected domains (space separated). Leave blank to show to everyone."
-                        form="alertForm" ></textarea>
+                        data-bind="textInput: domains"></textarea>
             </div>
           </div>
           <div class="form-group">
@@ -67,7 +65,7 @@
                      name="start_time"
                      id="start-time"
                      class="form-control"
-                     form="alertForm">
+                     data-bind="value: startTime">
             </div>
           </div>
           <div class="form-group">
@@ -80,7 +78,7 @@
                      name="end_time"
                      id="end-time"
                      class="form-control"
-                     form="alertForm">
+                     data-bind="value: endTime, attr: { min: startTime }">
             </div>
           </div>
           <div class="form-group">
@@ -92,8 +90,8 @@
               <select id="timezone"
                       name="timezone"
                       class="form-control hqwebapp-select2"
-                      form="alertForm">
-                <option value=""></option>
+                      data-bind="value: timezone">
+                <option></option>
                 {% for timezone in timezones %}
                   <option value="{{ timezone }}">{{ timezone }}</option>
                 {% endfor %}
@@ -112,7 +110,7 @@
       </div>
     </div>
 
-    <div class="panel panel-default">
+    <div id="ko-alert-container" class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">
           {% trans "Available Alerts" %}
