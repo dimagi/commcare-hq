@@ -539,7 +539,7 @@ class MediaMixin(object):
         An object that has multimedia associated with it.
         Used by apps, modules, forms.
     """
-    def get_media_ref_kwargs():
+    def get_media_ref_kwargs(self):
         raise NotImplementedError
 
     def all_media(self, lang=None):
