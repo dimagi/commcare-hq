@@ -66,7 +66,7 @@ class MaintenanceAlert(models.Model):
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
-    @quickcache([], timeout=5 * 60)
+    @quickcache([], timeout=1 * 60)
     def get_active_alerts(cls):
         cls._update_active_alerts()
         active_alerts = cls.objects.filter(active=True).order_by('-modified')
@@ -77,7 +77,7 @@ class MaintenanceAlert(models.Model):
         alerts_to_deactivate = cls.objects.filter(active=True, end_time__lte=datetime.utcnow())
         alerts_to_deactivate.update(active=False, scheduled=False)
 
-        alerts_to_activate = cls.objects.filter(scheduled=True, start_time__lte=datetime.utcnow())
+        alerts_to_activate = cls.objects.filter(active=False, scheduled=True, start_time__lte=datetime.utcnow())
         alerts_to_activate.update(active=True)
 
 
