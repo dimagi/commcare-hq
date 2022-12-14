@@ -17357,6 +17357,12 @@ msgstr ""
 "des caractères exigés:"
 
 #: corehq/apps/domain/views/accounting.py
+#, fuzzy
+#| msgid "There was an error processing your request"
+msgid "There was an error processing your request. Please try again."
+msgstr "Il y a une erreur dans le processus de votre requête"
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr "Gestion des suscription interne de Dimagi"
 
@@ -40864,6 +40870,12 @@ msgstr ""
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Processing Attempts"
 msgstr ""
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+#, fuzzy
+#| msgid "Retry Date"
+msgid "Retry"
+msgstr "Réessayer date"
 
 #: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
