@@ -72,7 +72,6 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
-    - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     - ad/taleau-syncing-util-functions # Addison Dec 5
