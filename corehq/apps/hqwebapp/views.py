@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pytz
 import re
 import sys
 import traceback
@@ -1259,7 +1260,6 @@ class MaintenanceAlertsView(BasePageView):
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
-        import pytz
         return {
             'timezones': pytz.common_timezones,
             'alerts': [{
@@ -1285,7 +1285,6 @@ class MaintenanceAlertsView(BasePageView):
 @require_superuser
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
-    import pytz
     alert_text = request.POST.get('alert_text')
     domains = request.POST.get('domains')
     domains = domains.split() if domains else None
@@ -1294,16 +1293,14 @@ def create_alert(request):
     end_time = request.POST.get('end_time')
     timezone = request.POST.get('timezone') or 'UTC'
 
-    try:
-        start_time = UserTime(
-            datetime.fromisoformat(start_time), tzinfo=pytz.timezone(timezone)
-        ).server_time().ui_string()
-        end_time = UserTime(
-            datetime.fromisoformat(end_time), tzinfo=pytz.timezone(timezone)
-        ).server_time().ui_string()
-    except (TypeError, ValueError):
-        start_time = None
-        end_time = None
+    start_time = UserTime(
+        datetime.fromisoformat(start_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().ui_string() if start_time else None
+    end_time = UserTime(
+        datetime.fromisoformat(end_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().ui_string() if end_time else None
 
     MaintenanceAlert(active=False, text=alert_text, domains=domains,
                      start_time=start_time, end_time=end_time, timezone=timezone).save()
