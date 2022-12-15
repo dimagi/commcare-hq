@@ -6,11 +6,9 @@ from django.core.management.base import BaseCommand
 
 from corehq.apps.es.client import manager
 from corehq.apps.es.transient_util import doc_adapter_from_cname, iter_index_cnames
+from corehq.apps.es.utils import mapping_sort_key
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings.const import NULL_VALUE
-from corehq.pillows.mappings.utils import (
-    mapping_sort_key,
-)
 
 from .utils import print_formatted
 
