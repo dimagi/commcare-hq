@@ -308,6 +308,41 @@ class ElasticManageAdapter(BaseAdapter):
         return self._es.indices.put_mapping(type_, {type_: mapping}, index,
                                             expand_wildcards="none")
 
+    def index_get_mapping(self, index, type_):
+        """Returns the current mapping for a doc type on an index.
+
+        :param index: ``str`` index to fetch the mapping from
+        :param type_: ``str`` doc type to fetch the mapping for
+        :returns: ``dict`` mapping or ``None`` if index does not have a mapping
+        """
+        self._validate_single_index(index)
+        response = self._es.indices.get_mapping(index, type_, expand_wildcards="none")
+        try:
+            index_data = response[index]
+        except KeyError:
+            return None  # index exists but does not have a mapping
+        return index_data["mappings"][type_]
+
+    def index_get_settings(self, index, values=None):
+        """Returns the current settings for an index.
+
+        :param index: ``str`` index to fetch settings for
+        :param values: Optional collection of explicit settings to provide in
+            the return value. If ``None`` (the default) all settings are
+            returned.
+        :returns: ``dict``
+        :raises: ``KeyError`` (only if invalid ``values`` are provided)
+        """
+        self._validate_single_index(index)
+        settings = self._es.indices.get_settings(
+            index,
+            expand_wildcards="none",
+            # include_defaults=bool(values),  # unavailable in elasticsearch2
+        )[index]["settings"]["index"]
+        if values is None:
+            return settings
+        return {k: settings[k] for k in values}
+
     @staticmethod
     def _validate_single_index(index):
         """Verify that the provided index is a valid, single index

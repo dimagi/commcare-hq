@@ -651,16 +651,60 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             }
         }
         self.adapter.index_create(self.index)
-
-        def get_mapping(index, type_):
-            info = self.adapter._es.indices.get_mapping(index, type_)
-            if info:
-                return info[index]["mappings"][type_]
-            return info
-
-        self.assertEqual(get_mapping(self.index, type_), {})
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, type_))
         self.adapter.index_put_mapping(self.index, type_, mapping)
-        self.assertEqual(get_mapping(self.index, type_), mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_get_mapping(self):
+        type_ = "test_doc"
+        mapping = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(mapping, self.adapter.index_get_mapping(self.index, type_))
+
+    def test_index_get_mapping_returns_none_if_no_mapping(self):
+        self.adapter.index_create(self.index)
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, "test_doc"))
+
+    def test_index_get_settings(self):
+        settings = {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "filter": ["lowercase"],
+                        "type": "custom",
+                        "tokenizer": "whitespace"
+                    }
+                }
+            },
+            "number_of_replicas": "2",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.adapter.index_refresh(self.index)
+        all_settings = self.adapter.index_get_settings(self.index)
+        self.maxDiff = None
+        self.assertEqual(
+            settings,
+            {k: v for k, v in all_settings.items() if k in settings},
+        )
+
+    def test_index_get_settings_for_specific_values(self):
+        settings = {
+            "number_of_replicas": "1",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.assertEqual(
+            {"number_of_replicas": "1"},
+            self.adapter.index_get_settings(self.index, values=["number_of_replicas"])
+        )
+
+    def test_index_get_settings_for_invalid_value_raises_keyerror(self):
+        settings = {"number_of_replicas": "1"}
+        self.adapter.index_create(self.index, {"settings": settings})
+        with self.assertRaises(KeyError) as mock:
+            self.adapter.index_get_settings(self.index, values=["foo"])
+        self.assertEqual(repr("foo"), str(mock.exception))
 
     def test__validate_single_index(self):
         self.adapter._validate_single_index(self.index)  # does not raise
