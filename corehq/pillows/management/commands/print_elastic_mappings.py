@@ -4,11 +4,11 @@ from textwrap import dedent
 
 from django.core.management.base import BaseCommand
 
+from corehq.apps.es.client import manager
+from corehq.apps.es.transient_util import doc_adapter_from_cname, iter_index_cnames
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
-from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
 from corehq.pillows.mappings.const import NULL_VALUE
 from corehq.pillows.mappings.utils import (
-    fetch_elastic_mapping,
     mapping_sort_key,
 )
 
@@ -53,7 +53,7 @@ class Command(BaseCommand):
             help=f"perform transforms on the mapping, chain multiple by "
                  f"providing a comma-delimited list (options: "
                  f"{', '.join(sorted(ALL_TRANSFORMS))}), default is no transforms")
-        parser.add_argument("cname", metavar="INDEX", choices=sorted(CANONICAL_NAME_INFO_MAP),
+        parser.add_argument("cname", metavar="INDEX", choices=sorted(iter_index_cnames()),
             help="print mapping for %(metavar)s")
 
     def handle(self, cname, **options):
@@ -61,11 +61,11 @@ class Command(BaseCommand):
             namespace = {}
         else:
             namespace = MAPPING_SPECIAL_VALUES
-        index_info = CANONICAL_NAME_INFO_MAP[cname]
+        adapter = doc_adapter_from_cname(cname)
         if options["from_elastic"]:
-            mapping = fetch_elastic_mapping(index_info.index, index_info.type)
+            mapping = manager.index_get_mapping(adapter.index_name, adapter.type)
         else:
-            mapping = index_info.mapping
+            mapping = adapter.mapping
         for key in (k.strip() for k in options["transforms"].split(",")):
             if key:
                 self.stderr.write(f"applying transform: {key}\n", style_func=lambda x: x)

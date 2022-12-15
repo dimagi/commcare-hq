@@ -1,8 +1,8 @@
 from django.test import SimpleTestCase
 
-from corehq.apps.es.tests.utils import es_test, test_adapter
+from corehq.apps.es.tests.utils import es_test
 
-from ..utils import fetch_elastic_mapping, sorted_mapping
+from ..utils import sorted_mapping
 
 
 @es_test
@@ -18,14 +18,3 @@ class TestMappingsUtilsNoIndex(SimpleTestCase):
         self.assertEqual(expected_order, list(mapping))
         self.assertEqual(expected_order, list(mapping["items"][0]))
         self.assertEqual(expected_order, list(mapping["properties"]))
-
-
-@es_test(requires=[test_adapter])
-class TestMappingsUtilsWithIndex(SimpleTestCase):
-
-    def test_fetch_elastic_mapping(self):
-        from_elastic = fetch_elastic_mapping(
-            test_adapter.index_name,
-            test_adapter.type,
-        )
-        self.assertEqual(test_adapter.mapping, from_elastic)
