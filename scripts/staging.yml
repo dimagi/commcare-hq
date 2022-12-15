@@ -77,6 +77,6 @@ branches:
     - ad/taleau-syncing-util-functions # Addison Dec 5
     #- pkv/application-release-logs-2
     #- smh/multi-select-error-handling # Steph Dec 13
-    #- em/maintenance-alert-scheduling # Evan Dec 14
+    - em/maintenance-alert-scheduling # Evan Dec 14
     - es/success-msg  # Ethan Dec 14
 submodules: { }
