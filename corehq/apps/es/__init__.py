@@ -7,6 +7,7 @@ from . import (  # noqa: F401
     exceptions,
     index,
     filters,
+    migration_operations,
     queries,
     utils,
     # "model" modules
