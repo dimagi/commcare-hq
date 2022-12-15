@@ -175,12 +175,13 @@ class SubmissionPost(object):
         return "\n\n".join(messages)
 
     def _get_form_name(self, instance, user):
-        default_language, names_by_xmlns = _get_form_name_info(instance.domain, instance.build_id)
-        names = names_by_xmlns.get(instance.xmlns, {})
-        if user and user.language and names.get(user.language):
-            return names[user.language]
-        if names.get(default_language):
-            return names[default_language]
+        if instance.build_id:
+            default_language, names_by_xmlns = _get_form_name_info(instance.domain, instance.build_id)
+            names = names_by_xmlns.get(instance.xmlns, {})
+            if user and user.language and names.get(user.language):
+                return names[user.language]
+            if names.get(default_language):
+                return names[default_language]
         return instance.name
 
     def _success_message_links(self, user, instance, cases):
@@ -665,8 +666,6 @@ def _get_form_name_info(domain, build_id):
     """
     :return: (default_language, {'http://my.xmlns': {'en': 'My Form'}})
     """
-    if not build_id:
-        return 'en', {}
     try:
         app_build = get_current_app(domain, build_id)
     except ResourceNotFound:
