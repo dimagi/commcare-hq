@@ -17,4 +17,6 @@ class TooMuchDataError(Exception):
 
 
 class TableauAPIError(Exception):
-    pass
+    def __init__(self, message, code=None):
+        self.code = int(code) if code else None
+        super().__init__(message)

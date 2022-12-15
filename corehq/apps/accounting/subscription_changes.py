@@ -9,6 +9,7 @@ from django.utils.translation import ngettext
 from couchdbkit import ResourceConflict
 
 from dimagi.utils.parsing import json_format_date
+from field_audit.models import AuditAction
 
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
@@ -262,7 +263,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             AutomaticUpdateRule.by_domain(
                 domain.name,
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            ).update(active=False)
+            ).update(active=False, audit_action=AuditAction.AUDIT)
             AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
             return True
         except Exception:

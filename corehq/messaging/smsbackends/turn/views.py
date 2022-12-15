@@ -17,6 +17,8 @@ class TurnIncomingSMSView(IncomingBackendView):
         for message in request_body.get('messages', []):
             message_id = message.get('id')
             from_ = message.get('from')
+
+            body = None
             if message.get('type') == 'text':
                 body = message.get('text', {}).get('body')
             elif message.get('type') == 'image':

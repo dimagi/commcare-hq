@@ -100,7 +100,6 @@ from corehq.elastic import (
 
 from . import aggregations, filters, queries
 from .const import SCROLL_SIZE, SIZE_LIMIT
-from .registry import verify_registered
 from .utils import flatten_field_dict, values_list
 
 
@@ -142,9 +141,6 @@ class ESQuery(object):
     def __init__(self, index=None, for_export=False):
         if index is not None:
             self.index = index
-        # verify index canonical name
-        verify_registered(self.index)  # raises ESRegistryError on failure
-
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
         self.for_export = for_export
