@@ -1,13 +1,15 @@
 from django.db import migrations
 
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
-from corehq.util.django_migrations import update_es_mapping
-
 
 class Migration(migrations.Migration):
+    """This migration no longer has any operations. In the past this migration
+    updated the mapping on the Elasticsearch `case_search` index. That operation
+    has been removed because it was merged further in the past than our
+    downstream hosters support window, making it safe to skip from now on.
+    """
 
     dependencies = [
         ('pillowtop', '0005_kafkacheckpoint_doc_modification_time'),
     ]
 
-    operations = [update_es_mapping(CASE_SEARCH_ALIAS)]
+    operations = []
