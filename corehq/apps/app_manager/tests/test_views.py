@@ -373,6 +373,7 @@ class TestViews(TestCase):
                 FormDatum(name="case_id", xpath="instance('commcaresession')/session/data/case_id")
             ]),
             FormLink(xpath="true()", form_id=m1f0.unique_id),
+            FormLink(xpath="true()", form_id="DELETED_ID"),  # this won't appear in the context
             FormLink(module_unique_id=m1.unique_id),
         ]
         links = _get_form_links(factory.app, m0f0)
