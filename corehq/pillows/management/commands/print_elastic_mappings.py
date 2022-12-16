@@ -5,7 +5,7 @@ from textwrap import dedent
 from django.core.management.base import BaseCommand
 
 from corehq.apps.es.client import manager
-from corehq.apps.es.transient_util import doc_adapter_from_cname, iter_index_cnames
+from corehq.apps.es.transient_util import doc_adapter_from_cname
 from corehq.apps.es.utils import mapping_sort_key
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.pillows.mappings.const import NULL_VALUE
@@ -45,23 +45,28 @@ class Command(BaseCommand):
             help="write output to %(metavar)s rather than STDOUT")
         parser.add_argument("--no-names", action="store_true", default=False,
             help="do not replace special values with names")
-        parser.add_argument("--from-elastic", action="store_true", default=False,
-            help="pull mappings from elastic index instead of code definitions")
         parser.add_argument("-t", "--transforms", metavar="TRANSFORMS", default="",
             help=f"perform transforms on the mapping, chain multiple by "
                  f"providing a comma-delimited list (options: "
                  f"{', '.join(sorted(ALL_TRANSFORMS))}), default is no transforms")
-        parser.add_argument("cname", metavar="INDEX", choices=sorted(iter_index_cnames()),
-            help="print mapping for %(metavar)s")
+        parser.add_argument("mapping_ident", metavar="ID", help=(
+            "Print the mapping for %(metavar)s. To print the mapping from "
+            "code, specify an index canonical name (e.g. 'cases', 'sms', etc). "
+            "To print the mapping fetched from Elasticsearch, specify a "
+            "colon-delimited index name and index '_type' (e.g. "
+            "'hqcases_2016-03-04:case', 'smslogs_2020-01-28:sms', etc)."
+        ))
 
-    def handle(self, cname, **options):
+    def handle(self, mapping_ident, **options):
         if options["no_names"]:
             namespace = {}
         else:
             namespace = MAPPING_SPECIAL_VALUES
-        adapter = doc_adapter_from_cname(cname)
-        if options["from_elastic"]:
-            mapping = manager.index_get_mapping(adapter.index_name, adapter.type)
+        try:
+            adapter = doc_adapter_from_cname(mapping_ident)
+        except KeyError:
+            index_name, x, type_ = mapping_ident.partition(":")
+            mapping = manager.index_get_mapping(index_name, type_) or {}
         else:
             mapping = adapter.mapping
         for key in (k.strip() for k in options["transforms"].split(",")):

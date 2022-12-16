@@ -1,3 +1,5 @@
+from io import StringIO
+from textwrap import dedent
 from unittest.mock import patch
 
 from django.db import connection
@@ -425,6 +427,59 @@ class TestUpdateIndexMapping(BaseCase):
             "[prop] has different [doc_values] values, cannot change from "
             "disabled to enabled, mapper [prop] has different [analyzer]]')"
         ))
+
+    def test_mapping_update_generates_diff(self):
+        # update the current mapping._meta.created to get a deterministic diff
+        manager.index_put_mapping(self.index, self.type, {"_meta": {"created": "initial"}})
+        update_op = UpdateIndexMapping(
+            self.index,
+            self.type,
+            {"number": {"type": "integer"}},
+        )
+        stream = StringIO()
+        with (
+            patch("corehq.apps.es.migration_operations.datetime", get_datetime_mock("updated")),
+            patch.object(update_op, "stream", stream),
+        ):
+            TestMigration(update_op).apply()
+        self.assertEqual(
+            dedent("""\
+                --- before.py
+                +++ after.py
+                @@ -3,7 +3,7 @@
+                         "enabled": False
+                     },
+                     "_meta": {
+                -        "created": "initial"
+                +        "created": "updated"
+                     },
+                     "date_detection": False,
+                     "dynamic": "true",
+                @@ -11,6 +11,9 @@
+                         "yyyy-MM-dd"
+                     ],
+                     "properties": {
+                +        "number": {
+                +            "type": "integer"
+                +        },
+                         "prop": {
+                             "type": "string"
+                         }
+            """),
+            stream.getvalue(),
+        )
+
+    def test_mapping_update_with_print_diff_false_does_not_generate_diff(self):
+        update_op = UpdateIndexMapping(
+            self.index,
+            self.type,
+            {"number": {"type": "integer"}},
+            print_diff=False,
+        )
+        stream = StringIO()
+        with patch.object(update_op, "stream", stream):
+            TestMigration(update_op).apply()
+        self.assertEqual("", stream.getvalue())
 
     def test_fails_if_index_does_not_exist(self):
         index = "missing"

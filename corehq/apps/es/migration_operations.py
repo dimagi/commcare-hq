@@ -1,6 +1,12 @@
 import logging
+import sys
 from datetime import datetime
+from difflib import unified_diff
+from tempfile import NamedTemporaryFile
 
+from django.core.management import call_command
+from django.core.management.base import CommandError, OutputWrapper
+from django.core.management.color import color_style
 from django.db.migrations import RunPython
 
 from corehq.apps.es.index.settings import render_index_tuning_settings
@@ -159,7 +165,7 @@ class UpdateIndexMapping(BaseElasticOperation):
     .. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
     """
 
-    def __init__(self, name, type_, properties, comment=None):
+    def __init__(self, name, type_, properties, comment=None, print_diff=True):
         """UpdateIndexMapping operation.
 
         :param name: the name of the index.
@@ -170,12 +176,16 @@ class UpdateIndexMapping(BaseElasticOperation):
             ``mapping._meta.comment`` property. If ``None`` (the default), then
             the existing ``mapping._meta.comment`` value (if one exists) is
             retained.
+        :param print_diff: Optional (default ``True``) set to ``False`` to
+            disable printing the mapping diff.
         """
         super().__init__(self.run)
         self.name = name
         self.type = type_
         self.properties = properties
         self.comment = comment
+        self.print_diff = print_diff
+        self.stream = sys.stdout  # stream where the diff is printed
 
     def run(self, *args, **kw):
         from corehq.apps.es.client import manager
@@ -183,11 +193,46 @@ class UpdateIndexMapping(BaseElasticOperation):
         mapping.setdefault("_meta", {}).update(make_mapping_meta(self.comment))
         mapping["properties"] = self.properties
         log.info("Updating mappings for Elasticsearch index: %s" % self.name)
+        if self.print_diff:
+            before = self.get_mapping_text_lines()
         response = manager.index_put_mapping(self.name, self.type, mapping)
         if not response.get("acknowledged", False):
             # Added because this condition is checked in historic put mapping
             # logic, but it is not clear why/when this happens.
             raise MappingUpdateFailed(f"Mapping update failed for index: {self.name}")
+        if self.print_diff:
+            self.show_diff(before, self.get_mapping_text_lines())
+
+    def get_mapping_text_lines(self):
+        """Fetch the existing mapping for the index as printable text."""
+        index_ident = f"{self.name}:{self.type}"
+        with NamedTemporaryFile("w+") as file:
+            argv = ["print_elastic_mappings", "--no-names", "-o", file.name, index_ident]
+            try:
+                call_command(*argv)
+            except CommandError as exc:
+                log.warning(f"failed to fetch mapping for index {self.name!r} ({exc!s})")
+                return []
+            file.seek(0)
+            return list(file)
+
+    def show_diff(self, before, after):
+        """Print a mapping diff."""
+        if getattr(self.stream, "isatty", lambda: False)():
+            style = color_style()
+            addition = style.SUCCESS  # green
+            deletion = style.ERROR  # red
+        else:
+            addition = deletion = None
+        stream_wrapper = OutputWrapper(self.stream)
+        for line in unified_diff(before, after, "before.py", "after.py"):
+            if line.startswith("-") and not line.startswith("--- "):
+                style_func = deletion
+            elif line.startswith("+") and not line.startswith("+++ "):
+                style_func = addition
+            else:
+                style_func = None
+            stream_wrapper.write(line, style_func, ending="")
 
     def describe(self):
         return f"Update the mapping for Elasticsearch index {self.name!r}"
