@@ -70,7 +70,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
         latestReleasedVersion: initial_page_data('latestReleasedVersion'),
         upstreamBriefs: initial_page_data('upstream_briefs'),
         upstreamUrl: initial_page_data('upstream_url'),
-        appReleaseLogs,
+        appReleaseLogs: appReleaseLogs,
     };
     var el = $('#releases-table');
     var releasesMain = releasesMainModel(o);
