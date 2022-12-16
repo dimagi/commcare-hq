@@ -655,6 +655,33 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         self.adapter.index_put_mapping(self.index, type_, mapping)
         self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
 
+    def test_index_put_mapping_clears_existing_mapping_metadata(self):
+        type_ = "test_doc"
+        mapping = {
+            "_meta": {"created": "now"},
+            "properties": {"value": {"type": "string"}},
+        }
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+        del mapping["_meta"]
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_put_mapping_updates_existing_mapping_properties(self):
+        type_ = "test_doc"
+        mapping1 = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping1}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping1)
+        mapping2 = {"properties": {"number": {"type": "integer"}}}
+        self.adapter.index_put_mapping(self.index, type_, mapping2)
+        self.assertEqual(
+            self.adapter.index_get_mapping(self.index, type_),
+            {"properties": {
+                "value": {"type": "string"},
+                "number": {"type": "integer"},
+            }},
+        )
+
     def test_index_get_mapping(self):
         type_ = "test_doc"
         mapping = {"properties": {"value": {"type": "string"}}}
