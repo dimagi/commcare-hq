@@ -82,9 +82,7 @@ class CreateIndex(BaseElasticOperation):
         # ['settings', 'mappings']
         mapping = dict(mapping)
         mapping["_meta"] = dict(mapping.pop("_meta", {}))
-        mapping["_meta"]["created"] = datetime.isoformat(datetime.utcnow())
-        if comment:
-            mapping["_meta"]["comment"] = comment
+        mapping["_meta"].update(make_mapping_meta(comment))
         settings = {"analysis": analysis}
         settings.update(render_index_tuning_settings(settings_key))
         return {
@@ -131,3 +129,83 @@ class DeleteIndex(BaseElasticOperation):
 
     def describe(self):
         return f"Delete Elasticsearch index {self.name!r}"
+
+
+class UpdateIndexMapping(BaseElasticOperation):
+    """Update the mapping for an Elasticsearch index.
+
+    This operation will apply mapping changes to an existing index as follows:
+
+    1. The existing index mapping is fetched in order to acquire a known "safe
+       to apply" mapping payload, hereinafter referred to as "the payload".
+    2. The ``properties`` item in the payload is replaced with properties from
+       the migration operation (i.e. ``self.properties``).
+    3. The ``_meta`` item in the payload is updated by setting/replacing the
+       ``created`` value (always), and the ``comment`` value (maybe, depending
+       on whether or not a comment is provided).
+    4. The payload is then applied to the existing index via the "Put Mapping"
+       API.
+
+    Note that this migration operation does not currently support changing
+    mapping values outside of the ``_meta`` and ``properties`` items (e.g.
+    ``date_detection``, ``dynamic``, etc). This functionality remains as a task
+    for the future.
+
+    See the :ref:`updating-elastic-index-mappings` documentation for further
+    details.
+
+    See also the `Put Mapping`_ Elastic documentation for API details.
+
+    .. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
+    """
+
+    def __init__(self, name, type_, properties, comment=None):
+        """UpdateIndexMapping operation.
+
+        :param name: the name of the index.
+        :param type_: the index ``_type`` for the mapping.
+        :param properties: the ``properties`` portion of an index mapping to
+            apply to the index.
+        :param comment: Optional value to set on the index's
+            ``mapping._meta.comment`` property. If ``None`` (the default), then
+            the existing ``mapping._meta.comment`` value (if one exists) is
+            retained.
+        """
+        super().__init__(self.run)
+        self.name = name
+        self.type = type_
+        self.properties = properties
+        self.comment = comment
+
+    def run(self, *args, **kw):
+        from corehq.apps.es.client import manager
+        mapping = manager.index_get_mapping(self.name, self.type) or {}
+        mapping.setdefault("_meta", {}).update(make_mapping_meta(self.comment))
+        mapping["properties"] = self.properties
+        log.info("Updating mappings for Elasticsearch index: %s" % self.name)
+        response = manager.index_put_mapping(self.name, self.type, mapping)
+        if not response.get("acknowledged", False):
+            # Added because this condition is checked in historic put mapping
+            # logic, but it is not clear why/when this happens.
+            raise MappingUpdateFailed(f"Mapping update failed for index: {self.name}")
+
+    def describe(self):
+        return f"Update the mapping for Elasticsearch index {self.name!r}"
+
+
+def make_mapping_meta(comment=None):
+    """Return a dict containing the common ``mapping._meta`` values to use when
+    writing (creating or updating) an Elastic index mapping.
+
+    :param comment: optionally include this comment in the return value. If
+        ``None`` (the default) a ``comment`` key will not be included in the
+        return value
+    """
+    meta = {"created": datetime.isoformat(datetime.utcnow())}
+    if comment is not None:
+        meta["comment"] = comment
+    return meta
+
+
+class MappingUpdateFailed(Exception):
+    """The mapping update operation failed."""

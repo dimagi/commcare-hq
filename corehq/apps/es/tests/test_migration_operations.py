@@ -4,7 +4,7 @@ from django.db import connection
 from django.db.migrations import Migration
 from django.db.migrations.exceptions import IrreversibleError
 from django.db.migrations.state import ProjectState
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from nose.tools import nottest
 
 from corehq.apps.es.client import manager
@@ -12,6 +12,9 @@ from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
     DeleteIndex,
+    MappingUpdateFailed,
+    UpdateIndexMapping,
+    make_mapping_meta,
 )
 from corehq.apps.es.tests.utils import es_test
 from corehq.util.es.elasticsearch import NotFoundError, RequestError
@@ -167,34 +170,16 @@ class TestCreateIndex(BaseCase):
             self.assertEqual(expected, rendered)
             self.assertIsNot(expected, rendered)
 
-    def test_render_index_metadata_adds_created_utcnow_as_isoformat(self):
-
-        class mock_datetime:
-
-            isoformat_called_count = 0
-            utcnow_called_count = 0
-
-            @classmethod
-            def isoformat(cls, value):
-                cls.isoformat_called_count += 1
-                return value
-
-            @classmethod
-            def utcnow(cls):
-                cls.utcnow_called_count += 1
-                return created
-
+    def test_render_index_metadata_adds_meta_created(self):
         mapping = {}
         type_ = object()
         created = "the time right now"
-        with patch("corehq.apps.es.migration_operations.datetime", mock_datetime):
+        with patch("corehq.apps.es.migration_operations.datetime", get_datetime_mock(created)):
             metadata = CreateIndex.render_index_metadata(type_, mapping, None, None, None)
         self.assertEqual(
             metadata["mappings"][type_]["_meta"]["created"],
             created,
         )
-        self.assertEqual(1, mock_datetime.isoformat_called_count)
-        self.assertEqual(1, mock_datetime.utcnow_called_count)
 
     def test_render_index_metadata_overrides_existing_created_date(self):
         type_ = object()
@@ -309,6 +294,213 @@ class TestDeleteIndex(BaseCase):
             f"Delete Elasticsearch index {self.index!r}",
             operation.describe(),
         )
+
+
+@es_test
+class TestUpdateIndexMapping(BaseCase):
+
+    def setUp(self):
+        super().setUp()
+        self.type = "test_doc"
+        self.mapping = {
+            "_all": {"enabled": False},
+            "_meta": {"test_meta": "this is a test"},
+            "date_detection": False,
+            "dynamic": True,
+            "dynamic_date_formats": ["yyyy-MM-dd"],
+            "properties": {"prop": {"type": "string"}},
+        }
+        CreateIndex(self.index, self.type, self.mapping, {}, "test").run()
+
+    def test_updates_meta(self):
+        before_update = manager.index_get_mapping(self.index, self.type)["_meta"]
+        new_created = "some date value"
+        mock = get_datetime_mock(new_created)
+        with patch("corehq.apps.es.migration_operations.datetime", mock):
+            TestMigration(UpdateIndexMapping(self.index, self.type, {})).apply()
+        after_update = manager.index_get_mapping(self.index, self.type)["_meta"]
+        self.assertEqual(new_created, after_update["created"])
+        self.assertNotEqual(
+            after_update.pop("created"),
+            before_update.pop("created"),
+        )
+        self.assertEqual(after_update, before_update)
+
+    def test_updates_meta_comment_if_provided(self):
+        mapping_meta = manager.index_get_mapping(self.index, self.type)["_meta"]
+        comment = "test comment"  # any value that differs from the initial
+        self.assertNotEqual(mapping_meta.get("comment"), comment)
+        TestMigration(UpdateIndexMapping(self.index, self.type, {}, comment=comment)).apply()
+        mapping_meta = manager.index_get_mapping(self.index, self.type)["_meta"]
+        self.assertEqual(comment, mapping_meta["comment"])
+
+    def test_adds_new_properties(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        new_properties = {
+            "new_str_prop": {"type": "string"},
+            "new_int_prop": {"type": "integer"},
+        }
+        self.assertNotEqual(properties, new_properties)
+        TestMigration(UpdateIndexMapping(self.index, self.type, new_properties)).apply()
+        properties.update(new_properties)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_updates_only_meta_and_properties_items_and_retains_all_others(self):
+
+        def exclude_meta_and_properties(mapping):
+            del mapping["_meta"], mapping["properties"]
+            return mapping
+
+        before_update = manager.index_get_mapping(self.index, self.type)
+        TestMigration(UpdateIndexMapping(self.index, self.type, {})).apply()
+        after_update = manager.index_get_mapping(self.index, self.type)
+        self.assertEqual(
+            exclude_meta_and_properties(before_update),
+            exclude_meta_and_properties(after_update),
+        )
+
+    def test_extends_existing_property_fields(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        property_update = {"prop": {
+            "type": "string",
+            "fields": {"raw_value": {
+                "index": "not_analyzed",
+                "type": "string",
+            }},
+        }}
+        self.assertNotEqual(properties, property_update)
+        TestMigration(UpdateIndexMapping(self.index, self.type, property_update)).apply()
+        properties.update(property_update)
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_tolerates_existing_property_noop(self):
+        properties = manager.index_get_mapping(self.index, self.type)["properties"]
+        property_noop = self.mapping["properties"]
+        self.assertEqual(properties, property_noop)
+        TestMigration(UpdateIndexMapping(self.index, self.type, property_noop)).apply()
+        self.assertEqual(
+            properties,
+            manager.index_get_mapping(self.index, self.type)["properties"],
+        )
+
+    def test_fails_for_existing_property_type_change(self):
+        self.assertEqual(
+            manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
+            {"type": "string"},
+        )
+        migration = TestMigration(UpdateIndexMapping(
+            self.index,
+            self.type,
+            {"prop": {"type": "integer"}},
+        ))
+        with self.assertRaises(RequestError) as mock:
+            migration.apply()
+        self.assertEqual(str(mock.exception), (
+            "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
+            "of different type, current_type [string], merged_type [integer]')"
+        ))
+
+    def test_fails_for_changing_existing_property_index_values(self):
+        self.assertEqual(
+            manager.index_get_mapping(self.index, self.type)["properties"]["prop"],
+            {"type": "string"},
+        )
+        migration = TestMigration(UpdateIndexMapping(
+            self.index,
+            self.type,
+            {"prop": {"type": "string", "index": "not_analyzed"}},
+        ))
+        with self.assertRaises(RequestError) as mock:
+            migration.apply()
+        self.assertEqual(str(mock.exception), (
+            "TransportError(400, 'illegal_argument_exception', "
+            "'Mapper for [prop] conflicts with existing mapping in other "
+            "types:\\n[mapper [prop] has different [index] values, mapper "
+            "[prop] has different [doc_values] values, cannot change from "
+            "disabled to enabled, mapper [prop] has different [analyzer]]')"
+        ))
+
+    def test_fails_if_index_does_not_exist(self):
+        index = "missing"
+        migration = TestMigration(UpdateIndexMapping(index, self.type, {}))
+        self.assertIndexDoesNotExist(index)
+        with self.assertRaises(NotFoundError):
+            migration.apply()
+
+    def test_raises_mappingupdatefailed_if_acknowledgement_is_missing(self):
+        migration = TestMigration(UpdateIndexMapping(self.index, self.type, {}))
+        with (
+            patch.object(manager, "index_put_mapping", return_value={}),
+            self.assertRaises(MappingUpdateFailed),
+        ):
+            migration.apply()
+
+    def test_is_irreversible(self):
+        migration = TestMigration(UpdateIndexMapping(self.index, self.type, {}))
+        with self.assertRaises(IrreversibleError):
+            migration.unapply()
+
+    def test_describe(self):
+        operation = UpdateIndexMapping(self.index, self.type, {})
+        self.assertEqual(
+            f"Update the mapping for Elasticsearch index {self.index!r}",
+            operation.describe(),
+        )
+
+
+@es_test
+class TestMakeMappingMeta(SimpleTestCase):
+
+    def test_make_mapping_meta_adds_created_utcnow_as_isoformat(self):
+        created = "mock created value"
+        mock = get_datetime_mock(created)
+        with patch("corehq.apps.es.migration_operations.datetime", mock):
+            self.assertEqual(created, make_mapping_meta()["created"])
+        self.assertEqual(1, mock.isoformat_called_count)
+        self.assertEqual(1, mock.utcnow_called_count)
+
+    def test_make_mapping_only_adds_created_and_comment(self):
+        self.assertEqual(
+            ["comment", "created"],
+            sorted(make_mapping_meta("test comment")),
+        )
+
+    def test_make_mapping_meta_omits_comment_by_default(self):
+        self.assertNotIn("comment", make_mapping_meta())
+
+    def test_make_mapping_meta_adds_comment_if_provided(self):
+        comment = object()
+        self.assertEqual(comment, make_mapping_meta(comment)["comment"])
+
+
+def get_datetime_mock(created):
+    """Returns a custom mock for ``datetime.datetime`` which implements the
+    functionality used to generate Elastic ``mapping._meta.created`` values.
+
+    :param created: a value that the mock should provide as the utcnow value.
+    """
+    class mock_datetime:
+
+        isoformat_called_count = 0
+        utcnow_called_count = 0
+
+        @classmethod
+        def isoformat(cls, value):
+            cls.isoformat_called_count += 1
+            return value
+
+        @classmethod
+        def utcnow(cls):
+            cls.utcnow_called_count += 1
+            return created
+
+    return mock_datetime
 
 
 @nottest

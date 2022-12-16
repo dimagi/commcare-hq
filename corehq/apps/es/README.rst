@@ -22,6 +22,48 @@ thereby preventing Elasticsearch index state drift between maintained CommCare
 HQ deployments.
 
 
+.. _updating-elastic-index-mappings:
+
+Updating Elastic Index Mappings
+'''''''''''''''''''''''''''''''
+
+Prior to the ``UpdateIndexMapping`` migration operation implementation, Elastic
+mappings were always applied "in full" any time a mapping change was needed.
+That is: the entire mapping (from code) was applied to the existing index via
+the `Put Mapping`_ API. This technique had some pros and cons:
+
+- **Pro**: the mapping update logic in code was simple because it did not have
+  to worry about which *existing* mapping properties are persistent (persist on
+  the index even if omitted in a PUT request payload) and which ones are
+  volatile (effectively "unset" if omitted in a PUT request payload).
+- **Con**: it requires that *all* mapping properties are explicitly set on every
+  mapping update, making mapping updates impossible if the existing index
+  mapping in Elasticsearch has diverged from the mapping in code.
+
+Because CommCare HQ Elastic mappings have been able to drift between
+environments, it is no longer possible to update some index mappings using the
+current technique. On some indexes, the live index mappings have sufficiently
+diverged that there is no common, "full mapping definition" that can be applied
+on all environments. This means that in order to push mapping changes to all
+environments, new mapping update logic is needed which is capable of updating
+individual properties on an Elastic index mapping while leaving other (existing)
+properties unchanged.
+
+The ``UpdateIndexMapping`` migration operation adds this capability. Due to the
+complex behavior of the Elasticsearch "Put Mapping" API, this implementation is
+limited to only support changing the mapping ``_meta`` and ``properties`` items.
+Changing other mapping properties (e.g. ``date_detection``, ``dynamic``, etc) is
+not yet implemented. However, the current implementation does ensure that the
+existing values are retained (unchanged). Historically, these values are rarely
+changed, so this limitation does not hinder any kind of routine maintenance
+operations. Implementing the ability to change the other properties will be a
+simple task when there is a clear definition of how that functionality needs to
+work, for example: when a future feature/change requires changing these
+properties for a specific reason.
+
+.. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
+
+
 Elastic Index Tuning Configurations
 '''''''''''''''''''''''''''''''''''
 
