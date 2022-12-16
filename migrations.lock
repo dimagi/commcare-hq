@@ -482,6 +482,7 @@ generic_inbound
  0002_configurableapivalidation
  0003_add_logging_models
  0004_add_filter_expression
+ 0005_remove_requestlog_unused_fields
 hqadmin
  0001_initial
  0002_vcmmigrationaudit
@@ -707,6 +708,7 @@ reports
  0010_delete_reportssidebarordering
  0011_tableauconnectedapp
  0012_tableaugroup_tableauuser
+ 0013_tableau_various_20221205
 saved_reports
  0001_initial
  0002_scheduledreportlog
@@ -1074,6 +1076,7 @@ users
  0046_add_default_mobile_worker_role
  0047_rename_sqlpermission_permission
  0048_expiring_keys
+ 0049_add_data_dict_permissions
 util
  0001_initial
  0002_complaintbouncemeta_permanentbouncemeta_transientbounceemail
