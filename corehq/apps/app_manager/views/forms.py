@@ -931,8 +931,12 @@ def _get_form_links(app, form):
     links = []
     for link in form.form_links:
         link_context = link.to_json()
-        link_context['uniqueId'] = link.get_unique_id(app)
-        links.append(link_context)
+        try:
+            link_context['uniqueId'] = link.get_unique_id(app)
+        except FormNotFoundException:
+            continue
+        else:
+            links.append(link_context)
     return links
 
 
