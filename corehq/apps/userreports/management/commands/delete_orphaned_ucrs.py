@@ -49,11 +49,20 @@ class Command(BaseCommand):
             print(suggestions)
             exit(0)
 
-        tablenames_to_drop = confirm_deletion_with_user(ucrs_to_delete)
-        if not tablenames_to_drop:
+        if not confirm_deletion_with_user(ucrs_to_delete):
             exit(0)
 
-        drop_ucr_tables(tablenames_to_drop)
+        tablenames = get_tables_names(ucrs_to_delete)
+        drop_ucr_tables(tablenames)
+
+
+def get_tables_names(ucrs_to_delete):
+    tablenames_to_drop = defaultdict(list)
+    for engine_id, ucr_infos in ucrs_to_delete.items():
+        for ucr_info in ucr_infos:
+            tablenames_to_drop[engine_id].append(ucr_info['tablename'])
+
+    return tablenames_to_drop
 
 
 def confirm_deletion_with_user(ucrs_to_delete):
@@ -61,18 +70,18 @@ def confirm_deletion_with_user(ucrs_to_delete):
         print("There aren't any UCRs to delete.")
         return None
 
-    tablenames_to_drop = defaultdict(list)
+    no_orphaned_tables = True
     for engine_id, ucr_infos in ucrs_to_delete.items():
         print(f"The following UCRs will be deleted in the {engine_id} database:")
         for ucr_info in ucr_infos:
+            no_orphaned_tables = False
             print(f"\t{ucr_info['tablename']} with {ucr_info['row_count']} rows.")
-            tablenames_to_drop[engine_id].append(ucr_info['tablename'])
 
-    if not tablenames_to_drop:
+    if no_orphaned_tables:
         print("No orphaned tables were found")
-        return None
+        return False
 
     if input("Are you sure you want to run the delete operation? (y/n)") == 'y':
-        return tablenames_to_drop
+        return True
 
-    return None
+    return False
