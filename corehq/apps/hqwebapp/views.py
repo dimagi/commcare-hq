@@ -1251,9 +1251,6 @@ class MaintenanceAlertsView(BasePageView):
             ma.active = True
         elif command == 'deactivate':
             ma.active = False
-            ma.scheduled = False
-        elif command == 'schedule':
-            ma.scheduled = True
         ma.save()
         return HttpResponseRedirect(reverse('alerts'))
 
@@ -1273,7 +1270,7 @@ class MaintenanceAlertsView(BasePageView):
                 'status': alert.status,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
-            } for alert in MaintenanceAlert.objects.order_by('-active', '-scheduled', '-created')[:20]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
         }
 
     @property
@@ -1296,11 +1293,11 @@ def create_alert(request):
     start_time = UserTime(
         datetime.fromisoformat(start_time),
         tzinfo=pytz.timezone(timezone)
-    ).server_time().ui_string() if start_time else None
+    ).server_time().done() if start_time else None
     end_time = UserTime(
         datetime.fromisoformat(end_time),
         tzinfo=pytz.timezone(timezone)
-    ).server_time().ui_string() if end_time else None
+    ).server_time().done() if end_time else None
 
     MaintenanceAlert(active=False, text=alert_text, domains=domains,
                      start_time=start_time, end_time=end_time, timezone=timezone).save()

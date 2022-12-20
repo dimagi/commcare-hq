@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models import Q
 
 import architect
 from oauth2_provider.settings import APPLICATION_MODEL
@@ -63,22 +64,19 @@ class MaintenanceAlert(models.Model):
 
     def save(self, *args, **kwargs):
         MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
+        MaintenanceAlert.objects.filter(end_time__lte=datetime.utcnow()).update(active=False)
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
     @quickcache([], timeout=1 * 60)
     def get_active_alerts(cls):
-        cls._update_active_alerts()
-        active_alerts = cls.objects.filter(active=True).order_by('-modified')
-        return active_alerts
-
-    @classmethod
-    def _update_active_alerts(cls):
-        alerts_to_deactivate = cls.objects.filter(active=True, end_time__lte=datetime.utcnow())
-        alerts_to_deactivate.update(active=False, scheduled=False)
-
-        alerts_to_activate = cls.objects.filter(active=False, scheduled=True, start_time__lte=datetime.utcnow())
-        alerts_to_activate.update(active=True)
+        now = datetime.utcnow()
+        active_alerts = cls.objects.filter(
+            Q(active=True),
+            Q(start_time__lte=now) | Q(start_time__isnull=True),
+            Q(end_time__gt=now) | Q(end_time__isnull=True)
+        )
+        return active_alerts.order_by('-modified')
 
 
 class UserAgent(models.Model):
