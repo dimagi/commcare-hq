@@ -8,15 +8,20 @@ from corehq.apps.userreports.dbaccessors import (
     get_orphaned_tables_by_engine_id,
 )
 
+CMD_FIND = 'find'
+CMD_DELETE = 'delete'
+CMD_CHOICES = [CMD_FIND, CMD_DELETE]
+
 
 class Command(BaseCommand):
     """
     An orphaned UCR table is one where the related datasource no longer exists
-    This command is designed to delete orphaned tables
+    This command is designed to find and/or delete orphaned UCRs
     """
-    help = "Delete orphaned UCR tables"
+    help = "Find and/or delete orphaned UCR tables"
 
     def add_arguments(self, parser):
+        parser.add_argument('command', choices=CMD_CHOICES)
         parser.add_argument(
             '--engine_id',
             action='store',
@@ -49,11 +54,27 @@ class Command(BaseCommand):
             print(suggestions)
             exit(0)
 
-        if not confirm_deletion_with_user(ucrs_to_delete):
-            exit(0)
+        log_orphaned_tables(ucrs_to_delete)
 
-        tablenames = get_tables_names(ucrs_to_delete)
-        drop_ucr_tables(tablenames)
+        if options.get('command') == CMD_DELETE and confirm_deletion_with_user():
+            tablenames = get_tables_names(ucrs_to_delete)
+            drop_ucr_tables(tablenames)
+
+
+def log_orphaned_tables(ucrs_to_delete):
+    if not ucrs_to_delete:
+        print("Did not find any orphaned UCRs.")
+        return
+
+    for engine_id, ucr_infos in ucrs_to_delete.items():
+        if len(ucr_infos) > 0:
+            print(f"Found orphaned UCRs in the {engine_id} database:")
+            for ucr_info in ucr_infos:
+                print(
+                    f"\t{ucr_info['tablename']}, {ucr_info['row_count']} rows."
+                )
+        else:
+            print(f"Did not find orphaned UCRs in the {engine_id} database.")
 
 
 def get_tables_names(ucrs_to_delete):
@@ -65,23 +86,5 @@ def get_tables_names(ucrs_to_delete):
     return tablenames_to_drop
 
 
-def confirm_deletion_with_user(ucrs_to_delete):
-    if not ucrs_to_delete:
-        print("There aren't any UCRs to delete.")
-        return None
-
-    no_orphaned_tables = True
-    for engine_id, ucr_infos in ucrs_to_delete.items():
-        print(f"The following UCRs will be deleted in the {engine_id} database:")
-        for ucr_info in ucr_infos:
-            no_orphaned_tables = False
-            print(f"\t{ucr_info['tablename']} with {ucr_info['row_count']} rows.")
-
-    if no_orphaned_tables:
-        print("No orphaned tables were found")
-        return False
-
-    if input("Are you sure you want to run the delete operation? (y/n)") == 'y':
-        return True
-
-    return False
+def confirm_deletion_with_user():
+    return input("Are you sure you want to delete orphaned UCRs? (y/n)") == 'y'
