@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
-from custom.abdm.milestone_one.utils.response_util import get_response
+from custom.abdm.milestone_one.utils.response_util import parse_response
 
 
 @api_view(["POST"])
@@ -18,7 +18,7 @@ from custom.abdm.milestone_one.utils.response_util import get_response
 def generate_aadhaar_otp(request):
     aadhaar_number = request.data.get("aadhaar")
     resp = abdm_util.generate_aadhar_otp(aadhaar_number)
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -29,7 +29,7 @@ def generate_mobile_otp(request):
     txn_id = request.data.get("txn_id")
     mobile_number = request.data.get("mobile_number")
     resp = abdm_util.generate_mobile_otp(mobile_number, txn_id)
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -40,7 +40,7 @@ def verify_aadhaar_otp(request):
     txn_id = request.data.get("txn_id")
     otp = request.data.get("otp")
     resp = abdm_util.verify_aadhar_otp(otp, txn_id)
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -55,4 +55,4 @@ def verify_mobile_otp(request):
         resp = abdm_util.create_health_id(txn_id)
         resp.pop("token")
         resp.pop("refreshToken")
-    return get_response(resp)
+    return parse_response(resp)

@@ -10,7 +10,7 @@ from custom.abdm.milestone_one.utils import abha_verification_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.milestone_one.utils.response_util import (
     generate_invalid_req_response,
-    get_response,
+    parse_response,
 )
 
 
@@ -25,7 +25,7 @@ def get_auth_methods(request):
     resp = abdm_util.search_by_health_id(health_id)
     auth_methods = resp.get("auth_methods")
     resp = {"auth_methods": auth_methods}
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -36,7 +36,7 @@ def generate_auth_otp(request):
     health_id = request.data.get("health_id")
     auth_method = request.data.get("auth_method")
     resp = abdm_util.generate_auth_otp(health_id, auth_method)
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -49,7 +49,7 @@ def confirm_with_mobile_otp(request):
     resp = abdm_util.confirm_with_mobile_otp(otp, txn_id)
     if "token" in resp:
         resp = {"status": "success", "txnId": txn_id}
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -62,7 +62,7 @@ def confirm_with_aadhaar_otp(request):
     resp = abdm_util.confirm_with_aadhaar_otp(otp, txn_id)
     if "token" in resp:
         resp = {"status": "success", "txnId": txn_id}
-    return get_response(resp)
+    return parse_response(resp)
 
 
 @api_view(["POST"])
@@ -72,4 +72,4 @@ def confirm_with_aadhaar_otp(request):
 def search_health_id(request):
     health_id = request.data.get("health_id")
     resp = abdm_util.search_by_health_id(health_id)
-    return get_response(resp)
+    return parse_response(resp)

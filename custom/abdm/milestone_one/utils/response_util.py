@@ -8,7 +8,7 @@ from rest_framework.status import (
 success_response_keys = ["txnId", "healthIdNumber", "auth_methods", "token"]
 
 
-def get_response(response_data):
+def parse_response(response_data):
     if not response_data:
         return Response({"error": "No valid response found"}, status=HTTP_500_INTERNAL_SERVER_ERROR)
     if any([key in response_data for key in success_response_keys]):
