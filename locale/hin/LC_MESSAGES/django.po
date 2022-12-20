@@ -16682,6 +16682,10 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
+msgid "There was an error processing your request. Please try again."
+msgstr ""
+
+#: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
 msgstr ""
 
@@ -39424,6 +39428,10 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
 msgid "Processing Attempts"
+msgstr ""
+
+#: corehq/motech/generic_inbound/templates/generic_inbound/request_log_detail.html
+msgid "Retry"
 msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py

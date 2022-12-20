@@ -22,7 +22,7 @@ class Command(BaseCommand):
             repeaters = self._get_repeaters_with_empty_names()
 
     def _get_repeaters_with_empty_names(self):
-        return SQLRepeater.objects.filter(name=None)[:CHUNKSIZE]
+        return SQLRepeater.objects.filter(name=None).select_related('connection_settings')[:CHUNKSIZE]
 
     def _show_progress(self, repeater_count):
         self.repeaters_updated_count += repeater_count
