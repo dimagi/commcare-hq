@@ -1,7 +1,11 @@
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.permissions import IsAuthenticated
-from custom.abdm.auth import ABDMUserAuthentication
 
+from custom.abdm.auth import ABDMUserAuthentication
 from custom.abdm.milestone_one.utils import abha_creation_util as abdm_util
 from custom.abdm.milestone_one.utils.decorators import required_request_params
 from custom.abdm.milestone_one.utils.response_util import get_response

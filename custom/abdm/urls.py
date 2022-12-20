@@ -1,5 +1,9 @@
 from django.urls import path
-from custom.abdm.milestone_one.views import abha_creation_views, abha_verification_views
+
+from custom.abdm.milestone_one.views import (
+    abha_creation_views,
+    abha_verification_views,
+)
 
 abha_creation_urls = [
     path('api/generate_aadhaar_otp', abha_creation_views.generate_aadhaar_otp, name='generate_aadhaar_otp'),

@@ -1,9 +1,10 @@
 import logging
-
 from functools import wraps
 from typing import List
 
-from custom.abdm.milestone_one.utils.response_util import generate_invalid_req_response
+from custom.abdm.milestone_one.utils.response_util import (
+    generate_invalid_req_response,
+)
 
 logger = logging.getLogger(__name__)
 

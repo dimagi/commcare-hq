@@ -1,7 +1,8 @@
 import json
-import requests
 
 from django.conf import settings
+
+import requests
 
 base_url = "https://healthidsbx.abdm.gov.in/api/"
 gateway_url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"

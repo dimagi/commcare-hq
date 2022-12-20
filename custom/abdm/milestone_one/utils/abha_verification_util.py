@@ -1,6 +1,10 @@
 import requests
 
-from custom.abdm.milestone_one.utils.request_util import get_access_token, get_response_http_post, base_url
+from custom.abdm.milestone_one.utils.request_util import (
+    base_url,
+    get_access_token,
+    get_response_http_post,
+)
 
 auth_otp_url = "v2/auth/init"
 confirm_with_mobile_otp_url = "v1/auth/confirmWithMobileOTP"

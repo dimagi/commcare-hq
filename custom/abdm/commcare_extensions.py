@@ -1,5 +1,6 @@
-from corehq.toggles import RESTORE_ADD_ABDM_TOKEN
 from casexml.apps.phone.xml import get_custom_user_data_for_restore
+
+from corehq.toggles import RESTORE_ADD_ABDM_TOKEN
 from custom.abdm.models import ABDMUser
 
 
