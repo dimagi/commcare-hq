@@ -1,7 +1,5 @@
-import os
-import binascii
-
 from django.db import models
+from rest_framework.authtoken.models import Token
 
 
 class ABDMUser(models.Model):
@@ -15,7 +13,7 @@ class ABDMUser(models.Model):
         return super().save(*args, **kwargs)
 
     def generate_token(self):
-        token = binascii.hexlify(os.urandom(20)).decode()
+        token = Token.generate_key()
         self.access_token = token
 
     @property

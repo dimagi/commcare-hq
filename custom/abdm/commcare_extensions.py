@@ -3,7 +3,7 @@ from casexml.apps.phone.xml import get_custom_user_data_for_restore
 from custom.abdm.models import ABDMUser
 
 
-def get_abdm_api_token(username, domain):
+def _get_abdm_api_token(username, domain):
     user, _ = ABDMUser.objects.get_or_create(username=username, domain=domain)
     if not user.access_token:
         user.generate_token()
@@ -13,5 +13,5 @@ def get_abdm_api_token(username, domain):
 @get_custom_user_data_for_restore.extend()
 def get_abdm_user_data(restore_user):
     if RESTORE_ADD_ABDM_TOKEN.enabled(restore_user.domain):
-        return {"abdm_api_token": get_abdm_api_token(restore_user.username, restore_user.domain)}
+        return {"abdm_api_token": _get_abdm_api_token(restore_user.username, restore_user.domain)}
     return {}

@@ -17,8 +17,7 @@
 # See: ./hqscripts/management/commands/makemigrations.py
 #
 abdm
- 0001_squashed_0002_auto_20220926_0547 (2 squashed migrations)
- 0002_abdmuser_domain
+ 0001_initial
 accounting
  0001_squashed_0052_ensure_report_builder_plans
  0002_auto_20170222_2008
