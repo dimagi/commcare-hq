@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -332,10 +332,8 @@ def _get_service_type(toggle):
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            subscription = Subscription.get_active_subscription_by_domain(name)
-            if subscription:
-                service_type[name] = subscription.service_type
-    return service_type
+            service_type, plan = get_subscription_info(name)
+    return f"{service_type} : {plan}"
 
 
 def _namespace_domain(enabled_item):
