@@ -1101,14 +1101,6 @@ TRANSFER_DOMAIN = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FORM_LINK_WORKFLOW = StaticToggle(
-    'form_link_workflow',
-    'Form linking workflow available on forms',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
-)
-
 SECURE_SESSION_TIMEOUT = StaticToggle(
     'secure_session_timeout',
     "USH: Allow domain to override default length of inactivity timeout",
