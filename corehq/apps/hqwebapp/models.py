@@ -32,7 +32,6 @@ class MaintenanceAlert(models.Model):
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     timezone = models.CharField(max_length=32, default='UTC')
-    scheduled = models.BooleanField(default=False)
 
     text = models.TextField()
     domains = ArrayField(models.CharField(max_length=126), null=True)
@@ -43,20 +42,6 @@ class MaintenanceAlert(models.Model):
     @property
     def html(self):
         return mark_up_urls(self.text)
-
-    @property
-    def status(self):
-        if self.active:
-            status = 'active'
-        elif self.scheduled:
-            status = 'scheduled'
-        elif self.end_time and self.end_time < datetime.utcnow():
-            status = 'expired'
-        elif self.start_time:
-            status = 'unscheduled'
-        else:
-            status = 'inactive'
-        return status
 
     def __repr__(self):
         return "MaintenanceAlert(text='{}', active='{}', domains='{}')".format(

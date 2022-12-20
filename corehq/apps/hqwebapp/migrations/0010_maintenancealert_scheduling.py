@@ -15,11 +15,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='maintenancealert',
-            name='scheduled',
-            field=models.BooleanField(default=False),
-        ),
-        migrations.AddField(
-            model_name='maintenancealert',
             name='end_time',
             field=models.DateTimeField(null=True),
         ),

@@ -1257,6 +1257,7 @@ class MaintenanceAlertsView(BasePageView):
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
+        now = datetime.utcnow()
         return {
             'timezones': pytz.common_timezones,
             'alerts': [{
@@ -1267,7 +1268,7 @@ class MaintenanceAlertsView(BasePageView):
                                                           .ui_string() if alert.start_time else None,
                 'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
                                                       .ui_string() if alert.end_time else None,
-                'status': alert.status,
+                'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]

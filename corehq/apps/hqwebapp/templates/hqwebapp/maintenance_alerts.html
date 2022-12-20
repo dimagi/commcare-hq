@@ -166,26 +166,20 @@
                           class="btn btn-primary"
                           name="command"
                           value="activate"
-                          data-bind="visible: status === 'inactive'">
-                    {% trans "Activate Alert" %}
+                          data-bind="visible: !active && !expired">
+                    <span data-bind="visible: !!start_time || !!end_time">{% trans "Schedule Alert" %}</span>
+                    <span data-bind="hidden: !!start_time || !!end_time">{% trans "Activate Alert" %}</span>
                   </button>
                   <button type="submit"
                           class="btn btn-danger"
                           name="command"
                           value="deactivate"
-                          data-bind="visible: status === 'active' || status === 'scheduled'">
+                          data-bind="visible: active && !expired">
                     {% trans "De-activate Alert" %}
-                  </button>
-                  <button type="submit"
-                          class="btn btn-primary"
-                          name="command"
-                          value="schedule"
-                          data-bind="visible: status === 'unscheduled'">
-                    {% trans "Schedule Alert" %}
                   </button>
                 </form>
                 <button class="btn"
-                        data-bind="visible: status === 'expired'"
+                        data-bind="visible: expired"
                         disabled>
                   {% trans "Alert Expired" %}
                 </button>
