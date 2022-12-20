@@ -182,11 +182,6 @@ class TestMaintenanceAlertsView(TestCase):
         self.client.post(reverse('create_alert'), {'alert_text': "Maintenance alert"})
         alert = MaintenanceAlert.objects.latest('created')
         self.assertFalse(alert.active)
-        self.assertFalse(alert.scheduled)
-
-        self.client.post(reverse('alerts'), {'command': 'schedule', 'alert_id': alert.id})
-        alert = MaintenanceAlert.objects.get(id=alert.id)
-        self.assertTrue(alert.scheduled)
 
         self.client.post(reverse('alerts'), {'command': 'activate', 'alert_id': alert.id})
         alert = MaintenanceAlert.objects.get(id=alert.id)
@@ -195,4 +190,3 @@ class TestMaintenanceAlertsView(TestCase):
         self.client.post(reverse('alerts'), {'command': 'deactivate', 'alert_id': alert.id})
         alert = MaintenanceAlert.objects.get(id=alert.id)
         self.assertFalse(alert.active)
-        self.assertFalse(alert.scheduled)

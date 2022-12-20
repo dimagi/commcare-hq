@@ -10,7 +10,6 @@ class TestMaintenanceAlerts(TestCase):
         alert = MaintenanceAlert.objects.create(**kwargs)
 
         self.assertFalse(alert.active, False)
-        self.assertFalse(alert.scheduled, False)
         self.assertEqual(alert.text, "Maintenance alert")
         self.assertEqual(alert.start_time, None)
         self.assertEqual(alert.end_time, None)
@@ -28,38 +27,39 @@ class TestMaintenanceAlerts(TestCase):
         self.assertEqual(alert.text, "Link to www.commcare.org")
         self.assertEqual(alert.html, 'Link to <a href="www.commcare.org">www.commcare.org</a>')
 
-    def test_update_activates_scheduled_alert(self):
+    def test_shows_alerts_on_schedule(self):
         current_time = datetime.utcnow()
         past_time = current_time - timedelta(minutes=1)
         future_time = current_time + timedelta(hours=1)
         kwargs = {
             'text': "Maintenance alert",
-            'scheduled': True,
-            'start_time': past_time,
-            'end_time': future_time
+            'start_time': future_time,
+            'active': True
         }
         alert = MaintenanceAlert.objects.create(**kwargs)
-        self.assertFalse(alert.active)
 
-        MaintenanceAlert.get_active_alerts()
-        alert = MaintenanceAlert.objects.get(id=alert.id)
-        self.assertTrue(alert.active)
+        active_alerts = MaintenanceAlert.get_active_alerts()
+        self.assertQuerysetEqual(active_alerts, [])
 
-    def test_update_deactivates_expired_alert(self):
-        current_time = datetime.utcnow()
-        past_time = current_time - timedelta(minutes=1)
+        alert.start_time = past_time
+        alert.save()
+        active_alerts = MaintenanceAlert.get_active_alerts()
+        self.assertQuerysetEqual(active_alerts, [alert])
+
+        alert.end_time = past_time
+        alert.save()
+        active_alerts = MaintenanceAlert.get_active_alerts()
+        self.assertQuerysetEqual(active_alerts, [])
+
+    def test_shows_alerts_without_schedule(self):
         kwargs = {
-            'active': True,
-            'scheduled': True,
-            'start_time': past_time,
-            'end_time': past_time
+            'text': "Maintenance alert",
+            'active': True
         }
         alert = MaintenanceAlert.objects.create(**kwargs)
 
-        MaintenanceAlert.get_active_alerts()
-        alert = MaintenanceAlert.objects.get(id=alert.id)
-        self.assertFalse(alert.active)
-        self.assertFalse(alert.scheduled)
+        active_alerts = MaintenanceAlert.get_active_alerts()
+        self.assertQuerysetEqual(active_alerts, [alert])
 
 
 class TestUserAccessLogManager(TestCase):
