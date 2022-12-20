@@ -16,7 +16,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
 @es_test
-class DeleteOrphanedUCRsTests(TestCase):
+class ManageOrphanedUCRsTests(TestCase):
 
     def test_non_orphaned_tables_are_not_dropped(self):
         config = self._create_data_source_config(self.active_domain.name)
@@ -27,7 +27,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         self.addCleanup(adapter.drop_table)
 
         try:
-            call_command('delete_orphaned_ucrs', 'delete',
+            call_command('manage_orphaned_ucrs', 'delete',
                          engine_id='ucr')
         except SystemExit:
             # should be able to assert that SystemExit is raised given there shouldn't be any orphaned tables
@@ -46,7 +46,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         config.delete()
 
         with self.assertRaises(SystemExit):
-            call_command('delete_orphaned_ucrs', 'delete',
+            call_command('manage_orphaned_ucrs', 'delete',
                          engine_id='ucr')
 
         self.assertTrue(adapter.table_exists)
@@ -60,7 +60,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         # orphan table by deleting config
         config.delete()
 
-        call_command('delete_orphaned_ucrs', 'delete', engine_id='ucr',
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
                      force_delete=True)
 
         self.assertFalse(adapter.table_exists)
@@ -74,7 +74,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         # orphan table by deleting config
         config.delete()
 
-        call_command('delete_orphaned_ucrs', 'delete', engine_id='ucr')
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr')
 
         self.assertFalse(adapter.table_exists)
 
@@ -94,7 +94,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         active_config.delete()
         deleted_config.delete()
 
-        call_command('delete_orphaned_ucrs', 'delete', engine_id='ucr',
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
                      force_delete=True, domain='test')
 
         self.assertTrue(deleted_adapter.table_exists)
@@ -109,7 +109,7 @@ class DeleteOrphanedUCRsTests(TestCase):
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
 
-        input_patcher = patch('corehq.apps.userreports.management.commands.delete_orphaned_ucrs.input')
+        input_patcher = patch('corehq.apps.userreports.management.commands.manage_orphaned_ucrs.input')
         mock_input = input_patcher.start()
         mock_input.return_value = 'y'
         cls.addClassCleanup(input_patcher.stop)
