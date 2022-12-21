@@ -5,7 +5,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
         const dsn = initialPageData('sentry_dsn');
         if (dsn) {
             Sentry.init({
-                dsn: initialPageData('sentry_dsn'),
+                dsn: dsn,
                 environment: initialPageData('sentry_environment'),
                 release: initialPageData('sentry_release'),
                 tracesSampleRate: 1.0,
