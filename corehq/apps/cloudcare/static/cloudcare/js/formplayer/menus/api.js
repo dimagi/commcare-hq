@@ -3,8 +3,13 @@
  */
 
 hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+    var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
+        constants = hqImport("cloudcare/js/formplayer/constants"),
+        errors = hqImport("cloudcare/js/form_entry/errors"),
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
+        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
 
     var API = {
         queryFormplayer: function (params, route) {
@@ -44,7 +49,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             FormplayerFrontend.trigger('clearProgress');
                             FormplayerFrontend.trigger(
                                 'showError',
-                                response.exception || hqImport("cloudcare/js/formplayer/constants").GENERIC_ERROR,
+                                response.exception,
                                 response.type === 'html'
                             );
 
@@ -59,6 +64,23 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                             defer.reject();
 
                         } else {
+                            if (response.smartLinkRedirect) {
+                                if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
+                                    FormplayerFrontend.trigger('showSuccess', gettext("You have selected a case in a different domain. App Preview does not support this feature.", 5000));
+                                    FormplayerFrontend.trigger('navigateHome');
+                                    return;
+                                }
+
+                                // Drop last selection to avoid redirect loop if user presses back in the future
+                                var urlObject = formplayerUtils.currentUrlToObject();
+                                urlObject.setSelections(_.initial(urlObject.selections || []));
+                                formplayerUtils.setUrlToObject(urlObject, true);
+
+                                console.log("Redirecting to " + response.smartLinkRedirect);
+                                document.location = response.smartLinkRedirect;
+                                return;
+                            }
+
                             FormplayerFrontend.trigger('clearProgress');
                             defer.resolve(parsedMenus);
                             // Only configure menu debugger if we didn't get a form entry response
@@ -71,12 +93,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         if (response.status === 423) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                hqImport("cloudcare/js/form_entry/errors").LOCK_TIMEOUT_ERROR
+                                errors.LOCK_TIMEOUT_ERROR
                             );
                         } else if (response.status === 401) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                hqImport("cloudcare/js/form_entry/utils").reloginErrorHtml(),
+                                formEntryUtils.reloginErrorHtml(),
                                 true
                             );
                         } else {
@@ -86,10 +108,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                         'Please report an issue if you continue to see this message.')
                             );
                         }
-                        var urlObject = Util.currentUrlToObject();
+                        var urlObject = formplayerUtils.currentUrlToObject();
                         if (urlObject.selections) {
                             urlObject.selections.pop();
-                            Util.setUrlToObject(urlObject);
+                            formplayerUtils.setUrlToObject(urlObject);
                         }
                         defer.reject();
                     },
@@ -107,7 +129,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "offset": params.page * casesPerPage,
                     "search_text": params.search,
                     "menu_session_id": params.sessionId,
-                    "force_manual_action": params.forceManualAction,
                     "query_data": params.queryData,
                     "cases_per_page": casesPerPage,
                     "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
@@ -117,10 +138,11 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "geo_location": lastRecordedLocation,
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
+                    "selected_values": params.selectedValues,
                 });
                 options.url = formplayerUrl + '/' + route;
 
-                menus = hqImport("cloudcare/js/formplayer/menus/collections")();
+                menus = Collections();
 
                 if (Object.freeze) {
                     Object.freeze(options);
@@ -133,9 +155,18 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
     };
 
     FormplayerFrontend.getChannel().reply("app:select:menus", function (options) {
+        if (sessionStorage.selectedValues !== undefined) {
+            const currentSelectedValues = JSON.parse(sessionStorage.selectedValues)[sessionStorage.queryKey];
+            options.selectedValues = currentSelectedValues !== undefined && currentSelectedValues !== '' ? currentSelectedValues.split(',') : undefined;
+        }
         if (!options.endpointId) {
             return API.queryFormplayer(options, options.isInitial ? "navigate_menu_start" : "navigate_menu");
         }
+
+        var progressView = ProgressBar({
+            progressMessage: gettext("Switching project spaces..."),
+        });
+        FormplayerFrontend.regions.getRegion('loadingProgress').show(progressView);
 
         var user = FormplayerFrontend.getChannel().request('currentUser');
         if (options.forceLoginAs && !user.restoreAs) {
@@ -159,6 +190,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         return API.queryFormplayer(options, 'get_details');
     });
 
-    return 1;
+    return API;
 });
 

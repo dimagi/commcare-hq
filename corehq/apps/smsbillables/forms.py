@@ -1,10 +1,10 @@
 from django import forms
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import layout as crispy
 from crispy_forms.helper import FormHelper
 from django_countries.data import COUNTRIES
-from phonenumbers import country_code_for_region
+from corehq.apps.sms.phonenumbers_helper import country_code_for_region
 
 from corehq.apps.sms.models import INCOMING, OUTGOING, SQLMobileBackend
 

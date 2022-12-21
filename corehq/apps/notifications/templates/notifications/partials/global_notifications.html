@@ -13,7 +13,7 @@
     <!-- ko foreach: notifications -->
     <li data-bind="css: {
                 'notifications-alert': isAlert(),
-                'notifications-info': isInfo(),
+                'notifications-info': isInfo() || isFeature(),
                 'notifications-unread': !isRead()
             }">
       <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
@@ -21,7 +21,7 @@
           <i class="notifications-type fa"
              data-bind="css: {
                   'fa-exclamation-triangle icon-warning-sign': isAlert(),
-                  'fa-info-circle icon-info-sign': isInfo()
+                  'fa-info-circle icon-info-sign': isInfo() || isFeature(),
               }"></i>
         </span>
         <span class="notifications-text" data-bind="text: content"></span>

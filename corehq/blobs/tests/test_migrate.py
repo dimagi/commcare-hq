@@ -118,7 +118,9 @@ Tests below are commented out because they are slow and no longer relevant
 to any current envs (all envs have been migrated). Kept for reference when
 writing new migrations.
 
-from testil import replattr, tempdir
+from unittest.mock import patch
+
+from testil import tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.blobs.mixin import BlobMixin
@@ -223,7 +225,7 @@ class BaseMigrationTest(TestCase):
                     modified.add(doc["_id"])
                 return super(ConcurrentModify, self)._do_migration(doc)
 
-        with replattr(migrator, "doc_migrator_class", ConcurrentModify):
+        with patch.object(migrator, "doc_migrator_class", ConcurrentModify):
             # do migration
             migrated, skipped = migrator.migrate(max_retry=0)
             self.assertGreaterEqual(skipped, len(docs))

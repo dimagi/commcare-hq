@@ -1,7 +1,7 @@
 Caching and Memoization
 =======================
 
-There are two primary ways of caching in CommCareHQ - using the decorators
+There are two primary ways of caching in CommCare HQ - using the decorators
 ``@quickcache`` and ``@memoized``. At their core, these both do the same sort of
 thing - they store the results of function, like this simplified version:
 
@@ -203,7 +203,7 @@ that sort of thing).
     @quickcache(['domain_obj.name', 'user._id'], timeout=10)
     def count_users_forms_by_device(domain_obj, user):
         return {
-            FormAccessors(domain_obj.name).count_forms_by_device(device.device_id)
+            XFormInstance.objects.count_forms_by_device(domain_obj.name, device.device_id)
             for device in user.devices
         }
 
@@ -239,7 +239,7 @@ memoize rather than quickcache. You could split it apart like this:
 
     @memoized
     def _count_users_forms_by_device(self, domain, device_id):
-        return FormAccessors(domain).count_forms_by_device(device_id)
+        return XFormInstance.objects.count_forms_by_device(domain, device_id)
 
     def count_users_forms_by_device(self, domain_obj, user):
         return {

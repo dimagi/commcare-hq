@@ -1,8 +1,8 @@
 /* eslint-env mocha */
 
 describe('WebForm', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        UI = hqImport("cloudcare/js/form_entry/form_ui");
+    var constants = hqImport("cloudcare/js/form_entry/const"),
+        formUI = hqImport("cloudcare/js/form_entry/form_ui");
 
     describe('TaskQueue', function () {
         var callCount,
@@ -111,7 +111,7 @@ describe('WebForm', function () {
             // Setup stubs
             $.cookie = sinon.stub();
             sinon.stub(Utils, 'initialRender');
-            sinon.stub(UI, 'getIx').callsFake(function () { return 3; });
+            sinon.stub(formUI, 'getIx').callsFake(function () { return 3; });
         });
 
         afterEach(function () {
@@ -124,7 +124,7 @@ describe('WebForm', function () {
                 // the browser.
             }
             Utils.initialRender.restore();
-            UI.getIx.restore();
+            formUI.getIx.restore();
             $.unsubscribe();
         });
 
@@ -150,7 +150,7 @@ describe('WebForm', function () {
             sinon.stub(sess, 'newRepeat').callsFake(spy);
             sinon.stub(sess2, 'newRepeat').callsFake(spy2);
 
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
             assert.isFalse(spy.calledOnce);
             assert.isTrue(spy2.calledOnce);
         });
@@ -159,16 +159,16 @@ describe('WebForm', function () {
             var sess = WebFormSession(params);
 
             // First blocking request
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_ALL);
+            assert.equal(sess.blockingStatus, constants.BLOCK_ALL);
 
             // Attempt another request
-            $.publish('formplayer.' + Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + constants.NEW_REPEAT, {});
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, constants.BLOCK_NONE);
             // One call to new-repeat
             assert.equal(server.requests.length, 1);
         });
@@ -185,19 +185,23 @@ describe('WebForm', function () {
                         },
                     };
                 },
+                entry: {
+                    xformAction: constants.ANSWER,
+                    xformParams: function () { return {}; },
+                },
             };
 
             // First blocking request
-            $.publish('formplayer.' + Const.ANSWER, question);
+            $.publish('formplayer.' + constants.ANSWER, question);
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_SUBMIT);
+            assert.equal(sess.blockingStatus, constants.BLOCK_SUBMIT);
 
             // Attempt another request
-            $.publish('formplayer.' + Const.ANSWER, question);
+            $.publish('formplayer.' + constants.ANSWER, question);
 
             server.respond();
 
-            assert.equal(sess.blockingStatus, Const.BLOCK_NONE);
+            assert.equal(sess.blockingStatus, constants.BLOCK_NONE);
             // two calls to answer
             assert.equal(server.requests.length, 2);
 
@@ -236,6 +240,7 @@ describe('WebForm', function () {
             assert.isTrue(sess.onerror.calledWith({
                 human_readable_message: hqImport("cloudcare/js/form_entry/errors").TIMEOUT_ERROR,
                 is_html: false,
+                reportToHq: false,
             }));
         });
 
@@ -246,6 +251,175 @@ describe('WebForm', function () {
 
             server.respond();
             assert.equal(sess.session_id, 'my-session');
+        });
+    });
+
+    describe('Question Validation', function () {
+        let server,
+            formJSON,
+            Utils = hqImport("cloudcare/js/form_entry/utils"),
+            WebFormSession = hqImport("cloudcare/js/form_entry/web_form_session").WebFormSession,
+            Fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures");
+
+        hqImport("hqwebapp/js/initial_page_data").registerUrl(
+            "report_formplayer_error",
+            "/a/domain/cloudcare/apps/report_formplayer_error"
+        );
+
+        beforeEach(function () {
+            // Setup HTML
+            try {
+                affix('input#submit');
+                affix('#content');
+            } catch (e) {
+                // temporarily catch this error while we work out issues running
+                // mocha tests with grunt-mocha. this passes fine in browser
+            }
+
+            formJSON = {
+                form_url: window.location.host,
+                onerror: sinon.spy(),
+                onload: sinon.spy(),
+                onsubmit: sinon.spy(),
+                onLoading: sinon.spy(),
+                onLoadingComplete: sinon.spy(),
+                resourceMap: sinon.spy(),
+                session_data: {},
+                xform_url: 'http://xform.url/',
+                action: 'dummy',
+                tree: [Fixtures.textJSON({ix: "0"})],
+            };
+
+            // Setup fake server
+            server = sinon.fakeServer.create();
+
+            // Setup server constants
+            window.XFORM_URL = 'dummy';
+
+            // Setup stubs
+            $.cookie = sinon.stub();
+            sinon.stub(Utils, 'initialRender');
+            this.clock = sinon.useFakeTimers();
+
+            /**
+             * Helper function to make requests and mock responses. Also
+             * checks for errors.
+             * @param action: One of the xform actions listed in `constants`
+             * @param args: Arguments to publish with the action
+             * @param responseBody: The mock request response
+             */
+            this.makeRequest = function (action, args, responseBody) {
+                $.publish('formplayer.' + action, args);
+                if (action === constants.SUBMIT) {
+                    this.clock.tick(250);
+                }
+                if (typeof responseBody !== "string") {
+                    responseBody = JSON.stringify(responseBody);
+                }
+                server.respond([200, { 'Content-Type': 'application/json' }, responseBody]);
+                assert.isTrue(formJSON.onerror.notCalled, "Error occurred handling request")
+            };
+        });
+
+        afterEach(function () {
+            $('#submit').remove();
+            try {
+                server.restore();
+            } catch (e) {
+                // temporarily catch these errors while we work on issues with
+                // running mocha tests with grunt-mocha. this passes fine in
+                // the browser.
+            }
+            Utils.initialRender.restore();
+            $.unsubscribe();
+            this.clock.restore();
+        });
+
+        it('Question validation updated after answer', function () {
+            let sess = WebFormSession(formJSON),
+                form = formUI.Form(formJSON);
+
+            this.makeRequest(constants.ANSWER, form.children()[0], {
+                "status": "validation-error",
+                "type": "constraint",
+            });
+            assert.isFalse(form.children()[0].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {});
+        });
+
+        it('Question validation updated on submit', function () {
+            let sess = WebFormSession(formJSON),
+                form = formUI.Form(formJSON);
+
+            this.makeRequest(constants.SUBMIT, form, {
+                    "status": "validation-error",
+                    "errors":{"0":{"status":"validation-error","type":"constraint"}}
+            });
+            assert.isFalse(form.children()[0].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {});
+        });
+
+        it('Label validation updated on submit', function () {
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
+            let sess = WebFormSession(formJSON),
+                form = formUI.Form(formJSON);
+
+            this.makeRequest(constants.SUBMIT, form, {
+                "status": "validation-error",
+                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+            });
+            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {"1": "OK"});
+        });
+
+        it('Label validation cleared on answer', function () {
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
+            let sess = WebFormSession(formJSON),
+                form = formUI.Form(formJSON);
+
+            this.makeRequest(constants.SUBMIT, form, {
+                "status": "validation-error",
+                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+            });
+            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {"1": "OK"});
+
+            this.makeRequest(constants.ANSWER, form.children()[0], {
+                "status": "accepted",
+                "errors": {},
+                "tree": [
+                    Fixtures.textJSON({ix: "0", answer: "a"}),
+                    Fixtures.labelJSON({ix: "1", answer: "OK"}),
+                ],
+            });
+
+            assert.isTrue(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {});
+
+        });
+
+        it('Label validation handle missing label', function () {
+            formJSON.tree.push(Fixtures.labelJSON({ix: "1"}))
+            let sess = WebFormSession(formJSON),
+                form = formUI.Form(formJSON);
+
+            this.makeRequest(constants.SUBMIT, form, {
+                "status": "validation-error",
+                "errors":{"1":{"status":"validation-error","type":"constraint"}}
+            });
+            assert.isFalse(form.children()[1].isValid(), "Expected question to be invalid");
+            assert.deepEqual(form.erroredLabels(), {"1": "OK"});
+
+            this.makeRequest(constants.ANSWER, form.children()[0], {
+                "status": "accepted",
+                "errors": {},
+                "tree": [
+                    Fixtures.textJSON({ix: "0", answer: "a"}),
+                    // label no longer visible so removed from the tree
+                ],
+            });
+
+            assert.deepEqual(form.erroredLabels(), {});
         });
     });
 });

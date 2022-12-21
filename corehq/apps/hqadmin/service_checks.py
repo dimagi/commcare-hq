@@ -53,7 +53,11 @@ def check_redis():
     if 'redis' in settings.CACHES:
         import redis
         rc = cache.caches['redis']
-        redis_api = redis.StrictRedis.from_url('%s' % rc._server)
+        if isinstance(rc._server, list):
+            redis_server = rc._server[0]
+        else:
+            redis_server = rc._server
+        redis_api = redis.StrictRedis.from_url(redis_server)
         memory = redis_api.info()['used_memory_human']
         result = rc.set('serverup_check_key', 'test', timeout=5)
         return ServiceStatus(result, "Redis is up and using {} memory".format(memory))
@@ -157,27 +161,33 @@ def check_blobdb():
 
 
 def check_celery():
-    blocked_queues = []
+    bad_queues = []
 
     for queue, threshold in settings.CELERY_HEARTBEAT_THRESHOLDS.items():
         if threshold:
             threshold = datetime.timedelta(seconds=threshold)
+            heartbeat = Heartbeat(queue)
             try:
-                blockage_duration = Heartbeat(queue).get_and_report_blockage_duration()
+                blockage_duration = heartbeat.get_and_report_blockage_duration()
+                heartbeat_time_to_start = heartbeat.get_and_report_time_to_start()
             except HeartbeatNeverRecorded:
-                blocked_queues.append((queue, 'as long as we can see', threshold))
+                bad_queues.append(f"{queue} has been blocked as long as we can see (max allowed is {threshold})")
             else:
                 # We get a lot of self-resolving celery "downtime" under 5 minutes
                 # so to make actionable, we never alert on blockage under 5 minutes
                 # It is still counted as out of SLA for the celery uptime metric in datadog
                 if blockage_duration > max(threshold, datetime.timedelta(minutes=5)):
-                    blocked_queues.append((queue, blockage_duration, threshold))
+                    bad_queues.append(
+                        f"{queue} has been blocked for {blockage_duration} (max allowed is {threshold})"
+                    )
+                elif (heartbeat_time_to_start is not None and
+                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
+                    bad_queues.append(
+                        f"{queue} is delayed for {heartbeat_time_to_start} (max allowed is {threshold})"
+                    )
 
-    if blocked_queues:
-        return ServiceStatus(False, '\n'.join(
-            "{} has been blocked for {} (max allowed is {})".format(
-                queue, blockage_duration, threshold
-            ) for queue, blockage_duration, threshold in blocked_queues))
+    if bad_queues:
+        return ServiceStatus(False, '\n'.join(bad_queues))
     else:
         return ServiceStatus(True, "OK")
 

@@ -1,15 +1,15 @@
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop, gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.fixtures.dispatcher import FixtureInterfaceDispatcher
-from corehq.apps.fixtures.models import FixtureDataType, _id_from_doc
-from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home
+from corehq.apps.fixtures.models import LookupTable
+from corehq.apps.fixtures.views import FixtureViewMixIn, fixtures_home, table_json
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter
 from corehq.apps.reports.generic import GenericReportView, GenericTabularReport
 
@@ -26,26 +26,27 @@ class FixtureSelectFilter(BaseSingleOptionFilter):
     slug = "table_id"
     label = ""
     placeholder = "place"
-    default_text = ugettext_lazy("Select a Table")
+    default_text = gettext_lazy("Select a Table")
 
     @property
     def selected(self):
         # ko won't display default selected-value as it should, display default_text instead
         return ""
 
-    @property
-    @memoized
-    def fixtures(self):
-        return sorted(FixtureDataType.by_domain(self.domain), key=lambda t: t.tag.lower())
+    def _fixture_options(self):
+        return sorted(
+            LookupTable.objects.by_domain(self.domain).values("id", "tag"),
+            key=lambda t: t["tag"].lower()
+        )
 
     @property
     @memoized
     def options(self):
-        return [(_id_from_doc(f), f.tag) for f in self.fixtures]
+        return [(f["id"].hex, f["tag"]) for f in self._fixture_options()]
 
 
 class FixtureViewInterface(GenericTabularReport, FixtureInterface):
-    name = ugettext_noop("View Tables")
+    name = gettext_noop("View Tables")
     slug = "view_lookup_tables"
 
     report_template_path = 'fixtures/view_table.html'
@@ -116,7 +117,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     @memoized
     def has_tables(self):
-        return True if list(FixtureDataType.by_domain(self.domain)) else False
+        return LookupTable.objects.filter(domain=self.domain).exists()
 
     @property
     @memoized
@@ -129,9 +130,10 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
     @cached_property
     def lookup_table(self):
-        if self.has_tables() and self.request.GET.get("table_id", None):
-            return FixtureDataType.get(self.request.GET['table_id'])
-        return None
+        try:
+            return LookupTable.objects.get(id=self.request.GET['table_id'])
+        except LookupTable.DoesNotExist:
+            return None
 
     @property
     def headers(self):
@@ -143,7 +145,7 @@ class FixtureViewInterface(GenericTabularReport, FixtureInterface):
 
 
 class FixtureEditInterface(FixtureInterface):
-    name = ugettext_noop("Manage Tables")
+    name = gettext_noop("Manage Tables")
     slug = "edit_lookup_tables"
 
     report_template_path = 'fixtures/manage_tables.html'
@@ -157,4 +159,4 @@ class FixtureEditInterface(FixtureInterface):
     @property
     @memoized
     def data_types(self):
-        return list(FixtureDataType.by_domain(self.domain))
+        return [table_json(t) for t in LookupTable.objects.by_domain(self.domain)]

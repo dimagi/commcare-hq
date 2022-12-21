@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
-from mock import patch
+from unittest.mock import patch
 
 from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.feed.interface import Change, ChangeMeta

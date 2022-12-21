@@ -1,25 +1,22 @@
 import sys
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple
 from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import (
@@ -28,7 +25,7 @@ from custom.onse.const import (
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
     MAX_RETRY_ATTEMPTS,
-    TASK_RETRY_FACTOR
+    TASK_RETRY_FACTOR,
 )
 from custom.onse.models import iter_mappings
 
@@ -51,7 +48,7 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
 
     Allows us to read current case property values and build a CaseBlock
     """
-    case: Union[CommCareCase, CommCareCaseSQL]
+    case: CommCareCase
     updates: dict = attr.Factory(dict)
 
     @property
@@ -76,7 +73,11 @@ def update_facility_cases_from_dhis2_data_elements():
 
 
 @task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
-def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
+def _update_facility_cases_from_dhis2_data_elements(
+    self,
+    period=None,
+    print_notifications=False,
+):
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
@@ -164,9 +165,8 @@ def get_dhis2_server(
 
 
 def get_clays() -> Iterable[CassiusMarcellus]:
-    case_accessors = CaseAccessors(DOMAIN)
-    for case_id in case_accessors.get_case_ids_in_domain(type=CASE_TYPE):
-        case = case_accessors.get_case(case_id)
+    for case_id in CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CASE_TYPE):
+        case = CommCareCase.objects.get_case(case_id, DOMAIN)
         if not case.external_id:
             # This case is not mapped to a facility in DHIS2.
             continue

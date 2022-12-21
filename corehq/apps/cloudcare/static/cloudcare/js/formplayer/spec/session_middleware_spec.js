@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 
 describe('SessionMiddle', function () {
-    var Middleware = hqImport("cloudcare/js/formplayer/middleware");
+    let Middleware = hqImport("cloudcare/js/formplayer/middleware");
 
     it('Should call middleware and apis with same arguments', function () {
-        var middlewareSpy = sinon.spy(),
+        let middlewareSpy = sinon.spy(),
             result,
             API = {
                 myRoute: sinon.spy(function (one, two, three) {
@@ -14,7 +14,7 @@ describe('SessionMiddle', function () {
 
         Middleware.middlewares = [middlewareSpy];
 
-        var WrappedApi = Middleware.apply(API);
+        let WrappedApi = Middleware.apply(API);
 
         result = WrappedApi.myRoute(1, 2, 3);
 

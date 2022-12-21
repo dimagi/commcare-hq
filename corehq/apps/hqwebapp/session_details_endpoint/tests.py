@@ -56,33 +56,29 @@ class SessionDetailsViewTest(TestCase):
         diff_in_minutes = delta.days * 24 * 60 + delta.seconds / 60
         self.assertEqual(expected_minutes, round(diff_in_minutes))
 
-    @override_settings(DEBUG=True)
     @softer_assert()
     def test_session_details_view(self):
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        response = Client().post(self.url, data, content_type="application/json")
+        response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
 
-    @override_settings(DEBUG=True)
     @softer_assert()
     def test_session_details_view_expired_session(self):
         self.session.set_expiry(-1)  # 1 second in the past
         self.session.save()
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        response = Client().post(self.url, data, content_type="application/json")
+        response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(404, response.status_code)
 
-    @override_settings(DEBUG=True)
     @softer_assert()
     def test_session_details_view_updates_session(self):
         expired_date = self.session.get_expiry_date()
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        response = Client().post(self.url, data, content_type="application/json")
+        response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         self.assertGreater(self.session.get_expiry_date(), expired_date)
 
-    @override_settings(DEBUG=True)
     @flag_enabled('SECURE_SESSION_TIMEOUT')
     def test_secure_sessions(self):
 
@@ -121,7 +117,7 @@ class SessionDetailsViewTest(TestCase):
         # Test the session details view itself
         expired_date = self.session.get_expiry_date()
         data = json.dumps({'sessionId': self.session_key, 'domain': self.domain.name})
-        response = Client().post(self.url, data, content_type="application/json")
+        response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         _assertSecureSessionExpiry(expired_date, custom_timeout)
 
@@ -135,7 +131,6 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(False, self.client.session.get('secure_session'))
         self.assertEqual(settings.INACTIVITY_TIMEOUT, self.client.session.get('secure_session_timeout'))
 
-    @override_settings(DEBUG=True)
     def test_ping_login_unauth_user(self):
         client = Client()
         client.login(username='jackalope', password='456')
@@ -148,7 +143,6 @@ class SessionDetailsViewTest(TestCase):
         self.assertFalse(data['secure_session'])
         self.assertEqual("", data['username'])
 
-    @override_settings(DEBUG=True)
     def test_ping_login_auth_user(self):
         client = Client()
         client.login(username=self.couch_user.username, password='123')
@@ -191,11 +185,9 @@ class SessionDetailsViewTest(TestCase):
         self.assertIsNotNone(data['session_expiry'])
         self.assertNotEqual(session_expiry, data['session_expiry'])
 
-    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing(self):
-        assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = get_hmac_digest(b'123abc', data)
+        header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
         response = Client().post(
             self.url,
             data,
@@ -205,9 +197,7 @@ class SessionDetailsViewTest(TestCase):
         self.assertEqual(200, response.status_code)
         self.assertJSONEqual(response.content, self.expected_response)
 
-    @override_settings(FORMPLAYER_INTERNAL_AUTH_KEY='123abc', DEBUG=False)
     def test_with_hmac_signing_fail(self):
-        assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
 
         response = Client().post(
@@ -218,16 +208,21 @@ class SessionDetailsViewTest(TestCase):
         )
         self.assertEqual(401, response.status_code)
 
-    @override_settings(DEBUG=True)
     @softer_assert()
     @flag_enabled('FORM_LINK_WORKFLOW')
     @flag_enabled('CALC_XPATHS', is_preview=True)
     def test_session_details_view_toggles(self):
         toggles.all_toggles()
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        response = Client().post(self.url, data, content_type="application/json")
+        response = _post_with_hmac(self.url, data, content_type="application/json")
         self.assertEqual(200, response.status_code)
         expected_response = self.expected_response.copy()
         expected_response['enabled_toggles'] = ['FORM_LINK_WORKFLOW']
         expected_response['enabled_previews'] = ['CALC_XPATHS']
         self.assertJSONEqual(response.content, expected_response)
+
+
+def _post_with_hmac(url, data, client=None, **kwargs):
+    header_value = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
+    client = client or Client()
+    return client.post(url, data, HTTP_X_MAC_DIGEST=header_value, **kwargs)

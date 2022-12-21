@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.urls import reverse
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq import toggles
 from corehq.apps.domain.exceptions import InactiveTransferDomainException
@@ -25,7 +25,7 @@ class BaseDomainTest(TestCase):
 
         self.domain = Domain(name="fandago", is_active=True)
         self.domain.save()
-        toggles.TRANSFER_DOMAIN.set("domain:{domain}".format(domain=self.domain.name), True)
+        toggles.TRANSFER_DOMAIN.set(self.domain.name, True, toggles.NAMESPACE_DOMAIN)
 
         self.username = 'bananafana'
         self.password = '*******'

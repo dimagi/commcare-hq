@@ -226,3 +226,137 @@ class TestDeleteLocations(LocationHierarchyPerTest):
             SQLLocation.objects.all().values_list('name', flat=True),
             ['Massachusetts', 'Middlesex', 'Somerville']
         )
+
+    def test_delete_location_related_rules__single_rule(self):
+        from corehq.apps.data_interfaces.models import (
+            LocationFilterDefinition,
+            MatchPropertyDefinition,
+            AutomaticUpdateRule,
+            CaseRuleCriteria,
+            CaseRuleAction,
+            CaseDeduplicationActionDefinition,
+        )
+
+        rule = self._create_rule(self.domain, 'rule1', 'case_type')
+
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        location_to_delete = locations[0]
+
+        definition = LocationFilterDefinition.objects.create(
+            location_id=location_to_delete.location_id
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        # Add another random criteria
+        other_definition = MatchPropertyDefinition(
+            property_name='name',
+            property_value='John',
+            match_type='exact'
+        )
+        other_definition.save()
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = other_definition
+        criteria.save()
+
+        # Add some actions
+        action_params = {
+            "match_type": 'exact',
+            "case_properties": ['age'],
+            "include_closed": True,
+            "properties_to_update": [{"name": "age", "value_type": "", "value": "31"}],
+        }
+
+        rule.add_action(
+            CaseDeduplicationActionDefinition,
+            **action_params,
+        )
+
+        location_to_delete.delete()
+
+        self.assertTrue(AutomaticUpdateRule.objects.filter(id=rule.id).count() == 0)
+        self.assertTrue(CaseRuleCriteria.objects.filter(rule_id=rule.id).count() == 0)
+        self.assertTrue(CaseRuleAction.objects.filter(rule_id=rule.id).count() == 0)
+        self.assertTrue(
+            LocationFilterDefinition.objects.filter(location_id=location_to_delete.location_id).count() == 0
+        )
+
+    def test_delete_location_related_rules__multiple_rules(self):
+        from corehq.apps.data_interfaces.models import (
+            LocationFilterDefinition,
+            MatchPropertyDefinition,
+            AutomaticUpdateRule,
+            CaseRuleCriteria,
+            CaseRuleAction,
+            CaseDeduplicationActionDefinition,
+        )
+
+        rule1 = self._create_rule(self.domain, 'rule1', 'case_type')
+        rule2 = self._create_rule(self.domain, 'rule2', 'case_type')
+
+        locations = SQLLocation.objects.filter(domain=self.domain)
+        location_to_delete = locations[0]
+
+        definition = LocationFilterDefinition.objects.create(
+            location_id=location_to_delete.location_id
+        )
+        criteria = CaseRuleCriteria(rule=rule1)
+        criteria.definition = definition
+        criteria.save()
+
+        criteria = CaseRuleCriteria(rule=rule2)
+        criteria.definition = definition
+        criteria.save()
+
+        # Add another random criteria
+        other_definition = MatchPropertyDefinition(
+            property_name='name',
+            property_value='John',
+            match_type='exact'
+        )
+        other_definition.save()
+        criteria = CaseRuleCriteria(rule=rule1)
+        criteria.definition = other_definition
+        criteria.save()
+
+        # Add some actions
+        action_params = {
+            "match_type": 'exact',
+            "case_properties": ['age'],
+            "include_closed": True,
+            "properties_to_update": [{"name": "age", "value_type": "", "value": "31"}],
+        }
+
+        rule1.add_action(
+            CaseDeduplicationActionDefinition,
+            **action_params,
+        )
+
+        location_to_delete.delete()
+
+        self.assertTrue(AutomaticUpdateRule.objects.filter(id=rule1.id).count() == 0)
+        self.assertTrue(CaseRuleCriteria.objects.filter(rule_id=rule1.id).count() == 0)
+        self.assertTrue(CaseRuleAction.objects.filter(rule_id=rule1.id).count() == 0)
+
+        self.assertTrue(AutomaticUpdateRule.objects.filter(id=rule2.id).count() == 0)
+        self.assertTrue(CaseRuleCriteria.objects.filter(rule_id=rule2.id).count() == 0)
+        self.assertTrue(CaseRuleAction.objects.filter(rule_id=rule2.id).count() == 0)
+
+        self.assertTrue(
+            LocationFilterDefinition.objects.filter(location_id=location_to_delete.location_id).count() == 0
+        )
+
+    def _create_rule(self, domain, name, case_type):
+        from corehq.apps.data_interfaces.models import AutomaticUpdateRule
+
+        return AutomaticUpdateRule.objects.create(
+            domain=domain,
+            name=name,
+            case_type=case_type,
+            active=False,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )

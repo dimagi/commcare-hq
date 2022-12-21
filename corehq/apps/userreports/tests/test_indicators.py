@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import delete_all_ledgers, delete_all_xforms
 from casexml.apps.stock.const import REPORT_TYPE_BALANCE
@@ -28,8 +28,8 @@ from corehq.form_processor.utils.xform import TestFormMetadata
 
 class SingleIndicatorTestBase(SimpleTestCase):
 
-    def _check_result(self, indicator, document, value, context=None):
-        [result] = indicator.get_values(document, context=context)
+    def _check_result(self, indicator, document, value, evaluation_context=None):
+        [result] = indicator.get_values(document, evaluation_context)
         self.assertEqual(value, result.value)
 
 

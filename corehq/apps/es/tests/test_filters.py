@@ -3,10 +3,10 @@ from datetime import date
 from django.test import SimpleTestCase
 
 from corehq.apps.es import filters
+from corehq.apps.es.const import SIZE_LIMIT
 from corehq.apps.es.es_query import HQESQuery
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.elastic import SIZE_LIMIT
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted

@@ -53,7 +53,7 @@
       </div>
       <span class="ix"></span>
     </fieldset>
-      <div data-bind="if: showChildren()">
+      <div data-bind="visible: showChildren">
         <fieldset>
         <legend aria-hidden="true" class="sr-only">{% trans "Question Group" %}</legend>
           <div class="children" data-bind="slideVisible: showChildren(), template: { name: childTemplate, foreach: $data.children,
@@ -107,7 +107,7 @@
     <div class="webforms-nav"
          data-bind="template: { name: 'form-navigation-ko-template' }"></div>
   </div>
-  <div class="container form-container js-form-container" data-bind="
+  <div class="container form-container js-form-container print-container" data-bind="
           css: { 'form-single-question': showInFormNavigation },
       ">
 
@@ -121,33 +121,37 @@
           <div class="question-container">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
           </div>
-          <div class="row" data-bind="visible: erroredQuestions().length > 0">
-            <div class="col-sm-12 alert alert-danger">
-              {% blocktrans %}
-                Please correct the answers below before submitting.
-                <br>
-                You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
-              {% endblocktrans %}
-              <ul data-bind="foreach: erroredQuestions">
-                  <li>
-                      <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
-                      <span data-bind="visible: serverError, text: serverError"></span>
-                      <span data-bind="if: error">
-                        <!-- ko text: error --><!-- /ko -->
-                      </span>
-                      <span data-bind="visible: !serverError() && !error()">
-                        {% trans "An answer is required." %}
-                      </span>
-                  </li>
-              </ul>
+          {% if environment == "web-apps" %}
+            <div class="row" data-bind="visible: erroredQuestions().length > 0">
+              <div class="col-sm-12 alert alert-danger">
+                {% blocktrans %}
+                  Please correct the answers below before submitting.
+                  <br>
+                  You can use the <strong><i class='fa fa-fast-forward'></i> Next Error</strong> button on the left-hand side of the screen to navigate between required fields.
+                {% endblocktrans %}
+                <ul data-bind="foreach: erroredQuestions">
+                    <li>
+                        <a href="#" data-bind="click: navigateTo, html: caption_markdown() || caption() || question_id() || gettext('Unknown Question')"></a>
+                        <span data-bind="visible: serverError, text: serverError"></span>
+                        <span data-bind="if: error">
+                          <!-- ko text: error --><!-- /ko -->
+                        </span>
+                        <span data-bind="visible: !serverError() && !error()">
+                          {% trans "An answer is required." %}
+                        </span>
+                    </li>
+                </ul>
+              </div>
             </div>
-          </div>
-          <div id="submit-button" class="form-actions form-group" data-bind="visible: showSubmitButton">
+          {% endif %}
+          <div id="submit-button" class="form-actions form-group noprint-sub-container" data-bind="visible: showSubmitButton">
             <div data-bind="css: submitClass">
               <button class="submit btn btn-primary"
                      type="submit"
                      data-bind="enable: enableSubmitButton">
-                <i class="fa fa-spin fa-refresh" data-bind="visible: !enableSubmitButton() && erroredQuestions.length != 0"></i>
+                <i class="fa fa-spin fa-refresh"
+                   data-bind="visible: !enableSubmitButton(){% if environment == "web-apps" %} && erroredQuestions.length != 0{% endif %}"
+                ></i>
                 <!-- ko text: submitText --><!-- /ko -->
               </button>
             </div>
@@ -313,7 +317,7 @@
   <span class="help-block type sr-only" data-bind="
         text: helpText()
     "></span>
-  <textarea class="textfield form-control" data-bind="
+  <textarea class="textfield form-control vertical-resize" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
         attr: {
@@ -332,8 +336,10 @@
   <input type="password" class="form-control" data-bind="
         value: $data.rawAnswer,
         valueUpdate: valueUpdate,
-        id: entryId,
-        attr: {'aria-required': $parent.required() ? 'true' : 'false'},
+        attr: {
+          id: entryId,
+          'aria-required': $parent.required() ? 'true' : 'false',
+        },
     "/>
   <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
@@ -381,9 +387,24 @@
     </div>
   </div>
 </script>
+
+<script type="text/html" id="file-entry-ko-template">
+  <span class="help-block type sr-only" data-bind="text: helpText()"></span>
+  <input type="file" data-bind="
+        value: $data.rawAnswer,
+        attr: {
+            id: entryId,
+            'aria-required': $parent.required() ? 'true' : 'false',
+            accept: accept,
+        },
+    "/>
+  <span class="help-block type" aria-hidden="true" data-bind="text: helpText()"></span>
+</script>
+
 <script type="text/html" id="address-entry-ko-template">
   <div data-bind="attr: { id: entryId }"></div>
 </script>
+
 <script type="text/html" id="geo-entry-ko-template">
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
     <tbody>
@@ -419,20 +440,23 @@
   <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
-        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+        <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
           <label>
-            <input data-bind="
-                        checked: $parent.rawAnswer,
-                        checkedValue: $index() + 1,
-                        attr: {
-                            id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                            type: $parent.isMulti ? 'checkbox' : 'radio',
-                            name: $parent.entryId,
-                            class: 'group-' + $parent.entryId,
-                        },
-                    "/>
-            <span data-bind="renderMarkdown: $data"></span>
+              <input data-bind="
+                          checked: $parent.rawAnswer,
+                          checkedValue: $data,
+                          attr: {
+                              id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                              type: $parent.isMulti ? 'checkbox' : 'radio',
+                              name: $parent.entryId,
+                              class: 'group-' + $parent.entryId,
+                          },
+                      "/>
+            <!-- ko ifnot: $parent.hideLabel -->
+              <span data-bind="renderMarkdown: $data"></span>
+            <!-- /ko -->
           </label>
+          </div>
         </div>
       </div>
       <button class="btn btn-default btn-xs pull-right" data-bind="click: onClear, fadeVisible: !isMulti && rawAnswer()">
@@ -468,7 +492,7 @@
         visible: helpText(),
     "></span>
   <select multiple class="form-control" data-bind="
-        foreach: options,
+        options: choices,
         selectedOptions: rawAnswer,
         attr: {
             id: entryId,
@@ -476,7 +500,6 @@
         },
         valueAllowUnset: true,
         ">
-    <option data-bind="value: id, text: text"></option>
   </select>
   <span class="help-block type" aria-hidden="true" data-bind="
         text: helpText(),
@@ -486,7 +509,7 @@
 <script type="text/html" id="choice-label-entry-ko-template">
   <div class="row">
     <!-- ko foreach: choices -->
-      <div data-bind="attr: { 'class': $parent.colStyle }">
+      <div data-bind="attr: { 'class': $parent.colStyle }, style: { 'word-wrap': 'break-word' }">
         <!-- ko if: $parent.hideLabel -->
           <input type="radio" data-bind="
                 checked: $parent.rawAnswer,
@@ -527,12 +550,12 @@
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
-  <span class="help-block sr-only">{% trans "24-hour clock" %}</span>
+  <span class="help-block sr-only" data-bind="text: helpText()"></span>
   <div class="input-group">
     <input type="text" class="form-control" data-bind="attr: { id: entryId, 'aria-required': $parent.required() ? 'true' : 'false' }"/>
     <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
   </div>
-  <span class="help-block" aria-hidden="true">{% trans "24-hour clock" %}</span>
+  <span class="help-block" aria-hidden="true" data-bind="text: helpText()"></span>
 </script>
 
 <script type="text/html" id="ethiopian-date-entry-ko-template">

@@ -227,6 +227,12 @@ class ESQueryFake(object):
 
         return self._filtered(_date_comparison)
 
+    def uses_aggregations(self):
+        return False
+
+    def aggregation(self, _):
+        raise NotImplementedError("Aggregations aren't supported by ESQueryFake")
+
     def __getattr__(self, item):
         """
         To make it really easy to add methods to a fake only as needed by real tests,

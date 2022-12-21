@@ -20,9 +20,9 @@
           {% blocktrans %}
             Enter alert text below and preview in the table below.
             Alerts will not be public until the "activate alert" button is
-            pressed. Links will be properly wrapped with anchor tags. Only one
-            alert will be shown at a time, and the most recently modified alert
-            will be displayed.
+            pressed. Links will be properly wrapped with anchor tags. Multiple
+            alerts may be shown at a time, and the most recently modified alert
+            will be displayed on top.
           {% endblocktrans %}
         </p>
         <form id="alertForm"
@@ -38,7 +38,7 @@
             <div class="col-sm-8">
               <textarea name="alert_text"
                         id="alert_text"
-                        class="form-control"
+                        class="form-control vertical-resize"
                         placeholder="Alert text..."
                         form="alertForm"></textarea>
             </div>
@@ -51,7 +51,7 @@
             <div class="col-sm-8">
               <textarea name="domains"
                         id="domains"
-                        class="form-control"
+                        class="form-control vertical-resize"
                         placeholder="Affected domains (space separated). Leave blank to show to everyone."
                         form="alertForm" ></textarea>
             </div>

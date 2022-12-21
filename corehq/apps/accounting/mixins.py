@@ -10,7 +10,7 @@ from corehq.apps.accounting.utils.downgrade import (
     is_subscription_eligible_for_downgrade_process,
 )
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.quickcache import quickcache
 
 
@@ -65,7 +65,7 @@ class BillingModalsMixin(object):
             and not self.request.couch_user.is_superuser
             and self.request.couch_user.has_permission(
                 self.domain,
-                get_permission_name(Permissions.edit_billing)
+                get_permission_name(HqPermissions.edit_billing)
             )
         )
 
@@ -88,7 +88,7 @@ class BillingModalsMixin(object):
             if monthly_fee:
                 prepaid_credits = get_total_credits_available_for_product(current_subscription)
                 num_months_remaining = prepaid_credits / monthly_fee
-                prepaid_remaining_date = months_from_date(date.today(), num_months_remaining)
+                prepaid_remaining_date = months_from_date(date.today(), int(num_months_remaining))
                 partial_month_remaining = num_months_remaining % 1
                 num_days_in_month = 30  # Approximate
                 prepaid_remaining_date += timedelta(days=int(partial_month_remaining * num_days_in_month))

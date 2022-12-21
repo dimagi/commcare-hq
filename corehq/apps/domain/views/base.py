@@ -2,10 +2,8 @@ from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
-from collections import namedtuple
 from memoized import memoized
 
 from corehq.apps.accounting.mixins import BillingModalsMixin
@@ -22,6 +20,7 @@ from corehq.util.quickcache import quickcache
 
 def covid19(request):
     return select(request, next_view="app_exchange")
+
 
 # Domain not required here - we could be selecting it for the first time. See notes domain.decorators
 # about why we need this custom login_required decorator

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.apps.data_dictionary.models import CaseProperty
 from corehq.apps.export.det.base import DETRow, DETTable, DETConfig

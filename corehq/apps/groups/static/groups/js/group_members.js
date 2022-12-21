@@ -15,7 +15,7 @@ hqDefine("groups/js/group_members", [
 ) {
     $(function () {
         // custom data
-        var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Group Information"));
+        var customDataEditor = uiMapList.new(initialPageData.get("group_id"), gettext("Edit Group Information"));
         customDataEditor.val(initialPageData.get("group_metadata"));
         customDataEditor.on("change", function () {
             $("#group-data").val(JSON.stringify(this.val()));

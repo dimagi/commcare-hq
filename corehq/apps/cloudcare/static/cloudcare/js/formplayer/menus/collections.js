@@ -1,8 +1,13 @@
 /*global Backbone */
 
+/**
+ *  A menu is implemented as a collection of items. Typically, the user
+ *  selects one of these items. The query screen is also implemented as
+ *  a menu, where each search field is an item.
+ */
 hqDefine("cloudcare/js/formplayer/menus/collections", function () {
     var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        Util = hqImport("cloudcare/js/formplayer/utils/util");
+        Utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var MenuSelect = Backbone.Collection.extend({
         commonProperties: [
@@ -10,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'appVersion',
             'breadcrumbs',
             'clearSession',
+            'description',
             'notification',
             'persistentCaseTile',
             'queryKey',
@@ -36,6 +42,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'titles',
             'useUniformUnits',
             'widthHints',
+            'multiSelect',
         ],
 
         commandProperties: [
@@ -53,10 +60,20 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
         parse: function (response) {
             _.extend(this, _.pick(response, this.commonProperties));
 
+            var urlObject = Utils.currentUrlToObject(),
+                updateUrl = false;
+            if (!urlObject.appId && response.appId) {
+                // will be undefined on urlObject when coming from an incomplete form
+                urlObject.appId = response.appId;
+                this.appId = urlObject.appId;
+                updateUrl = true;
+            }
             if (response.selections) {
-                var urlObject = Util.currentUrlToObject();
                 urlObject.setSelections(response.selections);
-                Util.setUrlToObject(urlObject);
+                updateUrl = true;
+            }
+            if (updateUrl) {
+                Utils.setUrlToObject(urlObject, true);
             }
 
             if (response.commands) {
@@ -73,12 +90,12 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             } else if (response.tree) {
                 // form entry time, doggy
                 _.extend(this, _.pick(response, this.formProperties));
-                FormplayerFrontend.trigger('startForm', response, this.app_id);
+                FormplayerFrontend.trigger('startForm', response);
             }
         },
 
         sync: function (method, model, options) {
-            Util.setCrossDomainAjaxOptions(options);
+            Utils.setCrossDomainAjaxOptions(options);
             return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
         },
     });

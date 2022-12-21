@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from redis import ConnectionError
 from ws4redis.publisher import RedisPublisher

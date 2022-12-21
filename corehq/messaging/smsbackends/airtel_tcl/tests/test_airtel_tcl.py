@@ -3,7 +3,7 @@ from corehq.messaging.smsbackends.airtel_tcl.exceptions import AirtelTCLError, I
 from corehq.messaging.smsbackends.airtel_tcl.models import AirtelTCLBackend
 from datetime import datetime
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 class AirtelTCLBackendTest(TestCase):
@@ -105,7 +105,7 @@ class AirtelTCLBackendTest(TestCase):
             host_and_port='localhost:8000',
         )
         self.assertEqual(
-            backend.get_url(),
+            backend.url,
             'https://localhost:8000/BULK_API/InstantJsonPush'
         )
 

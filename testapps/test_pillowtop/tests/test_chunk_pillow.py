@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 from kafka.common import KafkaUnavailableError
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler

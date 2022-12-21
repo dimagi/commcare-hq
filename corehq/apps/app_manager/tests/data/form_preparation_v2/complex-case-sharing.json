@@ -212,7 +212,10 @@
                             },
                             "doc_type": "UpdateCaseAction",
                             "update": {
-                                "owner_id": "/data/owner_id"
+                                "owner_id": {
+                                  "question_path": "/data/owner_id",
+                                  "update_mode": "always"
+                                }
                             }
                         },
                         "update_referral": {

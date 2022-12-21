@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-
 from django.test import TestCase
+from nose.plugins.attrib import attr
 
 from corehq.apps.export.dbaccessors import (
     get_brief_deid_exports,
@@ -15,6 +15,7 @@ from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
     get_properly_wrapped_export_instance,
+    ODataExportFetcher
 )
 from corehq.apps.export.models import (
     CaseExportDataSchema,
@@ -288,3 +289,54 @@ class TestInferredSchemasDBAccessors(TestCase):
     def test_get_form_inferred_schema_missing(self):
         result = get_form_inferred_schema(self.domain, 'not-here', self.xmlns)
         self.assertIsNone(result)
+
+
+@attr('slow')
+class TestODataExportFetcher(TestCase):
+    def setUp(self):
+        self.fetcher = ODataExportFetcher()
+        self.export_instances = []
+
+    def tearDown(self):
+        for export_instance in self.export_instances:
+            export_instance.delete()
+
+    def test_export_count(self):
+        self._create_export(name='Form1', domain='test-domain', is_form=True)
+        self._create_export(name='Form2', domain='test-domain', is_form=True)
+        self._create_export(name='Case1', domain='test-domain', is_form=False)
+
+        self.assertEqual(self.fetcher.get_export_count('test-domain'), 3)
+
+    def test_export_count_ignores_non_odata_exports(self):
+        self._create_export(name='Form1', domain='test-domain')
+        self._create_export(name='NonOData', domain='test-domain', is_odata=False)
+
+        self.assertEqual(self.fetcher.get_export_count('test-domain'), 1)
+
+    def test_get_exports(self):
+        self._create_export(name='Form1', domain='test-domain', is_form=True)
+        self._create_export(name='Form2', domain='test-domain', is_form=True)
+        self._create_export(name='Case1', domain='test-domain', is_form=False)
+
+        exports = self.fetcher.get_exports('test-domain')
+        export_names = set([export.name for export in exports])
+        self.assertSetEqual(export_names, {'Form1', 'Form2', 'Case1'})
+
+    def test_get_exports_ignores_non_odata_exports(self):
+        self._create_export(name='Form1', domain='test-domain')
+        self._create_export(name='NonOData', domain='test-domain', is_odata=False)
+
+        exports = self.fetcher.get_exports('test-domain')
+        export_names = set([export.name for export in exports])
+        self.assertSetEqual(export_names, {'Form1'})
+
+    def _create_export(self, name='Test', domain='test-domain', is_form=True, is_odata=True):
+        ExportClass = FormExportInstance if is_form else CaseExportInstance
+        export_instance = ExportClass(
+            domain=domain,
+            name=name,
+            is_odata_config=is_odata
+        )
+        self.export_instances.append(export_instance)
+        export_instance.save()

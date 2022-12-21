@@ -1,15 +1,15 @@
 import contextlib
 from datetime import time
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.reminders.models import RECIPIENT_OWNER, RECIPIENT_USER_GROUP
 from corehq.apps.sms.api import incoming
-from corehq.apps.sms.messages import *
+from corehq.apps.sms.messages import *  # noqa: F403
 from corehq.apps.sms.models import WORKFLOW_KEYWORD
 from corehq.apps.sms.tests.util import TouchformsTestCase, time_parser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 @patch('corehq.apps.smsforms.util.critical_section_for_smsforms_sessions',
@@ -684,7 +684,7 @@ class KeywordTestCase(TouchformsTestCase):
         case = self.get_case("pid1237")
         update_case(self.domain, case.case_id,
             case_properties={'contact_phone_number': '999124', 'contact_phone_number_is_verified': '1'})
-        case = CaseAccessors(self.domain).get_case(case.case_id)
+        case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
         incoming("999123", "for_user", "TEST")
         self.assertLastOutboundSMSEquals(self.user1, "This message is for users")
@@ -800,7 +800,6 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         session.submit_partially_completed_forms = True
         session.include_case_updates_in_partial_submissions = True
         session.close()
-        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_b")
@@ -820,7 +819,6 @@ class PartialFormSubmissionTestCase(TouchformsTestCase):
         session.submit_partially_completed_forms = True
         session.include_case_updates_in_partial_submissions = False
         session.close()
-        session.save()
 
         form = self.get_last_form_submission()
         self.assertFormQuestionEquals(form, "arm", "arm_a")

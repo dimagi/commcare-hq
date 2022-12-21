@@ -3,13 +3,13 @@ import math
 import warnings
 from collections import namedtuple
 from datetime import datetime
-from importlib import import_module
 
 from django.conf import settings
+from django.core.cache import cache
+from django.db.transaction import atomic
 from django.http import Http404
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
-import pytz
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
@@ -17,13 +17,14 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
-from corehq.apps.reports.exceptions import EditFormValidationError
+from corehq.apps.reports.models import TableauAPISession, TableauUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.models import XFormInstance
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.utils import get_timezone_for_user
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -108,7 +109,7 @@ def get_all_users_by_domain(domain=None, group=None, user_ids=None,
             users.extend(user for id, user in registered_users_by_id.items() if id not in submitted_user_ids)
 
     if simplified:
-        return [_report_user_dict(user) for user in users]
+        return [_report_user(user) for user in users]
     return users
 
 
@@ -123,6 +124,18 @@ def get_username_from_forms(domain, user_id):
             return possible_username
     else:
         return HQUserType.human_readable[HQUserType.ADMIN]
+
+
+def get_user_id_from_form(form_id):
+    key = f'xform-{form_id}-user_id'
+    user_id = cache.get(key)
+    if not user_id:
+        try:
+            user_id = XFormInstance.objects.get_form(form_id).user_id
+        except XFormNotFound:
+            return None
+        cache.set(key, user_id, 12 * 60 * 60)
+    return user_id
 
 
 def namedtupledict(name, fields):
@@ -160,7 +173,8 @@ class SimplifiedUserInfo(
         ))):
 
     ES_FIELDS = [
-        '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
+        '_id', 'domain', 'username', 'first_name', 'last_name',
+        'doc_type', 'is_active', 'location_id', '__group_ids'
     ]
 
     @property
@@ -171,11 +185,11 @@ class SimplifiedUserInfo(
         return Group.by_user_id(self.user_id, False)
 
 
-def _report_user_dict(user):
+def _report_user(user):
     """
     Accepts a user object or a dict such as that returned from elasticsearch.
-    Make sure the following fields are available:
-    ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
+    Make sure the following fields (attributes) are available:
+    _id, username, first_name, last_name, doc_type, is_active
     """
     if not isinstance(user, dict):
         user_report_attrs = [
@@ -221,8 +235,8 @@ def get_simplified_users(user_es_query):
     matching users, sorted by username.
     """
     users = user_es_query.fields(SimplifiedUserInfo.ES_FIELDS).run().hits
-    users = list(map(_report_user_dict, users))
-    return sorted(users, key=lambda u: u['username_in_report'])
+    users = list(map(_report_user, users))
+    return sorted(users, key=lambda u: u.username_in_report)
 
 
 def format_datatables_data(text, sort_key, raw=None):
@@ -328,11 +342,6 @@ def datespan_from_beginning(domain_object, timezone):
     return datespan
 
 
-def get_installed_custom_modules():
-
-    return [import_module(module) for module in settings.CUSTOM_MODULES]
-
-
 def get_null_empty_value_bindparam(field_slug):
     return f'{field_slug}_empty_eq'
 
@@ -343,24 +352,6 @@ def get_INFilter_element_bindparam(base_name, index):
 
 def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
-
-
-def validate_xform_for_edit(xform):
-    for node in xform.bind_nodes:
-        if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
-            raise EditFormValidationError(_('Form cannot be edited because it will create a new case'))
-
-    return None
-
-
-def get_report_timezone(request, domain):
-    if not domain:
-        return pytz.utc
-    else:
-        try:
-            return get_timezone_for_user(request.couch_user, domain)
-        except AttributeError:
-            return get_timezone_for_user(None, domain)
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
@@ -416,3 +407,92 @@ class DatatablesParams(object):
         search = query.get("sSearch", "")
 
         return DatatablesParams(count, start, desc, echo, search)
+
+
+# --- Tableau API util methods ---
+
+TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
+
+
+def _group_json_to_tuples(group_json):
+    group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
+    # Remove default Tableau group:
+    for group in group_tuples:
+        if group.name == 'All Users':
+            group_tuples.remove(group)
+            break
+    return group_tuples
+
+
+@quickcache(['domain'], timeout=30 * 60)
+def get_all_tableau_groups(domain):
+    '''
+    Returns a list of all Tableau groups on the site as list of TableauGroupTuples.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    return _group_json_to_tuples(group_json)
+
+
+def get_tableau_groups_for_user(domain, username):
+    '''
+    Returns a list of Tableau groups that the given user belongs to.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    group_json = session.get_groups_for_user_id(user.tableau_user_id)
+    return _group_json_to_tuples(group_json)
+
+
+@atomic
+def add_tableau_user(domain, username):
+    '''
+    Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
+    these details to the Tableau instance.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.create(
+        server=session.tableau_connected_app.server,
+        username=username,
+        role='Viewer',
+    )
+    new_id = session.create_user(username, 'Viewer')
+    user.tableau_user_id = new_id
+    user.save()
+
+
+@atomic
+def delete_tableau_user(domain, username):
+    '''
+    Deletes the TableauUser object with the given username and removes it from the Tableau instance.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    id = user.tableau_user_id
+    # Delete on server before removing the object so that we still have the object in case the server deletion
+    # fails.
+    session.delete_user(id)
+    user.delete()
+
+
+@atomic
+def update_tableau_user(domain, username, role=None, groups=[]):
+    '''
+    Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
+    of TableauGroupTuples.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    if role:
+        user.role = role
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=username)
+    user.tableau_user_id = new_id
+    user.save()
+    for group in groups:
+        session.add_user_to_group(user.tableau_user_id, group.id)

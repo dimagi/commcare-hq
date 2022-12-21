@@ -5,7 +5,7 @@ from django.test.client import Client
 from django.urls import reverse
 
 from bs4 import BeautifulSoup
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
@@ -14,7 +14,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import AppStructureRepeater
+from corehq.motech.repeaters.models import SQLAppStructureRepeater
 
 
 class TestDomainViews(TestCase, DomainSubscriptionMixin):
@@ -70,12 +70,12 @@ class TestDomainViews(TestCase, DomainSubscriptionMixin):
             })
             response = self.client.post(
                 post_url,
-                {'connection_settings_id': connx.id},
+                {'connection_settings_id': connx.id, 'request_method': "POST"},
                 follow=True
             )
             self.assertEqual(response.status_code, 200)
 
-            app_structure_repeaters = AppStructureRepeater.by_domain(self.domain.name)
+            app_structure_repeaters = SQLAppStructureRepeater.objects.by_domain(self.domain.name)
             self.assertEqual(len(app_structure_repeaters), 1)
 
             for app_structure_repeater in app_structure_repeaters:
@@ -93,7 +93,7 @@ class BaseAutocompleteTest(TestCase):
         # https://github.com/django-compressor/django-appconf/issues/30
         with patch(setting_path, flag):
             response = self.client.get(view_path)
-            soup = BeautifulSoup(response.content)
+            soup = BeautifulSoup(response.content, features="lxml")
             for field in fields:
                 tag = soup.find("input", attrs={"name": field})
                 self.assertTrue(tag, "field not found: " + field)

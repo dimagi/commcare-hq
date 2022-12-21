@@ -25,7 +25,7 @@ from django.test.utils import get_unique_databases_and_mirrors
 from couchdbkit import ResourceNotFound
 from couchdbkit.ext.django import loading
 from django_nose.plugin import DatabaseContext
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 from nose.plugins import Plugin
 from nose.tools import nottest
 from requests.exceptions import HTTPError
@@ -184,7 +184,7 @@ class HqdbContext(DatabaseContext):
     and migrated.
 
     When using REUSE_DB=1, you may also want to provide a value for the
-    --reusedb option, either reset, flush, migrate, or teardown.
+    --reusedb option, either reset, flush, bootstrap, migrate, or teardown.
     ./manage.py test --help will give you a description of these.
     """
 
@@ -213,6 +213,8 @@ class HqdbContext(DatabaseContext):
                 call_command('migrate_multi', interactive=False)
             if self.reuse_db == "flush":
                 flush_databases()
+            if self.reuse_db == "bootstrap":
+                bootstrap_migrated_db_state()
             return  # skip remaining setup
 
         if self.reuse_db == "reset":
@@ -226,7 +228,6 @@ class HqdbContext(DatabaseContext):
             # that already exist
             self.runner.keepdb = True
         super(HqdbContext, self).setup()
-        temporary_db_setup()
 
     def reset_databases(self):
         self.delete_couch_databases()
@@ -294,31 +295,6 @@ class HqdbContext(DatabaseContext):
         super(HqdbContext, self).teardown()
 
 
-def temporary_db_setup():
-    """Temporary setup while V1 ledger models are being removed
-
-    Can be removed when migrations are added to delete the tables.
-    """
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute("""
-        /*
-        StockState table must be deleted so TransactionTestCase can flush
-        the db. See commit 07329e61fefaf1c563c998a164029d735d11a4fd
-
-        Prevents CommandError: Database test_commcarehq couldn't be flushed.
-
-        SQL error:
-        ERROR:  cannot truncate a table referenced in a foreign key constraint
-        DETAIL:  Table "commtrack_stockstate" references "products_sqlproduct".
-        */
-        DROP TABLE IF EXISTS commtrack_stockstate;
-        DROP TABLE IF EXISTS stock_stocktransaction;
-        DROP TABLE IF EXISTS stock_stockreport;
-        DROP TABLE IF EXISTS stock_docdomainmapping;
-        """)
-
-
 def print_imports_until_thread_change():
     """Print imports until the current thread changes
 
@@ -368,6 +344,15 @@ def flush_databases():
         except (ResourceNotFound, HTTPError):
             pass
     call_command('flush', interactive=False)
+    bootstrap_migrated_db_state()
+
+
+@unit_testing_only
+def bootstrap_migrated_db_state():
+    from corehq.apps.accounting.tests.generator import bootstrap_accounting
+    from corehq.apps.smsbillables.tests.utils import bootstrap_smsbillables
+    bootstrap_accounting()
+    bootstrap_smsbillables()
 
 
 if os.environ.get("HQ_TESTS_PRINT_IMPORTS"):

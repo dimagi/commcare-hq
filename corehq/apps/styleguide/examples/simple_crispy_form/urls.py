@@ -1,6 +1,9 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
-from corehq.apps.styleguide.examples.simple_crispy_form.views import *
+from corehq.apps.styleguide.examples.simple_crispy_form.views import (
+    DefaultSimpleCrispyFormSectionView,
+    SimpleCrispyFormView
+)
 from corehq.apps.styleguide.views.docs import (
     FormsSimpleCrispyFormExampleView,
     ViewsSimpleCrispyFormExampleView,

@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.urls import path, include, re_path as url
 from django.http import HttpResponseNotFound
 
 from tastypie.api import Api
@@ -11,7 +11,7 @@ from corehq.apps.api.domain_metadata import (
 )
 from corehq.apps.api.object_fetch_api import (
     CaseAttachmentAPI,
-    FormAttachmentAPI,
+    view_form_attachment,
 )
 from corehq.apps.api.odata.views import (
     ODataCaseMetadataView,
@@ -34,9 +34,10 @@ from corehq.apps.fixtures.resources.v0_1 import (
     LookupTableItemResource,
     LookupTableResource,
 )
-from corehq.apps.hqcase.views import case_api
+from corehq.apps.hqcase.views import case_api, case_api_bulk_fetch
 from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations import resources as locations
+from corehq.motech.generic_inbound.views import generic_inbound_api
 
 API_LIST = (
     ((0, 3), (
@@ -50,7 +51,6 @@ API_LIST = (
         v0_4.CommCareCaseResource,
         v0_4.GroupResource,
         v0_4.XFormInstanceResource,
-        v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
         FixtureResource,
         DomainMetadataResource,
@@ -59,7 +59,6 @@ API_LIST = (
         v0_4.ApplicationResource,
         v0_4.CommCareCaseResource,
         v0_4.XFormInstanceResource,
-        v0_4.RepeaterResource,
         v0_4.SingleSignOnResource,
         v0_5.CommCareUserResource,
         v0_5.WebUserResource,
@@ -73,6 +72,7 @@ API_LIST = (
         locations.v0_5.LocationTypeResource,
         v0_5.SimpleReportConfigurationResource,
         v0_5.ConfigurableReportDataResource,
+        v0_5.DataSourceConfigurationResource,
         DomainForms,
         DomainCases,
         DomainUsernames,
@@ -82,6 +82,9 @@ API_LIST = (
         LookupTableResource,
         LookupTableItemResource,
     )),
+    ((0, 6), (
+        locations.v0_6.LocationResource,
+    ))
 )
 
 
@@ -120,11 +123,16 @@ def api_url_patterns():
               ODataFormMetadataView.as_view(), name=ODataFormMetadataView.urlname)
     yield url(r'v0.5/messaging-event/$', messaging_events, name="api_messaging_event_list")
     yield url(r'v0.5/messaging-event/(?P<event_id>\d+)/$', messaging_events, name="api_messaging_event_detail")
+    yield url(r'v0\.6/case/bulk-fetch/$', case_api_bulk_fetch, name='case_api_bulk_fetch')
     # match v0.6/case/ AND v0.6/case/e0ad6c2e-514c-4c2b-85a7-da35bbeb1ff1/ trailing slash optional
-    yield url(r'v0\.6/case(?:/(?P<case_id>[\w-]+))?/?$', case_api, name='case_api')
+    yield url(r'v0\.6/case(?:/(?P<case_id>[\w\-,]+))?/?$', case_api, name='case_api')
     yield from versioned_apis(API_LIST)
-    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(), name="api_case_attachment")
-    yield url(r'^form/attachment/(?P<form_id>[\w\-:]+)/(?P<attachment_id>.*)$', FormAttachmentAPI.as_view(), name="api_form_attachment")
+    yield url(r'^case/attachment/(?P<case_id>[\w\-:]+)/(?P<attachment_id>.*)$', CaseAttachmentAPI.as_view(),
+              name="api_case_attachment")
+    yield url(r'^form/attachment/(?P<instance_id>[\w\-:]+)/(?P<attachment_id>.*)$', view_form_attachment,
+              name="api_form_attachment")
+
+    yield path('case/custom/<slug:api_id>/', generic_inbound_api, name="generic_inbound_api")
 
 
 urlpatterns = list(api_url_patterns())
@@ -171,15 +179,17 @@ NON_GLOBAL_USER_API_LIST = (
 USER_API_LIST = GLOBAL_USER_API_LIST + NON_GLOBAL_USER_API_LIST
 
 
-def get_global_api_url_patterns(resources):
+def _get_global_api_url_patterns(resources):
     api = CommCareHqApi(api_name='global')
     for resource in resources:
         api.register(resource())
-        yield url(r'^', include(api.urls))
+    return url(r'^', include(api.urls))
 
 
-admin_urlpatterns = list(get_global_api_url_patterns(ADMIN_API_LIST)) + \
-                    list(get_global_api_url_patterns(GLOBAL_USER_API_LIST))
+admin_urlpatterns = [
+    _get_global_api_url_patterns(ADMIN_API_LIST),
+    _get_global_api_url_patterns(GLOBAL_USER_API_LIST),
+]
 
 
 VERSIONED_USER_API_LIST = (

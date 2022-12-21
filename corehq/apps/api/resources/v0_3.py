@@ -1,8 +1,6 @@
 from tastypie import fields
 from tastypie.exceptions import BadRequest
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq.apps.api.es import CaseESView, ElasticAPIQuerySet, es_query_from_get_params
 from corehq.apps.api.models import ESCase
 from corehq.apps.api.resources import (
@@ -12,9 +10,9 @@ from corehq.apps.api.resources import (
 from corehq.apps.api.resources.auth import RequirePermissionAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.util import get_obj, object_does_not_exist
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from no_exceptions.exceptions import Http400
 
 # By the time a test case is running, the resource is already instantiated,
@@ -59,7 +57,7 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
         try:
-            return CaseAccessors(kwargs['domain']).get_case(case_id)
+            return CommCareCase.objects.get_case(case_id, kwargs['domain'])
         except CaseNotFound:
             raise object_does_not_exist("CommCareCase", case_id)
 
@@ -76,8 +74,8 @@ class CommCareCaseResource(HqBaseResource, DomainSpecificResourceMixin):
         ).order_by('server_modified_on')
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
-        object_class = CommCareCase
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
+        object_class = ESCase
         resource_name = 'case'
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

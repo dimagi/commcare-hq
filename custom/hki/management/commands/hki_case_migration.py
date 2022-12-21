@@ -4,7 +4,7 @@ from corehq.apps.es import CaseES
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
@@ -49,7 +49,7 @@ class Command(BaseCommand):
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
             for case_type in ('household', 'household_member'):
-                cases = CommCareCaseSQL.objects.using(db).filter(domain=self.domain, type=case_type)
+                cases = CommCareCase.objects.using(db).filter(domain=self.domain, type=case_type)
                 for case in cases:
                     yield case
 

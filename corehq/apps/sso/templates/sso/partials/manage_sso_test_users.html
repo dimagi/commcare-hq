@@ -1,0 +1,63 @@
+{% load i18n %}
+
+{# requires sso/js/edit_identity_provider #}
+
+<div id="sso-test-user-manager"
+     class="form-inline ko-template">
+  <div class="panel panel-modern-gray panel-form-only">
+    <div class="panel-body">
+      <fieldset>
+        <legend>{% trans "SSO Test Users" %}</legend>
+        <p>
+          {% blocktrans %}
+            When the Identity Provider is in "Test" mode for Login Enforcement, only
+            the users in this list will be directed to sign in with SSO.
+          {% endblocktrans %}
+        </p>
+        <!-- ko if: showNoObjectsMessage -->
+        <p class="alert alert-info">
+          <i class="fa fa-warning"></i>
+          {% blocktrans %}
+            No users are marked as test users.
+          {% endblocktrans %}
+        </p>
+        <!-- /ko -->
+        <ul data-bind="foreach: linkedObjects">
+          <li>
+            <strong data-bind="text: $data"
+                      style="padding-right: 10px;"></strong>
+            (<button type="button"
+                     class="btn-link"
+                     data-bind="click: $parent.removeObject">remove</button>)
+          </li>
+        </ul>
+        <p class="text-danger"
+           style="padding-left: 10px;"
+           data-bind="text: asyncHandlerError,
+                      visible: asyncHandlerError"></p>
+      </fieldset>
+    </div>
+  </div>
+
+  <div class="panel panel-modern-gray panel-form-only">
+    <div class="panel-body">
+      <input data-bind="textInput: newObject"
+             placeholder="jsmith@example.org"
+             type="email"
+             class="form-control" />
+      <button type="button"
+              data-bind="click: addObject,
+                         css: {
+                           'btn-primary': isNewObjectValid,
+                           'btn-disabled': isAddDisabled
+                         }"
+              class="btn">
+        {% trans "Add User" %}
+      </button>
+      <span class="text-danger"
+            style="padding-left: 10px;"
+            data-bind="text: addObjectError,
+                       visible: addObjectError"></span>
+    </div>
+  </div>
+</div>

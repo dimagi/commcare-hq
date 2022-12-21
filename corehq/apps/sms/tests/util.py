@@ -11,7 +11,6 @@ from dateutil.parser import parse
 from nose.tools import nottest
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -20,6 +19,7 @@ from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.app_manager.models import import_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.sms.api import process_username
 from corehq.apps.sms.models import (
     OUTGOING,
@@ -32,10 +32,7 @@ from corehq.apps.sms.models import (
 )
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.test_utils import unit_testing_only
 
@@ -133,24 +130,24 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return user
 
     def update_case_owner(self, case, owner):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=False,
             case_id=case.case_id,
             case_type='participant',
             owner_id=owner.get_id,
             user_id=owner.get_id,
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        ).as_text()
+        submit_case_blocks(case_block, domain=self.domain)
 
     def add_parent_access(self, user, case):
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             create=True,
             case_id=uuid.uuid4().hex,
             case_type='magic_map',
             owner_id=user.get_id,
             index={'parent': ('participant', case.case_id)}
-        ).as_xml()
-        post_case_blocks([case_block], {'domain': self.domain})
+        ).as_text()
+        submit_case_blocks(case_block, domain=self.domain)
 
     def create_web_user(self, username, password):
         user = WebUser.create(self.domain, username, password, None, None)
@@ -255,14 +252,17 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
         return site
 
     def get_case(self, external_id):
-        [case] = CaseAccessors(self.domain).get_cases_by_external_id(external_id)
+        case = CommCareCase.objects.get_case_by_external_id(
+            self.domain, external_id, raise_multiple=True)
+        if case is None:
+            raise CommCareCase.DoesNotExist
         return case
 
     def assertCasePropertyEquals(self, case, prop, value):
         self.assertEqual(case.get_case_property(prop), value)
 
     def get_last_form_submission(self):
-        result = FormAccessors(self.domain).get_forms_by_type('XFormInstance', 1, recent_first=True)
+        result = XFormInstance.objects.get_forms_by_type(self.domain, 'XFormInstance', 1, recent_first=True)
         return result[0] if len(result) > 0 else None
 
     def assertNoNewSubmission(self, last_submission):

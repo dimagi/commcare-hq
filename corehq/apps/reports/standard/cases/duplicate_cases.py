@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.standard.cases.case_list_explorer import (
     CaseListExplorer,

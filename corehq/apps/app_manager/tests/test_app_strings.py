@@ -207,3 +207,21 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(es_app_strings['case_search.m0'], 'Conseguirlos')
             self.assertEqual(es_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1_es.png')
             self.assertEqual(es_app_strings['case_search.m0.again'], 'Get them all')
+
+    def test_dependencies_app_strings(self):
+        app_id = 'callout.commcare.org.sendussd'
+        app_name = 'CommCare USSD'
+
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.profile['features'] = {'dependencies': [app_id]}
+
+        with flag_disabled('APP_DEPENDENCIES'):
+            default_strings = self._generate_app_strings(factory.app, 'default')
+            self.assertNotIn(f'android.package.name.{app_id}', default_strings)
+
+        with flag_enabled('APP_DEPENDENCIES'):
+            default_strings = self._generate_app_strings(factory.app, 'default')
+            self.assertEqual(
+                default_strings[f'android.package.name.{app_id}'],
+                app_name
+            )

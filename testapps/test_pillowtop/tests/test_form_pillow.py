@@ -12,6 +12,7 @@ from corehq.apps.change_feed.consumer.feed import (
 )
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -21,6 +22,7 @@ from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 
 
+@es_test
 class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 

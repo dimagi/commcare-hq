@@ -1,7 +1,7 @@
 import re
 from collections import OrderedDict
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import XFormException
@@ -224,6 +224,10 @@ def get_module_search_command_rows(langs, module, domain):
         + tuple(module.search_config.search_label.label.get(lang, '') for lang in langs),
         ('search_again_label', 'list')
         + tuple(module.search_config.search_again_label.label.get(lang, '') for lang in langs),
+        ('title_label', 'list')
+        + tuple(module.search_config.title_label.get(lang, '') for lang in langs),
+        ('description', 'list')
+        + tuple(module.search_config.description.get(lang, '') for lang in langs),
     ]
 
 
@@ -365,7 +369,7 @@ def get_form_question_label_name_media(langs, form):
                     if isinstance(part, ItextOutput):
                         value += "<output value=\"" + part.ref + "\"/>"
                     else:
-                        part = force_text(part)
+                        part = force_str(part)
                         part = part.replace('&', '&amp;')
                         part = part.replace('<', '&lt;')
                         part = part.replace('>', '&gt;')

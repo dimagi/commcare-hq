@@ -1,19 +1,20 @@
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from django.conf import settings
 from django.core.cache import cache
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch import CriticalSection
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.apps.hqcase.utils import AUTO_UPDATE_XMLNS
+from corehq.form_processor.models import XFormInstance
 from corehq.motech.repeaters.dbaccessors import (
     get_couch_repeat_record_ids_by_payload_id,
     get_sql_repeat_records_by_payload_id,
@@ -25,10 +26,9 @@ from corehq.toggles import CASE_DEDUPE, DISABLE_CASE_UPDATE_RULE_SCHEDULED_TASK
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 
-from .deduplication import reset_deduplicate_rule, backfill_deduplicate_rule
+from .deduplication import backfill_deduplicate_rule, reset_deduplicate_rule
 from .interfaces import FormManagementMode
 from .models import (
-    AUTO_UPDATE_XMLNS,
     AutomaticUpdateRule,
     CaseDuplicate,
     CaseRuleSubmission,
@@ -108,7 +108,8 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
     return response
 
 
-@periodic_task(serializer='pickle',
+@periodic_task(
+    serializer='pickle',
     run_every=crontab(hour='*', minute=0),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
@@ -144,7 +145,8 @@ def run_case_update_rules_for_domain(domain, now=None):
             domain=domain,
             started_on=datetime.utcnow(),
             status=DomainCaseRuleRun.STATUS_RUNNING,
-            case_type=case_type
+            case_type=case_type,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
 
         for db in get_db_aliases_for_partitioned_query():
@@ -156,6 +158,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     timeout=36 * 60 * 60,
     max_retries=0,
     queue='case_rule_queue',
+    serializer='pickle',
 )
 def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=None):
     all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
@@ -167,7 +170,8 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
-            AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
+            rule.last_run = now
+            rule.save(update_fields=['last_run'])
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)
@@ -176,7 +180,7 @@ def run_case_update_rules_on_save(case):
     with CriticalSection([key]):
         update_case = True
         if case.xform_ids:
-            last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
+            last_form = XFormInstance.objects.get_form(case.xform_ids[-1], case.domain)
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
             rules = AutomaticUpdateRule.by_domain(case.domain,

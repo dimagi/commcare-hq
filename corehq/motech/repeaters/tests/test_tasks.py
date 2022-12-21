@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.utils.xform import (
     FormSubmissionBuilder,
     TestFormMetadata,
@@ -19,7 +19,7 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import FormRepeater, SQLRepeater
+from ..models import FormRepeater, SQLFormRepeater
 from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
@@ -86,13 +86,16 @@ class TestProcessRepeater(TestCase):
         cls.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=cls.connection_settings.id,
+            format="form_xml"
         )
-        cls.repeater.save()
+        # We are creating SQLRepeater on setup so skipping creation here
+        cls.repeater.save(sync_to_sql=False)
 
     def setUp(self):
-        self.sql_repeater = SQLRepeater.objects.create(
+        self.sql_repeater = SQLFormRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=self.repeater.get_id,
+            format='form_xml',
             connection_settings=self.connection_settings
         )
         just_now = timezone.now() - timedelta(seconds=10)
@@ -120,7 +123,7 @@ class TestProcessRepeater(TestCase):
         # payload
         with patch('corehq.motech.repeaters.models.log_repeater_error_in_datadog'), \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'):
-            process_repeater(self.sql_repeater)
+            process_repeater(self.sql_repeater.id)
 
         # All records were tried and cancelled
         records = list(self.sql_repeater.repeat_records.all())
@@ -134,11 +137,11 @@ class TestProcessRepeater(TestCase):
     def test_send_request_fails(self):
         # If send_request() should be retried with the same repeat
         # record, process_repeater() should exit
-        with patch('corehq.motech.repeaters.models.simple_post') as post_mock, \
+        with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
             post_mock.return_value = Mock(status_code=400, reason='Bad request')
-            process_repeater(self.sql_repeater)
+            process_repeater(self.sql_repeater.id)
 
         # Only the first record was attempted, the rest are still pending
         states = [r.state for r in self.sql_repeater.repeat_records.all()]
@@ -157,4 +160,4 @@ def form_context(form_ids):
     try:
         yield
     finally:
-        FormAccessorSQL.hard_delete_forms(DOMAIN, form_ids)
+        XFormInstance.objects.hard_delete_forms(DOMAIN, form_ids)

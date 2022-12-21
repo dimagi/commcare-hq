@@ -14,10 +14,10 @@ hqDefine('case_importer/js/excel_fields', [
             excelFields: excelFields,
             caseFieldSpecs: caseFieldSpecs,
         };
-        self.caseFieldSpecsInMenu = _(caseFieldSpecs).where({show_in_menu: true});
-
+        self.caseFieldSpecsInMenu = _(caseFieldSpecs).where({show_in_menu: true, deprecated: false});
         self.caseFieldsInMenu = _(self.caseFieldSpecsInMenu).pluck('field');
-        self.caseFieldSuggestions = _.chain(self.caseFieldSpecs).where({discoverable: true}).pluck('field').value();
+        self.caseFieldSuggestions = _.chain(self.caseFieldSpecs).where({discoverable: true, deprecated: false}).pluck('field').value();
+        self.deprecatedFields = _(caseFieldSpecs).where({deprecated: true});
         self.mappingRows = ko.observableArray();
         self.removeRow = function (row) {
             self.mappingRows.remove(row);
@@ -59,6 +59,19 @@ hqDefine('case_importer/js/excel_fields', [
             row.hasNonDiscoverableField = ko.computed(function () {
                 return row.caseFieldSpec().description && !row.caseFieldSpec().discoverable;
             });
+            row.valuesHints = ko.computed(function () {
+                return row.caseFieldSpec().values_hints || [];
+            });
+            row.createNewChecked = ko.computed({
+                read: function () {
+                    return _.isEmpty(row.caseFieldSpec());
+                },
+                write: row.isCustom,
+            });
+            row.isDeprecated = ko.computed(function () {
+                return row.caseFieldSpec().deprecated === true;
+            });
+
             row.reset = function () {
                 var field = row.excelField();
                 field = field && sanitizeCaseField(field);

@@ -2,7 +2,12 @@ import pickle
 from datetime import datetime, timedelta, date
 from six.moves.urllib.parse import urlencode
 import pytz
-from dimagi.utils.dates import DateSpan, add_months_to_date
+from dimagi.utils.dates import (
+    DateSpan,
+    add_months_to_date,
+    get_start_and_end_dates_of_month,
+    get_date_from_month_and_year_string,
+)
 from django.test import SimpleTestCase
 from django.http import HttpRequest, QueryDict
 from dimagi.utils.decorators.datespan import datespan_in_request
@@ -179,3 +184,37 @@ class DateSpanPickleTest(SimpleTestCase):
             ),
 
         )
+
+
+class StartAndEndDatesOfMonthTest(SimpleTestCase):
+    def ensure_start_and_end_dates_are_correct_for_30_days(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2020, 6)
+        self.assertEqual(date_start, date(2020, 6, 1))
+        self.assertEqual(date_end, date(2020, 6, 30))
+
+    def ensure_start_and_end_dates_are_correct_for_31_days(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2020, 7)
+        self.assertEqual(date_start, date(2020, 7, 1))
+        self.assertEqual(date_end, date(2020, 7, 31))
+
+    def ensure_start_and_end_dates_are_correct_feb_leap_year(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2020, 2)
+        self.assertEqual(date_start, date(2020, 2, 1))
+        self.assertEqual(date_end, date(2020, 2, 29))
+
+    def ensure_start_and_end_dates_are_correct_feb_no_leap_year(self):
+        date_start, date_end = get_start_and_end_dates_of_month(2021, 2)
+        self.assertEqual(date_start, date(2021, 2, 1))
+        self.assertEqual(date_end, date(2021, 2, 28))
+
+
+class DateFromMonthAndYearStringTest(SimpleTestCase):
+    def test_correct_format_is_parsed(self):
+        self.assertEqual(
+            get_date_from_month_and_year_string('02-2022'),
+            date(2022, 2, 1)
+        )
+
+    def test_invalid_format_throws_error(self):
+        with self.assertRaises(ValueError):
+            get_date_from_month_and_year_string('03-03-2022')

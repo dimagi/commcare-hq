@@ -2,7 +2,7 @@ import datetime
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.reports.daterange import (
     get_all_daterange_choices,

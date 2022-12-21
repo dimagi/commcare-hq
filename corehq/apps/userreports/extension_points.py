@@ -40,7 +40,7 @@ def custom_ucr_expressions() -> List[Tuple[str, str]]:
         The function must take two arguments:
 
         * spec: Dict
-        * context: FactoryContext instance
+        * factory_context: FactoryContext instance
     """
 
 

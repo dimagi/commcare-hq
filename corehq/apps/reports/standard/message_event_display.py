@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from django.urls import reverse
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.sms.models import (

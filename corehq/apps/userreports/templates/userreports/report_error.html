@@ -3,14 +3,14 @@
 {% load i18n %}
 {% load compress %}
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_title %}{% endblock %}
 
 {% block page_content %}
   {% block report_alerts %}
     <div id="report-error" class="alert alert-danger">
-      <p>{{ error_message|safe }}</p>
+      <p>{{ error_message }}</p>
       {% if details %}
         <p>{% trans "Technical Details:" %}</p>
         {{ details }}
@@ -18,7 +18,7 @@
       <div id="error-message"></div>
     </div>
   {% endblock report_alerts %}
-  {% if report_id and not is_static %}
+  {% if allow_delete %}
     <form method='post' action="{% url 'delete_configurable_report' domain report_id %}?redirect={% url 'reports_home' domain %}" >
       {% csrf_token %}
       <input type="submit" value="{% trans 'Delete Report'%}" class="btn btn-danger disable-on-submit pull-right">

@@ -1,30 +1,19 @@
 import uuid
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 import os
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure, CaseIndex
-from casexml.apps.case.models import CommCareCase
 from corehq.apps.reports.view_helpers import get_case_hierarchy, case_hierarchy_context
-from casexml.apps.case.util import post_case_blocks
-from casexml.apps.case.xml import V2, V1
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     sharded,
 )
 from corehq.util.test_utils import TestFileMixin, softer_assert
-
-
-class SimpleCaseBugTests(SimpleTestCase):
-
-    def test_generate_xml_with_no_date_modified(self):
-        # before this test was added both of these calls failed
-        for version in (V1, V2):
-            CommCareCase(_id='test').to_xml(version)
 
 
 @sharded
@@ -49,7 +38,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         """
         Ensure that form processor fails on empty id
         """
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             case_id='',
             create=True,
         ).as_text()
@@ -59,14 +48,14 @@ class CaseBugTest(TestCase, TestFileMixin):
 
     def _test_datatypes_in_various_properties(self, value):
         case_id = uuid.uuid4().hex
-        create_caseblock = CaseBlock.deprecated_init(
+        create_caseblock = CaseBlock(
             case_id=case_id,
             user_id=value,
             case_name=value,
             case_type=value,
             create=True,
         ).as_text()
-        update_caseblock = CaseBlock.deprecated_init(
+        update_caseblock = CaseBlock(
             case_id=case_id,
             user_id=value,
             update={
@@ -101,9 +90,7 @@ class CaseBugTest(TestCase, TestFileMixin):
         Submit multiple values for the same property in an update block
         """
         case_id = '061ecbae-d9be-4bb5-bdd4-e62abd5eaf7b'
-        post_case_blocks([
-            CaseBlock.deprecated_init(create=True, case_id=case_id).as_xml()
-        ])
+        submit_case_blocks(CaseBlock(create=True, case_id=case_id).as_text(), domain='test-domain')
         xml_data = self.get_xml('duplicate_case_properties')
         result = submit_form_locally(xml_data, 'test-domain')
         self.assertEqual("", result.case.dynamic_case_properties()['foo'])
@@ -116,11 +103,11 @@ class CaseBugTest(TestCase, TestFileMixin):
         """Ensure we can submit a form with multiple blocks for the same case"""
         case_id = uuid.uuid4().hex
         case_blocks = [
-            CaseBlock.deprecated_init(create=True, case_id=case_id, update={
+            CaseBlock(create=True, case_id=case_id, update={
                 'p1': 'v1',
                 'p2': 'v2',
             }).as_text(),
-            CaseBlock.deprecated_init(case_id=case_id, update={
+            CaseBlock(case_id=case_id, update={
                 'p2': 'v4',
                 'p3': 'v3',
             }).as_text(),
@@ -144,21 +131,20 @@ class CaseBugTest(TestCase, TestFileMixin):
     def test_submit_to_deleted_case(self):
         """submitting to a deleted case should succeed and affect the case"""
         case_id = uuid.uuid4().hex
-        xform, [case] = post_case_blocks([
-            CaseBlock.deprecated_init(create=True, case_id=case_id, user_id='whatever',
-                update={'foo': 'bar'}).as_xml()
+        xform, [case] = submit_case_blocks([
+            CaseBlock(create=True, case_id=case_id, user_id='whatever',
+                update={'foo': 'bar'}).as_text()
         ], domain="test-domain")
-        cases = CaseAccessors("test-domain")
-        cases.soft_delete_cases([case_id])
+        CommCareCase.objects.soft_delete_cases("test-domain", [case_id])
 
-        case = cases.get_case(case_id)
+        case = CommCareCase.objects.get_case(case_id, "test-domain")
         self.assertEqual('bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
-        xform, [case] = post_case_blocks([
-            CaseBlock.deprecated_init(create=False, case_id=case_id, user_id='whatever',
-                      update={'foo': 'not_bar'}).as_xml()
-        ])
+        xform, [case] = submit_case_blocks([
+            CaseBlock(create=False, case_id=case_id, user_id='whatever',
+                      update={'foo': 'not_bar'}).as_text()
+        ], domain="test-domain")
         self.assertEqual('not_bar', case.dynamic_case_properties()['foo'])
         self.assertTrue(case.is_deleted)
 
@@ -167,15 +153,31 @@ class CaseBugTest(TestCase, TestFileMixin):
         case_id2 = uuid.uuid4().hex
         # updates before create and case blocks for different cases interleaved
         blocks = [
-            CaseBlock.deprecated_init(create=False, case_id=case_id1, update={'p': '2'}).as_xml(),
-            CaseBlock.deprecated_init(create=False, case_id=case_id2, update={'p': '2'}).as_xml(),
-            CaseBlock.deprecated_init(create=True, case_id=case_id1, update={'p': '1'}).as_xml(),
-            CaseBlock.deprecated_init(create=True, case_id=case_id2, update={'p': '1'}).as_xml()
+            CaseBlock(create=False, case_id=case_id1, update={'p': '2'}).as_text(),
+            CaseBlock(create=False, case_id=case_id2, update={'p': '2'}).as_text(),
+            CaseBlock(create=True, case_id=case_id1, update={'p': '1'}).as_text(),
+            CaseBlock(create=True, case_id=case_id2, update={'p': '1'}).as_text()
         ]
 
-        xform, cases = post_case_blocks(blocks)
+        xform, cases = submit_case_blocks(blocks, domain='test-domain')
         self.assertEqual(cases[0].get_case_property('p'), '2')
         self.assertEqual(cases[1].get_case_property('p'), '2')
+
+    def test_case_block_ordering_with_indices(self):
+        # creating a case that indexes another new case in the same form
+        # where the child case block appears before the parent case block in the form
+        case_id1 = "child-" + uuid.uuid4().hex
+        case_id2 = "parent-" + uuid.uuid4().hex
+        blocks = [
+            CaseBlock(create=True, case_id=case_id1, case_type="child", index={
+                "parent": ("parent", case_id2)
+            }).as_text(),
+            CaseBlock(create=True, case_id=case_id2, case_type="parent").as_text()
+        ]
+
+        xform, cases = submit_case_blocks(blocks, domain='test-domain')
+        child_case = [case for case in cases if case.type == "child"][0]
+        self.assertEqual(child_case.get_index("parent").referenced_id, case_id2)
 
 
 @sharded
@@ -226,7 +228,7 @@ class TestCaseHierarchy(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        parent = CaseAccessors(parent.domain).get_case(parent.case_id)
+        parent = CommCareCase.objects.get_case(parent.case_id, parent.domain)
         hierarchy = get_case_hierarchy(parent, {})
         self.assertEqual(1, len(hierarchy['case_list']))
         self.assertEqual(0, len(hierarchy['child_cases']))
@@ -263,7 +265,8 @@ class TestCaseHierarchy(TestCase):
         [case] = factory.create_or_update_case(CaseStructure(
             case_id='infinite-recursion',
             attrs={'case_type': 'bug', 'create': True},
-            indices=[CaseIndex(CaseStructure(case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
+            indices=[CaseIndex(CaseStructure(
+                case_id='infinite-recursion', attrs={'create': True}), related_type='bug')],
             walk_related=False
         ))
 
@@ -320,22 +323,22 @@ class TestCaseHierarchy(TestCase):
         case_id1 = uuid.uuid4().hex
         case_id2 = uuid.uuid4().hex
         form_id = uuid.uuid4().hex
-        case_block = CaseBlock.deprecated_init(
+        case_block = CaseBlock(
             case_id=case_id1,
             create=True,
         ).as_text()
         submit_case_blocks(case_block, 'test-transactions', form_id=form_id)
         with self.assertRaises(CaseNotFound):
-            CaseAccessors('domain_name').get_case(case_id2)
+            CommCareCase.objects.get_case(case_id2, 'domain_name')
 
         # form with same ID submitted but now has a new case transaction
-        new_case_block = CaseBlock.deprecated_init(
+        new_case_block = CaseBlock(
             case_id=case_id2,
             create=True,
             case_type='t1',
         ).as_text()
         submit_case_blocks([case_block, new_case_block], 'test-transactions', form_id=form_id)
-        case2 = CaseAccessors('test-transactions').get_case(case_id2)
+        case2 = CommCareCase.objects.get_case(case_id2, 'test-transactions')
         self.assertEqual([form_id], case2.xform_ids)
         self.assertEqual('t1', case2.type)
 
@@ -395,6 +398,5 @@ class TestCaseHierarchyContext(TestCase):
         )
 
         # re-fetch case to clear memoized properties
-        accessors = CaseAccessors(self.parent.domain)
-        self.parent = accessors.get_case(self.parent.case_id)
-        self.child = accessors.get_case(self.child.case_id)
+        self.parent = CommCareCase.objects.get_case(self.parent.case_id, self.parent.domain)
+        self.child = CommCareCase.objects.get_case(self.child.case_id, self.parent.domain)

@@ -1,5 +1,4 @@
-import mock
-from mock.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from corehq.util.test_utils import softer_assert
 from custom.up_nrhm.reports.asha_facilitators_report import (
@@ -35,7 +34,7 @@ RUN_QUERY_VALUE = {
 
 class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
+    @patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_asha_functionality_checklist_report(self, mock_run_query):
         mock = MagicMock()
         mock.couch_user = self.user
@@ -76,7 +75,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             ]
         )
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
+    @patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_asha_facilitators_report(self, mock_run_query):
         mock = MagicMock()
         mock.couch_user = self.user
@@ -145,7 +144,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
+    @patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_month_report(self, mock_run_query):
         mock = MagicMock()
         mock.couch_user = self.user
@@ -223,7 +222,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
+    @patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_af_report(self, mock_run_query):
         mock = MagicMock()
         mock.couch_user = self.user
@@ -362,7 +361,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
+    @patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_district_functionality_report(self, mock_run_query):
         mock = MagicMock()
         mock.couch_user = self.user

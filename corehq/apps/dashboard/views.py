@@ -5,8 +5,8 @@ from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from django_prbac.utils import has_privilege
 
@@ -69,7 +69,7 @@ def dashboard_tile_total(request, domain, slug):
 @location_safe
 class DomainDashboardView(LoginAndDomainMixin, BillingModalsMixin, BasePageView, DomainViewMixin):
     urlname = 'dashboard_domain'
-    page_title = ugettext_noop("HQ Dashboard")
+    page_title = gettext_noop("HQ Dashboard")
     template_name = 'dashboard/base.html'
 
     @property

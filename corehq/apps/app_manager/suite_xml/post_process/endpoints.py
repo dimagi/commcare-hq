@@ -1,3 +1,13 @@
+"""
+EndpointsHelper
+---------------
+
+This is support for session endpoints, which are a flagged feature for mobile that also form the basis of smart
+links in web apps.
+
+Endpoints define specific locations in the application using a stack, so they rely on similar logic to end of form
+navigation. The complexity of generating endpoints is all delegated to ``WorkflowHelper``.
+"""
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
 from corehq.apps.app_manager.suite_xml.post_process.workflow import (
     CommandId,
@@ -41,11 +51,15 @@ class EndpointsHelper(PostProcessor):
 
         stack = Stack()
         children = self.get_frame_children(module, form)
-        argument_ids = self._get_argument_ids(children)
+        argument_ids = self.get_argument_ids(children, form)
 
         # Add a claim request for each endpoint argument.
         # This assumes that all arguments are case ids.
-        for arg_id in argument_ids:
+        non_computed_argument_ids = [
+            child.id for child in children
+            if isinstance(child, WorkflowDatumMeta) and child.requires_selection
+        ]
+        for arg_id in non_computed_argument_ids:
             self._add_claim_frame(stack, arg_id, endpoint_id)
 
         # Add a frame to navigate to the endpoint
@@ -63,10 +77,20 @@ class EndpointsHelper(PostProcessor):
             stack=stack,
         )
 
-    def _get_argument_ids(self, frame_children):
+    def get_argument_ids(self, frame_children, form=None):
+
+        def should_include(child):
+            if not isinstance(child, WorkflowDatumMeta):
+                return False
+            if child.requires_selection:
+                return True
+            if form:
+                return child.id in (form.function_datum_endpoints or [])
+            return False
+
         return [
             child.id for child in frame_children
-            if isinstance(child, WorkflowDatumMeta) and child.requires_selection
+            if should_include(child)
         ]
 
     def _add_claim_frame(self, stack, arg_id, endpoint_id):

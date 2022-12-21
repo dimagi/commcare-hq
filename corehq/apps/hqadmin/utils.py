@@ -1,3 +1,4 @@
+import os
 from importlib import import_module
 from itertools import groupby
 
@@ -149,3 +150,28 @@ def get_session(session_key):
         return None
 
     return session
+
+
+def unset_password(user):
+    """
+    "Clear" or "force reset" a user's password, preventing them from working until they have reset their password.
+
+    This is done by setting the user's password to a strong random value
+    that is discarded without ever being recorded.
+
+    This has the effect of
+    - Logging them out immediately
+    - Requiring the use of the reset-password workflow
+    - *Not* updating the user's `last_password_set` value
+      (conceptually we are treating this as not a password setting operation, but an "unsetting" of the password)
+
+    It is the caller's responsibility to save. Usage:
+
+      unset_password(user)
+      user.save()
+
+    """
+    # os.urandom is suitable for generating randomness for cryptographic use
+    # 128 bits / 8 (bits/byte) = 16 bytes
+    random_key = os.urandom(16).hex()
+    user.set_password(random_key)

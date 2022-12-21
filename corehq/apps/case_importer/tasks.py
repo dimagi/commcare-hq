@@ -1,5 +1,5 @@
 from celery.schedules import crontab
-from celery.task import task
+from corehq.apps.celery import task
 
 from corehq.apps.hqadmin.tasks import (
     AbnormalUsageAlert,
@@ -13,7 +13,11 @@ from .exceptions import ImporterError
 from .tracking.analytics import get_case_upload_files_total_bytes
 from .tracking.case_upload_tracker import CaseUpload
 from .tracking.task_status import make_task_status_success
-from .util import get_importer_error_message, exit_celery_with_error_message, ImporterConfig
+from .util import (
+    ImporterConfig,
+    exit_celery_with_error_message,
+    get_importer_error_message,
+)
 
 
 @task(queue='case_import_queue')
@@ -64,7 +68,7 @@ def _alert_on_result(result, domain):
         send_abnormal_usage_alert.delay(alert)
 
 
-total_bytes = metrics_gauge_task(
+metrics_gauge_task(
     'commcare.case_importer.files.total_bytes',
     get_case_upload_files_total_bytes,
     run_every=crontab(minute=0),

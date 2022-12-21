@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from django.db import models
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import jsonfield
 from couchdbkit.exceptions import ResourceNotFound

@@ -195,7 +195,7 @@ class AbtExpressionSpec(JsonObject):
     def _get_responsible_follow_up(self, spec):
         return spec.get('responsible_follow_up', "")
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         """
         Given a document (item), return a list of documents representing each
         of the flagged questions.
@@ -351,40 +351,40 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
     @property
     def _flagspec_filename(self):
         if self.domain == 'vectorlink-uganda':
-            return 'flagspecs_uganda.yaml'
+            return 'flagspecs_uganda.yml'
         else:
-            return 'flagspecs.yaml'
+            return 'flagspecs.yml'
 
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
-    _flagspec_filename = 'flagspecs_v2.yaml'
+    _flagspec_filename = 'flagspecs_v2.yml'
     comment_from_root = True
 
 
 class AbtSupervisorV2019ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2019')
-    _flagspec_filename = 'flagspecs_v2019.yaml'
+    _flagspec_filename = 'flagspecs_v2019.yml'
     comment_from_root = True
 
 
 class AbtSupervisorV2020ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2020')
-    _flagspec_filename = 'flagspecs_v2020.yaml'
+    _flagspec_filename = 'flagspecs_v2020.yml'
     comment_from_root = True
 
 
-def abt_supervisor_expression(spec, context):
+def abt_supervisor_expression(spec, factory_context):
     return AbtSupervisorExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2_expression(spec, context):
+def abt_supervisor_v2_expression(spec, factory_context):
     return AbtSupervisorV2ExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2019_expression(spec, context):
+def abt_supervisor_v2019_expression(spec, factory_context):
     return AbtSupervisorV2019ExpressionSpec.wrap(spec)
 
 
-def abt_supervisor_v2020_expression(spec, context):
+def abt_supervisor_v2020_expression(spec, factory_context):
     return AbtSupervisorV2020ExpressionSpec.wrap(spec)

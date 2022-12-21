@@ -1,3 +1,5 @@
+from datetime import date
+
 from corehq.apps.accounting.models import (
     BillingAccount,
     DefaultProductPlan,
@@ -23,6 +25,13 @@ class DomainSubscriptionMixin(object):
         account = BillingAccount.get_or_create_account_by_domain(
             domain_name, created_by="automated-test" + cls.__name__
         )[0]
+
+        current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
+        if current_subscription:
+            current_subscription.date_end = date.today()
+            current_subscription.is_active = False
+            current_subscription.save()
+
         subscription = Subscription.new_domain_subscription(account, domain_name, plan)
         subscription.is_active = True
         subscription.save()

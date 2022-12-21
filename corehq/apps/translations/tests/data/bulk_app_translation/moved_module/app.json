@@ -931,8 +931,16 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "y": "/data/y",
-                  "x": "/data/x"
+                  "y": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/y",
+                    "update_mode": "always"
+                  },
+                  "x": {
+                    "doc_type": "ConditionalCaseUpdate",
+                    "question_path": "/data/x",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "point",
                 "reference_id": null,

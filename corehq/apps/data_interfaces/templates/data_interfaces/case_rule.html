@@ -7,6 +7,7 @@
 
 {% block page_content %}
   {% initial_page_data 'actions_initial' actions_form.current_values %}
+  {% initial_page_data 'all_case_properties' all_case_properties %}
   {% initial_page_data 'read_only_mode' read_only_mode %}
 
   {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}

@@ -4,8 +4,9 @@ from django.db import DEFAULT_DB_ALIAS
 from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
-import mock
+from unittest import mock
 from decorator import contextmanager
+from flaky import flaky
 from testil import eq
 
 from corehq.sql_db.connections import ConnectionManager
@@ -18,6 +19,7 @@ from corehq.sql_db.util import (
     get_replication_delay_for_shard_standbys,
     get_standbys_with_acceptible_delay,
 )
+from .utils import ignore_databases_override_warning
 
 
 def _get_db_config(db_name, master=None, delay=None):
@@ -49,6 +51,7 @@ REPORTING_DATABASES = {
 }
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=DATABASES, REPORTING_DATABASES=REPORTING_DATABASES)
 class ConnectionManagerTests(SimpleTestCase):
     def setUp(self):
@@ -107,6 +110,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 [manager.get_load_balanced_read_db_alias(DEFAULT_DB_ALIAS) for i in range(3)]
             )
 
+    @flaky
     @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
     @mock.patch('corehq.sql_db.util.get_standby_databases', return_value={'ucr', 'other'})
     def test_read_load_balancing_session(self, *args):
@@ -173,6 +177,7 @@ class ConnectionManagerTests(SimpleTestCase):
         )
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=PARTITION_CONFIG_WITH_STANDBYS)
 class TestReadsFromShardStandbys(SimpleTestCase):
     def setUp(self):

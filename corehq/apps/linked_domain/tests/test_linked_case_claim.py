@@ -1,13 +1,12 @@
 import json
-
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
 )
-from corehq.apps.linked_domain.decorators import REMOTE_REQUESTER_HEADER
+from corehq.apps.linked_domain import decorators
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_case_search_config
 from corehq.apps.users.models import HQApiKey, WebUser
@@ -76,8 +75,8 @@ class TestRemoteLinkedCaseClaim(BaseLinkedCaseClaimTest):
     def test_remote_linked_app(self, fake_case_search_config_getter):
         url = reverse('linked_domain:case_search_config', args=[self.domain])
         headers = self.auth_headers.copy()
-        headers[REMOTE_REQUESTER_HEADER] = self.domain_link.linked_domain
-        resp = self.client.get(url, **headers)
+        with patch.object(decorators, 'can_user_access_linked_domains', return_value=True):
+            resp = self.client.get(url, **headers)
 
         fake_case_search_config_getter.return_value = json.loads(resp.content)
 

@@ -1,7 +1,7 @@
 [main]
 host = https://www.transifex.com
 
-[commcare-hq.djangopo]
+[o:dimagi:p:commcare-hq:r:djangopo]
 file_filter = locale/<lang>/LC_MESSAGES/django.po
 source_file = locale/en/LC_MESSAGES/django.po
 source_lang = en
@@ -12,7 +12,7 @@ trans.pt = locale/por/LC_MESSAGES/django.po
 trans.sw = locale/sw/LC_MESSAGES/django.po
 type = PO
 
-[commcare-hq.djangojspo]
+[o:dimagi:p:commcare-hq:r:djangojspo]
 file_filter = locale/<lang>/LC_MESSAGES/djangojs.po
 source_file = locale/en/LC_MESSAGES/djangojs.po
 source_lang = en

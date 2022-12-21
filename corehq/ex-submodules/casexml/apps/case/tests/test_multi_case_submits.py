@@ -2,7 +2,7 @@ from django.test import TestCase
 import os
 from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class MultiCaseTest(TestCase):
@@ -40,6 +40,6 @@ class MultiCaseTest(TestCase):
 
     def _check_ids(self, form, cases):
         for case in cases:
-            ids = CaseAccessors(case.domain).get_case_xform_ids(case.case_id)
+            ids = CommCareCase.objects.get_case_xform_ids(case.case_id)
             self.assertEqual(1, len(ids))
             self.assertEqual(form.form_id, ids[0])

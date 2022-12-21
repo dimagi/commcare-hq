@@ -4,16 +4,19 @@ from itertools import chain
 from django.test import TestCase, override_settings
 
 from faker import Faker
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseFactory
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.topics import get_topic_offset
-from corehq.apps.data_interfaces.deduplication import find_duplicate_case_ids
+from corehq.apps.data_interfaces.deduplication import (
+    backfill_deduplicate_rule,
+    find_duplicate_case_ids,
+    _get_es_filtered_case_query,
+)
 from corehq.apps.data_interfaces.models import (
-    AutomaticUpdateRule,
     CaseDeduplicationActionDefinition,
     CaseDeduplicationMatchTypeChoices,
     CaseDuplicate,
@@ -22,12 +25,242 @@ from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.tasks import tag_cases_as_deleted_and_remove_indices
 from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import flag_enabled, trap_extra_setup
+from corehq.util.test_utils import (
+    set_parent_case,
+    flag_enabled,
+    trap_extra_setup,
+)
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseRuleCriteria,
+    LocationFilterDefinition,
+    MatchPropertyDefinition,
+)
+from corehq.apps.data_interfaces.utils import run_rules_for_case
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.users.models import CommCareUser
+from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+
+
+@es_test
+class FindingDuplicatesQueryTest(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
+
+        self.domain = 'naboo'
+        self.factory = CaseFactory(self.domain)
+
+    def tearDown(self):
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+        super().tearDown()
+
+    def _prime_es_index(self, cases):
+        for case in cases:
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+    def test_without_filters(self):
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Pixel Brain", ""),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+        self._prime_es_index(cases)
+
+        query = _get_es_filtered_case_query(self.domain, cases[0])
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), len(cases))
+
+    def test_with_location_filter(self):
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+                ("Wannabe Anakin Skywalker", "1977-03-25"),
+                ("Wannabe Darth Vadar", "1977-03-25"),
+            ]
+        ]
+
+        rule = self.create_rule('test rule', cases[0].type)
+        # Create a filter criteria of cases to consider
+        definition = LocationFilterDefinition.objects.create(
+            location_id='mustafar_id',
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        location_id = 'mustafar_id'
+
+        # Only assign location id to first 2 cases, since we want only those two cases to be considered
+        cases[0].owner_id = location_id
+        cases[1].owner_id = location_id
+
+        self._prime_es_index(cases)
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 2)
+        self.assertTrue(retrieved_cases[0]['owner_id'] == location_id)
+        self.assertTrue(retrieved_cases[1]['owner_id'] == location_id)
+
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+
+    def test_with_case_properties_filter_match_equal(self):
+        match_type = MatchPropertyDefinition.MATCH_EQUAL
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Wannabe Darth Vadar", "1977-03-25"),
+            ]
+        ]
+        self._prime_es_index(cases)
+
+        rule = self.create_rule('test rule', cases[0].type)
+        # Create a filter criteria of cases to consider
+        definition_property_value = 'Anakin Skywalker'
+        definition = MatchPropertyDefinition.objects.create(
+            property_name='name',
+            property_value=definition_property_value,
+            match_type=match_type,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 2)
+
+        for case in retrieved_cases:
+            self.assertEqual(case['name'], definition_property_value)
+
+    def test_with_case_properties_filter_match_not_equal(self):
+        match_type = MatchPropertyDefinition.MATCH_NOT_EQUAL
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Darth Vadar", "1977-03-25"),
+                ("Anakin Skywalker", "1977-03-25"),
+                ("Wannabe Darth Vadar", "1977-03-25"),
+            ]
+        ]
+        self._prime_es_index(cases)
+
+        rule = self.create_rule('test rule', cases[0].type)
+        # Create a filter criteria of cases to consider
+        definition = MatchPropertyDefinition.objects.create(
+            property_name='name',
+            property_value='Wannabe Darth Vadar',
+            match_type=match_type,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 3)
+        for case in retrieved_cases:
+            self.assertNotEqual(case['name'], 'Wannabe Darth Vadar')
+
+    def test_with_case_properties_filter_match_has_value(self):
+        match_type = MatchPropertyDefinition.MATCH_HAS_VALUE
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'dob': dob}) for (case_name, dob) in [
+                ("Anakin Skywalker", ""),
+                ("Darth Vadar", "1977-03-25"),
+            ]
+        ]
+        cases.append(self.factory.create_case(case_name='Chewbacca'))
+
+        self._prime_es_index(cases)
+
+        rule = self.create_rule('test rule', cases[0].type)
+        # Create a filter criteria of cases to consider
+        definition = MatchPropertyDefinition.objects.create(
+            property_name='dob',
+            match_type=match_type,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 1)
+
+        case_properties = retrieved_cases[0]['case_properties']
+        dob = next((prop['value'] for prop in case_properties if prop['key'] == 'dob'))
+        self.assertEqual(dob, "1977-03-25")
+
+    def test_with_case_properties_filter_match_has_no_value(self):
+        match_type = MatchPropertyDefinition.MATCH_HAS_NO_VALUE
+
+        cases = [
+            self.factory.create_case(case_name=case_name, update={'age': age}) for (case_name, age) in [
+                ("Anakin Skywalker", ""),
+                ("Darth Vadar", "41"),
+                ("Wannabe Darth Vadar", "14"),
+            ]
+        ]
+        cases.append(self.factory.create_case(case_name='Chewbacca', update={'needs_to_see_hairdresser': 'yes'}))
+        self._prime_es_index(cases)
+
+        rule = self.create_rule('test rule', cases[0].type)
+        # Create a filter criteria of cases to consider
+        definition = MatchPropertyDefinition.objects.create(
+            property_name='age',
+            match_type=match_type,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        query = _get_es_filtered_case_query(self.domain, cases[0], rule.memoized_criteria)
+        retrieved_cases = query.run().hits
+
+        self.assertEqual(len(retrieved_cases), 2)
+        retrieved_cases_names = [case['name'] for case in retrieved_cases]
+        self.assertIn('Anakin Skywalker', retrieved_cases_names)
+        self.assertIn('Chewbacca', retrieved_cases_names)
+
+    def create_rule(self, rule_name, case_type):
+        return AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name=rule_name,
+            case_type=case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
 
 
 @es_test
@@ -179,7 +412,6 @@ class CaseDeduplicationActionTest(TestCase):
         cls.domain = 'case-dedupe-test'
         cls.case_type = 'adult'
         cls.factory = CaseFactory(cls.domain)
-        cls.accessor = CaseAccessors(cls.domain)
 
         cls.rule = AutomaticUpdateRule.objects.create(
             domain=cls.domain,
@@ -236,12 +468,15 @@ class CaseDeduplicationActionTest(TestCase):
 
         for duplicate_case in duplicates:
             self.assertEqual(
-                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'), 'yes'
+                CommCareCase.objects.get_case(duplicate_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
+                'yes',
             )
 
         for unique_case in uniques:
             self.assertIsNone(
-                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(unique_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -259,7 +494,8 @@ class CaseDeduplicationActionTest(TestCase):
         # It should only have two transactions (create and the initial
         # duplicate update). This prevents a situation where there are many
         # duplicates of the same case that get updated N times
-        form_transactions = CaseAccessors(self.domain).get_case(duplicates[1].case_id).get_form_transactions()
+        form_transactions = CommCareCase.objects.get_case(
+            duplicates[1].case_id, self.domain).get_form_transactions()
         self.assertEqual(2, len(form_transactions))
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -274,12 +510,14 @@ class CaseDeduplicationActionTest(TestCase):
 
         for duplicate_case in duplicates:
             self.assertIsNone(
-                self.accessor.get_case(duplicate_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(duplicate_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
         for unique_case in uniques:
             self.assertIsNone(
-                self.accessor.get_case(unique_case.case_id).get_case_property('is_potential_duplicate'),
+                CommCareCase.objects.get_case(unique_case.case_id, self.domain)
+                .get_case_property('is_potential_duplicate'),
             )
 
     @patch("corehq.apps.data_interfaces.models.find_duplicate_case_ids")
@@ -486,6 +724,41 @@ class CaseDeduplicationActionTest(TestCase):
 
         self.assertTrue(set(case.case_id for case in duplicates[0:3]) & set(duplicate_case_ids))
 
+    @es_test
+    def test_update_parent(self):
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+        self.addCleanup(ensure_index_deleted, CASE_SEARCH_INDEX_INFO.index)
+
+        duplicates, uniques = self._create_cases(num_cases=2)
+        parent = uniques[0]
+        child = duplicates[0]
+
+        set_parent_case(self.domain, child, parent)
+
+        parent_case_property_value = parent.get_case_property('name')
+        new_parent_case_property_value = f'{parent_case_property_value}-someextratext'
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='parent/name',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value=new_parent_case_property_value,
+            )
+        ])
+        self.action.save()
+
+        for case in chain(duplicates, uniques):
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+        self.rule = AutomaticUpdateRule.objects.get(id=self.rule.id)
+        self.rule.run_actions_when_case_matches(child)
+
+        updated_parent_case = CommCareCase.objects.get_case(parent.case_id, self.domain)
+        self.assertEqual(updated_parent_case.get_case_property('name'), new_parent_case_property_value)
+
 
 @override_settings(RUN_UNKNOWN_USER_PILLOW=False)
 @override_settings(RUN_FORM_META_PILLOW=False)
@@ -547,13 +820,24 @@ class DeduplicationPillowTest(TestCase):
         self._assert_case_duplicate_pair(case1.case_id, [case2.case_id])
         self._assert_case_duplicate_pair(case2.case_id, [case1.case_id])
         self.assertEqual(CaseDuplicate.objects.count(), 2)
-        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).get_case_property('age'), '5')
-        self.assertEqual(CaseAccessors(self.domain).get_case(case1.case_id).name, 'Herman Miller')
+        self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).get_case_property('age'), '5')
+        self.assertEqual(CommCareCase.objects.get_case(case1.case_id, self.domain).name, 'Herman Miller')
 
         # The new changes present should not be processed by the pillow
         # processor, since they were updates from a duplicate action.
         with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
             self.pillow.process_changes(since=new_kafka_sec, forever=False)
+            p.assert_not_called()
+
+    def test_deleted_form_returns_before_processing(self):
+        case = self.factory.create_case(case_name="test",
+                                        case_type=self.case_type,
+                                        update={"age": 2})
+        kafka_sec = get_topic_offset(topics.FORM_SQL)
+        XFormInstance.objects.hard_delete_forms(self.domain, case.xform_ids)
+
+        with patch.object(CaseDeduplicationProcessor, '_process_case_update') as p:
+            self.pillow.process_changes(since=kafka_sec, forever=False)
             p.assert_not_called()
 
     def _assert_case_duplicate_pair(self, case_id_to_check, expected_duplicates):
@@ -563,3 +847,371 @@ class DeduplicationPillowTest(TestCase):
             .potential_duplicates.values_list('case_id', flat=True)
         )
         self.assertItemsEqual(potential_duplicates, expected_duplicates)
+
+
+@es_test
+class TestDeduplicationRuleRuns(TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(self.es, CASE_SEARCH_INDEX_INFO)
+
+        self.case_type = 'duck'
+        self.domain = 'naboo'
+        self.domain_obj = create_domain(self.domain)
+        self.factory = CaseFactory(self.domain)
+
+    def tearDown(self):
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+        self.domain_obj.delete()
+        super().tearDown()
+
+    def create_rule(self, rule_name, case_type):
+        return AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name=rule_name,
+            case_type=case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+
+    def _create_mobile_worker(self, username):
+        return CommCareUser.create(
+            domain=self.domain,
+            username=username,
+            password="*****",
+            created_by=None,
+            created_via=None,
+            metadata=None,
+        )
+
+    def _prime_es_index(self, cases):
+        for case in cases:
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        self.es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+    def _send_user_to_es(self, user):
+        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
+            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
+        self.es.indices.refresh(USER_INDEX)
+        return user
+
+    def get_case_property_value(self, case, property_value):
+        return next((prop['value'] for prop in case['case_properties'] if prop['key'] == property_value))
+
+    def test_simple_rule(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        self._prime_es_index(cases)
+
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["age"],
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+        self.assertEqual(len(refreshed_cases), 2)
+        self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
+        self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
+
+    def test_rule_with_closed_cases(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14', 'is_evil': '1'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14', 'is_evil': '1'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        cases[0].closed = True
+        cases[0].save()
+
+        self._prime_es_index(cases)
+
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["is_evil"],
+            include_closed=True,
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+
+        self.assertEqual(len(refreshed_cases), 2)
+        self.assertTrue(refreshed_cases[0].get_case_property('age') == '41')
+        self.assertTrue(refreshed_cases[1].get_case_property('age') == '41')
+
+    def test_rule_with_location_as_owner(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Darth Vadar", update={'age': '14'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        from corehq.apps.locations.models import make_location
+        from corehq.apps.locations.models import LocationType
+        loc_type = LocationType.objects.create(
+            name='place',
+            domain=self.domain,
+        )
+        location = make_location(
+            domain=self.domain,
+            location_type=loc_type.name,
+            name='Mustafar'
+        )
+        location.save()
+        location_id = location.location_id
+
+        # Only assign location id to first 2 cases, since we want only those two cases to be considered
+        cases[0].owner_id = location_id
+        cases[1].owner_id = location_id
+
+        real_cases = [
+            cases[0].case_id,
+            cases[1].case_id,
+        ]
+        fake_cases = [
+            cases[2].case_id,
+            cases[3].case_id,
+        ]
+
+        self._prime_es_index(cases)
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        # Create rule criteria
+        definition = LocationFilterDefinition.objects.create(
+            location_id=location.location_id,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        # Create rule actions
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["age"],
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+
+        refreshed_real_cases = [case for case in refreshed_cases if case.case_id in real_cases]
+        refreshed_fake_cases = [case for case in refreshed_cases if case.case_id in fake_cases]
+
+        self.assertEqual(refreshed_real_cases[0].get_case_property('age'), '41')
+        self.assertEqual(refreshed_real_cases[1].get_case_property('age'), '41')
+
+        self.assertEqual(refreshed_fake_cases[0].get_case_property('age'), '14')
+        self.assertEqual(refreshed_fake_cases[1].get_case_property('age'), '14')
+
+    def test_rule_with_user_as_owner(self):
+        cases = [
+            self.factory.create_case(case_name="Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Darth Vadar", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Anakin Skywalker", update={'age': '14'}),
+            self.factory.create_case(case_name="Wannabe Darth Vadar", update={'age': '14'}),
+        ]
+
+        for case in cases:
+            case.type = self.case_type
+
+        from corehq.apps.locations.models import make_location
+        from corehq.apps.locations.models import LocationType
+        loc_type = LocationType.objects.create(
+            name='place',
+            domain=self.domain,
+        )
+        location = make_location(
+            domain=self.domain,
+            location_type=loc_type.name,
+            name='Mustafar'
+        )
+        location.save()
+
+        user = self._create_mobile_worker('Location User')
+        user.set_location(location)
+
+        self._send_user_to_es(user)
+
+        cases[0].owner_id = user.user_id
+        cases[1].owner_id = user.user_id
+
+        real_cases = [
+            cases[0].case_id,
+            cases[1].case_id,
+        ]
+        fake_cases = [
+            cases[2].case_id,
+            cases[3].case_id,
+        ]
+
+        self._prime_es_index(cases)
+        rule = self.create_rule(rule_name='Testy Rule', case_type=self.case_type)
+
+        # Create rule criteria
+        definition = LocationFilterDefinition.objects.create(
+            location_id=location.location_id,
+        )
+        criteria = CaseRuleCriteria(rule=rule)
+        criteria.definition = definition
+        criteria.save()
+
+        # Create rule actions
+        _, self.action = rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["age"],
+        )
+
+        self.action.set_properties_to_update([
+            CaseDeduplicationActionDefinition.PropertyDefinition(
+                name='age',
+                value_type=CaseDeduplicationActionDefinition.VALUE_TYPE_EXACT,
+                value='41',
+            ),
+        ])
+        self.action.save()
+
+        cases_ids = []
+        for case in cases:
+            cases_ids.append(case.case_id)
+            run_rules_for_case(case, [rule], datetime.utcnow())
+
+        refreshed_cases = CommCareCase.objects.get_cases(cases_ids, self.domain)
+
+        refreshed_real_cases = [case for case in refreshed_cases if case.case_id in real_cases]
+        refreshed_fake_cases = [case for case in refreshed_cases if case.case_id in fake_cases]
+
+        self.assertEqual(refreshed_real_cases[0].get_case_property('age'), '41')
+        self.assertEqual(refreshed_real_cases[1].get_case_property('age'), '41')
+
+        self.assertEqual(refreshed_fake_cases[0].get_case_property('age'), '14')
+        self.assertEqual(refreshed_fake_cases[1].get_case_property('age'), '14')
+
+
+@flag_enabled('CASE_DEDUPE')
+@es_test
+class DeduplicationBackfillTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        es = get_es_new()
+        with trap_extra_setup(ConnectionError):
+            initialize_index_and_mapping(es, CASE_SEARCH_INDEX_INFO)
+
+        cls.domain = 'naboo'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.case_type = 'people'
+        cls.factory = CaseFactory(cls.domain)
+
+        cls.case1 = cls.factory.create_case(
+            case_name="foo", case_type=cls.case_type, update={"age": 2}, close=True
+        )
+        cls.case2 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+        cls.case3 = cls.factory.create_case(case_name="foo", case_type=cls.case_type, update={"age": 2})
+
+        for case in [cls.case1, cls.case2, cls.case3]:
+            send_to_elasticsearch('case_search', transform_case_for_elasticsearch(case.to_json()))
+        es.indices.refresh(CASE_SEARCH_INDEX_INFO.index)
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(CASE_SEARCH_INDEX_INFO.index)
+        cls.domain_obj.delete()
+        return super().tearDownClass()
+
+    def _set_up_rule(self, include_closed):
+        self.rule = AutomaticUpdateRule.objects.create(
+            domain=self.domain,
+            name='test',
+            case_type=self.case_type,
+            active=True,
+            deleted=False,
+            filter_on_server_modified=False,
+            server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+        )
+        _, self.action = self.rule.add_action(
+            CaseDeduplicationActionDefinition,
+            match_type=CaseDeduplicationMatchTypeChoices.ALL,
+            case_properties=["case_name", "age"],
+            include_closed=include_closed
+        )
+
+        self.action.save()
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_DEDUPLICATE)
+
+    def test_include_closed_finds_open_and_closed_cases(self):
+        self._set_up_rule(include_closed=True)
+
+        backfill_deduplicate_rule(self.domain, self.rule)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 3)
+
+    def test_finds_open_cases_only(self):
+        self._set_up_rule(include_closed=False)
+
+        backfill_deduplicate_rule(self.domain, self.rule)
+        self.assertEqual(CaseDuplicate.objects.filter(action=self.action).count(), 2)

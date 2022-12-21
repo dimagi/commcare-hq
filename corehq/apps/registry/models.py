@@ -1,6 +1,6 @@
 from autoslug import AutoSlugField
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -72,7 +72,7 @@ class DataRegistry(models.Model):
     is_active = models.BooleanField(default=True)
 
     # [{"case_type": "X"}, {"case_type": "Y"}]
-    schema = JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
+    schema = models.JSONField(null=True, blank=True, validators=[JSONSchemaValidator(REGISTRY_JSON_SCHEMA)])
 
     created_on = models.DateTimeField(auto_now_add=True)
     modified_on = models.DateTimeField(auto_now=True)
@@ -263,7 +263,7 @@ class RegistryAuditLog(models.Model):
     user = models.ForeignKey(User, related_name="registry_actions", on_delete=models.CASCADE)
     related_object_id = models.CharField(max_length=36)
     related_object_type = models.CharField(max_length=32, choices=RELATED_OBJECT_CHOICES, db_index=True)
-    detail = JSONField(null=True)
+    detail = models.JSONField(null=True)
 
     class Meta:
         indexes = [
@@ -329,10 +329,17 @@ class RegistryAuditHelper:
         )
 
     def data_accessed(self, user, domain, related_object, filters=None):
-        if not related_object or not hasattr(related_object, "doc_type"):
+        is_repeater = True if hasattr(related_object, 'pk') else False
+        if (
+            not (related_object and hasattr(related_object, "doc_type"))
+            and not is_repeater
+        ):
             raise ValueError("Unexpected related object")
 
-        doc_type = getattr(related_object, 'base_doc', related_object.doc_type)
+        doc_type = (
+            getattr(related_object, 'base_doc', related_object.doc_type)
+            if not is_repeater else 'Repeater'
+        )
         try:
             related_object_type = {
                 "ReportConfiguration": RegistryAuditLog.RELATED_OBJECT_UCR,
@@ -343,12 +350,14 @@ class RegistryAuditHelper:
         except KeyError:
             raise ValueError(f"Unexpected related object type: {related_object.doc_type}")
 
+        related_object_id = related_object.repeater_id if is_repeater else related_object.get_id
+
         return RegistryAuditLog.objects.create(
             registry=self.registry,
             user=user,
             action=RegistryAuditLog.ACTION_DATA_ACCESSED,
             domain=domain,
-            related_object_id=related_object.get_id,
+            related_object_id=related_object_id,
             related_object_type=related_object_type,
             detail=filters
         )

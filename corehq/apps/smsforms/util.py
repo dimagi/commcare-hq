@@ -14,7 +14,12 @@ def form_requires_input(form):
     return False
 
 
-def process_sms_form_complete(session, form):
+def process_sms_form_complete(session_id, form):
+    from corehq.apps.smsforms.models import SQLXFormsSession
+    session = SQLXFormsSession.by_session_id(session_id)
+    if not session:
+        return
+
     attachments = get_sms_form_incoming_media_files(session)
     result = submit_form_locally(
         form,
@@ -25,7 +30,6 @@ def process_sms_form_complete(session, form):
     )
     session.submission_id = result.xform.form_id
     session.mark_completed(True)
-    session.save()
 
 
 def get_sms_form_incoming_media_files(session):

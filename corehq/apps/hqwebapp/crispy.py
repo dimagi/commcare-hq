@@ -1,17 +1,15 @@
 import re
 from contextlib import contextmanager
-
-from django.template import RequestContext
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from crispy_forms.bootstrap import AccordionGroup
 from crispy_forms.bootstrap import FormActions as OriginalFormActions
 from crispy_forms.bootstrap import InlineField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Field as OldField
-from crispy_forms.layout import LayoutObject, MultiField
+from crispy_forms.layout import LayoutObject
 from crispy_forms.utils import flatatt, get_template_pack, render_field
 
 CSS_LABEL_CLASS = 'col-xs-12 col-sm-4 col-md-4 col-lg-2'
@@ -78,16 +76,17 @@ class FormActions(OriginalFormActions):
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        html = ''
+        fields_html = ''
         for field in self.fields:
-            html += render_field(
+            fields_html += render_field(
                 field, form, form_style, context,
                 template_pack=template_pack,
             )
+        fields_html = mark_safe(fields_html)  # nosec: just concatenated safe fields
         offsets = _get_offsets(context)
         return render_to_string(self.template, {
             'formactions': self,
-            'fields_output': html,
+            'fields_output': fields_html,
             'offsets': offsets,
             'field_class': context.get('field_class', '')
         })
@@ -137,7 +136,7 @@ class FormStepNumber(LayoutObject):
     template = 'hqwebapp/crispy/form_step_number.html'
 
     def __init__(self, step_num, total_steps):
-        self.step_label = ugettext("Step {} of {}".format(step_num, total_steps))
+        self.step_label = gettext("Step {} of {}".format(step_num, total_steps))
 
     def render(self, form, form_style, context, template_pack=None):
         context.update({
@@ -186,6 +185,7 @@ class B3MultiField(LayoutObject):
         self.css_id = kwargs.pop('css_id', '')
         self.field_class = kwargs.pop('field_class', None)
         self.label_class = kwargs.pop('label_class', None)
+        self.show_row_class = kwargs.pop('show_row_class', True)
         self.required = kwargs.pop('required', False)
         self.help_bubble_text = kwargs.pop('help_bubble_text', '')
         self.flat_attrs = flatatt(kwargs)
@@ -260,19 +260,43 @@ class CrispyTemplate(object):
         return render_to_string(self.template, context.flatten())
 
 
-class FieldWithHelpBubble(Field):
-    template = "hqwebapp/crispy/field_with_help_bubble.html"
+class FieldWithExtras(Field):
+    extra_context = None
 
     def __init__(self, *args, **kwargs):
-        super(FieldWithHelpBubble, self).__init__(*args, **kwargs)
-        self.help_bubble_text = kwargs.pop('help_bubble_text')
+        self.extras = {
+            extra: kwargs.pop(extra, None) for extra in self.extra_context
+        }
+        super(FieldWithExtras, self).__init__(*args, **kwargs)
 
     def render(self, form, form_style, context, template_pack=None):
         template_pack = template_pack or get_template_pack()
-        context.update({
-            'help_bubble_text': self.help_bubble_text,
-        })
-        return super(FieldWithHelpBubble, self).render(form, form_style, context, template_pack=template_pack)
+        context.update(self.extras)
+        return super(FieldWithExtras, self).render(form, form_style, context, template_pack=template_pack)
+
+
+class FieldWithHelpBubble(FieldWithExtras):
+    """Add a help bubble after the field label.
+
+    Provide the help text using the `help_bubble_text` kwarg.
+    """
+    template = "hqwebapp/crispy/field_with_help_bubble.html"
+    extra_context = ['help_bubble_text']
+
+
+class FieldWithAddons(FieldWithExtras):
+    """Add 'input-group-addon' divs before / after the input
+    element. This is mostly only useful with inputs of type
+    'text' and 'select'.
+
+    The addon element must be provided using the `pre_addon`
+    and `post_addon` kwargs. The value should be a string or
+    'SafeString' (to prevent HTML escaping).
+
+    See the Bootstrap docs for addon examples.
+    """
+    template = "hqwebapp/crispy/field_with_addons.html"
+    extra_context = ['pre_addon', 'post_addon']
 
 
 class LinkButton(LayoutObject):

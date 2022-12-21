@@ -30,7 +30,7 @@ def case_id_to_case_name(case_id, doc):
 
 
 def case_id_to_link(case_id, doc):
-    from corehq.apps.reports.views import CaseDataView
+    from corehq.apps.reports.standard.cases.case_data import CaseDataView
     return reverse(CaseDataView.urlname, args=[doc['domain'], case_id], absolute=True)
 
 

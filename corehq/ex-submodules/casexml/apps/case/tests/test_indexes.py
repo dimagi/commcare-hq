@@ -3,31 +3,32 @@ import uuid
 from xml.etree import cElementTree as ElementTree
 import datetime
 from casexml.apps.case.mock import CaseBlock, CaseBlockError, IndexAttrs, ChildIndexAttrs
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from casexml.apps.case.tests.util import deprecated_check_user_has_case
-from casexml.apps.case.util import post_case_blocks
 from casexml.apps.phone.tests.utils import create_restore_user
 from django.test import TestCase, SimpleTestCase
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 
 
 class IndexSimpleTest(SimpleTestCase):
 
     def setUp(self):
-        self.i1 = CommCareCaseIndex(
-            identifier='i1',
-            referenced_type='t1',
-            referenced_id='id1'
-        )
-        self.i2 = CommCareCaseIndex(
-            identifier='i2',
-            referenced_type='t2',
-            referenced_id='id2'
-        )
-        self.case = CommCareCase(indices=[self.i1, self.i2])
+        i1 = {
+            'identifier': 'i1',
+            'referenced_type': 't1',
+            'referenced_id': 'id1',
+        }
+        i2 = {
+            'identifier': 'i2',
+            'referenced_type': 't2',
+            'referenced_id': 'id2',
+        }
+        self.i1 = CommCareCaseIndex(**i1)
+        self.i2 = CommCareCaseIndex(**i2)
+        self.case = CommCareCase(indices=[i1, i2])
 
     def testHasIndex(self):
         self.assertEqual(True, self.case.has_index('i1'))
@@ -39,19 +40,6 @@ class IndexSimpleTest(SimpleTestCase):
         self.assertEqual(self.i2, self.case.get_index('i2'))
         self.assertEqual(None, self.case.get_index('i3'))
         self.assertEqual(None, self.case.get_index('id1'))
-
-    def testGetIndexByRef(self):
-        self.assertEqual(self.i1, self.case.get_index_by_ref_id('id1'))
-        self.assertEqual(self.i2, self.case.get_index_by_ref_id('id2'))
-        self.assertEqual(None, self.case.get_index_by_ref_id('id3'))
-        self.assertEqual(None, self.case.get_index_by_ref_id('i1'))
-
-    def testRemoveIndexByRef(self):
-        self.assertEqual(2, len(self.case.indices))
-        self.case.remove_index_by_ref_id('id1')
-        self.assertEqual(1, len(self.case.indices))
-        self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'id3')
-        self.assertRaises(ValueError, self.case.remove_index_by_ref_id, 'i2')
 
 
 @sharded
@@ -81,8 +69,8 @@ class IndexTest(TestCase):
     def testIndexes(self):
         # Step 0. Create mother and father cases
         for prereq in [self.MOTHER_CASE_ID, self.FATHER_CASE_ID]:
-            post_case_blocks(
-                [CaseBlock.deprecated_init(create=True, case_id=prereq, user_id=self.user.user_id).as_xml()],
+            submit_case_blocks(
+                [CaseBlock.deprecated_init(create=True, case_id=prereq, user_id=self.user.user_id).as_text()],
                 domain=self.project.name
             )
 
@@ -93,9 +81,9 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
-        ).as_xml()
+        ).as_text()
 
-        post_case_blocks([create_index], domain=self.project.name)
+        submit_case_blocks([create_index], domain=self.project.name)
         deprecated_check_user_has_case(self, self.user, create_index)
 
         # Step 2. Update the case to delete <mom> and create <dad>
@@ -107,7 +95,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', ''), 'dad': ('father-case', self.FATHER_CASE_ID)},
             date_modified=now,
             date_opened=now.date()
-        ).as_xml()
+        ).as_text()
 
         update_index_expected = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
@@ -119,7 +107,7 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        post_case_blocks([update_index], domain=self.project.name)
+        submit_case_blocks([update_index], domain=self.project.name)
 
         deprecated_check_user_has_case(self, self.user, update_index_expected)
 
@@ -131,7 +119,7 @@ class IndexTest(TestCase):
             index={'mom': ('mother-case', self.MOTHER_CASE_ID)},
             date_modified=now,
             date_opened=now.date()
-        ).as_xml()
+        ).as_text()
 
         update_index_expected = CaseBlock.deprecated_init(
             case_id=self.CASE_ID,
@@ -144,14 +132,14 @@ class IndexTest(TestCase):
             date_opened=now.date()
         ).as_xml()
 
-        post_case_blocks([update_index], domain=self.project.name)
+        submit_case_blocks([update_index], domain=self.project.name)
 
         deprecated_check_user_has_case(self, self.user, update_index_expected)
 
     def testRelationshipGetsSet(self):
         parent_case_id = uuid.uuid4().hex
-        post_case_blocks(
-            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+        submit_case_blocks(
+            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_text()],
             domain=self.project.name
         )
         create_index = CaseBlock.deprecated_init(
@@ -160,14 +148,14 @@ class IndexTest(TestCase):
             user_id=self.user.user_id,
             owner_id=self.user.user_id,
             index={'mom': ('mother-case', parent_case_id, 'extension')},
-        ).as_xml()
-        post_case_blocks([create_index], domain=self.project.name)
+        ).as_text()
+        submit_case_blocks([create_index], domain=self.project.name)
         deprecated_check_user_has_case(self, self.user, create_index)
 
     def test_default_relationship(self):
         parent_case_id = uuid.uuid4().hex
-        post_case_blocks(
-            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_xml()],
+        submit_case_blocks(
+            [CaseBlock.deprecated_init(create=True, case_id=parent_case_id, user_id=self.user.user_id).as_text()],
             domain=self.project.name
         )
         create_index = CaseBlock.deprecated_init(
@@ -180,7 +168,7 @@ class IndexTest(TestCase):
         create_index.index = {
             'parent': IndexAttrs(case_type='parent', case_id=parent_case_id, relationship='')
         }
-        form, cases = post_case_blocks([create_index.as_xml()], domain=self.project.name)
+        form, cases = submit_case_blocks([create_index.as_text()], domain=self.project.name)
         self.assertEqual(cases[0].indices[0].relationship, 'child')
 
 

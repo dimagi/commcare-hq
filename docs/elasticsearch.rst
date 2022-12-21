@@ -1,5 +1,8 @@
-ElasticSearch
-~~~~~~~~~~~~~
+Elasticsearch
+*************
+
+Overview
+========
 
 Indexes
 -------
@@ -10,14 +13,8 @@ We have indexes for each of the following doc types:
  * Forms - ``xforms``
  * Groups - ``hqgroups``
  * Users - ``hqusers``
- * Report Cases - ``report_cases``
- * Report Forms - ``report_xforms``
  * SMS logs - ``smslogs``
- * TrialConnect SMS logs - ``tc_smslogs``
-
-The *Report* cases and forms indexes are only configured to run for a few
-domains, and they store additional mappings allowing you to query on form
-and case properties (not just metadata).
+ * Case Search - ``case_search``
 
 Each index has a corresponding mapping file in ``corehq/pillows/mappings/``.
 Each mapping has a hash that reflects the current state of the mapping. This
@@ -176,3 +173,11 @@ The best way to do this is by using helpers like ESQuery's ``.count()``
 that know to do this for you—your code will look better and you won't have to remember
 to check for that every time. (If you ever find *helpers* not doing this correctly,
 then it's definitely worth fixing.)
+
+----
+
+.. include:: ../corehq/apps/es/README.rst
+
+----
+
+.. include:: es_query.rst

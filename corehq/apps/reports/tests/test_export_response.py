@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.test.utils import override_settings
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.reports.standard.monitoring import WorkerActivityReport
@@ -63,10 +63,7 @@ class ExportResponseTest(TestCase):
         res = report.export_response
 
         self.assertEqual(res.status_code, 200)
-
-        expected_content_type = ('Content-Type', 'application/vnd.ms-excel')
-
-        self.assertEqual(res._headers['content-type'], expected_content_type)
+        self.assertEqual(res.headers['content-type'], 'application/vnd.ms-excel')
 
     @patch('corehq.apps.reports.standard.monitoring.WorkerActivityReport.export_table', return_value=[])
     @patch('corehq.apps.reports.generic.export_from_tables')

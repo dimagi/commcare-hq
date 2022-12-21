@@ -6,7 +6,7 @@ from django.conf import settings
 from django.test import SimpleTestCase, TestCase
 
 import requests
-from mock import patch
+from unittest.mock import patch
 
 from corehq.motech.auth import AuthManager, BasicAuthManager, DigestAuthManager
 from corehq.motech.const import OAUTH2_PWD, REQUEST_TIMEOUT

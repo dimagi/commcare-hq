@@ -659,4 +659,4 @@ class ScheduledBroadcast(Broadcast):
             self.save()
             self.schedule.deleted = True
             self.schedule.save()
-            delete_timed_schedule_instances.delay(self.schedule_id)
+            delete_timed_schedule_instances.delay(self.schedule_id.hex)

@@ -29,10 +29,10 @@ class _InvalidateCacheMixin(object):
 
     bulk_save = save_docs
 
-    def delete(self):
+    def delete(self, *args, **kw):
         id = self._id
         try:
-            super(_InvalidateCacheMixin, self).delete()
+            super(_InvalidateCacheMixin, self).delete(*args, **kw)
         except ResourceNotFound:
             # it was already deleted. this isn't a problem, but might be a caching bug
             logging.exception('Tried to delete cached doc %s but it was already deleted', id)
@@ -53,6 +53,8 @@ class _InvalidateCacheMixin(object):
 
 
 def dont_cache_docs(*args, **kwargs):
+    if kwargs.get(dont_cache_docs.__name__):
+        return True
     if settings.UNIT_TESTING:
         return False
     return not getattr(settings, 'COUCH_CACHE_DOCS', True)
@@ -67,7 +69,7 @@ class QuickCachedDocumentMixin(_InvalidateCacheMixin):
 
     @classmethod
     @quickcache(['cls.__name__', 'doc_id'], skip_arg=dont_cache_docs)
-    def get(cls, doc_id, *args, **kwargs):
+    def get(cls, doc_id, *args, dont_cache_docs=False, **kwargs):
         return super(QuickCachedDocumentMixin, cls).get(doc_id, *args, **kwargs)
 
 

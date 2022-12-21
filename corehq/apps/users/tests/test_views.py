@@ -1,16 +1,32 @@
 import json
+from unittest.mock import patch
 
+from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.tests.utils import populate_user_index
+from corehq.apps.locations.models import LocationType
+from corehq.apps.locations.tests.util import delete_all_locations, make_loc
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CouchUser, WebUser, Permissions, CommCareUser, UserHistory
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.views import _update_role_from_view
+from corehq.apps.users.exceptions import InvalidRequestException
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    HqPermissions,
+    UserHistory,
+    UserRole,
+    WebUser,
+)
+from corehq.apps.users.views import _delete_user_role, _update_role_from_view
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.pillows.mappings.user_mapping import USER_INDEX
+from corehq.toggles import FILTERED_BULK_USER_DOWNLOAD, NAMESPACE_DOMAIN
+from corehq.toggles.shortcuts import set_toggle
+from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import generate_cases
 
 
@@ -27,6 +43,8 @@ class TestMobileWorkerListView(TestCase):
         # We aren't testing permissions for this test
         self.web_user.is_superuser = True
         self.web_user.save()
+
+        self.role = UserRole.create(self.domain, 'default mobile use role', is_commcare_user_default=True)
 
     def tearDown(self):
         self.project.delete()
@@ -60,6 +78,8 @@ class TestMobileWorkerListView(TestCase):
                 self.domain,
             )
         )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.get_role(self.domain).id, self.role.id)
 
 
 @generate_cases((
@@ -92,7 +112,7 @@ class TestUpdateRoleFromView(TestCase):
         'is_non_admin_editable': False,
         'is_archived': False,
         'upstream_id': None,
-        'permissions': Permissions(edit_web_users=True).to_json(),
+        'permissions': HqPermissions(edit_web_users=True).to_json(),
         'assignable_by': []
     }
 
@@ -140,7 +160,7 @@ class TestUpdateRoleFromView(TestCase):
         role_data["name"] = "role1"  # duplicate name during update is OK for now
         role_data["default_landing_page"] = None
         role_data["is_non_admin_editable"] = True
-        role_data["permissions"] = Permissions(edit_reports=True, view_report_list=["report1"]).to_json()
+        role_data["permissions"] = HqPermissions(edit_reports=True, view_report_list=["report1"]).to_json()
         updated_role = _update_role_from_view(self.domain, role_data)
         self.assertEqual(updated_role.name, "role1")
         self.assertIsNone(updated_role.default_landing_page)
@@ -153,6 +173,36 @@ class TestUpdateRoleFromView(TestCase):
         role_data["default_landing_page"] = "bad value"
         with self.assertRaises(ValueError):
             _update_role_from_view(self.domain, role_data)
+
+
+class TestDeleteRole(TestCase):
+    domain = 'test-role-delete'
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=0)
+    def test_delete_role(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        _delete_user_role(self.domain, {"_id": role.get_id})
+        self.assertFalse(UserRole.objects.filter(pk=role.id).exists())
+
+    def test_delete_role_not_exist(self):
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": "mising"})
+
+    @patch("corehq.apps.users.views.get_role_user_count", return_value=1)
+    def test_delete_role_with_users(self, _):
+        role = UserRole.create(self.domain, 'test-role')
+        with self.assertRaisesRegex(InvalidRequestException, "It has one user"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
+    def test_delete_commcare_user_default_role(self):
+        role = UserRole.create(self.domain, 'test-role', is_commcare_user_default=True)
+        with self.assertRaisesRegex(InvalidRequestException, "default role for Mobile Users"):
+            _delete_user_role(self.domain, {"_id": role.get_id, 'name': role.name})
+
+    def test_delete_role_wrong_domain(self):
+        role = UserRole.create("other-domain", 'test-role')
+        with self.assertRaises(Http404):
+            _delete_user_role(self.domain, {"_id": role.get_id})
 
 
 class TestDeletePhoneNumberView(TestCase):
@@ -201,3 +251,79 @@ class TestDeletePhoneNumberView(TestCase):
         self.assertEqual(user_history_log.by_domain, self.domain)
         self.assertEqual(user_history_log.for_domain, self.domain)
         self.assertEqual(user_history_log.changed_via, USER_CHANGE_VIA_WEB)
+
+
+class TestCountWebUsers(TestCase):
+
+    view = 'count_web_users'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.domain = 'test'
+        cls.domain_obj = create_domain(cls.domain)
+
+        set_toggle(FILTERED_BULK_USER_DOWNLOAD.slug, cls.domain, True, namespace=NAMESPACE_DOMAIN)
+
+        location_type = LocationType(domain=cls.domain, name='phony')
+        location_type.save()
+
+        cls.some_location = make_loc('1', 'some_location', type=location_type, domain=cls.domain_obj.name)
+
+        cls.admin_user = WebUser.create(
+            cls.domain_obj.name,
+            'edith1@wharton.com',
+            'badpassword',
+            None,
+            None,
+            email='edith@wharton.com',
+            first_name='Edith',
+            last_name='Wharton',
+            is_admin=True,
+        )
+
+        cls.admin_user_with_location = WebUser.create(
+            cls.domain_obj.name,
+            'edith2@wharton.com',
+            'badpassword',
+            None,
+            None,
+            email='edith2@wharton.com',
+            first_name='Edith',
+            last_name='Wharton',
+            is_admin=True,
+        )
+        cls.admin_user_with_location.set_location(cls.domain, cls.some_location)
+
+        populate_user_index([
+            cls.admin_user_with_location,
+            cls.admin_user,
+        ])
+
+    @classmethod
+    def tearDownClass(cls):
+        ensure_index_deleted(USER_INDEX)
+        delete_all_locations()
+
+        cls.admin_user_with_location.delete(cls.domain_obj.name, deleted_by=None)
+        cls.admin_user.delete(cls.domain_obj.name, deleted_by=None)
+
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def test_admin_user_sees_all_web_users(self):
+        self.client.login(
+            username=self.admin_user.username,
+            password='badpassword',
+        )
+        result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
+        self.assertEqual(json.loads(result.content)['count'], 2)
+
+    def test_admin_location_user_sees_all_web_users(self):
+        self.client.login(
+            username=self.admin_user_with_location.username,
+            password='badpassword',
+        )
+        result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
+        self.assertEqual(json.loads(result.content)['count'], 2)

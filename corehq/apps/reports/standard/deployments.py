@@ -6,8 +6,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -54,7 +54,7 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 @location_safe
 class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
-    name = ugettext_lazy("Application Status")
+    name = gettext_lazy("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
@@ -540,7 +540,7 @@ def _bootstrap_class(obj, severe, warn):
 
 
 class ApplicationErrorReport(GenericTabularReport, ProjectReport):
-    name = ugettext_lazy("Application Error Report")
+    name = gettext_lazy("Application Error Report")
     slug = "application_error"
     ajax_pagination = True
     sortable = False
@@ -637,8 +637,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     slug = 'aggregate_user_status'
 
     report_template_path = "reports/async/aggregate_user_status.html"
-    name = ugettext_lazy("Aggregate User Status")
-    description = ugettext_lazy("See the last activity of your project's users in aggregate.")
+    name = gettext_lazy("Aggregate User Status")
+    description = gettext_lazy("See the last activity of your project's users in aggregate.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -661,10 +661,17 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             mobile_user_and_group_slugs,
             self.request.couch_user,
         )
-        user_query = user_query.size(0)
         user_query = user_query.aggregations([
-            DateHistogram('last_submission', 'reporting_metadata.last_submission_for_user.submission_date', '1d'),
-            DateHistogram('last_sync', 'reporting_metadata.last_sync_for_user.sync_date', '1d')
+            DateHistogram(
+                'last_submission',
+                'reporting_metadata.last_submission_for_user.submission_date',
+                DateHistogram.Interval.DAY,
+            ),
+            DateHistogram(
+                'last_sync',
+                'reporting_metadata.last_sync_for_user.sync_date',
+                DateHistogram.Interval.DAY,
+            )
         ])
         return user_query
 
@@ -729,8 +736,8 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
         query = self.user_query().run()
 
         aggregations = query.aggregations
-        last_submission_buckets = aggregations[0].raw_buckets
-        last_sync_buckets = aggregations[1].raw_buckets
+        last_submission_buckets = aggregations[0].normalized_buckets
+        last_sync_buckets = aggregations[1].normalized_buckets
         total_users = query.total
 
         def _buckets_to_series(buckets, user_count):
@@ -744,7 +751,7 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
             extra = total = running_total = 0
             today = datetime.today().date()
             for bucket_val in buckets:
-                bucket_date = datetime.fromtimestamp(bucket_val['key'] / 1000.0).date()
+                bucket_date = date.fromisoformat(bucket_val['key'])
                 delta_days = (today - bucket_date).days
                 val = bucket_val['doc_count']
                 if delta_days in vals:

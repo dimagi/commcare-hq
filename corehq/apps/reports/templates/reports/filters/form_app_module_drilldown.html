@@ -15,8 +15,11 @@
           {% trans 'Known Forms' %}
           <span class="hq-help-template"
                 data-title="{% trans "What are Known Forms?" %}"
-                data-content="{% trans "Known Forms are forms that have IDs which can be matched to existing or deleted CommCare Applications in your Project." %}"
-          ></span>
+                data-content="{% blocktrans %}
+                  These are forms that can be matched to an existing or deleted CommCare Application
+                  in your project.
+                {% endblocktrans %}">
+          </span>
         </label>
       </div>
       <div class="radio">
@@ -27,11 +30,15 @@
                  name="{{ slug }}_{{ unknown.slug }}"
                  id="{{ css_id }}_{{ unknown.slug }}_show"
                  value="yes">
-          {% trans 'Unknown Forms (Possibly Deleted)' %}
+          {% trans 'Unknown Forms' %}
           <span class="hq-help-template"
                 data-title="{% trans "What are Unknown Forms?" %}"
-                data-content="{% trans "We tried and tried, but these form IDs did not belong to any CommCare Applications (existing or deleted) in your Project. It might mean that these forms once belonged to an application, were deleted from it, and then replaced by a different form." %}"
-          ></span>
+                data-content="{% blocktrans %}
+                  These forms do not belong to a CommCare Application (existing or deleted) in your project.
+                  It might mean that these forms once belonged to an application but the application form
+                  has since been removed. They may also be 'system forms' or forms from an integration or API.
+                  {% endblocktrans %}">
+          </span>
         </label>
       </div>
     </div>

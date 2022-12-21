@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 LOOKUP_TABLES = 'lookup_tables'
 API_ACCESS = 'api_access'
@@ -81,9 +81,11 @@ APP_USER_PROFILES = 'app_user_profiles'
 
 DEFAULT_EXPORT_SETTINGS = 'default_export_settings'
 
-LINKED_PROJECTS = 'linked_projects'
-
 RELEASE_MANAGEMENT = 'release_management'
+
+LITE_RELEASE_MANAGEMENT = 'lite_release_management'
+
+LOADTEST_USERS = 'loadtest_users'
 
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
@@ -129,8 +131,9 @@ MAX_PRIVILEGES = [
     APP_USER_PROFILES,
     GEOCODER,
     DEFAULT_EXPORT_SETTINGS,
-    LINKED_PROJECTS,
     RELEASE_MANAGEMENT,
+    LITE_RELEASE_MANAGEMENT,
+    LOADTEST_USERS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -139,6 +142,9 @@ MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 # Other privileges related specifically to accounting processes
 ACCOUNTING_ADMIN = 'accounting_admin'
 OPERATIONS_TEAM = 'dimagi_ops'
+
+# This is a special privilege that is meant for Dev and Support team which allows access to Global SMS Gateway Page
+GLOBAL_SMS_GATEWAY = 'global_sms_gateway'
 
 
 class Titles(object):
@@ -187,6 +193,7 @@ class Titles(object):
             APP_USER_PROFILES: _("App User Profiles"),
             GEOCODER: _("Geocoder"),
             DEFAULT_EXPORT_SETTINGS: _("Default Export Settings"),
-            LINKED_PROJECTS: _("Linked Projects"),
-            RELEASE_MANAGEMENT: _("Release Management"),
+            RELEASE_MANAGEMENT: _("Enterprise Release Management"),
+            LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
+            LOADTEST_USERS: _('Loadtest Users'),
         }.get(privilege, privilege)

@@ -3,13 +3,16 @@ import inspect
 import os
 import re
 from datetime import datetime
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase, TestCase
 
 import attr
 from dateutil.tz import tzoffset, tzutc
 from lxml import etree
-from mock import Mock, patch
+from nose.tools import assert_equal, assert_is_none, assert_raises
+from corehq.motech.models import ConnectionSettings
 
 import corehq.motech.openmrs.atom_feed
 from corehq.motech.openmrs.atom_feed import (
@@ -17,12 +20,23 @@ from corehq.motech.openmrs.atom_feed import (
     get_case_block_kwargs_from_observations,
     get_diagnosis_mappings,
     get_encounter_uuid,
+    get_feed_updates,
+    get_feed_xml,
     get_observation_mappings,
     get_patient_uuid,
     get_timestamp,
     import_encounter,
 )
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater
+from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT
+from corehq.motech.openmrs.exceptions import (
+    OpenmrsException,
+    OpenmrsFeedRuntimeException,
+    OpenmrsFeedSyntaxError,
+)
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater, SQLOpenmrsRepeater
+from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
+from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
 from corehq.motech.requests import Requests
 from corehq.util.test_utils import TestFileMixin
 
@@ -142,10 +156,10 @@ class ImportEncounterTest(TestCase, TestFileMixin):
             type='patient',
             owner_id='123456'
         )
+        self.connx = ConnectionSettings.objects.create(url='abcd', domain='test_domain')
 
     def tearDown(self):
-        self.repeater.connection_settings.delete()
-        self.repeater.delete()
+        self.connx.delete()
 
     def setUpRepeater(self):
         observations = [
@@ -201,7 +215,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 "case_property": "hypothermia_date"
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
+        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -282,15 +296,13 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 }
             }
         ]
-        self.repeater = OpenmrsRepeater.wrap(self.get_repeater_dict(observations, diagnoses))
+        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def get_repeater_dict(self, observations, diagnoses):
         return {
-            "_id": "123456",
             "domain": "test_domain",
-            "url": "https://example.com/openmrs/",
-            "username": "foo",
-            "password": "bar",
+            "repeater_id": "123456",
+            "connection_settings": self.connx,
             "white_listed_case_types": ['patient'],
             "openmrs_config": {
                 "form_configs": [{
@@ -386,7 +398,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
         date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
-        date_opened = case_blocks[0].date_opened
         case_block = f"""
             <case case_id="{case_blocks[0].case_id}" »
                   date_modified="{date_modified}" »
@@ -397,7 +408,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <owner_id>default-owner-id</owner_id>
               </create>
               <update>
-                <date_opened>{date_opened}</date_opened>
                 <observation_value>105</observation_value>
               </update>
               <index>
@@ -419,7 +429,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_block_kwargs, {'update': {}})
         self.assertEqual(len(case_blocks), 1)
         date_modified = case_blocks[0].date_modified.isoformat() + 'Z'
-        date_opened = case_blocks[0].date_opened
         case_block = f"""
             <case case_id="{case_blocks[0].case_id}" »
                   date_modified="{date_modified}" »
@@ -430,7 +439,6 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 <owner_id>default-owner-id</owner_id>
               </create>
               <update>
-                <date_opened>{date_opened}</date_opened>
                 <certainty>CONFIRMED</certainty>
                 <diagnosis_date>2019-10-18</diagnosis_date>
                 <is_primary>yes</is_primary>
@@ -443,6 +451,171 @@ class ImportEncounterTest(TestCase, TestFileMixin):
         self.assertEqual(case_blocks[0].as_text(), case_block)
 
 
+def test_get_feed_xml_feed_does_not_exist():
+    page = '1000'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text=(
+            '<!DOCTYPE html>\n'
+            '<html><body><h1>HTTP Status 500 - Request processing failed; '
+            'nested exception is org.ict4h.atomfeed.server.exceptions'
+            '.AtomFeedRuntimeException: feed does not exist</h1></html>'
+        ),
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedRuntimeException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
+    requests.notify_exception.assert_called_with(
+        'Domain "test_domain": Page does not exist in Atom feed '
+        f'"{response_url}". Resetting Atom feed status.',
+        'This can happen if the IP address of a Repeater is changed to point '
+        'to a different server, or if a server has been rebuilt. It can '
+        'signal more severe consequences, like attempts to synchronize '
+        'CommCare cases with OpenMRS patients that can no longer be found.'
+    )
+
+
+def test_get_feed_xml_feedid_zero():
+    page = '0'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text=(
+            '<!DOCTYPE html>\n'
+            '<html><body><h1>HTTP Status 500 - Request processing failed; '
+            'nested exception is org.ict4h.atomfeed.server.exceptions'
+            '.AtomFeedRuntimeException: feedId must not be null and must be '
+            'greater than 0</h1></html>'
+        ),
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedRuntimeException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, '0')
+    requests.notify_exception.assert_called_with(
+        f'Domain "test_domain": Page "{page}" is not valid in Atom feed '
+        f'"{response_url}". Resetting Atom feed status.',
+        f'It is unclear how Atom feed pagination can lead to page "{page}". '
+        'Follow up with OpenMRS system administrator.'
+    )
+
+
+def test_get_feed_xml_500():
+    page = 'recent'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=500,
+        url=response_url,
+        text='<!DOCTYPE html>\n'
+             '<html><body>HTTP Status 500</body></html>',
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsException):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
+    requests.notify_exception.assert_called_with(
+        'Domain "test_domain": Unrecognized error in Atom feed '
+        f'"{response_url}".',
+        'Response text: \n'
+        '<!DOCTYPE html>\n<html><body>HTTP Status 500</body></html>'
+    )
+
+
+def test_get_feed_xml_bad_xml():
+    page = 'recent'
+    response_url = f'https://example.com/openmrs/ws/atomfeed/patient/{page}'
+    response = SimpleNamespace(
+        status_code=200,
+        url=response_url,
+        content='<html><body>Bad XML</html>',
+    )
+    requests = Mock(
+        domain_name='test_domain',
+        get=lambda url: response,
+    )
+    with assert_raises(OpenmrsFeedSyntaxError):
+        get_feed_xml(requests, ATOM_FEED_NAME_PATIENT, page)
+    requests.notify_exception.assert_called_with(
+        'Opening and ending tag mismatch: body line 1 and html, line 1, '
+        'column 27 (<string>, line 1)',
+        'There is an XML syntax error in the OpenMRS Atom feed at '
+        f'"{response_url}".'
+    )
+
+
+def test_get_feed_updates():
+    response = SimpleNamespace(
+        status_code=200,
+        url='https://www.example.com/openmrs/ws/atomfeed/patient/recent',
+        content='<html><body>Bad XML</html>',
+    )
+    requests = SimpleNamespace(
+        domain_name='test_domain',
+        get=lambda url: response,
+        notify_exception=lambda err, msg: None,
+    )
+    repeater = SimpleNamespace(
+        atom_feed_status={},
+        requests=requests,
+    )
+    with patch('corehq.motech.openmrs.atom_feed.get_feed_xml') \
+            as get_feed_xml_mock:
+        get_feed_xml_mock.side_effect = OpenmrsFeedSyntaxError
+
+        # Assert returns without raising
+        get_feed_updates(repeater, ATOM_FEED_NAME_PATIENT)
+
+
+def test_status_defaults():
+    status = AtomFeedStatus()
+    assert_is_none(status.last_polled_at)
+    assert_equal(status.last_page, 'recent')
+
+
 def test_doctests():
     results = doctest.testmod(corehq.motech.openmrs.atom_feed)
     assert results.failed == 0
+
+
+class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
+
+    file_path = ('data',)
+    root = os.path.dirname(__file__)
+
+    def setUp(self):
+        super().setUp()
+        self.conn = ConnectionSettings.objects.create(
+            id=1,
+            url="http://abc.com",
+            name="http://abc.com"
+        )
+        from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
+        self.repeater = OpenmrsRepeater.wrap(openmrs_repeater).save()
+
+        self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
+        self.encounter_feed_elem = etree.XML(self.encounter_feed_xml.encode('utf-8'))
+
+        self.patient_feed_xml = inspect.cleandoc(PATIENT_FEED_XML)
+        self.patient_feed_elem = etree.XML(self.patient_feed_xml.encode('utf-8'))
+
+    def tearDown(self):
+        delete_all_repeaters()
+        return super().tearDown()
+
+    @patch('corehq.motech.openmrs.atom_feed.get_feed_xml')
+    @patch('corehq.motech.openmrs.atom_feed.get_patient_by_uuid')
+    @patch('corehq.motech.openmrs.atom_feed.get_encounter')
+    def test_poll_openmrs_atom_feeds(self, get_encounter, get_patient, get_feed_xml):
+        get_feed_xml.side_effect = [self.patient_feed_elem, self.encounter_feed_elem]
+        get_encounter.return_value = self.get_json('encounter')
+        poll_openmrs_atom_feeds('test_openmrs')

@@ -2,14 +2,8 @@ import logging
 
 from django.core.management import BaseCommand
 
-from dimagi.utils.chunked import chunked
-
-from corehq.apps.domain.utils import silence_during_tests
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-)
-from corehq.util.log import with_progress_bar
+from ...deletion import delete_all_cases, delete_all_forms
+from ...utils import is_domain_in_use
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +19,21 @@ class Command(BaseCommand):
             default=False,
             help='Skip important confirmation warnings.',
         )
+        parser.add_argument(
+            '--ignore-domain-in-use-check',
+            action='store_true',
+            dest='ignore_domain_in_use',
+            default=False,
+            help='Allow deleting forms and cases for a domain that is in use.',
+        )
 
     def handle(self, domain, **options):
+        if not options['ignore_domain_in_use'] and is_domain_in_use(domain):
+            print(f'WARNING: Domain {domain} is currently in use. If your intention is to delete the domain, you '
+                  f'should use the `delete_domain` command instead. If you are sure you want to delete forms and'
+                  f'cases for this domain, use the "--ignore_domain_in_use" argument.')
+            return
+
         if not options['noinput']:
             confirm = input(
                 """
@@ -40,14 +47,6 @@ class Command(BaseCommand):
                 print("\n\t\tDomain deletion cancelled.")
                 return
 
-        logger.info('Hard deleting forms...')
-        deleted_sql_form_ids = FormAccessorSQL.get_deleted_form_ids_in_domain(domain)
-        for form_id_chunk in chunked(with_progress_bar(deleted_sql_form_ids, stream=silence_during_tests()), 500):
-            FormAccessorSQL.hard_delete_forms(domain, list(form_id_chunk), delete_attachments=True)
-
-        logger.info('Hard deleting cases...')
-        deleted_sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
-        for case_id_chunk in chunked(with_progress_bar(deleted_sql_case_ids, stream=silence_during_tests()), 500):
-            CaseAccessorSQL.hard_delete_cases(domain, list(case_id_chunk))
-
+        delete_all_cases(domain)
+        delete_all_forms(domain)
         logger.info('Done.')

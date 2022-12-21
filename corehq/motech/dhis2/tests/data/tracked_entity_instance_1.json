@@ -63,7 +63,19 @@
                             "created": "2021-06-04T04:49:57.562",
                             "dataElement": "ULRM783C0PL",
                             "value": "b03469f4-0912-4479-bd81-090dedd655c7",
-                            "providedElsewhere": false
+                            "providedElsewhere": false,
+                            "createdByUserInfo": {
+                              "uid": "au0IpYGTu5a",
+                              "firstName": "Testy",
+                              "surname": "Tester",
+                              "username": "testy_tester"
+                            },
+                            "lastUpdatedByUserInfo": {
+                              "uid": "nx8I1YIFu3a",
+                              "firstName": "Testy",
+                              "surname": "Tester",
+                              "username": "testy_tester"
+                            }
                         },
                         {
                             "lastUpdated": "2021-06-04T04:49:57.562",
@@ -107,7 +119,29 @@
             ]
         }
     ],
-    "relationships": [],
+    "relationships": [
+        {
+            "bidirectional": false,
+            "created": "2022-07-13T03:26:06.680",
+            "from": {
+                "trackedEntityInstance": {
+                    "programOwners": [],
+                    "trackedEntityInstance": "oDfdLQ0bOzY"
+                }
+            },
+            "lastUpdated": "2022-07-13T03:26:06.680",
+            "relationship": "K0UypYSV9rP",
+            "relationshipName": "Mother -> Child",
+            "relationshipType": "pmEdu7DAEQL",
+            "to": {
+                "trackedEntityInstance": {
+                    "programOwners": [],
+                    "trackedEntityInstance": "T6PdaIWODvO",
+                    "potentialDuplicate": false
+                }
+            }
+        }
+    ],
     "attributes": [
         {
             "attribute": "RFSPyNDnRzV",

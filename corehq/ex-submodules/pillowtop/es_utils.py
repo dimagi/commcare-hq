@@ -1,9 +1,9 @@
-from corehq.util.es.interface import ElasticsearchInterface
 from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
 from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.logger import pillow_logging
 
 
@@ -22,6 +22,10 @@ ANALYZERS = {
     "comma": {
         "type": "pattern",
         "pattern": r"\s*,\s*"
+    },
+    "phonetic": {
+        "filter": ["standard", "lowercase", "soundex"],
+        "tokenizer": "standard"
     }
 }
 
@@ -32,10 +36,18 @@ DOMAIN_HQ_INDEX_NAME = "hqdomains"
 APP_HQ_INDEX_NAME = "hqapps"
 GROUP_HQ_INDEX_NAME = "hqgroups"
 SMS_HQ_INDEX_NAME = "smslogs"
-REPORT_CASE_HQ_INDEX_NAME = "report_cases"
-REPORT_XFORM_HQ_INDEX_NAME = "report_xforms"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
 TEST_HQ_INDEX_NAME = "pillowtop_tests"
+
+phonetic_analysis = _get_analysis('default', 'phonetic')
+phonetic_analysis.update({
+    "filter": {
+        "soundex": {
+            "replace": "true",
+            "type": "phonetic",
+            "encoder": "soundex"
+        }
+    }})
 
 ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
@@ -44,6 +56,14 @@ ES_INDEX_SETTINGS = {
             "number_of_replicas": 0,
             "number_of_shards": 5,
             "analysis": _get_analysis('default'),
+        },
+    },
+    # Apply phonetic analysis to case search index only
+    CASE_SEARCH_HQ_INDEX_NAME: {
+        "settings": {
+            "number_of_replicas": 1,
+            "number_of_shards": 5,
+            "analysis": phonetic_analysis,
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
@@ -71,7 +91,10 @@ ES_INDEX_SETTINGS = {
 }
 
 # Allow removing settings from defaults by setting
-# the value to None in settings.ES_SETTINGS
+# the value to this constant in settings.ES_SETTINGS
+# TODO: change this constant to an object that isn't actually a meaningful
+# Elastic index settings value (`None` is how you revert a setting to its
+# cluster-default value).
 REMOVE_SETTING = None
 
 
@@ -115,16 +138,14 @@ def set_index_reindex_settings(es, index):
     """
     Set a more optimized setting setup for fast reindexing
     """
-    from pillowtop.index_settings import INDEX_REINDEX_SETTINGS
-    return ElasticsearchInterface(es).update_index_settings(index, INDEX_REINDEX_SETTINGS)
+    return ElasticsearchInterface(es).update_index_settings_reindex(index)
 
 
 def set_index_normal_settings(es, index):
     """
     Normal indexing configuration
     """
-    from pillowtop.index_settings import INDEX_STANDARD_SETTINGS
-    return ElasticsearchInterface(es).update_index_settings(index, INDEX_STANDARD_SETTINGS)
+    return ElasticsearchInterface(es).update_index_settings_standard(index)
 
 
 def initialize_index_and_mapping(es, index_info):

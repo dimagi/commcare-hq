@@ -1,7 +1,7 @@
 from dimagi.ext.couchdbkit import ListProperty, StringProperty
 from dimagi.utils.couch.undo import DeleteDocRecord, UndoableDocument
 
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 
 class CommCareCaseGroup(UndoableDocument):
@@ -14,7 +14,8 @@ class CommCareCaseGroup(UndoableDocument):
     timezone = StringProperty()
 
     def get_time_zone(self):
-        # Necessary for the CommCareCaseGroup to interact with CommConnect, as if using the CommCareMobileContactMixin
+        # Necessary for the CommCareCaseGroup to interact with
+        # CommConnect, as if using the CommCareMobileContactMixin.
         # However, the entire mixin is not necessary.
         return self.timezone
 
@@ -24,7 +25,7 @@ class CommCareCaseGroup(UndoableDocument):
             case_ids = case_ids[skip:]
         if limit is not None:
             case_ids = case_ids[:limit]
-        for case in CaseAccessors(self.domain).iter_cases(case_ids):
+        for case in CommCareCase.objects.iter_cases(case_ids, self.domain):
             if not case.is_deleted:
                 yield case
 
@@ -36,7 +37,7 @@ class CommCareCaseGroup(UndoableDocument):
     def clean_cases(self):
         cleaned_list = []
         changed = False
-        for case in CaseAccessors(self.domain).iter_cases(self.cases):
+        for case in CommCareCase.objects.iter_cases(self.cases, self.domain):
             if not case.is_deleted:
                 cleaned_list.append(case.case_id)
             else:

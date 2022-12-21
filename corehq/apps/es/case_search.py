@@ -12,22 +12,34 @@ from corehq.apps.es import case_search as case_search_es
 
 from warnings import warn
 
+from django.conf import settings
 from django.utils.dateparse import parse_date
+from memoized import memoized
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
+    INDEXED_ON,
     INDICES_PATH,
     IS_RELATED_CASE,
     REFERENCED_ID,
     RELEVANCE_SCORE,
     SPECIAL_CASE_PROPERTIES,
+    SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.util.dates import iso_string_to_datetime
 
 from . import filters, queries
+from .cases import case_adapter
+from .client import ElasticDocumentAdapter, create_document_adapter
+from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+
+PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
+PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
+PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
 
 
 class CaseSearchES(CaseES):
@@ -40,6 +52,7 @@ class CaseSearchES(CaseES):
             blacklist_owner_id,
             external_id,
             indexed_on,
+            case_property_missing,
         ] + super(CaseSearchES, self).builtin_filters
 
     def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
@@ -63,9 +76,7 @@ class CaseSearchES(CaseES):
         Search for all cases where case property `case_property_name` matches the regular expression in `regex`
         """
         return self.add_query(
-            _base_property_query(case_property_name, queries.regexp(
-                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE), regex)
-            ),
+            _base_property_query(case_property_name, queries.regexp(PROPERTY_VALUE, regex)),
             clause,
         )
 
@@ -107,7 +118,7 @@ class CaseSearchES(CaseES):
         )
 
     def sort_by_case_property(self, case_property_name, desc=False):
-        sort_filter = filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name)
+        sort_filter = filters.term(PROPERTY_KEY, case_property_name)
         return self.nested_sort(
             CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'numeric'),
             sort_filter,
@@ -126,30 +137,58 @@ class CaseSearchES(CaseES):
         )
 
 
+class ElasticCaseSearch(ElasticDocumentAdapter):
+
+    @property
+    def mapping(self):
+        return get_adapter_mapping(self)
+
+    @classmethod
+    def from_python(cls, doc):
+        return from_dict_with_possible_id(doc)
+
+
+case_search_adapter = create_document_adapter(
+    ElasticCaseSearch,
+    getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
+    case_adapter.type,
+)
+
+
 def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
     return filters.nested(
         CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name),
-            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
+            filters.term(PROPERTY_KEY, case_property_name),
+            filters.term(PROPERTY_VALUE, value),
         )
     )
 
 
-def case_property_query(case_property_name, value, fuzzy=False):
+def case_property_query(case_property_name, value, fuzzy=False, multivalue_mode=None):
     """
     Search for all cases where case property with name `case_property_name`` has text value `value`
     """
+    if value is None:
+        raise TypeError("You cannot pass 'None' as a case property value")
+    if multivalue_mode not in ['and', 'or', None]:
+        raise ValueError(" 'mode' must be one of: 'and', 'or', None")
     if value == '':
         return case_property_missing(case_property_name)
     if fuzzy:
-        return filters.OR(
-            # fuzzy match
-            case_property_text_query(case_property_name, value, fuzziness='AUTO'),
-            # non-fuzzy match. added to improve the score of exact matches
-            case_property_text_query(case_property_name, value),
+        return _base_property_query(
+            case_property_name,
+            filters.OR(
+                # fuzzy match. This portion of this query OR's together multi-word case
+                # property values and doesn't respect multivalue_mode
+                queries.fuzzy(value, PROPERTY_VALUE, fuzziness='AUTO'),
+                # non-fuzzy match. added to improve the score of exact matches
+                queries.match(value, PROPERTY_VALUE, operator=multivalue_mode)
+            ),
         )
+    if not fuzzy and multivalue_mode in ['or', 'and']:
+        return case_property_text_query(case_property_name, value, operator=multivalue_mode)
     return exact_case_property_text_query(case_property_name, value)
 
 
@@ -165,14 +204,14 @@ def exact_case_property_text_query(case_property_name, value):
         queries.filtered(
             queries.match_all(),
             filters.AND(
-                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
+                filters.term(PROPERTY_KEY, case_property_name),
+                filters.term(PROPERTY_VALUE_EXACT, value),
             )
         )
     )
 
 
-def case_property_text_query(case_property_name, value, fuzziness='0'):
+def case_property_text_query(case_property_name, value, operator=None):
     """Filter by case_properties.key and do a text search in case_properties.value
 
     This does not do exact matches on the case property value. If the value has
@@ -182,7 +221,27 @@ def case_property_text_query(case_property_name, value, fuzziness='0'):
     """
     return _base_property_query(
         case_property_name,
-        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
+        queries.match(value, PROPERTY_VALUE, operator=operator)
+    )
+
+
+def sounds_like_text_query(case_property_name, value):
+    return _base_property_query(
+        case_property_name,
+        queries.match(value, '{}.{}.phonetic'.format(CASE_PROPERTIES_PATH, VALUE))
+    )
+
+def case_property_starts_with(case_property_name, value):
+    """Filter by case_properties.key and do a text search in case_properties.value that
+       matches starting substring.
+
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        filters.AND(
+            filters.term(PROPERTY_KEY, case_property_name),
+            filters.prefix(PROPERTY_VALUE_EXACT, value),
+        )
     )
 
 
@@ -244,21 +303,29 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
+def _case_property_not_set(case_property_name):
+    return filters.NOT(
+        queries.nested(
+            CASE_PROPERTIES_PATH,
+            filters.term(PROPERTY_KEY, case_property_name),
+        )
+    )
+
+
 def case_property_missing(case_property_name):
     """case_property_name isn't set or is the empty string
 
     """
     return filters.OR(
-        filters.NOT(
-            queries.nested(
-                CASE_PROPERTIES_PATH,
-                queries.filtered(
-                    queries.match_all(),
-                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                )
-            )
-        ),
+        _case_property_not_set(case_property_name),
         exact_case_property_text_query(case_property_name, '')
+    )
+
+
+def case_property_geo_distance(geopoint_property_name, geopoint, **kwargs):
+    return _base_property_query(
+        geopoint_property_name,
+        queries.geo_distance(f"{CASE_PROPERTIES_PATH}.geopoint_value", geopoint, **kwargs)
     )
 
 
@@ -267,7 +334,7 @@ def _base_property_query(case_property_name, query):
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name)
+            filters.term(PROPERTY_KEY, case_property_name)
         )
     )
 
@@ -281,32 +348,70 @@ def external_id(external_id):
 
 
 def indexed_on(gt=None, gte=None, lt=None, lte=None):
-    return filters.date_range('@indexed_on', gt, gte, lt, lte)
+    return filters.date_range(INDEXED_ON, gt, gte, lt, lte)
 
 
-def flatten_result(hit, include_score=False, is_related_case=False):
-    """Flattens a result from CaseSearchES into the format that Case serializers
-    expect
+def wrap_case_search_hit(hit, include_score=False, is_related_case=False):
+    """Convert case search index hit to CommCareCase
 
-    i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
-    {'name': 'blah', 'foo':'bar'}
+    Nearly the opposite of
+    `corehq.pillows.case_search.transform_case_for_elasticsearch`.
+
+    The "case_properties" list of key/value pairs is converted to a dict
+    and assigned to `case_json`. 'Secial' case properties are excluded
+    from `case_json`, even if they were present in the original case's
+    dynamic properties.
+
+    All fields excluding "case_properties" and its contents are assigned
+    as attributes on the case object if `CommCareCase` has a field
+    with a matching name. Fields like "doc_type" and "@indexed_on" are
+    ignored.
+
+    Warning: `include_score=True` or `is_related_case=True` may cause
+    the relevant user-defined properties to be overwritten.
+
+    :returns: A `CommCareCase` instance.
     """
-    try:
-        result = hit['_source']
-    except KeyError:
-        result = hit
-
+    from corehq.form_processor.models import CommCareCase
+    data = hit.get("_source", hit)
+    _SPECIAL_PROPERTIES = SPECIAL_CASE_PROPERTIES_MAP
+    _VALUE = VALUE
+    case = CommCareCase(
+        case_id=data.get("_id", None),
+        case_json={
+            prop["key"]: prop[_VALUE]
+            for prop in data.get(CASE_PROPERTIES_PATH, {})
+            if prop["key"] not in _SPECIAL_PROPERTIES
+        },
+        indices=data.get("indices", []),
+    )
+    _CONVERSIONS = CONVERSIONS
+    _setattr = setattr
+    case_fields = _case_fields()
+    for key, value in data.items():
+        if key in case_fields:
+            if value is not None and key in _CONVERSIONS:
+                value = _CONVERSIONS[key](value)
+            _setattr(case, key, value)
     if include_score:
-        result[RELEVANCE_SCORE] = hit['_score']
+        case.case_json[RELEVANCE_SCORE] = hit['_score']
     if is_related_case:
-        result[IS_RELATED_CASE] = "true"
-    case_properties = result.pop(CASE_PROPERTIES_PATH, [])
-    for case_property in case_properties:
-        key = case_property.get('key')
-        value = case_property.get('value')
-        if key is not None and key not in SPECIAL_CASE_PROPERTIES and value:
-            result[key] = value
+        case.case_json[IS_RELATED_CASE] = "true"
+    return case
 
-    for key in SYSTEM_PROPERTIES:
-        result.pop(key, None)
-    return result
+
+@memoized
+def _case_fields():
+    from corehq.form_processor.models import CommCareCase
+    fields = {f.attname for f in CommCareCase._meta.concrete_fields}
+    fields.add("user_id")  # synonym for "modified_by"
+    return fields
+
+
+CONVERSIONS = {
+    "closed_on": iso_string_to_datetime,
+    "modified_on": iso_string_to_datetime,
+    "opened_on": iso_string_to_datetime,
+    "server_modified_on": iso_string_to_datetime,
+    "closed_on": iso_string_to_datetime,
+}

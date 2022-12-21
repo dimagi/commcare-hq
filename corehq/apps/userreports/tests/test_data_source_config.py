@@ -4,17 +4,90 @@ import time
 from django.test import SimpleTestCase, TestCase
 
 from jsonobject.exceptions import BadValueError
-from mock import patch
+from unittest.mock import MagicMock, patch
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
+from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
 
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, UCRExpression
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_doc_and_indicators,
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
+from corehq.util.test_utils import flag_enabled
 
 
+class TestDataSourceConfigAllowedExpressionsValidation(TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_nopermission', [])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_baseitem', ['base_item_expression'])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions('domain_related_doc', ['related_doc'])
+        AllowedUCRExpressionSettings.save_allowed_ucr_expressions(
+            'domain_both',
+            ['related_doc', 'base_item_expression']
+        )
+        cls.config = get_sample_data_source()
+        cls.config = cls.config.to_json()
+        cls.config['configured_indicators'].append({
+            "type": "expression",
+            "is_primary_key": False,
+            "is_nullable": True,
+            "datatype": "string",
+            "expression": {
+                "value_expression": {
+                    "datatype": None,
+                    "type": "property_name",
+                    "property_name": "name"
+                },
+                "type": "related_doc",
+                "related_doc_type": "Location",
+                "doc_id_expression": {
+                    "datatype": None,
+                    "type": "property_name",
+                    "property_name": "health_post_id"
+                }
+            },
+            "column_id": "health_post_name"
+        })
+        cls.config['base_item_expression'] = {
+            "datatype": None,
+            "property_name": "actions",
+            "type": "property_name"
+        }
+        cls.config = DataSourceConfiguration.wrap(cls.config)
+        return super().setUpClass()
+
+    def test_raises_when_domain_has_no_permission(self):
+        self.config.domain = 'domain_nopermission'
+        err_msg = f'base_item_expression is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_raises_when_related_doc_used_without_permission(self):
+        self.config.domain = 'domain_baseitem'
+        err_msg = f'related_doc is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_raises_when_domain_has_only_related_doc(self):
+        self.config.domain = 'domain_related_doc'
+        err_msg = f'base_item_expression is not allowed for domain {self.config.domain}'
+        with self.assertRaisesMessage(BadSpecError, err_msg):
+            self.config.validate()
+
+    def test_does_not_raise_with_permissions(self):
+        self.config.domain = 'domain_both'
+        self.assertIsNone(self.config.validate())
+
+    def test_allows_domains_with_no_explicit_permissions(self):
+        self.config.domain = 'random_domain'
+        self.assertIsNone(self.config.validate())
+
+
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class DataSourceConfigurationTest(SimpleTestCase):
 
     def setUp(self):
@@ -322,6 +395,7 @@ class DataSourceConfigurationDbTest(TestCase):
             DataSourceConfiguration(domain='domain', table_id='table').save()
 
 
+@patch('corehq.apps.userreports.models.AllowedUCRExpressionSettings.disallowed_ucr_expressions', MagicMock(return_value=[]))
 class IndicatorNamedExpressionTest(SimpleTestCase):
 
     def setUp(self):
@@ -638,3 +712,121 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)
+
+
+class TestDBExpressions(TestCase):
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_named_db_expression(self):
+        self.indicator_configuration = DataSourceConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'DataSourceConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_expressions': {
+                'pregnant': {
+                    'type': 'property_name',
+                    'property_name': 'pregnant',
+                }
+            },
+            'named_filters': {},
+            'configured_filter': {},
+            'configured_indicators': [
+                {
+                    "type": "expression",
+                    "column_id": "laugh_sound",
+                    "datatype": "string",
+                    "expression": {
+                        'type': 'named',
+                        'name': 'laugh_sound_db'  # note not in the named_expressions list above
+                    }
+                }
+            ]
+        })
+
+        UCRExpression.objects.create(
+            name='laugh_sound_db',
+            domain='test',
+            expression_type=UCR_NAMED_EXPRESSION,
+            definition={
+                'type': 'conditional',
+                'test': {
+                    'type': 'boolean_expression',
+                    'expression': {
+                        'type': 'property_name',
+                        'property_name': 'is_evil',
+                    },
+                    'operator': 'eq',
+                    'property_value': True,
+                },
+                'expression_if_true': "mwa-ha-ha",
+                'expression_if_false': "hehe",
+            },
+        )
+
+        for evil_status, laugh in ((True, 'mwa-ha-ha'), (False, 'hehe')):
+            [values] = self.indicator_configuration.get_all_values({
+                'doc_type': 'CommCareCase',
+                'domain': 'test',
+                'pregnant': 'yes',
+                'is_evil': evil_status
+            })
+            i = 2
+            self.assertEqual('laugh_sound', values[i].column.id)
+            self.assertEqual(laugh, values[i].value)
+
+    @flag_enabled('UCR_EXPRESSION_REGISTRY')
+    def test_named_db_filter(self):
+        self.indicator_configuration = DataSourceConfiguration.wrap({
+            'display_name': 'Mother Indicators',
+            'doc_type': 'DataSourceConfiguration',
+            'domain': 'test',
+            'referenced_doc_type': 'CommCareCase',
+            'table_id': 'mother_indicators',
+            'named_expressions': {
+                'on_a_date': {
+                    'type': 'property_name',
+                    'property_name': 'on_date',
+                }
+            },
+            'named_filters': {
+                'pregnant': {
+                    'type': 'property_match',
+                    'property_name': 'mother_state',
+                    'property_value': 'pregnant',
+                }
+            },
+            'configured_filter': {
+                'type': 'and',
+                'filters': [
+                    {
+                        'type': 'named',
+                        'name': 'pregnant',
+                    },
+                    {
+                        'type': 'named',
+                        'name': 'age_db',  # Note that this isn't in the list of `named_filters` above
+                    }
+                ]
+            },
+            'configured_indicators': []
+        })
+        UCRExpression.objects.create(
+            name='age_db',
+            domain='test',
+            expression_type=UCR_NAMED_FILTER,
+            definition={
+                'type': 'property_match',
+                'property_name': 'age',
+                'property_value': 34,
+            },
+        )
+
+        self.assertTrue(self.indicator_configuration.filter({
+            'doc_type': 'CommCareCase',
+            'domain': 'test',
+            'type': 'ttc_mother',
+            'mother_state': 'pregnant',
+            'age': 34,
+        }))

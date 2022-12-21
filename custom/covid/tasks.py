@@ -1,11 +1,15 @@
 from datetime import datetime
 
+from django.conf import settings
+
 from celery.exceptions import MaxRetriesExceededError
 from celery.schedules import crontab
-from celery.task import periodic_task
 from dateutil.relativedelta import relativedelta
 
 from casexml.apps.phone.models import SyncLogSQL
+from dimagi.utils.logging import notify_exception
+
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.auth import FORMPLAYER
 from corehq.apps.formplayer_api.clear_user_data import clear_user_data
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -15,13 +19,11 @@ from corehq.apps.users.util import raw_username
 from corehq.toggles import PRIME_FORMPLAYER_DBS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_exception
-from django.conf import settings
 
 RATE_LIMIT = getattr(settings, 'USH_PRIME_RESTORE_RATE_LIMIT', 100)
 
-# Include users that have synced in the last 48 hours
-SYNC_WINDOW_HOURS = 48
+# Include users that have synced in the last 72 hours
+SYNC_WINDOW_HOURS = 72
 
 # Exclude users that have synced in the last 8 hours
 SYNC_CUTOFF_HOURS = 8

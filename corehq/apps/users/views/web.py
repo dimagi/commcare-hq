@@ -10,11 +10,13 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.html import format_html
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.registration.models import AsyncSignupRequest
 from corehq.apps.sso.models import IdentityProvider
 from dimagi.utils.couch import CriticalSection
@@ -75,14 +77,21 @@ class UserInvitationView(object):
         if invitation.is_expired:
             return HttpResponseRedirect(reverse("no_permissions"))
 
-        # Add zero-width space to username for better line breaking
-        username = self.request.user.username.replace("@", "&#x200b;@")
+        username = self.request.user.username
+        if username:
+            userhalf, domainhalf = username.split('@')
+            # Add zero-width space to username for better line breaking
+            formatted_username = format_html('{}&#x200b;@{}', userhalf, domainhalf)
+        else:
+            formatted_username = username
+
         context = {
-            'formatted_username': username,
+            'formatted_username': formatted_username,
             'domain': self.domain,
             'invite_to': self.domain,
             'invite_type': _('Project'),
             'hide_password_feedback': has_custom_clean_password(),
+            'button_label': _('Create Account')
         }
         if request.user.is_authenticated:
             context['current_page'] = {'page_name': _('Project Invitation')}
@@ -137,7 +146,7 @@ class UserInvitationView(object):
         else:
             idp = None
             if settings.ENFORCE_SSO_LOGIN:
-                idp = IdentityProvider.get_active_identity_provider_by_username(invitation.email)
+                idp = IdentityProvider.get_required_identity_provider(invitation.email)
 
             if request.method == "POST":
                 form = WebUserInvitationForm(request.POST, is_sso=idp is not None)
@@ -153,7 +162,8 @@ class UserInvitationView(object):
                         form,
                         created_by=invited_by_user,
                         created_via=USER_CHANGE_VIA_INVITATION,
-                        domain=invitation.domain
+                        domain=invitation.domain,
+                        is_domain_admin=False,
                     )
                     user.save()
                     messages.success(request, _("User account for %s created!") % form.cleaned_data["email"])
@@ -217,6 +227,7 @@ class UserInvitationView(object):
             return reverse("domain_homepage", args=[domain])
 
 
+@waf_allow('XSS_BODY')
 @always_allow_project_access
 @location_safe
 @sensitive_post_parameters('password')
@@ -254,7 +265,7 @@ def delete_invitation(request, domain):
 @method_decorator(always_allow_project_access, name='dispatch')
 class DomainRequestView(BasePageView):
     urlname = "domain_request"
-    page_title = ugettext_lazy("Request Access")
+    page_title = gettext_lazy("Request Access")
     template_name = "users/domain_request.html"
     request_form = None
 

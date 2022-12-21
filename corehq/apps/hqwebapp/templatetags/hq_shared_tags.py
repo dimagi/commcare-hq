@@ -1,4 +1,3 @@
-import hashlib
 import json
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -7,9 +6,9 @@ from django import template
 from django.conf import settings
 from django.http import QueryDict
 from django.template import NodeList, TemplateSyntaxError, loader_tags
-from corehq.util.django2_shim.template.base import TokenType
 from django.template.base import (
     Token,
+    TokenType,
     Variable,
     VariableDoesNotExist,
 )
@@ -17,19 +16,16 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import conditional_escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from django_prbac.utils import has_privilege
-from memoized import memoized
 
 from dimagi.utils.web import json_handler
 
-from corehq import privileges, toggles
-from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException
+from corehq import privileges
+from corehq.apps.hqwebapp.exceptions import AlreadyRenderedException, TemplateTagJSONException
 from corehq.apps.hqwebapp.models import MaintenanceAlert
 from corehq.motech.utils import pformat_json
-from corehq.util.soft_assert import soft_assert
 
 register = template.Library()
 
@@ -42,16 +38,14 @@ def JSON(obj):
     try:
         return escape_script_tags(json.dumps(obj, default=json_handler))
     except TypeError as e:
-        msg = ("Unserializable data was sent to the `|JSON` template tag.  "
-               "If DEBUG is off, Django will silently swallow this error.  "
+        msg = ("Unserializable data was sent to a template tag that expectes JSON. "
                "{}".format(str(e)))
-        soft_assert(notify_admins=True)(False, msg)
-        raise e
+        raise TemplateTagJSONException(msg)
 
 
 def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
-    return unsafe_str.replace('</script>', '<" + "/script>')
+    return unsafe_str.replace('</script>', '<\\/script>')
 
 
 @register.filter
@@ -76,7 +70,7 @@ def add_days(date, days=1):
     span = timedelta(days=days)
     try:
         return date + span
-    except:
+    except Exception:
         return datetime.strptime(date, '%m/%d/%Y').date() + span
 
 
@@ -162,6 +156,8 @@ def listsort(value):
         return new_list
     else:
         return value
+
+
 listsort.is_safe = True
 
 
@@ -329,7 +325,7 @@ def case(parser, token):
         tag = args[0]
         if len(args) > 1:
             raise template.TemplateSyntaxError(
-                "'{}' tag does not accept arguments, got {}".format(tag))
+                f"'{tag}' tag does not accept arguments, got {len(args) - 1}")
     assert tag == "endcase", token.contents
     parser.delete_first_token()
     return CaseNode(lookup_expr, branches, default)
@@ -394,20 +390,14 @@ def chevron(value):
 
 
 @register.simple_tag
-def maintenance_alert(request, dismissable=True):
-    alert = MaintenanceAlert.get_latest_alert()
-    if alert and (not alert.domains or getattr(request, 'domain', None) in alert.domains):
-        return format_html(
-            '<div class="alert alert-warning alert-maintenance{}" data-id="{}">{}{}</div>',
-            ' hide' if dismissable else '',
-            alert.id,
-            mark_safe(  # nosec: no user input
-                '<button class="close" data-dismiss="alert" aria-label="close">&times;</button>'
-            ) if dismissable else '',
-            alert.html
-        )
-    else:
-        return ''
+def maintenance_alerts(request):
+    active_alerts = MaintenanceAlert.get_active_alerts()
+    domain = getattr(request, 'domain', None)
+    return [
+        alert for alert in active_alerts
+        if (not alert.domains
+            or domain in alert.domains)
+    ]
 
 
 @register.simple_tag
@@ -466,7 +456,7 @@ class AddToBlockNode(template.Node):
     def write(self, context, text):
         rendered_blocks = AppendingBlockNode.get_rendered_blocks_dict(context)
         if self.block_name in rendered_blocks:
-            raise AlreadyRenderedException('Block {} already rendered. Cannot add new node'.format(self.block_name))
+            raise AlreadyRenderedException(f'Block {self.block_name} already rendered. Cannot add new node')
         request_blocks = self.get_addtoblock_contents_dict(context)
         if self.block_name not in request_blocks:
             request_blocks[self.block_name] = ''
@@ -596,10 +586,19 @@ def _create_page_data(parser, token, node_slug):
     value = parser.compile_filter(split_contents[2])
 
     class FakeNode(template.Node):
+        # must mock token or error handling code will fail and not reveal real error
+        token = Token(TokenType.TEXT, '', (0, 0), 0)
+
         def render(self, context):
             resolved = value.resolve(context)
+            try:
+                resolved_json = html_attr(resolved)
+            except TemplateTagJSONException as e:
+                msg = ("Error in initial page data key '{}'. "
+                       "{}".format(name, str(e)))
+                raise TemplateTagJSONException(msg)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, html_attr(resolved)))
+                    .format(name, resolved_json))
 
     nodelist = NodeList([FakeNode()])
 

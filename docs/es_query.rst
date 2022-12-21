@@ -1,5 +1,5 @@
-ESQuery
-=======
+Querying Elasticsearch
+======================
 
 .. automodule:: corehq.apps.es.es_query
    :members:

@@ -2,21 +2,18 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 from django.conf import settings
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceNotFound
 
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_error, notify_exception
 from soil import DownloadBase
 
 from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE
 
 
@@ -78,7 +75,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
     if task:
         DownloadBase.set_progress(task, 0, len(form_ids))
 
-    for xform in FormAccessors(domain).iter_forms(form_ids):
+    for xform in XFormInstance.objects.iter_forms(form_ids, domain):
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:
@@ -122,8 +119,8 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
 
 def property_references_parent(case_property):
     return isinstance(case_property, str) and (
-        case_property.startswith("parent/") or
-        case_property.startswith("host/")
+        case_property.startswith("parent/")
+        or case_property.startswith("host/")
     )
 
 
@@ -244,16 +241,14 @@ def iter_cases_and_run_rules(domain, case_iterator, rules, now, run_id, case_typ
             notify_error("Halting rule run for domain %s and case type %s." % (domain, case_type))
 
             return DomainCaseRuleRun.done(
-                run_id, DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result, db=db
+                run_id, cases_checked, case_update_result, db=db, halted=True
             )
 
         case_update_result.add_result(run_rules_for_case(case, rules, now))
         if progress_helper is not None:
             progress_helper.increment_current_case_count()
         cases_checked += 1
-    return DomainCaseRuleRun.done(
-        run_id, DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result, db=db
-    )
+    return DomainCaseRuleRun.done(run_id, cases_checked, case_update_result, db=db)
 
 
 def _check_data_migration_in_progress(domain, last_migration_check_time):
@@ -274,9 +269,18 @@ def run_rules_for_case(case, rules, now):
                 last_result.num_updates > 0 or last_result.num_related_updates > 0
                 or last_result.num_related_closes > 0
             ):
-                case = CaseAccessors(case.domain).get_case(case.case_id)
+                case = CommCareCase.objects.get_case(case.case_id, case.domain)
 
-        last_result = rule.run_rule(case, now)
+        try:
+            last_result = rule.run_rule(case, now)
+        except Exception:
+            last_result = CaseRuleActionResult(num_errors=1)
+            notify_exception(None, "Error applying case update rule", {
+                'domain': case.domain,
+                'rule_pk': rule.pk,
+                'case_id': case.case_id,
+            })
+
         aggregated_result.add_result(last_result)
         if last_result.num_closes > 0:
             break

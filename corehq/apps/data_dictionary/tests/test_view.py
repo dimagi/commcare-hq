@@ -1,11 +1,14 @@
+import json
 import uuid
 
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from corehq.apps.data_dictionary.models import CaseProperty, CaseType
+from corehq.apps.data_dictionary.models import CaseProperty, CasePropertyAllowedValue, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, HqPermissions
+from corehq.apps.users.models_role import UserRole
+
 from corehq.util.test_utils import flag_enabled
 
 
@@ -52,6 +55,36 @@ class UpdateCasePropertyViewTest(TestCase):
             name=name
         ).first()
 
+    def _get_allowed_values_payload(self, prop, all_valid=True):
+        max_len = CasePropertyAllowedValue._meta.get_field('allowed_value').max_length
+        payload = {
+            "caseType": prop.case_type.name,
+            "name": prop.name,
+            "description": prop.description,
+            "data_type": "select",
+            "allowed_values": {
+                "True": "Yes!",
+                "False": "No!",
+                "X" * max_len: "huh?",
+            },
+        }
+        if not all_valid:
+            payload["allowed_values"]["Z" * (max_len + 1)] = "oops"
+        return payload
+
+    def _assert_allowed_values(self, prop, payload):
+        max_len = CasePropertyAllowedValue._meta.get_field('allowed_value').max_length
+        valid_count = 0
+        for allowed_value, description in payload["allowed_values"].items():
+            if len(allowed_value) <= max_len:
+                valid_count += 1
+                self.assertTrue(
+                    CasePropertyAllowedValue.objects.filter(
+                        case_property=prop,
+                        allowed_value=allowed_value,
+                        description=description).exists())
+        self.assertEqual(valid_count, CasePropertyAllowedValue.objects.filter(case_property=prop).count())
+
     def test_new_case_type(self):
         self._assert_type()
         post_data = {"properties": '[{"caseType": "somethingelse", "name": "property", "data_type": "date"}]'}
@@ -97,3 +130,69 @@ class UpdateCasePropertyViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         prop = self._get_property()
         self.assertEqual(prop.description, 'description')
+
+    def test_allowed_values_all_valid(self):
+        prop = self._get_property()
+        prop_payload = self._get_allowed_values_payload(prop)
+        response = self.client.post(self.url, {"properties": json.dumps([prop_payload])})
+        self.assertEqual(response.status_code, 200)
+        self._assert_allowed_values(prop, prop_payload)
+
+    def test_allowed_values_with_invalid_one(self):
+        prop = self._get_property()
+        prop_payload = self._get_allowed_values_payload(prop, all_valid=False)
+        response = self.client.post(self.url, {"properties": json.dumps([prop_payload])})
+        self.assertEqual(response.status_code, 400)
+        response_data = json.loads(response.content)
+        self.assertTrue(response_data["messages"][0].startswith("Unable to save valid values longer than"))
+        self._assert_allowed_values(prop, prop_payload)
+
+
+@flag_enabled('DATA_DICTIONARY')
+class DataDictionaryViewTest(TestCase):
+    domain_name = uuid.uuid4().hex
+
+    @classmethod
+    def make_web_user_with_data_dict_role(cls, email, domain, has_data_dict_access=False):
+        web_user = WebUser.create(
+            domain=domain.name,
+            username=email,
+            password="foobar",
+            created_by=None,
+            created_via=None
+        )
+        role = UserRole.create(
+            domain=domain,
+            name='Data Dictionary Access',
+            permissions=HqPermissions(view_data_dict=has_data_dict_access),
+        )
+        web_user.set_role(domain.name, role.get_qualified_id())
+        web_user.save()
+        return web_user
+
+    @classmethod
+    def setUpClass(cls):
+        super(DataDictionaryViewTest, cls).setUpClass()
+        cls.domain = create_domain(cls.domain_name)
+        cls.web_user_data_dict_access = cls.make_web_user_with_data_dict_role('has_data_dict@ex.com', cls.domain,
+                                                                            has_data_dict_access=True)
+        cls.web_user_no_data_dict_access = cls.make_web_user_with_data_dict_role('no_data_dict@ex.com', cls.domain)
+        cls.client = Client()
+        cls.url = reverse('data_dictionary', args=[cls.domain_name])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.web_user_data_dict_access.delete(cls.domain_name, deleted_by=None)
+        cls.web_user_no_data_dict_access.delete(cls.domain_name, deleted_by=None)
+        cls.domain.delete()
+        super(DataDictionaryViewTest, cls).tearDownClass()
+
+    def test_has_view_access(self):
+        self.client.login(username='has_data_dict@ex.com', password='foobar')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_no_view_access(self):
+        self.client.login(username='no_data_dict@ex.com', password='foobar')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)

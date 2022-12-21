@@ -4,7 +4,6 @@ import autoslug.fields
 import corehq.apps.registry.models
 from django.conf import settings
 import django.contrib.postgres.fields
-import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import django.db.models.deletion
 
@@ -27,7 +26,7 @@ class Migration(migrations.Migration):
                 ('slug', autoslug.fields.AutoSlugField(editable=False, populate_from='name', slugify=corehq.apps.registry.models.slugify_remove_stops, unique_with=('domain',))),
                 ('description', models.TextField(blank=True)),
                 ('is_active', models.BooleanField(default=True)),
-                ('schema', django.contrib.postgres.fields.jsonb.JSONField(blank=True, null=True)),
+                ('schema', models.JSONField(blank=True, null=True)),
                 ('created_on', models.DateTimeField(auto_now_add=True)),
                 ('modified_on', models.DateTimeField(auto_now=True)),
             ],
@@ -53,7 +52,7 @@ class Migration(migrations.Migration):
                 ('domain', models.CharField(db_index=True, max_length=255)),
                 ('related_object_id', models.CharField(max_length=36)),
                 ('related_object_type', models.CharField(choices=[('registry', 'Data Registry'), ('invitation', 'Invitation'), ('grant', 'Grant'), ('ucr', 'Report'), ('application', 'Case Search')], db_index=True, max_length=32)),
-                ('detail', django.contrib.postgres.fields.jsonb.JSONField(null=True)),
+                ('detail', models.JSONField(null=True)),
                 ('registry', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='audit_logs', to='registry.DataRegistry')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='registry_actions', to=settings.AUTH_USER_MODEL)),
             ],

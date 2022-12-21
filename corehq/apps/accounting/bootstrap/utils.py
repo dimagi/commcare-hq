@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition,

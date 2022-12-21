@@ -4,8 +4,8 @@ from collections import defaultdict
 from django.contrib import messages
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from dimagi.utils.dates import add_months
 from dimagi.utils.django.management import export_as_csv_action
@@ -19,7 +19,7 @@ from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 
 class DownloadMALTView(BaseAdminSectionView):
     urlname = 'download_malt'
-    page_title = ugettext_lazy("Download MALT")
+    page_title = gettext_lazy("Download MALT")
     template_name = "hqadmin/malt_downloader.html"
 
     @method_decorator(require_superuser)
@@ -49,7 +49,7 @@ def _malt_csv_response(month, year):
 
 class DownloadGIRView(BaseAdminSectionView):
     urlname = 'download_gir'
-    page_title = ugettext_lazy("Download GIR")
+    page_title = gettext_lazy("Download GIR")
     template_name = "hqadmin/gir_downloader.html"
 
     @method_decorator(require_superuser)

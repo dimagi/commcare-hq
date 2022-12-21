@@ -56,6 +56,7 @@ hqDefine('domain/js/case_search', [
 
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
+        self.synchronousWebApps = ko.observable(initialValues.synchronous_web_apps);
         self.fuzzyProperties = ko.observableArray();
         for (var caseType in initialValues.fuzzy_properties) {
             self.fuzzyProperties.push(caseTypeProps(
@@ -75,6 +76,7 @@ hqDefine('domain/js/case_search', [
             self.saveButton.fire('change');
         };
         self.fuzzyProperties.subscribe(self.change);
+        self.synchronousWebApps.subscribe(self.change);
 
         self.addCaseType = function () {
             self.fuzzyProperties.push(caseTypeProps('', ['']));
@@ -95,7 +97,7 @@ hqDefine('domain/js/case_search', [
         };
 
         self.saveButton = hqMain.initSaveButton({
-            unsavedMessage: "You have unchanged settings",
+            unsavedMessage: gettext("You have unchanged settings"),
             save: function () {
                 self.saveButton.ajax({
                     type: 'post',
@@ -120,6 +122,7 @@ hqDefine('domain/js/case_search', [
             }
             return {
                 'enable': self.toggleEnabled(),
+                'synchronous_web_apps': self.synchronousWebApps(),
                 'fuzzy_properties': fuzzyProperties,
                 'ignore_patterns': _.map(self.ignorePatterns(), function (rc) {
                     return {

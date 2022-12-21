@@ -1,6 +1,6 @@
 from django.test.testcases import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.callcenter.data_source import (
     call_center_data_source_configuration_provider,

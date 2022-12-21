@@ -3,16 +3,17 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.http import HttpRequest
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import six
 from celery.schedules import crontab
-from celery.task import periodic_task, task
+from couchdbkit import ResourceNotFound
 
 from dimagi.utils.django.email import LARGE_FILE_SIZE_ERROR_CODES
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_request
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.reports.tasks import export_all_rows_task
 from corehq.apps.saved_reports.exceptions import (
     UnsupportedScheduledReportError,
@@ -26,6 +27,7 @@ from corehq.elastic import ESError
 from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 
+from .exceptions import ReportNotFound
 from .models import ScheduledReportLog
 
 
@@ -33,7 +35,13 @@ def send_delayed_report(report_id):
     """
     Sends a scheduled report, via celery background task.
     """
-    domain = ReportNotification.get(report_id).domain
+    try:
+        report = ReportNotification.get(report_id)
+    except ResourceNotFound:
+        raise ReportNotFound
+
+    domain = report.domain
+
     if (
         settings.SERVER_ENVIRONMENT == 'production'
         and any(re.match(pattern, domain) for pattern in settings.THROTTLE_SCHED_REPORTS_PATTERNS)
@@ -86,7 +94,11 @@ def purge_old_scheduled_report_logs():
 @serial_task('queue_scheduled_reports', queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
 def queue_scheduled_reports():
     for report_id in create_records_for_scheduled_reports():
-        send_delayed_report(report_id)
+        try:
+            send_delayed_report(report_id)
+        except ReportNotFound:
+            # swallow the exception. If the report was deleted, it won't show up on future runs anyway
+            pass
 
 
 @task(serializer='pickle', bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
@@ -112,7 +124,10 @@ def send_email_report(self, recipient_emails, domain, report_slug, report_type,
     :Parameter cleaned_data:
             Dict containing cleaned data from the submitted form
     """
-    from corehq.apps.reports.views import _render_report_configs, render_full_report_notification
+    from corehq.apps.reports.views import (
+        _render_report_configs,
+        render_full_report_notification,
+    )
 
     user_id = request_data['couch_user']
     couch_user = CouchUser.get_by_user_id(user_id)

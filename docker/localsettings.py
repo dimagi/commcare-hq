@@ -82,6 +82,13 @@ redis_host = 'redis'
 redis_cache = {
     'BACKEND': 'django_redis.cache.RedisCache',
     'LOCATION': 'redis://{}:6379/0'.format(redis_host),
+    # match production settings
+    'PARSER_CLASS': 'redis.connection.HiredisParser',
+    'REDIS_CLIENT_KWARGS': {
+        'health_check_interval': 15,
+    },
+    # see `settingshelper.update_redis_location_for_tests`
+    'TEST_LOCATION': 'redis://{}:6379/1'.format(redis_host),
 }
 
 CACHES = {
@@ -118,6 +125,7 @@ SHARED_DRIVE_ROOT = '/sharedfiles'
 ALLOWED_HOSTS = ['*']
 #FIX_LOGGER_ERROR_OBFUSCATION = True
 
+CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
 INACTIVITY_TIMEOUT = 60 * 24 * 365

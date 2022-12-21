@@ -14,17 +14,16 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.data_interfaces.pillow import CaseDeduplicationProcessor
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
-from corehq.apps.userreports.pillow import ConfigurableReportPillowProcessor, ConfigurableReportTableManager
+from corehq.apps.userreports.pillow import get_ucr_processor
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.user import UnknownUsersProcessor
 from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
-from couchforms.jsonobject_extensions import GeoPointProperty
+from couchforms.geopoint import GeoPoint
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
 from pillowtop.const import DEFAULT_PROCESSOR_CHUNK_SIZE
 from pillowtop.pillow.interface import ConstructedPillow
@@ -69,7 +68,7 @@ def xform_pillow_filter(doc_dict):
 
 def transform_xform_for_elasticsearch(doc_dict):
     """
-    Given xform JSON such as that returned by `XFormInstanceSQL.to_json()`,
+    Given xform JSON such as that returned by `XFormInstance.to_json()`,
     return a copy that is ready to be sent to elasticsearch, or None, if the
     form should not be saved to elasticsearch
     """
@@ -95,7 +94,7 @@ def transform_xform_for_elasticsearch(doc_dict):
         doc_ret['form']['meta']['app_build_version'] = app_version_info.build_version
 
         try:
-            geo_point = GeoPointProperty().wrap(doc_ret['form']['meta']['location'])
+            geo_point = GeoPoint.from_string(doc_ret['form']['meta']['location'])
             doc_ret['form']['meta']['geo_point'] = geo_point.lat_lon
         except (KeyError, BadValueError):
             doc_ret['form']['meta']['geo_point'] = None
@@ -183,7 +182,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
       - :py:class:`corehq.apps.data_interfaces.pillow.CaseDeduplicationPillow``
     """
     # avoid circular dependency
-    from corehq.pillows.reportxform import transform_xform_for_report_forms_index, report_xform_filter
     from corehq.pillows.mappings.user_mapping import USER_INDEX
     if topics:
         assert set(topics).issubset(FORM_TOPICS), "This is a pillow to process cases only"
@@ -193,7 +191,7 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         dedicated_migration_process=dedicated_migration_process
     )
 
-    table_manager = ConfigurableReportTableManager(
+    ucr_processor = get_ucr_processor(
         data_source_providers=[
             DynamicDataSourceProvider('XFormInstance'),
             StaticDataSourceProvider('XFormInstance')
@@ -202,10 +200,9 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         include_ucrs=include_ucrs,
         exclude_ucrs=exclude_ucrs,
         run_migrations=(process_num == 0),  # only first process runs migrations
+        ucr_configs=ucr_configs
     )
-    ucr_processor = ConfigurableReportPillowProcessor(table_manager)
-    if ucr_configs:
-        table_manager.bootstrap(ucr_configs)
+
     xform_to_es_processor = BulkElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
@@ -215,8 +212,8 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
     )
     unknown_user_form_processor = UnknownUsersProcessor()
     form_meta_processor = FormSubmissionMetadataTrackerProcessor()
-    checkpoint_id = "{}-{}-{}-{}".format(
-        pillow_id, XFORM_INDEX_INFO.index, REPORT_XFORM_INDEX_INFO.index, USER_INDEX)
+    checkpoint_id = "{}-{}-{}".format(
+        pillow_id, XFORM_INDEX_INFO.index, USER_INDEX)
     checkpoint = KafkaPillowCheckpoint(checkpoint_id, topics)
     event_handler = KafkaCheckpointEventHandler(
         checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
@@ -229,16 +226,6 @@ def get_xform_pillow(pillow_id='xform-pillow', ucr_division=None,
         processors.append(form_meta_processor)
     if settings.RUN_DEDUPLICATION_PILLOW:
         processors.append(CaseDeduplicationProcessor())
-
-    if not settings.ENTERPRISE_MODE:
-        xform_to_report_es_processor = BulkElasticProcessor(
-            elasticsearch=get_es_new(),
-            index_info=REPORT_XFORM_INDEX_INFO,
-            doc_prep_fn=transform_xform_for_report_forms_index,
-            doc_filter_fn=report_xform_filter,
-            change_filter_fn=is_couch_change_for_sql_domain
-        )
-        processors.append(xform_to_report_es_processor)
     if not skip_ucr:
         processors.append(ucr_processor)
 

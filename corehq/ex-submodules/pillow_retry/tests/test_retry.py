@@ -2,7 +2,7 @@ from django.conf import settings
 from django.test import TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import change_meta_from_kafka_message, KafkaChangeFeed

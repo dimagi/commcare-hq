@@ -24,16 +24,21 @@ def main():
         GeventCommand('ptop_preindex'),
         GeventCommand('sync_prepare_couchdb_multi'),
         GeventCommand('sync_couch_views'),
+        GeventCommand('delete_old_couch_views_from_disk'),
         GeventCommand('populate_form_date_modified'),
         GeventCommand('run_aggregation_query'),
         GeventCommand('send_pillow_retry_queue_through_pillows'),
         GeventCommand('run_all_management_command'),
-        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32)
+        GeventCommand('copy_events_to_sql', http_adapter_pool_size=32),
+        GeventCommand('verify_ssl_connections'),
     )
     _patch_gevent_if_required(sys.argv, GEVENT_COMMANDS)
 
     init_hq_python_path()
     run_patches()
+
+    from corehq.warnings import configure_warnings
+    configure_warnings(is_testing(sys.argv))
 
     set_default_settings_path(sys.argv)
     set_nosetests_verbosity(sys.argv)
@@ -109,27 +114,7 @@ def _set_source_root(source_root):
 
 
 def run_patches():
-    # workaround for https://github.com/smore-inc/tinys3/issues/33
-    import mimetypes
-    mimetypes.init()
-
-    patch_pickle()
     patch_jsonfield()
-
-    import django
-    _setup_once.setup = django.setup
-    django.setup = _setup_once
-
-
-def patch_pickle():
-    """Patch pickle to support protocol 5
-
-    Remove after upgrading to Python 3.8+
-    """
-    import pickle
-    if pickle.HIGHEST_PROTOCOL < 5:
-        import pickle5
-        sys.modules["pickle"] = pickle5
 
 
 def patch_jsonfield():
@@ -138,7 +123,7 @@ def patch_jsonfield():
     """
     import json
     from django.core.exceptions import ValidationError
-    from django.utils.translation import ugettext_lazy as _
+    from django.utils.translation import gettext_lazy as _
     from jsonfield import JSONField
 
     def to_python(self, value):
@@ -152,20 +137,17 @@ def patch_jsonfield():
     JSONField.to_python = to_python
 
 
-# HACK monkey-patch django setup to prevent second setup by django_nose
-def _setup_once(*args, **kw):
-    if not hasattr(_setup_once, "done"):
-        _setup_once.done = True
-        _setup_once.setup(*args, **kw)
-
-
 def set_default_settings_path(argv):
-    if len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1':
+    if is_testing(argv):
         os.environ.setdefault('CCHQ_TESTING', '1')
         module = 'testsettings'
     else:
         module = 'settings'
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", module)
+
+
+def is_testing(argv):
+    return len(argv) > 1 and argv[1] == 'test' or os.environ.get('CCHQ_TESTING') == '1'
 
 
 def set_nosetests_verbosity(argv):

@@ -1,9 +1,13 @@
 import pickle
+from contextlib import contextmanager
 
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import WebUser
 
-from ..models import SQLLocation
+from ..models import (
+    SQLLocation,
+    get_domain_locations,
+)
 from .util import LocationHierarchyTestCase
 
 
@@ -63,6 +67,28 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
         locs = SQLLocation.objects.get(name='Suffolk').get_descendants()
         # should not raise excepiton
         pickle.dumps(locs)
+
+    def test_location_descendants_include_location(self):
+        boston = SQLLocation.objects.get(name="Boston")
+
+        massachusetts = SQLLocation.objects.get(name="Massachusetts")
+        self.assertTrue(massachusetts.descendants_include_location(boston.location_id))
+
+        california = SQLLocation.objects.get(name="California")
+        self.assertFalse(california.descendants_include_location(boston.location_id))
+
+    def test_get_domain_locations(self):
+        locations = get_domain_locations(self.domain)
+        names = {loc.name for loc in locations}
+        self.assertIn('Massachusetts', names)
+        self.assertIn('California', names)
+
+    def test_get_domain_locations_archived(self):
+        with california_secedes():
+            locations = get_domain_locations(self.domain)
+            names = {loc.name for loc in locations}
+            self.assertIn('Massachusetts', names)
+            self.assertNotIn('California', names)
 
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):
@@ -190,3 +216,13 @@ class TestFilterByUserInput(LocationHierarchyTestCase):
                           .values_list('name', flat=True))
             error_msg = f"\nExpected '{querystring}' to yield\n{expected}\nbut got\n{actual}"
             self.assertItemsEqual(actual, expected, error_msg)
+
+
+@contextmanager
+def california_secedes():
+    california = SQLLocation.objects.get(name="California")
+    california.archive()
+    try:
+        yield
+    finally:
+        california.unarchive()

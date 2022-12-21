@@ -6,14 +6,14 @@ from alembic.autogenerate import compare_metadata
 from alembic.operations import Operations
 
 from dimagi.utils.couch import get_redis_client
-from fluff.signals import (
+
+from .alembic_diffs import (
     DiffTypes,
     get_migration_context,
     get_tables_to_rebuild,
     reformat_alembic_diffs,
 )
-
-from corehq.apps.userreports.models import id_is_static
+from .models import id_is_static
 
 logger = logging.getLogger(__name__)
 
@@ -33,13 +33,16 @@ class DataSourceResumeHelper(object):
         self._client = get_redis_client().client.get_client()
         self._key = get_redis_key_for_config(config)
 
-    def get_completed_case_type_or_xmlns(self):
-        return self._client.lrange(self._key, 0, -1)
+    def get_completed_iterations(self):
+        return [
+            value.decode('utf8').split(':')
+            for value in self._client.lrange(self._key, 0, -1)
+        ]
 
-    def add_completed_case_type_or_xmlns(self, case_type_or_xmlns):
+    def add_completed_iteration(self, domain, case_type_or_xmlns):
         if case_type_or_xmlns is None:
             case_type_or_xmlns = 'None'
-        self._client.rpush(self._key, case_type_or_xmlns)
+        self._client.rpush(self._key, f"{domain}:{case_type_or_xmlns}".encode('utf8'))
 
     def clear_resume_info(self):
         self._client.delete(self._key)

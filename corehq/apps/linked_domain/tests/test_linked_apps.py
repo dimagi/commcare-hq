@@ -5,7 +5,7 @@ from django.test.testcases import TestCase
 
 from couchdbkit.exceptions import ResourceNotFound
 from lxml import etree
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.exceptions import AppEditingError, AppLinkError
 from corehq.apps.app_manager.models import (

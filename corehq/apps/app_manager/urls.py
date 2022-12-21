@@ -1,4 +1,4 @@
-from django.conf.urls import include, url
+from django.conf.urls import include, re_path as url
 
 from corehq.apps.app_manager.views import (
     AppCaseSummaryView,
@@ -46,6 +46,7 @@ from corehq.apps.app_manager.views import (
     edit_report_module,
     edit_schedule_phases,
     edit_visit_schedule,
+    enable_usercase,
     form_source,
     form_source_legacy,
     get_app_ui_translations,
@@ -65,6 +66,7 @@ from corehq.apps.app_manager.views import (
     odk_qr_code,
     overwrite_module_case_list,
     paginate_releases,
+    paginate_release_logs,
     patch_xform,
     pull_upstream_app,
     rearrange,
@@ -98,6 +100,7 @@ from corehq.apps.translations.views import (
     upload_bulk_app_translations,
     upload_bulk_ui_translations,
 )
+from ..hqwebapp.decorators import waf_allow
 
 app_urls = [
     url(r'^languages/$', view_app, name='app_languages'),
@@ -119,6 +122,7 @@ app_urls = [
     url(r'^add_ons/edit/$', edit_add_ons, name='edit_add_ons'),
     url(r'^current_version/$', current_app_version, name='current_app_version'),
     url(r'^releases/json/$', paginate_releases, name='paginate_releases'),
+    url(r'^releases/logs/json/$', paginate_release_logs, name='paginate_release_logs'),
     url(r'^releases/release/(?P<saved_app_id>[\w-]+)/$', release_build,
         name='release_build'),
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', release_build,
@@ -155,6 +159,7 @@ urlpatterns = [
         get_xform_source, name='get_xform_source'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
     url(r'^app_exchange/$', app_exchange, name='app_exchange'),
+    url(r'^enable_usercase/$', enable_usercase, name="enable_usercase"),
     url(r'^import_app/$', import_app, name='import_app'),
     url(r'^app_from_template/(?P<slug>[\w-]+)/$', app_from_template, name='app_from_template'),
     url(r'^copy_app/$', copy_app, name='copy_app'),
@@ -201,7 +206,7 @@ urlpatterns = [
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
     url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
-        edit_advanced_form_actions, name='edit_advanced_form_actions'),
+        waf_allow('XSS_BODY')(edit_advanced_form_actions), name='edit_advanced_form_actions'),
 
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',

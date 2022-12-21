@@ -1,9 +1,10 @@
 import uuid
 from datetime import date, time
+from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, TransactionTestCase
 
-from mock import Mock, call, patch
+from dimagi.utils.parsing import json_format_date
 
 from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.models import (
@@ -27,12 +28,14 @@ from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import (
     CommCareUser,
-    Permissions,
+    HqPermissions,
     UserRole,
-    UserRolePresets,
     WebUser,
 )
-from corehq.apps.users.role_utils import initialize_domain_with_default_roles
+from corehq.apps.users.role_utils import (
+    UserRolePresets,
+    initialize_domain_with_default_roles,
+)
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     ImmediateBroadcast,
@@ -80,7 +83,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self.custom_role = UserRole.create(
             self.domain.name,
             "Custom Role",
-            permissions=Permissions(
+            permissions=HqPermissions(
                 edit_apps=True,
                 view_apps=True,
                 edit_web_users=True,
@@ -145,7 +148,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
     def _change_std_roles(self):
         for u in self.user_roles:
             user_role = UserRole.objects.by_couch_id(u.get_id)
-            user_role.set_permissions(Permissions(
+            user_role.set_permissions(HqPermissions(
                 view_reports=True,
                 edit_commcare_users=True,
                 view_commcare_users=True,
@@ -164,7 +167,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
             user_role = UserRole.objects.by_couch_id(u.get_id)
             self.assertEqual(
                 user_role.permissions,
-                UserRolePresets.get_permissions(user_role.name)
+                UserRolePresets.INITIAL_ROLES[user_role.name](),
             )
 
     def _assertStdUsers(self):
@@ -389,7 +392,11 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p1.call_count, 2)
             p1.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients, start_date=broadcast.start_date)
+                    call(
+                        broadcast.schedule_id.hex,
+                        broadcast.recipients,
+                        start_date_iso_string=json_format_date(broadcast.start_date)
+                    )
                     for broadcast in (self.domain_1_sms_schedules[0], self.domain_1_survey_schedules[0])
                 ],
                 any_order=True
@@ -398,7 +405,7 @@ class DeactivateScheduleTest(TransactionTestCase):
             self.assertEqual(p2.call_count, 2)
             p2.assert_has_calls(
                 [
-                    call(broadcast.schedule_id, broadcast.recipients)
+                    call(broadcast.schedule_id.hex, broadcast.recipients)
                     for broadcast in (self.domain_1_sms_schedules[1], self.domain_1_survey_schedules[1])
                 ],
                 any_order=True
@@ -431,10 +438,14 @@ class DeactivateScheduleTest(TransactionTestCase):
             _deactivate_schedules(self.domain_obj_1, survey_only=True)
 
             b = self.domain_1_survey_schedules[0]
-            p1.assert_called_once_with(b.schedule_id, b.recipients, start_date=b.start_date)
+            p1.assert_called_once_with(
+                b.schedule_id.hex,
+                b.recipients,
+                start_date_iso_string=json_format_date(b.start_date)
+            )
 
             b = self.domain_1_survey_schedules[1]
-            p2.assert_called_once_with(b.schedule_id, b.recipients)
+            p2.assert_called_once_with(b.schedule_id.hex, b.recipients)
 
             rule = self.domain_1_survey_schedules[2]
             p3.assert_called_once_with(rule)

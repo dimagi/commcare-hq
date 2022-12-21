@@ -1,23 +1,24 @@
 import base64
 import json
 import uuid
+from urllib.parse import parse_qs, urlparse
 
 from django.http import QueryDict
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
 from .utils import APIResourceTest
 
@@ -184,14 +185,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.cases = []
         for val in cls.case_property_values:
             id = uuid.uuid4().hex
-            case_block = CaseBlock.deprecated_init(
+            case_block = CaseBlock(
                 create=True,
                 case_id=id,
                 case_type=case_type,
                 update={cls.field_name: val},
-            ).as_xml()
-            post_case_blocks([case_block], {'domain': cls.domain.name})
-            cls.cases.append(CaseAccessors(cls.domain.name).get_case(id))
+            ).as_text()
+            submit_case_blocks(case_block, domain=cls.domain.name)
+            cls.cases.append(CommCareCase.objects.get_case(id, cls.domain.name))
 
         cls.report_columns = [
             {
@@ -338,7 +339,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
 
         def _get_query_params(url):
-            from six.moves.urllib.parse import parse_qs, urlparse
             return parse_qs(urlparse(url).query)
 
         self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
@@ -372,7 +372,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
         self.addCleanup(wrong_domain.delete)
-        user_in_wrong_domain = WebUser.create(
+        WebUser.create(
             wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password, None, None
         )
 

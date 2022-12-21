@@ -19,6 +19,7 @@ from corehq.apps.reports.filters.controllers import (
     EmwfOptionsController,
     MobileWorkersOptionsController,
     ReassignCaseOptionsController,
+    EnterpriseUserOptionsController,
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
@@ -123,6 +124,18 @@ class ReassignCaseOptions(CaseListFilterOptions):
     @memoized
     def options_controller(self):
         return ReassignCaseOptionsController(self.request, self.domain, self.search)
+
+
+class EnterpriseUserOptions(EmwfOptionsView):
+    """View designed to return all users across all enterprise domains when the request
+    is made from the enterprise domain and the request is not location restricted.
+
+    If either of those conditions are false then only users from the current domain are returned
+    """
+    @property
+    @memoized
+    def options_controller(self):
+        return EnterpriseUserOptionsController(self.request, self.domain, self.search)
 
 
 class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):

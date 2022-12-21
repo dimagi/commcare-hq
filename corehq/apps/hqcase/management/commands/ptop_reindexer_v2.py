@@ -5,10 +5,7 @@ from corehq.pillows.app_submission_tracker import (
     UserAppFormSubmissionReindexerFactory,
 )
 from corehq.pillows.application import AppReindexerFactory
-from corehq.pillows.case import (
-    CouchCaseReindexerFactory,
-    SqlCaseReindexerFactory,
-)
+from corehq.pillows.case import SqlCaseReindexerFactory
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
@@ -16,8 +13,6 @@ from corehq.pillows.case_search import (
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.reportcase import ReportCaseReindexerFactory
-from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
@@ -37,14 +32,11 @@ FACTORIES = [
     UserReindexerFactory,
     GroupReindexerFactory,
     GroupToUserReindexerFactory,
-    CouchCaseReindexerFactory,
     SqlCaseReindexerFactory,
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
     SmsReindexerFactory,
-    ReportCaseReindexerFactory,
-    ReportFormReindexerFactory,
     AppReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UpdateUserSyncHistoryReindexerFactory,
@@ -132,6 +124,7 @@ class Command(SubCommand):
             'traceback',
             'no_color',
             'force_color',
+            'skip_checks'
         ]:
             options.pop(option, None)
 

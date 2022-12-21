@@ -62,3 +62,11 @@ def ensure_community_or_paused_subscription(domain_name, from_date, method, web_
 
     assign_explicit_unpaid_subscription(domain_name, from_date, method,
                                         web_user=web_user, is_paused=is_paused)
+
+
+def is_domain_enterprise(domain):
+    subscription = Subscription.get_active_subscription_by_domain(domain)
+    try:
+        return subscription.plan_version.plan.edition == SoftwarePlanEdition.ENTERPRISE
+    except AttributeError:
+        return False

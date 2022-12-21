@@ -4,16 +4,17 @@ import zipfile
 from datetime import datetime, timedelta
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 from text_unidecode import unidecode
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.analytics import app_has_been_submitted_to_in_last_30_days
+from dimagi.utils.chunked import chunked
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from soil.util import expose_blob_download
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.calculations import all_domain_stats, calced_props
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import AppES, DomainES, FormES, filters
@@ -22,7 +23,7 @@ from corehq.apps.reports.util import send_report_download_email
 from corehq.blobs import CODES, get_blob_db
 from corehq.const import ONE_DAY
 from corehq.elastic import send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.models import XFormInstance
 from corehq.util.dates import get_timestamp_for_filename
 from corehq.util.files import TransientTempfile, safe_filename_header
 from corehq.util.metrics import metrics_gauge
@@ -35,7 +36,7 @@ from .analytics.esaccessors import (
     scroll_case_names,
 )
 
-logging = get_task_logger(__name__)
+logger = get_task_logger(__name__)
 EXPIRE_TIME = ONE_DAY
 
 _calc_props_soft_assert = soft_assert(to='{}@{}'.format('dmore', 'dimagi.com'), exponential_backoff=False)
@@ -47,11 +48,12 @@ def update_calculated_properties():
         get_domains_to_update_es_filter()
     ).fields(["name", "_id"]).run().hits
 
-    update_calculated_properties_in_chunks.chunks(domains_to_update, 5000).apply_async(queue='background_queue')
+    for chunk in chunked(domains_to_update, 5000):
+        update_calculated_properties_for_domains.delay(chunk)
 
 
 @task(queue='background_queue')
-def update_calculated_properties_in_chunks(domains):
+def update_calculated_properties_for_domains(domains):
     """
     :param domains: list of {'name': <name>, '_id': <id>} entries
     """
@@ -172,10 +174,12 @@ def export_all_rows_task(ReportClass, report_state, recipient_list=None, subject
         report.domain = report.request.couch_user.get_domains()[0]
 
     hash_id = _store_excel_in_blobdb(report_class, file, report.domain, report.slug)
+    logger.info(f'Stored report {report.name} with parameters: {report_state["request_params"]} in hash {hash_id}')
     if not recipient_list:
         recipient_list = [report.request.couch_user.get_email()]
     for recipient in recipient_list:
         _send_email(report.request.couch_user, report, hash_id, recipient=recipient, subject=subject)
+        logger.info(f'Sent {report.name} with hash {hash_id} to {recipient}')
 
 
 def _send_email(user, report, hash_id, recipient, subject=None):
@@ -212,8 +216,8 @@ def build_form_multimedia_zipfile(
         download_id,
         owner_id,
 ):
-    from corehq.apps.export.models import FormExportInstance
     from corehq.apps.export.export import get_export_query
+    from corehq.apps.export.models import FormExportInstance
     export = FormExportInstance.get(export_id)
     es_query = get_export_query(export, es_filters)
     form_ids = get_form_ids_with_multimedia(es_query)
@@ -262,7 +266,7 @@ def _get_form_attachment_info(domain, form_ids, export):
     properties = _get_export_properties(export)
     return [
         _extract_form_attachment_info(form, properties)
-        for form in FormAccessors(domain).iter_forms(form_ids)
+        for form in XFormInstance.objects.iter_forms(form_ids, domain)
     ]
 
 
@@ -292,11 +296,16 @@ def _format_filename(form_info, question_id, extension, case_id_to_name):
 
 def _write_attachments_to_file(fpath, num_forms, forms_info, case_id_to_name):
     total_size = 0
+    unique_attachment_ids = set()
     with open(fpath, 'wb') as zfile:
         with zipfile.ZipFile(zfile, 'w') as multimedia_zipfile:
             for form_number, form_info in enumerate(forms_info, 1):
                 form = form_info['form']
                 for attachment in form_info['attachments']:
+                    if attachment['id'] in unique_attachment_ids:
+                        continue
+
+                    unique_attachment_ids.add(attachment['id'])
                     total_size += attachment['size']
                     if total_size >= MAX_MULTIMEDIA_EXPORT_SIZE:
                         raise Exception("Refusing to make multimedia export bigger than {} GB"
@@ -442,6 +451,7 @@ def _extract_form_attachment_info(form, properties):
         if not properties or question_id in properties:
             extension = str(os.path.splitext(attachment_name)[1])
             form_info['attachments'].append({
+                'id': attachment.id,
                 'size': attachment.content_length,
                 'name': attachment_name,
                 'question_id': question_id,

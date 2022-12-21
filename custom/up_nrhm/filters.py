@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from corehq.apps.reports.filters.select import MonthFilter
 from corehq.apps.userreports.util import get_table_name
 from memoized import memoized
@@ -35,7 +35,7 @@ class HierarchySqlData(SqlData):
 
 
 class DrillDownOptionFilter(BaseDrilldownOptionFilter):
-    label = ugettext_lazy("Hierarchy")
+    label = gettext_lazy("Hierarchy")
     slug = "hierarchy"
 
     @property
@@ -106,7 +106,7 @@ class DrillDownOptionFilter(BaseDrilldownOptionFilter):
 
 class SampleFormatFilter(BaseSingleOptionFilter):
     slug = 'sf'
-    label = ugettext_lazy('Report type')
+    label = gettext_lazy('Report type')
     default_text = "Format-1 for ASHA Sanginis"
 
     @property
@@ -120,14 +120,14 @@ class SampleFormatFilter(BaseSingleOptionFilter):
 
 
 class ASHAMonthFilter(MonthFilter):
-    label = ugettext_lazy("Last Reporting month of the quarter")
+    label = gettext_lazy("Last Reporting month of the quarter")
 
 
 class LanguageFilter(BaseSingleOptionFilter):
     slug = 'lang'
-    label = ugettext_lazy('Language')
+    label = gettext_lazy('Language')
     default_text = "English"
 
     @property
     def options(self):
-        return [('hin', ugettext_lazy('Hindi'))]
+        return [('hin', gettext_lazy('Hindi'))]

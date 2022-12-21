@@ -2,7 +2,7 @@ import base64
 import os
 from datetime import datetime, timedelta
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.mobile_auth.xml import AuthKeys, KeyRecord, OpenRosaResponse
 

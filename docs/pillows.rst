@@ -167,9 +167,10 @@ Many pillow exceptions
 `commcare.change_feed.changes.exceptions` has tag `exception_type` that reports the name and path of the exception encountered.
 These exceptions could be from coding errors or from infrastructure issues.
 If they are from infrastructure issues (e.g. ES timeouts) some solutions could be:
-    - Scale ES cluster (more nodes, shards, etc)
-    - Reduce number of pillow processes that are writing to ES
-    - Reduce other usages of ES if possible (e.g. if some custom code relies on ES, could it use UCRs, https://github.com/dimagi/commcare-hq/pull/26241)
+
+- Scale ES cluster (more nodes, shards, etc)
+- Reduce number of pillow processes that are writing to ES
+- Reduce other usages of ES if possible (e.g. if some custom code relies on ES, could it use UCRs, https://github.com/dimagi/commcare-hq/pull/26241)
 
 
 Problem with checkpoint for pillow name: First available topic offset for topic is num1 but needed num2

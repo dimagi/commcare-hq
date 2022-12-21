@@ -2,7 +2,7 @@ from custom.champ.tests.utils import ChampTestCase
 from custom.champ.views import ServiceUptakeView
 
 import json
-import mock
+from unittest import mock
 
 from django.urls import reverse
 

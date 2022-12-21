@@ -1,6 +1,6 @@
 hqDefine("app_manager/js/modules/module_view", function () {
     $(function () {
-        $('.multiselect-caselist').select2();
+        $('.case-type-dropdown').select2();
         $('.overwrite-danger').on("click", function () {
             hqImport('analytix/js/kissmetrix').track.event("Overwrite Case Lists/Case Details");
         });
@@ -15,7 +15,7 @@ hqDefine("app_manager/js/modules/module_view", function () {
             var details = initial_page_data('details');
             for (var i = 0; i < details.length; i++) {
                 var detail = details[i];
-                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")({
+                var detailScreenConfigOptions = {
                     module_id: moduleBrief.id,
                     moduleUniqueId: moduleBrief.unique_id,
                     state: {
@@ -36,20 +36,9 @@ hqDefine("app_manager/js/modules/module_view", function () {
                     parentSelect: detail.parent_select,
                     fixtureSelect: detail.fixture_select,
                     multimedia: initial_page_data('multimedia_object_map'),
-                    searchProperties: options.search_properties || [],
-                    searchDefaultRelevant: options.search_default_relevant,
-                    searchAdditionalRelevant: options.search_additional_relevant,
-                    autoLaunch: options.auto_launch,
-                    defaultSearch: options.default_search,
-                    defaultProperties: options.default_properties || [],
-                    searchButtonDisplayCondition: options.search_button_display_condition,
-                    searchLabel: options.search_label,
-                    searchAgainLabel: options.search_again_label,
-                    searchFilter: options.search_filter,
-                    blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
-                    dataRegistry: options.data_registry,
-                    additionalRegistryCases: options.additional_registry_cases,
-                });
+                };
+                _.extend(detailScreenConfigOptions, options.search_config);
+                var detailScreenConfig = hqImport("app_manager/js/details/screen_config")(detailScreenConfigOptions);
 
                 var $list_home = $("#" + detail.type + "-detail-screen-config-tab");
                 $list_home.koApplyBindings(detailScreenConfig);

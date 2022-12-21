@@ -2,9 +2,9 @@ import datetime
 import uuid
 
 from django.test import TestCase
-from mock import patch
 from requests import ConnectionError
 
+from corehq.const import MISSING_APP_ID
 from couchforms.analytics import (
     app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
@@ -21,7 +21,7 @@ from testapps.test_pillowtop.utils import process_pillow_changes
 from corehq.apps.es.tests.utils import es_test
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import transform_xform_for_elasticsearch
@@ -68,19 +68,19 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             create_form_for_test(domain=cls.domain, app_id=cls.app_id_1, xmlns=cls.xmlns_1, save=False),
             create_form_for_test(domain=cls.domain, app_id=cls.app_id_2, xmlns=cls.xmlns_2, save=False),
         ]
-        cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstanceSQL.ERROR, save=False)]
+        cls.error_forms = [create_form_for_test(domain=cls.domain, state=XFormInstance.ERROR, save=False)]
         cls.all_forms = cls.forms + cls.error_forms
         for form in cls.all_forms:
             elastic_form = transform_xform_for_elasticsearch(form.to_json())
             send_to_elasticsearch('forms', elastic_form)
 
-        cls.es.indices.refresh(XFORM_INDEX_INFO.index)
+        cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
 
     @classmethod
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        ensure_index_deleted(XFORM_INDEX_INFO.alias)
         super(ExportsFormsAnalyticsTest, cls).tearDownClass()
 
     def test_get_form_analytics_metadata__no_match(self):
@@ -93,6 +93,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
             {'submissions': 2, 'xmlns': 'my://crazy.xmlns/'}
         )
 
+    @flaky_slow
     def test_get_form_analytics_metadata__app(self):
         self.assertEqual(get_form_analytics_metadata(self.domain, self.app_id_2, self.xmlns_2), {
             'app': {'id': self.app_id_2, 'langs': [], 'name': None},
@@ -121,11 +122,7 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         }])
 
 
-TEST_ES_META = {
-    XFORM_INDEX_INFO.index: XFORM_INDEX_INFO
-}
-
-
+@es_test
 @disable_quickcache
 class CouchformsESAnalyticsTest(TestCase):
     domain = 'hqadmin-es-accessor'
@@ -134,82 +131,69 @@ class CouchformsESAnalyticsTest(TestCase):
     def setUpClass(cls):
         super(CouchformsESAnalyticsTest, cls).setUpClass()
 
-        @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-        @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-        @patch('corehq.elastic.ES_META', TEST_ES_META)
-        def create_form_and_sync_to_es(received_on):
-            with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
-                with process_pillow_changes('DefaultChangeFeedPillow'):
-                    metadata = TestFormMetadata(domain=cls.domain, app_id=cls.app_id,
-                                                xmlns=cls.xmlns, received_on=received_on)
-                    form = get_form_ready_to_save(metadata, is_db_test=True)
-                    form_processor = FormProcessorInterface(domain=cls.domain)
-                    form_processor.save_processed_models([form])
-            return form
-
-        from casexml.apps.case.tests.util import delete_all_xforms
-        delete_all_xforms()
         cls.now = datetime.datetime.utcnow()
         cls._60_days = datetime.timedelta(days=60)
         cls.domain = 'my_crazy_analytics_domain'
         cls.app_id = uuid.uuid4().hex
         cls.xmlns = 'my://crazy.xmlns/'
+
+        def create_form(received_on, app_id=cls.app_id, xmlns=cls.xmlns):
+            metadata = TestFormMetadata(domain=cls.domain, app_id=app_id,
+                                        xmlns=xmlns, received_on=received_on)
+            form = get_form_ready_to_save(metadata, is_db_test=True)
+            form_processor = FormProcessorInterface(domain=cls.domain)
+            form_processor.save_processed_models([form])
+            return form
+
+        def create_forms_and_sync_to_es():
+            forms = []
+            with process_pillow_changes('xform-pillow', {'skip_ucr': True}):
+                with process_pillow_changes('DefaultChangeFeedPillow'):
+                    for received_on in [cls.now, cls.now - cls._60_days]:
+                        forms.append(create_form(received_on))
+                    forms.append(create_form(cls.now, app_id=None, xmlns="system"))
+            return forms
+
+        from casexml.apps.case.tests.util import delete_all_xforms
+        delete_all_xforms()
         with trap_extra_setup(ConnectionError):
             cls.elasticsearch = get_es_new()
             initialize_index_and_mapping(cls.elasticsearch, XFORM_INDEX_INFO)
-            cls.forms = [create_form_and_sync_to_es(cls.now), create_form_and_sync_to_es(cls.now - cls._60_days)]
+            cls.forms = create_forms_and_sync_to_es()
 
-        cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
+        cls.elasticsearch.indices.refresh(XFORM_INDEX_INFO.alias)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
+        ensure_index_deleted(XFORM_INDEX_INFO.alias)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
         super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
-    def test_get_number_of_cases_in_domain(self):
+    def test_get_number_of_forms_in_domain(self):
         self.assertEqual(
             get_number_of_forms_in_domain(self.domain),
             len(self.forms)
         )
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_domain_has_submission_in_last_30_days(self):
         self.assertEqual(
             domain_has_submission_in_last_30_days(self.domain), True)
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_first_form_submission_received(self):
         self.assertEqual(
             get_first_form_submission_received(self.domain),
             self.now - self._60_days)
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_last_form_submission_received(self):
         self.assertEqual(
             get_last_form_submission_received(self.domain), self.now)
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_app_has_been_submitted_to_in_last_30_days(self):
         self.assertEqual(
             app_has_been_submitted_to_in_last_30_days(self.domain, self.app_id),
             True)
 
-    @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
-    @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
-    @patch('corehq.elastic.ES_META', TEST_ES_META)
     def test_get_all_xmlns_app_id_pairs_submitted_to_in_domain(self):
         self.assertEqual(
             get_all_xmlns_app_id_pairs_submitted_to_in_domain(self.domain),
-            {(self.xmlns, self.app_id)})
+            {(self.xmlns, self.app_id), ("system", MISSING_APP_ID)})

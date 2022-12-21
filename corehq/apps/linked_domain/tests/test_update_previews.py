@@ -3,10 +3,10 @@ from unittest import mock
 from corehq.apps.linked_domain.local_accessors import get_enabled_previews
 from corehq.apps.linked_domain.tests.test_linked_apps import BaseLinkedDomainTest
 from corehq.apps.linked_domain.updates import update_previews
-from toggle.shortcuts import set_toggle
 
 from corehq.feature_previews import FeaturePreview
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles.shortcuts import set_toggle
 
 TEST_PREVIEW = FeaturePreview(
     slug='test_preview',

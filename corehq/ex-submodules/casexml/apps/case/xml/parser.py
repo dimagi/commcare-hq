@@ -2,13 +2,15 @@
 This isn't really a parser, but it's the code that generates case-like
 objects from things from xforms.
 """
-import os
 import datetime
 
 from casexml.apps.case import const
-from casexml.apps.case.models import CommCareCaseAction
 from casexml.apps.case.xml import DEFAULT_VERSION, V1, V2, NS_REVERSE_LOOKUP_MAP
+from dimagi.utils.logging import notify_error
 from dimagi.utils.parsing import string_to_utc_datetime
+
+from corehq.util.global_request import get_request_domain
+from corehq.util.metrics import metrics_counter
 
 XMLNS_ATTR = "@xmlns"
 KNOWN_PROPERTIES = {
@@ -33,13 +35,17 @@ def get_version(case_block):
                 "We don't know how to handle this version." % xmlns
             )
         return NS_REVERSE_LOOKUP_MAP[xmlns]
+    domain = get_request_domain()
+    tags = {"domain": domain} if domain else {}
+    metrics_counter("commcare.deprecated.v1caseblock", tags=tags)
+    notify_error("encountered deprecated V1 case block")
     return DEFAULT_VERSION
 
 
 class CaseGenerationException(Exception):
     """
     When anything illegal/unexpected happens while working with case parsing
-    """ 
+    """
     pass
 
 
@@ -48,11 +54,15 @@ def case_update_from_block(case_block):
     return VERSION_FUNCTION_MAP[case_version](case_block)
 
 
+def case_id_from_block(case_block):
+    return CASE_ID_FUNCTION_MAP[get_version(case_block)](case_block)
+
+
 class CaseActionBase(object):
     action_type_slug = None
 
     def __init__(self, block, type=None, name=None, external_id=None,
-                 user_id=None, owner_id=None, opened_on=None, 
+                 user_id=None, owner_id=None, opened_on=None,
                  dynamic_properties=None, indices=None, attachments=None):
         self.raw_block = block
         self.type = type
@@ -64,7 +74,7 @@ class CaseActionBase(object):
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
         self.attachments = attachments or {}
-    
+
     def get_known_properties(self):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
@@ -76,11 +86,11 @@ class CaseActionBase(object):
     def _from_block_and_mapping(cls, block, mapping):
         def _normalize(val):
             if isinstance(val, list):
-                # if we get multiple updates, they look like a list. 
+                # if we get multiple updates, they look like a list.
                 # normalize these by taking the last item
                 return val[-1]
             return val
-        
+
         kwargs = {}
         dynamic_properties = {}
         # if not a dict, it's probably an empty close block
@@ -90,10 +100,10 @@ class CaseActionBase(object):
                     kwargs[mapping[k]] = v
                 else:
                     dynamic_properties[k] = _normalize(v)
-        
+
         return cls(block, dynamic_properties=dynamic_properties,
                    **kwargs)
-        
+
     @classmethod
     def from_v1(cls, block):
         mapping = {const.CASE_TAG_TYPE_ID: "type",
@@ -103,7 +113,7 @@ class CaseActionBase(object):
                    const.CASE_TAG_OWNER_ID: "owner_id",
                    const.CASE_TAG_DATE_OPENED: "opened_on"}
         return cls._from_block_and_mapping(block, mapping)
-                   
+
     @classmethod
     def from_v2(cls, block):
         # the only difference is the place where "type" is stored
@@ -128,7 +138,7 @@ class CaseNoopAction(CaseActionBase):
 
 class CaseCreateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_CREATE
-        
+
 
 class CaseUpdateAction(CaseActionBase):
     action_type_slug = const.CASE_ACTION_UPDATE
@@ -181,11 +191,6 @@ class CaseAttachment(object):
         `name` value could be considered as well, although having a non-empty
         `name` with empty `src` and `from` is an undefined state.
         https://github.com/dimagi/commcare-core/wiki/casexml20#case-action-elements
-
-        This property is named differently from
-        `casexml.apps.case.sharedmodels.CommCareCaseAttachment.is_present`
-        to disambiguate the interface of that class from this one since
-        they are not the same but are used in very similar contexts.
         """
         return not (self.attachment_src or self.attachment_from)
 
@@ -237,19 +242,19 @@ class CaseIndexAction(CaseActionBase):
     Action describing updates to the case indices
     """
     action_type_slug = const.CASE_ACTION_INDEX
-    
+
     def __init__(self, block, indices):
         super(CaseIndexAction, self).__init__(block, indices=indices)
 
     def get_known_properties(self):
         # override this since the index action only cares about a list of indices
         return {}
-    
+
     @classmethod
     def from_v1(cls, block):
         # indices are not supported in v1
         return cls(block, [])
-                   
+
     @classmethod
     def from_v2(cls, block):
         indices = []
@@ -262,20 +267,20 @@ class CaseIndexAction(CaseActionBase):
             indices.append(CaseIndex(id, data["@case_type"], data.get("#text", ""),
                                      data.get("@relationship", 'child')))
         return cls(block, indices)
-    
+
 
 class CaseUpdate(object):
     """
     A temporary model that parses the data from the form consistently.
     The actual Case objects use this to update themselves.
     """
-    
+
     def __init__(self, id, version, block, user_id="", modified_on_str=""):
         self.id = id
         self.version = version
         self.user_id = user_id
         self.modified_on_str = modified_on_str
-        
+
         # deal with the various blocks
         self.raw_block = block
         self.create_block = block.get(const.CASE_ACTION_CREATE, {})
@@ -287,7 +292,7 @@ class CaseUpdate(object):
 
         # referrals? really? really???
         self.referral_block = block.get(const.REFERRAL_TAG, {})
-        
+
         # actions
         self.actions = []
         if self.creates_case():
@@ -312,36 +317,24 @@ class CaseUpdate(object):
 
     def creates_case(self):
         # creates have to have actual data in them so this is fine
-        return bool(self.create_block)    
-    
+        return bool(self.create_block)
+
     def updates_case(self):
         # updates have to have actual data in them so this is fine
-        return bool(self.update_block)    
-    
+        return bool(self.update_block)
+
     def closes_case(self):
         # closes might not have data and so we store this separately
-        return self._closes_case    
-    
+        return self._closes_case
+
     def has_indices(self):
         return bool(self.index_block)
-    
+
     def has_referrals(self):
         return bool(self.referral_block)
 
     def has_attachments(self):
         return bool(self.attachment_block)
-
-    def get_case_actions(self, xformdoc):
-        """
-        Gets case actions from this object. These are the actual objects that get stored
-        in the CommCareCase model (as opposed to the parser's representation of those)
-        """
-        return [
-            CommCareCaseAction.from_parsed_action(
-                self.guess_modified_on(), self.user_id, xformdoc, action
-            )
-            for action in self.actions
-        ]
 
     def __str__(self):
         return "%s: %s" % (self.version, self.id)
@@ -352,16 +345,16 @@ class CaseUpdate(object):
         if filtered:
             assert(len(filtered) == 1)
             return filtered[0]
-            
+
     def get_create_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseCreateAction))
-        
+
     def get_update_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseUpdateAction))
-    
+
     def get_close_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseCloseAction))
-    
+
     def get_index_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseIndexAction))
 
@@ -371,51 +364,60 @@ class CaseUpdate(object):
     @classmethod
     def from_v1(cls, case_block):
         """
-        Gets a case update from a version 1 case. 
+        Gets a case update from a version 1 case.
         Spec: https://bitbucket.org/javarosa/javarosa/wiki/casexml
         """
-        if const.CASE_TAG_ID not in case_block:
+        case_id = cls.v1_case_id_from(case_block)
+        modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
+        return cls(id=case_id, version=V1, block=case_block, modified_on_str=modified_on)
+
+    @classmethod
+    def from_v2(cls, case_block):
+        """
+        Gets a case update from a version 2 case.
+        Spec: https://github.com/dimagi/commcare/wiki/casexml20
+        """
+        return cls(id=cls.v2_case_id_from(case_block),
+                   version=V2,
+                   block=case_block,
+                   user_id=case_block.get(_USER_ID_ATTR, ""),
+                   modified_on_str=case_block.get(_MODIFIED_ATTR, ""))
+
+    @classmethod
+    def v1_case_id_from(cls, case_block):
+        try:
+            return case_block[const.CASE_TAG_ID]
+        except KeyError:
             raise CaseGenerationException(
                 "No case_id element found in v1 case block, "
                 "this is a required property."
             )
-        
-        modified_on = case_block.get(const.CASE_TAG_MODIFIED, "")
-        return cls(id=case_block[const.CASE_TAG_ID],
-                   version=V1,
-                   block=case_block,
-                   modified_on_str=modified_on)
-    
+
     @classmethod
-    def from_v2(cls, case_block):
-        """
-        Gets a case update from a version 2 case. 
-        Spec: https://github.com/dimagi/commcare/wiki/casexml20
-        """
-        
-        def _to_attr(val):
-            return "@%s" % val
-    
-        case_id_attr = _to_attr(const.CASE_TAG_ID) 
-        if case_id_attr not in case_block:
+    def v2_case_id_from(cls, case_block):
+        try:
+            return case_block[_CASE_ID_ATTR]
+        except KeyError:
             raise CaseGenerationException(
                 "No case_id attribute found in v2 case block, "
                 "this is a required property."
             )
-        
-        user_id = case_block.get(_to_attr(const.CASE_TAG_USER_ID), "")
-        modified_on = case_block.get(_to_attr(const.CASE_TAG_MODIFIED), "")
-        return cls(id=case_block[case_id_attr],
-                   version=V2,
-                   block=case_block,
-                   user_id=user_id,
-                   modified_on_str=modified_on)
+
+
+_CASE_ID_ATTR = "@" + const.CASE_TAG_ID
+_USER_ID_ATTR = "@" + const.CASE_TAG_USER_ID
+_MODIFIED_ATTR = "@" + const.CASE_TAG_MODIFIED
 
 
 # this section is what maps various things to their v1/v2 parsers
 VERSION_FUNCTION_MAP = {
     V1: CaseUpdate.from_v1,
     V2: CaseUpdate.from_v2
+}
+
+CASE_ID_FUNCTION_MAP = {
+    V1: CaseUpdate.v1_case_id_from,
+    V2: CaseUpdate.v2_case_id_from
 }
 
 NOOP_ACTION_FUNCTION_MAP = {

@@ -5,13 +5,12 @@ from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
 
-from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.text import slugify
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -45,7 +44,7 @@ from corehq.apps.linked_domain.exceptions import (
 )
 from corehq.apps.linked_domain.models import AppLinkDetail
 from corehq.apps.linked_domain.util import pull_missing_multimedia_for_app
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.util.metrics import metrics_gauge, metrics_histogram_timer
 
@@ -123,7 +122,7 @@ def get_langs(request, app):
 
 
 def set_lang_cookie(response, lang):
-    response.set_cookie('lang', lang, secure=settings.SECURE_COOKIES)
+    response.set_cookie('lang', lang)
 
 
 def bail(request, domain, app_id, not_found=""):
@@ -357,7 +356,7 @@ def update_linked_app(app, master_app_id_or_build, user_id):
         report_map = get_static_report_mapping(master_build.domain, app['domain'])
         report_map.update({
             c.report_meta.master_id: c._id
-            for c in get_report_configs_for_domain(app.domain)
+            for c in get_report_and_registry_report_configs_for_domain(app.domain)
             if c.report_meta.master_id
         })
 
@@ -427,8 +426,7 @@ def get_new_multimedia_between_builds(domain, target_build_id, source_build_id, 
     return total_size
 
 
-def get_multimedia_sizes_for_build(domain, build_id, build_profile_id=None):
-    build = get_app_cached(domain, build_id)
+def get_multimedia_sizes_for_build(build, build_profile_id=None):
     assert build.copy_of, _("Size calculation available only for builds")
     build_profile = build.build_profiles.get(build_profile_id) if build_profile_id else None
     multimedia_map_for_build = build.multimedia_map_for_build(build_profile=build_profile)

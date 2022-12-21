@@ -1,20 +1,17 @@
 import datetime
 import math
-from collections import defaultdict, namedtuple
+from collections import namedtuple
+from urllib.parse import urlencode
 
-from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 import pytz
 from memoized import memoized
-from pygooglechart import ScatterChart
-from six.moves.urllib.parse import urlencode
 
 from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
 
@@ -74,13 +71,12 @@ from corehq.apps.reports.standard import (
 from corehq.apps.reports.util import format_datatables_data, friendly_timedelta
 from corehq.apps.users.models import CommCareUser
 from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.elastic import ES_DEFAULT_INSTANCE
 from corehq.util import flatten_list
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.timezones.conversions import PhoneTime, ServerTime
 from corehq.util.view_utils import absolute_reverse
 
-TOO_MUCH_DATA = ugettext_noop(
+TOO_MUCH_DATA = gettext_noop(
     'The filters you selected include too much data. Please change your filters and try again'
 )
 
@@ -173,13 +169,13 @@ class CompletionOrSubmissionTimeMixin(object):
 @location_safe
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
-    name = ugettext_lazy('Case Activity')
+    name = gettext_lazy('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
     display_data = ['percent']
     emailable = True
-    description = ugettext_lazy("Followup rates on active cases.")
+    description = gettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
@@ -285,7 +281,6 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
             return DataTablesColumn(title, sort_type=DTSortType.NUMERIC,
                                     help_text=help_text.format(num_days),
                                     sortable=False if title == "Proportion" else True)
-
 
         columns = [DataTablesColumn(_("Users"))]
 
@@ -656,7 +651,7 @@ class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
 class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
                               MultiFormDrilldownMixin, DatespanMixin,
                               CompletionOrSubmissionTimeMixin):
-    name = ugettext_noop("Submissions By Form")
+    name = gettext_noop("Submissions By Form")
     slug = "submissions_by_form"
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -667,7 +662,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
     fix_left_col = True
     emailable = True
     is_cacheable = True
-    description = ugettext_noop("Number of submissions by form.")
+    description = gettext_noop("Number of submissions by form.")
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -769,8 +764,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 @location_safe
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = ugettext_lazy("Daily Form Activity")
-    bad_request_error_text = ugettext_lazy(
+    name = gettext_lazy("Daily Form Activity")
+    bad_request_error_text = gettext_lazy(
         "Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
@@ -779,7 +774,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
-    description = ugettext_lazy("Number of submissions per day.")
+    description = gettext_lazy("Number of submissions per day.")
 
     fix_left_col = False
     emailable = True
@@ -989,14 +984,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 @location_safe
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
-    name = ugettext_lazy("Form Completion Time")
+    name = gettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    description = ugettext_lazy("Statistics on time spent on a particular form.")
+    description = gettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
 
     @property
@@ -1105,12 +1100,12 @@ class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixi
 @location_safe
 class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase,
                                              MultiFormDrilldownMixin, DatespanMixin):
-    name = ugettext_noop("Form Completion vs. Submission Trends")
+    name = gettext_noop("Form Completion vs. Submission Trends")
     slug = "completion_vs_submission"
     is_cacheable = True
 
-    description = ugettext_noop("Time lag between when forms were completed and when forms were successfully "
-                                "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
+    description = gettext_noop("Time lag between when forms were completed and when forms were successfully "
+                               "sent to {}.".format(commcare_hq_names()['commcare_hq_names']['COMMCARE_HQ_NAME']))
 
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
@@ -1187,9 +1182,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
                     total_seconds += td_total
                     total += 1
         else:
-            rows.append(['No Submissions Available for this Date Range'] + ['--']*5)
+            rows.append(['No Submissions Available for this Date Range'] + ['--'] * 5)
 
-        self.total_row = [_("Average"), "-", "-", "-", "-", self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"]
+        self.total_row = [
+            _("Average"), "-", "-", "-", "-",
+            self._format_td_status(int(total_seconds // total), False) if total > 0 else "--"
+        ]
         return rows
 
     def get_user_link(self, username, user):
@@ -1216,9 +1214,12 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
         if isinstance(td, datetime.timedelta):
             hours = td.seconds // 3600
             minutes = (td.seconds // 60) % 60
-            vals = [td.days, hours, minutes, (td.seconds - hours*3600 - minutes*60)]
+            vals = [td.days, hours, minutes, (td.seconds - hours * 3600 - minutes * 60)]
             names = [_("day"), _("hour"), _("minute"), _("second")]
-            status = ["%s %s%s" % (val, names[i], "s" if val != 1 else "") for (i, val) in enumerate(vals) if val > 0]
+            status = [
+                f"{val} {names[i]}{'s' if val != 1 else ''}"
+                for (i, val) in enumerate(vals) if val > 0
+            ]
 
             if td.days > 1:
                 klass = "label-danger"
@@ -1229,7 +1230,7 @@ class FormCompletionVsSubmissionTrendsReport(WorkerMonitoringFormReportTableBase
             if not status:
                 status.append("same")
             elif td.days < 0:
-                if abs(td).seconds > 15*60:
+                if abs(td).seconds > 15 * 60:
                     status = [_("submitted before completed [strange]")]
                     klass = "label-info"
                 else:
@@ -1250,127 +1251,6 @@ class WorkerMonitoringChartBase(ProjectReport, ProjectReportParametersMixin):
     report_template_path = "reports/async/basic.html"
 
 
-@location_safe
-class WorkerActivityTimes(WorkerMonitoringChartBase,
-    MultiFormDrilldownMixin, CompletionOrSubmissionTimeMixin, DatespanMixin):
-    name = ugettext_noop("Worker Activity Times")
-    slug = "worker_activity_times"
-    is_cacheable = True
-
-    description = ugettext_noop("Graphical representation of when forms are "
-                                "completed or submitted.")
-
-    fields = [
-        'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
-        'corehq.apps.reports.filters.forms.FormsByApplicationFilter',
-        'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
-        'corehq.apps.reports.filters.dates.DatespanFilter']
-
-    report_partial_path = "reports/partials/punchcard.html"
-
-    @property
-    @memoized
-    def activity_times(self):
-        users = _get_selected_users(self.domain, self.request)
-        user_ids = [user.user_id for user in users]
-        xmlnss = [form['xmlns'] for form in self.all_relevant_forms.values()]
-        app_ids = [form['app_id'] for form in self.all_relevant_forms.values()]
-
-        paged_result = get_forms(
-            self.domain,
-            self.datespan.startdate_utc,
-            self.datespan.enddate_utc,
-            user_ids=user_ids,
-            app_ids=app_ids,
-            xmlnss=xmlnss,
-            by_submission_time=self.by_submission_time,
-        )
-        if paged_result.total > 5000:
-            raise TooMuchDataError()
-
-        all_times = []
-
-        for form in paged_result.hits:
-            if self.by_submission_time:
-                all_times.append(
-                    ServerTime(string_to_utc_datetime(form['received_on'])).user_time(self.timezone).done()
-                )
-            else:
-                all_times.append(
-                    PhoneTime(
-                        string_to_utc_datetime(safe_index(form, ['form', 'meta', 'timeEnd'])),
-                        self.timezone,
-                    )
-                    .user_time(self.timezone)
-                    .done()
-                )
-
-        aggregated_times = defaultdict(int)
-        for t in all_times:
-            aggregated_times[(t.weekday(), t.hour)] += 1
-        return aggregated_times
-
-    @property
-    def report_context(self):
-        error = None
-        try:
-            activity_times = self.activity_times
-            if len(activity_times) == 0:
-                error = _("Note: No submissions matched your filters.")
-        except TooMuchDataError:
-            activity_times = defaultdict(int)
-            error = _(TOO_MUCH_DATA)
-
-        return dict(
-            chart_url=self.generate_chart(activity_times, timezone=self.timezone),
-            error=error,
-            timezone=self.timezone,
-        )
-
-    @classmethod
-    def generate_chart(cls, data, width=950, height=300, timezone="UTC"):
-        """
-            Gets a github style punchcard chart.
-            Hat tip: http://github.com/dustin/bindir/blob/master/gitaggregates.py
-        """
-        no_data = not data
-        # Apply the fix made in https://github.com/gak/pygooglechart/pull/25/
-        #   since a new version is not yet released
-        ScatterChart.BASE_URL = 'https://chart.googleapis.com/chart'
-        chart = ScatterChart(width, height, x_range=(-1, 24), y_range=(-1, 7))
-
-        chart.add_data([(h % 24) for h in range(24 * 8)])
-
-        d=[]
-        for i in range(8):
-            d.extend([i] * 24)
-        chart.add_data(d)
-
-        # mapping between numbers 0..6 and its day of the week label
-        day_names = [_("Mon"), _("Tue"), _("Wed"), _("Thu"), _("Fri"), _("Sat"), _("Sun")]
-        # the order, bottom-to-top, in which the days should appear
-        # i.e. Sun, Sat, Fri, Thu, etc
-        days = (6, 5, 4, 3, 2, 1, 0)
-
-        sizes=[]
-        for d in days:
-            sizes.extend([data[(d, h)] for h in range(24)])
-        sizes.extend([0] * 24)
-        if no_data:
-            # fill in a line out of view so that chart.get_url() doesn't crash
-            sizes.extend([1] * 24)
-        chart.add_data(sizes)
-
-        chart.set_axis_labels('x', [''] + [(str(h) + ':00') for h in range(24)] + [''])
-        chart.set_axis_labels('x', [' ', _('Time ({timezone})').format(timezone=timezone), ' '])
-        # our google charts library doesn't support unicode
-        # TODO: replace with some in JS (d3?)
-        chart.set_axis_labels('y', [''] + [day_names[n] for n in days] + [''])
-
-        chart.add_marker(1, 1.0, 'o', '333333', 25)
-        return chart.get_url() + '&chds=-1,24,-1,7,0,20'
-
-
 def _worker_activity_is_location_safe(view, request, *args, **kwargs):
     return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
 
@@ -1378,9 +1258,9 @@ def _worker_activity_is_location_safe(view, request, *args, **kwargs):
 @conditionally_location_safe(_worker_activity_is_location_safe)
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_lazy("Worker Activity")
-    description = ugettext_lazy("Summary of form and case activity by user or group.")
-    section_name = ugettext_lazy("Project Reports")
+    name = gettext_lazy("Worker Activity")
+    description = gettext_lazy("Summary of form and case activity by user or group.")
+    section_name = gettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
@@ -1388,11 +1268,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     emailable = True
     exportable_all = True
 
-    NO_FORMS_TEXT = ugettext_noop('None')
-
-    @property
-    def include_active_cases(self):
-        return not settings.CASE_ES_DROP_FORM_FIELDS
+    NO_FORMS_TEXT = gettext_noop('None')
 
     @property
     def fields(self):
@@ -1438,26 +1314,31 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             DataTablesColumn(_("# Forms Submitted"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of forms submitted in chosen date range. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Avg # Forms Submitted"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Average number of forms submitted in the three preceding date ranges of the same length. %s" % CASE_TYPE_MSG)),
+                help_text=_("Average number of forms submitted in the three "
+                            "preceding date ranges of the same length. %s" % CASE_TYPE_MSG)),
             DataTablesColumn(_("Last Form Submission"),
-                help_text=_("Date of last form submission in time period.  Total row displays proportion of users submitting forms in date range")) \
+                help_text=_("Date of last form submission in time period.  "
+                            "Total row displays proportion of users submitting forms in date range"))
             if not by_group else DataTablesColumn(_("# Active Users"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Proportion of users in group who submitted forms in date range."))
         ))
-        columns.append(DataTablesColumnGroup(_("Case Data"),
+        columns.append(DataTablesColumnGroup(
+            _("Case Data"),
             DataTablesColumn(_("# Cases Created"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases created in the date range.")),
             DataTablesColumn(_("# Cases Closed"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases closed in the date range.")),
-            ))
+        ))
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
+                help_text=_("Number of cases owned by the user that were opened, "
+                            "modified or closed in date range.  This includes case sharing cases.")),
             DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Total number of cases owned by the user.  This includes cases created by the user "
                             "and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
+                help_text=_("Percentage of cases owned by user that were "
+                            "active.  This includes case sharing cases.")),
         ))
         return DataTablesHeader(*columns)
 
@@ -1487,10 +1368,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         return user_dict
 
     def get_users_by_mobile_workers(self):
-        from corehq.apps.reports.util import _report_user_dict
         user_dict = {}
         for mw in self.mobile_worker_ids:
-            user_dict[mw] = _report_user_dict(CommCareUser.get_by_user_id(mw))
+            user_dict[mw] = util._report_user(CommCareUser.get_by_user_id(mw))
 
         return user_dict
 
@@ -1511,7 +1391,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             )
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
-            ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
+            ret = [util._report_user(u) for u in list(CommCareUser.by_domain(self.domain))]
             return ret
         else:
             all_users = flatten_list(list(self.users_by_group.values()))
@@ -1527,12 +1407,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         """
         Creates a dict of userid => date of last submission
         """
-        if self.exporting_as_excel:
-            es_instance_alias = 'export'
-        else:
-            es_instance_alias = ES_DEFAULT_INSTANCE
         return get_last_submission_time_for_users(self.domain, user_ids,
-                                                  self.datespan, es_instance_alias=es_instance_alias)
+                                                  self.datespan,
+                                                  for_export=self.exporting_as_excel)
 
     @staticmethod
     def _dates_for_linked_reports(datespan, case_list=False):
@@ -1667,15 +1544,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = _get_owner_ids_from_users(users)
 
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-            if self.include_active_cases:
-                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-                active_cases_cell = util.numcell(active_cases)
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-                )
-            else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            active_cases_cell = util.numcell(active_cases)
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
@@ -1729,22 +1604,20 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
-            if self.include_active_cases:
-                active_cases = sum([int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-                if today_or_tomorrow(self.datespan.enddate):
-                    active_cases_cell = util.numcell(
-                        self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
-                        active_cases,
-                    )
-                else:
-                    active_cases_cell = util.numcell(active_cases)
-
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            if today_or_tomorrow(self.datespan.enddate):
+                active_cases_cell = util.numcell(
+                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                    active_cases,
                 )
             else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+                active_cases_cell = util.numcell(active_cases)
+
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
@@ -1806,12 +1679,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(users_to_iterate)
         user_ids = user_ids
 
-        if self.include_active_cases:
-            active_cases_by_owner = get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
-            )
-        else:
-            active_cases_by_owner = {}
+        active_cases_by_owner = get_active_case_counts_by_owner(
+            self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+        )
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1848,7 +1718,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
-             for id in case_owners]) if self.include_active_cases else '---'
+             for id in case_owners])
 
         total_row[7] = sum(
             [int(report_data.total_cases_by_owner.get(id, 0))
@@ -1882,7 +1752,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         from corehq.elastic import iter_es_docs_from_query
         user_iterator = iter_es_docs_from_query(user_es_query)
         for user_chunk in chunked(user_iterator, chunk_size):
-            users = [util._report_user_dict(user) for user in user_chunk]
+            users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)
             if self.view_by_groups:
                 rows = self._rows_by_group(formatted_data)

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.util.es.elasticsearch import TransportError
 from memoized import memoized
@@ -29,7 +29,7 @@ from corehq.elastic import ESError
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.timezones.conversions import PhoneTime
 
-from .data_sources import CaseDisplay
+from .data_sources import CaseDisplayES
 
 
 class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin):
@@ -146,7 +146,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
-    name = ugettext_lazy('Case List')
+    name = gettext_lazy('Case List')
     slug = 'case_list'
 
     @classmethod
@@ -157,7 +157,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
             else:
                 return _('View Case')
 
-        from corehq.apps.reports.views import CaseDataView
+        from corehq.apps.reports.standard.cases.case_data import CaseDataView
         return [
             {
                 'title': _get_case_name,
@@ -228,7 +228,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     @property
     def rows(self):
         for row in self.es_results['hits'].get('hits', []):
-            display = CaseDisplay(self.get_case(row), self.timezone, self.individual)
+            display = CaseDisplayES(self.get_case(row), self.timezone, self.individual)
 
             yield [
                 display.case_type,

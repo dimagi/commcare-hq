@@ -2,7 +2,7 @@ import datetime
 
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import TermsAggregation
-from corehq.elastic import ES_EXPORT_INSTANCE
+from corehq.const import MISSING_APP_ID
 from corehq.util.quickcache import quickcache
 
 from corehq.util.couch import stale_ok
@@ -75,7 +75,7 @@ def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
     query = (FormES()
              .domain(domain)
              .aggregation(
-                 TermsAggregation("app_id", "app_id").aggregation(
+                 TermsAggregation("app_id", "app_id", missing=MISSING_APP_ID).aggregation(
                      TermsAggregation("xmlns", "xmlns.exact")))
              .remove_default_filter("has_xmlns")
              .remove_default_filter("has_user")
@@ -168,7 +168,7 @@ def get_exports_by_form(domain):
 
 
 def get_form_count_breakdown_for_domain(domain):
-    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    query = (FormES(for_export=True)
              .domain(domain)
              .aggregation(
                  TermsAggregation("app_id", "app_id").aggregation(

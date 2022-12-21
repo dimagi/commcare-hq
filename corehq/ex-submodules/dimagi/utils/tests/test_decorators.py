@@ -1,7 +1,8 @@
 import sys
 from io import StringIO
+from unittest.mock import patch
 
-from testil import Regex, eq, replattr
+from testil import Regex, eq
 
 from .. import profile
 
@@ -14,7 +15,7 @@ def test_profile_decorator():
     def func(arg):
         args.append(arg)
 
-    with replattr(sys.stderr, "write", output.write):
+    with patch.object(sys.stderr, "write", output.write):
         func(1)
     eq(args, [1])
     eq(output.getvalue(), Regex(r"test_decorators.py:\d+\(func\)"))

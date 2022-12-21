@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from memoized import memoized
 
@@ -17,9 +17,9 @@ class LocationGroupFilter(ExpandedMobileWorkerFilter):
     Displays a list of locations and groups to select from to filter report
     """
     slug = "grouplocationfilter"
-    label = ugettext_lazy("Groups or Locations")
+    label = gettext_lazy("Groups or Locations")
     default_options = None
-    placeholder = ugettext_lazy(
+    placeholder = gettext_lazy(
         "Click here to select groups or locations to filter in the report")
     is_cacheable = False
     options_url = 'grouplocationfilter_options'

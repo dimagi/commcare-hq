@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.dispatch import receiver
 
@@ -232,8 +231,8 @@ class AlertConfig(models.Model):
 
 
 class StockRestoreConfig(models.Model):
-    section_to_consumption_types = JSONField(default=dict, null=True)
-    force_consumption_case_types = JSONField(default=list, null=True)
+    section_to_consumption_types = models.JSONField(default=dict, null=True)
+    force_consumption_case_types = models.JSONField(default=list, null=True)
     use_dynamic_product_list = models.BooleanField(default=False)
 
     commtrack_config = models.OneToOneField(

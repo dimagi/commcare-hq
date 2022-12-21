@@ -168,6 +168,48 @@
               </div>
             </div>
 
+              <div class="form-group" data-bind="visible: canSeeAnyReports">
+              <label class="col-sm-4 control-label">
+                {% trans "Download and Email Reports" %}
+              </label>
+              <div class="col-sm-8 controls">
+                <div class="form-check">
+                  <input type="checkbox"
+                    id="download-and-email-reports-checkbox"
+                    data-bind="checked: permissions.download_reports, disable: !$root.allowEdit" />
+                  <label for="download-and-email-reports-checkbox">
+                    {% trans "Allow role to download and email report data." %}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {% if request|toggle_enabled:"EMBEDDED_TABLEAU" %}
+              <div class="form-group" data-bind="visible: !tableauPermissions.all()">
+                <label class="col-sm-4 control-label">
+                  {% trans "Access Specific Tableau Reports" %}
+                </label>
+                <div class="col-sm-8 controls">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      {% trans "Select which Tableau reports the role can access:" %}
+                    </div>
+                    <div class="panel-body"
+                         data-bind="foreach: tableauPermissions.specific, slideVisible: !tableauPermissions.all()">
+                      <div class="form-check">
+                        <input type="checkbox"
+                               data-bind="checked: value, attr: { 'id': 'tableau-' + slug() + '-checkbox' },
+                                          disable: !$root.allowEdit" />
+                        <label data-bind="attr: { 'for': 'tableau-' + slug() + '-checkbox' }">
+                          <span data-bind="text: name"></span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
             {% if request|toggle_enabled:"DATA_REGISTRY" %}
             <legend>
               {% trans "Data Registries" %}
@@ -349,8 +391,6 @@
               </div>
               </div>
             {% endif %}
-            {% if request|toggle_enabled:"RESTRICT_MOBILE_ACCESS" %}
-            {# BEGIN MOBILE permission #}
             <div class="form-group">
               <label class="col-sm-4 control-label">
                 {% trans "Mobile App Access" %}
@@ -367,8 +407,6 @@
                 </div>
               </div>
             </div>
-            {# END MOBILE permission #}
-            {% endif %}
             <div class="form-group">
               <label class="col-sm-4 control-label"
                      for="landing-page">
@@ -435,21 +473,6 @@
                       </label>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="col-sm-4 control-label">
-                {% trans "Download and Email Reports" %}
-              </label>
-              <div class="col-sm-8 controls">
-                <div class="form-check">
-                  <input type="checkbox"
-                         id="download-and-email-reports-checkbox"
-                         data-bind="checked: permissions.download_reports, disable: !$root.allowEdit" />
-                  <label for="download-and-email-reports-checkbox">
-                    {% trans "Allow role to download and email report data." %}
-                  </label>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
@@ -23,8 +23,8 @@ from ..models import CommCareUser, WebUser
 # already been called.  It's easier to patch something that the handler calls.
 
 
-
 @mock_out_couch()
+@patch('corehq.apps.sms.tasks.sync_user_phone_numbers', new=MagicMock())
 @patch('corehq.apps.users.models.CouchUser.sync_to_django_user', new=MagicMock())
 @patch('corehq.apps.users.models.CommCareUser.project', new=MagicMock())
 @es_test
@@ -109,6 +109,7 @@ class TestUserSyncToEs(SimpleTestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0], {
             '_id': user._id,
+            'domain': user.domain,
             'username': user.username,
             'is_active': True,
             'first_name': user.first_name,

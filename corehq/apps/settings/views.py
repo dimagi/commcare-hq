@@ -5,18 +5,21 @@ from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 
+import langcodes
 import qrcode
 from memoized import memoized
 from two_factor.models import PhoneDevice
-from two_factor.utils import default_device, backup_phones
+from two_factor.utils import backup_phones, default_device
 from two_factor.views import (
     BackupTokensView,
     DisableView,
@@ -27,23 +30,25 @@ from two_factor.views import (
     SetupView,
 )
 
-from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.sso.models import IdentityProvider
-from corehq.apps.sso.utils.request_helpers import is_request_using_sso
-from corehq.apps.hqwebapp.views import not_found
 from dimagi.utils.web import json_response
 
-import langcodes
+from corehq import toggles
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_required,
     require_superuser,
     two_factor_exempt,
 )
-from corehq import toggles
+from corehq.apps.domain.extension_points import has_custom_clean_password
+from corehq.apps.domain.forms import clean_password
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
-from corehq.apps.hqwebapp.utils import sign, update_session_language
-from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.views import (
+    BaseSectionPageView,
+    CRUDPaginatedViewMixin,
+    not_found,
+)
 from corehq.apps.settings.exceptions import DuplicateApiKeyName
 from corehq.apps.settings.forms import (
     HQApiKeyForm,
@@ -55,16 +60,19 @@ from corehq.apps.settings.forms import (
     HQTOTPDeviceForm,
     HQTwoFactorMethodForm,
 )
+from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.forms import AddPhoneNumberForm
+from corehq.apps.users.models import HQApiKey
 from corehq.apps.users.util import log_user_change
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import USER_CHANGE_VIA_WEB, USER_DATETIME_FORMAT
 from corehq.mobile_flags import (
     ADVANCED_SETTINGS_ACCESS,
     MULTIPLE_APPS_UNLIMITED,
 )
 from corehq.util.quickcache import quickcache
+from corehq.util.timezones.conversions import ServerTime
 
 
 @login_and_domain_required
@@ -84,8 +92,8 @@ def redirect_domain_settings(request, domain, old_url=""):
 
 @require_superuser
 def project_id_mapping(request, domain):
-    from corehq.apps.users.models import CommCareUser
     from corehq.apps.groups.models import Group
+    from corehq.apps.users.models import CommCareUser
 
     users = CommCareUser.by_domain(domain)
     groups = Group.by_domain(domain)
@@ -97,7 +105,7 @@ def project_id_mapping(request, domain):
 
 
 class BaseMyAccountView(BaseSectionPageView):
-    section_name = ugettext_lazy("My Account")
+    section_name = gettext_lazy("My Account")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -130,7 +138,7 @@ class DefaultMySettingsView(BaseMyAccountView):
 
 class MyAccountSettingsView(BaseMyAccountView):
     urlname = 'my_account_settings'
-    page_title = ugettext_lazy("My Information")
+    page_title = gettext_lazy("My Information")
     template_name = 'settings/edit_my_account.html'
 
     @two_factor_exempt
@@ -246,17 +254,18 @@ class MyAccountSettingsView(BaseMyAccountView):
         if self.form_type and self.form_type in self.form_actions:
             return self.form_actions[self.form_type]()
         if self.settings_form.is_valid():
-            old_lang = self.request.couch_user.language
             self.settings_form.update_user()
-            new_lang = self.request.couch_user.language
-            update_session_language(request, old_lang, new_lang)
+
+            res = redirect(reverse(MyAccountSettingsView.urlname))
+            res.set_cookie(settings.LANGUAGE_COOKIE_NAME, self.request.couch_user.language)
+            return res
 
         return self.get(request, *args, **kwargs)
 
 
 class MyProjectsList(BaseMyAccountView):
     urlname = 'my_projects'
-    page_title = ugettext_lazy("My Projects")
+    page_title = gettext_lazy("My Projects")
     template_name = 'settings/my_projects.html'
 
     @method_decorator(login_required)
@@ -271,9 +280,11 @@ class MyProjectsList(BaseMyAccountView):
         return {
             'domains': [{
                 'name': d,
-                'is_admin': self.request.couch_user.is_domain_admin(d)
+                'is_admin': self.request.couch_user.is_domain_admin(d),
+                'session_timeout': Domain.secure_timeout(d) or "",
             } for d in self.request.couch_user.get_domains()],
-            'web_user': self.request.couch_user.is_web_user
+            'web_user': self.request.couch_user.is_web_user,
+            'show_session_timeout': self.request.user.is_superuser
         }
 
     @property
@@ -304,7 +315,7 @@ class MyProjectsList(BaseMyAccountView):
 class ChangeMyPasswordView(BaseMyAccountView):
     urlname = 'change_my_password'
     template_name = 'settings/change_my_password.html'
-    page_title = ugettext_lazy("Change My Password")
+    page_title = gettext_lazy("Change My Password")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -337,8 +348,12 @@ class ChangeMyPasswordView(BaseMyAccountView):
     @method_decorator(sensitive_post_parameters())
     def post(self, request, *args, **kwargs):
         if self.password_change_form.is_valid():
-            self.password_change_form.save()
-            messages.success(request, _("Your password was successfully changed!"))
+            try:
+                clean_password(request.POST['new_password1'])
+                self.password_change_form.save()
+                messages.success(request, _("Your password was successfully changed!"))
+            except ValidationError as e:
+                messages.error(request, _(e.message))
         return self.get(request, *args, **kwargs)
 
 
@@ -352,7 +367,7 @@ def _user_can_use_phone(user):
 class TwoFactorProfileView(BaseMyAccountView, ProfileView):
     urlname = 'two_factor_settings'
     template_name = 'two_factor/profile/profile.html'
-    page_title = ugettext_lazy("Two Factor Authentication")
+    page_title = gettext_lazy("Two Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -383,7 +398,7 @@ class TwoFactorProfileView(BaseMyAccountView, ProfileView):
 class TwoFactorSetupView(BaseMyAccountView, SetupView):
     urlname = 'two_factor_setup'
     template_name = 'two_factor/core/setup.html'
-    page_title = ugettext_lazy("Two Factor Authentication Setup")
+    page_title = gettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
         ('welcome_setup', HQEmptyForm),
@@ -410,7 +425,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
 class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
     urlname = 'two_factor_setup_complete'
     template_name = 'two_factor/core/setup_complete.html'
-    page_title = ugettext_lazy("Two Factor Authentication Setup Complete")
+    page_title = gettext_lazy("Two Factor Authentication Setup Complete")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -427,7 +442,7 @@ class TwoFactorSetupCompleteView(BaseMyAccountView, SetupCompleteView):
 class TwoFactorBackupTokensView(BaseMyAccountView, BackupTokensView):
     urlname = 'two_factor_backup_tokens'
     template_name = 'two_factor/core/backup_tokens.html'
-    page_title = ugettext_lazy("Two Factor Authentication Backup Tokens")
+    page_title = gettext_lazy("Two Factor Authentication Backup Tokens")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -454,7 +469,7 @@ def _show_link_to_webapps(user):
 class TwoFactorDisableView(BaseMyAccountView, DisableView):
     urlname = 'two_factor_disable'
     template_name = 'two_factor/profile/disable.html'
-    page_title = ugettext_lazy("Remove Two-Factor Authentication")
+    page_title = gettext_lazy("Remove Two-Factor Authentication")
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -468,7 +483,7 @@ class TwoFactorDisableView(BaseMyAccountView, DisableView):
 class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     urlname = 'two_factor_phone_setup'
     template_name = 'two_factor/core/phone_register.html'
-    page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
+    page_title = gettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
         ('method', HQPhoneNumberMethodForm),
@@ -508,7 +523,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 
     def get_success_url(self):
-        messages.add_message(self.request, messages.SUCCESS, ugettext_lazy("Phone number removed."))
+        messages.add_message(self.request, messages.SUCCESS, gettext_lazy("Phone number removed."))
         return reverse(TwoFactorProfileView.urlname)
 
     @method_decorator(login_required)
@@ -535,7 +550,7 @@ class TwoFactorResetView(TwoFactorSetupView):
 
 
 class BaseProjectDataView(BaseDomainView):
-    section_name = ugettext_noop("Data")
+    section_name = gettext_noop("Data")
 
     @property
     def section_url(self):
@@ -555,12 +570,12 @@ def get_qrcode(data):
 
 class EnableMobilePrivilegesView(BaseMyAccountView):
     urlname = 'enable_mobile_privs'
-    page_title = ugettext_lazy("Enable Privileges on Mobile")
+    page_title = gettext_lazy("Enable Privileges on Mobile")
     template_name = 'settings/enable_superuser.html'
 
     def dispatch(self, request, *args, **kwargs):
         # raises a 404 if a user tries to access this page without the right authorizations
-        if self.is_user_authorized(request.couch_user):
+        if hasattr(request, 'couch_user') and self.is_user_authorized(request.couch_user):
             return super(BaseMyAccountView, self).dispatch(request, *args, **kwargs)
         return not_found(request)
 
@@ -602,14 +617,40 @@ class EnableMobilePrivilegesView(BaseMyAccountView):
 
 
 class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
-    page_title = ugettext_lazy("API Keys")
+    page_title = gettext_lazy("API Keys")
     urlname = "user_api_keys"
 
     template_name = "settings/user_api_keys.html"
 
     @property
+    def allowed_actions(self):
+        return [
+            'create',
+            'delete',
+            'paginate',
+            'activate',
+            'deactivate',
+        ]
+
+    @property
+    def activate_response(self):
+        return self._set_is_active_response(is_active=True)
+
+    @property
+    def deactivate_response(self):
+        return self._set_is_active_response(is_active=False)
+
+    def _set_is_active_response(self, is_active):
+        key_id = self.parameters.get('id')
+        api_key = self.base_query.get(pk=key_id)
+        api_key.is_active = is_active
+        api_key.deactivated_on = None if is_active else timezone.now()
+        api_key.save()
+        return {'success': True, 'itemData': self._to_json(api_key)}
+
+    @property
     def base_query(self):
-        return HQApiKey.objects.filter(user=self.request.user)
+        return HQApiKey.all_objects.filter(user=self.request.user)
 
     @property
     def total(self):
@@ -623,8 +664,15 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             _("Project"),
             _("IP Allowlist"),
             _("Created"),
-            _("Delete"),
+            _("Status"),
+            _("Actions"),
         ]
+
+    def _to_user_time(self, value):
+        return (ServerTime(value)
+                .user_time(self.request.couch_user.get_time_zone())
+                .done()
+                .strftime(USER_DATETIME_FORMAT)) if value else '-'
 
     @property
     def page_context(self):
@@ -632,22 +680,31 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for api_key in self.base_query.order_by('-created').all():
-            redacted_key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+        for api_key in self.base_query.order_by('-created').all()[self.skip:self.skip + self.limit]:
             yield {
-                "itemData": {
-                    "id": api_key.id,
-                    "name": api_key.name,
-                    "key": redacted_key,
-                    "domain": api_key.domain or _('All Projects'),
-                    "ip_allowlist": (
-                        ", ".join(api_key.ip_allowlist)
-                        if api_key.ip_allowlist else _("All IP Addresses")
-                    ),
-                    "created": api_key.created.strftime('%Y-%m-%d %H:%M:%S'),
-                },
+                "itemData": self._to_json(api_key),
                 "template": "base-user-api-key-template",
             }
+
+    def _to_json(self, api_key, redacted=True):
+        if redacted:
+            key = f"{api_key.key[0:4]}…{api_key.key[-4:]}"
+        else:
+            copy_msg = _("Copy this in a secure place. It will not be shown again.")
+            key = f"{api_key.key} ({copy_msg})",
+        return {
+            "id": api_key.id,
+            "name": api_key.name,
+            "key": key,
+            "domain": api_key.domain or _('All Projects'),
+            "ip_allowlist": (
+                ", ".join(api_key.ip_allowlist)
+                if api_key.ip_allowlist else _("All IP Addresses")
+            ),
+            "created": self._to_user_time(api_key.created),
+            "deactivated_on": self._to_user_time(api_key.deactivated_on),
+            "is_active": api_key.is_active,
+        }
 
     def post(self, *args, **kwargs):
         return self.paginate_crud_response
@@ -664,21 +721,13 @@ class ApiKeyView(BaseMyAccountView, CRUDPaginatedViewMixin):
             new_api_key = create_form.create_key(self.request.user)
         except DuplicateApiKeyName:
             return {'error': _(f"Api Key with name \"{create_form.cleaned_data['name']}\" already exists.")}
-        copy_key_message = _("Copy this in a secure place. It will not be shown again.")
         return {
-            'itemData': {
-                'id': new_api_key.id,
-                'name': new_api_key.name,
-                'key': f"{new_api_key.key} ({copy_key_message})",
-                "domain": new_api_key.domain or _('All Projects'),
-                'ip_allowlist': new_api_key.ip_allowlist,
-                'created': new_api_key.created.isoformat()
-            },
+            'itemData': self._to_json(new_api_key, redacted=False),
             'template': 'new-user-api-key-template',
         }
 
     def get_deleted_item_data(self, item_id):
-        deleted_key = HQApiKey.objects.get(id=item_id)
+        deleted_key = self.base_query.get(id=item_id)
         deleted_key.delete()
         return {
             'itemData': {

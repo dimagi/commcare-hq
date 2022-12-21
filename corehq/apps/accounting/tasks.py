@@ -9,13 +9,12 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
 import six.moves.urllib.request
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from couchdbkit import ResourceConflict
 from dateutil.relativedelta import relativedelta
 from six.moves.urllib.parse import urlencode
@@ -70,6 +69,7 @@ from corehq.apps.accounting.utils.subscription import (
     assign_explicit_unpaid_subscription,
 )
 from corehq.apps.app_manager.dbaccessors import get_all_apps
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
 from corehq.apps.users.models import CommCareUser, FakeUser
@@ -819,3 +819,8 @@ def calculate_users_in_all_domains(today=None):
                 "Something went wrong while creating DomainUserHistory for domain %s: %s" % (domain, e),
                 show_stack_trace=True,
             )
+    # kick off the auto-deactivation of mobile workers after we calculate the
+    # DomainUserHistory for projects. This ensures this feature is never abused
+    # to get around our billing system.
+    from corehq.apps.enterprise.tasks import auto_deactivate_mobile_workers
+    auto_deactivate_mobile_workers.delay()

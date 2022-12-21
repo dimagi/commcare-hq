@@ -1,5 +1,5 @@
 import uuid
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
@@ -42,6 +42,7 @@ class AppPillowTest(TestCase):
         ensure_index_deleted(APP_INDEX_INFO.index)
         super(AppPillowTest, self).tearDown()
 
+    @flaky_slow
     def test_app_pillow_kafka(self):
         consumer = get_test_kafka_consumer(topics.APP)
         # have to get the seq id before the change is processed

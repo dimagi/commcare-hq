@@ -57,6 +57,8 @@ class TestSsoBackend(TestCase):
             'zee@vaultwax.com',
             'exist@vaultwax.com',
             'aart@vaultwax.com',
+            'liam@vaultwax.com',
+            'nile@vaultwax.com'
         ]:
             web_user = WebUser.get_by_username(username)
             if web_user:
@@ -69,7 +71,13 @@ class TestSsoBackend(TestCase):
     def setUp(self):
         super().setUp()
         self.request = RequestFactory().get('/sso/test')
-        create_request_session(self.request)
+        create_request_session(self.request, use_saml_sso=True)
+
+    @staticmethod
+    def _get_oidc_request():
+        request = RequestFactory().get('/sso/oidc')
+        create_request_session(request, use_oidc_sso=True)
+        return request
 
     def test_backend_failure_without_username(self):
         """
@@ -442,6 +450,63 @@ class TestSsoBackend(TestCase):
             self.request.sso_new_user_messages['success'],
             [
                 f'You have been added to the "{invitation.domain}" project space.',
+            ]
+        )
+
+    def test_new_user_is_populated_with_oidc_full_name_data(self):
+        """
+        Ensure that if the request is an oidc request, the first name and last name are obtained from the stored
+        oidcUserData
+        """
+        request = self._get_oidc_request()
+        username = 'liam@vaultwax.com'
+        generator.store_full_name_in_oidc_user_data(
+            request,
+            'Liam',
+            'Bakker'
+        )
+        user = auth.authenticate(
+            request=request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Liam')
+        self.assertEqual(user.last_name, 'Bakker')
+        self.assertEqual(
+            request.sso_new_user_messages['success'],
+            [
+                f'User account for {username} created.',
+            ]
+        )
+
+    def test_new_user_is_populated_with_oidc_display_name_data(self):
+        """
+        Ensure that if the request is an oidc request, the first name and last name are obtained from the stored
+        display name oidcUserData
+        """
+        request = self._get_oidc_request()
+        username = 'nile@vaultwax.com'
+        generator.store_display_name_in_oidc_user_data(
+            request,
+            'Nile Jansen'
+        )
+        user = auth.authenticate(
+            request=request,
+            username=username,
+            idp_slug=self.idp.slug,
+            is_handshake_successful=True,
+        )
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.first_name, 'Nile')
+        self.assertEqual(user.last_name, 'Jansen')
+        self.assertEqual(
+            request.sso_new_user_messages['success'],
+            [
+                f'User account for {username} created.',
             ]
         )
 

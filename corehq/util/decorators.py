@@ -7,12 +7,12 @@ from functools import wraps
 from django.conf import settings
 
 import requests
-from celery.task import task
 
-from corehq.util.metrics import metrics_counter
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.celery import task
 from corehq.util.global_request import get_request
+from corehq.util.metrics import metrics_counter
 
 
 def handle_uncaught_exceptions(mail_admins=True):
@@ -116,7 +116,7 @@ def _get_unique_key(format_str, fn, *args, **kwargs):
 
 
 def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=3,
-                queue='background_queue', ignore_result=True):
+                queue='background_queue', ignore_result=True, serializer=None):
     """
     Define a task to be executed one at a time.  If another serial_task with
     the same unique_key is currently in process, this will retry after a delay.
@@ -139,12 +139,17 @@ def serial_task(unique_key, default_retry_delay=30, timeout=5 * 60, max_retries=
         greet.delay(joeshmoe)
         # Locking key used would be "greet-joeshmoe@test.commcarehq.org-Dimagi"
     """
+
+    task_kwargs = {}
+    if serializer:
+        task_kwargs['serializer'] = serializer
+
     def decorator(fn):
         # register task with celery.  Note that this still happens on import
         from dimagi.utils.couch import get_redis_lock, release_lock
 
-        @task(serializer='pickle', bind=True, queue=queue, ignore_result=ignore_result,
-              default_retry_delay=default_retry_delay, max_retries=max_retries)
+        @task(bind=True, queue=queue, ignore_result=ignore_result, default_retry_delay=default_retry_delay,
+              max_retries=max_retries, **task_kwargs)
         @wraps(fn)
         def _inner(self, *args, **kwargs):
             if settings.UNIT_TESTING:  # Don't depend on redis

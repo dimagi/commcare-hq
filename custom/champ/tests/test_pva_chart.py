@@ -1,5 +1,5 @@
 import json
-import mock
+from unittest import mock
 
 from corehq.util.test_utils import softer_assert
 from custom.champ.tests.utils import ChampTestCase

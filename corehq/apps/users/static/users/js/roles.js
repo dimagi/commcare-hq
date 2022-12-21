@@ -2,8 +2,9 @@ hqDefine('users/js/roles',[
     'jquery',
     'underscore',
     'knockout',
+    'hqwebapp/js/toggles',
     'hqwebapp/js/alert_user',
-], function ($, _, ko, alertUser) {
+], function ($, _, ko, toggles, alertUser) {
     let selectPermissionModel = function (id, permissionModel, text) {
         /*
         Function to build the view model for permissions that aren't simple booleans. The data is
@@ -95,6 +96,19 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
+                data.permissions.download_reports = true;  // the user must explicitly disable this when visible
+
+                data.tableauPermissions = {
+                    all: data.permissions.view_tableau,
+                    specific: ko.utils.arrayMap(root.tableauOptions, function (viz) {
+                        var slug = String(viz.id);     // ultimately jsonobject expects this to be a string
+                        return {
+                            slug: slug,
+                            name: viz.name,
+                            value: data.permissions.view_tableau_list.indexOf(slug) !== -1,
+                        };
+                    }),
+                };
 
                 data.manageRegistryPermission = {
                     all: data.permissions.manage_data_registry,
@@ -138,12 +152,17 @@ hqDefine('users/js/roles',[
                     });
                 };
                 self.reportPermissions.filteredSpecific = filterSpecific(self.reportPermissions);
+                self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.canSeeAnyReports = ko.computed(function () {
+                    return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
+                });
+
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
-                self.hasUsersAssigned = data.hasUsersAssigned;
+                self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
@@ -169,7 +188,7 @@ hqDefine('users/js/roles',[
                         showOption: true,
                         editPermission: self.permissions.edit_commcare_users,
                         viewPermission: self.permissions.view_commcare_users,
-                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings,deactivate or delete mobile workers."),
+                        text: gettext("<strong>Mobile Workers</strong> &mdash; create new accounts, manage account settings, deactivate or delete mobile workers."),
                         showEditCheckbox: true,
                         editCheckboxLabel: "edit-commcare-users-checkbox",
                         showViewCheckbox: true,
@@ -212,6 +231,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: gettext("Allow changing workers at a location."),
                         allowCheckboxId: "edit-users-locations-checkbox",
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
+                    },
+                    {
+                        showOption: toggles.toggleEnabled("DATA_DICTIONARY"),
+                        editPermission: self.permissions.edit_data_dict,
+                        viewPermission: self.permissions.view_data_dict,
+                        text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-data-dict-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-data-dict-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
+                        screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
                     },
                     {
                         showOption: true,
@@ -340,8 +375,41 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: null,
                         allowCheckboxId: null,
                         allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: root.ermPrivilege,
+                        editPermission: self.permissions.access_release_management,
+                        viewPermission: null,
+                        text: gettext("<strong>Enterprise Release Management</strong> &mdash; access the Linked Project Spaces feature"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-release-management-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-release-management-checkbox",
+                        screenReaderEditAndViewText: null,
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
+                    },
+                    {
+                        showOption: root.mrmPrivilege,
+                        editPermission: self.permissions.access_release_management,
+                        viewPermission: null,
+                        text: gettext("<strong>Multi-Environment Release Management</strong> &mdash; access the Linked Project Spaces feature"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-release-management-checkbox",
+                        showViewCheckbox: false,
+                        viewCheckboxLabel: "view-release-management-checkbox",
+                        screenReaderEditAndViewText: null,
+                        screenReaderViewOnlyText: null,
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
                     }];
 
+                var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
                 self.reports = [
                     {
                         visibilityRestraint: self.permissions.access_all_locations,
@@ -352,19 +420,40 @@ hqDefine('users/js/roles',[
                     },
                     {
                         visibilityRestraint: true,
-                        text: gettext("Access All Reports"),
+                        text: hasEmbeddedTableau ? gettext("Access All CommCare Reports") : gettext("Access All Reports"),
                         checkboxLabel: "access-all-reports-checkbox",
                         checkboxPermission: self.reportPermissions.all,
-                        checkboxText: gettext("Allow role to access all reports."),
+                        checkboxText: hasEmbeddedTableau
+                            ? gettext("Allow role to view all CommCare reports. Excludes embedded Tableau reports")
+                            : gettext("Allow role to access all reports."),
+                    },
+                ];
+                if (toggles.toggleEnabled('EMBEDDED_TABLEAU')) {
+                    self.reports.push({
+                        visibilityRestraint: true,
+                        text: gettext("Access All Tableau Reports"),
+                        checkboxLabel: "view-tableau-checkbox",
+                        checkboxPermission: self.tableauPermissions.all,
+                        checkboxText: gettext("Allow role to access all embedded Tableau reports."),
+                    });
+                }
+                if (toggles.toggleEnabled('UCR_UPDATED_NAMING')) {
+                    self.ucrs = [{
+                        visibilityRestraint: self.permissions.access_all_locations,
+                        text: gettext("Create and Edit Custom Web Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        checkboxPermission: self.permissions.edit_ucrs,
+                        checkboxText: gettext("Allow role to create and edit custom web reports."),
                     }];
-                self.ucrs = [{
-                    visibilityRestraint: self.permissions.access_all_locations,
-                    text: gettext("Create and Edit Configurable Reports"),
-                    checkboxLabel: "create-and-edit-configurable-reports-checkbox",
-                    checkboxPermission: self.permissions.edit_ucrs,
-                    checkboxText: gettext("Allow role to create and edit configurable reports."),
-                }];
-
+                } else {
+                    self.ucrs = [{
+                        visibilityRestraint: self.permissions.access_all_locations,
+                        text: gettext("Create and Edit Configurable Reports"),
+                        checkboxLabel: "create-and-edit-configurable-reports-checkbox",
+                        checkboxPermission: self.permissions.edit_ucrs,
+                        checkboxText: gettext("Allow role to create and edit configurable reports."),
+                    }];
+                }
                 self.registryPermissions = [
                     selectPermissionModel(
                         'manage_registries',
@@ -414,6 +503,13 @@ hqDefine('users/js/roles',[
 
                 data.permissions.view_reports = data.reportPermissions.all;
                 data.permissions.view_report_list = unwrapItemList(data.reportPermissions.specific, 'path');
+                data.permissions.view_tableau = data.tableauPermissions.all;
+                data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
+
+                // Set download_reports to true only if the user can see reports
+                data.permissions.download_reports = data.permissions.download_reports && (
+                    data.permissions.view_reports || data.permissions.view_report_list.length !== 0
+                );
 
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
@@ -432,19 +528,13 @@ hqDefine('users/js/roles',[
         self.ExportOwnershipEnabled = o.ExportOwnershipEnabled;
         self.allowEdit = o.allowEdit;
         self.reportOptions = o.reportOptions;
+        self.tableauOptions = o.tableauOptions;
         self.canRestrictAccessByLocation = o.canRestrictAccessByLocation;
         self.landingPageChoices = o.landingPageChoices;
         self.dataRegistryChoices = o.dataRegistryChoices;
         self.webAppsPrivilege = o.webAppsPrivilege;
-        self.getReportObject = function (path) {
-            var i;
-            for (i = 0; i < self.reportOptions.length; i++) {
-                if (self.reportOptions[i].path === path) {
-                    return self.reportOptions[i];
-                }
-            }
-            return path;
-        };
+        self.ermPrivilege = o.ermPrivilege;
+        self.mrmPrivilege = o.mrmPrivilege;
 
         self.userRoles = ko.observableArray(ko.utils.arrayMap(o.userRoles, function (userRole) {
             return UserRole.wrap(userRole);
@@ -486,7 +576,7 @@ hqDefine('users/js/roles',[
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
-            if (!role._id || !role.hasUsersAssigned) {
+            if (!role._id || !role.preventRoleDelete) {
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(

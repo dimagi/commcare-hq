@@ -2,7 +2,7 @@ import uuid
 
 from django.test import TestCase
 from corehq.util.es.elasticsearch import ConnectionError
-import mock
+from unittest import mock
 
 from corehq.apps.callcenter.tests.test_utils import CallCenterDomainMockTest
 from corehq.apps.case_search.models import CaseSearchConfig
@@ -18,10 +18,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.application import AppReindexerFactory
-from corehq.pillows.case import (
-    CouchCaseReindexerFactory,
-    SqlCaseReindexerFactory,
-)
+from corehq.pillows.case import SqlCaseReindexerFactory
 from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
@@ -32,8 +29,6 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
-from corehq.pillows.reportcase import ReportCaseReindexerFactory
-from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
 from corehq.pillows.xform import SqlFormReindexerFactory
@@ -148,13 +143,10 @@ class CheckpointCreationTest(CallCenterDomainMockTest):
 
 @generate_cases([
     (AppReindexerFactory, 'ApplicationToElasticsearchPillow'),
-    (CouchCaseReindexerFactory, 'CaseToElasticsearchPillow'),
     (DomainReindexerFactory, 'KafkaDomainPillow'),
     (UserReindexerFactory, 'UserPillow'),
     (GroupReindexerFactory, 'GroupPillow'),
     (SmsReindexerFactory, 'SqlSMSPillow'),
-    (ReportCaseReindexerFactory, 'ReportCaseToElasticsearchPillow'),
-    (ReportFormReindexerFactory, 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     # checks that checkpoipnts are set to the latest checkpoints after reindexing
@@ -185,12 +177,10 @@ def test_checkpoint_creation(self, reindexer_factory, pillow_name):
     (SqlCaseReindexerFactory, 'case-pillow'),
     (SqlFormReindexerFactory, 'xform-pillow'),
     (GroupToUserReindexerFactory, 'UserPillow'),
-    (CouchCaseReindexerFactory, 'case-pillow'),
-    (ReportCaseReindexerFactory, 'case-pillow'),
-    (ReportFormReindexerFactory, 'xform-pillow'),
     (UserReindexerFactory, 'user-pillow'),
     (GroupReindexerFactory, 'group-pillow'),
 ], CheckpointCreationTest)
+@es_test
 def test_no_checkpoint_creation(self, reindexer_factory, pillow_name):
     # these pillows should not touch checkpoints since they are run with other
     # reindexers

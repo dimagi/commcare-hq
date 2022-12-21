@@ -5,7 +5,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from couchdbkit import MultipleResultsFound
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.sms.handlers.form_session import (
     get_single_open_session_or_close_multiple,

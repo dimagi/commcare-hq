@@ -136,7 +136,7 @@
         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
             <span class="responsive-label">{% trans "Project" %}:</span>
             {% if domain %}
-                {% ifequal domain 'public' %}
+                {% if domain == 'public' %}
                     {% trans 'CommCare HQ Demo Project' %}
                 {% else %}
                     {% if request.project.is_snapshot %}
@@ -146,7 +146,7 @@
                     {% else %}
                         {{ request.project.display_name }}
                     {% endif %}
-                {% endifequal %}
+                {% endif %}
             {% else %}
                 {%  trans 'Select Project...' %}
             {% endif %}

@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.test import SimpleTestCase
 
 from lxml import etree
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.hqadmin.views.users import AdminRestoreView, DisableUserView
@@ -17,7 +17,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
 
     def test_bad_restore(self):
         user = Mock()
-        user.domain = None
+        domain = None
         app_id = None
         request = Mock()
         request.GET = {}
@@ -27,7 +27,7 @@ class AdminRestoreViewTests(TestXmlMixin, SimpleTestCase):
         with patch('corehq.apps.hqadmin.views.users.get_restore_response',
                    return_value=(HttpResponse('bad response', status=500), timing_context)):
 
-            view = AdminRestoreView(user=user, app_id=app_id, request=request)
+            view = AdminRestoreView(user=user, app_id=app_id, request=request, domain=domain)
             context = view.get_context_data(foo='bar', view='AdminRestoreView')
             self.assertEqual(context, {
                 'foo': 'bar',

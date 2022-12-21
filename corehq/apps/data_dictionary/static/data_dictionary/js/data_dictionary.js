@@ -5,14 +5,21 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "hqwebapp/js/initial_page_data",
     "hqwebapp/js/main",
     "analytix/js/google",
+    "hqwebapp/js/ui_elements/ui-element-key-val-list",
+    "DOMPurify/dist/purify.min",
+    "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
+    "data_interfaces/js/make_read_only",
 ], function (
     $,
     ko,
     _,
     initialPageData,
     hqMain,
-    googleAnalytics
+    googleAnalytics,
+    uiElementKeyValueList,
+    DOMPurify,
+    toggles
 ) {
     var caseType = function (name, fhirResourceType) {
         var self = {};
@@ -27,13 +34,14 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
-                        prop.description, prop.fhir_resource_prop_path, prop.deprecated,
+                        prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
                         prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
                     propObj.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                    propObj.allowedValues.on('change', changeSaveButton);
                     self.properties.push(propObj);
                 });
             });
@@ -42,7 +50,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description,
+    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, allowedValues,
         fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
@@ -56,6 +64,24 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
         self.removeFHIRResourcePropertyPath = ko.observable(removeFHIRResourcePropertyPath || false);
+        let subTitle;
+        if (toggles.toggleEnabled("CASE_IMPORT_DATA_DICTIONARY_VALIDATION")) {
+            subTitle = gettext("When importing data, CommCare will not save a row if its cells don't match these valid values.");
+        } else {
+            subTitle = gettext("Help colleagues upload correct data into case properties by listing the valid values here.");
+        }
+        self.allowedValues = uiElementKeyValueList.new(
+            String(Math.random()).slice(2), /* guid */
+            interpolate('Edit valid values for "%s"', [name]), /* modalTitle */
+            subTitle, /* subTitle */
+            {"key": gettext("valid value"), "value": gettext("description")}, /* placeholders */
+            10 /* maxDisplay */
+        );
+        self.allowedValues.val(allowedValues);
+        if (initialPageData.get('read_only_mode')) {
+            self.allowedValues.setEdit(false);
+        }
+        self.$allowedValues = self.allowedValues.ui;
 
         self.toggle = function () {
             self.expanded(!self.expanded());
@@ -79,6 +105,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
             self.removeFHIRResourcePropertyPath(false);
         };
 
+        self.canHaveAllowedValues = ko.computed(function () {
+            return self.dataType() === 'select';
+        });
+
         return self;
     };
 
@@ -101,6 +131,11 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var currentGroup = '';
                 _.each(self.casePropertyList(), function (element) {
                     if (!element.isGroup) {
+                        const allowedValues = element.allowedValues.val();
+                        let pureAllowedValues = {};
+                        for (const key in allowedValues) {
+                            pureAllowedValues[DOMPurify.sanitize(key)] = DOMPurify.sanitize(allowedValues[key]);
+                        }
                         var data = {
                             'caseType': element.caseType,
                             'name': element.name,
@@ -111,6 +146,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
                             'removeFHIRResourcePropertyPath': element.removeFHIRResourcePropertyPath(),
+                            'allowed_values': pureAllowedValues,
                         };
                         postProperties.push(data);
                     } else {
@@ -192,12 +228,13 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);
+                prop.allowedValues.on('change', changeSaveButton);
                 self.newPropertyName(undefined);
                 self.casePropertyList.push(prop);
             }

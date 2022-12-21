@@ -1,15 +1,23 @@
-from . import (
+from . import (  # noqa: F401
+    # "utility" modules
+    aggregations,
+    client,
+    const,
+    es_query,
+    exceptions,
+    filters,
+    queries,
+    utils,
+    # "model" modules
     apps,
     case_search,
     cases,
     domains,
-    filters,
     forms,
     groups,
-    queries,
     users,
 )
-from .es_query import ESQuery, HQESQuery
+from .es_query import ESQuery, HQESQuery  # noqa: F401
 
 AppES = apps.AppES
 CaseES = cases.CaseES

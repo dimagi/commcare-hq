@@ -1,11 +1,12 @@
 -r requirements.in
 
-pip>=10.0.0
+pip
 
-flower==0.9.2
-setproctitle==1.2.2
-uWSGI==2.0.19.1
-ipython==7.16.1
+# Switch back to normal package as soon as flower release a version > 1.2.0
+flower @ git+https://github.com/mher/flower@a4fc7c97d897a3172d1058d5269115eb88d811de
+setproctitle
+uWSGI
+ipython  # for nicer django shell experience
 ndg-httpsclient
 pyasn1
 

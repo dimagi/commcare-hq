@@ -3,7 +3,8 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
     $(function () {
         var caseConfigUtils = hqImport('app_manager/js/case_config_utils'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            privileges = initial_page_data('add_ons_privileges');
+            privileges = initial_page_data('add_ons_privileges'),
+            toggles = hqImport("hqwebapp/js/toggles");
         var action_names = ["open_case", "update_case", "close_case", "case_preload",
             // Usercase actions are managed in the User Properties tab.
             "usercase_update", "usercase_preload",
@@ -135,9 +136,6 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return caseConfigUtils.getQuestions(self.questions(), filter, excludeHidden, includeRepeat, excludeTrigger);
             };
 
-            self.refreshQuestions = function (url, formUniqueId, event) {
-                return caseConfigUtils.refreshQuestions(self.questions, url, formUniqueId, event);
-            };
             self.getAnswers = function (condition) {
                 return caseConfigUtils.getAnswers(self.questions(), condition);
             };
@@ -199,6 +197,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                         self.forceRefreshTextchangeBinding($usercaseMgmt);
                     }
 
+                    caseConfigUtils.initRefreshQuestions(self.questions);
                 });
 
             };
@@ -307,6 +306,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
             self.hasPrivilege = hasPrivilege;
             self.caseConfig = caseConfig;
+            self.saveOnlyEditedFormFieldsEnabled = toggles.toggleEnabled("SAVE_ONLY_EDITED_FORM_FIELDS");
 
             // link self.case_name to corresponding path observable in case_properties for convenience
             try {
@@ -366,6 +366,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     path: '',
                     key: '',
                     required: false,
+                    save_only_if_edited: false,
                 }, self);
 
                 self.case_properties.push(property);
@@ -381,6 +382,20 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 if (!self.visible_case_properties().length) {
                     self.pagination_reset_flag(!self.pagination_reset_flag());
                 }
+                saveButton.fire('change');
+            };
+
+            self.switchSaveOnlyIfEdited = function (property, event) {
+                if (!self.hasPrivilege) return;
+                var checked = event.target.checked;
+                if (checked) {
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Checked "Save only if edited"');
+                } else {
+                    hqImport('analytix/js/google').track.event('Case Management', analyticsAction, 'Unchecked "Save only if edited"');
+                }
+                var updatedCaseProp = caseProperty.wrap(_.extend(ko.mapping.toJS(property), {save_only_if_edited: checked}), self);
+                self.case_properties.replace(property, updatedCaseProp);
+                self.visible_case_properties.replace(property, updatedCaseProp);
                 saveButton.fire('change');
             };
 
@@ -478,7 +493,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
 
         var casePropertyBase = {
             mapping: {
-                include: ['key', 'path', 'required'],
+                include: ['key', 'path', 'required', 'save_only_if_edited'],
             },
             wrap: function (data, case_transaction) {
                 var self = ko.mapping.fromJS(data, caseProperty.mapping);
@@ -486,10 +501,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 self.caseType = ko.computed(function () {
                     return self.case_transaction.case_type();
                 });
-                self.updatedDescription = ko.observable('');
+                self.updatedDescription = ko.observable();
                 self.description = ko.computed({
                     read: function () {
-                        if (self.updatedDescription()) {
+                        if (self.updatedDescription() !== undefined) {
                             return self.updatedDescription();
                         }
                         var config = self.case_transaction.caseConfig;
@@ -555,6 +570,12 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             operator: null,
         };
 
+        // Default UpdateCaseAction json
+        var DEFAULT_UPDATE_ALWAYS = {
+            question_path: '',
+            update_mode: 'always',
+        };
+
         var cleanCondition = function (condition) {
             if (condition.type !== 'if') {
                 condition.question = null;
@@ -569,7 +590,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 var self = {};
                 self.open_case = {
                     condition: (o.open_case || {}).condition || DEFAULT_CONDITION_ALWAYS,
-                    name_path: (o.open_case || {}).name_path || '',
+                    name_update: (o.open_case || {}).name_update || DEFAULT_UPDATE_ALWAYS,
                 };
                 self.update_case = {
                     update: (o.update_case || {}).update || {},
@@ -590,23 +611,22 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             },
             to_case_transaction: function (o, caseConfig) {
                 var self = HQFormActions.normalize(o);
-                var required_properties = caseConfig.requires() === 'none' &&
+                var required_properties = (caseConfig.requires() === 'none' &&
                     caseConfig.actions.open_case.condition.type !== "never" &&
-                    !o.update_case.update.name ? [{
+                    !o.update_case.update.name) ? [{
                         key: 'name',
-                        path: self.open_case.name_path,
+                        path: self.open_case.name_update.question_path,
                         required: true,
+                        save_only_if_edited: self.open_case.name_update.update_mode === 'edit',
                     }] : [];
                 var case_properties = caseConfigUtils.propertyDictToArray(
                     required_properties,
                     self.update_case.update,
                     caseConfig
                 );
-                var case_preload = caseConfigUtils.propertyDictToArray(
-                    [],
+                var case_preload = caseConfigUtils.preloadDictToArray(
                     self.case_preload.preload,
-                    caseConfig,
-                    true
+                    caseConfig
                 );
                 var x = caseTransaction({
                     case_type: null, // will get overridden by the default
@@ -639,7 +659,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
                 var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].name;
+                    open_name_update = x[1].name;
                 var case_preload = caseConfigUtils.preloadArrayToDict(o.case_preload);
                 var open_condition = o.condition;
                 var close_condition = o.close_condition;
@@ -660,7 +680,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 return {
                     open_case: {
                         condition: cleanCondition(open_condition),
-                        name_path: case_name,
+                        name_update: open_name_update,
                     },
                     update_case: {
                         update: case_properties,
@@ -682,11 +702,9 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                     self.usercase_update.update,
                     caseConfig
                 );
-                var case_preload = caseConfigUtils.propertyDictToArray(
-                    [],
+                var case_preload = caseConfigUtils.preloadDictToArray(
                     self.usercase_preload.preload,
-                    caseConfig,
-                    true
+                    caseConfig
                 );
                 return usercaseTransaction({
                     case_properties: case_properties,
@@ -729,7 +747,7 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             normalize: function (o) {
                 var self = {};
                 self.case_type = o.case_type || null;
-                self.case_name = o.case_name || null;
+                self.name_update = o.name_update || {};
                 self.reference_id = o.reference_id || null;
                 self.case_properties = o.case_properties || {};
                 self.condition = o.condition || DEFAULT_CONDITION_ALWAYS;
@@ -741,9 +759,11 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
             to_case_transaction: function (o, caseConfig) {
                 var self = HQOpenSubCaseAction.normalize(o);
                 var case_properties = caseConfigUtils.propertyDictToArray([{
-                    path: self.case_name,
+                    path: self.name_update.question_path,
                     key: 'name',
                     required: true,
+                    save_only_if_edited: o.name_update ?
+                        o.name_update.update_mode === 'edit' : false,
                 }], self.case_properties, caseConfig);
 
                 return caseTransaction({
@@ -783,10 +803,10 @@ hqDefine('app_manager/js/forms/case_config_ui', function () {
                 var o = ko.mapping.toJS(case_transaction, caseTransactionMapping(case_transaction));
                 var x = caseConfigUtils.propertyArrayToDict(['name'], o.case_properties);
                 var case_properties = x[0],
-                    case_name = x[1].name;
+                    open_subcase_update_name = x[1].name;
 
                 return {
-                    case_name: case_name,
+                    name_update: open_subcase_update_name,
                     case_type: o.case_type,
                     case_properties: case_properties,
                     reference_id: o.reference_id,

@@ -5,7 +5,7 @@ from io import BytesIO
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -347,6 +347,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("case_list_menu_item_label", "list", "List Stethoscopes", "French List of Stethoscopes"),
             ("search_label", "list", "Find a Mother", "Mère!"),
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
+            ("title_label", "list", "Find a Mom", "Maman!"),
+            ("description", "list", "More information", "Plus d'information"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -399,6 +401,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
            "List Stethoscopes", "French List of Stethoscopes", "", "", ""),
           ("menu1", "search_label", "list", "", "Find a Mother", "", "", "", ""),
           ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
+          ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
+          ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -777,12 +781,17 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
         # default values
         self.assertEqual(module.search_config.search_label.label, {'en': 'Search All Cases'})
         self.assertEqual(module.search_config.search_again_label.label, {'en': 'Search Again'})
+        self.assertEqual(module.search_config.title_label, {})
+        self.assertEqual(module.search_config.description, {})
 
         self.upload_raw_excel_translations(self.multi_sheet_upload_headers, self.multi_sheet_upload_data)
 
         self.assertEqual(module.search_config.search_label.label, {'en': 'Find a Mother', 'fra': 'Mère!'})
         self.assertEqual(module.search_config.search_again_label.label,
                          {'en': 'Find Another Mother', 'fra': 'Mère! Encore!'})
+        self.assertEqual(module.search_config.title_label, {'en': 'Find a Mom', 'fra': 'Maman!'})
+        self.assertEqual(module.search_config.description,
+                         {'en': 'More information', 'fra': "Plus d'information"})
 
 
 class BulkAppTranslationPartialsTest(BulkAppTranslationTestBase):
@@ -1071,7 +1080,9 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
         app = AppFactory.case_claim_app_factory().app
         self.assertEqual(get_module_search_command_rows(app.langs, app.modules[0], app.domain),
                          [('search_label', 'list', 'Find a Mother'),
-                          ('search_again_label', 'list', 'Find Another Mother')])
+                          ('search_again_label', 'list', 'Find Another Mother'),
+                          ('title_label', 'list', 'Find a Mom'),
+                          ('description', 'list', 'More information')])
 
     @flag_enabled('SYNC_SEARCH_CASE_CLAIM')
     def test_module_case_search_rows(self):

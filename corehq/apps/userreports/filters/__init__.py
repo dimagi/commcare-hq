@@ -12,7 +12,7 @@ class Filter(object):
     Base filter class
     """
 
-    def __call__(self, item, context=None):
+    def __call__(self, item, evaluation_context=None):
         return True
 
     def __str__(self):
@@ -24,8 +24,8 @@ class NOTFilter(Filter):
     def __init__(self, filter):
         self._filter = filter
 
-    def __call__(self, item, context=None):
-        return not self._filter(item, context)
+    def __call__(self, item, evaluation_context=None):
+        return not self._filter(item, evaluation_context)
 
     def __str__(self):
         return "not({})".format(str(self._filter))
@@ -40,8 +40,8 @@ class ANDFilter(Filter):
         self.filters = filters
         assert len(self.filters) > 0
 
-    def __call__(self, item, context=None):
-        return all(_filter(item, context) for _filter in self.filters)
+    def __call__(self, item, evaluation_context=None):
+        return all(_filter(item, evaluation_context) for _filter in self.filters)
 
     def __str__(self):
         return "and(\n{}\n)".format(
@@ -57,8 +57,8 @@ class ORFilter(Filter):
         self.filters = filters
         assert len(self.filters) > 0
 
-    def __call__(self, item, context=None):
-        return any(_filter(item, context) for _filter in self.filters)
+    def __call__(self, item, evaluation_context=None):
+        return any(_filter(item, evaluation_context) for _filter in self.filters)
 
     def __str__(self):
         return "or(\n{}\n)".format(
@@ -69,14 +69,14 @@ class CustomFilter(Filter):
     """
     This filter allows you to pass in a function reference to use as the filter
 
-    e.g. CustomFilter(lambda f, context: f['gender'] in ['male', 'female'])
+    e.g. CustomFilter(lambda f, evaluation_context: f['gender'] in ['male', 'female'])
     """
 
     def __init__(self, filter):
         self._filter = filter
 
-    def __call__(self, item, context=None):
-        return self._filter(item, context)
+    def __call__(self, item, evaluation_context=None):
+        return self._filter(item, evaluation_context)
 
     def __str__(self):
         return str(self._filter)
@@ -89,8 +89,9 @@ class SinglePropertyValueFilter(Filter):
         self.operator = operator
         self.reference_expression = reference_expression
 
-    def __call__(self, item, context=None):
-        return self.operator(self.expression(item, context), self.reference_expression(item, context))
+    def __call__(self, item, evaluation_context=None):
+        return self.operator(
+            self.expression(item, evaluation_context), self.reference_expression(item, evaluation_context))
 
     def __str__(self):
         return "{} {} '{}'".format(str(self.expression),
@@ -103,8 +104,8 @@ class NamedFilter(Filter):
         self.filter_name = filter_name
         self.filter = filter
 
-    def __call__(self, item, context=None):
-        return self.filter(item, context)
+    def __call__(self, item, evaluation_context=None):
+        return self.filter(item, evaluation_context)
 
     def __str__(self):
         return "{}:{}".format(NAMED_FILTER_PREFIX, self.filter_name)

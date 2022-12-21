@@ -1,11 +1,4 @@
 from corehq.apps.reports.util import get_INFilter_element_bindparam
-import fluff
-
-
-def flat_field(fn):
-    def getter(item):
-        return str(fn(item) or "")
-    return fluff.FlatField(getter)
 
 
 def clean_IN_filter_value(filter_values, filter_value_name):

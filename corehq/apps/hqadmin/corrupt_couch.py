@@ -12,7 +12,6 @@ from dateutil.parser import parse as parse_date
 from django.conf import settings
 from memoized import memoized
 
-from custom.m4change.models import FixtureReportResult
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import BulkFetchException
 from dimagi.utils.couch.database import retry_on_couch_error
@@ -20,14 +19,13 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.auditcare.models import AuditEvent
-from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.motech.repeaters.models import Repeater
+from corehq.toggles.models import Toggle
 from corehq.util.couch_helpers import NoSkipArgsProvider
 from corehq.util.pagination import ResumableFunctionIterator
-from toggle.models import Toggle
 
 log = logging.getLogger(__name__)
 COUCH_NODE_PORT = 15984
@@ -55,19 +53,6 @@ DOC_TYPES_BY_NAME = {
     "apps": {
         "type": Application,
         "use_domain": True,
-    },
-    "auditcare": {
-        "type": AuditEvent,
-        "use_domain": True,
-        "view": "auditcare/all_events",
-    },
-    "fixtures": {
-        "type": FixtureDataType,
-        "use_domain": True
-    },
-    "m4change": {
-        "type": FixtureReportResult,
-        "view": "m4change/fixture_by_composite_key",
     },
     "receiver_wrapper_repeaters": {
         "type": Repeater,

@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.test import TestCase
 
 from dateutil import relativedelta
-from mock import Mock
+from unittest.mock import Mock
 
 from dimagi.utils.dates import add_months_to_date
 

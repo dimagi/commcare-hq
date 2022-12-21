@@ -1,7 +1,7 @@
 import re
 
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.app_manager.const import (
     SCHEDULE_DATE_CASE_OPENED,
@@ -23,7 +23,7 @@ from corehq.apps.app_manager.exceptions import (
 # but it should not miss any strings that do need interpolation.
 DOT_INTERPOLATE_PATTERN = r'(\D|^)\.(\D|$)'
 
-CASE_REFERENCE_VALIDATION_ERROR = ugettext_lazy(
+CASE_REFERENCE_VALIDATION_ERROR = gettext_lazy(
     "Your form uses an expression which references a case, but cases are not available. Please go to form "
     "settings and either remove the case reference or (1) make sure that the menu mode is set to display the "
     "menu first and then form, and (2) make sure that all forms in this case list update or close a case "
@@ -183,7 +183,7 @@ class XPath(str):
 
     @staticmethod
     def not_(a):
-        return XPath.expr("not {}", [a])
+        return XPath.expr("not({})", [a])
 
     @staticmethod
     def date(a):
@@ -202,9 +202,16 @@ class CaseSelectionXPath(XPath):
     selector = ''
 
     def case(self, instance_name='casedb', case_name='case'):
-        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}={self}]".format(
-            inst=instance_name, case=case_name, sel=self.selector, self=self
+        return CaseXPath("instance('{inst}')/{root}/{case}[{sel}={self}]".format(
+            inst=instance_name, root=self.get_instance_root(instance_name),
+            case=case_name, sel=self.selector, self=self
         ))
+
+    @staticmethod
+    def get_instance_root(instance_name):
+        return {
+            "results:inline": "results"
+        }.get(instance_name, instance_name)
 
 
 class CaseIDXPath(CaseSelectionXPath):
@@ -224,8 +231,8 @@ class CaseTypeXpath(CaseSelectionXPath):
         for type in additional_types:
             quoted = CaseTypeXpath("'{}'".format(type))
             selector = "{selector} or {sel}={quoted}".format(selector=selector, sel=self.selector, quoted=quoted)
-        return CaseXPath("instance('{inst}')/{inst}/{case}[{sel}]".format(
-            inst=instance_name, case=case_name, sel=selector
+        return CaseXPath("instance('{inst}')/{root}/{case}[{sel}]".format(
+            inst=instance_name, root=self.get_instance_root(instance_name), case=case_name, sel=selector
         ))
 
 
@@ -335,7 +342,13 @@ class CaseClaimXpath(object):
         self.session_var_name = session_var_name
 
     def default_relevant(self):
+        # Checks to see if the searched-for case already exists in the casedb:
+        # count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/search_case_id]) = 0
         return CaseIDXPath(session_var(self.session_var_name)).case().count().eq(0)
+
+    def multi_select_relevant(self):
+        # Verifies that there's at least one case that isn't yet owned by the user
+        return XPath("$case_id").neq(XPath.string(""))
 
 
 class LedgerdbXpath(XPath):
@@ -396,6 +409,15 @@ class IndicatorXpath(InstanceXpath):
     @property
     def id(self):
         return self
+
+
+class SearchSelectedCasesInstanceXpath(InstanceXpath):
+    default_id = "search_selected_cases"
+    path = "results/value"
+
+    @property
+    def id(self):
+        return self or self.default_id
 
 
 class CommCareSession(object):

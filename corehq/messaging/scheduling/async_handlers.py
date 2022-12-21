@@ -9,7 +9,7 @@ from corehq.apps.reminders.util import get_combined_id
 from corehq.apps.reports.analytics.esaccessors import get_groups_by_querystring
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.util.quickcache import quickcache
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 
 @quickcache(['domain', 'timestamp'], timeout=10 * 60)

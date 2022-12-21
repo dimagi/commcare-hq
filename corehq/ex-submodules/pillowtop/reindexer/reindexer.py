@@ -1,8 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from elasticsearch2.helpers import BulkIndexError as ES2BulkIndexError
-
-from corehq.util.es.elasticsearch import TransportError
+from corehq.util.es.elasticsearch import BulkIndexError, TransportError
 from corehq.util.es.interface import ElasticsearchInterface
 
 from pillowtop.es_utils import (
@@ -131,6 +129,7 @@ class PillowChangeProviderReindexer(Reindexer):
         self.change_provider = change_provider
 
     def reindex(self):
+        total_docs = 0
         for i, change in enumerate(self.change_provider.iter_all_changes()):
             try:
                 # below works because signature is same for pillow and processor
@@ -138,8 +137,11 @@ class PillowChangeProviderReindexer(Reindexer):
             except Exception:
                 pillow_logging.exception("Unable to process change: %s", change.id)
 
-            if i % 1000 == 0:
+            if i > 0 and i % 1000 == 0:
                 pillow_logging.info("Processed %s docs", i)
+            total_docs = i
+
+        pillow_logging.info("Processed %s docs", total_docs)
 
 
 def clean_index(es, index_info):
@@ -200,38 +202,39 @@ class BulkPillowReindexProcessor(BaseDocProcessor):
         return True
 
     def process_bulk_docs(self, docs, progress_logger):
-        if len(docs) == 0:
+        if not docs:
             return True
 
         pillow_logging.info("Processing batch of %s docs", len(docs))
-
-        changes = [
-            self._doc_to_change(doc) for doc in docs
-            if self.process_deletes or not is_deletion(doc.get('doc_type'))
-        ]
+        changes = []
+        for doc in docs:
+            change = self._doc_to_change(doc)  # de-dupe the is_deletion check
+            if self.process_deletes or not change.deleted:
+                changes.append(change)
         error_collector = ErrorCollector()
 
-        bulk_changes = build_bulk_payload(self.index_info, changes, self.doc_transform, error_collector)
+        bulk_changes = build_bulk_payload(changes, self.doc_transform, error_collector)
 
         for change, exception in error_collector.errors:
-            pillow_logging.error("Error procesing doc %s: %s (%s)", change.id, type(exception), exception)
+            pillow_logging.error("Error processing doc %s: %s (%s)", change.id,
+                                 type(exception), exception)
 
         es_interface = ElasticsearchInterface(self.es)
         try:
-            es_interface.bulk_ops(bulk_changes)
-        except (ESBulkIndexError, ES2BulkIndexError) as e:
+            es_interface.bulk_ops(self.index_info.alias, self.index_info.type,
+                                  bulk_changes)
+        except BulkIndexError as e:
             pillow_logging.error("Bulk index errors\n%s", e.errors)
-        except Exception:
-            pillow_logging.exception("\tException sending payload to ES")
+        except Exception as exc:
+            pillow_logging.exception("Error sending bulk payload to Elasticsearch: %s", exc)
             return False
 
         return True
 
     @staticmethod
     def _doc_to_change(doc):
-        return Change(
-            id=doc['_id'], sequence_id=None, document=doc, deleted=is_deletion(doc.get('doc_type'))
-        )
+        return Change(id=doc['_id'], sequence_id=None, document=doc,
+                      deleted=is_deletion(doc.get('doc_type')))
 
 
 class ResumableBulkElasticPillowReindexer(Reindexer):

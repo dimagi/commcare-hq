@@ -4,12 +4,10 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseForbidden,
 )
-from django.urls import reverse
 from memoized import memoized
 
 from tastypie import fields
 from tastypie.authentication import Authentication
-from tastypie.bundle import Bundle
 from tastypie.exceptions import BadRequest
 
 from casexml.apps.case.xform import get_case_updates
@@ -33,9 +31,9 @@ from corehq.apps.api.resources import (
     v0_3,
 )
 from corehq.apps.api.resources.auth import (
-    DomainAdminAuthentication,
     LoginAndDomainAuthentication,
     RequirePermissionAuthentication,
+    SSOAuthentication,
 )
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
@@ -53,10 +51,9 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.models import Application, RemoteApp, LinkedApplication
 from corehq.apps.groups.models import Group
-from corehq.apps.users.models import CouchUser, Permissions
+from corehq.apps.users.models import CouchUser, HqPermissions
 from corehq.apps.users.util import format_username
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.repeaters.models import Repeater, get_all_repeater_types
+from corehq.motech.repeaters.models import CommCareCase
 from corehq.util.view_utils import absolute_reverse
 from no_exceptions.exceptions import Http400
 
@@ -149,7 +146,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
-            es_query = es_query_from_get_params(bundle.request.GET, domain, ['include_archived'])
+            es_query = es_query_from_get_params(bundle.request.GET, domain)
         except Http400 as e:
             raise BadRequest(str(e))
 
@@ -166,7 +163,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         }
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_data)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_data)
         object_class = ESXFormInstance
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -184,64 +181,7 @@ def _cases_referenced_by_xform(esxform):
     """
     assert esxform.domain, esxform.form_id
     case_ids = set(cu.id for cu in get_case_updates(esxform))
-    return CaseAccessors(esxform.domain).get_cases(list(case_ids))
-
-
-class RepeaterResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
-
-    id = fields.CharField(attribute='_id', readonly=True, unique=True)
-    type = fields.CharField(attribute='doc_type')
-    domain = fields.CharField(attribute='domain')
-    url = fields.CharField(attribute='url')
-    version = fields.CharField(attribute='version', null=True)
-
-    def get_resource_uri(self, bundle_or_obj=None, url_name='api_dispatch_list'):
-        if isinstance(bundle_or_obj, Bundle):
-            obj = bundle_or_obj.obj
-        elif bundle_or_obj is None:
-            return None
-        else:
-            obj = bundle_or_obj
-
-        return reverse('api_dispatch_detail', kwargs=dict(resource_name=self._meta.resource_name,
-                                                          domain=obj.domain,
-                                                          api_name=self._meta.api_name,
-                                                          pk=obj._id))
-
-    def obj_get_list(self, bundle, domain, **kwargs):
-        repeaters = Repeater.by_domain(domain)
-        return list(repeaters)
-
-    def obj_get(self, bundle, **kwargs):
-        return get_object_or_not_exist(Repeater, kwargs['pk'], kwargs['domain'],
-                                       additional_doc_types=list(get_all_repeater_types()))
-
-    def obj_create(self, bundle, request=None, **kwargs):
-        bundle.obj.domain = kwargs['domain']
-        bundle = self._update(bundle)
-        bundle.obj.save()
-        return bundle
-
-    def obj_update(self, bundle, **kwargs):
-        bundle.obj = Repeater.get(kwargs['pk'])
-        assert bundle.obj.domain == kwargs['domain']
-        bundle = self._update(bundle)
-        assert bundle.obj.domain == kwargs['domain']
-        bundle.obj.save()
-        return bundle
-
-    def _update(self, bundle):
-        for key, value in bundle.data.items():
-            setattr(bundle.obj, key, value)
-        bundle = self.full_hydrate(bundle)
-        return bundle
-
-    class Meta(CustomResourceMeta):
-        authentication = DomainAdminAuthentication()
-        object_class = Repeater
-        resource_name = 'data-forwarding'
-        detail_allowed_methods = ['get', 'put', 'delete']
-        list_allowed_methods = ['get', 'post']
+    return CommCareCase.objects.get_cases(list(case_ids), esxform.domain)
 
 
 class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResource, DomainSpecificResourceMixin):
@@ -309,7 +249,7 @@ class GroupResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMi
         return GroupQuerySetAdapter(domain)
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_commcare_users)
+        authentication = RequirePermissionAuthentication(HqPermissions.edit_commcare_users)
         object_class = Group
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']
@@ -362,7 +302,7 @@ class SingleSignOnResource(HqBaseResource, DomainSpecificResourceMixin):
         return HttpResponseForbidden()
 
     class Meta(CustomResourceMeta):
-        authentication = Authentication()
+        authentication = SSOAuthentication()
         resource_name = 'sso'
         detail_allowed_methods = []
         list_allowed_methods = ['post']
@@ -432,6 +372,7 @@ class ApplicationResource(BaseApplicationResource):
         try:
             dehydrated = {}
 
+            dehydrated['name'] = module.name
             dehydrated['case_type'] = module.case_type
 
             all_case_properties = self.get_all_case_properties_local(app)

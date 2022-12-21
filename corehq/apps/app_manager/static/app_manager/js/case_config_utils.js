@@ -48,24 +48,31 @@ hqDefine('app_manager/js/case_config_utils', function () {
             }
             return options;
         },
-        refreshQuestions: function (questions_observable, url, formUniqueId, event) {
-            var $el = $(event.currentTarget);
-            $el.find('i').addClass('fa-spin');
-            $.get({
-                url: url,
-                data: {
-                    form_unique_id: formUniqueId,
-                },
-                success: function (data) {
-                    questions_observable(data);
-                    $el.find('i').removeClass('fa-spin');
-                },
-                error: function () {
-                    $el.find('i').removeClass('fa-spin');
-                    hqImport("hqwebapp/js/alert_user").alert_user(gettext("Something went wrong refreshing "
-                               + "your form properties. Please refresh the page and try again", "danger"));
-                },
-            });
+        // This function depends on initial page data, so it should be called within a document ready handler
+        initRefreshQuestions: function (questionsObservable) {
+            var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+                formUniqueId = initialPageData.get("form_unique_id");
+            if (formUniqueId) {
+                var currentAppUrl = initialPageData.reverse("current_app_version"),
+                    oldVersion = initialPageData.get("app_subset").version;
+                $(document).on("ajaxComplete", function (e, xhr, options) {
+                    if (options.url === currentAppUrl) {
+                        var newVersion = xhr.responseJSON.currentVersion;
+                        if (newVersion > oldVersion) {
+                            oldVersion = newVersion;
+                            $.get({
+                                url: initialPageData.reverse('get_form_questions'),
+                                data: {
+                                    form_unique_id: formUniqueId,
+                                },
+                                success: function (data) {
+                                    questionsObservable(data);
+                                },
+                            });
+                        }
+                    }
+                });
+            }
         },
         filteredSuggestedProperties: function (suggestedProperties, properties) {
             var used_properties = _.map(properties, function (x) {
@@ -73,34 +80,50 @@ hqDefine('app_manager/js/case_config_utils', function () {
             });
             return _(suggestedProperties).difference(used_properties);
         },
-        propertyDictToArray: function (required, property_dict, caseConfig, keyIsPath) {
-            var property_array = _(property_dict).map(function (value, key) {
+        propertyDictToArray: function (required, propertyDict, caseConfig) {
+            var propertyArray = _(propertyDict).map(function (conditionalCaseUpdate, caseName) {
                 return {
-                    path: !keyIsPath ? value : key,
-                    key: !keyIsPath ? key : value,
+                    path: conditionalCaseUpdate.question_path,
+                    key: caseName,
                     required: false,
+                    save_only_if_edited: conditionalCaseUpdate.update_mode === 'edit',
                 };
             });
-            property_array = _(property_array).sortBy(function (property) {
+            propertyArray = _(propertyArray).sortBy(function (property) {
                 return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
             });
-            return required.concat(property_array);
+            return required.concat(propertyArray);
         },
-        propertyArrayToDict: function (required, property_array) {
-            var property_dict = {},
-                extra_dict = {};
-            _(property_array).each(function (case_property) {
-                var key = case_property.key;
-                var path = case_property.path;
+        propertyArrayToDict: function (required, propertyArray) {
+            var propertyDict = {},
+                extraDict = {};
+            _(propertyArray).each(function (caseProperty) {
+                var key = caseProperty.key;
+                var path = caseProperty.path;
+                var updateMode = caseProperty.save_only_if_edited ? 'edit' : 'always';
                 if (key || path) {
-                    if (_(required).contains(key) && case_property.required) {
-                        extra_dict[key] = path;
+                    if (_(required).contains(key) && caseProperty.required) {
+                        extraDict[key] = {question_path: path, update_mode: updateMode};
                     } else {
-                        property_dict[key] = path;
+                        propertyDict[key] = {question_path: path, update_mode: updateMode};
                     }
                 }
             });
-            return [property_dict, extra_dict];
+            return [propertyDict, extraDict];
+        },
+        preloadDictToArray: function (propertyDict, caseConfig) {
+            var propertyArray = _(propertyDict).map(function (path, caseName) {
+                return {
+                    path: caseName,
+                    key: path,
+                    required: false,
+                    save_only_if_edited: false,
+                };
+            });
+            propertyArray = _(propertyArray).sortBy(function (property) {
+                return caseConfig.questionScores[property.path] * 2 + (property.required ? 0 : 1);
+            });
+            return propertyArray;
         },
         preloadArrayToDict: function (preloadArray) {
             // i.e. {i.path: i.key for i in preloadArray if i.key or i.path}

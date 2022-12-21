@@ -6,12 +6,9 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.commtrack.tests.util import get_single_balance_block
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    LedgerAccessors,
-)
+from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import RebuildWithReason
+from corehq.form_processor.models import CommCareCase, RebuildWithReason
 from corehq.form_processor.parsers.ledgers.helpers import UniqueLedgerReference
 from corehq.util.test_utils import softer_assert
 
@@ -80,7 +77,7 @@ class RebuildStockStateTest(TestCase):
         form_id = self._submit_ledgers(LEDGER_BLOCKS_SIMPLE)
         case_id = self.case.case_id
         rebuild_case_from_forms(self.domain, case_id, RebuildWithReason(reason='test'))
-        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         self.assertEqual(case.xform_ids[1:], [form_id])
         self.assertTrue(form_id in [action.form_id for action in case.actions])
 
@@ -93,8 +90,7 @@ class RebuildStockStateTest(TestCase):
         )[0]
         self._assert_stats(1, initial_quantity, initial_quantity)
 
-        case_accessors = CaseAccessors(self.domain)
-        case = case_accessors.get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
         try:
             self.assertTrue(any([action.is_ledger_transaction for action in case.actions]))
         except AttributeError:
@@ -108,7 +104,7 @@ class RebuildStockStateTest(TestCase):
             domain=self.domain,
             form_id=form.form_id,
         )
-        case = case_accessors.get_case(self.case.case_id)
+        case = CommCareCase.objects.get_case(self.case.case_id, self.domain)
 
         try:
             # CaseTransaction

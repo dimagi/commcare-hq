@@ -1,22 +1,24 @@
-from xml.etree import cElementTree as ElementTree
 from django.test import TestCase
 from corehq.blobs import get_blob_db
 from casexml.apps.phone.utils import MockDevice
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
-    FixtureDataType, FixtureTypeField,
-    FixtureDataItem, FieldList, FixtureItemField,
-    FIXTURE_BUCKET
+    FIXTURE_BUCKET,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    LookupTableRowOwner,
+    OwnerType,
+    TypeField,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.dbaccessors import delete_all_users
-from casexml.apps.case.tests.util import check_xml_line_by_line
 from corehq.form_processor.tests.utils import sharded
 
 DOMAIN = 'fixture-test'
 SA_PROVINCES = 'sa_provinces'
 FR_PROVINCES = 'fr_provinces'
+CA_PROVINCES = 'ca_provinces'
 
 
 @sharded
@@ -26,54 +28,22 @@ class OtaFixtureTest(TestCase):
     def setUpClass(cls):
         super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
         cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic', None, None)
+        cls.addClassCleanup(cls.user.delete, None, None)
+
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
         cls.group1.save()
-        cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[cls.user._id])
+        cls.group2 = Group(domain=DOMAIN, name='group2', case_sharing=True, users=[])
         cls.group2.save()
 
-        cls.item_lists = {
-            SA_PROVINCES: make_item_lists(SA_PROVINCES, 'western cape'),
-            FR_PROVINCES: make_item_lists(FR_PROVINCES, 'burgundy'),
-        }
+        make_item_lists(SA_PROVINCES, 'western cape'),
+        make_item_lists(FR_PROVINCES, 'burgundy', cls.group1),
+        make_item_lists(CA_PROVINCES, 'alberta', cls.group2),
 
-        cls.restore_user = cls.user.to_ota_restore_user()
+        cls.addClassCleanup(get_blob_db().delete, key=FIXTURE_BUCKET + "/" + DOMAIN)
 
-    @classmethod
-    def tearDownClass(cls):
-        for group in Group.by_domain(DOMAIN):
-            group.delete()
-        delete_all_users()
-
-        for _, item_list in cls.item_lists.items():
-            item_list[0].delete()
-            item_list[1].delete()
-
-        get_blob_db().delete(key=FIXTURE_BUCKET + "/" + DOMAIN)
-        cls.domain.delete()
-        super(OtaFixtureTest, cls).tearDownClass()
-
-    def _check_fixture(self, fixture_xml, has_groups=True, item_lists=None):
-        fixture_xml = list(fixture_xml)
-        item_lists = item_lists or []
-        expected_len = sum([has_groups, len(item_lists)])
-        self.assertEqual(len(fixture_xml), expected_len)
-
-        if has_groups:
-            expected = _get_group_fixture(self.user.get_id, [self.group1, self.group2])
-            check_xml_line_by_line(self, expected, ElementTree.tostring(fixture_xml[0], encoding='utf-8'))
-
-        if item_lists:
-            for i, item_list_tag in enumerate(item_lists):
-                data_type, data_item = self.item_lists[item_list_tag]
-                item_list_xml = [
-                    ElementTree.tostring(fixture, encoding='utf-8')
-                    for fixture in fixture_xml if item_list_tag in fixture.attrib.get("id")
-                ]
-                self.assertEqual(len(item_list_xml), 1)
-
-                expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
-                check_xml_line_by_line(self, expected, item_list_xml[0])
+        cls.restore_user = cls.user.to_ota_restore_user(DOMAIN)
 
     def test_skip_fixture(self):
         device = MockDevice(self.domain, self.restore_user)
@@ -82,63 +52,38 @@ class OtaFixtureTest(TestCase):
         restore_without_fixture = device.sync(skip_fixtures=True).payload.decode('utf-8')
         self.assertNotIn('<fixture ', restore_without_fixture)
 
-
-def _get_group_fixture(user_id, groups):
-    groups = sorted(groups, key=lambda g: g.get_id)
-    group_blocks = ["""
-    <group id="{id}">
-        <name>{name}</name>
-    </group>
-    """.format(id=group.get_id, name=group.name) for group in groups]
-
-    groups_xml = """
-    <groups>
-        {}
-    </groups>
-    """.format(''.join(group_blocks)) if group_blocks else "<groups/>"
-
-    return """
-    <fixture id="user-groups" user_id="{user_id}">
-        {groups}
-    </fixture>
-    """.format(user_id=user_id, groups=groups_xml)
+    def test_fixture_ownership(self):
+        device = MockDevice(self.domain, self.restore_user)
+        restore = device.sync().payload.decode('utf-8')
+        self.assertIn('<sa_provinces><name>western cape', restore)  # global fixture
+        self.assertIn('<fr_provinces><name>burgundy', restore)  # user fixture (owned)
+        self.assertNotIn('alberta', restore)  # user fixture (not owned)
 
 
-def _get_item_list_fixture(user_id, tag, fixture_item):
-    template = """
-    <fixture id="item-list:{tag}" user_id="{user_id}">
-      <{tag}_list>
-        {item_xml}
-      </{tag}_list>
-    </fixture>
-    """
-    return template.format(
-        user_id=user_id,
-        tag=tag,
-        item_xml=ElementTree.tostring(fixture_item.to_xml(), encoding='utf-8')
-    )
-
-
-def make_item_lists(tag, item_name):
-    data_type = FixtureDataType(
+def make_item_lists(tag, item_name, group=None):
+    data_type = LookupTable(
         domain=DOMAIN,
         tag=tag,
-        name="Provinces",
-        fields=[FixtureTypeField(field_name="name", properties=[])],
+        fields=[TypeField(name="name")],
         item_attributes=[],
-        is_global=True
+        is_global=group is None,
     )
     data_type.save()
 
-    data_item = FixtureDataItem(
+    data_item = LookupTableRow(
         domain=DOMAIN,
-        data_type_id=data_type.get_id,
-        fields={
-            "name": FieldList(
-                field_list=[FixtureItemField(field_value=item_name, properties={})]
-            )
-        },
+        table_id=data_type.id,
+        fields={"name": [Field(value=item_name)]},
         item_attributes={},
+        sort_key=0,
     )
     data_item.save()
+
+    if group is not None:
+        LookupTableRowOwner(
+            domain=DOMAIN,
+            row_id=data_item.id,
+            owner_type=OwnerType.Group,
+            owner_id=group._id,
+        ).save()
     return data_type, data_item

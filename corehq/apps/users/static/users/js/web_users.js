@@ -205,9 +205,13 @@ hqDefine("users/js/web_users",[
         $('.undeliverable-label').tooltip({
             placement: 'right',
             html: true,
-            title: gettext(`We have sent the invitation email to this user but the user's email server
-            rejected it. This usually means either the email address is incorrect or your organization
-            is blocking emails from our address (${initialPageData.get('fromAddress')}).`),
+            title: _.template(gettext(
+                "We have sent the invitation email to this user but the user's email server " +
+                "rejected it. This usually means either the email address is incorrect or your organization " +
+                "is blocking emails from our address (<%- fromAddress %>)."
+            ))({
+                fromAddress: initialPageData.get('fromAddress'),
+            }),
         });
     });
 });

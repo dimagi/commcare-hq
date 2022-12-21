@@ -2,14 +2,14 @@ import inspect
 
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from corehq.apps.auditcare.models import NavigationEventAudit
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin
 from corehq.apps.reports.standard import DatespanMixin, ProjectReport
-from corehq.apps.userreports.models import ReportConfiguration
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.reports.view import ConfigurableReportView
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.view_utils import reverse
@@ -18,7 +18,7 @@ from corehq.toggles import WEB_USER_ACTIVITY_REPORT
 
 class WebUserActivityReport(GetParamsMixin, DatespanMixin, GenericTabularReport, ProjectReport):
     slug = 'web_user_activity'
-    name = ugettext_noop("Web User Activity")
+    name = gettext_noop("Web User Activity")
     ajax_pagination = True
     sortable = False
     toggles = [WEB_USER_ACTIVITY_REPORT]
@@ -125,11 +125,12 @@ class EventFormatter:
 
     @cached_property
     def ucr_displays_by_id(self):
+        report_configs = get_report_and_registry_report_configs_for_domain(self.domain)
         return {
             config._id: _link(
                 config.title, reverse(ConfigurableReportView.slug, args=[self.domain, config._id])
             )
-            for config in ReportConfiguration.by_domain(self.domain)
+            for config in report_configs
         }
 
 
