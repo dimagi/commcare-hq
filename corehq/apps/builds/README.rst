@@ -80,11 +80,7 @@ Make sure your local django application is accessible over the network
 
 Try accessing ``http://localhost/a/domain`` and see if it works. nginx should
 
-proxy all requests to localhost to your django server. You should also be able
-
-to access ``http://your_ip_address:8000/a/domain`` from a phone or other device on the
-
-same network.
+proxy all requests to localhost to your django server.
 
 Make Commcare use your local IP address
 #######################################
@@ -97,6 +93,9 @@ Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace local
 your IP address as ``server_name``.
 For example, set server_name as ``192.168.0.10``.
 Then run ``sudo nginx -s reload`` to update configuration changes.
+
+You should also be able to access ``http://your_ip_address:8000/a/domain`` from a phone or other device on the
+same network.
 
 Note: You'll have to update these if you ever change networks or get a new IP address.
 
