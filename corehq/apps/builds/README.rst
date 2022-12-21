@@ -66,7 +66,7 @@ Install the configuration file
 
 In ``/etc/nginx/nginx.conf``, at the bottom of the ``http{}`` block, above any other site includes, add the line:
 
-``include /path/to/commcarehq/deployment/nginx/cchq*local*nginx.conf;``
+``include /path/to/commcarehq/deployment/nginx/cchq_local_nginx.conf;``
 
 Start nginx
 ###########
