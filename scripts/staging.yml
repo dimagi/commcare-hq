@@ -79,4 +79,5 @@ branches:
     - em/maintenance-alert-scheduling # Evan Dec 14
     - es/success-msg  # Ethan Dec 14
     - pkv/case-list-explorer-labels-revert # Pawan Dec 20
+    - sk/sentry-js  # Simon Dec 21
 submodules: { }
