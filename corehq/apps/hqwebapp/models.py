@@ -49,7 +49,6 @@ class MaintenanceAlert(models.Model):
 
     def save(self, *args, **kwargs):
         MaintenanceAlert.get_active_alerts.clear(MaintenanceAlert)
-        MaintenanceAlert.objects.filter(end_time__lte=datetime.utcnow()).update(active=False)
         super(MaintenanceAlert, self).save(*args, **kwargs)
 
     @classmethod
