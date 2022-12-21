@@ -96,7 +96,7 @@ Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g
 Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
 your IP address as ``server_name``.
 For example, set server_name as ``192.168.0.10``.
-Then run ``sudo nginx -s reload`` to update configration changes.
+Then run ``sudo nginx -s reload`` to update configuration changes.
 
 Note: You'll have to update these if you ever change networks or get a new IP address.
 
