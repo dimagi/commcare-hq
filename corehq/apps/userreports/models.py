@@ -184,6 +184,27 @@ class DataSourceBuildInformation(DocumentSchema):
     initiated_in_place = DateTimeProperty()
     rebuilt_asynchronously = BooleanProperty(default=False)
 
+    @property
+    def is_rebuilding(self):
+        return (
+            self.initiated
+            and (
+                not self.finished
+                and not self.rebuilt_asynchronously
+            )
+        )
+
+    @property
+    def is_rebuilding_in_place(self):
+        return (
+            self.initiated_in_place
+            and not self.finished_in_place
+        )
+
+    @property
+    def is_rebuild_in_progress(self):
+        return self.is_rebuilding or self.is_rebuilding_in_place
+
 
 class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
@@ -1496,11 +1517,12 @@ def report_config_id_is_static(config_id):
     )
 
 
-def is_data_registry_report(report_config):
-    return (
-        isinstance(report_config, RegistryReportConfiguration)
-        or report_config.config.meta.build.registry_slug
-    )
+def is_data_registry_report(report_config, datasource=None):
+    """
+    The optional datasource parameter is useful when checking a report config fetched from a remote server
+    """
+    datasource = datasource or report_config.config
+    return isinstance(report_config, RegistryReportConfiguration) or datasource.meta.build.registry_slug
 
 
 def get_report_configs(config_ids, domain):

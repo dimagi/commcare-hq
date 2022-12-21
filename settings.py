@@ -289,7 +289,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows.app_config.PillowsAppConfig',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -1052,22 +1052,8 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ELASTIC_ADAPTER_SETTINGS = {
-    "ElasticCase": {
-        # Set to True to remove the `actions` and `xform_id` fields from the
-        # Elastic "hqcases_..." index. These fields contribute high load to the
-        # shard databases.
-        "DROP_FORM_FIELDS": False,
-    },
-    "ElasticForm": {
-        # TODO: document what this is for
-        "DISABLE_ALL": False,
-    },
-}
-
-# TODO: remove these Elastic settings:
-ES_SETTINGS = None  # [do not use] legacy mechanism for tests
-CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
+ES_SETTINGS = None
 
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1102,9 +1088,6 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1122,6 +1105,7 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1568,7 +1552,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -2066,4 +2049,3 @@ GOOGLE_SHEETS_API_NAME = "sheets"
 GOOGLE_SHEETS_API_VERSION = "v4"
 
 DAYS_KEEP_GSHEET_STATUS = 14
-COMMCARE_ANALYTICS_HOST = ""

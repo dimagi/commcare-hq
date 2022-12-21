@@ -17,8 +17,8 @@ from corehq.apps.change_feed.consumer.feed import (
     KafkaCheckpointEventHandler,
 )
 from corehq.apps.data_dictionary.util import get_gps_properties
-from corehq.apps.es.case_search import CaseSearchES, ElasticCaseSearch
-from corehq.apps.es.client import ElasticManageAdapter
+from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
+from corehq.apps.es.client import manager
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.base import is_couch_change_for_sql_domain
@@ -234,12 +234,6 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info = ElasticsearchIndexInfo.wrap(raw_info)
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
-        from corehq.apps.es.registry import register
-        from corehq.apps.es.transient_util import add_dynamic_es_adapter
-        register(index_info, index_info.alias)
-        add_dynamic_es_adapter(
-            "CaseSearchBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
-        )
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(
@@ -307,7 +301,6 @@ def delete_case_search_cases(domain):
     if domain is None or isinstance(domain, dict):
         raise TypeError("Domain attribute is required")
 
-    case_search = ElasticCaseSearch()
-    ElasticManageAdapter().index_refresh(case_search.index_name)
+    manager.index_refresh(case_search_adapter.index_name)
     case_ids = CaseSearchES().domain(domain).values_list('_id', flat=True)
-    case_search.bulk_delete(case_ids)
+    case_search_adapter.bulk_delete(case_ids)

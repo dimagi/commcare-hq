@@ -266,6 +266,7 @@ class RepeaterManager(models.Manager):
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
+    name = models.CharField(max_length=64, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
         choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
@@ -278,9 +279,12 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     options = JSONField(default=dict)
     connection_settings = models.ForeignKey(
         ConnectionSettings,
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        related_name='repeaters'
     )
     is_deleted = models.BooleanField(default=False, db_index=True)
+    last_modified = models.DateTimeField(auto_now=True)
+    date_created = models.DateTimeField(auto_now_add=True)
 
     objects = RepeaterManager()
     all_objects = models.Manager()
@@ -295,6 +299,12 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     friendly_name = _("Data")
 
     _has_config = False
+
+    @property
+    def repeater_name(self):
+        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
+        # time. This method/property will be removed in a subsequent PR.
+        return self.connection_settings.name
 
     @property
     @memoized
@@ -351,7 +361,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
                 raise e
 
     def get_url(self, record):
-        return self.repeater.get_url(record)
+        return self.connection_settings.url
 
     @classmethod
     @property
@@ -386,6 +396,13 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.next_attempt_at = None
             self.save()
 
+    def get_attempt_info(self, repeat_record):
+        return None
+
+    @property
+    def verify(self):
+        return not self.connection_settings.skip_cert_verify
+
     def register(self, payload, fire_synchronously=False):
         if not self.allowed_to_forward(payload):
             return
@@ -401,7 +418,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         )
         metrics_counter('commcare.repeaters.new_record', tags={
             'domain': self.domain,
-            'doc_type': self.doc_type,
+            'doc_type': self.repeater_type,
             'mode': 'sync' if fire_synchronously else 'async'
         })
         repeat_record.save()
@@ -421,15 +438,15 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         return True
 
     def pause(self):
-        self.paused = True
+        self.is_paused = True
         self.save()
 
     def resume(self):
-        self.paused = False
+        self.is_paused = False
         self.save()
 
     def retire(self, sync_to_couch=True):
-        self.paused = False
+        self.is_paused = False
         self.is_deleted = True
         self.save(sync_to_couch=False)
         if sync_to_couch:
@@ -476,7 +493,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             self.domain, url, payload,
             headers=self.get_headers(repeat_record),
             auth_manager=self.connection_settings.get_auth_manager(),
-            verify=self.verify,
+            verify=not self.connection_settings.skip_cert_verify,
             notify_addresses=self.connection_settings.notify_addresses,
             payload_id=repeat_record.payload_id,
             method=self.request_method,
@@ -544,7 +561,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
         (Most classes that extend CaseRepeater, and all classes that
         extend FormRepeater, use the same form.)
         """
-        return self.__class__.__name__
+        return self._repeater_type
 
     def _wrap_schema_attrs(self, couch_object):
         pass
@@ -571,6 +588,7 @@ class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
             "domain",
             "format",
             "request_method",
+            "name",
         ]
 
 
@@ -623,7 +641,7 @@ class SQLFormRepeater(SQLRepeater):
             return urlunparse(url_parts)
 
     def get_headers(self, repeat_record):
-        headers = super(FormRepeater, self).get_headers(repeat_record)
+        headers = super().get_headers(repeat_record)
         headers.update({
             "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
         })
@@ -701,6 +719,8 @@ class SQLCaseRepeater(SQLRepeater):
 class SQLCreateCaseRepeater(SQLCaseRepeater):
     class Meta:
         proxy = True
+
+    friendly_name = _("Forward Cases on Creation Only")
 
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
@@ -919,6 +939,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     # TODO: Delete the following properties once all Repeaters have been
     #       migrated to ConnectionSettings. (2020-05-16)
     url = StringProperty()
+    name = StringProperty(required=False)
     auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH, OAUTH1, BEARER_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()  # See also plaintext_password()
@@ -939,10 +960,10 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
     _has_config = False
 
     def __str__(self):
-        return f'{self.__class__.__name__}: {self.name}'
+        return f'{self.__class__.__name__}: {self.repeater_name}'
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} {self._id} {self.name!r}>"
+        return f"<{self.__class__.__name__} {self._id} {self.repeater_name!r}>"
 
     @property
     def connection_settings(self):
@@ -961,7 +982,9 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
         return SQLRepeater.objects.get(repeater_id=self._id)
 
     @property
-    def name(self):
+    def repeater_name(self):
+        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
+        # time. This method/property will be removed in a subsequent PR.
         return self.connection_settings.name
 
     @property
@@ -1106,7 +1129,6 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
 
     @classmethod
     def wrap(cls, data):
-        data.pop('name', None)
         if cls.__name__ == Repeater.__name__:
             cls_ = cls.get_class_from_doc_type(data['doc_type'])
             if cls_:
@@ -1269,6 +1291,7 @@ class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
             "format",
             "connection_settings",
             "request_method",
+            "name",
         ]
 
     @classmethod
@@ -1623,6 +1646,17 @@ def get_all_repeater_types():
     ])
 
 
+def get_all_sqlrepeater_types():
+    # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
+    return OrderedDict([
+        (
+            to_function(class_path, failhard=True).__name__,
+            to_function(class_path, failhard=True)._migration_get_sql_model_class()
+        )
+        for class_path in settings.REPEATER_CLASSES
+    ])
+
+
 class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
@@ -1706,9 +1740,15 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return Repeater.get(self.repeater_id)
-        except ResourceNotFound:
+            return SQLRepeater.objects.get(repeater_id=self.repeater_id)
+        except SQLRepeater.DoesNotExist:
             return None
+
+    def is_repeater_deleted(self):
+        try:
+            return SQLRepeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+        except SQLRepeater.DoesNotExist:
+            return True
 
     @property
     def url(self):

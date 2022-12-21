@@ -52,7 +52,7 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)
         assert all(complete_), complete_
-        result = _perfom_post_save_actions(form, save)
+        result = _perform_post_save_actions(form, save)
     else:
         result = reprocess_form(form, save, lock_form=lock)
 
@@ -60,7 +60,7 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     return result
 
 
-def _perfom_post_save_actions(form, save=True):
+def _perform_post_save_actions(form, save=True):
     interface = FormProcessorInterface(form.domain)
     cache = interface.casedb_cache(
         domain=form.domain, lock=False, deleted_ok=True, xforms=[form],

@@ -54,11 +54,6 @@ DOC_TYPES_BY_NAME = {
         "type": Application,
         "use_domain": True,
     },
-    "auditcare": {
-        "type": AuditEvent,
-        "use_domain": True,
-        "view": "auditcare/all_events",
-    },
     "receiver_wrapper_repeaters": {
         "type": Repeater,
         "use_domain": True,

@@ -92,10 +92,10 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     now = datetime.utcnow
     last_update = [now()]
-    upate_period = timedelta(seconds=1)  # do not update progress more than once a second
+    update_period = timedelta(seconds=1)  # do not update progress more than once a second
 
     def _update_progress(event_count, item_count, items_in_table):
-        if task and now() - last_update[0] > upate_period:
+        if task and now() - last_update[0] > update_period:
             last_update[0] = now()
             processed = event_count * 10 + (10 * item_count / items_in_table)
             processed = min(processed, total_events)  # limit at 100%
@@ -177,8 +177,8 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
         for n, item_row in enumerate(fixture_data):
             _update_progress(event_count, n, num_rows)
             data_items_book_by_type[data_type.tag].append(item_row)
-            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.User))
-            max_users = max(max_users, owner_names.count(item_row, OwnerType.Group))
+            max_groups = max(max_groups, owner_names.count(item_row, OwnerType.Group))
+            max_users = max(max_users, owner_names.count(item_row, OwnerType.User))
             max_locations = max(max_locations, owner_names.count(item_row, OwnerType.Location))
             for field_key in item_row.fields:
                 if field_key in max_field_prop_combos:
@@ -330,9 +330,11 @@ class OwnerNames:
         ).values_list("row_id", "owner_type", "owner_id", named=True)
         for rec in row_owners:
             owners[rec.row_id][rec.owner_type].add(rec.owner_id)
-        self.usernames = self._load_usernames(owners)
-        self.group_names = self._load_group_names(owners)
-        self.location_codes = self._load_location_codes(owners)
+        self.names = {
+            OwnerType.User: self._load_usernames(owners),
+            OwnerType.Group: self._load_group_names(owners),
+            OwnerType.Location: self._load_location_codes(owners),
+        }
 
     def _load_usernames(self, owners):
         docs = self._iter_couch_docs(owners, OwnerType.User, CommCareUser)
@@ -357,19 +359,23 @@ class OwnerNames:
         return dict(codes)
 
     def count(self, row, owner_type):
-        return len(self.owners[row.id][owner_type])
+        names = self.names[owner_type]
+        return sum(1 for doc_id in self.owners[row.id][owner_type] if doc_id in names)
 
     def get_usernames(self, row):
         user_ids = self.owners[row.id][OwnerType.User]
-        return sorted(self.usernames[doc_id] for doc_id in user_ids)
+        names = self.names[OwnerType.User]
+        return sorted(names[doc_id] for doc_id in user_ids if doc_id in names)
 
     def get_group_names(self, row):
         group_ids = self.owners[row.id][OwnerType.Group]
-        return sorted(self.group_names[doc_id] for doc_id in group_ids)
+        names = self.names[OwnerType.Group]
+        return sorted(names[doc_id] for doc_id in group_ids if doc_id in names)
 
     def get_location_codes(self, row):
         loc_ids = self.owners[row.id][OwnerType.Location]
-        return sorted(self.location_codes[loc_id] for loc_id in loc_ids)
+        names = self.names[OwnerType.Location]
+        return sorted(names[loc_id] for loc_id in loc_ids if loc_id in names)
 
 
 def get_indexed_field_numbers(tables):

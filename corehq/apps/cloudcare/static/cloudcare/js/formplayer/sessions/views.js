@@ -1,7 +1,9 @@
 /*global Marionette, moment */
 
 hqDefine("cloudcare/js/formplayer/sessions/views", function () {
-    var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app");
+    var constants = hqImport("cloudcare/js/formplayer/constants"),
+        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var SessionView = Marionette.View.extend({
         tagName: "tr",
@@ -37,7 +39,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             var self = this;
             e.preventDefault();
             e.stopPropagation();
-            hqImport("cloudcare/js/formplayer/utils/utils").confirmationModal({
+            utils.confirmationModal({
                 title: gettext('Delete incomplete form?'),
                 message: gettext("Are you sure you want to delete '" + self.model.get('title') + "'"),
                 confirmText: gettext('Yes'),
@@ -63,7 +65,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         getTemplate: function () {
             var user = FormplayerFrontend.getChannel().request('currentUser');
             var id = "#session-view-list-web-apps-template";
-            if (user.environment === hqImport("cloudcare/js/formplayer/constants").PREVIEW_APP_ENVIRONMENT) {
+            if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
                 id = "#session-view-list-preview-template";
             }
             return _.template($(id).html() || "");

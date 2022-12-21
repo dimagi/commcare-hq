@@ -643,7 +643,12 @@ class ProjectDataTab(UITab):
             items.extend(FixtureInterfaceDispatcher.navigation_sections(
                 request=self._request, domain=self.domain))
 
-        if toggles.DATA_DICTIONARY.enabled(self.domain):
+        from corehq.apps.users.models import HqPermissions
+        has_view_data_dict_permission = self.couch_user.has_permission(
+            self.domain,
+            get_permission_name(HqPermissions.view_data_dict)
+        )
+        if toggles.DATA_DICTIONARY.enabled(self.domain) and has_view_data_dict_permission:
             items.append([_('Data Dictionary'),
                           [{'title': 'Data Dictionary',
                             'url': reverse('data_dictionary', args=[self.domain])}]])
@@ -2067,10 +2072,14 @@ def _get_integration_section(domain, couch_user):
 
     if toggles.GENERIC_INBOUND_API.enabled(domain):
         from corehq.motech.generic_inbound.views import ConfigurableAPIListView
-        integration.append({
+        from corehq.motech.generic_inbound.reports import ApiRequestLogReport
+        integration.extend([{
             'title': ConfigurableAPIListView.page_title,
             'url': reverse(ConfigurableAPIListView.urlname, args=[domain])
-        })
+        }, {
+            'title': ApiRequestLogReport.name,
+            'url': ApiRequestLogReport.get_url(domain),
+        }])
 
     return integration
 

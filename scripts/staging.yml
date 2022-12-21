@@ -58,30 +58,25 @@ branches:
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO) in QA
-    # - ad/remove-entered-wrap-functions # Addison Aug 22
-    - ce/api-rate-limits # Cal Aug 23
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    # - akj/abdm-api # Akash Sep 5
-    # - sk/webapps-update-url # Simon Sep 13
-    - ap/sql-repeater/phase-2 # Amit Sep 16
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - rc/update-case-search-settings-mapping # Robert Sept 20
-    - rp/mobile-worker-validation # Rynhard Sept 21
-    # - mp/mobile_fix-2fa # Marco Sep 26
-    #- jls/new-instance-connectors # Jenny Sept 27
-    - akj/abdm-api-for-mobile-app # Akash Sep 28
-    - dependabot/pip/requirements/jwcrypto-1.4  # Biyeun Sep 28 (OIDC) in QA
-    - gh/replace-base-crud-view # Graham Sep 29
+    # - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - jls/standardize-web-apps-js-imports+jls/multi-select-flag-handling+jt/ush-2427
-    - jls/standardize-web-apps-js-imports # Jenny Oct 3
-    - jt/ush-2427 # Jonathan T. Oct 18
-    - ce/api-rate-limits # Cal Oct 19
-    - ml/lookup-table-UI # Minha Oct 19
-    - gh/add-history-tab # Graham Oct 20
+    - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
+    # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
+    # - akj/abdm-api-for-mobile-app # Akash Sep 28
+    # - ml/lookup-table-UI # Minha Oct 19
+    - ml/user-limit-emails # Minha Nov 18
+    - es/redirect-domain  # Ethan Nov 21
+    #- pkv/case-list-explorer-labels # Pawan Nov 22
+    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
+    - cs/SC-2360-auto-update-rule-overwrites-case-property
+    - ad/taleau-syncing-util-functions # Addison Dec 5
+    #- smh/multi-select-error-handling # Steph Dec 13
+    - em/maintenance-alert-scheduling # Evan Dec 14
+    - es/success-msg  # Ethan Dec 14
+    - pkv/case-list-explorer-labels-revert # Pawan Dec 20
 submodules: { }
