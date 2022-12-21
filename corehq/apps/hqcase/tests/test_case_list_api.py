@@ -1,19 +1,27 @@
 import datetime
 import uuid
 from base64 import b64decode
+from unittest.mock import patch
 
 from django.http import QueryDict
 from django.test import TestCase
+from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq import privileges
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
     case_search_es_teardown,
     es_test,
 )
-from corehq.util.test_utils import generate_cases, privilege_enabled
+from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.util.test_utils import (
+    flag_enabled,
+    generate_cases,
+    privilege_enabled,
+)
 
 from ..api.core import UserError
 from ..api.get_list import MAX_PAGE_SIZE, get_list
@@ -24,13 +32,20 @@ BAD_GUYS_ID = str(uuid.uuid4())
 
 @es_test
 @privilege_enabled(privileges.API_ACCESS)
+@flag_enabled('CASE_API_V0_6')
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.domain_obj = create_domain(cls.domain)
         case_search_es_setup(cls.domain, cls._get_case_blocks())
+        role = UserRole.create(
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
+        )
+        cls.web_user = WebUser.create(cls.domain, 'netflix', 'password', None, None, role_id=role.get_id)
 
     @staticmethod
     def _get_case_blocks():
@@ -72,6 +87,7 @@ class TestCaseListAPI(TestCase):
     @classmethod
     def tearDownClass(cls):
         case_search_es_teardown()
+        cls.domain_obj.delete()
         super().tearDownClass()
 
     def test_pagination(self):
@@ -96,6 +112,13 @@ class TestCaseListAPI(TestCase):
             [c['external_id'] for c in res['cases']]
         )
         self.assertNotIn('next', res)  # No pages after this one
+
+    def test_get_list_basic_auth(self):
+        self.client.login(username='netflix', password='password')
+        with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
+            res = self.client.get(reverse('case_api', args=(self.domain,)))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json(), {'example': 'result'})
 
 
 @generate_cases([

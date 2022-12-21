@@ -1,5 +1,4 @@
 import uuid
-from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
@@ -89,12 +88,6 @@ class TestCaseAPI(TestCase):
     def _bulk_update_cases(self, body):
         # for the time being, the implementation is the same
         return self._create_case(body)
-
-    def test_basic_get_list(self):
-        with patch('corehq.apps.hqcase.views.get_list', lambda *args: {'example': 'result'}):
-            res = self.client.get(reverse('case_api', args=(self.domain,)))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json(), {'example': 'result'})
 
     def test_create_case(self):
         res = self._create_case({
