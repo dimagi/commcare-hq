@@ -8,11 +8,15 @@ hqDefine("cloudcare/js/formplayer/main", function () {
                 dsn: dsn,
                 environment: initialPageData('sentry_environment'),
                 release: initialPageData('sentry_release'),
-                tracesSampleRate: 1.0,
                 initialScope: {
                     tags: { "domain": initialPageData('domain') },
                     user: { "username": initialPageData('username') },
                 },
+                integrations: [
+                    new Sentry.Integrations.Breadcrumbs({
+                        dom: false,
+                    }),
+                ],
             });
         }
     };
