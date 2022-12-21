@@ -138,6 +138,7 @@ def get_user_data_for_restore(restore_user):
     user_data = dict()
     for custom_user_data in get_custom_user_data_for_restore(restore_user):
         user_data.update(custom_user_data)
+    user_data.update(restore_user.user_session_data)
     return user_data
 
 
