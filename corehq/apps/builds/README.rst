@@ -94,9 +94,8 @@ Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g
 ``192.168.0.10``), without a port.
 
 Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
-your IP address as ``server_name`` and also in ``proxy_pass``.
-For example, set server_name as ``192.168.0.10`` and
-``proxy_pass`` as ``http://192.168.0.10:8000``.
+your IP address as ``server_name``.
+For example, set server_name as ``192.168.0.10``.
 Then run ``sudo nginx -s reload`` to update configration changes.
 
 Note: You'll have to update these if you ever change networks or get a new IP address.
