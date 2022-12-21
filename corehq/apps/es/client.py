@@ -197,14 +197,14 @@ class ElasticManageAdapter(BaseAdapter):
             pass
         raise TaskError(result)
 
-    def index_create(self, index, settings=None):
+    def index_create(self, index, metadata=None):
         """Create a new index.
 
         :param index: ``str`` index name
-        :param settings: ``dict`` of index settings
+        :param metadata: ``dict`` full index metadata (mappings, settings, etc)
         """
         self._validate_single_index(index)
-        self._es.indices.create(index, settings)
+        self._es.indices.create(index, metadata)
 
     def index_delete(self, index):
         """Delete an existing index.

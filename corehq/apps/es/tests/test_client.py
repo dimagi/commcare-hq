@@ -695,8 +695,8 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     def index_exists(self):
         return manager.index_exists(self.index_name)
 
-    def create_index(self, settings=None):
-        manager.index_create(self.index_name, settings)
+    def create_index(self, metadata=None):
+        manager.index_create(self.index_name, metadata)
 
     def delete_index(self):
         manager.index_delete(self.index_name)
