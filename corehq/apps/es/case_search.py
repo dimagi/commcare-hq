@@ -35,6 +35,7 @@ from corehq.util.dates import iso_string_to_datetime
 from . import filters, queries
 from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
+from .index.analysis import PHONETIC_ANALYSIS
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
@@ -138,6 +139,8 @@ class CaseSearchES(CaseES):
 
 
 class ElasticCaseSearch(ElasticDocumentAdapter):
+
+    analysis = PHONETIC_ANALYSIS
 
     @property
     def mapping(self):

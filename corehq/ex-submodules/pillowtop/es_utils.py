@@ -2,32 +2,11 @@ from dimagi.ext import jsonobject
 from django.conf import settings
 from copy import copy, deepcopy
 from datetime import datetime
+
+from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.util.es.elasticsearch import TransportError
 from corehq.util.es.interface import ElasticsearchInterface
 from pillowtop.logger import pillow_logging
-
-
-def _get_analysis(*names):
-    return {
-        "analyzer": {name: ANALYZERS[name] for name in names}
-    }
-
-
-ANALYZERS = {
-    "default": {
-        "type": "custom",
-        "tokenizer": "whitespace",
-        "filter": ["lowercase"]
-    },
-    "comma": {
-        "type": "pattern",
-        "pattern": r"\s*,\s*"
-    },
-    "phonetic": {
-        "filter": ["standard", "lowercase", "soundex"],
-        "tokenizer": "standard"
-    }
-}
 
 XFORM_HQ_INDEX_NAME = "xforms"
 CASE_HQ_INDEX_NAME = "hqcases"
@@ -39,23 +18,12 @@ SMS_HQ_INDEX_NAME = "smslogs"
 CASE_SEARCH_HQ_INDEX_NAME = "case_search"
 TEST_HQ_INDEX_NAME = "pillowtop_tests"
 
-phonetic_analysis = _get_analysis('default', 'phonetic')
-phonetic_analysis.update({
-    "filter": {
-        "soundex": {
-            "replace": "true",
-            "type": "phonetic",
-            "encoder": "soundex"
-        }
-    }})
-
 ES_INDEX_SETTINGS = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
             "number_of_replicas": 0,
             "number_of_shards": 5,
-            "analysis": _get_analysis('default'),
         },
     },
     # Apply phonetic analysis to case search index only
@@ -63,21 +31,18 @@ ES_INDEX_SETTINGS = {
         "settings": {
             "number_of_replicas": 1,
             "number_of_shards": 5,
-            "analysis": phonetic_analysis,
         },
     },
     # Default settings for aliases on all environments (overrides default settings)
     DOMAIN_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
-            "analysis": _get_analysis('default', 'comma'),
         },
     },
 
     APP_HQ_INDEX_NAME: {
         "settings": {
             "number_of_replicas": 0,
-            "analysis": _get_analysis('default'),
         },
     },
 
@@ -85,7 +50,6 @@ ES_INDEX_SETTINGS = {
         "settings": {
             "number_of_shards": 2,
             "number_of_replicas": 0,
-            "analysis": _get_analysis('default'),
         },
     },
 }
@@ -125,7 +89,7 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
                         del meta_settings['settings'][key]
                     else:
                         meta_settings['settings'][key] = value
-
+        meta_settings['settings']['analysis'] = deepcopy(doc_adapter_from_info(self).analysis)
         return meta_settings
 
     def to_json(self):

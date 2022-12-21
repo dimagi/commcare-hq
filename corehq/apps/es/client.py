@@ -29,6 +29,7 @@ from .const import (
     SCROLL_SIZE,
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
+from .index.analysis import DEFAULT_ANALYSIS
 from .utils import ElasticJSONSerializer
 
 log = logging.getLogger(__name__)
@@ -372,6 +373,8 @@ class ElasticDocumentAdapter(BaseAdapter):
     - ``mapping``: attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
     """
+
+    analysis = DEFAULT_ANALYSIS
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -981,10 +984,8 @@ class ElasticMultiplexAdapter(BaseAdapter):
     # meta methods and Elastic index read methods (pass-through on the primary
     # adapter)
     @property
-    def settings(self):
-        # TODO: this is a classproperty on the the document adapter, but should
-        # be converted to a property
-        return self.primary.settings
+    def analysis(self):
+        return self.primary.analysis
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should

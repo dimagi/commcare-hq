@@ -14,6 +14,7 @@ DomainES
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.analysis import COMMA_ANALYSIS
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -45,6 +46,8 @@ class DomainES(HQESQuery):
 
 
 class ElasticDomain(ElasticDocumentAdapter):
+
+    analysis = COMMA_ANALYSIS
 
     @property
     def mapping(self):

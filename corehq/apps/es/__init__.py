@@ -5,6 +5,7 @@ from . import (  # noqa: F401
     const,
     es_query,
     exceptions,
+    index,
     filters,
     queries,
     utils,
