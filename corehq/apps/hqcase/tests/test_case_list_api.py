@@ -1,11 +1,10 @@
 import datetime
 import uuid
 from base64 import b64decode
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.http import QueryDict
 from django.test import TestCase
-from django.urls import reverse
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -16,12 +15,13 @@ from corehq.apps.es.tests.utils import (
     case_search_es_teardown,
     es_test,
 )
-from corehq.apps.users.models import HqPermissions, UserRole, WebUser
+from corehq.apps.users.models import HQApiKey, HqPermissions, UserRole, WebUser
 from corehq.util.test_utils import (
     flag_enabled,
     generate_cases,
     privilege_enabled,
 )
+from corehq.util.view_utils import reverse
 
 from ..api.core import UserError
 from ..api.get_list import MAX_PAGE_SIZE, get_list
@@ -119,6 +119,24 @@ class TestCaseListAPI(TestCase):
             res = self.client.get(reverse('case_api', args=(self.domain,)))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json(), {'example': 'result'})
+
+    def test_GET_param_auth(self):
+        # url/?username=foo&api_key=abc123
+        # That is a valid means of authenticating, but we need to strip those
+        # params so they're not interpreted as filters on the API
+        api_key = HQApiKey.objects.create(user=self.web_user.get_django_user())
+        get_list = MagicMock(return_value={'example': 'result'})
+        with patch('corehq.apps.hqcase.views.get_list', get_list):
+            get_params = {
+                'username': 'netflix',
+                'api_key': api_key.key,
+                'external_id': 'mattie',
+            }
+            self.client.get(reverse('case_api', args=(self.domain,), params=get_params))
+
+        domain, params = get_list.call_args.args
+        # only 'external_id' should get passed through
+        self.assertEqual(params, {'external_id': 'mattie'})
 
 
 @generate_cases([

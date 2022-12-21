@@ -154,7 +154,12 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        params = request.GET.dict()
+        if 'username' in params and 'api_key' in params:
+            # 'username' and 'api_key' are being used for auth, strip 'em
+            params.pop('username')
+            params.pop('api_key')
+        res = get_list(request.domain, params)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
