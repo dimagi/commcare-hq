@@ -4379,6 +4379,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
 "<strong>Data</strong> &mdash; view, export, and edit form and case data, "
 "reassign cases"
 msgstr ""

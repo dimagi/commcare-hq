@@ -4052,6 +4052,27 @@ msgstr ""
 msgid "In Test"
 msgstr ""
 
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+#: corehq/apps/settings/views.py
+msgid "Created"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py corehq/motech/generic_inbound/models.py
+msgid "Reverted"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/export/templates/export/incremental_export.html
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/standard/users/reports.py
+#: corehq/apps/reports/templates/reports/tableau_visualization.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/tabs/tabclasses.py
+msgid "Deleted"
+msgstr ""
+
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
 msgstr ""
@@ -9229,6 +9250,11 @@ msgid "Form and Case Changes"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+msgid "Application Release Logs"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Version Number"
 msgstr ""
 
@@ -9242,6 +9268,10 @@ msgstr ""
 #: corehq/apps/reports/forms.py
 msgid "Time"
 msgstr "Hora"
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+msgid "Info"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
 msgid "Current Profiles"
@@ -9341,10 +9371,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-msgid "Application Release Logs"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
@@ -10458,6 +10484,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
+msgid "Reverted to version {log.info['version']}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
@@ -12513,6 +12543,7 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Dictionary"
 msgstr "Dicionário de Dados"
@@ -12584,10 +12615,10 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"        Missing properties or case types? <a href=\"%(refresh_url)s\" "
+"          Missing properties or case types? <a href=\"%(refresh_url)s\" "
 "target=\"_blank\">Click to sync</a>\n"
-"        (opens in a new tab, may be slow...)\n"
-"        "
+"          (opens in a new tab, may be slow...)\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -16767,10 +16798,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
-#, fuzzy
-#| msgid "There was an error processing your request"
 msgid "There was an error processing your request. Please try again."
-msgstr "Houve um erro ao processamento de seu pedido"
+msgstr ""
 
 #: corehq/apps/domain/views/accounting.py
 msgid "Dimagi Internal Subscription Management"
@@ -18410,16 +18439,6 @@ msgstr ""
 msgid ""
 "Now access forms and cases directly from your exports. Check out the new "
 "\"form_link\" and \"case_link\" fields in your export settings!"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/users/reports.py
-#: corehq/apps/reports/templates/reports/tableau_visualization.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/tabs/tabclasses.py
-msgid "Deleted"
 msgstr ""
 
 #: corehq/apps/export/templates/export/incremental_export.html
@@ -22231,11 +22250,6 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Available Alerts"
-msgstr ""
-
-#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-#: corehq/apps/settings/views.py
-msgid "Created"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -39608,10 +39622,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
 msgid "Validation Failed"
-msgstr ""
-
-#: corehq/motech/generic_inbound/models.py
-msgid "Reverted"
 msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
