@@ -74,7 +74,6 @@ branches:
     #- pkv/case-list-explorer-labels # Pawan Nov 22
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - ad/taleau-syncing-util-functions # Addison Dec 5
     #- smh/multi-select-error-handling # Steph Dec 13
     - em/maintenance-alert-scheduling # Evan Dec 14
     - es/success-msg  # Ethan Dec 14
