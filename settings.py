@@ -1052,22 +1052,8 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ELASTIC_ADAPTER_SETTINGS = {
-    "ElasticCase": {
-        # Set to True to remove the `actions` and `xform_id` fields from the
-        # Elastic "hqcases_..." index. These fields contribute high load to the
-        # shard databases.
-        "DROP_FORM_FIELDS": False,
-    },
-    "ElasticForm": {
-        # TODO: document what this is for
-        "DISABLE_ALL": False,
-    },
-}
-
-# TODO: remove these Elastic settings:
-ES_SETTINGS = None  # [do not use] legacy mechanism for tests
-CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
+ES_SETTINGS = None
 
 PHI_API_KEY = None
 PHI_PASSWORD = None

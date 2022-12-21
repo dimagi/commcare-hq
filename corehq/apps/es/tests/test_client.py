@@ -1568,9 +1568,6 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         TestDocumentAdapter("secondary", "doc"),
     )
 
-    def test_settings(self):
-        self.assertEqual(self.adapter.settings, self.adapter.primary.settings)
-
     def test_to_json(self):
         doc = self._make_doc()
         as_json = {"_id": doc.id, "value": doc.value, "entropy": doc.entropy}
