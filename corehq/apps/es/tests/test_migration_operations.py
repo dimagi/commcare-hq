@@ -237,6 +237,48 @@ class TestCreateIndex(BaseCase):
             operation.describe(),
         )
 
+    def test_deconstruct(self):
+        args = ["test", "test", {}, {}, "test"]
+        operation = CreateIndex(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (CreateIndex.__qualname__, args, {}),
+        )
+
+    def test_deconstruct_omits_mapping__meta(self):
+        name, type_, analysis, settings_key = ("test", "test", {}, "test")
+        mapping = {
+            "top_level": True,
+            "_meta": {"key": "value"},
+        }
+        operation = CreateIndex(name, type_, mapping, analysis, settings_key)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                CreateIndex.__qualname__,
+                [
+                    name,
+                    type_,
+                    {"top_level": True},
+                    analysis,
+                    settings_key,
+                ],
+                {},
+            ),
+        )
+
+    def test_deconstruct_with_comment(self):
+        args = ["test", "test", {}, {}, "test", "this is the comment"]
+        operation = CreateIndex(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                CreateIndex.__qualname__,
+                args[:-1],
+                {"comment": "this is the comment"},
+            ),
+        )
+
 
 @es_test
 class TestDeleteIndex(BaseCase):
@@ -295,6 +337,27 @@ class TestDeleteIndex(BaseCase):
         self.assertEqual(
             f"Delete Elasticsearch index {self.index!r}",
             operation.describe(),
+        )
+
+    def test_deconstruct(self):
+        name = "name"
+        operation = DeleteIndex(name)
+        self.assertEqual(
+            operation.deconstruct(),
+            (DeleteIndex.__qualname__, [name], {}),
+        )
+
+    def test_deconstruct_with_reverse_params(self):
+        name = "name"
+        reverse_params = ("type", {}, {}, "settings_key")
+        operation = DeleteIndex(name, reverse_params)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                DeleteIndex.__qualname__,
+                [name],
+                {"reverse_params": reverse_params},
+            ),
         )
 
 
@@ -506,6 +569,34 @@ class TestUpdateIndexMapping(BaseCase):
         self.assertEqual(
             f"Update the mapping for Elasticsearch index {self.index!r}",
             operation.describe(),
+        )
+
+    def test_deconstruct(self):
+        args = ["name", "type", {}]
+        operation = UpdateIndexMapping(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (UpdateIndexMapping.__qualname__, args, {}),
+        )
+
+    def test_deconstruct_with_comment(self):
+        args = ["name", "type", {}, "this is the comment"]
+        operation = UpdateIndexMapping(*args)
+        self.assertEqual(
+            operation.deconstruct(),
+            (
+                UpdateIndexMapping.__qualname__,
+                args[:-1],
+                {"comment": "this is the comment"},
+            ),
+        )
+
+    def test_deconstruct_no_print_diff(self):
+        args = ["name", "type", {}]
+        operation = UpdateIndexMapping(*args, print_diff=False)
+        self.assertEqual(
+            operation.deconstruct(),
+            (UpdateIndexMapping.__qualname__, args, {"print_diff": False}),
         )
 
 

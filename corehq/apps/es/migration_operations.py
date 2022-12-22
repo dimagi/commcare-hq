@@ -30,6 +30,8 @@ class BaseElasticOperation(RunPython):
 class CreateIndex(BaseElasticOperation):
     """Create an Elasticsearch index."""
 
+    serialization_expand_args = ["mapping", "analysis"]
+
     def __init__(self, name, type_, mapping, analysis, settings_key, comment=None):
         """CreateIndex operation.
 
@@ -49,6 +51,17 @@ class CreateIndex(BaseElasticOperation):
         self.analysis = analysis
         self.settings_key = settings_key
         self.comment = comment
+
+    def deconstruct(self):
+        kwargs = {}
+        if self.comment is not None:
+            kwargs["comment"] = self.comment
+        mapping = {k: v for k, v in self.mapping.items() if k != "_meta"}
+        return (
+            self.__class__.__qualname__,
+            [self.name, self.type, mapping, self.analysis, self.settings_key],
+            kwargs,
+        )
 
     def run(self, *args, **kw):
         from corehq.apps.es.client import manager
@@ -100,6 +113,8 @@ class CreateIndex(BaseElasticOperation):
 class DeleteIndex(BaseElasticOperation):
     """Delete an Elasticsearch index."""
 
+    serialization_expand_args = ["reverse_params"]
+
     def __init__(self, name, reverse_params=None):
         """DeleteIndex operation.
 
@@ -116,6 +131,21 @@ class DeleteIndex(BaseElasticOperation):
             self.reverse_mapping = mapping
             self.reverse_analysis = analysis
             self.reverse_settings_key = settings_key
+
+    def deconstruct(self):
+        kwargs = {}
+        if self.reversible:
+            kwargs["reverse_params"] = (
+                self.reverse_type,
+                self.reverse_mapping,
+                self.reverse_analysis,
+                self.reverse_settings_key,
+            )
+        return (
+            self.__class__.__qualname__,
+            [self.name],
+            kwargs,
+        )
 
     def run(self, *args, **kw):
         from corehq.apps.es.client import manager
@@ -165,6 +195,8 @@ class UpdateIndexMapping(BaseElasticOperation):
     .. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
     """
 
+    serialization_expand_args = ["properties"]
+
     def __init__(self, name, type_, properties, comment=None, print_diff=True):
         """UpdateIndexMapping operation.
 
@@ -186,6 +218,18 @@ class UpdateIndexMapping(BaseElasticOperation):
         self.comment = comment
         self.print_diff = print_diff
         self.stream = sys.stdout  # stream where the diff is printed
+
+    def deconstruct(self):
+        kwargs = {}
+        if self.comment is not None:
+            kwargs["comment"] = self.comment
+        if not self.print_diff:
+            kwargs["print_diff"] = False
+        return (
+            self.__class__.__qualname__,
+            [self.name, self.type, self.properties],
+            kwargs,
+        )
 
     def run(self, *args, **kw):
         from corehq.apps.es.client import manager
