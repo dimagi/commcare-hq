@@ -92,9 +92,9 @@ Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g
 Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
 your IP address as ``server_name``.
 For example, set server_name as ``192.168.0.10``.
-Then run ``sudo nginx -s reload`` to update configuration changes.
+Then run ``sudo nginx -s reload`` or ``brew services restart nginx`` to update configuration changes.
 
-You should also be able to access ``http://your_ip_address/a/domain`` from a phone or other device on the
+You should now be able to access ``http://your_ip_address/a/domain`` from a phone or other device on the
 same network.
 
 Note: You'll have to update these if you ever change networks or get a new IP address.
