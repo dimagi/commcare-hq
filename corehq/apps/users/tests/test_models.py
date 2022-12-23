@@ -278,3 +278,17 @@ class HQPermissionsTests(SimpleTestCase):
         permissions.normalize()
 
         self.assertTrue(permissions.view_apps)
+
+    def test_normalize_access_release_management_preserves_previous_edit_linked_config_value(self):
+        permissions = HqPermissions(access_release_management=True, edit_linked_configurations=True)
+        old_permissions = HqPermissions(edit_linked_configurations=False)
+        permissions.normalize(previous=old_permissions)
+
+        self.assertFalse(permissions.edit_linked_configurations)
+
+    def test_normalize_disabled_release_management_uses_edit_linked_config_value(self):
+        permissions = HqPermissions(access_release_management=False, edit_linked_configurations=True)
+        old_permissions = HqPermissions(edit_linked_configurations=False)
+        permissions.normalize(previous=old_permissions)
+
+        self.assertTrue(permissions.edit_linked_configurations)
