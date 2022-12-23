@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 
@@ -24,6 +25,8 @@ from pillowtop.utils import (
 )
 
 from .interface import BulkPillowProcessor, PillowProcessor
+
+logger = logging.getLogger(__name__)
 
 
 def identity(x):
@@ -76,6 +79,7 @@ class ElasticProcessor(PillowProcessor):
                     self._delete_doc_if_exists(change.id)
             else:
                 self._delete_doc_if_exists(change.id)
+            logger.info(f'Processed doc deletion for change {change.id}')
             return
 
         with self._datadog_timing('extract'):
