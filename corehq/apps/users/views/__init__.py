@@ -967,7 +967,7 @@ def _update_role_from_view(domain, role_data):
     role.save()
 
     permissions = HqPermissions.wrap(role_data["permissions"])
-    permissions.normalize()
+    permissions.normalize(previous=role.permissions)
     role.set_permissions(permissions.to_list())
 
     assignable_by = role_data["assignable_by"]

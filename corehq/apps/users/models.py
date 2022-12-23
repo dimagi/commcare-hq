@@ -194,6 +194,7 @@ class HqPermissions(DocumentSchema):
     access_web_apps = BooleanProperty(default=False)
     edit_messaging = BooleanProperty(default=False)
     access_release_management = BooleanProperty(default=False)
+    edit_linked_configurations = BooleanProperty(default=False)
 
     edit_reports = BooleanProperty(default=False)
     download_reports = BooleanProperty(default=False)
@@ -231,7 +232,7 @@ class HqPermissions(DocumentSchema):
                 setattr(permissions, PARAMETERIZED_PERMISSIONS[perm.name], list(perm.allowed_items))
         return permissions
 
-    def normalize(self):
+    def normalize(self, previous=None):
         if not self.access_all_locations:
             # The following permissions cannot be granted to location-restricted
             # roles.
@@ -270,6 +271,11 @@ class HqPermissions(DocumentSchema):
 
         if not (self.view_reports or self.view_report_list):
             self.download_reports = False
+
+        if self.access_release_management and previous:
+            # Do not overwrite edit_linked_configurations, so that if access_release_management
+            # is removed, the previous value for edit_linked_configurations can be restored
+            self.edit_linked_configurations = previous.edit_linked_configurations
 
     @classmethod
     @memoized

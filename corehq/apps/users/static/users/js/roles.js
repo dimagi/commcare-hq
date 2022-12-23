@@ -376,38 +376,6 @@ hqDefine('users/js/roles',[
                         allowCheckboxPermission: null,
                     },
                     {
-                        showOption: root.ermPrivilege,
-                        editPermission: self.permissions.access_release_management,
-                        viewPermission: null,
-                        text: gettext("<strong>Enterprise Release Management</strong> &mdash; access the Linked Project Spaces feature"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
-                        showOption: root.mrmPrivilege,
-                        editPermission: self.permissions.access_release_management,
-                        viewPermission: null,
-                        text: gettext("<strong>Multi-Environment Release Management</strong> &mdash; access the Linked Project Spaces feature"),
-                        showEditCheckbox: true,
-                        editCheckboxLabel: "edit-release-management-checkbox",
-                        showViewCheckbox: false,
-                        viewCheckboxLabel: "view-release-management-checkbox",
-                        screenReaderEditAndViewText: null,
-                        screenReaderViewOnlyText: null,
-                        showAllowCheckbox: false,
-                        allowCheckboxText: null,
-                        allowCheckboxId: null,
-                        allowCheckboxPermission: null,
-                    },
-                    {
                         showOption: root.attendanceTrackingPrivilege,
                         editPermission: self.permissions.manage_attendance_tracking,
                         viewPermission: null,
@@ -426,6 +394,26 @@ hqDefine('users/js/roles',[
                 ];
 
                 var hasEmbeddedTableau = toggles.toggleEnabled("EMBEDDED_TABLEAU");
+
+                const linkedTitle = root.ermPrivilege ?
+                    gettext("Enterprise Release Management") : gettext("Multi-Environment Release Management");
+                self.erm = {
+                    'title': linkedTitle,
+                    'visible': root.ermPrivilege || root.mrmPrivilege,
+                    'access_release_management': {
+                        text: linkedTitle,
+                        checkboxLabel: "erm-checkbox",
+                        checkboxPermission: self.permissions.access_release_management,
+                        checkboxText: gettext("Access the Linked Project Spaces feature"),
+                    },
+                    'edit_linked_configs': {
+                        text: gettext("Edit Linked Configurations"),
+                        checkboxLabel: "erm-edit-linked-checkbox",
+                        checkboxPermission: self.permissions.edit_linked_configurations,
+                        checkboxText: "Allow overriding linked data",
+                    },
+                };
+
                 self.reports = [
                     {
                         visibilityRestraint: self.permissions.access_all_locations,
