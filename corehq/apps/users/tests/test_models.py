@@ -9,6 +9,7 @@ from corehq.apps.users.models import (
     Invitation,
     WebUser,
     DeviceAppMeta,
+    HqPermissions,
 )
 
 from corehq.apps.domain.models import Domain
@@ -209,3 +210,71 @@ class DeviceAppMetaLatestRequestTests(SimpleTestCase):
     def setUp(self):
         self.previous_time = datetime(2022, 10, 2)
         self.current_time = self.previous_time + timedelta(hours=1)
+
+
+class HQPermissionsTests(SimpleTestCase):
+    def test_normalize_removes_permissions_from_location_restricted_user(self):
+        permissions = HqPermissions(
+            edit_web_users=True,
+            view_web_users=True,
+            edit_groups=True,
+            view_groups=True,
+            edit_apps=True,
+            view_roles=True,
+            edit_reports=True,
+            edit_billing=True
+        )
+        permissions.access_all_locations = False
+
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_web_users)
+        self.assertFalse(permissions.view_web_users)
+        self.assertFalse(permissions.edit_groups)
+        self.assertFalse(permissions.view_groups)
+        self.assertFalse(permissions.edit_apps)
+        self.assertFalse(permissions.view_roles)
+        self.assertFalse(permissions.edit_reports)
+        self.assertFalse(permissions.edit_billing)
+
+    def test_normalize_edit_users_implies_view_users(self):
+        permissions = HqPermissions(edit_web_users=True, view_web_users=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_web_users)
+
+    def test_normalize_edit_commcare_users_implies_view_users(self):
+        permissions = HqPermissions(edit_commcare_users=True, view_commcare_users=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.edit_commcare_users)
+
+    def test_normalize_edit_group_implies_view_group(self):
+        permissions = HqPermissions(edit_groups=True, view_groups=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_groups)
+
+    def test_normalize_disabled_edit_groups_prevents_editing_users_in_groups(self):
+        permissions = HqPermissions(edit_groups=False, edit_users_in_groups=True)
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_users_in_groups)
+
+    def test_normalize_edit_locations_implies_viewing_locations(self):
+        permissions = HqPermissions(edit_locations=True, view_locations=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_locations)
+
+    def test_normalize_disabled_edit_locations_prevents_editing_users_locations(self):
+        permissions = HqPermissions(edit_locations=False, edit_users_in_locations=True)
+        permissions.normalize()
+
+        self.assertFalse(permissions.edit_users_in_locations)
+
+    def test_normalize_edit_apps_implies_view_apps(self):
+        permissions = HqPermissions(edit_apps=True, view_apps=False)
+        permissions.normalize()
+
+        self.assertTrue(permissions.view_apps)
