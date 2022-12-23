@@ -126,6 +126,7 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             }]
         )
         cls.config1.save()
+        cls.addClassCleanup(cls.config1.delete)
         cls.config2 = _make_config(
             [{
                 "type": "expression",
@@ -139,12 +140,14 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             }]
         )
         cls.config2.save()
+        cls.addClassCleanup(cls.config2.delete)
 
         cls.adapters = []
         for config in [cls.config1, cls.config2]:
             adapter = get_indicator_adapter(config, raise_errors=True)
             adapter.build_table()
             cls.adapters.append(adapter)
+            cls.addClassCleanup(adapter.drop_table)
 
     @classmethod
     def tearDownClass(cls):

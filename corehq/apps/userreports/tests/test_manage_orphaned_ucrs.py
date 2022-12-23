@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -24,7 +24,7 @@ class BaseOrphanedUCRTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.active_domain = create_domain('test')
+        cls.active_domain = create_domain('active-domain')
         cls.deleted_domain = create_domain('deleted-domain')
         cls.deleted_domain.delete(leave_tombstone=True)
         cls.addClassCleanup(cls.active_domain.delete)
@@ -188,4 +188,4 @@ class ManageOrphanedUCRsTests(BaseOrphanedUCRTest):
                                        is_orphan=True)
         call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
                      domain=self.deleted_domain.name)
-        self.mock_drop_ucrs.assert_called_with('ucr', [orphaned_ucr])
+        self.mock_drop_ucrs.assert_called_with(ANY, [orphaned_ucr])
