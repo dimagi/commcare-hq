@@ -1,6 +1,4 @@
 import logging
-from collections import defaultdict
-from textwrap import dedent
 
 from sqlalchemy.exc import ProgrammingError
 
@@ -183,124 +181,115 @@ def delete_all_ucr_tables_for_domain(domain):
         adapter.drop_table()
 
 
-def get_deletable_ucrs(orphaned_tables_by_id, force_delete=False, domain=None):
+def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True):
     """
-    Ensures tables are UCRs via inserted_at column
-    :param orphaned_tables_by_id: {<engine_id>: [<tablename>, ...]}
-    :param force_delete: if True, orphaned tables associated with active domains are marked as deletable
-    :param domain: optional, but if specified will only gather ucrs from the specified domain
-    :return:
+    :param engine_id: id of the database/engine to search in
+    :param domain: (optional) domain name to limit search to
+    :param ignore_active_domains: if True, only searches within deleted domains
+    :return: list of tablenames
     """
-    ucrs_to_delete = defaultdict(list)
-    active_domains_with_orphaned_ucrs = set()
-    for engine_id, tablenames in orphaned_tables_by_id.items():
+
+    if domain and not Domain.is_domain_deleted(domain):
+        assert not ignore_active_domains,\
+            f"{domain} is active but ignore_active_domains is True"
+
+    ucrs_with_datasources = _get_ucrs_with_datasources(engine_id,
+                                                       domain,
+                                                       ignore_active_domains)
+    all_ucrs = _get_existing_ucrs(engine_id, domain, ignore_active_domains)
+    suspected_orphaned_ucrs = set(all_ucrs) - set(ucrs_with_datasources)
+    return _get_confirmed_orphaned_ucrs(engine_id, suspected_orphaned_ucrs)
+
+
+def _get_ucrs_with_datasources(engine_id, domain, ignore_active_domains):
+    ucrs_with_datasources = []
+    if domain:
+        datasources = get_datasources_for_domain(domain)
+    else:
+        datasources = get_all_data_sources()
+
+    for datasource in datasources:
+        if datasource.engine_id != engine_id:
+            continue
+
+        if ignore_active_domains and not Domain.is_domain_deleted(
+                datasource.domain):
+            continue
+
+        ucr = get_table_name(datasource.domain, datasource.table_id)
+        ucrs_with_datasources.append(ucr)
+
+    return ucrs_with_datasources
+
+
+def _get_existing_ucrs(engine_id, domain, ignore_active_domains):
+    try:
         engine = connection_manager.get_engine(engine_id)
-        if not tablenames:
-            continue
+    except KeyError:
+        raise ValueError(f"Engine id {engine_id} does not exist.")
 
-        for tablename in tablenames:
-            domain_for_table = get_domain_for_ucr_table_name(tablename)
+    with engine.begin() as connection:
+        # Using string formatting rather than execute with %s syntax
+        # is acceptable here because the strings we're inserting are static
+        # and only templated for DRYness
+        results = connection.execute(f"""
+        SELECT table_name
+          FROM information_schema.tables
+        WHERE table_schema='public'
+          AND table_type='BASE TABLE'
+          AND (
+            table_name LIKE '{UCR_TABLE_PREFIX}%%'
+            OR
+            table_name LIKE '{LEGACY_UCR_TABLE_PREFIX}%%'
+        );
+        """).fetchall()
+        all_existing_ucrs = [r[0] for r in results]
 
-            if domain and domain != domain_for_table:
-                continue
+    if domain:
+        all_existing_ucrs = [ucr for ucr in all_existing_ucrs if
+                             get_domain_for_ucr_table_name(ucr) == domain]
+    elif ignore_active_domains:
+        # can use elif because this is redundant after a domain filter
+        all_existing_ucrs = [ucr for ucr in all_existing_ucrs if
+                             Domain.is_domain_deleted(
+                                 get_domain_for_ucr_table_name(ucr))]
 
-            if not force_delete and not Domain.is_domain_deleted(domain_for_table):
-                active_domains_with_orphaned_ucrs.add(domain_for_table)
-                continue
-
-            with engine.begin() as connection:
-                try:
-                    result = connection.execute(f'SELECT COUNT(*), MAX(inserted_at) FROM "{tablename}"')
-                except ProgrammingError:
-                    print(f"\t{tablename}: no inserted_at column, probably not UCR")
-                except Exception as e:
-                    print(f"\tAn error was encountered when attempting to read from {tablename}: {e}")
-                else:
-                    row_count, idle_since = result.fetchone()
-                    ucrs_to_delete[engine_id].append({'tablename': tablename, 'row_count': row_count})
-
-    if not force_delete and active_domains_with_orphaned_ucrs:
-        formatted_domains = '\n'.join(sorted(active_domains_with_orphaned_ucrs))
-        error_message = dedent("""
-            {} active domain(s) have orphaned ucrs.
-            The domains are:
-            {}
-            """).format(len(active_domains_with_orphaned_ucrs),
-                        formatted_domains)
-        raise AssertionError(error_message)
-
-    return ucrs_to_delete
+    return all_existing_ucrs
 
 
-def get_orphaned_tables_by_engine_id(engine_id=None):
-    """
-    :param engine_id: optional parameter to only search within a specific database
-    :return: {<engine_id>: [<tablename>, ...]}
-    """
-    data_sources = get_all_data_sources()
-    tables_by_engine_id = _get_tables_for_data_sources(data_sources, engine_id)
-    return _get_tables_without_data_sources(tables_by_engine_id)
+def _get_confirmed_orphaned_ucrs(engine_id, suspected_orphaned_ucrs):
+    if not suspected_orphaned_ucrs:
+        return []
 
-
-def _get_tables_for_data_sources(data_sources, engine_id=None):
-    """
-    :param data_sources:
-    :param engine_id: optional parameter to limit results to one db engine
-    :return: a dictionary in the form of {<engine_id>: [<tables>], ...}
-    """
-    tables_by_engine_id = defaultdict(set)
-    for data_source in data_sources:
-        if engine_id and data_source.engine_id != engine_id:
-            continue
-
-        table_name = get_table_name(data_source.domain, data_source.table_id)
-        tables_by_engine_id[data_source.engine_id].add(table_name)
-
-    return tables_by_engine_id
-
-
-def _get_tables_without_data_sources(tables_by_engine_id):
-    """
-    :param tables_by_engine_id:
-    :return: a dictionary in the form of {<engine_id>: [<tables], ...}
-    """
-    tables_without_data_sources = defaultdict(list)
-    for engine_id, expected_tables in tables_by_engine_id.items():
-        try:
-            engine = connection_manager.get_engine(engine_id)
-        except KeyError:
-            print(f"Engine id {engine_id} does not exist anymore. Skipping.")
-            continue
+    engine = connection_manager.get_engine(engine_id)
+    confirmed_orphaned_ucrs = []
+    for suspected_orphaned_ucr in suspected_orphaned_ucrs:
         with engine.begin() as connection:
-            # Using string formatting rather than execute with %s syntax
-            # is acceptable here because the strings we're inserting are static
-            # and only templated for DRYness
-            results = connection.execute(f"""
-            SELECT table_name
-              FROM information_schema.tables
-            WHERE table_schema='public'
-              AND table_type='BASE TABLE'
-              AND (
-                table_name LIKE '{UCR_TABLE_PREFIX}%%'
-                OR
-                table_name LIKE '{LEGACY_UCR_TABLE_PREFIX}%%'
-            );
-            """).fetchall()
-            tables_in_db = {r[0] for r in results}
-        tables_without_data_sources[engine_id] = tables_in_db - expected_tables
-    return tables_without_data_sources
+            try:
+                connection.execute(
+                    f'SELECT COUNT(*), MAX(inserted_at) FROM "{suspected_orphaned_ucr}"')
+            except ProgrammingError:
+                print(f"\t{suspected_orphaned_ucr}: no inserted_at column, probably not UCR")
+            except Exception as e:
+                print(
+                    f"\tAn error was encountered when attempting to read from "
+                    f"{suspected_orphaned_ucr}: {e}")
+            else:
+                confirmed_orphaned_ucrs.append(suspected_orphaned_ucr)
+
+    return confirmed_orphaned_ucrs
 
 
-def drop_ucr_tables(ucr_tables_by_engine_id):
+def drop_orphaned_ucrs(engine_id, ucrs):
     """
-    :param ucr_tables_by_engine_id: {'<engine_id>': [<tablename>, ...]}
+    WARNING: this method is intended for use with orphaned UCRs only
+    If passing in a UCR with an existing datasource, the datasource will not be
+    deleted along with the UCR table
+    :param engine_id: id of engine/database to connect to
+    :param ucrs: list of ucr tablenames to delete
     """
-    for engine_id, tablenames in ucr_tables_by_engine_id.items():
-        engine = connection_manager.get_engine(engine_id)
-        if not tablenames:
-            continue
-
-        for tablename in tablenames:
-            with engine.begin() as connection:
-                connection.execute(f'DROP TABLE "{tablename}"')
-                logger.info(f'Deleted {tablename} from database {engine_id}')
+    engine = connection_manager.get_engine(engine_id)
+    for ucr in ucrs:
+        with engine.begin() as connection:
+            connection.execute(f'DROP TABLE "{ucr}"')
+            logger.info(f'Deleted {ucr} from database {engine_id}')

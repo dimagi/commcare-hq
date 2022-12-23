@@ -1,13 +1,17 @@
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
-from django.test import TestCase
 from django.core.management import call_command
+from django.test import TestCase
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
+from corehq.apps.userreports.dbaccessors import (
+    drop_orphaned_ucrs,
+    get_orphaned_ucrs,
+)
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.elastic import get_es_new
@@ -15,90 +19,7 @@ from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
-@es_test
-class ManageOrphanedUCRsTests(TestCase):
-
-    def test_non_orphaned_tables_are_not_dropped(self):
-        config = self._create_data_source_config(self.active_domain.name)
-        config.save()
-        self.addCleanup(config.delete)
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-        self.addCleanup(adapter.drop_table)
-
-        try:
-            call_command('manage_orphaned_ucrs', 'delete',
-                         engine_id='ucr')
-        except SystemExit:
-            # should be able to assert that SystemExit is raised given there shouldn't be any orphaned tables
-            # but when running the entire test suite, this test fails likely because of a lingering orphaned UCR
-            pass
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_orphaned_table_of_active_domain_is_not_dropped(self):
-        config = self._create_data_source_config(self.active_domain.name)
-        config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-        self.addCleanup(adapter.drop_table)
-        # orphan table by deleting config
-        config.delete()
-
-        with self.assertRaises(SystemExit):
-            call_command('manage_orphaned_ucrs', 'delete',
-                         engine_id='ucr')
-
-        self.assertTrue(adapter.table_exists)
-
-    def test_orphaned_table_of_active_domain_is_dropped_with_force_delete(self):
-        config = self._create_data_source_config(self.active_domain.name)
-        config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-        self.addCleanup(adapter.drop_table)
-        # orphan table by deleting config
-        config.delete()
-
-        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
-                     force_delete=True)
-
-        self.assertFalse(adapter.table_exists)
-
-    def test_orphaned_table_of_deleted_domain_is_dropped(self):
-        config = self._create_data_source_config(self.deleted_domain.name)
-        config.save()
-        adapter = get_indicator_adapter(config, raise_errors=True)
-        adapter.build_table()
-        self.addCleanup(adapter.drop_table)
-        # orphan table by deleting config
-        config.delete()
-
-        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr')
-
-        self.assertFalse(adapter.table_exists)
-
-    def test_limit_deletion_to_one_domain(self):
-        active_config = self._create_data_source_config(self.active_domain.name)
-        active_config.save()
-        active_adapter = get_indicator_adapter(active_config, raise_errors=True)
-        active_adapter.build_table()
-        self.addCleanup(active_adapter.drop_table)
-
-        deleted_config = self._create_data_source_config(self.deleted_domain.name)
-        deleted_config.save()
-        deleted_adapter = get_indicator_adapter(deleted_config, raise_errors=True)
-        deleted_adapter.build_table()
-        self.addCleanup(deleted_adapter.drop_table)
-        # orphan table by deleting config
-        active_config.delete()
-        deleted_config.delete()
-
-        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
-                     force_delete=True, domain='test')
-
-        self.assertTrue(deleted_adapter.table_exists)
-        self.assertFalse(active_adapter.table_exists)
+class BaseOrphanedUCRTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -118,13 +39,25 @@ class ManageOrphanedUCRsTests(TestCase):
         super().setUp()
         self._setup_es()
 
+    def create_ucr(self, domain, tablename, is_orphan=False):
+        config = self._create_data_source_config(domain.name, tablename)
+        config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        if is_orphan:
+            config.delete()
+        else:
+            self.addCleanup(config.delete)
+        return adapter.get_table().name
+
     @staticmethod
-    def _create_data_source_config(domain_name):
+    def _create_data_source_config(domain_name, tablename='test-table'):
         return DataSourceConfiguration(
             domain=domain_name,
             display_name='foo',
             referenced_doc_type='CommCareCase',
-            table_id=clean_table_name(domain_name, 'test-table'),
+            table_id=clean_table_name(domain_name, tablename),
             configured_indicators=[{
                 "type": "expression",
                 "expression": {
@@ -142,3 +75,117 @@ class ManageOrphanedUCRsTests(TestCase):
         reset_es_index(DOMAIN_INDEX_INFO)
         initialize_index_and_mapping(self.es, DOMAIN_INDEX_INFO)
         self.addCleanup(ensure_index_deleted, DOMAIN_INDEX_INFO.index)
+
+
+@es_test
+class GetOrphanedUCRsTests(BaseOrphanedUCRTest):
+
+    def test_returns_empty_if_no_orphaned_tables(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=False)
+        self.assertEqual(get_orphaned_ucrs('ucr'), [])
+
+    def test_returns_deleted_domain_ucrs_when_ignore_active_domains_is_true(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=True)
+        deleted_domain_ucr = self.create_ucr(self.deleted_domain,
+                                             'deleted-table', is_orphan=True)
+
+        # ignore_active_domains is True by default
+        orphaned_ucrs = get_orphaned_ucrs('ucr')
+
+        self.assertEqual(orphaned_ucrs, [deleted_domain_ucr])
+
+    def test_includes_active_domain_ucrs_when_ignore_active_domains_is_false(self):
+        active_domain_ucr = self.create_ucr(self.active_domain,
+                                            'active-table', is_orphan=True)
+        deleted_domain_ucr = self.create_ucr(self.deleted_domain,
+                                             'deleted-table', is_orphan=True)
+
+        orphaned_ucrs = get_orphaned_ucrs('ucr', ignore_active_domains=False)
+
+        self.assertEqual(sorted(orphaned_ucrs),
+                         sorted([active_domain_ucr, deleted_domain_ucr]))
+
+    def test_returns_for_specific_domain_when_domain_is_specified(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=True)
+        deleted_domain_ucr = self.create_ucr(self.deleted_domain,
+                                             'deleted-table', is_orphan=True)
+
+        orphaned_ucrs = get_orphaned_ucrs('ucr', ignore_active_domains=False,
+                                          domain=self.deleted_domain.name)
+
+        self.assertEqual(orphaned_ucrs, [deleted_domain_ucr])
+
+    def test_raises_exception_if_domain_is_active_but_ignore_active_domains_is_true(self):
+        with self.assertRaises(AssertionError):
+            get_orphaned_ucrs('ucr', ignore_active_domains=True,
+                              domain=self.active_domain.name)
+
+    def test_raises_exception_if_database_does_not_exist(self):
+        with self.assertRaises(ValueError):
+            get_orphaned_ucrs('database')
+
+
+@es_test
+class DropUCRTablesTests(BaseOrphanedUCRTest):
+
+    def test_ucrs_are_dropped(self):
+        # want access to the adapter, so don't use create_ucr helper
+        config = self._create_data_source_config(self.active_domain.name,
+                                                 'orphaned-table')
+        config.save()
+        adapter = get_indicator_adapter(config, raise_errors=True)
+        adapter.build_table()
+        self.addCleanup(adapter.drop_table)
+        config.delete()
+
+        drop_orphaned_ucrs('ucr', [adapter.get_table().name])
+
+        self.assertFalse(adapter.table_exists)
+
+
+@es_test
+class ManageOrphanedUCRsTests(BaseOrphanedUCRTest):
+
+    def setUp(self):
+        super().setUp()
+        drop_ucrs_patcher = patch(
+            'corehq.apps.userreports.management.commands.manage_orphaned_ucrs'
+            '.drop_orphaned_ucrs')
+        self.mock_drop_ucrs = drop_ucrs_patcher.start()
+        self.addClassCleanup(drop_ucrs_patcher.stop)
+
+    def test_non_orphaned_tables_are_not_dropped(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=False)
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr')
+        self.mock_drop_ucrs.assert_not_called()
+
+    def test_orphaned_table_for_active_domain_is_not_dropped_if_ignore_active_domains_is_true(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=True)
+        # ignore_active_domains is true by default
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr')
+        self.mock_drop_ucrs.assert_not_called()
+
+    def test_orphaned_table_for_active_domain_is_dropped_if_ignore_active_domains_is_false(self):
+        self.create_ucr(self.active_domain, 'active-table', is_orphan=True)
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
+                     ignore_active_domains=False)
+        self.mock_drop_ucrs.assert_called()
+
+    def test_orphaned_table_for_deleted_domain_is_dropped_if_ignore_active_domains_is_true(self):
+        self.create_ucr(self.deleted_domain, 'deleted-table', is_orphan=True)
+        # ignore_active_domains is true by default
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr')
+        self.mock_drop_ucrs.assert_called()
+
+    def test_orphaned_table_for_deleted_domain_is_dropped_if_ignore_active_domains_is_false(self):
+        self.create_ucr(self.deleted_domain, 'deleted-table', is_orphan=True)
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
+                     ignore_active_domains=False)
+        self.mock_drop_ucrs.assert_called()
+
+    def test_orphaned_table_for_deleted_domain_is_dropped_if_domain_is_set(self):
+        orphaned_ucr = self.create_ucr(self.deleted_domain, 'deleted-table',
+                                       is_orphan=True)
+        call_command('manage_orphaned_ucrs', 'delete', engine_id='ucr',
+                     domain=self.deleted_domain.name)
+        self.mock_drop_ucrs.assert_called_with(ANY, [orphaned_ucr])
