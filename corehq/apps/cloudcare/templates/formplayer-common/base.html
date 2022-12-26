@@ -1,6 +1,9 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load statici18n %}
+
+{% requirejs_main "cloudcare/js/preview_app/main" %}
+
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
@@ -43,25 +46,17 @@
   <link rel="stylesheet" href="{% static 'jquery-ui-built-themes/base/jquery-ui.min.css' %}">
   <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
 
-  {% javascript_libraries use_bootstrap5=use_bootstrap5 underscore=True jquery_ui=True ko=True hq=True analytics=True %}
   <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
-  {% compress js %}
-    <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
-    <script src="{% static 'cloudcare/js/preview_app/dragscroll.js' %}"></script>
-  {% endcompress %}
-
-  {% if request.use_daterangepicker and not requirejs_main %}
-    {% compress js %}
-      <script src="{% static 'moment/moment.js' %}"></script>
-      <script src="{% static 'bootstrap-daterangepicker/daterangepicker.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/daterangepicker.config.js' %}"></script>
-    {% endcompress %}
-  {% endif %}
+  {% include "hqwebapp/partials/requirejs.html" %}
 
   <style id="list-cell-layout-style"></style>
   <!-- For Formplayer's app preview -->
 
+  {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+  <script>
+    window.USE_REQUIREJS = true;
+  </script>
 </head>
 <body>
 {% block body %}{% endblock %}
