@@ -1,5 +1,6 @@
 {% load compress %}
 {% load hq_shared_tags %}
+{% load statici18n %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -19,6 +20,10 @@
     </style>
 
     {% block stylesheets %}{% endblock %}
+
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=False %}
+
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     <script src="{% static 'mocha/mocha.js' %}"></script>
     <script src="{% static 'chai/chai.js' %}"></script>
