@@ -76,7 +76,6 @@ branches:
     - cs/SC-2360-auto-update-rule-overwrites-case-property
     #- smh/multi-select-error-handling # Steph Dec 13
     - em/maintenance-alert-scheduling # Evan Dec 14
-    - es/success-msg  # Ethan Dec 14
     - pkv/case-list-explorer-labels-revert # Pawan Dec 20
     - sk/sentry-js  # Simon Dec 21
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
