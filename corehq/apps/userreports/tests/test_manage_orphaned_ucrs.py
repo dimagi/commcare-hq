@@ -7,18 +7,18 @@ from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.dbaccessors import (
     drop_orphaned_ucrs,
     get_orphaned_ucrs,
 )
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.tests.utils import create_data_source_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.elastic import get_es_new
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted, reset_es_index
 
 
+@es_test
 class BaseOrphanedUCRTest(TestCase):
 
     @classmethod
@@ -30,17 +30,12 @@ class BaseOrphanedUCRTest(TestCase):
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
 
-        input_patcher = patch('corehq.apps.userreports.management.commands.manage_orphaned_ucrs.input')
-        mock_input = input_patcher.start()
-        mock_input.return_value = 'y'
-        cls.addClassCleanup(input_patcher.stop)
-
     def setUp(self):
         super().setUp()
         self._setup_es()
 
     def create_ucr(self, domain, tablename, is_orphan=False):
-        config = self._create_data_source_config(domain.name, tablename)
+        config = create_data_source_config(domain.name, tablename)
         config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
@@ -51,25 +46,6 @@ class BaseOrphanedUCRTest(TestCase):
             self.addCleanup(config.delete)
         return adapter.get_table().name
 
-    @staticmethod
-    def _create_data_source_config(domain_name, tablename='test-table'):
-        return DataSourceConfiguration(
-            domain=domain_name,
-            display_name='foo',
-            referenced_doc_type='CommCareCase',
-            table_id=clean_table_name(domain_name, tablename),
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": 'name'
-                },
-                "column_id": 'name',
-                "display_name": 'name',
-                "datatype": "string"
-            }],
-        )
-
     def _setup_es(self):
         self.es = get_es_new()
         reset_es_index(DOMAIN_INDEX_INFO)
@@ -77,7 +53,6 @@ class BaseOrphanedUCRTest(TestCase):
         self.addCleanup(ensure_index_deleted, DOMAIN_INDEX_INFO.index)
 
 
-@es_test
 class GetOrphanedUCRsTests(BaseOrphanedUCRTest):
 
     def test_returns_empty_if_no_orphaned_tables(self):
@@ -125,13 +100,12 @@ class GetOrphanedUCRsTests(BaseOrphanedUCRTest):
             get_orphaned_ucrs('database')
 
 
-@es_test
 class DropUCRTablesTests(BaseOrphanedUCRTest):
 
     def test_ucrs_are_dropped(self):
         # want access to the adapter, so don't use create_ucr helper
-        config = self._create_data_source_config(self.active_domain.name,
-                                                 'orphaned-table')
+        config = create_data_source_config(self.active_domain.name,
+                                           'orphaned-table')
         config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
@@ -143,8 +117,15 @@ class DropUCRTablesTests(BaseOrphanedUCRTest):
         self.assertFalse(adapter.table_exists)
 
 
-@es_test
 class ManageOrphanedUCRsTests(BaseOrphanedUCRTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        input_patcher = patch('corehq.apps.userreports.management.commands.manage_orphaned_ucrs.input')
+        mock_input = input_patcher.start()
+        mock_input.return_value = 'y'
+        cls.addClassCleanup(input_patcher.stop)
 
     def setUp(self):
         super().setUp()
