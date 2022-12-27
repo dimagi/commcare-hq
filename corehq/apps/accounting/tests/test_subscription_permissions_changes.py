@@ -162,7 +162,9 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             table_id="bar",
         )
         builder_report_data_source.save()
+        self.addCleanup(builder_report_data_source.delete)
         other_data_source.save()
+        self.addCleanup(other_data_source.delete)
         report_builder_report = ReportConfiguration(
             domain=self.project.name,
             config_id=builder_report_data_source._id,
