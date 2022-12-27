@@ -64,12 +64,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         FormplayerFrontend.regions = new RegionContainer();
     });
 
-    // TODO: navigation isn't navigating
-    FormplayerFrontend.navigate = function (route, options) {
-        options || (options = {});
-        Backbone.history.navigate(route, options);
-    };
-
     FormplayerFrontend.getCurrentRoute = function () {
         return Backbone.history.fragment;
     };
@@ -283,7 +277,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
                 } else {
-                    FormplayerFrontend.navigate('/apps', { trigger: true });
+                    FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
                 if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
