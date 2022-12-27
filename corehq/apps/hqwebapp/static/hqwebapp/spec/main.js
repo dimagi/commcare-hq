@@ -27,6 +27,7 @@ hqDefine("hqwebapp/spec/main", [
     hqRequire([
         "hqwebapp/spec/assert_properties_spec",
         "hqwebapp/spec/inactivity_spec",
+        "hqwebapp/spec/urllib_spec",
     ], function () {
         // TODO: DRY up with mocha/base.html
         if (navigator.userAgent.indexOf('PhantomJS') < 0) {
