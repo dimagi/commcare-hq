@@ -13,6 +13,7 @@ from corehq.apps.es import FormES
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.tests.utils import create_data_source_config
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import create_case, create_form_for_test
@@ -139,27 +140,36 @@ class TestFindESDocsForDeletedDomains(TestCase):
 class TestFindUCRTablesForDeletedDomains(TestCase):
 
     def test_deleted_domain_with_ucr_tables_is_flagged(self):
-        config = self._create_data_source_config(self.deleted_domain.name)
+        config = create_data_source_config(self.deleted_domain.name)
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(config.delete)
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
         self.assertTrue(counts_by_domain[self.deleted_domain.name], [config.table_id])
 
     def test_missing_domain_with_ucr_tables_is_not_flagged(self):
-        config = self._create_data_source_config('missing-domain')
+        config = create_data_source_config('missing-domain')
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(config.delete)
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
         self.assertTrue('missing-domain' not in counts_by_domain)
 
     def test_active_domain_with_ucr_tables_is_not_flagged(self):
-        config = self._create_data_source_config(self.active_domain.name)
+        config = create_data_source_config(self.active_domain.name)
+        config.save()
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(config.delete)
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
@@ -173,22 +183,3 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         cls.deleted_domain.delete(leave_tombstone=True)
         cls.addClassCleanup(cls.active_domain.delete)
         cls.addClassCleanup(cls.deleted_domain.delete)
-
-    @staticmethod
-    def _create_data_source_config(domain):
-        return DataSourceConfiguration(
-            domain=domain,
-            display_name='foo',
-            referenced_doc_type='CommCareCase',
-            table_id=clean_table_name('domain', 'test-table'),
-            configured_indicators=[{
-                "type": "expression",
-                "expression": {
-                    "type": "property_name",
-                    "property_name": 'name'
-                },
-                "column_id": 'name',
-                "display_name": 'name',
-                "datatype": "string"
-            }],
-        )
