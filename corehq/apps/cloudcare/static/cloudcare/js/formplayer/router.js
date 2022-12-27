@@ -131,7 +131,7 @@ hqDefine("cloudcare/js/formplayer/router", [
             currentFragment = Backbone.history.getFragment();
             urlObject = utils.CloudcareUrl.fromJson(utils.encodedUrlToObject(currentFragment));
             encodedUrl = utils.objectToEncodedUrl(urlObject.toJson());
-            FormplayerFrontend.navigate(encodedUrl);
+            utils.navigate(encodedUrl);
 
             menusController.showMenu(menuCollection);
         },
@@ -146,7 +146,7 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("apps:list", function () {
-        FormplayerFrontend.navigate("apps");
+        utils.navigate("apps");
         API.listApps();
     });
 
@@ -157,12 +157,12 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on('app:singleApp', function (appId) {
-        FormplayerFrontend.navigate("/single_app/" + appId);
+        utils.navigate("/single_app/" + appId);
         API.singleApp(appId);
     });
 
     FormplayerFrontend.on('app:landingPageApp', function (appId) {
-        FormplayerFrontend.navigate("/home/" + appId);
+        utils.navigate("/home/" + appId);
         API.landingPageApp(appId);
     });
 
@@ -235,12 +235,12 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on('restore_as:list', function () {
-        FormplayerFrontend.navigate("/restore_as");
+        utils.navigate("/restore_as");
         API.listUsers();
     });
 
     FormplayerFrontend.on('settings:list', function () {
-        FormplayerFrontend.navigate("/settings");
+        utils.navigate("/settings");
         API.listSettings();
     });
 
@@ -249,12 +249,12 @@ hqDefine("cloudcare/js/formplayer/router", [
     });
 
     FormplayerFrontend.on("sessions", function (pageNumber, pageSize) {
-        FormplayerFrontend.navigate("/sessions", pageNumber, pageSize);
+        utils.navigate("/sessions", pageNumber, pageSize);
         API.listSessions(pageNumber, pageSize);
     });
 
     FormplayerFrontend.on("getSession", function (sessionId) {
-        FormplayerFrontend.navigate("/sessions/" + sessionId);
+        utils.navigate("/sessions/" + sessionId);
         API.getSession(sessionId);
     });
 
