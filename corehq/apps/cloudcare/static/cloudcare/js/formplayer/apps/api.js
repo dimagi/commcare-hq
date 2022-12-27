@@ -4,11 +4,11 @@
 hqDefine("cloudcare/js/formplayer/apps/api", [
     'jquery',
     'cloudcare/js/formplayer/apps/collections',
-    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/users/models',
 ], function (
     $,
     Collections,
-    FormplayerFrontend
+    UsersModels,
 ) {
     var appsPromiseByRestoreAs = {};
     var appsByRestoreAs = {};
@@ -37,8 +37,8 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
         },
         getAppEntities: function () {
             var appsPromise,
-                restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs,
-                singleAppMode = FormplayerFrontend.getChannel().request('currentUser').displayOptions.singleAppMode;
+                restoreAs = UsersModels.getCurrentUser().restoreAs,
+                singleAppMode = UsersModels.getCurrentUser().displayOptions.singleAppMode;
             if (singleAppMode) {
                 appsPromise = fetchPredefinedApps();
             } else {
@@ -50,7 +50,7 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
             });
         },
         getAppEntity: function (id) {
-            var restoreAs = FormplayerFrontend.getChannel().request('currentUser').restoreAs;
+            var restoreAs = UsersModels.getCurrentUser().restoreAs;
             var apps = appsByRestoreAs[restoreAs];
             if (!apps) {
                 console.warn("getAppEntity is returning null. If the app_id is correct, " +

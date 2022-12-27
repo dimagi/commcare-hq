@@ -14,6 +14,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'cloudcare/js/utils',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
@@ -34,6 +35,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     GGAnalytics,
     Kissmetrics,
     CloudcareUtils,
+    AppsAPI,
     Const,
     FormplayerUtils,
     ProgressBar,
@@ -79,7 +81,8 @@ hqDefine("cloudcare/js/formplayer/app", [
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
         // TODO: now this is returning a promise, so all the callers need to be fixed. Or move this into a less popular module.
-        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+        //hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+console.log("asking for resource " + resourcePath);
             var currentApp = AppsAPI.getAppEntity(appId);
             if (!currentApp) {
                 console.warn('App is undefined for app_id: ' + appId);
@@ -98,7 +101,7 @@ hqDefine("cloudcare/js/formplayer/app", [
                 var name = _.last(resourcePath.split('/'));
                 return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
             }
-        });
+        //});
     });
 
     FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
@@ -308,9 +311,8 @@ hqDefine("cloudcare/js/formplayer/app", [
         user.changeFormLanguage = options.changeFormLanguage;
 
         hqRequire([
-            "cloudcare/js/formplayer/apps/api",
             "cloudcare/js/formplayer/users/utils",  // restoreAsUser
-        ], function (AppsAPI) {
+        ], function () {
             user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
@@ -329,10 +331,7 @@ hqDefine("cloudcare/js/formplayer/app", [
             });
 
             FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            hqRequire([
-                "cloudcare/js/formplayer/router",
-                "cloudcare/js/formplayer/apps/api",
-            ], function (Router, AppsAPI) {
+            hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
                 FormplayerFrontend.router = Router.start();
                 $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                     var appId;
