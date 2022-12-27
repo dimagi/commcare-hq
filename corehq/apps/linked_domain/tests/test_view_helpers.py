@@ -45,7 +45,6 @@ from corehq.apps.linked_domain.view_helpers import (
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION
-from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
@@ -53,26 +52,6 @@ from corehq.apps.userreports.models import (
     UCRExpression,
 )
 from corehq.util.test_utils import flag_enabled
-
-
-def _create_report(domain, title="report", upstream_id=None, should_save=True, app_id=None):
-    data_source = DataSourceConfiguration(
-        domain=domain,
-        table_id=uuid.uuid4().hex,
-        referenced_doc_type='XFormInstance',
-    )
-    data_source.meta.build.app_id = app_id
-    data_source.save()
-    report = ReportConfiguration(
-        domain=domain,
-        config_id=data_source._id,
-        title=title,
-        report_meta=ReportMeta(created_by_builder=True, master_id=upstream_id),
-    )
-    if should_save:
-        report.save()
-
-    return report
 
 
 def _create_keyword(domain, name="ping", upstream_id=None, should_save=True, is_grouped=False):
@@ -134,24 +113,30 @@ def _create_fixture(domain, tag="table", should_save=True):
 
 
 class BaseLinkedDomainTest(TestCase):
+
     @classmethod
     def setUpClass(cls):
-        super(BaseLinkedDomainTest, cls).setUpClass()
+        super().setUpClass()
         cls.upstream_domain_obj = create_domain('upstream-domain')
         cls.upstream_domain = cls.upstream_domain_obj.name
+        cls.addClassCleanup(cls.upstream_domain_obj.delete)
+
         cls.downstream_domain_obj = create_domain('downstream-domain')
         cls.downstream_domain = cls.downstream_domain_obj.name
+        cls.addClassCleanup(cls.downstream_domain_obj.delete)
 
         cls.original_app = Application.new_app(cls.upstream_domain, "Original Application")
         cls.original_app.linked_whitelist = [cls.downstream_domain]
         cls.original_app.save()
+        cls.addClassCleanup(cls.original_app.delete)
 
         cls.linked_app = LinkedApplication.new_app(cls.downstream_domain, "Linked Application")
         cls.linked_app.upstream_app_id = cls.original_app._id
         cls.linked_app.save()
+        cls.addClassCleanup(cls.linked_app.delete)
 
-        cls.original_report = _create_report(cls.upstream_domain)
-        cls.linked_report = _create_report(cls.downstream_domain, upstream_id=cls.original_report._id)
+        cls.original_report = cls._create_report(cls.upstream_domain)
+        cls.linked_report = cls._create_report(cls.downstream_domain, upstream_id=cls.original_report._id)
 
         cls.original_keyword = _create_keyword(cls.upstream_domain)
         cls.linked_keyword = _create_keyword(cls.downstream_domain, upstream_id=cls.original_keyword.id)
@@ -167,18 +152,30 @@ class BaseLinkedDomainTest(TestCase):
         cls.domain_link = DomainLink.link_domains(cls.downstream_domain, cls.upstream_domain)
 
     @classmethod
-    def tearDownClass(cls):
-        delete_all_report_configs()
-        cls.original_keyword.delete()
-        cls.linked_keyword.delete()
-        cls.original_report.delete()
-        cls.linked_report.delete()
-        cls.linked_app.delete()
-        cls.original_app.delete()
-        cls.domain_link.delete()
-        cls.upstream_domain_obj.delete()
-        cls.downstream_domain_obj.delete()
-        super(BaseLinkedDomainTest, cls).tearDownClass()
+    def _create_report(cls, domain, title="report", upstream_id=None,
+                       should_save=True, app_id=None):
+        data_source = DataSourceConfiguration(
+            domain=domain,
+            table_id=uuid.uuid4().hex,
+            referenced_doc_type='XFormInstance',
+        )
+        data_source.meta.build.app_id = app_id
+        if should_save:
+            data_source.save()
+            cls.addClassCleanup(data_source.delete)
+
+        report = ReportConfiguration(
+            domain=domain,
+            config_id=data_source._id,
+            title=title,
+            report_meta=ReportMeta(created_by_builder=True,
+                                   master_id=upstream_id),
+        )
+        if should_save:
+            report.save()
+            cls.addClassCleanup(report.delete)
+
+        return report
 
 
 class TestGetDataModels(BaseLinkedDomainTest):
@@ -309,16 +306,13 @@ class TestGetDataModels(BaseLinkedDomainTest):
 
 
 class TestBuildIndividualViewModels(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(TestBuildIndividualViewModels, cls).setUpClass()
-        cls.domain_obj = create_domain('test-create-view-model-domain')
-        cls.domain = cls.domain_obj.name
 
     @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        super(TestBuildIndividualViewModels, cls).tearDownClass()
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain('test-create-view-model-domain')
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.domain = cls.domain_obj.name
 
     def test_build_app_view_model_returns_match(self):
         app = Application.new_app(self.domain, "Test Application")
@@ -371,7 +365,7 @@ class TestBuildIndividualViewModels(TestCase):
         self.assertIsNone(actual_view_model)
 
     def test_build_report_view_model(self):
-        report = _create_report(self.domain, title='report-test', should_save=False)
+        report = self._create_report(self.domain, title='report-test')
         report._id = 'abc123'
         expected_view_model = {
             'type': 'report',
@@ -460,6 +454,23 @@ class TestBuildIndividualViewModels(TestCase):
         ucr_expression = {}
         actual_view_model = build_ucr_expression_view_model(ucr_expression)
         self.assertIsNone(actual_view_model)
+
+    @classmethod
+    def _create_report(cls, domain, title="report", upstream_id=None):
+        data_source = DataSourceConfiguration(
+            domain=domain,
+            table_id=uuid.uuid4().hex,
+            referenced_doc_type='XFormInstance',
+        )
+        report = ReportConfiguration(
+            domain=domain,
+            config_id=data_source._id,
+            title=title,
+            report_meta=ReportMeta(created_by_builder=True,
+                                   master_id=upstream_id),
+        )
+
+        return report
 
 
 class TestBuildFeatureFlagViewModels(TestCase):
