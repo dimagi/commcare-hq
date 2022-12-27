@@ -13,6 +13,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     'analytix/js/google',
     'analytix/js/kissmetrix',
     'cloudcare/js/utils',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/constants',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
@@ -33,6 +34,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     GGAnalytics,
     Kissmetrics,
     CloudcareUtils,
+    AppsAPI,
     Const,
     FormplayerUtils,
     ProgressBar,
@@ -98,27 +100,24 @@ hqDefine("cloudcare/js/formplayer/app", [
      * The actual mapping is contained in the app Couch document
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
-        // TODO: now this is returning a promise, so all the callers need to be fixed. Or move this into a less popular module.
-        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
-            var currentApp = AppsAPI.getAppEntity(appId);
-            if (!currentApp) {
-                console.warn('App is undefined for app_id: ' + appId);
-                console.warn('Not processing resource: ' + resourcePath);
+        var currentApp = AppsAPI.getAppEntity(appId);
+        if (!currentApp) {
+            console.warn('App is undefined for app_id: ' + appId);
+            console.warn('Not processing resource: ' + resourcePath);
+            return;
+        }
+        if (resourcePath.substring(0, 7) === 'http://') {
+            return resourcePath;
+        } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+            var resource = currentApp.get('multimedia_map')[resourcePath];
+            if (!resource) {
+                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
                 return;
             }
-            if (resourcePath.substring(0, 7) === 'http://') {
-                return resourcePath;
-            } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
-                var resource = currentApp.get('multimedia_map')[resourcePath];
-                if (!resource) {
-                    console.warn('Unable to find resource ' + resourcePath + ' in multimedia map');
-                    return;
-                }
-                var id = resource.multimedia_id;
-                var name = _.last(resourcePath.split('/'));
-                return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
-            }
-        });
+            var id = resource.multimedia_id;
+            var name = _.last(resourcePath.split('/'));
+            return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
+        }
     });
 
     FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
@@ -332,9 +331,8 @@ hqDefine("cloudcare/js/formplayer/app", [
         user.changeFormLanguage = options.changeFormLanguage;
 
         hqRequire([
-            "cloudcare/js/formplayer/apps/api",
             "cloudcare/js/formplayer/users/utils",  // restoreAsUser
-        ], function (AppsAPI) {
+        ], function () {
             user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
@@ -352,10 +350,7 @@ hqDefine("cloudcare/js/formplayer/app", [
             });
 
             FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            hqRequire([
-                "cloudcare/js/formplayer/router",
-                "cloudcare/js/formplayer/apps/api",
-            ], function (Router, AppsAPI) {
+            hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
                 FormplayerFrontend.router = Router.start();
                 $.when(
                     AppsAPI.getAppEntities(),
