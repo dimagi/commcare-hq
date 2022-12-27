@@ -24,7 +24,10 @@ hqDefine("hqwebapp/spec/main", [
     googleAnalytics.track.click = sinon.spy();
     kissAnalytics.track.event = sinon.spy();
 
-    hqRequire(["hqwebapp/spec/assert_properties_spec"], function () {
+    hqRequire([
+        "hqwebapp/spec/assert_properties_spec",
+        "hqwebapp/spec/inactivity_spec",
+    ], function () {
         // TODO: DRY up with mocha/base.html
         if (navigator.userAgent.indexOf('PhantomJS') < 0) {
             mocha.run();
