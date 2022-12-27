@@ -164,7 +164,7 @@ hqDefine("cloudcare/js/formplayer/users/views", [
             });
         },
         navigate: function () {
-            FormplayerFrontend.navigate(
+            formplayerUtils.navigate(
                 '/restore_as/' +
                 this.model.get('page') + '/' +
                 this.model.get('query')
