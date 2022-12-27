@@ -205,6 +205,9 @@ UNIT_TESTING = True
 
 PILLOWTOP_MACHINE_ID = 'testhq'
 
+FORMPLAYER_URL = 'http://localhost:8080'
+FORMPLAYER_INTERNAL_AUTH_KEY = "secretkey"
+
 CACHE_REPORTS = True
 
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
