@@ -82,9 +82,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
             delete urlObject.queryData[queryKey].inputs;
         }
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            FormplayerFrontend.navigate(encodedUrl, { replace: replace });
-        });
+        Utils.navigate(encodedUrl, { replace: replace });
+    };
+
+    Utils.navigate = function (route, options) {
+        options || (options = {});
+        Backbone.history.navigate(route, options);
     };
 
     /**
