@@ -62,7 +62,6 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    # - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
@@ -80,4 +79,5 @@ branches:
     - sk/sentry-js  # Simon Dec 21
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
+    - jls/web-apps-requirejs # Jenny Dec 27
 submodules: { }
