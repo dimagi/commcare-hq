@@ -4,6 +4,9 @@ requirejs.config({
     paths: {
         "jquery": "jquery/dist/jquery.min",
         "underscore": "underscore/underscore",
+        "backbone": "backbone/backbone-min",
+        "backbone.radio": "backbone.radio/build/backbone.radio.min",
+        "backbone.marionette": "backbone.marionette/lib/backbone.marionette.min",
         "bootstrap": "bootstrap/dist/js/bootstrap.min",
         "knockout": "knockout/build/output/knockout-latest.debug",
         "ko.mapping": "hqwebapp/js/lib/knockout_plugins/knockout_mapping.ko.min",
@@ -15,7 +18,42 @@ requirejs.config({
     },
     shim: {
         "ace-builds/src-min-noconflict/ace": { exports: "ace" },
+        "backbone": { exports: "backbone" },
         "bootstrap": { deps: ['jquery'] },
+        "calendars/dist/js/jquery.calendars.picker": {
+            deps: [
+                "calendars/dist/js/jquery.plugin",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.plus": {
+            deps: [
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.picker-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars",
+            ],
+        },
+        "calendars/dist/js/jquery.calendars.ethiopian-am": {
+            deps: [
+                "calendars/dist/js/jquery.calendars.picker",
+                "calendars/dist/js/jquery.calendars.ethiopian",
+            ],
+        },
         "ko.mapping": { deps: ['knockout'] },
         "hqwebapp/js/hq.helpers": { deps: ['jquery', 'bootstrap', 'knockout', 'underscore'] },
         "datatables.bootstrap": { deps: ['datatables'] },

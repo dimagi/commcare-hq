@@ -1,8 +1,18 @@
-/*global Backbone, DOMPurify */
-hqDefine("cloudcare/js/formplayer/utils/utils", function () {
-    var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        toggles = hqImport("hqwebapp/js/toggles");
-
+hqDefine("cloudcare/js/formplayer/utils/utils", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles'
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    initialPageData,
+    toggles
+) {
     var Utils = {};
 
     /**
@@ -62,9 +72,12 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
     Utils.setUrlToObject = function (urlObject, replace) {
         replace = replace || false;
         var encodedUrl = Utils.objectToEncodedUrl(urlObject.toJson());
-        hqRequire(["cloudcare/js/formplayer/app"], function (FormplayerFrontend) {
-            FormplayerFrontend.navigate(encodedUrl, { replace: replace });
-        });
+        Utils.navigate(encodedUrl, { replace: replace });
+    };
+
+    Utils.navigate = function (route, options) {
+        options || (options = {});
+        Backbone.history.navigate(route, options);
     };
 
     Utils.doUrlAction = function (actionCallback) {

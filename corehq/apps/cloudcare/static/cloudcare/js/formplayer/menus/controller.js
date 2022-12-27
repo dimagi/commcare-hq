@@ -1,12 +1,27 @@
-/*global Backbone, DOMPurify */
-
-hqDefine("cloudcare/js/formplayer/menus/controller", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        menusUtils = hqImport("cloudcare/js/formplayer/menus/utils"),
-        views = hqImport("cloudcare/js/formplayer/menus/views"),
-        md = window.markdownit();
+hqDefine("cloudcare/js/formplayer/menus/controller", [
+    'jquery',
+    'underscore',
+    'backbone',
+    'DOMPurify/dist/purify.min',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/menus/utils',
+    'cloudcare/js/formplayer/menus/views',
+    'markdown-it/dist/markdown-it',
+    'cloudcare/js/formplayer/menus/api',    // app:select:menus and entity:get:details
+], function (
+    $,
+    _,
+    Backbone,
+    DOMPurify,
+    constants,
+    FormplayerFrontend,
+    formplayerUtils,
+    menusUtils,
+    views,
+    markdowner
+) {
     var selectMenu = function (options) {
 
         options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
@@ -195,7 +210,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             obj.style = styles[i];
             obj.id = i;
             if (obj.style.displayFormat === 'Markdown') {
-                obj.html = DOMPurify.sanitize(md.render(details[i]));
+                obj.html = DOMPurify.sanitize(markdowner().render(details[i]));
             }
             detailModel.push(obj);
         }

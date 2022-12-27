@@ -1,16 +1,29 @@
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
-
-hqDefine("cloudcare/js/formplayer/menus/api", function () {
-    var Collections = hqImport("cloudcare/js/formplayer/menus/collections"),
-        constants = hqImport("cloudcare/js/formplayer/constants"),
-        errors = hqImport("cloudcare/js/form_entry/errors"),
-        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        formplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar");
-
+hqDefine("cloudcare/js/formplayer/menus/api", [
+    'jquery',
+    'underscore',
+    'cloudcare/js/formplayer/menus/collections',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/form_entry/errors',
+    'cloudcare/js/form_entry/utils',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+], function (
+    $,
+    _,
+    Collections,
+    constants,
+    errors,
+    formEntryUtils,
+    FormplayerFrontend,
+    AppsAPI,
+    formplayerUtils,
+    ProgressBar
+) {
     var API = {
         queryFormplayer: function (params, route) {
             var user = FormplayerFrontend.getChannel().request('currentUser'),
@@ -23,7 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {

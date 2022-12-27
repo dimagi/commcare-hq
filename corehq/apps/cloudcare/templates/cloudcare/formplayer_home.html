@@ -52,10 +52,7 @@
   {% endcompress %}
 {% endblock %}
 
-{% block js %} {{ block.super }}
-  {% include "formplayer/dependencies.html" %}
-  <script src="{% static "cloudcare/js/formplayer/main.js" %}"></script>
-{% endblock %}
+{% requirejs_main "cloudcare/js/formplayer/main" %}
 
 {% block content %}
 

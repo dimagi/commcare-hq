@@ -278,38 +278,10 @@
 
     {# javascript below this line #}
 
-    {% if requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-      <script src="{% static 'requirejs/require.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-      {# Do not compress these, which are re-written during depeloy #}
-      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-      <script>
-        requirejs.config({
-          deps: ['knockout', 'ko.mapping'],
-          callback: function (ko, mapping) {
-            ko.mapping = mapping;
-          }
-        });
-        requirejs([
-          'hqwebapp/js/common',
-        ], function() {
-          requirejs([
-            'hqwebapp/js/base_main',
-          ], function () {
-            requirejs(['{{ requirejs_main }}'], function () {
-              console.log("Loaded requirejs main module: {{ requirejs_main }}");
-            });
-          });
-        });
-      </script>
-    {% endif %}
+    {% include "hqwebapp/partials/requirejs.html" %}
 
     {# HQ Specific Libraries #}
     {% if not requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>

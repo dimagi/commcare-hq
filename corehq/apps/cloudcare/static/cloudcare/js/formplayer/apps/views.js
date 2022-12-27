@@ -1,11 +1,22 @@
-/*global Marionette */
-
-hqDefine("cloudcare/js/formplayer/apps/views", function () {
-    var constants = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-        googleAnalytics = hqImport("analytix/js/google"),
-        kissmetrics = hqImport("analytix/js/kissmetrix");
-
+hqDefine("cloudcare/js/formplayer/apps/views", [
+    'jquery',
+    'underscore',
+    'backbone.marionette',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
+], function (
+    $,
+    _,
+    Marionette,
+    googleAnalytics,
+    kissmetrics,
+    constants,
+    FormplayerFrontend,
+    AppsAPI
+) {
     var GridItem = Marionette.View.extend({
         template: _.template($("#row-template").html() || ""),
         tagName: "div",
@@ -140,7 +151,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             this.appId = options.appId;
         },
         templateContext: function () {
-            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
+            var currentApp = AppsAPI.getAppEntity(this.appId),
                 appName;
             appName = currentApp.get('name');
             return {
@@ -185,7 +196,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
             this.appId = options.appId;
         },
         templateContext: function () {
-            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", this.appId),
+            var currentApp = AppsAPI.getAppEntity(this.appId),
                 appName = currentApp.get('name'),
                 imageUri = currentApp.get('imageUri');
             return {

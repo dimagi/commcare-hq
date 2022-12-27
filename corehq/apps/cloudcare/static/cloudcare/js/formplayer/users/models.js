@@ -1,8 +1,10 @@
-/*global Backbone */
-
-hqDefine("cloudcare/js/formplayer/users/models", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-
+hqDefine("cloudcare/js/formplayer/users/models", [
+    "backbone",
+    "analytix/js/kissmetrix",
+], function (
+    Backbone,
+    kissmetrics
+) {
     var User = Backbone.Model.extend();
     var CurrentUser = Backbone.Model.extend({
         initialize: function () {
@@ -34,11 +36,19 @@ hqDefine("cloudcare/js/formplayer/users/models", function () {
             );
         },
     });
+    var userInstance;
+    var getCurrentUser = function () {
+        if (!userInstance) {
+            userInstance = new CurrentUser();
+        }
+        return userInstance;
+    };
 
     return {
         User: User,
         CurrentUser: function () {
-            return new CurrentUser();
+            return getCurrentUser();
         },
+        getCurrentUser: getCurrentUser,
     };
 });

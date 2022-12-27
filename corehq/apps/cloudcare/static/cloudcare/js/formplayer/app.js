@@ -1,23 +1,49 @@
-/*global Marionette, Backbone */
-
 /**
  * The primary Marionette application managing menu navigation and launching form entry
  */
-
-hqDefine("cloudcare/js/formplayer/app", function () {
-    var appcues = hqImport('analytix/js/appcues'),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-        CloudcareUtils = hqImport("cloudcare/js/utils"),
-        Const = hqImport("cloudcare/js/formplayer/constants"),
-        FormplayerUtils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        GGAnalytics = hqImport("analytix/js/google"),
-        Kissmetrics = hqImport("analytix/js/kissmetrix"),
-        ProgressBar = hqImport("cloudcare/js/formplayer/layout/views/progress_bar"),
-        Toggles = hqImport("hqwebapp/js/toggles"),
-        UsersModels = hqImport("cloudcare/js/formplayer/users/models"),
-        WebFormSession = hqImport('cloudcare/js/form_entry/web_form_session');
-
-    Marionette.setRenderer(Marionette.TemplateCache.render);
+hqDefine("cloudcare/js/formplayer/app", [
+    'jquery',
+    'knockout',
+    'underscore',
+    'backbone',
+    'backbone.marionette',
+    'markdown-it/dist/markdown-it',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/toggles',
+    'analytix/js/appcues',
+    'analytix/js/google',
+    'analytix/js/kissmetrix',
+    'cloudcare/js/utils',
+    'cloudcare/js/formplayer/apps/api',
+    'cloudcare/js/formplayer/constants',
+    'cloudcare/js/formplayer/utils/utils',
+    'cloudcare/js/formplayer/layout/views/progress_bar',
+    'cloudcare/js/formplayer/users/models',
+    'cloudcare/js/form_entry/web_form_session',
+    'marionette.templatecache/lib/marionette.templatecache.min',    // needed for Marionette.TemplateCache
+    'backbone.radio',
+], function (
+    $,
+    ko,
+    _,
+    Backbone,
+    Marionette,
+    markdowner,
+    initialPageData,
+    Toggles,
+    appcues,
+    GGAnalytics,
+    Kissmetrics,
+    CloudcareUtils,
+    AppsAPI,
+    Const,
+    FormplayerUtils,
+    ProgressBar,
+    UsersModels,
+    WebFormSession,
+    TemplateCache
+) {
+    Marionette.setRenderer(TemplateCache.render);
     var FormplayerFrontend = new Marionette.Application();
 
     FormplayerFrontend.on("before:start", function (app, options) {
@@ -38,15 +64,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         });
 
         FormplayerFrontend.regions = new RegionContainer();
-        hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
-            FormplayerFrontend.router = Router.start();
-        });
     });
-
-    FormplayerFrontend.navigate = function (route, options) {
-        options || (options = {});
-        Backbone.history.navigate(route, options);
-    };
 
     FormplayerFrontend.getCurrentRoute = function () {
         return Backbone.history.fragment;
@@ -62,24 +80,28 @@ hqDefine("cloudcare/js/formplayer/app", function () {
      * The actual mapping is contained in the app Couch document
      */
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
-        var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
-        if (!currentApp) {
-            console.warn('App is undefined for app_id: ' + appId);
-            console.warn('Not processing resource: ' + resourcePath);
-            return;
-        }
-        if (resourcePath.substring(0, 7) === 'http://') {
-            return resourcePath;
-        } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
-            var resource = currentApp.get('multimedia_map')[resourcePath];
-            if (!resource) {
-                console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
+        // TODO: now this is returning a promise, so all the callers need to be fixed. Or move this into a less popular module.
+        //hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+console.log("asking for resource " + resourcePath);
+            var currentApp = AppsAPI.getAppEntity(appId);
+            if (!currentApp) {
+                console.warn('App is undefined for app_id: ' + appId);
+                console.warn('Not processing resource: ' + resourcePath);
                 return;
             }
-            var id = resource.multimedia_id;
-            var name = _.last(resourcePath.split('/'));
-            return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
-        }
+            if (resourcePath.substring(0, 7) === 'http://') {
+                return resourcePath;
+            } else if (!_.isEmpty(currentApp.get("multimedia_map"))) {
+                var resource = currentApp.get('multimedia_map')[resourcePath];
+                if (!resource) {
+                    console.warn('Unable to find resource ' + resourcePath + 'in multimedia map');
+                    return;
+                }
+                var id = resource.multimedia_id;
+                var name = _.last(resourcePath.split('/'));
+                return '/hq/multimedia/file/' + resource.media_type + '/' + id + '/' + name;
+            }
+        //});
     });
 
     FormplayerFrontend.getChannel().reply('gridPolyfillPath', function (path) {
@@ -202,8 +224,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             if (resp.status === "success") {
                 var $alert;
                 if (resp.submitResponseMessage) {
-                    var markdowner = window.markdownit(),
-                        analyticsLinks = [
+                    var analyticsLinks = [
                             { url: initialPageData.reverse('list_case_exports'), text: '[Data Feedback Loop Test] Clicked on Export Cases Link' },
                             { url: initialPageData.reverse('list_form_exports'), text: '[Data Feedback Loop Test] Clicked on Export Forms Link' },
                             { url: initialPageData.reverse('case_data', '.*'), text: '[Data Feedback Loop Test] Clicked on Case Data Link' },
@@ -222,7 +243,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                             }
                         };
                     $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                    $alert = CloudcareUtils.showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
+                    $alert = CloudcareUtils.showSuccess(markdowner().render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
                 } else {
                     $alert = CloudcareUtils.showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
                 }
@@ -259,7 +280,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
                 } else {
-                    FormplayerFrontend.navigate('/apps', { trigger: true });
+                    FormplayerUtils.navigate('/apps', { trigger: true });
                 }
             } else {
                 if (user.environment === Const.PREVIEW_APP_ENVIRONMENT) {
@@ -276,13 +297,6 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
-            // This isn't a circular import, but importing it at the top level would
-            // mean it would need to be faked for tests
-            hqRequire(["notifications/js/notifications_service_main"], function (Notifications) {
-                Notifications.initNotifications();
-            });
-        }
         $('.menu-scrollable-container').addClass('hide');
     });
 
@@ -295,9 +309,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         user.debuggerEnabled = options.debuggerEnabled;
         user.environment = options.environment;
         user.changeFormLanguage = options.changeFormLanguage;
-        user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
 
-        hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
+        hqRequire([
+            "cloudcare/js/formplayer/users/utils",  // restoreAsUser
+        ], function () {
+            user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
 
@@ -315,39 +331,42 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             });
 
             FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
-                var appId;
-                var apps = appCollection.toJSON();
-                if (Backbone.history) {
-                    Backbone.history.start();
-                    hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
-                        FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
-                            UsersViews.RestoreAsBanner({
-                                model: user,
-                            })
-                        );
-                    });
-                    if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
-                        appId = apps[0]['_id'];
-                    }
+            hqRequire(["cloudcare/js/formplayer/router"], function (Router) {
+                FormplayerFrontend.router = Router.start();
+                $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
+                    var appId;
+                    var apps = appCollection.toJSON();
+                    if (Backbone.history) {
+                        Backbone.history.start();
+                        hqRequire(["cloudcare/js/formplayer/users/views"], function (UsersViews) {
+                            FormplayerFrontend.regions.getRegion('restoreAsBanner').show(
+                                UsersViews.RestoreAsBanner({
+                                    model: user,
+                                })
+                            );
+                        });
+                        if (user.displayOptions.singleAppMode || user.displayOptions.landingPageAppMode) {
+                            appId = apps[0]['_id'];
+                        }
 
-                    if (self.getCurrentRoute() === "") {
-                        if (user.displayOptions.singleAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:singleApp", appId);
-                        } else if (user.displayOptions.landingPageAppMode) {
-                            FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
-                            FormplayerFrontend.trigger("app:landingPageApp", appId);
-                        } else {
-                            FormplayerFrontend.trigger("apps:list", apps);
-                        }
-                        if (user.displayOptions.phoneMode) {
-                            // Refresh on start of preview mode so it ensures we're on the latest app
-                            // since app updates do not work.
-                            FormplayerFrontend.trigger('refreshApplication', appId);
+                        if (self.getCurrentRoute() === "") {
+                            if (user.displayOptions.singleAppMode) {
+                                FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                                FormplayerFrontend.trigger("app:singleApp", appId);
+                            } else if (user.displayOptions.landingPageAppMode) {
+                                FormplayerFrontend.trigger('setAppDisplayProperties', apps[0]);
+                                FormplayerFrontend.trigger("app:landingPageApp", appId);
+                            } else {
+                                FormplayerFrontend.trigger("apps:list", apps);
+                            }
+                            if (user.displayOptions.phoneMode) {
+                                // Refresh on start of preview mode so it ensures we're on the latest app
+                                // since app updates do not work.
+                                FormplayerFrontend.trigger('refreshApplication', appId);
+                            }
                         }
                     }
-                }
+                });
             });
         });
 
