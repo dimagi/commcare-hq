@@ -14,8 +14,16 @@ hqDefine('notifications/js/notifications_service_main', [
     googleAnalytics
 ) {
     var initNotifications = function () {
+        var url;
+        try {
+            url = initialPageData.reverse('notifications_service');
+        } catch (e) {
+            // if URL isn't provided, bail
+            return;
+        }
+
         var csrfToken = $("#csrfTokenContainer").val();
-        notificationsService.setRMI(initialPageData.reverse('notifications_service'), csrfToken);
+        notificationsService.setRMI(url, csrfToken);
         notificationsService.initService('#js-settingsmenu-notifications');
         notificationsService.relativelyPositionUINotify('.alert-ui-notify-relative');
         notificationsService.initUINotify('.alert-ui-notify');
