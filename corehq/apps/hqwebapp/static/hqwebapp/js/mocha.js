@@ -11,11 +11,11 @@ hqDefine("hqwebapp/js/mocha", [
     googleAnalytics,
     kissAnalytics
 ) {
-    mocha.setup('bdd')
-    window.assert = chai.assert
+    mocha.setup('bdd');
+    window.assert = chai.assert;
 
     function gettext(str) {
-      return str;
+        return str;
     }
     window.gettext = gettext;
 

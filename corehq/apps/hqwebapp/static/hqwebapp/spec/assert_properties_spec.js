@@ -8,10 +8,10 @@ hqDefine("hqwebapp/spec/assert_properties_spec", [
 ) {
     describe('assert_properties', function () {
         var object = {
-                alpha: 1,
-                beta: 2,
-                delta: 3,
-            };
+            alpha: 1,
+            beta: 2,
+            delta: 3,
+        };
 
         it('should fail if required properties are missing', function () {
             try {
