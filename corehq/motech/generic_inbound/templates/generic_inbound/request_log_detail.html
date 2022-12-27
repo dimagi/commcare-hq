@@ -166,6 +166,13 @@
         {% trans 'Retry' %}
       </button>
     </form>
+  {% elif log.status == 'success' %}
+    <form action="{% url 'archive_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
+      <button type="submit" class="btn btn-danger disable-on-submit" >
+        <i class="fa fa-archive"></i>
+        {% trans 'Archive' %}
+      </button>
+    </form>
   {% endif %}
 </div>
 
