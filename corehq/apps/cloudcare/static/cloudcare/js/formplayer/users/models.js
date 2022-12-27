@@ -37,11 +37,20 @@ hqDefine("cloudcare/js/formplayer/users/models", [
             );
         },
     });
+    var userInstance;
+    var getCurrentUser = function () {
+        if (!userInstance) {
+            userInstance = new CurrentUser();
+        }
+        return userInstance;
+    };
 
     return {
         User: User,
+        // TODO: deprecate
         CurrentUser: function () {
-            return new CurrentUser();
+            return getCurrentUser();
         },
+        getCurrentUser: getCurrentUser,
     };
 });
