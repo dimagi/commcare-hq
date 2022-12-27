@@ -15,6 +15,7 @@ from pillowtop.feed.interface import Change, ChangeMeta
 
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration, RegistryDataSourceConfiguration,
@@ -168,3 +169,22 @@ def mock_filter_missing_domains(configs):
 skip_domain_filter_patch = patch(
     'corehq.apps.userreports.pillow._filter_domains_to_skip', mock_filter_missing_domains
 )
+
+
+def create_data_source_config(domain_name, tablename='test-table'):
+    return DataSourceConfiguration(
+        domain=domain_name,
+        display_name='foo',
+        referenced_doc_type='CommCareCase',
+        table_id=clean_table_name(domain_name, tablename),
+        configured_indicators=[{
+            "type": "expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": 'name'
+            },
+            "column_id": 'name',
+            "display_name": 'name',
+            "datatype": "string"
+        }],
+    )
