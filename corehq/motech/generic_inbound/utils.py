@@ -14,6 +14,7 @@ from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.util.view_utils import get_form_or_404
 
 
 def make_url_key():
@@ -125,3 +126,15 @@ def reprocess_api_request(request_log):
         request_log.response_status = response.status
         request_log.save()
         make_processing_attempt(response, request_log, is_retry=True)
+
+
+def revert_api_request(request_log, user_id):
+    from corehq.motech.generic_inbound.models import RequestLog
+
+    attempts = request_log.processingattempt_set.filter(xform_id__isnull=False)
+    for attempt in attempts:
+        form = get_form_or_404(request_log.domain, attempt.xform_id)
+        form.archive(user_id=user_id)
+
+    request_log.status = RequestLog.Status.REVERTED
+    request_log.save()
