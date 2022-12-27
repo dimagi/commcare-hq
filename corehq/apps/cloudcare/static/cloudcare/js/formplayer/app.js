@@ -309,14 +309,6 @@ hqDefine("cloudcare/js/formplayer/app", [
         };
         var sess = WebFormSession.WebFormSession(data);
         sess.renderFormXml(data, $('#webforms'));
-        // TODO: getting js error in app manager / app preview for the notifications_service URL
-        if (user.environment === Const.WEB_APPS_ENVIRONMENT) {
-            // This isn't a circular import, but importing it at the top level would
-            // mean it would need to be faked for tests
-            hqRequire(["notifications/js/bootstrap3/notifications_service_main"], function (Notifications) {
-                Notifications.initNotifications();
-            });
-        }
         $('.menu-scrollable-container').addClass('hide');
     });
 
