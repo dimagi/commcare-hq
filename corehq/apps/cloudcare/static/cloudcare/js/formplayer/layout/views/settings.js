@@ -4,14 +4,15 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     'underscore',
     'backbone.marionette',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/utils/utils',
     'bootstrap-switch/dist/js/bootstrap-switch', // bootstrapSwitch
-    'cloudcare/js/formplayer/apps/api',     // appselect:getApp
 ], function (
     $,
     _,
     Marionette,
     FormplayerFrontend,
+    AppsAPI,
     Utils
 ) {
     var slugs = {
@@ -43,7 +44,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
-            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            var currentApp = AppsAPI.getAppEntity(appId);
             return {
                 langs: currentApp.get('langs'),
                 currentLang: this.currentUser.displayOptions.language,

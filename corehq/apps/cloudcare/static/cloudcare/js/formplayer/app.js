@@ -91,7 +91,7 @@ hqDefine("cloudcare/js/formplayer/app", [
     FormplayerFrontend.getChannel().reply('resourceMap', function (resourcePath, appId) {
         // TODO: now this is returning a promise, so all the callers need to be fixed. Or move this into a less popular module.
         hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
-            var currentApp = FormplayerFrontend.getChannel().request("appselect:getApp", appId);
+            var currentApp = AppsAPI.getAppEntity(appId);
             if (!currentApp) {
                 console.warn('App is undefined for app_id: ' + appId);
                 console.warn('Not processing resource: ' + resourcePath);
@@ -346,10 +346,10 @@ hqDefine("cloudcare/js/formplayer/app", [
             hqRequire([
                 "cloudcare/js/formplayer/router",
                 "cloudcare/js/formplayer/apps/api",
-            ], function (Router) {
+            ], function (Router, AppsAPI) {
                 FormplayerFrontend.router = Router.start();
                 $.when(
-                    FormplayerFrontend.getChannel().request("appselect:apps"),
+                    AppsAPI.getAppEntities(),
                     FormplayerFrontend.xsrfRequest
                 ).done(function (appCollection) {
                     var appId;

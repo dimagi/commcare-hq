@@ -12,9 +12,9 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     'cloudcare/js/form_entry/errors',
     'cloudcare/js/form_entry/utils',
     'cloudcare/js/formplayer/app',
+    'cloudcare/js/formplayer/apps/api',
     'cloudcare/js/formplayer/utils/utils',
     'cloudcare/js/formplayer/layout/views/progress_bar',
-    'cloudcare/js/formplayer/apps/api',     // appselect:apps
 ], function (
     $,
     _,
@@ -25,6 +25,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
     errors,
     formEntryUtils,
     FormplayerFrontend,
+    AppsAPI,
     formplayerUtils,
     ProgressBar
 ) {
@@ -40,7 +41,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", [
                 options,
                 menus;
 
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(AppsAPI.getAppEntities()).done(function (appCollection) {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {

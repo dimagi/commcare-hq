@@ -63,13 +63,5 @@ hqDefine("cloudcare/js/formplayer/apps/api", [
         },
     };
 
-    FormplayerFrontend.getChannel().reply("appselect:apps", function () {
-        return API.getAppEntities();
-    });
-
-    FormplayerFrontend.getChannel().reply("appselect:getApp", function (id) {
-        return API.getAppEntity(id);
-    });
-
     return API;
 });
