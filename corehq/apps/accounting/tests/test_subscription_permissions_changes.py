@@ -155,20 +155,25 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
             referenced_doc_type="XFormInstance",
             table_id="foo",
         )
+        builder_report_data_source.save()
+        self.addCleanup(builder_report_data_source.delete)
+
         other_data_source = DataSourceConfiguration(
             domain=self.project.name,
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="bar",
         )
-        builder_report_data_source.save()
         other_data_source.save()
+        self.addCleanup(other_data_source.delete)
+
         report_builder_report = ReportConfiguration(
             domain=self.project.name,
             config_id=builder_report_data_source._id,
             report_meta=ReportMeta(created_by_builder=True),
         )
         report_builder_report.save()
+        self.addCleanup(report_builder_report.delete)
 
         # downgrade the domain
         community_sub = pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
@@ -191,12 +196,6 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         # check that the data source is activated
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
         self.assertFalse(builder_report_data_source.is_deactivated)
-
-        # delete the data sources
-        builder_report_data_source.delete()
-        other_data_source.delete()
-        # Delete the report
-        report_builder_report.delete()
 
         # reset the subscription
         pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())

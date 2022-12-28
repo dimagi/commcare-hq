@@ -21,6 +21,7 @@ from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 
 from .utils import APIResourceTest
+from ...userreports.util import get_indicator_adapter
 
 
 class TestSimpleReportConfigurationResource(APIResourceTest):
@@ -76,6 +77,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             table_id=uuid.uuid4().hex,
         )
         cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
 
         cls.report_configuration = ReportConfiguration(
             title=cls.report_title,
@@ -85,11 +87,13 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             filters=cls.report_filters
         )
         cls.report_configuration.save()
+        cls.addClassCleanup(cls.report_configuration.delete)
 
         another_report_configuration = ReportConfiguration(
             domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
         )
         another_report_configuration.save()
+        cls.addClassCleanup(another_report_configuration.delete)
 
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
@@ -176,7 +180,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        super(TestConfigurableReportDataResource, cls).setUpClass()
+        super().setUpClass()
 
         case_type = "my_case_type"
         cls.field_name = "my_field"
@@ -214,7 +218,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
             referenced_doc_type="CommCareCase",
-            table_id=uuid.uuid4().hex,
+            table_id='ucr-resource-test',
             configured_filter={
                 "type": "boolean_expression",
                 "operator": "eq",
@@ -249,7 +253,10 @@ class TestConfigurableReportDataResource(APIResourceTest):
         )
         cls.data_source.validate()
         cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
         rebuild_indicators(cls.data_source._id)
+        adapter = get_indicator_adapter(cls.data_source)
+        cls.addClassCleanup(adapter.drop_table)
 
         cls.report_configuration = ReportConfiguration(
             domain=cls.domain.name,
@@ -259,6 +266,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
             filters=cls.report_filters,
         )
         cls.report_configuration.save()
+        cls.addClassCleanup(cls.report_configuration.delete)
 
     def test_fetching_data(self):
         response = self.client.get(
@@ -287,6 +295,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
             filters=[],
         )
         aggregated_report.save()
+        self.addCleanup(aggregated_report.delete)
 
         response = self.client.get(
             self.single_endpoint(aggregated_report._id))
