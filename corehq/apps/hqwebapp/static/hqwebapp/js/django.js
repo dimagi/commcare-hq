@@ -3,5 +3,5 @@
     Allow usage of gettext, RequireJS-style, rather than accessing the global django.
 */
 define([], function () {
-    return { gettext: django.gettext };
+    return { gettext: window.django ? django.gettext : undefined };
 });
