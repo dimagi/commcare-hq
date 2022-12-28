@@ -71,13 +71,13 @@ describe('WebForm', function () {
 
         beforeEach(function () {
             // Setup HTML
-            try {
+            //try {
                 affix('input#submit');
                 affix('#content');
-            } catch (e) {
+            //} catch (e) {
                 // temporarily catch this error while we work out issues running
                 // mocha tests with grunt-mocha. this passes fine in browser
-            }
+            //}
 
             // Setup Params object
             params = {
