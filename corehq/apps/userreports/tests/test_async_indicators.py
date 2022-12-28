@@ -100,9 +100,10 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BulkAsyncIndicatorProcessingTest, cls).setUpClass()
+        super().setUpClass()
         domain_name = "bulk_async_indicator_processing"
         cls.domain = Domain.get_or_create_with_name(domain_name, is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
 
         def _make_config(indicators):
             return DataSourceConfiguration(
@@ -126,6 +127,8 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             }]
         )
         cls.config1.save()
+        cls.addClassCleanup(cls.config1.delete)
+
         cls.config2 = _make_config(
             [{
                 "type": "expression",
@@ -139,17 +142,14 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
             }]
         )
         cls.config2.save()
+        cls.addClassCleanup(cls.config2.delete)
 
         cls.adapters = []
         for config in [cls.config1, cls.config2]:
             adapter = get_indicator_adapter(config, raise_errors=True)
             adapter.build_table()
+            cls.addClassCleanup(adapter.drop_table)
             cls.adapters.append(adapter)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain.delete()
-        super(BulkAsyncIndicatorProcessingTest, cls).tearDownClass()
 
     def _setup_docs_and_indicators(self):
         self.docs = [
@@ -188,14 +188,6 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
         docstore_patch.start()
         self.addCleanup(_patch.stop)
         self.addCleanup(docstore_patch.stop)
-
-    def tearDown(self):
-        AsyncIndicator.objects.all().delete()
-        for adapter in self.adapters:
-            adapter.clear_table()
-
-    def indicators(self):
-        return AsyncIndicator.objects.all()
 
     def _assert_rows_in_ucr_table(self, config, rows):
         results = list(load_data_from_db(get_table_name(self.domain.name, config.table_id)))
