@@ -1,9 +1,15 @@
-hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
+hqDefine("cloudcare/js/form_entry/spec/utils_spec", [
+    "hqwebapp/js/initial_page_data",
+    "cloudcare/js/form_entry/spec/fixtures",
+    "cloudcare/js/form_entry/form_ui",
+    "cloudcare/js/form_entry/utils",
+], function (
+    initialPageData,
+    fixtures,
+    formUI,
+    utils,
+) {
     describe('Formplayer utils', function () {
-        var fixtures = hqImport("cloudcare/js/form_entry/spec/fixtures"),
-            formUI = hqImport("cloudcare/js/form_entry/form_ui"),
-            utils = hqImport("cloudcare/js/form_entry/utils");
-
         it('Should determine if two answers are equal', function () {
             var answersEqual = utils.answersEqual,
                 result;
@@ -31,7 +37,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
              *         groupInRepeat
              *             textInRepeat
              */
-            hqImport("hqwebapp/js/initial_page_data").register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
+            initialPageData.register("toggles_dict", { WEB_APPS_ANCHORED_SUBMIT: false });
             var text = fixtures.textJSON({ix: "0"}),
                 textInGroup = fixtures.textJSON({ix: "1,0"}),
                 group = fixtures.groupJSON({ix: "1", children: [textInGroup]}),
@@ -54,7 +60,7 @@ hqDefine("cloudcare/js/form_entry/spec/utils_spec", function () {
             assert.equal(utils.getBroadcastContainer(text), form);
             assert.equal(utils.getBroadcastContainer(textInRepeat), groupInRepeat);
 
-            hqImport("hqwebapp/js/initial_page_data").unregister("toggles_dict");
+            initialPageData.unregister("toggles_dict");
         });
     });
 });
