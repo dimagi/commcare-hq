@@ -537,18 +537,28 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(DomainChoiceProviderTest, cls).setUpClass()
+        super().setUpClass()
         cls.domain_a = create_domain(name="A")
         cls.domain_b = create_domain(name="B")
         cls.domain_c = create_domain(name="C")
         cls.domain_d = create_domain(name="D")
         for domain in [cls.domain_a, cls.domain_b, cls.domain_c, cls.domain_d]:
             domain.save()
+            cls.addClassCleanup(domain.delete)
+
         cls.user = create_user("admin", "123")
-        cls.web_user = cls.make_web_user_with_registry_role('web-user@ex.com', cls.domain_a,
-                                                            has_registry_access=True)
-        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role('other-web-user@ex.com',
-                                                                               cls.domain_a)
+        cls.addClassCleanup(cls.user.delete, None, None)
+
+        cls.web_user = cls.make_web_user_with_registry_role(
+            'web-user@ex.com',
+            cls.domain_a,
+            has_registry_access=True)
+        cls.addClassCleanup(cls.web_user.delete, None, None)
+
+        cls.web_user_no_registry_access = cls.make_web_user_with_registry_role(
+            'other-web-user@ex.com',
+            cls.domain_a)
+        cls.addClassCleanup(cls.web_user_no_registry_access.delete, None, None)
 
         invitations = [Invitation('A'), Invitation('B'), Invitation('C')]
         # A, B, and C are in the registry A has access to B and C, B has access to C
@@ -564,9 +574,11 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=cls.registry.slug,
         )
         cls.config.save()
+        cls.addClassCleanup(cls.config.delete)
 
         cls.report = RegistryReportConfiguration(domain="A", config_id=cls.config._id)
         cls.report.save()
+        cls.addClassCleanup(cls.report.delete)
 
         choices = [
             SearchableChoice("A", "A", ["A"]),
@@ -576,14 +588,6 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
         choices.sort(key=lambda choice: choice.display)
         cls.choice_provider = DomainChoiceProvider(cls.report, None)
         cls.static_choice_provider = StaticChoiceProvider(choices)
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_users()
-        delete_all_domains()
-        cls.config.delete()
-        cls.report.delete()
-        super(DomainChoiceProviderTest, cls).tearDownClass()
 
     def test_query_search(self):
         self._test_query(ChoiceQueryContext("A", limit=1, page=0, user=self.web_user))
@@ -629,12 +633,14 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
+        self.addCleanup(config.delete)
+
         report = RegistryReportConfiguration(domain="B", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
+
         self.assertEqual([Choice(value='B', display='B'), Choice(value='C', display='C', )],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
                                                                        user=user)))
-        config.delete()
 
     def test_domain_with_no_grants(self):
         user = self.make_web_user_with_registry_role('yet-another-web-user@ex.com', self.domain_c,
@@ -644,9 +650,11 @@ class DomainChoiceProviderTest(TestCase, ChoiceProviderTestMixin):
             referenced_doc_type='CommCareCase', registry_slug=self.registry.slug,
         )
         config.save()
+        self.addCleanup(config.delete)
+
         report = RegistryReportConfiguration(domain="C", config_id=config._id)
         self.choice_provider = DomainChoiceProvider(report, None)
+
         self.assertEqual([Choice(value='C', display='C')],
                          self.choice_provider.query(ChoiceQueryContext(query='', offset=0,
                                                                        user=user)))
-        config.delete()
