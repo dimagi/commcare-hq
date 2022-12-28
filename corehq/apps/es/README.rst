@@ -1,6 +1,27 @@
 Elasticsearch App
 =================
 
+
+Elasticsearch Index Management
+------------------------------
+
+CommCare HQ data in Elasticsearch is integral to core application functionality.
+The level that the application relies on Elasticsearch data varies from index to
+index. Currently, Elasticsearch contains both authoritative data (for example
+``@indexed_on`` case property and ``UnknownUser`` user records) and data used
+for real-time application logic (the ``users`` index, for example).
+
+In order to guarantee stability (or "manageability", if you will) of this core
+data, it is important that Elasticsearch indexes are maintained in a consistent
+state across all environments as a concrete design feature of CommCare HQ. This
+design constraint is accomplished by managing Elasticsearch index modifications
+(for example: creating indexes, updating index mappings, etc) exclusively
+through Django's migration framework. This ensures that all Elasticsearch index
+modifications will be part of standard CommCare HQ code deployment procedures,
+thereby preventing Elasticsearch index state drift between maintained CommCare
+HQ deployments.
+
+
 Adapter Design
 --------------
 
