@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-env mocha */
 hqDefine("cloudcare/js/spec/utils_spec", [
     "sinon/pkg/sinon",
     "cloudcare/js/formplayer/constants",
