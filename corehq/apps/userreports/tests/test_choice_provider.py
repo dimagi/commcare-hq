@@ -1,10 +1,9 @@
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.translation import gettext
-
-from unittest import mock
 
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -15,23 +14,35 @@ from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
-from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test, Grant
+from corehq.apps.registry.tests.utils import (
+    Grant,
+    Invitation,
+    create_registry_for_test,
+)
 from corehq.apps.reports_core.filters import Choice
-from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration, \
-    RegistryReportConfiguration
+from corehq.apps.userreports.models import (
+    RegistryDataSourceConfiguration,
+    RegistryReportConfiguration,
+    ReportConfiguration,
+)
 from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
+    DomainChoiceProvider,
     GroupChoiceProvider,
     LocationChoiceProvider,
     OwnerChoiceProvider,
     SearchableChoice,
     StaticChoiceProvider,
     UserChoiceProvider,
-    DomainChoiceProvider,
 )
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
 from corehq.apps.users.dbaccessors import delete_all_users
-from corehq.apps.users.models import CommCareUser, DomainMembership, WebUser, HqPermissions
+from corehq.apps.users.models import (
+    CommCareUser,
+    DomainMembership,
+    HqPermissions,
+    WebUser,
+)
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.util import normalize_username
 from corehq.elastic import get_es_new

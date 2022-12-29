@@ -1,6 +1,7 @@
-from freezegun import freeze_time
 from django.http import HttpRequest
 from django.test import TestCase
+
+from freezegun import freeze_time
 
 from corehq.apps.userreports.exceptions import BadSpecError, UserReportsError
 from corehq.apps.userreports.models import (

@@ -4,7 +4,6 @@ from django.http import HttpRequest, QueryDict
 from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 
-from corehq.apps.userreports.datatypes import DATA_TYPE_DATETIME, DATA_TYPE_DATE
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
@@ -22,6 +21,10 @@ from corehq.apps.reports_core.filters import (
     LocationDrilldownFilter,
     NumericFilter,
     PreFilter,
+)
+from corehq.apps.userreports.datatypes import (
+    DATA_TYPE_DATE,
+    DATA_TYPE_DATETIME,
 )
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import (

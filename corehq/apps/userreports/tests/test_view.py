@@ -1,9 +1,8 @@
 import uuid
+from unittest.mock import patch
 
 from django.http import HttpRequest
 from django.test import TestCase
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases

@@ -20,8 +20,8 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.models import CommCareCase
 
-from .utils import APIResourceTest
 from ...userreports.util import get_indicator_adapter
+from .utils import APIResourceTest
 
 
 class TestSimpleReportConfigurationResource(APIResourceTest):
