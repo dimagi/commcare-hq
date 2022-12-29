@@ -21,6 +21,43 @@ modifications will be part of standard CommCare HQ code deployment procedures,
 thereby preventing Elasticsearch index state drift between maintained CommCare
 HQ deployments.
 
+Creating Elasticsearch Index Migrations
+'''''''''''''''''''''''''''''''''''''''
+
+Like Django Model migrations, Elasticsearch index migrations can be quite
+verbose. To aid in creating these migrations, there is a Django manage command
+that can generate migration files for Elasticsearch index operations. Since
+the Elasticsearch index state is not a Django model, Django's model migration
+framework cannot automatically determine what operations need to be included in
+a migration, or even when a new migration is required. This is why creating
+these migrations is a separate command and not integrated into the default
+``makemigrations`` command.
+
+To create a new Elasticsearch index migration, use the
+``make_elastic_migration`` management command and provide details for the
+required migration operations via any combination of the ``-c/--create``,
+``-u/--update`` and/or ``-d/--delete`` command line options.
+
+Similar to Django model migrations, this management command uses the index
+metadata (mappings, analysis, etc) from the existing Elasticsearch code, so it
+is important that this command is executed *after* making changes to index
+metadata. To provide an example, consider a hypothetical scenario where the
+following index changes are needed:
+
+- create a new ``users`` index
+- update the mapping on the existing ``groups`` index to add a new property
+  named ``pending_users``
+- delete the existing index named ``groups-sandbox``
+
+After the new property has been added to the ``groups`` index mapping in code,
+the following management command would create a migration file (e.g.
+``corehq/apps/es/migrations/0003_groups_pending_users.py``) for the necessary
+operations:
+
+.. code-block:: shell
+
+    ./manage.py make_elastic_migration --name groups_pending_users -c users -u groups:pending_users -d groups-sandbox
+
 
 .. _updating-elastic-index-mappings:
 
