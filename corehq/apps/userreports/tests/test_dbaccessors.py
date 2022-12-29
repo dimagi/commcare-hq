@@ -5,13 +5,21 @@ from django.test import TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_user
-from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
+from corehq.apps.registry.tests.utils import (
+    Invitation,
+    create_registry_for_test,
+)
 from corehq.apps.userreports.dbaccessors import (
+    get_all_registry_data_source_ids,
     get_all_report_configs,
     get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain, get_registry_data_sources_modified_since, get_all_registry_data_source_ids,
+    get_registry_data_sources_modified_since,
+    get_report_configs_for_domain,
 )
-from corehq.apps.userreports.models import ReportConfiguration, RegistryDataSourceConfiguration
+from corehq.apps.userreports.models import (
+    RegistryDataSourceConfiguration,
+    ReportConfiguration,
+)
 
 
 class DBAccessorsTest(TestCase):

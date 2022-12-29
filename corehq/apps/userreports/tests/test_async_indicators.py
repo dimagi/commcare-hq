@@ -1,8 +1,7 @@
 import uuid
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
@@ -10,7 +9,10 @@ from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
 )
-from corehq.apps.userreports.tasks import build_async_indicators, queue_async_indicators
+from corehq.apps.userreports.tasks import (
+    build_async_indicators,
+    queue_async_indicators,
+)
 from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 

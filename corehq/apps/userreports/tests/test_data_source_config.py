@@ -1,15 +1,21 @@
 import datetime
-from freezegun import freeze_time
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
+from freezegun import freeze_time
 from jsonobject.exceptions import BadValueError
-from unittest.mock import MagicMock, patch
-from corehq.apps.domain.models import AllowedUCRExpressionSettings
-from corehq.apps.userreports.const import UCR_NAMED_EXPRESSION, UCR_NAMED_FILTER
 
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
+from corehq.apps.userreports.const import (
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
+)
 from corehq.apps.userreports.exceptions import BadSpecError
-from corehq.apps.userreports.models import DataSourceConfiguration, UCRExpression
+from corehq.apps.userreports.models import (
+    DataSourceConfiguration,
+    UCRExpression,
+)
 from corehq.apps.userreports.tests.utils import (
     get_sample_data_source,
     get_sample_doc_and_indicators,

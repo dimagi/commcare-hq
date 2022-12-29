@@ -2,15 +2,20 @@ import datetime
 from unittest.mock import MagicMock, create_autospec, patch
 
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.exceptions import RegistryAccessDenied
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
+from corehq.apps.registry.tests.utils import (
+    Invitation,
+    create_registry_for_test,
+)
 from corehq.apps.userreports.models import RegistryDataSourceConfiguration
 from corehq.apps.userreports.tests.utils import (
-    get_sample_doc_and_indicators, get_sample_registry_data_source,
+    get_sample_doc_and_indicators,
+    get_sample_registry_data_source,
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
