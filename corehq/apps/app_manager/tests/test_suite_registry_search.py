@@ -180,7 +180,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(expected_entry_query, suite, "./entry[1]/session/query[2]")
 
         self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='commcaresession']")
-        self.assertXmlHasXpath(suite, "./entry[1]/instance[@id='registry']")
+        self.assertXmlDoesNotHaveXpath(suite, "./entry[1]/instance[@id='registry']")
 
     def test_form_linking_from_registry_module(self, *args):
         self.form.post_form_workflow = WORKFLOW_FORM
@@ -546,7 +546,6 @@ class InlineSearchDataRegistryModuleTest(SimpleTestCase, SuiteMixin):
               </text>
             </command>
             <instance id="commcaresession" src="jr://instance/session"/>
-            <instance id="results:inline" src="jr://instance/remote/results:inline"/>
             <session>
                 <query url="http://localhost:8000/a/test_domain/phone/search/123/" storage-instance="{RESULTS_INSTANCE_INLINE}"
                     template="case" default_search="false">
