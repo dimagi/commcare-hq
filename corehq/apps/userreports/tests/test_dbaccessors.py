@@ -19,12 +19,14 @@ class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DBAccessorsTest, cls).setUpClass()
+        super().setUpClass()
         cls.data_source_id = 'd36c7c934cb84725899cca9a0ef96e3a'
         cls.domain_1 = Domain(name='userreport-dbaccessors')
         cls.domain_1.save()
+        cls.addClassCleanup(cls.domain_1.delete)
         cls.domain_2 = Domain(name='mallory')
         cls.domain_2.save()
+        cls.addClassCleanup(cls.domain_2.delete)
         cls.report_configs = [
             ReportConfiguration(domain=cls.domain_1.name,
                                 config_id=cls.data_source_id, title='A'),
@@ -36,13 +38,8 @@ class DBAccessorsTest(TestCase):
                                 config_id=cls.data_source_id, title='X'),
         ]
         ReportConfiguration.get_db().bulk_save(cls.report_configs)
-
-    @classmethod
-    def tearDownClass(cls):
-        ReportConfiguration.get_db().bulk_delete(cls.report_configs)
-        cls.domain_1.delete()
-        cls.domain_2.delete()
-        super(DBAccessorsTest, cls).tearDownClass()
+        cls.addClassCleanup(ReportConfiguration.get_db().bulk_delete,
+                            cls.report_configs)
 
     def test_get_number_of_report_configs_by_data_source(self):
         self.assertEqual(
@@ -73,16 +70,13 @@ class RegistryUcrDbAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(RegistryUcrDbAccessorsTest, cls).setUpClass()
+        super().setUpClass()
         cls.user = create_user("admin", "123")
+        cls.addClassCleanup(cls.user.delete, None, None)
 
         cls.registry = create_registry_for_test(cls.user, cls.domain, invitations=[
             Invitation('foo'), Invitation('bar'),
         ], name='foo_bar')
-
-    def tearDown(self):
-        for config in RegistryDataSourceConfiguration.all():
-            config.delete()
 
     def test_get_all_registry_data_source_ids(self):
         expected = [self._create_datasource().get_id for i in range(2)]
@@ -149,4 +143,5 @@ class RegistryUcrDbAccessorsTest(TestCase):
             is_deactivated=(not active), globally_accessible=globally_accessible
         )
         config.save()
+        self.addCleanup(config.delete)
         return config
