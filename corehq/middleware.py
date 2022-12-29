@@ -202,17 +202,18 @@ class TimeoutMiddleware(MiddlewareMixin):
         domain = getattr(request, "domain", None)
         domain_obj = Domain.get_by_name(domain) if domain else None
 
-        # figure out if we want to switch to secure_sessions
-        change_to_secure_session = (
-            not secure_session
-            and (
-                (domain_obj and domain_obj.secure_sessions)
-                or any(filter(Domain.is_secure_session_required,
-                             self._get_relevant_domains(request.couch_user, domain)))
-            )
+        # figure out if we want to switch to or from secure_sessions
+        any_secure_sessions = (
+            (domain_obj and domain_obj.secure_sessions)
+            or any(filter(Domain.is_secure_session_required,
+                          self._get_relevant_domains(request.couch_user, domain)))
         )
+        change_to_secure_session = not secure_session and any_secure_sessions
+        change_from_secure_session = secure_session and not any_secure_sessions
 
-        secure_session = secure_session or change_to_secure_session
+        if change_to_secure_session or change_from_secure_session:
+            secure_session = not secure_session
+
         timeout = self._get_timeout(request.session, secure_session, request.couch_user, domain)
         if change_to_secure_session:
             # force re-authentication if the user has been logged in longer than the secure timeout
