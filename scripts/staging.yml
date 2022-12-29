@@ -79,6 +79,5 @@ branches:
     - sk/sentry-js  # Simon Dec 21
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
-    # - jls/new-instance-connectors # Steph Dec 27
-    - smh/new-instance-connectors-mods # Steph Dec 28
+    - jls/new-instance-connectors # Steph Dec 27
 submodules: { }
