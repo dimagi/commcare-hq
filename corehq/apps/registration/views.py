@@ -36,7 +36,7 @@ from corehq.apps.analytics.utils import get_meta
 from corehq.apps.domain.decorators import login_required
 from corehq.apps.domain.exceptions import NameUnavailableException
 from corehq.apps.domain.extension_points import has_custom_clean_password
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import AppReleaseModeSetting, Domain
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_ko_validation
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.registration.forms import (
@@ -381,6 +381,8 @@ class RegisterDomainView(TemplateView):
                 form.cleaned_data['hr_name'],
                 is_new_user=self.is_new_user
             )
+            # Always show release mode setting for a new domain
+            AppReleaseModeSetting(domain=domain_name, is_visible=True).save()
         except NameUnavailableException:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
