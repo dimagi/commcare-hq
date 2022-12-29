@@ -102,20 +102,16 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
         )
         cls.data_source.validate()
         cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
         rebuild_indicators(cls.data_source._id)
         cls.adapter = get_indicator_adapter(cls.data_source)
+        cls.addClassCleanup(cls.adapter.drop_table)
 
     @classmethod
     def setUpClass(cls):
         super(TestReportAggregationSQL, cls).setUpClass()
         cls._create_data()
         cls._create_data_source()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.adapter.drop_table()
-        cls._delete_everything()
-        super(TestReportAggregationSQL, cls).tearDownClass()
 
     def test_aggregation_by_column_not_in_report(self):
         """
@@ -132,6 +128,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 'aggregation': 'sum'
             }]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -176,6 +173,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 }
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -216,6 +214,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -253,6 +252,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 }
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -293,6 +293,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 }
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -319,6 +320,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 }
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -343,6 +345,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 'aggregation': 'simple'
             }]
         )
+        self.addCleanup(report_config.delete)
 
         default_sorted_view = self._create_view(report_config)
         self.assertEqual(
@@ -422,6 +425,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -470,6 +474,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -517,6 +522,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -550,6 +556,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         with self.assertRaises(UserReportsError):
@@ -584,6 +591,7 @@ class TestReportAggregationSQL(ConfigurableReportAggregationTestMixin, TestCase)
                 },
             ],
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -720,21 +728,17 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
         )
         cls.data_source.validate()
         cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
+
         rebuild_indicators(cls.data_source._id)
-        adapter = get_indicator_adapter(cls.data_source)
-        cls.adapter = adapter
+        cls.adapter = get_indicator_adapter(cls.data_source)
+        cls.addClassCleanup(cls.adapter.drop_table)
 
     @classmethod
     def setUpClass(cls):
-        super(TestReportMultipleAggregationsSQL, cls).setUpClass()
+        super().setUpClass()
         cls._create_data()
         cls._create_data_source()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.adapter.drop_table()
-        cls._delete_everything()
-        super(TestReportMultipleAggregationsSQL, cls).tearDownClass()
 
     def _create_default_report(self, filters=None):
         return self._create_report(
@@ -770,6 +774,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
 
     def test_with_multiple_agg_columns(self):
         report_config = self._create_default_report()
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -813,6 +818,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
                 }
             ],
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         table = view.export_table[0][1]
@@ -838,6 +844,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
                 },
             ]
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
 
         self.assertEqual(
@@ -894,6 +901,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
                 },
             ],
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         self.assertEqual(
             view.export_table,
@@ -939,6 +947,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
             filters=None,
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         table = view.export_table[0][1]
         self.assertEqual(len(table), 4)
@@ -978,6 +987,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
             filters=None,
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         with self.assertRaises(BadSpecError):
             view.export_table
@@ -1060,6 +1070,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
             filters=None,
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         table = view.export_table[0][1]
         self.assertEqual(len(table), 3)
@@ -1111,6 +1122,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
             filters=None,
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         with self.assertRaises(BadSpecError):
             view.export_table
@@ -1143,6 +1155,7 @@ class TestReportMultipleAggregationsSQL(ConfigurableReportAggregationTestMixin, 
             ],
             filters=None,
         )
+        self.addCleanup(report_config.delete)
         view = self._create_view(report_config)
         table = view.export_table[0][1]
         self.assertEqual(len(table), 5)
