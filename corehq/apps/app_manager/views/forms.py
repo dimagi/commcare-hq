@@ -808,7 +808,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled(domain)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -862,8 +862,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        context.update(_get_form_link_context(module, langs))
+    if allow_form_workflow:
+        context.update(_get_form_link_context(app, module, form, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -917,7 +917,30 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     return "app_manager/form_view.html", context
 
 
-def _get_form_link_context(module, langs):
+def _get_form_link_context(app, module, form, langs):
+    return {
+        'linkable_forms': _get_linkable_forms_context(module, langs),
+        'form_links': _get_form_links(app, form)
+    }
+
+
+def _get_form_links(app, form):
+    """Augments the form link JSON with the 'unique_id' field
+    which is dynamically generated.
+    """
+    links = []
+    for link in form.form_links:
+        link_context = link.to_json()
+        try:
+            link_context['uniqueId'] = link.get_unique_id(app)
+        except FormNotFoundException:
+            continue
+        else:
+            links.append(link_context)
+    return links
+
+
+def _get_linkable_forms_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
@@ -927,6 +950,7 @@ def _get_form_link_context(module, langs):
         return "{} > {}".format(module_name, form_name)
 
     linkable_items = []
+    is_multi_select = module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
@@ -958,13 +982,11 @@ def _get_form_link_context(module, langs):
                 # this is necessary to disambiguate forms in shadow modules
                 'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
                 'name': _form_name(candidate_module, candidate_form),
-                'auto_link': case_type_match or is_parent,
+                'auto_link': not is_multi_select and (case_type_match or is_parent),
                 'allow_manual_linking': True,
             })
 
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 
 @require_can_edit_apps

@@ -61,10 +61,7 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    - ap/sql-repeater/phase-2+cs/fix/duplicate_relationships # Chris Nov 30
-    - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
@@ -73,11 +70,12 @@ branches:
     # - ml/lookup-table-UI # Minha Oct 19
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
-    - pkv/case-list-explorer-labels # Pawan Nov 22
-    - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
-    - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
+    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - ad/taleau-syncing-util-functions # Addison Dec 5
-    #- pkv/application-release-logs-2
-    - sk/multi-select-eof-nav  # Simon Dec 7
+    #- smh/multi-select-error-handling # Steph Dec 13
+    - em/maintenance-alert-scheduling # Evan Dec 14
+    - sk/sentry-js  # Simon Dec 21
+    - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
+    - gh/refactor-orphaned-ucr-code # Graham Dec 26
+    - jls/new-instance-connectors # Steph Dec 27
 submodules: { }

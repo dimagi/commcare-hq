@@ -7,9 +7,9 @@ from functools import cached_property
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
-from django.utils.functional import classproperty
 
 from memoized import memoized
+from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
@@ -148,6 +148,17 @@ class ElasticManageAdapter(BaseAdapter):
         # instead.
         return self._parse_task_result(self._es.tasks.list(task_id=task_id,
                                                            detailed=True))
+
+    def cancel_task(self, task_id):
+        """
+        Cancells a running task in ES
+
+        :param task_id: ``str`` ID of the task
+        :returns: ``dict`` of task details
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
+        """
+        result = self._es.tasks.cancel(task_id)
+        return self._parse_task_result(result)
 
     @staticmethod
     def _parse_task_result(result, *, _return_one=True):
@@ -318,6 +329,40 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
+    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
+        """
+        Starts the reindex process in elastic search cluster
+
+        :param source: ``str`` name of the source index
+        :param dest: ``str`` name of the destination index
+        :param wait_for_completion: ``bool`` would block the request until reindex is complete
+        :param refresh: ``bool`` refreshes index
+
+        :returns: None if wait_for_completion is True else would return task_id of reindex task
+        """
+
+        # More info on "op_type" and "version_type"
+        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+
+        reindex_body = {
+            "source": {
+                "index": source,
+            },
+            "dest": {
+                "index": dest,
+                "op_type": "create",
+                "version_type": "external"
+            },
+            "conflicts": "proceed"
+        }
+        reindex_info = self._es.reindex(
+            reindex_body,
+            wait_for_completion=wait_for_completion,
+            refresh=refresh
+        )
+        if not wait_for_completion:
+            return reindex_info['task']
+
 
 class ElasticDocumentAdapter(BaseAdapter):
     """Base for subclassing document-specific adapters.
@@ -346,10 +391,6 @@ class ElasticDocumentAdapter(BaseAdapter):
         adapter = copy.copy(self)
         adapter._es = get_client(for_export=True)
         return adapter
-
-    @classproperty
-    def settings(cls):
-        return settings.ELASTIC_ADAPTER_SETTINGS.get(cls.__name__, {})
 
     @classmethod
     def from_python(cls, doc):
@@ -823,6 +864,25 @@ class ElasticDocumentAdapter(BaseAdapter):
             #   "_shards: {"successful": 4, "failed": 1, "total": 5}"
             shard_info = json.dumps(result["_shards"])
             raise ESShardFailure(f"_shards: {shard_info}")
+
+    def delete_tombstones(self):
+        """
+        Deletes all tombstones documents present in the index
+
+        TODO:  This should be replaced by delete_by_query
+        https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
+        when on ES version >= 5
+        """
+        tombstone_ids = self._get_tombstone_ids()
+        self.bulk_delete(tombstone_ids, refresh=True)
+
+    def _get_tombstone_ids(self):
+        query = {
+            "query": term(Tombstone.PROPERTY_NAME, True),
+            "_source": False
+        }
+        scroll_iter = self.scroll(query, size=1000)
+        return [doc['_id'] for doc in scroll_iter]
 
     def __repr__(self):
         return f"<{self.__class__.__name__} index={self.index_name!r}, type={self.type!r}>"

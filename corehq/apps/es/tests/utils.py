@@ -1,5 +1,6 @@
 import json
 from contextlib import contextmanager
+from copy import deepcopy
 from functools import wraps
 from datetime import datetime
 from inspect import isclass
@@ -10,6 +11,7 @@ from nose.tools import nottest
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.tests.utils import TEST_INDEX_INFO
 
+from corehq.apps.es.client import ElasticMultiplexAdapter
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
@@ -18,11 +20,7 @@ from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup
 
 from ..client import ElasticDocumentAdapter, manager
-from ..registry import (
-    register,
-    deregister,
-    registry_entry,
-)
+from ..transient_util import index_info_from_cname
 
 TEST_ES_MAPPING = {
     '_meta': {
@@ -93,86 +91,76 @@ class ElasticTestMixin(object):
 
 
 @nottest
-def es_test(test=None, index=None, indices=[], setup_class=False):
+def es_test(test=None, requires=[], setup_class=False):
     """Decorator for Elasticsearch tests.
     The decorator sets the `es_test` nose attribute and optionally performs
-    index registry setup/teardown before and after the test(s).
+    index setup/teardown before and after the test(s).
 
     :param test: A test class, method, or function (only used via the @decorator
-                 syntax).
-    :param index: Index info object or `(info_obj, cname)` tuple of an index to
-                  be registered for the test, mutually exclusive with the
-                  `indices` param (raises ValueError if both provided).
-    :param indices: A list of index info objects (or tuples, see above) of
-                    indices to be registered for the test, mutually exclusive
-                    with the the `index` param (raises ValueError).
-    :param setup_class: Set to `True` to perform registry setup/teardown in the
-                        `setUpClass` and `tearDownClass` (instead of the default
-                        `setUp` and `tearDown`) methods. Invalid if true when
-                        decorating non-class objects (raises ValueError).
-    :raises: ValueError
+        syntax).
+    :param requires: A list of document adapters whose indexes are required by
+        the test(s).
+    :param setup_class: Set to `True` to perform index setup/teardown in the
+        `setUpClass` and `tearDownClass` (instead of the default `setUp` and
+        `tearDown`) methods. Invalid if true when decorating non-class objects
+        (raises ValueError).
+    :raises: ``ValueError``
 
     See test_test_utils.py for examples.
     """
     if test is None:
         def es_test_decorator(test):
-            return es_test(test, index, indices, setup_class)
+            return es_test(test, requires, setup_class)
         return es_test_decorator
 
-    if not (index or indices):
+    if not requires:
         return es_test_attr(test)
 
-    if index is None:
-        _registration_info = list(indices)
-    elif not indices:
-        _registration_info = [index]
-    else:
-        raise ValueError(f"index and indices are mutually exclusive {(index, indices)}")
+    def setup_func():
+        for adapter in iter_all_doc_adapters():
+            setup_test_index(adapter)
 
-    def registry_setup():
-        reg = {}
-        for info in _registration_info:
-            if isinstance(info, tuple):
-                info, cname = info
+    def teardown_func():
+        for adapter in iter_all_doc_adapters():
+            teardown_test_index(adapter)
+
+    def iter_all_doc_adapters():
+        for adapter in adapters:
+            if isinstance(adapter, ElasticMultiplexAdapter):
+                yield adapter.primary
+                yield adapter.secondary
             else:
-                cname = None
-            reg[register(info, cname)] = info
-        return reg
+                yield adapter
 
-    def registry_teardown():
-        for dereg in _registration_info:
-            if isinstance(dereg, tuple):
-                info, dereg = dereg
-            deregister(dereg)
-
+    adapters = list(requires)
     if isclass(test):
-        test = _add_setup_and_teardown(test, setup_class, registry_setup, registry_teardown)
+        test = _add_setup_and_teardown(test, setup_class, setup_func, teardown_func)
     else:
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
-        test = _decorate_test_function(test, registry_setup, registry_teardown)
+        test = _decorate_test_function(test, setup_func, teardown_func)
     return es_test_attr(test)
 
 
-def _decorate_test_function(test, registry_setup, registry_teardown):
+def _decorate_test_function(test, setup_func, teardown_func):
 
     @wraps(test)
     def wrapper(*args, **kw):
-        registry_setup()
+        setup_func()
         try:
             return test(*args, **kw)
         finally:
-            registry_teardown()
+            teardown_func()
 
     return wrapper
 
 
-def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_teardown):
+def _add_setup_and_teardown(test_class, setup_class, setup_func, teardown_func):
 
     def setup_decorator(setup):
         @wraps(setup)
         def wrapper(self, *args, **kw):
-            self._indices = registry_setup()
+            setup_func()
             if setup is not None:
                 return setup(self, *args, **kw)
         return wrapper
@@ -184,7 +172,7 @@ def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_te
                 if teardown is not None:
                     return teardown(*args, **kw)
             finally:
-                registry_teardown()
+                teardown_func()
         return wrapper
 
     def decorate(name, decorator):
@@ -207,6 +195,22 @@ def _add_setup_and_teardown(test_class, setup_class, registry_setup, registry_te
     return test_class
 
 
+@nottest
+def setup_test_index(adapter):
+    mapping = deepcopy(adapter.mapping)
+    if "_meta" in mapping:
+        # some mappings contain `None` here, which isn't a legal value
+        mapping["_meta"]["created"] = datetime.isoformat(datetime.utcnow())
+    index_settings = {"mappings": {adapter.type: mapping}}
+    manager.index_create(adapter.index_name, index_settings)
+    manager.index_configure_for_standard_ops(adapter.index_name)
+
+
+@nottest
+def teardown_test_index(adapter):
+    manager.index_delete(adapter.index_name)
+
+
 @contextmanager
 def temporary_index(index, type_=None, mapping=None, *, purge=True):
     if (type_ is None and mapping is not None) or \
@@ -226,7 +230,7 @@ def temporary_index(index, type_=None, mapping=None, *, purge=True):
 
 
 def populate_es_index(models, index_cname, doc_prep_fn=lambda doc: doc):
-    index_info = registry_entry(index_cname)
+    index_info = index_info_from_cname(index_cname)
     es = get_es_new()
     with trap_extra_setup(ConnectionError):
         initialize_index_and_mapping(es, index_info)
