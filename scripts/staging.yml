@@ -62,13 +62,11 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - ap/sql-repeater/phase-2+cs/fix/duplicate_relationships # Chris Nov 30
-    - ap/sql-repeater/phase-2 # Amit Sep 16
     - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
     - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
-    - ad/tableau-connected-app # Addison Oct 26
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
@@ -76,7 +74,11 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     - pkv/case-list-explorer-labels # Pawan Nov 22
-    - cs/fix-settings-position-in-file # Charl Nov 28
-    - sk/shadow-module-form-links # Simon Nov 30
+    - revert-32380-revert-32369-sk/shadow-module-form-links # Simon Nov 30
     - gh/audit-conditional-alerts # Graham Nov 30
+    - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
+    - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
+    - cs/SC-2360-auto-update-rule-overwrites-case-property
+    - dm/sql-lookup-tables # Daniel Dec 5
+    - ad/taleau-syncing-util-functions # Addison Dec 5
 submodules: { }

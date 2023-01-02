@@ -1429,14 +1429,6 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-SEND_UCR_REBUILD_INFO = StaticToggle(
-    'send_ucr_rebuild_info',
-    'Notify when UCR rebuilds finish or error.',
-    TAG_SOLUTIONS_CONDITIONAL,
-    namespaces=[NAMESPACE_USER],
-    parent_toggles=[USER_CONFIGURABLE_REPORTS]
-)
-
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
     'Add user defined columns to exports',
