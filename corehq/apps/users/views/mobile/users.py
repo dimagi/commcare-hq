@@ -5,6 +5,7 @@ import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
+from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -34,8 +35,11 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
+    DefaultProductPlan,
     EntryPoint,
+    Subscription,
 )
+from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -94,6 +98,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
+    WebUser,
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -146,6 +151,8 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
+ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                            "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
 DEFAULT_USER_LIST_LIMIT = 10
 BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
@@ -756,10 +763,60 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        data = self.get_plan_and_user_count_by_domain(self.domain)
+        self.check_and_send_limit_email(self.domain, data['plan_limit'], data['user_count'])
         return {
             'success': True,
             'user_id': couch_user.userID,
         }
+
+    @staticmethod
+    def get_plan_and_user_count_by_domain(domain):
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        for rate in plan_version.feature_rates.all():
+            if rate.feature.feature_type == 'User':
+                user_rate = rate
+                break
+        return {
+            'plan_limit': user_rate.monthly_limit,
+            'user_count': FeatureUsageCalculator(user_rate, domain).get_usage()
+        }
+
+    @staticmethod
+    def check_and_send_limit_email(domain, plan_limit, user_count, prev_count=None):
+        if plan_limit == -1:
+            return None
+
+        if prev_count is None:
+            prev_count = user_count - 1
+
+        if user_count >= plan_limit > prev_count:
+            at_capacity = True
+        elif plan_limit > user_count >= (0.9 * plan_limit) > prev_count:
+            at_capacity = False
+        else:
+            return None
+
+        users = WebUser.by_domain(domain)
+        recipients = []
+        for user in users:
+            if user.role_label(domain) == 'Billing Admin' or user.role_label(domain) == 'Admin':
+                recipients.append(user.username)
+        if at_capacity:
+            subject = _("User count has reached the Plan limit for {}").format(domain)
+        else:
+            subject = _("User count has reached 90% of the Plan limit for ({})").format(domain)
+        send_HTML_email(
+            subject,
+            recipients,
+            render_to_string('users/email/user_limit_notice.html', context={
+                'at_capacity': at_capacity,
+                'url': ADDITIONAL_USERS_PRICING
+            }),
+        )
+        return None
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
