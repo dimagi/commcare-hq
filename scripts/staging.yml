@@ -72,7 +72,6 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - smh/multi-select-error-handling # Steph Dec 13
     - em/maintenance-alert-scheduling # Evan Dec 14
     - sk/sentry-js  # Simon Dec 21
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
