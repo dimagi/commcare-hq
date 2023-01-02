@@ -1,3 +1,4 @@
+#!/bin/bash
 function delete-pyc() {
     find . -name '*.pyc' -delete
 }

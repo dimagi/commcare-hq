@@ -718,13 +718,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     def save(self, **params):
         from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
-
         self.last_modified = datetime.utcnow()
         if not self._rev:
             if domain_or_deleted_domain_exists(self.name):
                 raise NameUnavailableException(self.name)
         super(Domain, self).save(**params)
-
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
