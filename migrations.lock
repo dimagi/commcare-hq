@@ -290,6 +290,7 @@ data_interfaces
  0029_locationfilterdefinition_include_child_locations
  0030_add_workflow_choices
  0031_add_domaincaserulerun_status_choices
+ 0032_bootstrap_audit_events_for_update_rules
 dhis2
  0001_initial
  0002_auto_20170322_1323
