@@ -1748,10 +1748,10 @@ class TableauUserForm(forms.Form):
         self.all_tableau_groups = get_all_tableau_groups(self.domain)
         user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
         self.fields['groups'].initial = []
-        for i in range(len(self.all_tableau_groups)):
+        for i, group in enumerate(self.all_tableau_groups):
             # Add a choice for each tableau group on the server
-            self.fields['groups'].choices.append((i, self.all_tableau_groups[i].name))
-            if self.all_tableau_groups[i].name in user_group_names:
+            self.fields['groups'].choices.append((i, group.name))
+            if group.name in user_group_names:
                 # Pre-choose groups that the user already belongs to
                 self.fields['groups'].initial.append(i)
 
