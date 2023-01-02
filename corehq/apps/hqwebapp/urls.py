@@ -11,9 +11,7 @@ from corehq.apps.hqwebapp.session_details_endpoint.views import (
 from corehq.apps.hqwebapp.views import (
     BugReportView,
     MaintenanceAlertsView,
-    activate_alert,
     create_alert,
-    deactivate_alert,
     debug_notify,
     domain_login,
     dropbox_upload,
@@ -68,8 +66,6 @@ urlpatterns = [
     url(r'^messaging-pricing', PublicSMSRatesView.as_view(), name=PublicSMSRatesView.urlname),
     url(r'^alerts/$', MaintenanceAlertsView.as_view(), name=MaintenanceAlertsView.urlname),
     url(r'^create_alert/$', create_alert, name='create_alert'),
-    url(r'^activate_alert/$', activate_alert, name='activate_alert'),
-    url(r'^deactivate_alert/$', deactivate_alert, name='deactivate_alert'),
     url(r'^jserror/$', jserror, name='jserror'),
     url(r'^dropbox_upload/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', dropbox_upload,
         name='dropbox_upload'),
