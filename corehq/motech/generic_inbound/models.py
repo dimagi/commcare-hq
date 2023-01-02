@@ -113,6 +113,14 @@ class RequestLog(models.Model):
         ERROR = 'error', _('Error')
         REVERTED = 'reverted', _('Reverted')
 
+        @classmethod
+        def from_status_code(cls, code):
+            return {
+                200: cls.SUCCESS,
+                204: cls.FILTERED,
+                400: cls.VALIDATION_FAILED,
+            }.get(code, cls.ERROR)
+
     class RequestMethod(models.TextChoices):
         POST = 'POST'
         PUT = 'PUT'
@@ -126,7 +134,6 @@ class RequestLog(models.Model):
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
     attempts = models.PositiveSmallIntegerField(default=1)
     response_status = models.PositiveSmallIntegerField()
-    error_message = models.TextField()
 
     username = models.CharField(max_length=128)
     request_method = models.CharField(max_length=32, choices=RequestMethod.choices)
@@ -151,7 +158,6 @@ class ProcessingAttempt(models.Model):
     timestamp = models.DateTimeField(auto_now=True, db_index=True)
     is_retry = models.BooleanField(default=False)
     response_status = models.PositiveSmallIntegerField(db_index=True)
-    response_body = models.TextField()
     raw_response = models.JSONField(default=dict)
 
     xform_id = models.CharField(max_length=36, db_index=True, null=True, blank=True)

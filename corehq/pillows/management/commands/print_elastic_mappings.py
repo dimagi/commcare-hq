@@ -63,7 +63,7 @@ class Command(BaseCommand):
             namespace = MAPPING_SPECIAL_VALUES
         index_info = CANONICAL_NAME_INFO_MAP[cname]
         if options["from_elastic"]:
-            mapping = fetch_elastic_mapping(index_info.alias, index_info.type)
+            mapping = fetch_elastic_mapping(index_info.index, index_info.type)
         else:
             mapping = index_info.mapping
         for key in (k.strip() for k in options["transforms"].split(",")):

@@ -1747,7 +1747,10 @@ class UCRExpressionEditView(BaseProjectDataView):
 
     @property
     def expression_id(self):
-        return self.kwargs['expression_id']
+        try:
+            return int(self.kwargs['expression_id'])
+        except ValueError:
+            raise Http404
 
     @property
     @memoized
