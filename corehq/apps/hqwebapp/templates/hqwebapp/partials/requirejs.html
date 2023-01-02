@@ -24,15 +24,17 @@
       'hqwebapp/js/common',
     ], function() {
       {% if BASE_MAIN %}
-        {# This module is relevant for running HQ, but not for tests #}
-        requirejs([
-          'hqwebapp/js/base_main',
-        ], function () {
+        {# This code is relevant for running HQ, but not for tests #}
+        requirejs(['hqwebapp/js/django'], function () {
+          requirejs([
+            'hqwebapp/js/base_main',
+          ], function () {
       {% endif %}
-          requirejs(['{{ requirejs_main }}'], function () {
-            console.log("Loaded requirejs main module: {{ requirejs_main }}");
-          });
+            requirejs(['{{ requirejs_main }}'], function () {
+              console.log("Loaded requirejs main module: {{ requirejs_main }}");
+            });
       {% if BASE_MAIN %}
+          });
         });
       {% endif %}
     });
