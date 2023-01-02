@@ -563,9 +563,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
                 hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
-                        alertUser.alert_user(errorMessage, 'danger');
-                })
-            };
+                    alertUser.alert_user(errorMessage, 'danger');
+                });
+            }
         },
     });
 
