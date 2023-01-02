@@ -5,8 +5,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         constants = hqImport("cloudcare/js/formplayer/constants"),
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         toggles = hqImport("hqwebapp/js/toggles"),
-        utils = hqImport("cloudcare/js/formplayer/utils/utils"),
-        alertUser = hqImport('hqwebapp/js/alert_user');
+        utils = hqImport("cloudcare/js/formplayer/utils/utils");
 
     var MenuView = Marionette.View.extend({
         tagName: function () {
@@ -563,8 +562,10 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
             if (this.selectedCaseIds.length > this.maxSelectValue) {
                 let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
                     "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
-                alertUser.alert_user(errorMessage, 'danger');
-            }
+                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
+                        alertUser.alert_user(errorMessage, 'danger');
+                })
+            };
         },
     });
 
