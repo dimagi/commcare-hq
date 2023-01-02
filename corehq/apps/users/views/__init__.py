@@ -11,9 +11,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.toggles import TABLEAU_USER_SYNCING
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import (
@@ -96,6 +98,7 @@ from corehq.apps.users.forms import (
     CommtrackUserForm,
     SetUserPasswordForm,
     UpdateUserRoleForm,
+    TableauUserForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -334,6 +337,27 @@ class BaseEditUserView(BaseUserSettingsView):
         if self.form_user_update.is_valid():
             return self.form_user_update.update_user()
 
+    @property
+    @memoized
+    def tableau_form(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
+            return TableauUserForm(self.request.POST,
+                                   request=self.request,
+                                   domain=self.domain,
+                                   username=self.editable_user.username)
+
+        tableau_user = TableauUser.objects.filter(server__domain=self.domain).get(
+            username=self.editable_user.username
+        )
+        return TableauUserForm(
+            domain=self.domain,
+            request=self.request,
+            username=self.editable_user.username,
+            initial={
+                'role': tableau_user.role
+            }
+        )
+
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
@@ -343,6 +367,10 @@ class BaseEditUserView(BaseUserSettingsView):
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
+                saved = True
+        elif self.request.POST['form_type'] == "tableau":
+            if self.tableau_form.is_valid():
+                self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
             return HttpResponseRedirect(self.page_url)
@@ -410,6 +438,8 @@ class EditWebUserView(BaseEditUserView):
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            ctx.update({'tableau_form': self.tableau_form})
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
