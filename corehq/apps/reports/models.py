@@ -290,7 +290,7 @@ class TableauAPISession(object):
         logger.info(f"Making Tableau API request '{request_name}'.")
         response = requests.request(method, url, data=json.dumps(data), headers=self.headers)
         if response.ok:
-            logger.info(f"Tableau API request '{request_name}' was succussful.")
+            logger.info(f"Tableau API request '{request_name}' was successful.")
             if response.text:
                 body = json.loads(response.text)
                 return body
