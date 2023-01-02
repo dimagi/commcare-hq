@@ -245,6 +245,12 @@ class TableauUser(models.Model):
     class Meta:
         unique_together = ['server', 'username']
 
+    class Roles(models.TextChoices):
+        EXPLORER = 'Explorer', 'Explorer'
+        EXPLORER_CAN_PUBLISH = 'ExplorerCanPublish', 'Explorer (can publish)'
+        SITE_ADMINISTRATOR_EXPLORER = 'SiteAdministratorExplorer', 'Site Administrator (Explorer)'
+        VIEWER = 'Viewer', 'Viewer'
+
 
 logger = logging.getLogger('tableau_api')
 
