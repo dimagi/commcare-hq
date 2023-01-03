@@ -141,3 +141,12 @@ def _revert_api_request_log(request_log):
     if request_log.status == RequestLog.Status.SUCCESS:
         request_log.status = RequestLog.Status.REVERTED
         request_log.save()
+
+
+def revert_api_request_from_form(form_id):
+    from corehq.motech.generic_inbound.models import ProcessingAttempt
+    try:
+        attempt = ProcessingAttempt.objects.get(xform_id=form_id)
+        _revert_api_request_log(attempt.log)
+    except ProcessingAttempt.DoesNotExist:
+        return
