@@ -98,10 +98,6 @@ from dimagi.ext.couchdbkit import (
     StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.migration import (
-    SyncCouchToSQLMixin,
-    SyncSQLToCouchMixin,
-)
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.modules import to_function
@@ -263,7 +259,7 @@ class RepeaterManager(models.Manager):
         return list(self.filter(domain=domain))
 
 
-class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
+class SQLRepeater(RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=64, null=True)
@@ -926,7 +922,7 @@ class SQLLocationRepeater(SQLRepeater):
         return LocationRepeater
 
 
-class Repeater(SyncCouchToSQLMixin, QuickCachedDocumentMixin, Document):
+class Repeater(QuickCachedDocumentMixin, Document):
     """
     Represents the configuration of a repeater. Will specify the URL to forward to and
     other properties of the configuration.
