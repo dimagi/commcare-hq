@@ -18,7 +18,7 @@ def parse_response(response_data):
 
 def generate_invalid_req_response(message):
     resp = {
-        "code": "400",
+        "code": str(HTTP_400_BAD_REQUEST),
         "message": "Unable to process the current request due to incorrect data entered.",
         "details": [{
             "message": message,
