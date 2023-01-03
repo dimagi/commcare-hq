@@ -61,10 +61,13 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'underscore': '_',
                 'clipboard/dist/clipboard': 'Clipboard',
                 'ace-builds/src-min-noconflict/ace': 'ace',
+                'chai/chai': 'chai',
                 'DOMPurify/dist/purify.min': 'DOMPurify',
+                'mocha/mocha': 'mocha',
                 'moment/moment': 'moment',
                 'crypto-js/crypto-js': 'CryptoJS',
                 'hqwebapp/js/lib/modernizr': 'Modernizr',
+                'sinon/pkg/sinon': 'sinon',
             };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {

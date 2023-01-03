@@ -1006,9 +1006,10 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             'edit_url': reverse(self.edit_url_name, args=[self.domain, rule.pk]),
             'action_error': "",     # must be provided because knockout template looks for it
         }
+        case_list_explorer_case_props = list(col["name"] for col in CaseListExplorerColumns.DEFAULT_COLUMNS)
         rule_properties = (
             set(CaseDeduplicationActionDefinition.from_rule(rule).case_properties)
-            - set(CaseListExplorerColumns.DEFAULT_COLUMNS)
+            - set(case_list_explorer_case_props)
         )
         ret['duplicates_count'] = self._get_duplicates_count(rule)
         ret['explore_url'] = reverse_with_params(
@@ -1016,7 +1017,7 @@ class DeduplicationRuleListView(DataInterfaceSection, CRUDPaginatedViewMixin):
             args=(self.domain, 'duplicate_cases'),
             params={
                 "duplicate_case_rule": rule.id,
-                "explorer_columns": json.dumps(CaseListExplorerColumns.DEFAULT_COLUMNS + list(rule_properties)),
+                "explorer_columns": json.dumps(case_list_explorer_case_props + list(rule_properties)),
             },
         )
 
