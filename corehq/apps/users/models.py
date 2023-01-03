@@ -65,6 +65,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -2361,11 +2362,19 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             add_tableau_user(domain, username)
         return web_user
 
-    def delete_domain_membership(self, domain, create_record=False):
+    def delete_domain_membership(self, domain, create_record=False, return_error_message=False):
+        record = super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
         if TABLEAU_USER_SYNCING.enabled(domain):
             from corehq.apps.reports.util import delete_tableau_user
-            delete_tableau_user(domain, self.username)
-        return super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
+            try:
+                delete_tableau_user(domain, self.username)
+                error_message = None
+            except TableauAPIError as e:
+                error_message = f'''There was an error deleting the associated Tableau user. Error code: {e.code}.
+                                    \nError message: {e}'''
+            if return_error_message:
+                return record, error_message
+        return record
 
     def is_commcare_user(self):
         return False

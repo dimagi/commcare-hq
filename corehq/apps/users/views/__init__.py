@@ -73,6 +73,7 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -340,23 +341,28 @@ class BaseEditUserView(BaseUserSettingsView):
     @property
     @memoized
     def tableau_form(self):
-        if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
-            return TableauUserForm(self.request.POST,
-                                   request=self.request,
-                                   domain=self.domain,
-                                   username=self.editable_user.username)
+        try:
+            if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
+                return TableauUserForm(self.request.POST,
+                                    request=self.request,
+                                    domain=self.domain,
+                                    username=self.editable_user.username)
 
-        tableau_user = TableauUser.objects.filter(server__domain=self.domain).get(
-            username=self.editable_user.username
-        )
-        return TableauUserForm(
-            domain=self.domain,
-            request=self.request,
-            username=self.editable_user.username,
-            initial={
-                'role': tableau_user.role
-            }
-        )
+            tableau_user = TableauUser.objects.filter(server__domain=self.domain).get(
+                username=self.editable_user.username
+            )
+            return TableauUserForm(
+                domain=self.domain,
+                request=self.request,
+                username=self.editable_user.username,
+                initial={
+                    'role': tableau_user.role
+                }
+            )
+        except TableauAPIError as e:
+            messages.error(self.request, f'''There was an error getting data for this user's associated Talbeau user.
+                                                Error code: {e.code}.
+                                                \nError message: {e}''')
 
     def post(self, request, *args, **kwargs):
         saved = False
@@ -369,7 +375,7 @@ class BaseEditUserView(BaseUserSettingsView):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         elif self.request.POST['form_type'] == "tableau":
-            if self.tableau_form.is_valid():
+            if self.tableau_form and self.tableau_form.is_valid():
                 self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
@@ -872,7 +878,10 @@ def remove_web_user(request, domain, couch_user_id):
     # if no user, very likely they just pressed delete twice in rapid succession so
     # don't bother doing anything.
     if user:
-        record = user.delete_domain_membership(domain, create_record=True)
+        record, error_message = user.delete_domain_membership(domain, create_record=True,
+                                                              return_error_message=True)
+        if error_message:
+            messages.error(request, error_message)
         user.save()
         # web user's membership is bound to the domain, so log as a change for that domain
         log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
