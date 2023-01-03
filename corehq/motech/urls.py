@@ -13,8 +13,8 @@ from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.generic_inbound.views import (
     ConfigurableAPIEditView,
     ConfigurableAPIListView,
-    archive_api_request,
     retry_api_request,
+    revert_api_request,
 )
 from corehq.motech.openmrs.views import (
     AddOpenmrsRepeaterView,
@@ -126,6 +126,6 @@ urlpatterns = [
     url(r'^inbound/$', ConfigurableAPIListView.as_view(), name=ConfigurableAPIListView.urlname),
     url(r'^inbound/(?P<api_id>\d+)/$', ConfigurableAPIEditView.as_view(), name=ConfigurableAPIEditView.urlname),
     url(r'^inbound/log/(?P<log_id>[\w-]+)/$', ApiLogDetailView.as_view(), name=ApiLogDetailView.urlname),
-    url(r'^inbound/archive/(?P<log_id>[\w-]+)/$', archive_api_request, name='archive_api_request'),
+    url(r'^inbound/revert/(?P<log_id>[\w-]+)/$', revert_api_request, name='revert_api_request'),
     url(r'^inbound/retry/(?P<log_id>[\w-]+)/$', retry_api_request, name='retry_api_request'),
 ]

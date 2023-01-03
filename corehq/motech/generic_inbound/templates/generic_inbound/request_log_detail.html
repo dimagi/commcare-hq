@@ -167,11 +167,15 @@
       </button>
     </form>
   {% elif log.status == 'success' %}
-    <form action="{% url 'archive_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
+    <form action="{% url 'revert_api_request' domain log.id %}" method="post" class="pull-left">{% csrf_token %}
       <button type="submit" class="btn btn-danger disable-on-submit" >
-        <i class="fa fa-archive"></i>
-        {% trans 'Archive' %}
+        <i class="fa fa-undo"></i>
+        {% trans 'Revert' %}
       </button>
+      <span class="hq-help-template"
+            data-title="{% trans 'Reverting API Requests' %}"
+            data-content="{% blocktrans %}Reverts actions performed in this request and archives any associated forms.{% endblocktrans %}">
+      </span>
     </form>
   {% endif %}
 </div>

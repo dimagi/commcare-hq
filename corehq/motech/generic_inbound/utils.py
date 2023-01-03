@@ -128,13 +128,16 @@ def reprocess_api_request(request_log):
         make_processing_attempt(response, request_log, is_retry=True)
 
 
-def revert_api_request(request_log, user_id):
-    from corehq.motech.generic_inbound.models import RequestLog
-
+def archive_api_request(request_log, user_id):
     attempts = request_log.processingattempt_set.filter(xform_id__isnull=False)
     for attempt in attempts:
         form = get_form_or_404(request_log.domain, attempt.xform_id)
         form.archive(user_id=user_id)
+    _revert_api_request_log(request_log)
 
-    request_log.status = RequestLog.Status.REVERTED
-    request_log.save()
+
+def _revert_api_request_log(request_log):
+    from corehq.motech.generic_inbound.models import RequestLog
+    if request_log.status == RequestLog.Status.SUCCESS:
+        request_log.status = RequestLog.Status.REVERTED
+        request_log.save()
