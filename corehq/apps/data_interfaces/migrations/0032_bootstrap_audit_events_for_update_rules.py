@@ -11,10 +11,6 @@ def bootstrap_audit_events_for_automatic_update_rule(apps, schema_editor):
                  ['AutomaticUpdateRule'])
 
 
-def noop(*args, **kwargs):
-    pass
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,5 +20,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(bootstrap_audit_events_for_automatic_update_rule,
-                             reverse_code=noop)
+                             reverse_code=migrations.RunPython.noop)
     ]
