@@ -360,9 +360,9 @@ class BaseEditUserView(BaseUserSettingsView):
                 }
             )
         except TableauAPIError as e:
-            messages.error(self.request, f'''There was an error getting data for this user's associated Talbeau user.
-                                                Error code: {e.code}.
-                                                \nError message: {e}''')
+            messages.error(self.request, f'''There was an error getting data for this user's associated Tableau
+                                             user. Error code: {e.code}.
+                                             \nError message: {e}''')
 
     def post(self, request, *args, **kwargs):
         saved = False
