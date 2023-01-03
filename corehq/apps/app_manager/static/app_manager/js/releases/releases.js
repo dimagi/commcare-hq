@@ -500,7 +500,7 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
 
-        self.toggleReleasesControl = function (enableRelease) {
+        self.showReleaseControl = function (enableRelease) {
             self.releasesEnabled(enableRelease);
         };
 

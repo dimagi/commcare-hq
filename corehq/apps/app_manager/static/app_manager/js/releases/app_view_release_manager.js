@@ -80,7 +80,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
         var releaseControlEl = $('#release-control');
         if (releaseControlEl.length) {
-            releasesMain.toggleReleasesControl(false);
+            releasesMain.showReleaseControl(false);
 
             var setReleaseLockButtons = function () {
                 if (releasesMain.releasesEnabled()) {
@@ -93,11 +93,11 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
             };
 
             $("#btn-release-unlocked").click(function () {
-                releasesMain.toggleReleasesControl(false);
+                releasesMain.showReleaseControl(false);
                 setReleaseLockButtons();
             });
             $("#btn-release-locked").click(function () {
-                releasesMain.toggleReleasesControl(true);
+                releasesMain.showReleaseControl(true);
                 setReleaseLockButtons();
             });
 
