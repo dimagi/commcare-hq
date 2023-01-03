@@ -153,6 +153,7 @@ class TimeoutMiddleware(MiddlewareMixin):
     def _get_timeout(cls, session, is_secure, user, domain=None):
         if not is_secure:
             return settings.INACTIVITY_TIMEOUT
+
         domains = cls._get_relevant_domains(user, domain)
 
         timeouts = list(map(Domain.secure_timeout, domains))
@@ -163,7 +164,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         if 'secure_session_timeout' in session:
             timeouts.append(session['secure_session_timeout'])
 
-        return timeouts[0] if timeouts else settings.SECURE_TIMEOUT
+        return timeouts[0] if timeouts else settings.INACTIVITY_TIMEOUT
 
     @classmethod
     def _get_relevant_domains(cls, couch_user, domain=None):

@@ -40,6 +40,7 @@ from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
 
 from corehq import toggles
+
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
     AMPLIFIES_NOT_SET,
@@ -510,8 +511,15 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
         if domain_obj.secure_sessions:
             if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
-                return domain_obj.secure_sessions_timeout or settings.SECURE_TIMEOUT
-            return settings.SECURE_TIMEOUT
+                if domain_obj.secure_sessions_timeout and domain_obj.secure_sessions:
+                    return domain_obj.secure_sessions_timeout
+
+                elif domain_obj.secure_sessions and not domain_obj.secure_sessions_timeout:
+                    return settings.SECURE_TIMEOUT
+
+        elif not domain_obj.secure_sessions:
+            if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
+                return settings.INACTIVITY_TIMEOUT
 
         return None
 
