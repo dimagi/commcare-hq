@@ -130,6 +130,8 @@ from corehq.util.workbook_json.excel import (
     get_workbook,
 )
 
+from dimagi.utils.logging import notify_exception
+
 
 def _users_context(request, domain):
     couch_user = request.couch_user
@@ -361,8 +363,12 @@ class BaseEditUserView(BaseUserSettingsView):
             )
         except TableauAPIError as e:
             messages.error(self.request, f'''There was an error getting data for this user's associated Tableau
-                                             user. Error code: {e.code}.
-                                             \nError message: {e}''')
+                                             user. Please contact support if this error persists.
+                                             \nError code: {e.code}.''')
+            notify_exception(self.request, str(e), details={
+                'domain': self.domain,
+                'exception_type': type(e),
+            })
 
     def post(self, request, *args, **kwargs):
         saved = False
@@ -878,10 +884,15 @@ def remove_web_user(request, domain, couch_user_id):
     # if no user, very likely they just pressed delete twice in rapid succession so
     # don't bother doing anything.
     if user:
-        record, error_message = user.delete_domain_membership(domain, create_record=True,
-                                                              return_error_message=True)
-        if error_message:
-            messages.error(request, error_message)
+        record, error = user.delete_domain_membership(domain, create_record=True, return_error=True)
+        if error:
+            messages.error(request, f'''There was an error deleting the associated Tableau user.
+                                        Please contanct support if this problem persists.
+                                        \nError code: {error.code}.''')
+            notify_exception(request, str(error), details={
+                'domain': domain,
+                'exception_type': type(error)
+            })
         user.save()
         # web user's membership is bound to the domain, so log as a change for that domain
         log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,

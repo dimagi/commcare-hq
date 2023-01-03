@@ -2368,12 +2368,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             from corehq.apps.reports.util import delete_tableau_user
             try:
                 delete_tableau_user(domain, self.username)
-                error_message = None
+                return record, None
             except TableauAPIError as e:
-                error_message = f'''There was an error deleting the associated Tableau user. Error code: {e.code}.
-                                    \nError message: {e}'''
-            if return_error_message:
-                return record, error_message
+                return record, e
         return record
 
     def is_commcare_user(self):
