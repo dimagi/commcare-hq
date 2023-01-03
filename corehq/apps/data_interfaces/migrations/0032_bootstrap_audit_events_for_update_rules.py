@@ -1,7 +1,10 @@
 from django.core.management import call_command
 from django.db import migrations
 
+from corehq.util.django_migrations import skip_on_fresh_install
 
+
+@skip_on_fresh_install
 def bootstrap_audit_events_for_automatic_update_rule(apps, schema_editor):
     call_command('bootstrap_field_audit_events',
                  'top-up',
