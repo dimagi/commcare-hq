@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('data_interfaces', '0031_add_domaincaserulerun_status_choices'),
+        ('field_audit', '0002_add_is_bootstrap_column'),
     ]
 
     operations = [
