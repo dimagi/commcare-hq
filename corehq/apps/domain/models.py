@@ -869,6 +869,18 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         # https://manage.dimagi.com/default.asp?274299
         return 50000
 
+    @staticmethod
+    def is_domain_deleted(domain):
+        """
+        Ensure that the domain exists in the deleted_domain view, AND not in
+        the active domain view
+        :param domain:
+        :return: True if deleted, False if not
+        """
+        deleted_domains = Domain.get_deleted_domain_names()
+        active_domains = set(Domain.get_all_names())
+        return domain in deleted_domains and domain not in active_domains
+
 
 class TransferDomainRequest(models.Model):
     active = models.BooleanField(default=True, blank=True)
