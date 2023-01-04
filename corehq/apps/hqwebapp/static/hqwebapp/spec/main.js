@@ -1,5 +1,5 @@
 hqDefine("hqwebapp/spec/main", [
-    "hqwebapp/js/mocha",
+    "mocha/js/main",
 ], function (
     hqMocha
 ) {

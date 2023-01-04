@@ -1,4 +1,4 @@
-hqDefine("hqwebapp/js/mocha", [
+hqDefine("mocha/js/main", [
     "mocha/mocha",
     "chai/chai",
     "sinon/pkg/sinon",
