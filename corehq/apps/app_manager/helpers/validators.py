@@ -958,26 +958,15 @@ class FormBaseValidator(object):
                         linked_module = self.app.get_module_by_unique_id(form_link.module_unique_id)
                     except ModuleNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
-                if linked_module:
-                    if linked_module.is_multi_select():
-                        errors.append(dict(type="multi select form links", **meta))
-                    if linked_module.root_module and linked_module.root_module.is_multi_select():
-                        errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            if module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            elif module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
-            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='previous multi select form links', **meta))
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
