@@ -1,0 +1,25 @@
+
+*** These modified files were found in JOE when it aborted on Mon Jan  2 15:38:41 2023
+*** JOE was aborted because the terminal closed
+
+*** File '/home/holly/commcare-hq/.git/MERGE_MSG'
+# Updating my local code base (I hope)Merge https://github.com/dimagi/commcare-hq
+# Please enter a commit message to explain why this merge is necessary,
+# especially if it merges an updated upstream into a topic branch.
+#
+# Lines starting with '#' will be ignored, and an empty message aborts
+# the commit.
+
+*** File '(Unnamed)'
+/home/holly/.bashrc
+/home/holly/bash_profile
+/home/holly/.bash_profile
+/home/holly/.bashrc
+/home/holly/.bashrc
+/home/holly/commcare-hq/.git/MERGE_MSG
+
+*** File '* Startup Log *'
+Processing '/etc/joe/editorrc'...
+Processing '/etc/joe/ftyperc'...
+Finished processing /etc/joe/ftyperc
+Finished processing /etc/joe/editorrc
