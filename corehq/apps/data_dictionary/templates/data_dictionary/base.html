@@ -158,6 +158,7 @@
           <th>{% trans "Case Property" %}</th>
           <th>{% trans "Data Type" %}</th>
           <th>{% trans "Description" %}</th>
+          <th>{% trans "Label" %}</th>
           {% if fhir_integration_enabled %}
             <th>{% trans "FHIR Resource Property Path" %}</th>
           {% endif %}
@@ -206,6 +207,13 @@
                                 rows: 1,
                                 placeholder: '{% trans "Click here to add a description" %}',
                               "></textarea>
+            </td>
+            <td>
+                            <input class="form-control" data-bind="
+                              value: $data.label,
+                              rows: 1,
+                              placeholder: '{% trans "Click here to add a label" %}',
+                            "/>
             </td>
             {% if fhir_integration_enabled %}
               <td class="fhir-path">

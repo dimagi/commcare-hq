@@ -35,8 +35,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 _.each(properties, function (prop) {
                     var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath);
+                        prop.removeFHIRResourcePropertyPath, prop.label);
                     propObj.description.subscribe(changeSaveButton);
+                    propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
                     propObj.dataType.subscribe(changeSaveButton);
                     propObj.deprecated.subscribe(changeSaveButton);
@@ -51,7 +52,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     };
 
     var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, label) {
         var self = {};
         self.name = name;
         self.expanded = ko.observable(true);
@@ -60,6 +61,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
         self.caseType = caseType;
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
+        self.label = ko.observable(label);
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
@@ -142,6 +144,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
+                            'label': element.label(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
@@ -231,6 +234,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                 var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
+                prop.label.subscribe(changeSaveButton);
                 prop.fhirResourcePropPath.subscribe(changeSaveButton);
                 prop.deprecated.subscribe(changeSaveButton);
                 prop.removeFHIRResourcePropertyPath.subscribe(changeSaveButton);

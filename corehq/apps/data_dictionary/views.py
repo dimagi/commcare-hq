@@ -107,6 +107,7 @@ def data_dictionary_json(request, domain, case_type_name=None):
         for prop in case_type.properties.all():
             p['properties'].append({
                 "description": prop.description,
+                "label": prop.label,
                 "fhir_resource_prop_path": fhir_resource_prop_by_case_prop.get(prop),
                 "name": prop.name,
                 "data_type": prop.data_type,
@@ -155,6 +156,7 @@ def update_case_property(request, domain):
             case_type = property.get('caseType')
             name = property.get('name')
             description = property.get('description')
+            label = property.get('label')
             data_type = property.get('data_type')
             group = property.get('group')
             deprecated = property.get('deprecated')
@@ -166,7 +168,7 @@ def update_case_property(request, domain):
                 fhir_resource_prop_path, remove_path = None, None
             error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
                                        fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values)
+                                       allowed_values, label)
             if error:
                 errors.append(error)
 
