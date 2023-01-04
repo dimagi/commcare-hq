@@ -2823,6 +2823,12 @@ msgstr ""
 msgid "Page <%-num%>"
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid ""
+"You have selected more than the maximum selection limit of <%= value %> . "
+"Please uncheck some values to continue."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
@@ -4333,6 +4339,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

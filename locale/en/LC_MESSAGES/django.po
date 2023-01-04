@@ -3985,6 +3985,27 @@ msgstr ""
 msgid "In Test"
 msgstr ""
 
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+#: corehq/apps/settings/views.py
+msgid "Created"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py corehq/motech/generic_inbound/models.py
+msgid "Reverted"
+msgstr ""
+
+#: corehq/apps/app_manager/models.py
+#: corehq/apps/export/templates/export/incremental_export.html
+#: corehq/apps/reports/standard/sms.py
+#: corehq/apps/reports/standard/users/reports.py
+#: corehq/apps/reports/templates/reports/tableau_visualization.html
+#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
+#: corehq/motech/templates/motech/connection_settings.html
+#: corehq/tabs/tabclasses.py
+msgid "Deleted"
+msgstr ""
+
 #: corehq/apps/app_manager/static_strings.py
 msgid "1 Day"
 msgstr ""
@@ -5570,6 +5591,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/reports/templates/reports/filters/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Label"
 msgstr ""
@@ -9159,6 +9181,11 @@ msgid "Form and Case Changes"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
+msgid "Application Release Logs"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
 msgid "Version Number"
 msgstr ""
 
@@ -9171,6 +9198,10 @@ msgstr ""
 #: corehq/apps/case_importer/templates/case_importer/partials/ko_import_history.html
 #: corehq/apps/reports/forms.py
 msgid "Time"
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/partials/releases/app_release_logs.html
+msgid "Info"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/build_profiles.html
@@ -9271,10 +9302,6 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
 msgid "Application Profiles"
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/releases/releases.html
-msgid "Application Release Logs"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/partials/releases/releases_deploy_modal.html
@@ -10380,6 +10407,10 @@ msgstr ""
 
 #: corehq/apps/app_manager/views/releases.py
 msgid "Latest release now available for profile {}"
+msgstr ""
+
+#: corehq/apps/app_manager/views/releases.py
+msgid "Reverted to version {log.info['version']}"
 msgstr ""
 
 #: corehq/apps/app_manager/views/utils.py
@@ -12414,6 +12445,7 @@ msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
 #: corehq/apps/data_dictionary/views.py corehq/apps/linked_domain/const.py
+#: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/tabs/tabclasses.py
 msgid "Data Dictionary"
 msgstr ""
@@ -12485,10 +12517,10 @@ msgstr ""
 #, python-format
 msgid ""
 "\n"
-"        Missing properties or case types? <a href=\"%(refresh_url)s\" "
+"          Missing properties or case types? <a href=\"%(refresh_url)s\" "
 "target=\"_blank\">Click to sync</a>\n"
-"        (opens in a new tab, may be slow...)\n"
-"        "
+"          (opens in a new tab, may be slow...)\n"
+"          "
 msgstr ""
 
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -18311,16 +18343,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/export/templates/export/incremental_export.html
-#: corehq/apps/reports/standard/sms.py
-#: corehq/apps/reports/standard/users/reports.py
-#: corehq/apps/reports/templates/reports/tableau_visualization.html
-#: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
-#: corehq/motech/templates/motech/connection_settings.html
-#: corehq/tabs/tabclasses.py
-msgid "Deleted"
-msgstr ""
-
-#: corehq/apps/export/templates/export/incremental_export.html
 msgid "Delete Incremental Export"
 msgstr ""
 
@@ -22050,19 +22072,30 @@ msgstr ""
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid ""
 "\n"
-"            Enter alert text below and preview in the table below.\n"
-"            Alerts will not be public until the \"activate alert\" button "
-"is\n"
-"            pressed. Links will be properly wrapped with anchor tags. "
-"Multiple\n"
-"            alerts may be shown at a time, and the most recently modified "
-"alert\n"
-"            will be displayed on top.\n"
+"          Enter alert text here and preview in the table below. Links will "
+"be properly wrapped with anchor tags. Alerts\n"
+"          will become public when the \"activate alert\" button is pressed, "
+"or during the chosen timeframe after the\n"
+"          \"schedule alert\" button has been pressed. Multiple alerts may be "
+"shown to users at a time, and the most\n"
+"          recently modified alert will be displayed on top.\n"
 "          "
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Affected domains"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Start time (optional)"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "End time (optional)"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Time zone"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -22074,12 +22107,19 @@ msgid "Available Alerts"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
-#: corehq/apps/settings/views.py
-msgid "Created"
+msgid "Scheduled start"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Scheduled end"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "Activate or De-activate"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Schedule Alert"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
@@ -22088,6 +22128,10 @@ msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
 msgid "De-activate Alert"
+msgstr ""
+
+#: corehq/apps/hqwebapp/templates/hqwebapp/maintenance_alerts.html
+msgid "Alert Expired"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/no_permission.html
@@ -37102,7 +37146,8 @@ msgid "Product IDs must be set for all ledger updates!"
 msgstr ""
 
 #: corehq/form_processor/submission_post.py
-msgid "Form successfully saved!"
+#, python-brace-format
+msgid "'{form_name}' successfully saved!"
 msgstr ""
 
 #: corehq/form_processor/submission_post.py
@@ -39358,10 +39403,6 @@ msgstr ""
 
 #: corehq/motech/generic_inbound/models.py
 msgid "Validation Failed"
-msgstr ""
-
-#: corehq/motech/generic_inbound/models.py
-msgid "Reverted"
 msgstr ""
 
 #: corehq/motech/generic_inbound/reports.py
