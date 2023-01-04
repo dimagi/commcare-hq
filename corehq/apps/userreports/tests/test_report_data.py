@@ -20,6 +20,7 @@ ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number', 'sort_key
 class ReportDataTest(TestCase):
 
     def setUp(self):
+        super().setUp()
         # Create report
         self.domain = 'test-ucr-report-data'
         self.data_source = DataSourceConfiguration(

@@ -39,6 +39,7 @@ def get_sample_config(domain=None):
 class SaveErrorsTest(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.config = get_sample_config()
         self.adapter = get_indicator_adapter(self.config, raise_errors=True)
 

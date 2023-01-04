@@ -28,6 +28,7 @@ class TestLocationDataSource(TestCase):
         cls.addClassCleanup(cls.domain_obj.delete)
 
     def setUp(self):
+        super().setUp()
         es = get_es_new()
         initialize_index_and_mapping(es, USER_INDEX_INFO)
         self.addCleanup(ensure_index_deleted, USER_INDEX_INFO.index)
