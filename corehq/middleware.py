@@ -159,18 +159,6 @@ class TimeoutMiddleware(MiddlewareMixin):
         timeouts = list(map(Domain.secure_timeout, domains))
         timeouts = list(filter(None, timeouts))
 
-        """ Include timeout in current session, important for users who are not domain
-        members.
-        (e.g., superusers) who visited a secure domain and are now looking at a
-        non-secure domain.
-
-        Code works as intended without this
-        not sure if neccessary for another aspect:
-
-        if 'secure_session_timeout' in session:
-        timeouts.append(session['secure_session_timeout'])
-        """
-
         return min(timeouts) if timeouts else settings.INACTIVITY_TIMEOUT
 
     @classmethod
