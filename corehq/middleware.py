@@ -164,7 +164,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         if 'secure_session_timeout' in session:
             timeouts.append(session['secure_session_timeout'])
 
-        return timeouts[0] if timeouts else settings.INACTIVITY_TIMEOUT
+        return min(timeouts[0], timeouts[1]) if timeouts else settings.INACTIVITY_TIMEOUT
 
     @classmethod
     def _get_relevant_domains(cls, couch_user, domain=None):
