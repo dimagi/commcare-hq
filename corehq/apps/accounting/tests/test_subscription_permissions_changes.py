@@ -15,7 +15,6 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
 )
-from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
@@ -30,17 +29,15 @@ from corehq.apps.userreports.models import (
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
     def setUp(self):
-        super(TestSubscriptionPermissionsChanges, self).setUp()
-        self.project = Domain(
-            name="test-sub-changes",
-            is_active=True,
-        )
-        self.project.save()
+        super().setUp()
+        self.domain_obj = Domain(name="test-sub-changes", is_active=True)
+        self.domain_obj.save()
+        self.addCleanup(self.domain_obj.delete)
 
-        self.admin_username = generator.create_arbitrary_web_user_name()
+        self.admin_username = 'test-sub-change-admin'
 
         self.account = BillingAccount.get_or_create_account_by_domain(
-            self.project.name, created_by=self.admin_username)[0]
+            self.domain_obj.name, created_by=self.admin_username)[0]
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
         self._init_pro_with_rb_plan_and_version()
 
@@ -74,12 +71,12 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
     def _subscribe_to_advanced(self):
         return Subscription.new_domain_subscription(
-            self.account, self.project.name, self.advanced_plan,
+            self.account, self.domain_obj.name, self.advanced_plan,
             web_user=self.admin_username
         )
 
     def _subscribe_to_pro_with_rb(self):
-        subscription = Subscription.get_active_subscription_by_domain(self.project.name)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain_obj.name)
 
         new_subscription = subscription.change_plan(
             self.pro_rb_version,
@@ -104,11 +101,11 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         app_standard = Application.wrap(standard_source)
         app_standard.save()
-        self.assertEqual(self.project.name, app_standard.domain)
+        self.assertEqual(self.domain_obj.name, app_standard.domain)
 
         app_build = Application.wrap(build_source)
         app_build.save()
-        self.assertEqual(self.project.name, app_build.domain)
+        self.assertEqual(self.domain_obj.name, app_build.domain)
 
         self.assertTrue(LOGO_HOME in app_standard.logo_refs)
         self.assertTrue(LOGO_LOGIN in app_standard.logo_refs)
@@ -140,7 +137,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
     def test_report_builder_datasource_deactivation(self):
 
         def _get_data_source(id_):
-            return get_datasource_config(id_, self.project.name)[0]
+            return get_datasource_config(id_, self.domain_obj.name)[0]
 
         # Upgrade the domain
         # (for the upgrade to work, there has to be an existing subscription,
@@ -150,25 +147,30 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
 
         # Create reports and data sources
         builder_report_data_source = DataSourceConfiguration(
-            domain=self.project.name,
+            domain=self.domain_obj.name,
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="foo",
         )
+        builder_report_data_source.save()
+        self.addCleanup(builder_report_data_source.delete)
+
         other_data_source = DataSourceConfiguration(
-            domain=self.project.name,
+            domain=self.domain_obj.name,
             is_deactivated=False,
             referenced_doc_type="XFormInstance",
             table_id="bar",
         )
-        builder_report_data_source.save()
         other_data_source.save()
+        self.addCleanup(other_data_source.delete)
+
         report_builder_report = ReportConfiguration(
-            domain=self.project.name,
+            domain=self.domain_obj.name,
             config_id=builder_report_data_source._id,
             report_meta=ReportMeta(created_by_builder=True),
         )
         report_builder_report.save()
+        self.addCleanup(report_builder_report.delete)
 
         # downgrade the domain
         community_sub = pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
@@ -192,15 +194,5 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         builder_report_data_source = _get_data_source(builder_report_data_source._id)
         self.assertFalse(builder_report_data_source.is_deactivated)
 
-        # delete the data sources
-        builder_report_data_source.delete()
-        other_data_source.delete()
-        # Delete the report
-        report_builder_report.delete()
-
         # reset the subscription
         pro_with_rb_sub.change_plan(DefaultProductPlan.get_default_plan_version())
-
-    def tearDown(self):
-        self.project.delete()
-        super(TestSubscriptionPermissionsChanges, self).tearDown()
