@@ -77,4 +77,5 @@ branches:
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
     - ad/user-syncing-UI-2 # Addison Jan 3
+    - revert-32445-jls/requirejs-hqwebapp-tests # Addison Jan 4
 submodules: { }
