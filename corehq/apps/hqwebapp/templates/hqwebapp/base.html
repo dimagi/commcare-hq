@@ -148,6 +148,13 @@
 
     {% block head %}
     {% endblock %}
+
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+    <script>
+      // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+      // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+      window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+    </script>
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}
@@ -271,12 +278,38 @@
 
     {# javascript below this line #}
 
-    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
-
-    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+    {% if requirejs_main %}
+      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+      <script src="{% static 'requirejs/require.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+      {# Do not compress these, which are re-written during depeloy #}
+      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+      <script>
+        requirejs.config({
+          deps: ['knockout', 'ko.mapping'],
+          callback: function (ko, mapping) {
+            ko.mapping = mapping;
+          }
+        });
+        requirejs([
+          'hqwebapp/js/common',
+        ], function() {
+          requirejs([
+            'hqwebapp/js/base_main',
+          ], function () {
+            requirejs(['{{ requirejs_main }}'], function () {
+              console.log("Loaded requirejs main module: {{ requirejs_main }}");
+            });
+          });
+        });
+      </script>
+    {% endif %}
 
     {# HQ Specific Libraries #}
     {% if not requirejs_main %}
+      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
+
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
