@@ -39,13 +39,6 @@ def create_health_id(txnid):
     Info about what things are already authenticated, is tracked using txnId.
     """
     payload = {
-        "email": "",
-        "firstName": "",
-        "healthId": "",
-        "lastName": "",
-        "middleName": "",
-        "password": "",
-        "profilePhoto": "",
         "txnId": txnid
     }
     return get_response_http_post(CREATE_HEALTH_ID_URL, payload)
