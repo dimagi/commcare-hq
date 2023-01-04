@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger('__name__')
+logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
