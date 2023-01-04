@@ -213,7 +213,8 @@ def _get_main_js_modules_by_dir(html_files):
                 main = match.group(1)
                 directory = match.group(2)
                 if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    dirs[directory].add(main)
+                    if not re.search(r'\bspec\b', main):
+                        dirs[directory].add(main)
     return dirs
 
 
