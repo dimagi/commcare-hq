@@ -734,6 +734,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
+        self.clear_caches()
 
     def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
