@@ -453,6 +453,11 @@ def add_tableau_user(domain, username):
     these details to the Tableau instance.
     '''
     session = TableauAPISession.create_session_for_domain(domain)
+    if TableauUser.objects.filter(
+        server=session.tableau_connected_app.server,
+        username=username
+    ).exists():
+        return True
     user = TableauUser.objects.create(
         server=session.tableau_connected_app.server,
         username=username,
