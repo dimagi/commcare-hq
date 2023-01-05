@@ -236,7 +236,7 @@ class OpenmrsRepeater(CaseRepeater):
                     for feed_name, feed in self.atom_feed_status.items()
                 }
             setattr(sql_object, field_name, value)
-        sql_object.save(sync_to_couch=False)
+        sql_object.save()
 
     @classmethod
     def _migration_get_sql_model_class(cls):

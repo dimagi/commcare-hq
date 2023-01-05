@@ -441,12 +441,10 @@ class SQLRepeater(RepeaterSuperProxy):
         self.is_paused = False
         self.save()
 
-    def retire(self, sync_to_couch=True):
+    def retire(self):
         self.is_paused = False
         self.is_deleted = True
-        self.save(sync_to_couch=False)
-        if sync_to_couch:
-            self.repeater.retire(sync_to_sql=False)
+        self.save()
 
     def get_pending_record_count(self):
         return get_pending_repeat_record_count(self.domain, self.repeater_id)
@@ -1062,15 +1060,13 @@ class Repeater(QuickCachedDocumentMixin, Document):
         else:
             return None
 
-    def retire(self, sync_to_sql=True):
+    def retire(self):
         if DELETED_SUFFIX not in self['doc_type']:
             self['doc_type'] += DELETED_SUFFIX
         if DELETED_SUFFIX not in self['base_doc']:
             self['base_doc'] += DELETED_SUFFIX
         self.paused = False
-        self.save(sync_to_sql=False)
-        if sync_to_sql:
-            self.sql_repeater.retire(sync_to_couch=False)
+        self.save()
 
     def pause(self):
         self.paused = True
@@ -1193,7 +1189,7 @@ class Repeater(QuickCachedDocumentMixin, Document):
         conn.plaintext_password = self.plaintext_password
         conn.save()
         self.connection_settings_id = conn.id
-        self.save(sync_to_sql=False)
+        self.save()
         return conn
 
 
