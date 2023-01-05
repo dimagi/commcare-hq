@@ -1315,22 +1315,6 @@ class CaseRepeater(Repeater):
         return SQLCaseRepeater
 
 
-class CreateCaseRepeater(CaseRepeater):
-    """
-    Just like CaseRepeater but only create records if the case is being created.
-    Used by the Zapier integration.
-    """
-    friendly_name = _("Forward Cases on Creation Only")
-
-    def allowed_to_forward(self, payload):
-        # assume if there's exactly 1 xform_id that modified the case it's being created
-        return super(CreateCaseRepeater, self).allowed_to_forward(payload) and len(payload.xform_ids) == 1
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLCreateCaseRepeater
-
-
 def get_repeater_response_from_submission_response(response):
     from couchforms.openrosa_response import (
         ResponseNature,
