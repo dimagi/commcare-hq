@@ -14,7 +14,6 @@ from corehq.motech.models import ConnectionSettings
 
 class TestDhisConfigValidation(TestCase):
 
-    # adding sync_to_sql=False because tests only deal with config validations
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
         self.fakedb = FakeCouchDb()
