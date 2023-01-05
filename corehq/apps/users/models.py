@@ -2371,19 +2371,11 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 })
         super().add_domain_membership(domain, timezone, **kwargs)
 
-    def delete_domain_membership(self, domain, create_record=False, return_error_message=False):
-        record = super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
-        if TABLEAU_USER_SYNCING.enabled(domain):
+    def delete_domain_membership(self, domain, create_record=False, skip_tableau=False):
+        if TABLEAU_USER_SYNCING.enabled(domain) and not skip_tableau:
             from corehq.apps.reports.util import delete_tableau_user
-            try:
-                delete_tableau_user(domain, self.username)
-                error_message = None
-            except TableauAPIError as e:
-                error_message = f'''There was an error deleting the associated Tableau user. Error code: {e.code}.
-                                    \nError message: {e}'''
-            if return_error_message:
-                return record, error_message
-        return record
+            delete_tableau_user(domain, self.username)
+        return super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
 
     def is_commcare_user(self):
         return False
