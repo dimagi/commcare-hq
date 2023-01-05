@@ -1402,53 +1402,6 @@ def get_repeater_response_from_submission_response(response):
     return response
 
 
-class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
-    """
-    A repeater that triggers off case creation but sends a form to update cases in
-    another commcare project space.
-    """
-    friendly_name = _("Update Cases in another CommCare Project via a Data Registry")
-    payload_generator_classes = (DataRegistryCaseUpdatePayloadGenerator,)
-
-    def form_class_name(self):
-        return 'DataRegistryCaseUpdateRepeater'
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        return toggles.DATA_REGISTRY_CASE_UPDATE_REPEATER.enabled(domain)
-
-    def get_url(self, repeat_record):
-        new_domain = self.payload_doc(repeat_record).get_case_property('target_domain')
-        return self.connection_settings.url.format(domain=new_domain)
-
-    def send_request(self, repeat_record, payload):
-        return get_repeater_response_from_submission_response(
-            super().send_request(repeat_record, payload)
-        )
-
-    def allowed_to_forward(self, payload):
-        if not super().allowed_to_forward(payload):
-            return False
-
-        # Exclude extension cases where the host is also a case type that this repeater
-        # would act on since they get forwarded along with their host
-        host_indices = payload.get_indices(relationship=CASE_INDEX_EXTENSION)
-        for host_index in host_indices:
-            if host_index.referenced_type in self.white_listed_case_types:
-                return False
-
-        transaction = CaseTransaction.objects.get_most_recent_form_transaction(payload.case_id)
-        if transaction:
-            # prevent chaining updates
-            return transaction.xmlns != DataRegistryCaseUpdatePayloadGenerator.XMLNS
-
-        return True
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLDataRegistryCaseUpdateRepeater
-
-
 def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
