@@ -381,17 +381,6 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         for feed in self.atom_feed_status.keys():
             couch_object.atom_feed_status[feed] = AtomFeedStatus.wrap(self.atom_feed_status[feed])
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "location_id",
-            "atom_feed_enabled",
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return OpenmrsRepeater
-
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
     """

@@ -261,18 +261,6 @@ class SQLFHIRRepeater(SQLCaseRepeater):
             ))
         return case_trigger_info_list, resource_types_by_case_type
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FHIRRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "fhir_version",
-            "patient_registration_enabled",
-            "patient_search_enabled"
-        ]
-
 
 def _get_cases_by_id(domain, case_blocks):
     case_ids = [case_block['@case_id'] for case_block in case_blocks]

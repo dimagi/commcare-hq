@@ -65,10 +65,6 @@ class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
             )
         return allowed
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return BeneficiaryRegistrationRepeater
-
 
 class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
 
@@ -102,10 +98,6 @@ class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
                 and case.get_case_property('api') == COWIN_API_DATA_VACCINATION_IDENTIFIER
             )
         return allowed
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return BeneficiaryVaccinationRepeater
 
 
 class BaseCOWINRepeater(CaseRepeater):
