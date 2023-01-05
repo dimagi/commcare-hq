@@ -64,6 +64,29 @@ properties for a specific reason.
 .. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
 
 
+Comparing Mappings In Code Against Live Indexes
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+When modifying mappings for an existing index, it can be useful to compare the
+new mapping (as defined in code) to the live index mappings in Elasticsearch on
+a CommCare HQ deployment. This is possible by dumping the mappings of interest
+into local files and comparing them with a diff utility. The
+``print_elastic_mappings`` Django manage command makes this process relatively
+easy. Minimally, this can be accomplished in as few as three steps:
+
+1. Export the local code mapping into a new file.
+2. Export the mappings from a deployed environment into a local file.
+3. Compare the two files.
+
+In practice, this might look like the following example:
+
+.. code-block:: shell
+
+   ./manage.py print_elastic_mappings sms --no-names > ./sms-in-code.py
+   cchq <env> django-manage print_elastic_mappings smslogs_2020-01-28:sms --no-names > ./sms-live.py
+   diff -u ./sms-live.py ./sms-in-code.py
+
+
 Elastic Index Tuning Configurations
 '''''''''''''''''''''''''''''''''''
 
