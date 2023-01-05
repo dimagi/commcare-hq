@@ -2356,11 +2356,20 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         web_user.save()
         web_user.log_user_create(domain, created_by, created_via,
                                  by_domain_required_for_log=by_domain_required_for_log)
+        return web_user
+
+    def add_domain_membership(self, domain, timezone=None, **kwargs):
         if TABLEAU_USER_SYNCING.enabled(domain):
             # Inline import avoids a circular import error
             from corehq.apps.reports.util import add_tableau_user
-            add_tableau_user(domain, username)
-        return web_user
+            from corehq.apps.reports.models import TableauUser
+            try:
+                add_tableau_user(domain, self.username)
+            except (TableauAPIError, TableauUser.DoesNotExist) as e:
+                notify_exception(None, str(e), details={
+                    'domain': domain
+                })
+        super().add_domain_membership(domain, timezone, **kwargs)
 
     def delete_domain_membership(self, domain, create_record=False, return_error_message=False):
         record = super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
