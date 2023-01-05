@@ -159,7 +159,7 @@ class TimeoutMiddleware(MiddlewareMixin):
         timeouts = list(map(Domain.secure_timeout, domains))
         timeouts = list(filter(None, timeouts))
 
-        return min(timeouts) if timeouts else settings.INACTIVITY_TIMEOUT
+        return min(timeouts) if timeouts else settings.SECURE_TIMEOUT
 
     @classmethod
     def _get_relevant_domains(cls, couch_user, domain=None):
