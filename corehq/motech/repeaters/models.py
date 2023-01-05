@@ -1346,40 +1346,6 @@ class UpdateCaseRepeater(CaseRepeater):
         return SQLUpdateCaseRepeater
 
 
-class ReferCaseRepeater(CreateCaseRepeater):
-    """
-    A repeater that triggers off case creation but sends a form creating cases in
-    another commcare project
-    """
-    friendly_name = _("Forward Cases To Another Commcare Project")
-
-    payload_generator_classes = (ReferCasePayloadGenerator,)
-
-    def form_class_name(self):
-        # Note this class does not exist but this property is only used to construct the URL
-        return 'ReferCaseRepeater'
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        """Returns whether this repeater can be used by a particular domain
-        """
-        return toggles.REFER_CASE_REPEATER.enabled(domain)
-
-    def get_url(self, repeat_record):
-        new_domain = self.payload_doc(repeat_record).get_case_property('new_domain')
-        return self.connection_settings.url.format(domain=new_domain)
-
-    def send_request(self, repeat_record, payload):
-        """Add custom response handling to allow more nuanced handling of form errors"""
-        return get_repeater_response_from_submission_response(
-            super().send_request(repeat_record, payload)
-        )
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLReferCaseRepeater
-
-
 def get_repeater_response_from_submission_response(response):
     from couchforms.openrosa_response import (
         ResponseNature,
