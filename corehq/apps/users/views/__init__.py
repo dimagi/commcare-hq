@@ -362,8 +362,8 @@ class BaseEditUserView(BaseUserSettingsView):
                 }
             )
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
-            messages.error(self.request, '''There was an error getting data for this user's associated Tableau
-                                             user. Please contact support if this error persists.''')
+            messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
+                                             user. Please contact support if this error persists.'''))
             notify_exception(self.request, str(e), details={
                 'domain': self.domain,
                 'exception_type': type(e),
@@ -887,8 +887,8 @@ def remove_web_user(request, domain, couch_user_id):
         try:
             record = user.delete_domain_membership(domain, create_record=True)
         except (TableauAPIError, TableauUser.DoesNotExist) as e:
-            messages.error(request, '''There was an error deleting the associated Tableau user.
-                                        Please contanct support if this problem persists.''')
+            messages.error(request, _('''There was an error deleting the associated Tableau user.
+                                        Please contanct support if this problem persists.'''))
             notify_exception(request, str(e), details={
                 'domain': domain,
                 'exception_type': type(e)
