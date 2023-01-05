@@ -1510,20 +1510,6 @@ class UserRepeater(Repeater):
         return SQLUserRepeater
 
 
-class LocationRepeater(Repeater):
-    friendly_name = _("Forward Locations")
-
-    payload_generator_classes = (LocationPayloadGenerator,)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return SQLLocation.objects.get(location_id=repeat_record.payload_id)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLLocationRepeater
-
-
 def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
