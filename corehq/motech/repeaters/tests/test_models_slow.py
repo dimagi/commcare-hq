@@ -19,11 +19,7 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import (
-    FormRepeater,
-    SQLFormRepeater,
-    send_request,
-)
+from corehq.motech.repeaters.models import SQLFormRepeater, send_request
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -41,25 +37,18 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
         url = 'https://www.example.com/api/'
         conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        cls.repeater = FormRepeater(
+        cls.repeater = SQLFormRepeater(
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
+            repeater_id=uuid4().hex
         )
-        cls.repeater.save(sync_to_sql=False)
-        cls.sql_repeater = SQLFormRepeater(
-            domain=DOMAIN,
-            repeater_id=cls.repeater.get_id,
-            connection_settings=conn,
-            format='form_xml',
-        )
-        cls.sql_repeater.save(sync_to_couch=False)
+        cls.repeater.save()
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
 
     @classmethod
     def tearDownClass(cls):
-        cls.sql_repeater.delete()
         cls.repeater.delete()
         cls.teardown_subscriptions()
         cls.domain_obj.delete()
@@ -68,7 +57,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
-        self.repeat_record = self.sql_repeater.repeat_records.create(
+        self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
@@ -79,7 +68,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         super().tearDown()
 
     def reget_sql_repeater(self):
-        return SQLFormRepeater.objects.get(pk=self.sql_repeater.pk)
+        return SQLFormRepeater.objects.get(pk=self.repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
