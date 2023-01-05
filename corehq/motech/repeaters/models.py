@@ -1483,19 +1483,6 @@ class ShortFormRepeater(Repeater):
         return super()._migration_get_fields() + ["version"]
 
 
-class AppStructureRepeater(Repeater):
-    friendly_name = _("Forward App Schema Changes")
-
-    payload_generator_classes = (AppStructureGenerator,)
-
-    def payload_doc(self, repeat_record):
-        return None
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLAppStructureRepeater
-
-
 def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
