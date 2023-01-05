@@ -1496,20 +1496,6 @@ class AppStructureRepeater(Repeater):
         return SQLAppStructureRepeater
 
 
-class UserRepeater(Repeater):
-    friendly_name = _("Forward Users")
-
-    payload_generator_classes = (UserPayloadGenerator,)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return CommCareUser.get(repeat_record.payload_id)
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLUserRepeater
-
-
 def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))

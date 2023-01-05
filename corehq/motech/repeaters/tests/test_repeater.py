@@ -47,8 +47,8 @@ from corehq.motech.repeaters.models import (
     SQLCaseRepeater,
     SQLLocationRepeater,
     SQLRepeater,
+    SQLUserRepeater,
     ShortFormRepeater,
-    UserRepeater,
     _get_retry_interval,
 )
 from corehq.motech.repeaters.repeater_generators import (
@@ -901,9 +901,10 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             url='super-cool-url',
         )
-        self.repeater = UserRepeater(
+        self.repeater = SQLUserRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
+            repeater_id=uuid.uuid4().hex
         )
         self.repeater.save()
 
@@ -917,7 +918,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
     def tearDown(self):
         super().tearDown()
         delete_all_repeat_records()
-        delete_all_repeaters()
+        self.repeater.delete()
         self.connx.delete()
 
     def repeat_records(self):
