@@ -1,62 +1,21 @@
-import inspect
 from uuid import uuid4
 
-from django.db import models
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
-from dimagi.ext.couchdbkit import Document
-from dimagi.utils.couch.migration import (
-    SyncCouchToSQLMixin,
-    SyncSQLToCouchMixin,
-)
-
-from corehq.motech.dhis2.repeaters import (
-    Dhis2EntityRepeater,
-    Dhis2Repeater,
-    SQLDhis2EntityRepeater,
-    SQLDhis2Repeater,
-)
-from corehq.motech.fhir.repeaters import FHIRRepeater, SQLFHIRRepeater
+from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
-from corehq.motech.repeaters.dbaccessors import (
-    delete_all_repeaters,
-)
-from corehq.motech.repeaters.utils import get_all_repeater_docs
+from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.expression.repeaters import (
-    CaseExpressionRepeater,
     SQLCaseExpressionRepeater,
-)
-from custom.cowin.repeaters import (
-    BeneficiaryRegistrationRepeater,
-    BeneficiaryVaccinationRepeater,
-    SQLBeneficiaryRegistrationRepeater,
-    SQLBeneficiaryVaccinationRepeater,
 )
 
 from ..models import (
-    AppStructureRepeater,
-    CaseRepeater,
-    CreateCaseRepeater,
-    DataRegistryCaseUpdateRepeater,
-    FormRepeater,
-    LocationRepeater,
-    ReferCaseRepeater,
-    Repeater,
-    ShortFormRepeater,
-    SQLAppStructureRepeater,
     SQLCaseRepeater,
     SQLCreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
-    SQLFormRepeater,
-    SQLLocationRepeater,
     SQLReferCaseRepeater,
     SQLRepeater,
-    SQLShortFormRepeater,
-    SQLUpdateCaseRepeater,
-    SQLUserRepeater,
-    UpdateCaseRepeater,
-    UserRepeater,
 )
 
 
