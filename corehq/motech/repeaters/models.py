@@ -562,31 +562,6 @@ class SQLRepeater(RepeaterSuperProxy):
     def _wrap_schema_attrs(self, couch_object):
         pass
 
-    def _migration_sync_to_couch(self, couch_object):
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            setattr(couch_object, field_name, value)
-        self._wrap_schema_attrs(couch_object)
-        setattr(couch_object, 'connection_settings_id', self.connection_settings.id)
-        setattr(couch_object, 'paused', self.is_paused)
-        couch_object.save(sync_to_sql=False)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Repeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        # all common fields that would be synced to couch
-        # connection_settings_id, paused is handelled in sync logic
-        # No need to sync repeater_type in couch
-        return [
-            "domain",
-            "format",
-            "request_method",
-            "name",
-        ]
-
 
 class SQLFormRepeater(SQLRepeater):
 
@@ -643,18 +618,6 @@ class SQLFormRepeater(SQLRepeater):
         })
         return headers
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return FormRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "include_app_id_param",
-            "white_listed_form_xmlns",
-            "user_blocklist"
-        ]
-
 
 class SQLCaseRepeater(SQLRepeater):
     """
@@ -703,14 +666,6 @@ class SQLCaseRepeater(SQLRepeater):
         })
         return headers
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["version", "white_listed_case_types", "black_listed_users"]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CaseRepeater
-
 
 class SQLCreateCaseRepeater(SQLCaseRepeater):
     class Meta:
@@ -721,10 +676,6 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
     def allowed_to_forward(self, payload):
         # assume if there's exactly 1 xform_id that modified the case it's being created
         return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return CreateCaseRepeater
 
 
 class SQLUpdateCaseRepeater(SQLCaseRepeater):
@@ -739,10 +690,6 @@ class SQLUpdateCaseRepeater(SQLCaseRepeater):
 
     def allowed_to_forward(self, payload):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) > 1
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return UpdateCaseRepeater
 
 
 class SQLReferCaseRepeater(SQLCreateCaseRepeater):
@@ -776,10 +723,6 @@ class SQLReferCaseRepeater(SQLCreateCaseRepeater):
         return get_repeater_response_from_submission_response(
             super().send_request(repeat_record, payload)
         )
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return ReferCaseRepeater
 
 
 class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
@@ -827,10 +770,6 @@ class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
 
         return True
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return DataRegistryCaseUpdateRepeater
-
 
 class SQLShortFormRepeater(SQLRepeater):
     """
@@ -860,14 +799,6 @@ class SQLShortFormRepeater(SQLRepeater):
         })
         return headers
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return ShortFormRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["version"]
-
 
 class SQLAppStructureRepeater(SQLRepeater):
 
@@ -880,10 +811,6 @@ class SQLAppStructureRepeater(SQLRepeater):
 
     def payload_doc(self, repeat_record):
         return None
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return AppStructureRepeater
 
 
 class SQLUserRepeater(SQLRepeater):
@@ -899,10 +826,6 @@ class SQLUserRepeater(SQLRepeater):
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return UserRepeater
-
 
 class SQLLocationRepeater(SQLRepeater):
 
@@ -916,10 +839,6 @@ class SQLLocationRepeater(SQLRepeater):
     @memoized
     def payload_doc(self, repeat_record):
         return SQLLocation.objects.get(location_id=repeat_record.payload_id)
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return LocationRepeater
 
 
 class Repeater(QuickCachedDocumentMixin, Document):
@@ -1276,32 +1195,6 @@ class Repeater(QuickCachedDocumentMixin, Document):
         self.connection_settings_id = conn.id
         self.save(sync_to_sql=False)
         return conn
-
-    @classmethod
-    def _migration_get_fields(cls):
-        # common attrs for all repeaters
-        return [
-            "domain",
-            "is_paused",
-            "repeater_type",
-            "format",
-            "connection_settings",
-            "request_method",
-            "name",
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLRepeater
-
-    def _migration_sync_to_sql(self, sql_object):
-        """Copy data from the Couch model to the SQL model and save it"""
-        for field_name in self._migration_get_fields():
-            value = getattr(self, field_name)
-            if hasattr(value, 'to_json'):
-                value = value.to_json()
-            setattr(sql_object, field_name, value)
-        sql_object.save(sync_to_couch=False)
 
 
 class FormRepeater(Repeater):
