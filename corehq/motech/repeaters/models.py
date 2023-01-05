@@ -1449,40 +1449,6 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return SQLDataRegistryCaseUpdateRepeater
 
 
-class ShortFormRepeater(Repeater):
-    """
-    Record that form id & case ids should be repeated to a new url
-
-    """
-
-    version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
-    friendly_name = _("Forward Form Stubs")
-
-    payload_generator_classes = (ShortFormRepeaterJsonPayloadGenerator,)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-
-    def allowed_to_forward(self, payload):
-        return payload.xmlns != DEVICE_LOG_XMLNS
-
-    def get_headers(self, repeat_record):
-        headers = super(ShortFormRepeater, self).get_headers(repeat_record)
-        headers.update({
-            "received-on": json_format_datetime(self.payload_doc(repeat_record).received_on)
-        })
-        return headers
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLShortFormRepeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["version"]
-
-
 def get_all_repeater_types():
     return OrderedDict([
         (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
