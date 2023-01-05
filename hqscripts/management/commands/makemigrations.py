@@ -71,7 +71,8 @@ class Command(makemigrations.Command):
 
     def write_migration_files(self, changes):
         super().write_migration_files(changes)
-        self.write_migrations_lock(self.dry_run)
+        if self.dry_run:
+            self.write_migrations_lock()
 
     def get_migrations_list(self, preamble=LOCK_PREAMBLE):
         """Generate and return the full list of existing migrations.
@@ -94,10 +95,8 @@ class Command(makemigrations.Command):
             lines.append(line)
         return lines
 
-    def write_migrations_lock(self, dry_run=False):
+    def write_migrations_lock(self):
         """Write a new migrations.lock file."""
-        if dry_run:
-            return
         with open(self.lock_path, "w") as file:
             file.write("".join(self.get_migrations_list()))
 
