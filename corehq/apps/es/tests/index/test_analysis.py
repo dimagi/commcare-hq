@@ -2,8 +2,8 @@ from django.test import SimpleTestCase
 
 from corehq.apps.es.index.analysis import (
     DEFAULT_ANALYSIS,
-    DEFAULT_ANALYZER,
     COMMA_ANALYSIS,
+    LOWERCASE_WHITESPACE_ANALYZER,
     PHONETIC_ANALYSIS,
 )
 from corehq.apps.es.tests.utils import es_test
@@ -25,12 +25,12 @@ class TestConstantValues(SimpleTestCase):
                 "tokenizer": "whitespace",
                 "filter": ["lowercase"]
             },
-            DEFAULT_ANALYZER,
+            LOWERCASE_WHITESPACE_ANALYZER,
         )
 
     def test_default_analysis(self):
         self.assertEqual(
-            {"analyzer": {"default": DEFAULT_ANALYZER}},
+            {"analyzer": {"default": LOWERCASE_WHITESPACE_ANALYZER}},
             DEFAULT_ANALYSIS,
         )
 
@@ -38,7 +38,7 @@ class TestConstantValues(SimpleTestCase):
         self.assertEqual(
             {
                 "analyzer": {
-                    "default": DEFAULT_ANALYZER,
+                    "default": LOWERCASE_WHITESPACE_ANALYZER,
                     "comma": {"type": "pattern", "pattern": r"\s*,\s*"},
                 }
             },
@@ -56,7 +56,7 @@ class TestConstantValues(SimpleTestCase):
                     }
                 },
                 "analyzer": {
-                    "default": DEFAULT_ANALYZER,
+                    "default": LOWERCASE_WHITESPACE_ANALYZER,
                     "phonetic": {
                         "filter": ["standard", "lowercase", "soundex"],
                         "tokenizer": "standard"

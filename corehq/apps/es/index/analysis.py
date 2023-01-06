@@ -4,7 +4,7 @@ Changes to these values must be accompanied by migrations to apply the changes
 in Elasticsearch.
 """
 
-DEFAULT_ANALYZER = {
+LOWERCASE_WHITESPACE_ANALYZER = {
     "type": "custom",
     "tokenizer": "whitespace",
     "filter": ["lowercase"]
@@ -12,12 +12,12 @@ DEFAULT_ANALYZER = {
 
 DEFAULT_ANALYSIS = {
     "analyzer": {
-        "default": DEFAULT_ANALYZER,
+        "default": LOWERCASE_WHITESPACE_ANALYZER,
     }
 }
 COMMA_ANALYSIS = {
     "analyzer": {
-        "default": DEFAULT_ANALYZER,
+        "default": LOWERCASE_WHITESPACE_ANALYZER,
         "comma": {
             "type": "pattern",
             "pattern": r"\s*,\s*"
@@ -33,7 +33,7 @@ PHONETIC_ANALYSIS = {
         }
     },
     "analyzer": {
-        "default": DEFAULT_ANALYZER,
+        "default": LOWERCASE_WHITESPACE_ANALYZER,
         "phonetic": {
             "filter": ["standard", "lowercase", "soundex"],
             "tokenizer": "standard"
