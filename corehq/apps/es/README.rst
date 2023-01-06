@@ -21,6 +21,21 @@ modifications will be part of standard CommCare HQ code deployment procedures,
 thereby preventing Elasticsearch index state drift between maintained CommCare
 HQ deployments.
 
+One or more migrations are required any time the following Elasticsearch state
+configurations are changed in code:
+
+- index names
+- index aliases
+- analyzers
+- mappings
+- tuning parameters
+
+Elasticsearch allows changing an index's ``number_of_replicas`` tuning parameter
+on a live index. In the future, the configuration settings (i.e. "live state")
+of that value should be removed from the CommCare HQ codebase entirely in order
+to decouple it from application logic.
+
+
 Creating Elasticsearch Index Migrations
 '''''''''''''''''''''''''''''''''''''''
 
@@ -79,7 +94,7 @@ the `Put Mapping`_ API. This technique had some pros and cons:
 
 Because CommCare HQ Elastic mappings have been able to drift between
 environments, it is no longer possible to update some index mappings using the
-current technique. On some indexes, the live index mappings have sufficiently
+historical technique. On some indexes, the live index mappings have sufficiently
 diverged that there is no common, "full mapping definition" that can be applied
 on all environments. This means that in order to push mapping changes to all
 environments, new mapping update logic is needed which is capable of updating
@@ -162,8 +177,8 @@ That is: changing their values on a deployed environment will not have any
 immediate affect on live indexes in Elasticsearch. Instead, these values are
 only ever used when an index is created (for example, during a fresh CommCare HQ
 installation or when an existing index is reindexed into a new one). This means
-that making new values become "live" requires a update to the CommCare HQ
-codebase.
+that making new values become "live" involves an index migration and reindex,
+which requires changes in the CommCare HQ codebase.
 
 .. _CommCare Cloud environment: https://commcare-cloud.readthedocs.io/en/latest/reference/1-commcare-cloud/2-configuration.html
 .. _corehq/app/es/index/settings.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/app/es/index/settings.py
