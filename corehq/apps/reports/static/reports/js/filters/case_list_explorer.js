@@ -72,10 +72,9 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
             var initialColumn = initialColumns[i];
             self.properties.push(Property(self, initialColumn.name, initialColumn.label));
         }
-        self.properties.subscribe(function (item) {
+        self.properties.subscribe(function () {
             // When reordering properties, trigger a change to enable the "Apply" button
             $('#fieldset_explorer_columns').trigger('change');
-            console.log(item);
         });
 
         self.addProperty = function () {
