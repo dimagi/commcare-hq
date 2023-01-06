@@ -22,7 +22,7 @@ from dimagi.ext.couchdbkit import (
 
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
-from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
+from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig, Dhis2FormConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.dhis2.exceptions import Dhis2Exception
@@ -344,6 +344,15 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
                     raise
         return True
 
+    def _validate_dhis2_form_config(self):
+        for config in self.dhis2_config.get('form_configs', []):
+            Dhis2FormConfig.wrap(config).validate()
+
+    def save(self, *args, **kwargs):
+        # ensuring that the valid config is passed while saving
+        self._validate_dhis2_form_config()
+        super().save(*args, **kwargs)
+
     def _wrap_schema_attrs(self, couch_object):
         couch_object.dhis2_config = Dhis2Config.wrap(self.dhis2_config)
 
@@ -410,6 +419,15 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
                 details="".join(tb_lines)
             )
             raise
+
+    def _validate_dhis2_entity_config(self):
+        for config in self.dhis2_entity_config.get('case_configs', []):
+            Dhis2EntityConfig.wrap(config).validate()
+
+    def save(self, *args, **kwargs):
+        # ensuring that the valid config is passed while saving
+        self._validate_dhis2_entity_config()
+        super().save(*args, **kwargs)
 
     def _wrap_schema_attrs(self, couch_object):
         couch_object.dhis2_entity_config = Dhis2EntityConfig.wrap(self.dhis2_entity_config)
