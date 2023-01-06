@@ -376,6 +376,15 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
 
+    def _validate_openmrs_config(self):
+        OpenmrsConfig.wrap(self.openmrs_config).validate()
+        for feed in self.atom_feed_status.keys():
+            AtomFeedStatus.wrap(self.atom_feed_status[feed]).validate()
+
+    def save(self, *args, **kwargs):
+        self._validate_openmrs_config()
+        super().save(*args, **kwargs)
+
     def _wrap_schema_attrs(self, couch_object):
         couch_object.openmrs_config = OpenmrsConfig.wrap(self.openmrs_config)
         for feed in self.atom_feed_status.keys():
