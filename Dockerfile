@@ -63,6 +63,7 @@ RUN npm -g install \
     uglify-js \
     puppeteer \
     mocha-headless-chrome \
+    sass \
  && cd /vendor \
  && npm shrinkwrap \
  && yarn global add phantomjs-prebuilt
