@@ -57,6 +57,7 @@ class ElasticTestMixin(object):
     def setUpClass(cls):
         super().setUpClass()
         cls._es_instance = get_es_new()
+        # TODO: make individual test[ case]s warning-safe and remove this
         with ignore_index_settings_key_warning:
             initialize_index_and_mapping(cls._es_instance, TEST_INDEX_INFO)
 
