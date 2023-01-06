@@ -274,7 +274,6 @@ openmrs_repeater = {
             'doc_type': 'AtomFeedStatus'
         }
     },
-    "doc_type": "OpenmrsRepeater",
     "version": "2.0",
     "white_listed_case_types":
     [
@@ -282,10 +281,9 @@ openmrs_repeater = {
     ],
     "black_listed_users":
     [],
-    "base_doc": "Repeater",
     "domain": "test_openmrs",
     "format": "form_json",
-    "paused": False,
+    "is_paused": False,
     "connection_settings_id": 1,
 }
 
