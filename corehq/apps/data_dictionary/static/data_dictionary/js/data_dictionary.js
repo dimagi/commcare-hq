@@ -30,12 +30,12 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.init = function (groupDict, changeSaveButton) {
             _.each(groupDict, function (properties, group) {
-                var groupObj = propertyListItem(group, true, group, self.name);
+                var groupObj = propertyListItem(group, '', true, group, self.name);
                 self.properties.push(groupObj);
                 _.each(properties, function (prop) {
-                    var propObj = propertyListItem(prop.name, false, prop.group, self.name, prop.data_type,
+                    var propObj = propertyListItem(prop.name, prop.label, false, prop.group, self.name, prop.data_type,
                         prop.description, prop.allowed_values, prop.fhir_resource_prop_path, prop.deprecated,
-                        prop.removeFHIRResourcePropertyPath, prop.label);
+                        prop.removeFHIRResourcePropertyPath);
                     propObj.description.subscribe(changeSaveButton);
                     propObj.label.subscribe(changeSaveButton);
                     propObj.fhirResourcePropPath.subscribe(changeSaveButton);
@@ -51,17 +51,17 @@ hqDefine("data_dictionary/js/data_dictionary", [
         return self;
     };
 
-    var propertyListItem = function (name, isGroup, groupName, caseType, dataType, description, allowedValues,
-        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath, label) {
+    var propertyListItem = function (name, label, isGroup, groupName, caseType, dataType, description, allowedValues,
+        fhirResourcePropPath, deprecated, removeFHIRResourcePropertyPath) {
         var self = {};
         self.name = name;
+        self.label = ko.observable(label);
         self.expanded = ko.observable(true);
         self.isGroup = isGroup;
         self.group = ko.observable(groupName);
         self.caseType = caseType;
         self.dataType = ko.observable(dataType);
         self.description = ko.observable(description);
-        self.label = ko.observable(label);
         self.fhirResourcePropPath = ko.observable(fhirResourcePropPath);
         self.originalResourcePropPath = fhirResourcePropPath;
         self.deprecated = ko.observable(deprecated || false);
@@ -141,10 +141,10 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         var data = {
                             'caseType': element.caseType,
                             'name': element.name,
+                            'label': element.label(),
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),
-                            'label': element.label(),
                             'fhir_resource_prop_path': (
                                 element.fhirResourcePropPath() ? element.fhirResourcePropPath().trim() : element.fhirResourcePropPath()),
                             'deprecated': element.deprecated(),
@@ -231,7 +231,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
+                var prop = propertyListItem(self.newPropertyName(), '', false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.label.subscribe(changeSaveButton);
@@ -246,7 +246,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newGroup = function () {
             if (_.isString(self.newGroupName())) {
-                var group = propertyListItem(self.newGroupName(), true, '', self.activeCaseType());
+                var group = propertyListItem(self.newGroupName(), '', true, '', self.activeCaseType());
                 self.casePropertyList.push(group);
                 self.newGroupName(undefined);
             }

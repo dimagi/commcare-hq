@@ -155,8 +155,8 @@ def update_case_property(request, domain):
         for property in property_list:
             case_type = property.get('caseType')
             name = property.get('name')
-            description = property.get('description')
             label = property.get('label')
+            description = property.get('description')
             data_type = property.get('data_type')
             group = property.get('group')
             deprecated = property.get('deprecated')
@@ -166,9 +166,9 @@ def update_case_property(request, domain):
                 remove_path = property.get('removeFHIRResourcePropertyPath', False)
             else:
                 fhir_resource_prop_path, remove_path = None, None
-            error = save_case_property(name, case_type, domain, data_type, description, group, deprecated,
+            error = save_case_property(name, case_type, domain, data_type, description, label, group, deprecated,
                                        fhir_resource_prop_path, fhir_resource_type_obj, remove_path,
-                                       allowed_values, label)
+                                       allowed_values)
             if error:
                 errors.append(error)
 
@@ -235,6 +235,7 @@ def _generate_data_for_export(domain, export_fhir_data):
             _('Group'): case_prop.group,
             _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
+            _('Label'): case_prop.label,
             _('Deprecated'): case_prop.deprecated
         }
         if case_prop.data_type == 'select':
@@ -464,6 +465,7 @@ def _process_bulk_upload(bulk_file, domain):
                     error = _('Not enough columns')
                 else:
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
+                    print([cell.value for cell in row[:5]])
                     name, group, data_type_display, description, deprecated = [cell.value for cell in row[:5]]
                     # Fall back to value from file if data_type_display is not found in the map.
                     # This allows existing error path to report accurately the value that isn't found,
