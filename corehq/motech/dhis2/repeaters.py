@@ -204,9 +204,6 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
         self._validate_dhis2_form_config()
         super().save(*args, **kwargs)
 
-    def _wrap_schema_attrs(self, couch_object):
-        couch_object.dhis2_config = Dhis2Config.wrap(self.dhis2_config)
-
 
 class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
     class Meta():
@@ -279,9 +276,6 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
         # ensuring that the valid config is passed while saving
         self._validate_dhis2_entity_config()
         super().save(*args, **kwargs)
-
-    def _wrap_schema_attrs(self, couch_object):
-        couch_object.dhis2_entity_config = Dhis2EntityConfig.wrap(self.dhis2_entity_config)
 
 
 def get_api_version(dhis2_version):

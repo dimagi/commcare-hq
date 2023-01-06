@@ -557,9 +557,6 @@ class SQLRepeater(RepeaterSuperProxy):
         """
         return self._repeater_type
 
-    def _wrap_schema_attrs(self, couch_object):
-        pass
-
 
 class SQLFormRepeater(SQLRepeater):
 

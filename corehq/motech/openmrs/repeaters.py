@@ -203,11 +203,6 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         self._validate_openmrs_config()
         super().save(*args, **kwargs)
 
-    def _wrap_schema_attrs(self, couch_object):
-        couch_object.openmrs_config = OpenmrsConfig.wrap(self.openmrs_config)
-        for feed in self.atom_feed_status.keys():
-            couch_object.atom_feed_status[feed] = AtomFeedStatus.wrap(self.atom_feed_status[feed])
-
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):
     """
