@@ -1,3 +1,9 @@
+"""Elasticsearch index tuning parameters configurable in Django settings.
+
+Changes to the constant values (settings keys, default values, etc) in this
+module require forum announcements for downstream self-hosters.
+"""
+
 import warnings
 from functools import cached_property
 

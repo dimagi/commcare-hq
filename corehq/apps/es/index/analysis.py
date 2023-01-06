@@ -1,3 +1,8 @@
+"""Elasticsearch index analyzers and analyses.
+
+Changes to these values must be accompanied by migrations to apply the changes
+in Elasticsearch.
+"""
 
 DEFAULT_ANALYZER = {
     "type": "custom",
