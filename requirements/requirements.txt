@@ -534,7 +534,7 @@ zope-interface==5.4.0
     # via gevent
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==50.3.0
+setuptools==65.5.1
     # via
     #   django-websocket-redis
     #   gevent
