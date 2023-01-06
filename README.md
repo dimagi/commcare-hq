@@ -8,6 +8,8 @@ It includes multi-tenant application building, user management, data collection,
 CommCare HQ apps work with [CommCare mobile](https://github.com/dimagi/commcare-android) and its
 bundled [web application platform](https://github.com/dimagi/formplayer).
 
+This is a test change. DO NOT MERGE
+
 ### Key Components
 
 + CommCare application builder
