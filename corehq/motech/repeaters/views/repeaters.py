@@ -1,4 +1,5 @@
 from collections import namedtuple
+import uuid
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
@@ -135,7 +136,8 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
 
     def set_repeater_attr(self, repeater, cleaned_data):
-        # set repeater.repeater_id when couch classes would be removed
+        if not repeater.repeater_id:
+            repeater.repeater_id = uuid.uuid4().hex
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
