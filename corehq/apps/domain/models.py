@@ -518,8 +518,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                     return settings.SECURE_TIMEOUT
 
         elif not domain_obj.secure_sessions:
-            if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
-                return settings.INACTIVITY_TIMEOUT
+            return settings.INACTIVITY_TIMEOUT
 
         return None
 
@@ -734,7 +733,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         from corehq.apps.domain.signals import commcare_domain_post_save
         results = commcare_domain_post_save.send_robust(sender='domain', domain=self)
         log_signal_errors(results, "Error occurred during domain post_save (%s)", {'domain': self.name})
-        self.clear_caches()
 
     def snapshots(self, **view_kwargs):
         return Domain.view('domain/snapshots',
