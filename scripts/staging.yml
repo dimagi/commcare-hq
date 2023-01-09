@@ -79,4 +79,6 @@ branches:
     - ad/user-syncing-UI-2 # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
     - bmb/compile-scss-with-less  # Biyeun Jan 9
+    - jm/elastic-index-migrations  # Joel Jan 9
+    - jm/refactor-es-query  # Joel Jan 9
 submodules: { }
