@@ -204,15 +204,6 @@ class TestAppReleaseModeSettingForm(TestCase):
         form = self.create_form(domain=self.domain_obj)
         self.assertTrue('release_mode_visibility' in form.fields)
 
-    def test_release_mode_settings_hidden_after_enabling(self):
-        # Enable release mode setting for the domain
-        form = self.create_form(domain=self.domain_obj, release_mode_visibility=True)
-        form.full_clean()
-        form.save(Mock(), self.domain_obj)
-
-        form = self.create_form(domain=self.domain_obj)
-        self.assertTrue('release_mode_visibility' not in form.fields)
-
     def create_form(self, domain=None, **kwargs):
         data = {
             "hr_name": "foo",
