@@ -109,12 +109,9 @@ class TestMakeElasticMigrationCommand(TestCase):
             call_command("make_elastic_migration", "-d", "trashme", "--empty")
 
     def test_handle_fails_for_invalid_migration_name(self):
-        with self.assertRaises(CommandError) as mock:
+        literal = "The migration name must be a valid Python identifier."
+        with self.assertRaisesRegex(CommandError, f"^{re.escape(literal)}$"):
             call_command("make_elastic_migration", "-d", "trashme", "-n", "in-valid")
-        self.assertEqual(
-            "The migration name must be a valid Python identifier.",
-            str(mock.exception),
-        )
 
     def test_build_migration(self):
         creates = [(groups.group_adapter, "groups-custom")]
@@ -138,10 +135,9 @@ class TestMakeElasticMigrationCommand(TestCase):
         deletes = [conflict_index]
         command = Command()
         command.empty = False
-        with self.assertRaises(CommandError) as mock:
+        prefix = f"Multiple operations for the same index ({conflict_index}):"
+        with self.assertRaisesRegex(CommandError, f"^{re.escape(prefix)}.*"):
             command.build_migration([], updates, deletes)
-        literal = f"Multiple operations for the same index ({conflict_index}):"
-        self.assertRegex(str(mock.exception), f"^{re.escape(literal)}.*")
 
     def test_arrange_migration_changes_generates_correct_migration_name(self):
 
@@ -171,12 +167,10 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertIs(adapter, groups.group_adapter)
 
     def test_adapter_type_raises_argumenttypeerror_for_invalid_cname(self):
-        with self.assertRaises(ArgumentTypeError) as mock:
-            Command().adapter_type("bogus cname")
-        self.assertRegex(
-            str(mock.exception),
-            r"^Invalid index canonical name \(bogus cname\), choices: .*",
-        )
+        invalid = "bogus cname"
+        prefix = f"Invalid index canonical name ({invalid}), choices: "
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}.*"):
+            Command().adapter_type(invalid)
 
     @patch("corehq.apps.es.management.commands.make_elastic_migration.datetime", mock_datetime)
     def test_adapter_and_name_type(self):
@@ -190,12 +184,10 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertEqual("groups-custom", new_name)
 
     def test_adapter_and_name_type_raises_argumenttypeerror_for_empty_new_name(self):
-        with self.assertRaises(ArgumentTypeError) as mock:
-            Command().adapter_and_name_type("groups:")
-        self.assertEqual(
-            str(mock.exception),
-            "Invalid (empty) new name for create action: 'groups:'",
-        )
+        invalid = "groups:"
+        literal = f"Invalid (empty) new name for create action: {invalid!r}"
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(literal)}$"):
+            Command().adapter_and_name_type(invalid)
 
     def test_adapter_and_properties_type(self):
         adapter, properties = Command().adapter_and_properties_type("groups:domain,name")
@@ -208,20 +200,16 @@ class TestMakeElasticMigrationCommand(TestCase):
         self.assertEqual(groups.group_adapter.mapping["properties"], properties)
 
     def test_adapter_and_properties_type_raises_argumenttypeerror_for_invalid_property_name(self):
-        with self.assertRaises(ArgumentTypeError) as mock:
-            Command().adapter_and_properties_type("groups:bogus property")
-        self.assertRegex(
-            str(mock.exception),
-            r"^Invalid property name for index: groups \(got 'bogus property', expected one of .*",
-        )
+        invalid = "bogus property"
+        prefix = f"Invalid property name for index: groups (got {invalid!r}, expected one of "
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}.*"):
+            Command().adapter_and_properties_type(f"groups:{invalid}")
 
     def test_adapter_and_properties_type_raises_argumenttypeerror_for_empty_property_list(self):
-        with self.assertRaises(ArgumentTypeError) as mock:
-            Command().adapter_and_properties_type("groups:")
-        self.assertEqual(
-            str(mock.exception),
-            "Invalid (empty) property list for update action: 'groups:'",
-        )
+        invalid = "groups:"
+        literal = f"Invalid (empty) property list for update action: {invalid!r}"
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(literal)}$"):
+            Command().adapter_and_properties_type(invalid)
 
 
 def sort_ops(operation):

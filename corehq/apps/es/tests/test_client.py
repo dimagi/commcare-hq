@@ -729,9 +729,8 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
     def test_index_get_settings_for_invalid_value_raises_keyerror(self):
         settings = {"number_of_replicas": "1"}
         self.adapter.index_create(self.index, {"settings": settings})
-        with self.assertRaises(KeyError) as mock:
+        with self.assertRaisesRegex(KeyError, "^'foo'$"):
             self.adapter.index_get_settings(self.index, values=["foo"])
-        self.assertEqual(repr("foo"), str(mock.exception))
 
     def test__validate_single_index(self):
         self.adapter._validate_single_index(self.index)  # does not raise

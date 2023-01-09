@@ -1,3 +1,4 @@
+import re
 from io import StringIO
 from textwrap import dedent
 from unittest.mock import patch
@@ -115,9 +116,9 @@ class TestCreateIndex(BaseCase):
         manager.index_create(self.index)
         self.assertIndexExists(self.index)
         migration = TestMigration(CreateIndex(*self.create_index_args))
-        with self.assertRaises(RequestError) as mock:
+        with self.assertRaises(RequestError) as context:
             migration.apply()
-        self.assertEqual(mock.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "index_already_exists_exception")
 
     def test_reverse_deletes_index(self):
         migration = TestMigration(CreateIndex(*self.create_index_args))
@@ -328,9 +329,9 @@ class TestDeleteIndex(BaseCase):
         migration = TestMigration(
             DeleteIndex(self.index, reverse_params=("test", {}, {}, "test"))
         )
-        with self.assertRaises(RequestError) as mock:
+        with self.assertRaises(RequestError) as context:
             migration.unapply()
-        self.assertEqual(mock.exception.error, "index_already_exists_exception")
+        self.assertEqual(context.exception.error, "index_already_exists_exception")
 
     def test_describe(self):
         operation = DeleteIndex(self.index)
@@ -464,12 +465,12 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "integer"}},
         ))
-        with self.assertRaises(RequestError) as mock:
-            migration.apply()
-        self.assertEqual(str(mock.exception), (
+        literal = (
             "TransportError(400, 'illegal_argument_exception', 'mapper [prop] "
             "of different type, current_type [string], merged_type [integer]')"
-        ))
+        )
+        with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
+            migration.apply()
 
     def test_fails_for_changing_existing_property_index_values(self):
         self.assertEqual(
@@ -481,15 +482,15 @@ class TestUpdateIndexMapping(BaseCase):
             self.type,
             {"prop": {"type": "string", "index": "not_analyzed"}},
         ))
-        with self.assertRaises(RequestError) as mock:
-            migration.apply()
-        self.assertEqual(str(mock.exception), (
+        literal = (
             "TransportError(400, 'illegal_argument_exception', "
             "'Mapper for [prop] conflicts with existing mapping in other "
             "types:\\n[mapper [prop] has different [index] values, mapper "
             "[prop] has different [doc_values] values, cannot change from "
             "disabled to enabled, mapper [prop] has different [analyzer]]')"
-        ))
+        )
+        with self.assertRaisesRegex(RequestError, f"^{re.escape(literal)}$"):
+            migration.apply()
 
     def test_mapping_update_generates_diff(self):
         # update the current mapping._meta.created to get a deterministic diff
