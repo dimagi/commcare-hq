@@ -106,8 +106,8 @@ in the context of remote links.
 If you don't already have an upstream application you would like to link, create an app in the upstream domain. Then create an app in the downstream domain to serve as a placeholder. These app ids can then be used when running the `link_app_to_remote` management command:
 ```
 $ ./manage.py link_app_to_remote \
-    --linked_id {downstream_app_id} \
-    --master_id {upstream_app_id} \
+    --downstream_id {downstream_app_id} \
+    --upstream_id {upstream_app_id} \
     --url_base {upstream base_url, eg: https://www.commcarehq.org} \
     --domain {upstream_domain_name} \
     --username {username} \
