@@ -75,12 +75,10 @@ class TestTimeout(TestCase):
         else:
             self.client.get(reverse('my_account_settings'))
 
-
     def test_insecure(self):
         self._get_page(self.insecure_domain)
         self.assertFalse(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(settings.INACTIVITY_TIMEOUT, self.client.session)
-
 
     def test_secure(self):
         # visit a secure domain
@@ -93,7 +91,6 @@ class TestTimeout(TestCase):
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(settings.SECURE_TIMEOUT, self.client.session)
 
-
     def test_secure_configurable(self):
         # visit a secure domain with configurable timeout
         self._get_page(self.secure_domain2)
@@ -103,7 +100,7 @@ class TestTimeout(TestCase):
         # settings should be retained when going to a non-domain page
         self._get_page()
         self.assertTrue(self.client.session.get('secure_session'))
-        self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)S
+        self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
 
     def test_secure_membership(self):
         # If a user is a member of a secure domain, all of their sessions are secure
