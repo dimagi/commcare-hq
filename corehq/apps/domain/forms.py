@@ -477,7 +477,7 @@ class DomainGlobalSettingsForm(forms.Form):
 
         self._handle_call_limit_visibility()
         self._handle_account_confirmation_by_sms_settings()
-        self._handle_release_mode_setting_visibility()
+        self._handle_release_mode_setting_value()
 
     def _handle_account_confirmation_by_sms_settings(self):
         if not TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
@@ -506,12 +506,9 @@ class DomainGlobalSettingsForm(forms.Form):
             OperatorCallLimitSettings.CALL_LIMIT_MAXIMUM
         )
 
-    def _handle_release_mode_setting_visibility(self):
-        release_mode_setting = AppReleaseModeSetting.get_settings(domain=self.domain)
-        if release_mode_setting.is_visible is True:
-            del self.fields['release_mode_visibility']
-            return
-        self.fields['release_mode_visibility'].initial = release_mode_setting.is_visible
+    def _handle_release_mode_setting_value(self):
+        self.fields['release_mode_visibility'].initial = AppReleaseModeSetting.get_settings(
+            domain=self.domain).is_visible
 
     def _add_range_validation_to_integer_input(self, settings_name, min_value, max_value):
         setting = self.fields.get(settings_name)
