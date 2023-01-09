@@ -5,7 +5,6 @@ import time
 
 from braces.views import JsonRequestResponseMixin
 from couchdbkit import ResourceNotFound
-from dimagi.utils.django.email import send_HTML_email
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import ValidationError
@@ -35,11 +34,9 @@ from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
-    DefaultProductPlan,
     EntryPoint,
     Subscription,
 )
-from corehq.apps.accounting.usage import FeatureUsageCalculator
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
@@ -58,6 +55,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -764,53 +762,37 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
 
-        data = self.get_plan_and_user_count_by_domain(self.domain)
-        self.check_and_send_limit_email(self.domain, data['plan_limit'], data['user_count'])
+        plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
+        self.check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,
         }
 
     @staticmethod
-    def get_plan_and_user_count_by_domain(domain):
-        subscription = Subscription.get_active_subscription_by_domain(domain)
-        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
-        for rate in plan_version.feature_rates.all():
-            if rate.feature.feature_type == 'User':
-                user_rate = rate
-                break
-        return {
-            'plan_limit': user_rate.monthly_limit,
-            'user_count': FeatureUsageCalculator(user_rate, domain).get_usage()
-        }
-
-    @staticmethod
-    def check_and_send_limit_email(domain, plan_limit, user_count, prev_count=None):
-        if plan_limit == -1:
+    def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
+        ENTERPRISE_LIMIT = -1
+        if plan_limit == ENTERPRISE_LIMIT:
             return None
 
-        if prev_count is None:
-            prev_count = user_count - 1
-
+        WARNING_PERCENT = 0.9
         if user_count >= plan_limit > prev_count:
             at_capacity = True
-        elif plan_limit > user_count >= (0.9 * plan_limit) > prev_count:
+        elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
             at_capacity = False
         else:
             return None
 
-        users = WebUser.by_domain(domain)
-        recipients = []
-        for user in users:
-            if user.role_label(domain) == 'Billing Admin' or user.role_label(domain) == 'Admin':
-                recipients.append(user.username)
+        billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
+        admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
+
         if at_capacity:
             subject = _("User count has reached the Plan limit for {}").format(domain)
         else:
             subject = _("User count has reached 90% of the Plan limit for ({})").format(domain)
-        send_HTML_email(
+        send_html_email_async(
             subject,
-            recipients,
+            admins + billing_admins,
             render_to_string('users/email/user_limit_notice.html', context={
                 'at_capacity': at_capacity,
                 'url': ADDITIONAL_USERS_PRICING

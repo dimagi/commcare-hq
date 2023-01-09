@@ -2403,6 +2403,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield web_user
 
     @classmethod
+    def get_billing_admins_by_domain(cls, domain):
+        from corehq.apps.users.role_utils import UserRolePresets
+        users = cls.by_domain(domain)
+        for user in users:
+            if user.role_label(domain) == UserRolePresets.BILLING_ADMIN:
+                yield user
+
+    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):

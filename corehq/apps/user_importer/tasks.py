@@ -8,6 +8,7 @@ from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 from soil.progress import get_task_progress
 
+from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import WebUser
@@ -103,7 +104,7 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
         DownloadBase.set_progress(task, start + value, total)
 
     from corehq.apps.users.views.mobile.users import MobileWorkerListView
-    prev_data = MobileWorkerListView.get_plan_and_user_count_by_domain(domain)
+    plan_limit, prev_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
 
     if is_web_upload:
         user_results = create_or_update_web_users(
@@ -122,9 +123,9 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             group_memoizer=group_memoizer,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
-    post_data = MobileWorkerListView.get_plan_and_user_count_by_domain(domain)
-    MobileWorkerListView.check_and_send_limit_email(domain, post_data['plan_limit'],
-                                                    post_data['user_count'], prev_data['user_count'])
+    plan_limit, post_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
+    MobileWorkerListView.check_and_send_limit_email(domain, plan_limit, post_user_count, prev_user_count)
+
     results = {
         'errors': group_results['errors'] + user_results['errors'],
         'rows': user_results['rows']
