@@ -136,7 +136,7 @@ class TestMakeElasticMigrationCommand(TestCase):
         command = Command()
         command.empty = False
         prefix = f"Multiple operations for the same index ({conflict_index}):"
-        with self.assertRaisesRegex(CommandError, f"^{re.escape(prefix)}.*"):
+        with self.assertRaisesRegex(CommandError, f"^{re.escape(prefix)}"):
             command.build_migration([], updates, deletes)
 
     def test_arrange_migration_changes_generates_correct_migration_name(self):
@@ -169,7 +169,7 @@ class TestMakeElasticMigrationCommand(TestCase):
     def test_adapter_type_raises_argumenttypeerror_for_invalid_cname(self):
         invalid = "bogus cname"
         prefix = f"Invalid index canonical name ({invalid}), choices: "
-        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}.*"):
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}"):
             Command().adapter_type(invalid)
 
     @patch("corehq.apps.es.management.commands.make_elastic_migration.datetime", mock_datetime)
@@ -202,7 +202,7 @@ class TestMakeElasticMigrationCommand(TestCase):
     def test_adapter_and_properties_type_raises_argumenttypeerror_for_invalid_property_name(self):
         invalid = "bogus property"
         prefix = f"Invalid property name for index: groups (got {invalid!r}, expected one of "
-        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}.*"):
+        with self.assertRaisesRegex(ArgumentTypeError, f"^{re.escape(prefix)}"):
             Command().adapter_and_properties_type(f"groups:{invalid}")
 
     def test_adapter_and_properties_type_raises_argumenttypeerror_for_empty_property_list(self):
