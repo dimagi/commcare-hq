@@ -6,13 +6,12 @@ from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.repeaters.models import CaseRepeater, OptionValue, SQLCaseRepeater
+from corehq.motech.repeaters.models import OptionValue, SQLCaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )

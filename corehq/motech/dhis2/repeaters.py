@@ -16,13 +16,12 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (
     DateTimeProperty,
     Document,
-    SchemaProperty,
     StringProperty,
 )
 
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
-from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig, Dhis2FormConfig
+from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.dhis2.exceptions import Dhis2Exception
@@ -31,8 +30,6 @@ from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
 from corehq.motech.repeaters.models import (
-    CaseRepeater,
-    FormRepeater,
     OptionValue,
     SQLCaseRepeater,
     SQLFormRepeater,
