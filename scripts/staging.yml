@@ -72,9 +72,11 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - em/maintenance-alert-scheduling # Evan Dec 14
     - sk/sentry-js  # Simon Dec 21
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
+    - ad/user-syncing-UI-2 # Addison Jan 3
+    - revert-32445-jls/requirejs-hqwebapp-tests # Addison Jan 4
+    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
 submodules: { }
