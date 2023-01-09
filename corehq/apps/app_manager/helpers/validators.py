@@ -928,7 +928,6 @@ class FormBaseValidator(object):
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
             for form_link in self.form.form_links:
-                linked_module = None
                 if form_link.form_id:
                     try:
                         linked_form = self.app.get_form(form_link.form_id)
@@ -937,6 +936,7 @@ class FormBaseValidator(object):
                         continue
 
                     if form_link.form_module_id:
+                        linked_module = None
                         try:
                             linked_module = self.app.get_module_by_unique_id(form_link.form_module_id)
                         except ModuleNotFoundException:
@@ -950,14 +950,6 @@ class FormBaseValidator(object):
                                 errors.append(dict(type='bad form link', **meta))
                         elif linked_module.unique_id != linked_form.get_module().unique_id:
                             errors.append(dict(type='bad form link', **meta))
-                    else:
-                        linked_module = linked_form.get_module()
-
-                else:
-                    try:
-                        linked_module = self.app.get_module_by_unique_id(form_link.module_unique_id)
-                    except ModuleNotFoundException:
-                        errors.append(dict(type='bad form link', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
