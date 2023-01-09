@@ -203,6 +203,8 @@ class RepeaterSuperProxy(models.Model):
 
     def save(self, *args, **kwargs):
         self.repeater_type = self._repeater_type
+        if not self.name:
+            self.name = self.connection_settings.name
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):

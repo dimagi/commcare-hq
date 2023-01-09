@@ -196,6 +196,7 @@ class TestRepeaterName(RepeaterTestCase):
         self.assertEqual(self.repeater.name, connection_settings.name)
 
     def test_repeater_name(self):
+        original_connection_setting = self.conn
         connection_settings = ConnectionSettings.objects.create(
             domain=DOMAIN,
             name='Example Server',
@@ -203,8 +204,8 @@ class TestRepeaterName(RepeaterTestCase):
         )
         self.repeater.connection_settings_id = connection_settings.id
         self.repeater.save()
-
-        self.assertEqual(self.repeater.name, connection_settings.name)
+        # Since the repeater name is being persisted, this will be static until changed by the user
+        self.assertEqual(self.repeater.name, original_connection_setting.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):

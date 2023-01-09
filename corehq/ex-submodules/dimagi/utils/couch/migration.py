@@ -183,6 +183,8 @@ class SyncCouchToSQLMixin(object):
         return sql_object
 
     def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = self.connection_settings.name
         sync_to_sql = kwargs.pop('sync_to_sql', True)
         super(SyncCouchToSQLMixin, self).save(*args, **kwargs)
         if sync_to_sql:
