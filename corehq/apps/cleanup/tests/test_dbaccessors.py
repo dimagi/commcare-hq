@@ -142,6 +142,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config(self.deleted_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
@@ -151,6 +152,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config('missing-domain')
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
@@ -160,6 +162,7 @@ class TestFindUCRTablesForDeletedDomains(TestCase):
         config = self._create_data_source_config(self.active_domain.name)
         adapter = get_indicator_adapter(config, raise_errors=True)
         adapter.build_table()
+        self.addCleanup(adapter.drop_table)
 
         counts_by_domain = find_ucr_tables_for_deleted_domains()
 
