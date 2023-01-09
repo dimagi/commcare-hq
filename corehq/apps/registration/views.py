@@ -381,8 +381,6 @@ class RegisterDomainView(TemplateView):
                 form.cleaned_data['hr_name'],
                 is_new_user=self.is_new_user
             )
-            # Always show release mode setting for a new domain
-            AppReleaseModeSetting(domain=domain_name, is_visible=True).save()
         except NameUnavailableException:
             context.update({
                 'current_page': {'page_name': _('Oops!')},
