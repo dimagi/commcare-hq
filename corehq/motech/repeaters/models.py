@@ -1256,62 +1256,6 @@ class FormRepeater(Repeater):
         return SQLFormRepeater
 
 
-class CaseRepeater(Repeater):
-    """
-    Record that cases should be repeated to a new url
-
-    """
-
-    payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
-
-    version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
-    white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
-    black_listed_users = StringListProperty(default=[])  # users who caseblock submissions should be ignored
-    friendly_name = _("Forward Cases")
-
-    def allowed_to_forward(self, payload):
-        return self._allowed_case_type(payload) and self._allowed_user(payload)
-
-    def _allowed_case_type(self, payload):
-        return not self.white_listed_case_types or payload.type in self.white_listed_case_types
-
-    def _allowed_user(self, payload):
-        return not self.black_listed_users or self.payload_user_id(payload) not in self.black_listed_users
-
-    def payload_user_id(self, payload):
-        # get the user_id who submitted the payload, note, it's not the owner_id
-        return payload.actions[-1].user_id
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return CommCareCase.objects.get_case(repeat_record.payload_id, repeat_record.domain)
-
-    @property
-    def form_class_name(self):
-        """
-        CaseRepeater and most of its subclasses use the same form for editing
-        """
-        return 'CaseRepeater'
-
-    def get_headers(self, repeat_record):
-        headers = super(CaseRepeater, self).get_headers(repeat_record)
-        headers.update({
-            "server-modified-on": json_format_datetime(self.payload_doc(repeat_record).server_modified_on)
-        })
-        return headers
-
-    def save(self, *args, **kwargs):
-        return super().save(*args, **kwargs)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["version", "white_listed_case_types", "black_listed_users"]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLCaseRepeater
-
-
 def get_repeater_response_from_submission_response(response):
     from couchforms.openrosa_response import (
         ResponseNature,
