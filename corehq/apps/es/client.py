@@ -313,7 +313,7 @@ class ElasticManageAdapter(BaseAdapter):
 
         :param index: ``str`` index to fetch the mapping from
         :param type_: ``str`` doc type to fetch the mapping for
-        :returns: ``dict`` mapping or ``None`` if index does not have a mapping
+        :returns: mapping ``dict`` or ``None`` if index does not have a mapping
         """
         self._validate_single_index(index)
         response = self._es.indices.get_mapping(index, type_, expand_wildcards="none")
