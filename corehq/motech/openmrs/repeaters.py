@@ -148,7 +148,7 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         case_blocks = extract_case_blocks(payload)
         case_ids = [case_block['@case_id'] for case_block in case_blocks]
         cases = CommCareCase.objects.get_cases(case_ids, payload.domain, ordered=True)
-        if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
+        if not any(SQLCaseRepeater.allowed_to_forward(self, case) for case in cases):
             # If none of the case updates in the payload are allowed to
             # be forwarded, drop it.
             return False
