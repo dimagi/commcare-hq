@@ -993,8 +993,11 @@ class ViewMultimediaFile(View):
         data, content_type = self.multimedia.get_display_file()
         if self.thumb:
             data = CommCareImage.get_thumbnail_data(data, self.thumb)
+        filename = 'download' + self.multimedia.get_file_extension()
+        if not content_type:
+            content_type = self.multimedia.get_mime_type(data, filename)
         response = HttpResponse(data, content_type=content_type)
-        response['Content-Disposition'] = 'filename="download{}"'.format(self.multimedia.get_file_extension())
+        response['Content-Disposition'] = f'filename="{filename}"'
         return response
 
 
