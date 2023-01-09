@@ -200,9 +200,13 @@ class TestAppReleaseModeSettingForm(TestCase):
         self.domain_obj = Domain(name=domain)
         self.domain_obj.save()
 
-    def test_release_mode_settings_present_when_domain_eligible(self):
+    def test_release_mode_settings_visible_and_saved_without_error(self):
         form = self.create_form(domain=self.domain_obj)
         self.assertTrue('release_mode_visibility' in form.fields)
+
+        form.full_clean()
+        saved = form.save(Mock(), self.domain_obj)
+        self.assertEqual(True, saved)  # No error during form save
 
     def create_form(self, domain=None, **kwargs):
         data = {
