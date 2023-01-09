@@ -22,11 +22,10 @@ of all unknown users, web users, and demo users on a domain.
 
     owner_ids = query.get_ids()
 """
-from copy import deepcopy
-
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -67,6 +66,8 @@ class UserES(HQESQuery):
 
 
 class ElasticUser(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.USERS
 
     @property
     def mapping(self):
