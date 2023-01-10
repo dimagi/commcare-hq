@@ -81,5 +81,6 @@ branches:
     - bmb/compile-scss-with-less  # Biyeun Jan 9
     - jm/elastic-index-migrations  # Joel Jan 9
     - jm/refactor-es-query  # Joel Jan 9
+    - jm/refactor-api-es  # Joel Jan 10
     - cs/migration/repeater_name_length # Chris Jan 10
 submodules: { }
