@@ -82,5 +82,7 @@ branches:
     - jm/elastic-index-migrations  # Joel Jan 9
     - jm/refactor-es-query  # Joel Jan 9
     - jm/refactor-api-es  # Joel Jan 10
+    - jm/refactor-hqadmin-escheck  # Joel Jan 10
+    - jm/refactor-user-pillow  # Joel Jan 10
     - cs/migration/repeater_name_length # Chris Jan 10
 submodules: { }
