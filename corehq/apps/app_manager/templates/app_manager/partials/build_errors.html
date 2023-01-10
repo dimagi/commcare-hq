@@ -83,6 +83,12 @@
                 a multi-select form, which is not supported.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
+            {% case "mismatch multi select form links" %}
+              {% blocktrans %}
+                Please check that end of form navigation is correct. It appears to involve both
+                a multi-select form and a single select-form, which is not supported.
+              {% endblocktrans %}
+              {% include "app_manager/partials/form_error_message.html" %}
             {% case "parent multi select form links" %}
               {% blocktrans %}
                 Please check that end of form navigation is correct. It appears to involve

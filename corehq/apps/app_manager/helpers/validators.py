@@ -928,7 +928,6 @@ class FormBaseValidator(object):
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
             for form_link in self.form.form_links:
-                linked_module = None
                 if form_link.form_id:
                     try:
                         linked_form = self.app.get_form(form_link.form_id)
@@ -937,6 +936,7 @@ class FormBaseValidator(object):
                         continue
 
                     if form_link.form_module_id:
+                        linked_module = None
                         try:
                             linked_module = self.app.get_module_by_unique_id(form_link.form_module_id)
                         except ModuleNotFoundException:
@@ -950,34 +950,18 @@ class FormBaseValidator(object):
                                 errors.append(dict(type='bad form link', **meta))
                         elif linked_module.unique_id != linked_form.get_module().unique_id:
                             errors.append(dict(type='bad form link', **meta))
-                    else:
-                        linked_module = linked_form.get_module()
-
-                else:
-                    try:
-                        linked_module = self.app.get_module_by_unique_id(form_link.module_unique_id)
-                    except ModuleNotFoundException:
-                        errors.append(dict(type='bad form link', **meta))
-                if linked_module:
-                    if linked_module.is_multi_select():
-                        errors.append(dict(type="multi select form links", **meta))
-                    if linked_module.root_module and linked_module.root_module.is_multi_select():
-                        errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            if module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PARENT_MODULE:
             if not module.root_module:
                 errors.append(dict(type='form link to missing root', **meta))
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
-            elif module.root_module.is_multi_select():
-                errors.append(dict(type='parent multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
-            if module.is_multi_select() or module.root_module and module.root_module.is_multi_select():
-                errors.append(dict(type='previous multi select form links', **meta))
+            if (module.is_multi_select() and not module.root_module.is_multi_select()) or \
+                    (not module.is_multi_select() and module.root_module.is_multi_select()):
+                errors.append(dict(type='mismatch multi select form links', **meta))
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
