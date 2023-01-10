@@ -84,13 +84,13 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
             domain=DOMAIN,
             payload_id='r2d2',
             registered_at='1977-01-01',
-            repeater_id=uuid4().hex,
+            repeater_id=self.createcase_repeater_obj.id,
         )
         self.case_repeater_obj.repeat_records.create(
             domain=DOMAIN,
             payload_id='darth',
             registered_at='1980-01-01',
-            repeater_id=uuid4().hex,
+            repeater_id=self.case_repeater_obj.id,
         )
 
         createcase_repeat_records = self.createcase_repeater_obj.repeat_records.all()
