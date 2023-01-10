@@ -22,6 +22,7 @@ WHITELIST = [
     ("compressor.filters.base", "smart_text() is deprecated"),
     ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
+    ("distutils", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
         "django_celery_results",
