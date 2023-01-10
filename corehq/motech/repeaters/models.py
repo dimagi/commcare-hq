@@ -86,7 +86,6 @@ from requests.exceptions import ConnectionError, RequestException, Timeout
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.xml import LEGAL_VERSIONS, V2
-from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
@@ -95,17 +94,14 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     IntegerProperty,
     ListProperty,
-    StringListProperty,
     StringProperty,
 )
-from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
@@ -114,21 +110,12 @@ from corehq.form_processor.models import (
     CommCareCase,
     XFormInstance,
 )
-from corehq.motech.const import (
-    ALGO_AES,
-    BASIC_AUTH,
-    BEARER_AUTH,
-    DIGEST_AUTH,
-    OAUTH1,
-    REQUEST_METHODS,
-    REQUEST_POST,
-)
+from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
+from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from corehq.motech.repeaters.optionvalue import OptionValue
 from corehq.motech.requests import simple_request
-from corehq.motech.utils import b64_aes_decrypt
 from corehq.privileges import DATA_FORWARDING, ZAPIER_INTEGRATION
-from corehq.util.couch import stale_ok
 from corehq.util.metrics import metrics_counter
 from corehq.util.quickcache import quickcache
 from corehq.util.urlvalidate.ip_resolver import CannotResolveHost
@@ -147,7 +134,6 @@ from .const import (
     RECORD_SUCCESS_STATE,
 )
 from .dbaccessors import (
-    force_update_repeaters_views,
     get_cancelled_repeat_record_count,
     get_failure_repeat_record_count,
     get_pending_repeat_record_count,
