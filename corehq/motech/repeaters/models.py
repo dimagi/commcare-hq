@@ -302,11 +302,6 @@ class SQLRepeater(RepeaterSuperProxy):
         # time. This method/property will be removed in a subsequent PR.
         return self.connection_settings.name
 
-    @property
-    @memoized
-    def repeater(self):
-        return Repeater.get(self.repeater_id)
-
     @cached_property
     def _optionvalue_fields(self):
         return [
@@ -1366,7 +1361,7 @@ def attempt_forward_now(repeater: SQLRepeater):
     process_repeater.delay(repeater.id)
 
 
-def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
+def get_payload(repeater: SQLRepeater, repeat_record: SQLRepeatRecord) -> str:
     try:
         return repeater.get_payload(repeat_record)
     except Exception as err:
@@ -1383,7 +1378,7 @@ def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
 
 
 def send_request(
-    repeater: Repeater,
+    repeater: SQLRepeater,
     repeat_record: SQLRepeatRecord,
     payload: Any,
 ) -> bool:
