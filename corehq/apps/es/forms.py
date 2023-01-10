@@ -9,6 +9,7 @@ from corehq.pillows.mappings.const import NULL_VALUE
 from . import filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -49,6 +50,8 @@ class FormES(HQESQuery):
 
 
 class ElasticForm(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.FORMS
 
     @property
     def mapping(self):
