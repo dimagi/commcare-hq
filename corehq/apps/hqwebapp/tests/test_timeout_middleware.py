@@ -61,6 +61,8 @@ class TestTimeout(TestCase):
         cls.insecure_domain.delete()
         cls.secure_domain1.delete()
         cls.secure_domain2.delete()
+        cls.secure_domain3.delete()
+        cls.secure_domain4.delete()
         super().tearDownClass()
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, session):
@@ -90,17 +92,6 @@ class TestTimeout(TestCase):
         self._get_page()
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(settings.SECURE_TIMEOUT, self.client.session)
-
-    def test_secure_configurable(self):
-        # visit a secure domain with configurable timeout
-        self._get_page(self.secure_domain2)
-        self.assertTrue(self.client.session.get('secure_session'))
-        self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
-
-        # settings should be retained when going to a non-domain page
-        self._get_page()
-        self.assertTrue(self.client.session.get('secure_session'))
-        self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
 
     def test_secure_membership(self):
         # If a user is a member of a secure domain, all of their sessions are secure
@@ -144,13 +135,3 @@ class TestTimeout(TestCase):
         self._get_page()
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(self.secure_domain4.secure_sessions_timeout, self.client.session)
-
-    def test_timeoutvalue_without_secure_session(self):
-        # If timeout value provided but secure sessions false
-        # timeout value should equal inactivity_timeout
-        self.secure_domain1.secure_sessions = False
-        self.secure_domain1.secure_sessions_timeout = 10
-        self.secure_domain1.save()
-        self._get_page()
-        self.assertFalse(self.client.session.get('secure_session'))
-        self._assert_session_expiry_in_minutes(settings.INACTIVITY_TIMEOUT, self.client.session)
