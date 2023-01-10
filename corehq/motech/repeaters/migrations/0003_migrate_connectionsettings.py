@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('repeaters', '0002_sqlrepeatrecord'),
-        ('motech', '0007_migrate_to_sql'),
+        ('motech', '0007_auto_20200909_2138'),
     ]
 
     operations = [
