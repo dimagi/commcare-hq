@@ -3,15 +3,18 @@ from datetime import date, datetime
 from django.test.testcases import SimpleTestCase
 from pytz import UTC, timezone
 
+from .utils import es_test
 from ..utils import (
     ElasticJSONSerializer,
     SerializationError,
     es_format_datetime,
+    sorted_mapping,
 )
 
 ET = timezone('US/Eastern')
 
 
+@es_test
 def test_es_format_datetime():
     def _assert_returns(date_or_datetime, expected):
         actual = es_format_datetime(date_or_datetime)
@@ -32,6 +35,7 @@ def test_es_format_datetime():
         yield _assert_returns, date_or_datetime, expected
 
 
+@es_test
 class TestElasticJSONSerializer(SimpleTestCase):
 
     def test_raises_elastic_exception(self):
@@ -40,3 +44,18 @@ class TestElasticJSONSerializer(SimpleTestCase):
             serializer.loads("object")
         with self.assertRaises(SerializationError):
             serializer.dumps({"object": object()})
+
+
+@es_test
+class TestMappingsUtilsNoIndex(SimpleTestCase):
+
+    def test_sorted_mapping(self):
+        expected_order = ["alpha", "items", "zulu", "properties"]
+        unsorted = {key: None for key in expected_order[::-1]}
+        mapping = unsorted.copy()
+        mapping["items"] = [unsorted.copy()]
+        mapping["properties"] = unsorted.copy()
+        mapping = sorted_mapping(mapping)
+        self.assertEqual(expected_order, list(mapping))
+        self.assertEqual(expected_order, list(mapping["items"][0]))
+        self.assertEqual(expected_order, list(mapping["properties"]))
