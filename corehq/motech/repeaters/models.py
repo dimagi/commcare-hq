@@ -266,7 +266,7 @@ class RepeaterManager(models.Manager):
 class SQLRepeater(SyncSQLToCouchMixin, RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
-    name = models.CharField(max_length=64, null=True)
+    name = models.CharField(max_length=255, null=True)
     format = models.CharField(max_length=64, null=True)
     request_method = models.CharField(
         choices=list(zip(REQUEST_METHODS, REQUEST_METHODS)),
