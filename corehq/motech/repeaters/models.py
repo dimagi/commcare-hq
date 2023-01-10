@@ -66,6 +66,7 @@ class.
 import inspect
 import json
 import traceback
+import uuid
 import warnings
 from collections import OrderedDict
 from datetime import datetime, timedelta
@@ -183,6 +184,10 @@ class RepeaterSuperProxy(models.Model):
 
     def save(self, *args, **kwargs):
         self.repeater_type = self._repeater_type
+        # For first save when reepater is created
+        # If repeater_id is not set then set one
+        if not self.repeater_id:
+            self.repeater_id = uuid.uuid4().hex
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
