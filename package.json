@@ -111,6 +111,7 @@
         "minimatch": "^3.0.5",
         "moment-timezone": "^0.5.35",
         "normalize-url": "^4.5.1",
+        "qs": "^6.9.7",
         "set-value": "^4.0.1",
         "ssri": "^8.0.1",
         "yargs-parser": "^18.1.3",
