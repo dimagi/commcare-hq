@@ -213,10 +213,10 @@ def _export_data_dictionary(domain):
     case_type_headers = [_('Case Type'), _('FHIR Resource Type'), _('Remove Resource Type(Y)')]
     case_prop_headers = [
         _('Case Property'),
+        _('Label'),
         _('Group'),
         _('Data Type'),
         _('Description'),
-        _('Label'),
         _('Deprecated')
     ]
     allowed_value_headers = [_('Case Property'), _('Valid Value'), _('Valid Value Description')]
@@ -239,10 +239,10 @@ def _generate_data_for_export(domain, export_fhir_data):
     def generate_prop_dict(case_prop, fhir_resource_prop):
         prop_dict = {
             _('Case Property'): case_prop.name,
+            _('Label'): case_prop.label,
             _('Group'): case_prop.group,
             _('Data Type'): case_prop.get_data_type_display() if case_prop.data_type else '',
             _('Description'): case_prop.description,
-            _('Label'): case_prop.label,
             _('Deprecated'): case_prop.deprecated
         }
         if case_prop.data_type == 'select':
@@ -474,10 +474,10 @@ def _process_bulk_upload(bulk_file, domain):
                     error, fhir_resource_prop_path, fhir_resource_type, remove_path = None, None, None, None
                     (
                         name,
+                        label,
                         group,
                         data_type_display,
                         description,
-                        label,
                         deprecated
                     ) = [cell.value for cell in row[:6]]
                     # Fall back to value from file if data_type_display is not found in the map.
