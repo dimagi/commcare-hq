@@ -158,7 +158,6 @@
           <th>{% trans "Case Property" %}</th>
           <th>{% trans "Data Type" %}</th>
           <th>{% trans "Description" %}</th>
-          <th>{% trans "Label" %}</th>
           {% if fhir_integration_enabled %}
             <th>{% trans "FHIR Resource Property Path" %}</th>
           {% endif %}
@@ -190,7 +189,15 @@
                 <i class="sortable-handle fa fa-arrows-v"></i>
               {% endif %}
             </td>
-            <td data-bind="text: name"></td>
+            <td class="main-form">
+                <span data-bind="text: name"></span>
+
+                <input class="form-control"
+                      data-bind="value: $data.label, rows: 1"
+                      placeholder='{% trans "Click here to add a label" %}'
+                      style="margin-top: 8px;"
+                ></input>
+            </td>
             <td class="main-form">
               <select class="form-control"
                       data-bind="
@@ -207,13 +214,6 @@
                                 rows: 1,
                                 placeholder: '{% trans "Click here to add a description" %}',
                               "></textarea>
-            </td>
-            <td>
-                            <input class="form-control" data-bind="
-                              value: $data.label,
-                              rows: 1,
-                              placeholder: '{% trans "Click here to add a label" %}',
-                            "/>
             </td>
             {% if fhir_integration_enabled %}
               <td class="fhir-path">
