@@ -22,7 +22,6 @@ WHITELIST = [
     ("compressor.filters.base", "smart_text() is deprecated"),
     ("compressor.signals", "The providing_args argument is deprecated."),
     ("couchdbkit.schema.properties", "'collections.abc'"),
-    ("distutils", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("django.apps", re.compile(r"'(" + "|".join(re.escape(app) for app in [
         "captcha",
         "django_celery_results",
@@ -47,6 +46,7 @@ WHITELIST = [
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
+    ("redis.connection", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",
