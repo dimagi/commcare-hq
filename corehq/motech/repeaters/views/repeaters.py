@@ -27,7 +27,6 @@ from ..models import (
     RepeatRecord,
     SQLRepeater,
     are_repeat_records_migrated,
-    get_all_repeater_types,
     get_all_sqlrepeater_types,
 )
 

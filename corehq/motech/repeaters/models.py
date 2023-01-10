@@ -72,7 +72,6 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
-from django.conf import settings
 from django.db import models
 from django.db.models.base import Deferred
 from django.utils import timezone
@@ -97,7 +96,6 @@ from dimagi.ext.couchdbkit import (
     StringProperty,
 )
 from dimagi.utils.logging import notify_error, notify_exception
-from dimagi.utils.modules import to_function
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq import toggles
@@ -837,13 +835,6 @@ def get_repeater_response_from_submission_response(response):
         return RepeaterResponse(422, ResponseNature.SUBMIT_ERROR, openrosa_response.message, False)
 
     return response
-
-
-def get_all_repeater_types():
-    return OrderedDict([
-        (to_function(cls, failhard=True).__name__, to_function(cls, failhard=True))
-        for cls in settings.REPEATER_CLASSES
-    ])
 
 
 def get_all_sqlrepeater_types():
