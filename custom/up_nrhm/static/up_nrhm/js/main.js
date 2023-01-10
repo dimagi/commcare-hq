@@ -28,6 +28,10 @@ hqDefine("up_nrhm/js/main", function () {
         }
     }
 
+    function getDate(value) {
+        return value ? value.toISOString().split("T")[0] : undefined;
+    }
+
     $(document).on("ajaxComplete", function (e, xhr, options) {
         var fragment = "async/",
             pageUrl = window.location.href.split('?')[0],
@@ -61,8 +65,8 @@ hqDefine("up_nrhm/js/main", function () {
         $('#filter_range').createDateRangePicker(
             reportLabels,
             separator,
-            $datespan.data("start-date").toISOString().split("T")[0],
-            $datespan.data("end-date").toISOString().split("T")[0]
+            getDate($datespan.data("start-date")),
+            getDate($datespan.data("end-date"))
         );
         $('#filter_range').on('change apply', function () {
             var picker = $(this).data('daterangepicker');
