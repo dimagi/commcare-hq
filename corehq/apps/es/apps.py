@@ -5,6 +5,7 @@ AppES
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -24,6 +25,8 @@ class AppES(HQESQuery):
 
 
 class ElasticApp(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.APPS
 
     @property
     def mapping(self):
