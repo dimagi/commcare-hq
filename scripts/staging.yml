@@ -76,7 +76,15 @@ branches:
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    - ad/user-syncing-UI-2 # Addison Jan 3
-    - revert-32445-jls/requirejs-hqwebapp-tests # Addison Jan 4
+    - ad/user-syncing-UI # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
+    - bmb/compile-scss-with-less  # Biyeun Jan 9
+    - jm/elastic-index-migrations  # Joel Jan 9
+    - jm/refactor-es-query  # Joel Jan 9
+    # - jm/refactor-api-es  # Joel Jan 10
+    - jm/refactor-hqadmin-escheck  # Joel Jan 10
+    # - jm/refactor-user-pillow  # Joel Jan 10
+    - cs/migration/repeater_name_length # Chris Jan 10
+    - ap/repeaters/remove-couch-models # Amit Jan 11
+    - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
 submodules: { }

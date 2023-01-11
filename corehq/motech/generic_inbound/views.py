@@ -37,6 +37,7 @@ from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
     ApiResponse,
+    archive_api_request,
     make_processing_attempt,
     reprocess_api_request,
 )
@@ -220,4 +221,11 @@ def _log_api_request(api, request, response):
 def retry_api_request(request, domain, log_id):
     request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
     reprocess_api_request(request_log)
+    return redirect(ApiLogDetailView.urlname, domain, log_id)
+
+
+@can_administer_generic_inbound
+def revert_api_request(request, domain, log_id):
+    request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
+    archive_api_request(request_log, request.couch_user._id)
     return redirect(ApiLogDetailView.urlname, domain, log_id)

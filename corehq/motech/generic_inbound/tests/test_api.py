@@ -14,6 +14,7 @@ from corehq.apps.userreports.const import (
 )
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.users.models import HQApiKey, WebUser
+from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
@@ -23,7 +24,9 @@ from corehq.motech.generic_inbound.models import (
 )
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
+    archive_api_request,
     reprocess_api_request,
+    revert_api_request_from_form,
 )
 from corehq.util.test_utils import flag_enabled, privilege_enabled
 
@@ -345,3 +348,32 @@ class TestGenericInboundAPIView(TestCase):
         attempt = log.processingattempt_set.last()
         self.assertEqual(attempt.is_retry, True)
         self.assertEqual(attempt.raw_response, {"error": "Payload must be valid JSON"})
+
+    def test_archive_forms(self):
+        properties_expression = {'prop': 'const'}
+        self._call_api(properties_expression)
+
+        log = RequestLog.objects.last()
+        xform = XFormInstance.get_obj_by_id(log.processingattempt_set.last().xform_id)
+        self.assertEqual(xform.is_archived, False)
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+
+        # Archive form(s) based on request log
+        archive_api_request(log, self.user._id)
+        log.refresh_from_db()
+        xform.refresh_from_db()
+        self.assertEqual(xform.is_archived, True)
+        self.assertEqual(log.status, RequestLog.Status.REVERTED)
+
+    def test_revert_log(self):
+        properties_expression = {'prop': 'const'}
+        self._call_api(properties_expression)
+
+        log = RequestLog.objects.last()
+        xform = XFormInstance.get_obj_by_id(log.processingattempt_set.last().xform_id)
+        self.assertEqual(log.status, RequestLog.Status.SUCCESS)
+
+        # Revert request log based on form
+        revert_api_request_from_form(xform.form_id)
+        log.refresh_from_db()
+        self.assertEqual(log.status, RequestLog.Status.REVERTED)
