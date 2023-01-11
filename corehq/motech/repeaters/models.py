@@ -277,8 +277,6 @@ class SQLRepeater(RepeaterSuperProxy):
     class Meta:
         db_table = 'repeaters_repeater'
 
-    _migration_couch_id_name = 'repeater_id'
-
     payload_generator_classes = ()
 
     friendly_name = _("Data")
