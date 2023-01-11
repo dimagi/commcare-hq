@@ -32,6 +32,15 @@ class TestTimeout(TestCase):
         cls.secure_domain2.secure_sessions_timeout = 15
         cls.secure_domain2.save()
 
+        cls.secure_domain3 = Domain(name="fortress-3", is_active=True)
+        cls.secure_domain3.secure_sessions = True
+        cls.secure_domain3.secure_sessions_timeout = 5
+        cls.secure_domain3.save()
+
+        cls.secure_domain4 = Domain(name="fortress-4", is_active=True)
+        cls.secure_domain4.secure_sessions = True
+        cls.secure_domain4.save()
+
     def setUp(self):
         # Re-login for each test to create new session
         self.client = Client()
@@ -52,6 +61,8 @@ class TestTimeout(TestCase):
         cls.insecure_domain.delete()
         cls.secure_domain1.delete()
         cls.secure_domain2.delete()
+        cls.secure_domain3.delete()
+        cls.secure_domain4.delete()
         super().tearDownClass()
 
     def _assert_session_expiry_in_minutes(self, expected_minutes, session):
@@ -104,3 +115,23 @@ class TestTimeout(TestCase):
         self._get_page()
         self.assertTrue(self.client.session.get('secure_session'))
         self._assert_session_expiry_in_minutes(self.secure_domain2.secure_sessions_timeout, self.client.session)
+
+    def test_multiple_secure_allow_increase(self):
+        # Session should apply minimum value of all relevant timeouts AND
+        # this minimum should be increasable
+        self.user = WebUser.get_by_username(self.user.username)
+        self.user.add_as_web_user(self.secure_domain3.name, 'admin')
+        self.user.add_as_web_user(self.secure_domain4.name, 'admin')
+        self._get_page()
+        self.assertTrue(self.client.session.get('secure_session'))
+        self._assert_session_expiry_in_minutes(self.secure_domain3.secure_sessions_timeout, self.client.session)
+
+        self.secure_domain3.secure_sessions = True
+        self.secure_domain3.secure_sessions_timeout = 25
+        self.secure_domain3.save()
+        self.secure_domain4.secure_sessions = True
+        self.secure_domain4.secure_sessions_timeout = 20
+        self.secure_domain4.save()
+        self._get_page()
+        self.assertTrue(self.client.session.get('secure_session'))
+        self._assert_session_expiry_in_minutes(self.secure_domain4.secure_sessions_timeout, self.client.session)
