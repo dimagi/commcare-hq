@@ -189,7 +189,15 @@
                 <i class="sortable-handle fa fa-arrows-v"></i>
               {% endif %}
             </td>
-            <td data-bind="text: name"></td>
+            <td class="main-form">
+                <span data-bind="text: name"></span>
+
+                <input class="form-control"
+                      data-bind="value: $data.label, rows: 1"
+                      placeholder='{% trans "Click here to add a label" %}'
+                      style="margin-top: 8px;"
+                ></input>
+            </td>
             <td class="main-form">
               <select class="form-control"
                       data-bind="
