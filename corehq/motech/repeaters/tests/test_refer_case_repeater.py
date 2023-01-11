@@ -7,7 +7,7 @@ from testil import eq
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V2_NAMESPACE
 from corehq.form_processor.models import CommCareCase
-from corehq.motech.repeaters.models import ReferCaseRepeater
+from corehq.motech.repeaters.models import SQLReferCaseRepeater
 from corehq.motech.repeaters.repeater_generators import ReferCasePayloadGenerator
 
 
@@ -40,7 +40,7 @@ def test_refer_case_payload_generator_multiple_previous_transfer():
 
 def _test_refer_case_payload_generator(initial_case_properties, expected_referral_props):
     domain = "source_domain"
-    repeater = ReferCaseRepeater(domain=domain)
+    repeater = SQLReferCaseRepeater(domain=domain)
     generator = ReferCasePayloadGenerator(repeater)
     generator.submission_user_id = Mock(return_value='user1')
     generator.submission_username = Mock(return_value='user1')

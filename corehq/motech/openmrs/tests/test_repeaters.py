@@ -44,7 +44,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
 from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -516,12 +516,14 @@ class CaseLocationTests(LocationHierarchyTestCase):
         cape_town_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
+            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
         western_cape_repeater = SQLOpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
+            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         western_cape_repeater.save()
@@ -550,6 +552,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=gardens.location_id,
             connection_settings=self.conn,
+            repeater_id=uuid.uuid4().hex,
         )
         gardens_repeater.save()
 
@@ -569,12 +572,14 @@ class CaseLocationTests(LocationHierarchyTestCase):
             domain=self.domain,
             location_id=self.locations['Cape Town'].location_id,
             connection_settings_id=self.conn.id,
+            repeater_id=uuid.uuid4().hex,
         )
         cape_town_repeater.save()
         western_cape_repeater = SQLOpenmrsRepeater(
             domain=self.domain,
             location_id=self.locations['Western Cape'].location_id,
             connection_settings_id=self.conn.id,
+            repeater_id=uuid.uuid4().hex,
         )
         western_cape_repeater.save()
 
