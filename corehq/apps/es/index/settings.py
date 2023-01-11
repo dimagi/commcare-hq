@@ -11,7 +11,7 @@ from django.conf import settings
 
 
 def render_index_tuning_settings(index_settings_key):
-    """Returns an index tunning settings dict for the provided index settings
+    """Returns an index tuning settings dict for the provided index settings
     key. The returned values are rendered from four increasingly specific
     sources using a last-set-wins algorithm. Values are set in order:
 
