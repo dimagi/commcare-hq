@@ -1,5 +1,6 @@
 from copy import deepcopy
 import json
+import uuid
 
 from django.urls import reverse
 
@@ -20,6 +21,7 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
         conn.save()
         cls.connection_setting = conn
         cls.repeater = SQLOpenmrsRepeater(**deepcopy(test_data))
+        cls.repeater.repeater_id = uuid.uuid4().hex
         cls.repeater.domain = cls.domain.name
         cls.repeater.connection_settings_id = conn.id
         cls.repeater.save()
