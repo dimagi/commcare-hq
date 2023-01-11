@@ -255,6 +255,16 @@
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
             {% endif %}
 
+            <div class="form-group">
+              <label for="description" class="{% css_label_class %} control-label">
+                {% trans "Empty Case List Text" %}
+                <span class="hq-help-template" data-title="{% trans "Empty Case List Text" %}"
+                      data-content="{% trans_html_attr "Define text displayed when case list has no results." %}">
+              </label>
+              <div class="{% css_field_class %}">
+                {% input_trans module.case_details.short.no_items_text langs input_name='no_items_text' input_id='no_items_text' data_bind="value: no_items_text" element_type="textarea" %}
+              </div>
+            </div>
           </div><!-- end .panel-body -->
         </div><!-- end .panel -->
       {% endif %}
