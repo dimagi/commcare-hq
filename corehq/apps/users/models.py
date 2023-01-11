@@ -65,6 +65,7 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
@@ -87,6 +88,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
@@ -2356,6 +2358,25 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                                  by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
+    def add_domain_membership(self, domain, timezone=None, **kwargs):
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            # Inline import avoids a circular import error
+            from corehq.apps.reports.util import add_tableau_user
+            from corehq.apps.reports.models import TableauUser
+            try:
+                add_tableau_user(domain, self.username)
+            except (TableauAPIError, TableauUser.DoesNotExist) as e:
+                notify_exception(None, str(e), details={
+                    'domain': domain
+                })
+        super().add_domain_membership(domain, timezone, **kwargs)
+
+    def delete_domain_membership(self, domain, create_record=False, skip_tableau=False):
+        if TABLEAU_USER_SYNCING.enabled(domain) and not skip_tableau:
+            from corehq.apps.reports.util import delete_tableau_user
+            delete_tableau_user(domain, self.username)
+        return super(WebUser, self).delete_domain_membership(domain, create_record=create_record)
+
     def is_commcare_user(self):
         return False
 
@@ -2731,6 +2752,9 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            from corehq.apps.reports.util import add_tableau_user
+            add_tableau_user(self.domain, user.username)
 
 
 class UserReportingMetadataStaging(models.Model):
