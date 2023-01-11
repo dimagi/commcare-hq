@@ -512,6 +512,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             if toggles.SECURE_SESSION_TIMEOUT.enabled(name):
                 return domain_obj.secure_sessions_timeout or settings.SECURE_TIMEOUT
             return settings.SECURE_TIMEOUT
+        elif not domain_obj.secure_sessions:
+            return settings.INACTIVITY_TIMEOUT
 
         return None
 
