@@ -20,6 +20,7 @@ from corehq.motech.repeaters.const import (
     RECORD_SUCCESS_STATE,
 )
 from corehq.motech.repeaters.models import SQLFormRepeater, send_request
+from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -110,7 +111,30 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             sql_repeater = self.reget_sql_repeater()
             self.assertIsNone(sql_repeater.next_attempt_at)
 
+    @timelimit(65)
     def test_backoff_on_503(self):
+        """Configured with a custom timelimit to prevent intermittent test
+        failures in GitHub actions. Example:
+
+        ```
+        setup,corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503,60.48151421546936,1673364559.7436702
+        ERROR
+
+        ======================================================================
+        ERROR: corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503
+        ----------------------------------------------------------------------
+        Traceback (most recent call last):
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 134, in run
+            self.runTest(result)
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 152, in runTest
+            test(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 245, in __call__
+            self._setup_and_call(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 281, in _setup_and_call
+            super().__call__(result)
+        AssertionError: setup time limit (29.0) exceeded: 60.48151421546936
+        ```
+        """
         resp = ResponseMock(status_code=503, reason='Service Unavailable')
         with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
             simple_request.return_value = resp

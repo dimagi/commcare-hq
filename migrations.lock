@@ -290,6 +290,7 @@ data_interfaces
  0029_locationfilterdefinition_include_child_locations
  0030_add_workflow_choices
  0031_add_domaincaserulerun_status_choices
+ 0032_bootstrap_audit_events_for_update_rules
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -515,6 +516,7 @@ hqwebapp
  0007_user_access_agent
  0008_hqoauthapplication
  0009_truncate_authtoken_table
+ 0010_maintenancealert_scheduling
 integration
  0001_initial
  0002_dialersettings
@@ -696,6 +698,7 @@ repeaters
  0008_add_related_name_in_connection_settings
  0009_add_create_update_info
  00010_add_repeater_name
+ 0011_alter_sqlrepeater_name
 reports
  0001_initial
  0002_auto_20171121_1803

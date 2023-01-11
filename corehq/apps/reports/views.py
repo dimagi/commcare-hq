@@ -115,6 +115,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.utils.xform import resave_form
+from corehq.motech.generic_inbound.utils import revert_api_request_from_form
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.toggles import VIEW_FORM_ATTACHMENT
 from corehq.util import cmp
@@ -1531,6 +1532,7 @@ def archive_form(request, domain, instance_id):
             notify_level = messages.ERROR
         else:
             instance.archive(user_id=request.couch_user._id)
+            revert_api_request_from_form(instance_id)
             notify_msg = _("Form was successfully archived.")
     elif instance.is_archived:
         notify_msg = _("Form was already archived.")
