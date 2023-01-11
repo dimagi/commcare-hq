@@ -231,7 +231,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
 
         self.newCaseProperty = function () {
             if (_.isString(self.newPropertyName())) {
-                var prop = propertyListItem(self.newPropertyName(), '', false, '', self.activeCaseType(), '', '', {});
+                var prop = propertyListItem(self.newPropertyName(), self.newPropertyName(), false, '', self.activeCaseType(), '', '', {});
                 prop.dataType.subscribe(changeSaveButton);
                 prop.description.subscribe(changeSaveButton);
                 prop.label.subscribe(changeSaveButton);
