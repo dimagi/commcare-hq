@@ -959,9 +959,10 @@ class FormBaseValidator(object):
             elif module.root_module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
-            if (module.is_multi_select() and not module.root_module.is_multi_select()) or \
-                    (not module.is_multi_select() and module.root_module.is_multi_select()):
-                errors.append(dict(type='mismatch multi select form links', **meta))
+            if module.root_module:
+                if (module.is_multi_select() and not module.root_module.is_multi_select()) or \
+                        (not module.is_multi_select() and module.root_module.is_multi_select()):
+                    errors.append(dict(type='mismatch multi select form links', **meta))
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
 
