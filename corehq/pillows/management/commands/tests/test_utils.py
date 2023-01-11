@@ -4,7 +4,7 @@ from textwrap import dedent
 from django.test import SimpleTestCase
 
 from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.mappings.utils import mapping_sort_key
+from corehq.apps.es.utils import mapping_sort_key
 
 from ..utils import print_formatted
 
