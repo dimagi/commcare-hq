@@ -453,12 +453,14 @@ def add_tableau_user(domain, username):
     these details to the Tableau instance.
     '''
     session = TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.create(
+    user, created = TableauUser.objects.get_or_create(
         server=session.tableau_connected_app.server,
         username=username,
         role='Viewer',
     )
-    new_id = session.create_user(username, 'Viewer')
+    if not created:
+        return
+    new_id = session.create_user('HQ/' + username, 'Viewer')
     user.tableau_user_id = new_id
     user.save()
 
@@ -491,7 +493,7 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     ).get(username=username)
     if role:
         user.role = role
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=username)
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=('HQ/' + username))
     user.tableau_user_id = new_id
     user.save()
     for group in groups:
