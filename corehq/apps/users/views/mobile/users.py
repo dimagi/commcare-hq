@@ -789,7 +789,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         if at_capacity:
             subject = _("User count has reached the Plan limit for {}").format(domain)
         else:
-            subject = _("User count has reached 90% of the Plan limit for ({})").format(domain)
+            subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
         send_html_email_async(
             subject,
             admins + billing_admins,
