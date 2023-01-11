@@ -68,7 +68,6 @@ import json
 import traceback
 import uuid
 import warnings
-from collections import OrderedDict
 from datetime import datetime, timedelta
 from typing import Any, Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
@@ -842,11 +841,7 @@ def get_repeater_response_from_submission_response(response):
 
 def get_all_sqlrepeater_types():
     # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
-    return OrderedDict(
-        list(
-            zip(REPEATER_CLASS_MAP.keys(), REPEATER_CLASS_MAP.values())
-        )
-    )
+    return dict(REPEATER_CLASS_MAP)
 
 
 class RepeatRecordAttempt(DocumentSchema):
