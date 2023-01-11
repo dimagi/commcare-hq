@@ -159,7 +159,7 @@ def test_temporary_index():
         assert not manager.index_exists(index)
 
     yield test_temporary_index_with_args,  # without type/mapping
-    yield test_temporary_index_with_args, "test_doc", {}  # with type/mapping
+    yield test_temporary_index_with_args, "test_doc", {"_meta": {}}  # with type/mapping
 
 
 @es_test
