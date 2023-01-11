@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 
 from django.core.management import BaseCommand
 
@@ -15,7 +15,7 @@ from corehq.blobs.mixin import BlobHelper
 
 def premature_auto_gps(build):
     app = Application.wrap(build)
-    if app.build_version and app.build_version >= LooseVersion('2.14'):
+    if app.build_version and app.build_version >= parse_version('2.14'):
         return
 
     for module in app.get_modules():

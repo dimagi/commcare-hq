@@ -11,7 +11,7 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 from functools import wraps
 from io import BytesIO, open
 from itertools import chain
@@ -4448,11 +4448,8 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
 
     @property
     def build_version(self):
-        # `LooseVersion`s are smart!
-        # LooseVersion('2.12.0') > '2.2'
-        # (even though '2.12.0' < '2.2')
         if self.build_spec.version:
-            return LooseVersion(self.build_spec.version)
+            return parse_version(self.build_spec.version)
 
     @property
     def commcare_minor_release(self):
@@ -5615,7 +5612,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if not self.build_version or self.build_version < LooseVersion(yaml_setting.get("since", "0")):
+        if not self.build_version or self.build_version < parse_version(yaml_setting.get("since", "0")):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting

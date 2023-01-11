@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 
 from django.urls import reverse
 
@@ -153,7 +153,7 @@ class MediaSuiteGenerator(object):
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
             descriptor = None
-            if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
+            if self.app.build_version and self.app.build_version >= parse_version('2.9'):
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
                                 "CommCareVideo": "Video",

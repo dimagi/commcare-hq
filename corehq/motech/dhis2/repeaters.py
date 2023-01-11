@@ -3,7 +3,7 @@ import re
 import sys
 import traceback
 from datetime import datetime, timedelta
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 
 from django.utils.translation import gettext_lazy as _
 
@@ -78,7 +78,7 @@ class Dhis2Instance(Document):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
+        if parse_version(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
@@ -268,7 +268,7 @@ class SQLDhis2Instance(object):
         except Dhis2Exception as err:
             requests.notify_exception(str(err))
             raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
+        if parse_version(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
             requests.notify_error(
                 "Integration has not yet been tested for DHIS2 version "
                 f"{dhis2_version}. Its API may not be supported."
@@ -448,7 +448,7 @@ def get_api_version(dhis2_version):
     .. _DHIS 2 Developer guide: https://docs.dhis2.org/master/en/developer/html/webapi_browsing_the_web_api.html#webapi_api_versions
     """
     try:
-        api_version = LooseVersion(dhis2_version).version[1]
+        api_version = parse_version(dhis2_version).version[1]
     except (AttributeError, IndexError):
         raise Dhis2Exception(f"Unable to parse DHIS2 version {dhis2_version}.")
     return api_version

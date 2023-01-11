@@ -1,4 +1,4 @@
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 
 from casexml.apps.phone.fixtures import FixtureProvider
 
@@ -58,7 +58,7 @@ class ProductFixturesProvider(FixtureProvider):
     def __call__(self, restore_state):
         indexed = (
             not restore_state.params.openrosa_version
-            or restore_state.params.openrosa_version >= LooseVersion(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])
+            or restore_state.params.openrosa_version >= parse_version(OPENROSA_VERSION_MAP['INDEXED_PRODUCTS_FIXTURE'])
         )
 
         fixture_nodes = self._get_fixture_items(restore_state, indexed)

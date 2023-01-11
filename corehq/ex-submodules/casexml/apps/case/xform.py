@@ -103,13 +103,13 @@ def _validate_indices(case_db, case_updates):
                     invalid = False
                 if invalid:
                     # fail hard on invalid indices
-                    from distutils.version import LooseVersion
+                    from packaging.version import parse as parse_version
                     if case_db.cached_xforms and case_db.domain != 'commcare-tests':
                         xform = case_db.cached_xforms[0]
                         if xform.metadata and xform.metadata.commcare_version:
                             commcare_version = xform.metadata.commcare_version
                             _soft_assert(
-                                commcare_version < LooseVersion("2.39"),
+                                commcare_version < parse_version("2.39"),
                                 "Invalid Case Index in CC version >= 2.39", {
                                     'domain': case_db.domain,
                                     'xform_id': xform.form_id,

@@ -1,5 +1,5 @@
 import functools
-from distutils.version import LooseVersion
+from packaging.version import parse as parse_version
 
 from django.utils.translation import gettext
 
@@ -513,7 +513,7 @@ def _create_dependencies_app_strings(app):
 
 
 def _maybe_add_index(text, app):
-    if app.build_version and app.build_version >= LooseVersion('2.8'):
+    if app.build_version and app.build_version >= parse_version('2.8'):
         sense_on = app.profile.get('features', {}).get('sense') == 'true'
         entry_mode = app.profile.get('properties', {}).get('cc-entry-mode')
         numeric_nav_on = entry_mode == 'cc-entry-review'
