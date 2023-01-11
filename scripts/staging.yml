@@ -85,4 +85,5 @@ branches:
     - jm/refactor-hqadmin-escheck  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
     - cs/migration/repeater_name_length # Chris Jan 10
+    - ap/repeaters/remove-couch-models # Amit Jan 11
 submodules: { }
