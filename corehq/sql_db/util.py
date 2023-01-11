@@ -2,7 +2,7 @@ import random
 import re
 import uuid
 from collections import defaultdict
-from packaging.version import Version
+from packaging.version import parse as parse_version
 from functools import wraps
 
 from django.conf import settings
@@ -19,7 +19,7 @@ from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 STALE_CHECK_FREQUENCY = 30
 
-PG_V10 = Version('10.0.0')
+PG_V10 = parse_version('10.0.0')
 
 REPLICATION_SQL_10 = """
     SELECT
@@ -282,7 +282,7 @@ def get_db_version(db_alias):
         cursor.execute('SHOW SERVER_VERSION;')
         raw_version = cursor.fetchone()[0]
 
-    return Version(raw_version.split(' ')[0])
+    return parse_version(raw_version.split(' ')[0])
 
 
 def get_replication_delay_for_standby(db_alias):
