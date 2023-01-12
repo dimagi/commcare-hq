@@ -141,7 +141,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
                         var data = {
                             'caseType': element.caseType,
                             'name': element.name,
-                            'label': element.label(),
+                            'label': element.label() || element.name,
                             'data_type': element.dataType(),
                             'group': currentGroup,
                             'description': element.description(),

@@ -54,7 +54,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         self.name.subscribe(() => {
             var value = self._value();
             if (value) {
-                self.label(value.label || "");
+                self.label(value.label || self.name());
             }
         });
 

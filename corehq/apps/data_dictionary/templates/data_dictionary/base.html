@@ -193,8 +193,7 @@
                 <span data-bind="text: name"></span>
 
                 <input class="form-control"
-                      data-bind="value: $data.label, rows: 1"
-                      placeholder='{% trans "Click here to add a label" %}'
+                      data-bind="value: $data.label, rows: 1, attr: {'placeholder': name}"
                       style="margin-top: 8px;"
                 ></input>
             </td>
