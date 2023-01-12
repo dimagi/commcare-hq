@@ -560,6 +560,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             self._fix_hits_in_result(result)
             self._report_and_fail_on_shard_failures(result)
         except ElasticsearchException as exc:
+            debug_failed_search(exc, query, kw)
             raise ESError(exc)
         return result
 
@@ -1198,6 +1199,50 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
 
     register_document_adapter(doc_adapter)
     return doc_adapter
+
+
+def debug_failed_search(exc, query, search_kw):
+    """Write debugging information for Elastic exception:
+
+    TransportError(500, 'search_phase_execution_exception', 'too_many_clauses: maxClauseCount is set to 1024')
+    """
+    if "too_many_clauses" not in str(exc):
+        return exc
+
+    def debug_failed(reason):
+        log.error("failed to debug Elastic exception: %s, %s, %s\nreason: %s",
+                  exc, query, search_kw, reason)
+
+    # setup
+    import os
+    debug_dir = os.path.join(settings.FILEPATH, "data")
+    if not os.path.isdir(debug_dir):
+        try:
+            os.mkdir(debug_dir)
+        except OSError:
+            # we lost the race
+            pass
+    if not os.path.isdir(debug_dir):
+        debug_failed(f"failed to create: {debug_dir}")
+        return
+    # write it
+    from datetime import datetime
+    from uuid import uuid4
+    fname = f"qa-4602-{datetime.utcnow():%Y%m%d-%H%M%S.%f}-{uuid4().hex}.json"
+    try:
+        with open(os.path.join(debug_dir, fname), "w") as jsonfile:
+            json.dump(
+                {
+                    "exception": str(exc),
+                    "search_kw": search_kw,
+                    "query": query,
+                },
+                jsonfile,
+                indent=2,
+            )
+            jsonfile.write("\n")
+    except Exception as reason:
+        debug_failed(reason)
 
 
 manager = ElasticManageAdapter()
