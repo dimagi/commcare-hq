@@ -95,11 +95,10 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                                 'showError',
                                 errors.LOCK_TIMEOUT_ERROR
                             );
-                        } else if (response.status === 401) {
+                        } else if (response.status === 401 || response.status === 403) {
                             FormplayerFrontend.trigger(
                                 'showError',
-                                formEntryUtils.reloginErrorHtml(),
-                                true
+                                gettext("Could not authenticate, please log in and try again")
                             );
                         } else {
                             FormplayerFrontend.trigger(
