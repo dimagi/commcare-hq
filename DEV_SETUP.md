@@ -507,7 +507,20 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
+```
+
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 
