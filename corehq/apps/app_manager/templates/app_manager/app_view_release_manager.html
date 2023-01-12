@@ -61,15 +61,19 @@
   {% registerurl "app_form_summary" app.domain '---' %}
   <div class="tab-pane" id="releases">
     {% if show_release_mode %}
-      <div id="release-control" class="pull-right hidden">
-        {% trans "Release Mode" %}
-          <button id="btn-release-locked" class="btn btn-default">
-            <i class="fa fa-lock fa-fw"></i>
-          </button>
-          <button id="btn-release-unlocked" class="btn btn-default">
-            <i class="fa fa-unlock fa-fw"></i>
-          </button>
-      </div>
+      {% if not build_profile_access and not enable_update_prompts %}
+        <div id="release-control" class="w-100 text-right hidden">
+      {% else %}
+        <div id="release-control" class="pull-right hidden">
+      {% endif %}
+          {% trans "Release Mode" %}
+            <button id="btn-release-locked" class="btn btn-default">
+              <i class="fa fa-lock fa-fw"></i>
+            </button>
+            <button id="btn-release-unlocked" class="btn btn-default">
+              <i class="fa fa-unlock fa-fw"></i>
+            </button>
+        </div>
     {% endif %}
     {% include "app_manager/partials/releases/releases.html" %}
   </div>
