@@ -372,6 +372,9 @@ hqDefine('app_manager/js/releases/releases', function () {
                     );
                     self.totalItems(data.pagination.total);
                     self.fetchState('');
+                    if (data.pagination.total > 0) {
+                        $("#release-control").removeClass("hidden");
+                    }
                 },
                 error: function () {
                     self.fetchState('error');
@@ -485,6 +488,7 @@ hqDefine('app_manager/js/releases/releases', function () {
                     if (data.saved_app) {
                         var app = savedAppModel(data.saved_app, self);
                         self.savedApps.unshift(app);
+                        $("#release-control").removeClass("hidden");
                     }
                     self.buildState('');
                     self.buildErrorCode('');
