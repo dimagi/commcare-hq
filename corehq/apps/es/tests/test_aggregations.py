@@ -1,5 +1,4 @@
 import uuid
-from copy import deepcopy
 from datetime import datetime
 
 from django.test.testcases import SimpleTestCase
@@ -106,7 +105,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 }
             }
         }
-        queryset = ESQuerySet(raw_result, deepcopy(query))
+        queryset = ESQuerySet(raw_result, query.clone())
         self.assertEqual(queryset.aggregations.closed.doc_count, 1)
         self.assertEqual(queryset.aggregations.open.doc_count, 2)
 
@@ -162,7 +161,7 @@ class TestAggregations(ElasticTestMixin, SimpleTestCase):
                 }
             },
         }
-        queryset = ESQuerySet(raw_result, deepcopy(query))
+        queryset = ESQuerySet(raw_result, query.clone())
         self.assertEqual(queryset.aggregations.users.buckets.user1.key, 'user1')
         self.assertEqual(queryset.aggregations.users.buckets.user1.doc_count, 2)
         self.assertEqual(queryset.aggregations.users.buckets.user1.closed.doc_count, 0)
