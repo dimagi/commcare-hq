@@ -279,7 +279,9 @@ you don't have the option of using the deadsnakes PPA.
     python3 -m pip install --upgrade pip
     ```
 
-2. Next, install the appropriate requirements (**only one is necessary**).
+### Step 3: Install requirements
+
+1. Install the appropriate requirements (**only one is necessary**).
 
     NOTE: If this fails you may need to [install the prerequisite system dependencies](#prerequisites).
 
@@ -316,7 +318,7 @@ will update all code and do a few more tasks like run migrations and update
 libraries, so it's good to run once a month or so, or when you pull code and
 then immediately hit an error.
 
-### Step 3: Set up `localsettings.py`
+### Step 4: Set up `localsettings.py`
 
 First create your `localsettings.py` file:
 
@@ -333,7 +335,7 @@ mkdir sharedfiles
 ```
 
 
-### Step 4: Set up Docker services
+### Step 5: Set up Docker services
 
 Once you have completed the above steps, you can use Docker to build and run all
 of the service containers. There are detailed instructions for setting up Docker
@@ -405,7 +407,7 @@ needs of most developers.
     ```
 
 
-### Step 5A: (Optional) Copying data from an existing HQ install
+### Step 6A: (Optional) Copying data from an existing HQ install
 
 If you previously created backups of another HQ install's data, you can now copy
 that to the new install. If not, proceed to Step 5B.
@@ -451,7 +453,7 @@ that to the new install. If not, proceed to Step 5B.
     directory referenced in `localsettings.py`
 
 
-### Step 5B: Initial Database Population
+### Step 6B: Initial Database Population
 
 Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
@@ -520,7 +522,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
   Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 
-### Step 6: Populate Elasticsearch
+### Step 7: Populate Elasticsearch
 
 To set up elasticsearch indexes run the following:
 
@@ -538,7 +540,7 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 8: Installing JavaScript Requirements
 
 #### Installing Yarn
 
@@ -589,7 +591,7 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 9: Configure LESS CSS (2 Options)
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
 
@@ -625,7 +627,7 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
 ```
 
 
-### Step 9: Browser Settings
+### Step 10: Browser Settings
 
 We recommend disabling the cache. In Chrome, go to **Dev Tools > Settings >
 Preferences > Network** and check the following:
@@ -633,7 +635,7 @@ Preferences > Network** and check the following:
 - [x] Disable cache (while DevTools is open)
 
 
-### Step 10: Create a superuser
+### Step 11: Create a superuser
 
 To be able to use CommCare, you'll want to create a superuser, which you can do by running:
 
@@ -646,7 +648,7 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running CommCare HQ
+### Step 12: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
