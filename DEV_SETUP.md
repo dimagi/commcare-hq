@@ -51,9 +51,13 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Linux**:
 
-    In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
+    Running multiple versions of Python in Ubuntu (and Ubuntu derivatives) is
+    relatively simple using the deadsnakes PPA. You will also need to install
+    the modules for `python-dev`, `pip`, and `venv` explicitly.
+
     ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt install python3.9-dev python3.9-venv python3-pip
     ```
 
   - **Mac**:
@@ -135,9 +139,43 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 ## Downloading & Running CommCare HQ
 
-### Step 1: Create your virtual environment and activate it
+### Step 1: Clone this repo
 
-#### Option A: With `pyenv` and `pyenv-virtualenv`
+1. Once all the prerequisites are in order, please do the following:
+
+    ```sh
+    git clone https://github.com/dimagi/commcare-hq.git
+    cd commcare-hq
+    git submodule update --init --recursive
+    git-hooks/install.sh
+    ```
+
+### Step 2: Create your virtual environment and activate it
+
+#### Option A: With Python's standard venv module
+
+If you are using the deadsnakes PPA, managing virtual environments for multiple
+versions of Python is straightforward with Python's standard venv module.
+
+1. Create a virtual environment for Python 3.9 in the conventional `venv`
+   directory, in the root directory of the repo, and activate it:
+
+   ```sh
+   python3.9 -m venv venv
+   . venv/bin/activate
+   ```
+
+1. (Optional) Add the following to your `~/.bashrc` or `~/.zshrc` file,
+   so that you can activate virtual environments by typing "venv":
+
+   ```sh
+   alias venv='if [[ -d venv ]] ; then source venv/bin/activate ; fi'
+   ```
+
+#### Option B: With `pyenv` and `pyenv-virtualenv`
+
+pyenv is great for managing multiple versions of Python, especially if
+you don't have the option of using the deadsnakes PPA.
 
 1. Install `pyenv`
 
@@ -180,7 +218,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
    ```
    That's it! You may now proceed to Step 2.
 
-#### Option B: With `virtualenvwrapper`
+#### Option C: With `virtualenvwrapper`
 
 1. Set the `WORKON_HOME` environment variable to the path where you keep
    your virtual environments. If you don't already have a home for your
@@ -229,23 +267,16 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     workon hq
     ```
 
-1. Ensure your vitualenv `pip` is up-to-date:
+1. Set the current directory (`commcare-hq`) as the project root:
+
+    ```sh
+    setvirtualenvproject
+    ```
+
+1. Ensure your virtualenv `pip` is up-to-date:
 
     ```sh
     python3 -m pip install --upgrade pip
-    ```
-
-
-### Step 2: Clone this repo and install requirements
-
-1. Once all the dependencies are in order, please do the following:
-
-    ```sh
-    git clone https://github.com/dimagi/commcare-hq.git
-    cd commcare-hq
-    git submodule update --init --recursive
-    git-hooks/install.sh
-    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
     ```
 
 2. Next, install the appropriate requirements (**only one is necessary**).
