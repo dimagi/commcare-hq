@@ -18,6 +18,7 @@ closed after May 1st.
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -45,6 +46,8 @@ class CaseES(HQESQuery):
 
 
 class ElasticCase(ElasticDocumentAdapter):
+
+    settings_key = IndexSettingsKey.CASES
 
     @property
     def mapping(self):

@@ -1,4 +1,4 @@
-from corehq.elastic import get_es_new
+from corehq.apps.es.client import manager
 
 
 def check_es_cluster_health():
@@ -11,6 +11,4 @@ def check_es_cluster_health():
     There are better realtime tools for monitoring ES clusters which
     should probably be looked at. specifically paramedic or bigdesk
     """
-    es = get_es_new()  # assign to variable to avoid weak reference error
-    cluster_health = es.cluster.health()
-    return cluster_health['status']
+    return manager.cluster_health()["status"]
