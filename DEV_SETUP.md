@@ -51,9 +51,13 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Linux**:
 
-    In Ubuntu you will also need to install the modules for `python-dev`, `pip`, and `venv` explicitly.
+    Running multiple versions of Python in Ubuntu (and Ubuntu derivatives) is
+    relatively simple using the deadsnakes PPA. You will also need to install
+    the modules for `python-dev`, `pip`, and `venv` explicitly.
+
     ```sh
-    sudo apt install python3.9-dev python3-pip python3-venv
+    sudo add-apt-repository ppa:deadsnakes/ppa
+    sudo apt install python3.9-dev python3.9-venv python3-pip
     ```
 
   - **Mac**:
@@ -135,9 +139,43 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
 ## Downloading & Running CommCare HQ
 
-### Step 1: Create your virtual environment and activate it
+### Step 1: Clone this repo
 
-#### Option A: With `pyenv` and `pyenv-virtualenv`
+1. Once all the prerequisites are in order, please do the following:
+
+    ```sh
+    git clone https://github.com/dimagi/commcare-hq.git
+    cd commcare-hq
+    git submodule update --init --recursive
+    git-hooks/install.sh
+    ```
+
+### Step 2: Create your virtual environment and activate it
+
+#### Option A: With Python's standard venv module
+
+If you are using the deadsnakes PPA, managing virtual environments for multiple
+versions of Python is straightforward with Python's standard venv module.
+
+1. Create a virtual environment for Python 3.9 in the conventional `venv`
+   directory, in the root directory of the repo, and activate it:
+
+   ```sh
+   python3.9 -m venv venv
+   . venv/bin/activate
+   ```
+
+1. (Optional) Add the following to your `~/.bashrc` or `~/.zshrc` file,
+   so that you can activate virtual environments by typing "venv":
+
+   ```sh
+   alias venv='if [[ -d venv ]] ; then source venv/bin/activate ; fi'
+   ```
+
+#### Option B: With `pyenv` and `pyenv-virtualenv`
+
+pyenv is great for managing multiple versions of Python, especially if
+you don't have the option of using the deadsnakes PPA.
 
 1. Install `pyenv`
 
@@ -180,7 +218,7 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
    ```
    That's it! You may now proceed to Step 2.
 
-#### Option B: With `virtualenvwrapper`
+#### Option C: With `virtualenvwrapper`
 
 1. Set the `WORKON_HOME` environment variable to the path where you keep
    your virtual environments. If you don't already have a home for your
@@ -229,26 +267,21 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
     workon hq
     ```
 
-1. Ensure your vitualenv `pip` is up-to-date:
+1. Set the current directory (`commcare-hq`) as the project root:
+
+    ```sh
+    setvirtualenvproject
+    ```
+
+1. Ensure your virtualenv `pip` is up-to-date:
 
     ```sh
     python3 -m pip install --upgrade pip
     ```
 
+### Step 3: Install requirements
 
-### Step 2: Clone this repo and install requirements
-
-1. Once all the dependencies are in order, please do the following:
-
-    ```sh
-    git clone https://github.com/dimagi/commcare-hq.git
-    cd commcare-hq
-    git submodule update --init --recursive
-    git-hooks/install.sh
-    setvirtualenvproject  # optional, virtualenvwrapper only - sets this directory as the project root
-    ```
-
-2. Next, install the appropriate requirements (**only one is necessary**).
+1. Install the appropriate requirements (**only one is necessary**).
 
     NOTE: If this fails you may need to [install the prerequisite system dependencies](#prerequisites).
 
@@ -285,7 +318,7 @@ will update all code and do a few more tasks like run migrations and update
 libraries, so it's good to run once a month or so, or when you pull code and
 then immediately hit an error.
 
-### Step 3: Set up `localsettings.py`
+### Step 4: Set up `localsettings.py`
 
 First create your `localsettings.py` file:
 
@@ -302,7 +335,7 @@ mkdir sharedfiles
 ```
 
 
-### Step 4: Set up Docker services
+### Step 5: Set up Docker services
 
 Once you have completed the above steps, you can use Docker to build and run all
 of the service containers. There are detailed instructions for setting up Docker
@@ -374,7 +407,7 @@ needs of most developers.
     ```
 
 
-### Step 5A: (Optional) Copying data from an existing HQ install
+### Step 6A: (Optional) Copying data from an existing HQ install
 
 If you previously created backups of another HQ install's data, you can now copy
 that to the new install. If not, proceed to Step 5B.
@@ -420,7 +453,7 @@ that to the new install. If not, proceed to Step 5B.
     directory referenced in `localsettings.py`
 
 
-### Step 5B: Initial Database Population
+### Step 6B: Initial Database Population
 
 Before running any of the commands below, you should have all of the following
 running: Postgres, CouchDB, Redis, and Elasticsearch.
@@ -489,7 +522,7 @@ If you have trouble with your first run of `./manage.py sync_couch_views`:
   Alternatively, you can try upgrading `gevent` (`pip install --upgrade gevent`) to fix this error
   on Python 3.8, but you may run into other issues!
 
-### Step 6: Populate Elasticsearch
+### Step 7: Populate Elasticsearch
 
 To set up elasticsearch indexes run the following:
 
@@ -507,7 +540,7 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 8: Installing JavaScript Requirements
 
 #### Installing Yarn
 
@@ -558,7 +591,7 @@ curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### Step 8: Configure LESS CSS (2 Options)
+### Step 9: Configure LESS CSS (2 Options)
 
 #### Option 1: Let Client Side Javascript (less.js) handle it for you
 
@@ -594,7 +627,7 @@ For all STATICFILES changes (primarily LESS and JavaScript), run:
 ```
 
 
-### Step 9: Browser Settings
+### Step 10: Browser Settings
 
 We recommend disabling the cache. In Chrome, go to **Dev Tools > Settings >
 Preferences > Network** and check the following:
@@ -602,7 +635,7 @@ Preferences > Network** and check the following:
 - [x] Disable cache (while DevTools is open)
 
 
-### Step 10: Create a superuser
+### Step 11: Create a superuser
 
 To be able to use CommCare, you'll want to create a superuser, which you can do by running:
 
@@ -615,7 +648,7 @@ This can also be used to promote a user created by signing up to a superuser.
 Note that promoting a user to superuser status using this command will also give them the
 ability to assign other users as superuser in the in-app Superuser Management page.
 
-### Step 11: Running CommCare HQ
+### Step 12: Running CommCare HQ
 
 Make sure the required services are running (PostgreSQL, Redis, CouchDB, Kafka,
 Elasticsearch).
