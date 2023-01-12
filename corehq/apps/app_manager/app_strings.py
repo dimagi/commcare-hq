@@ -67,7 +67,7 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     yield id_strings.current_language(), lang
 
     for module in app.get_modules():
-        yield from _create_module_details_app_strings(module, langs)
+        yield from _create_module_details_app_strings(app, module, langs)
 
         yield (
             id_strings.module_locale(module),
@@ -123,11 +123,18 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
     yield from _create_dependencies_app_strings(app)
 
 
-def _create_module_details_app_strings(module, langs):
-    yield (
-        id_strings.no_items_text_detail(module),
-        clean_trans(module.case_details.short.no_items_text, langs)
-    )
+def _create_module_details_app_strings(app, module, langs):
+    from corehq.apps.app_manager.models import Detail
+    if toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(app.domain):
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(module.case_details.short.no_items_text, langs)
+        )
+    else:
+        yield (
+            id_strings.no_items_text_detail(module),
+            clean_trans(Detail.no_items_text.default(), langs)
+        )
 
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
