@@ -1,5 +1,5 @@
 from datetime import datetime
-from packaging.version import Version
+from packaging.version import Version as StrictVersion
 from itertools import groupby
 from zipfile import ZipFile
 
@@ -239,7 +239,7 @@ class BuildSpec(DocumentSchema):
     def release_greater_than_or_equal_to(self, version):
         if not self.version:
             return False
-        return Version(self.version) >= Version(version)
+        return StrictVersion(self.version) >= StrictVersion(version)
 
 
 class BuildMenuItem(DocumentSchema):
