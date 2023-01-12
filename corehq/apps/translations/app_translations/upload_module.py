@@ -45,24 +45,24 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         self._get_condensed_rows(rows)
 
-        short_details = list(self.module.case_details.short.get_columns())
-        long_details = list(self.module.case_details.long.get_columns())
+        short_details_columns = list(self.module.case_details.short.get_columns())
+        long_details_columns = list(self.module.case_details.long.get_columns())
         list_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'list']
         detail_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'detail']
 
         if (
-            len(short_details) == len(list_rows)
-            and len(long_details) == len(detail_rows)
+            len(short_details_columns) == len(list_rows)
+            and len(long_details_columns) == len(detail_rows)
         ):
-            self._update_details_based_on_position(list_rows, short_details,
-                                                   detail_rows, long_details)
+            self._update_details_based_on_position(list_rows, short_details_columns,
+                                                   detail_rows, long_details_columns)
         else:
-            if len(short_details) != len(list_rows):
-                expected_list = short_details
+            if len(short_details_columns) != len(list_rows):
+                expected_list = short_details_columns
                 received_list = list_rows
                 list_or_detail = _("case list")
             else:
-                expected_list = long_details
+                expected_list = long_details_columns
                 received_list = detail_rows
                 list_or_detail = _("case detail")
             message = _(
