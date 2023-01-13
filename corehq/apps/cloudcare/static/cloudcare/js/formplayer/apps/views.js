@@ -144,7 +144,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
                 appName;
             appName = currentApp.get('name');
             return {
-                shouldShowIncompleteForms: function () {
+                showIncompleteForms: function () {
                     return FormplayerFrontend.getChannel()
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },
