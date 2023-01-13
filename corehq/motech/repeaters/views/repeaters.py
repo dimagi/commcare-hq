@@ -292,6 +292,14 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
         return reverse(AddCaseRepeaterView.urlname, args=[self.domain])
 
 
+class EditReferCaseRepeaterView(EditCaseRepeaterView):
+    urlname = "edit_refer_case_repeater"
+
+
+class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
+    urlname = "edit_data_registry_case_update_repeater"
+
+
 @require_POST
 @require_can_edit_web_users
 @requires_privilege_with_fallback(privileges.DATA_FORWARDING)
