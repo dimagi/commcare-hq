@@ -795,7 +795,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             admins + billing_admins,
             render_to_string('users/email/user_limit_notice.html', context={
                 'at_capacity': at_capacity,
-                'url': ADDITIONAL_USERS_PRICING
+                'url': ADDITIONAL_USERS_PRICING,
+                'user_count': user_count,
+                'plan_limit': plan_limit,
             }),
         )
         return None
