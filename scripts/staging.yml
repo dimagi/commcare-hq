@@ -84,4 +84,5 @@ branches:
     - cs/migration/repeater_name_length # Chris Jan 10
     - ap/repeaters/remove-couch-models # Amit Jan 11
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
+    - ap/fix-repeater-urls # Amit Jan 13
 submodules: { }
