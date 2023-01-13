@@ -626,7 +626,7 @@ class AppStringsBase(object):
 class DumpKnownAppStrings(AppStringsBase):
 
     def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
-        commcare_version = app.build_version.vstring if app.build_version else None
+        commcare_version = str(app.build_version) if app.build_version else None
 
         yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
         yield self.get_default_translations(lang, commcare_version)
@@ -654,7 +654,7 @@ class SelectKnownAppStrings(AppStringsBase):
 
     def app_strings_parts(self, app, lang, for_default=False, build_profile_id=None):
         yield self.create_custom_app_strings(app, lang, for_default=for_default, build_profile_id=build_profile_id)
-        commcare_version = app.build_version.vstring if app.build_version else None
+        commcare_version = str(app.build_version) if app.build_version else None
         cc_trans = self.get_default_translations(lang, commcare_version)
         yield {key: cc_trans[key] for key in self.get_app_translation_keys(app) if key in cc_trans}
         yield non_empty_only(app.translations.get(lang, {}))
