@@ -9,9 +9,9 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
     return {
         listApps: function () {
             $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
-                let apps = appCollection.toJSON();
+                var apps = appCollection.toJSON();
                 let isIncompleteFormsDisabled = (app) => app.profile.properties['cc-show-incomplete'] === 'no';
-                let isAllIncompleteFormsDisabled = apps.every(isIncompleteFormsDisabled);
+                let isAllIncompleteFormsDisabled = apps.every(isIncompleteFormsDisabled)
 
                 var appGridView = views.GridView({
                     collection: appCollection,
