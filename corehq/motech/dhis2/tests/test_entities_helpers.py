@@ -5,8 +5,6 @@ from uuid import uuid4
 
 from django.test import SimpleTestCase, TestCase
 
-from fakecouch import FakeCouchDb
-
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
 
 from corehq.apps.domain.shortcuts import create_domain
@@ -28,7 +26,7 @@ from corehq.motech.dhis2.entities_helpers import (
     validate_tracked_entity,
 )
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import Dhis2Repeater, SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -106,14 +104,6 @@ class TestDhis2EntitiesHelpers(TestCase):
         cls.location.delete()
         cls.domain.delete()
         super().tearDownClass()
-
-    def setUp(self):
-        self.db = Dhis2Repeater.get_db()
-        self.fakedb = FakeCouchDb()
-        Dhis2Repeater.set_db(self.fakedb)
-
-    def tearDown(self):
-        Dhis2Repeater.set_db(self.db)
 
     def test_get_programs_by_id(self):
         program_id = 'test program'

@@ -114,7 +114,7 @@ class RegistryLoggingTests(TestCase):
             connection_settings=connx,
             repeater_id=uuid.uuid4().hex
         )
-        repeater.save(sync_to_couch=False)
+        repeater.save()
         self.registry.logger.data_accessed(self.user, self.domain, repeater)
         self._assertLogs([
             (self.domain, RegistryAuditLog.ACTION_DATA_ACCESSED)
