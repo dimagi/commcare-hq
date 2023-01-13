@@ -900,6 +900,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)

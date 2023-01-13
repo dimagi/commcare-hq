@@ -512,6 +512,7 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         initialize: function (options) {    // eslint-disable-line no-unused-vars
             MultiSelectCaseListView.__super__.initialize.apply(this, arguments);
             var self = this;
+            self.maxSelectValue = options.multiSelectMaxSelectValue;
             // Remove any event handling left over from previous instances of MultiSelectCaseListView.
             // Only one of these views is supporteed on the page at any given time.
             FormplayerFrontend.off("multiSelect:updateCases").on("multiSelect:updateCases", function (action, caseIds) {
@@ -542,6 +543,8 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         reconcileMultiSelectUI: function () {
             var self = this;
 
+            self.verifySelectedCaseIdsLessThanMaxSelectValue();
+
             // Update states of row checkboxes
             self.children.each(function (childView) {
                 childView.ui.selectRow.prop("checked", self.selectedCaseIds.indexOf(childView.model.id) !== -1);
@@ -553,6 +556,16 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
 
             // Reconcile state of "select all" checkbox
             self.ui.selectAllCheckbox.prop("checked", !_.difference(self._allCaseIds(), self.selectedCaseIds).length);
+        },
+
+        verifySelectedCaseIdsLessThanMaxSelectValue: function () {
+            if (this.selectedCaseIds.length > this.maxSelectValue) {
+                let errorMessage = _.template(gettext("You have selected more than the maximum selection limit " +
+                    "of <%= value %> . Please uncheck some values to continue."))({ value: this.maxSelectValue });
+                hqRequire(["hqwebapp/js/alert_user"], function (alertUser) {
+                    alertUser.alert_user(errorMessage, 'danger');
+                });
+            }
         },
     });
 
