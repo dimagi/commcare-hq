@@ -154,11 +154,11 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
         actions = {action.action_type_slug for action in case_update.actions}
         if case is None:
             if xform.metadata and xform.metadata.commcare_version:
-                from packaging.version import parse as parse_version
+                from looseversion import LooseVersion
                 commcare_version = xform.metadata.commcare_version
                 message = "Case created without create block"
                 send_to = None
-                if commcare_version >= parse_version("2.44"):
+                if commcare_version >= LooseVersion("2.44"):
                     send_to = "{}@{}.com".format('skelly', 'dimagi')
                     message += " in CC version >= 2.44"
                 soft_assert(to=send_to)(

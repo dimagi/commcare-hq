@@ -1,6 +1,7 @@
 import io
 import re
 from collections import defaultdict
+from packaging.version import Version as StrictVersion
 
 from django.utils.translation import gettext as _
 
@@ -127,7 +128,7 @@ def build_ui_translation_download_file(app):
 
     rows = list(row_dict.values())
     try:
-        commcare_version = str(app.build_version)
+        commcare_version = str(StrictVersion(app.build_version.vstring))
     except ValueError:
         commcare_version = None
 

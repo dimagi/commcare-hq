@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from packaging.version import parse as parse_version
+from looseversion import LooseVersion
 from urllib.parse import unquote
 
 from django.conf import settings
@@ -274,7 +274,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     async_restore_enabled = (
         toggles.ASYNC_RESTORE.enabled(domain)
         and openrosa_version
-        and parse_version(openrosa_version) >= parse_version(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+        and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
     )
 
     # Ensure fixtures are included if sync is full rather than incremental

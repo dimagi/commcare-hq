@@ -1,4 +1,5 @@
-from packaging.version import Version, parse as parse_version
+from looseversion import LooseVersion
+from packaging.version import Version
 
 from django.conf import settings
 
@@ -7,7 +8,7 @@ from corehq import toggles
 
 class CommCareFeatureSupportMixin(object):
     # overridden by subclass
-    build_version = parse_version('')
+    build_version = LooseVersion('')
 
     def _require_minimum_version(self, minimum_version):
         if settings.UNIT_TESTING and self.build_version is None:
@@ -15,7 +16,7 @@ class CommCareFeatureSupportMixin(object):
         assert isinstance(self.build_version, Version)
         assert isinstance(minimum_version, (str, Version))
         if isinstance(minimum_version, str):
-            minimum_version = parse_version(minimum_version)
+            minimum_version = LooseVersion(minimum_version)
         return self.build_version and self.build_version >= minimum_version
 
     @property

@@ -798,7 +798,7 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     @property
     def commcare_version(self):
         from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
-        from packaging.version import parse as parse_version
+        from looseversion import LooseVersion
         version_text = get_commcare_version_from_appversion_text(self.appVersion)
         if version_text:
-            return parse_version(version_text)
+            return LooseVersion(version_text)

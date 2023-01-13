@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
-from packaging.version import parse as parse_version
+from looseversion import LooseVersion
 from unittest import skip
 
 from django.test import SimpleTestCase, TestCase
@@ -226,7 +226,7 @@ class SlowApiVersionTest(TestCase):
             mock_fetch.assert_called()
 
     def test_max_version_exceeded_notifies_admins(self):
-        major_ver, max_api_ver, patch_ver = parse_version(KNOWN_GOOD).version
+        major_ver, max_api_ver, patch_ver = LooseVersion(KNOWN_GOOD).version
         bigly_api_version = max_api_ver + 1
         bigly_dhis2_version = f"{major_ver}.{bigly_api_version}.{patch_ver}"
         with patch('corehq.motech.dhis2.repeaters.fetch_metadata') as mock_fetch, \

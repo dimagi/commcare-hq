@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import uuid
 from datetime import datetime, timedelta
-from packaging.version import parse as parse_version
+from looseversion import LooseVersion
 from io import BytesIO
 from typing import Optional
 from uuid import uuid4
@@ -299,7 +299,7 @@ class RestoreParams(object):
         self.include_item_count = include_item_count
         self.app = app
         self.device_id = device_id
-        self.openrosa_version = (parse_version(openrosa_version)
+        self.openrosa_version = (LooseVersion(openrosa_version)
             if isinstance(openrosa_version, str) else openrosa_version)
 
     @property
