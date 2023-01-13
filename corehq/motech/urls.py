@@ -37,6 +37,7 @@ from corehq.motech.repeaters.views import (
     pause_repeater,
     resume_repeater,
 )
+from corehq.motech.repeaters.views.repeaters import EditDataRegistryCaseUpdateRepeater, EditReferCaseRepeaterView
 from corehq.motech.views import (
     ConnectionSettingsDetailView,
     ConnectionSettingsListView,
@@ -83,10 +84,13 @@ urlpatterns = [
         {'repeater_type': 'CaseRepeater'}, name=EditCaseRepeaterView.urlname),
     url(r'^forwarding/edit/FormRepeater/(?P<repeater_id>\w+)/$', EditFormRepeaterView.as_view(),
         {'repeater_type': 'FormRepeater'}, name=EditFormRepeaterView.urlname),
-    url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
-        {'repeater_type': 'ReferCaseRepeater'}, name=EditCaseRepeaterView.urlname),
-    url(r'^forwarding/edit/DataRegistryCaseUpdateRepeater/(?P<repeater_id>\w+)/$', EditCaseRepeaterView.as_view(),
-        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=EditCaseRepeaterView.urlname),
+    url(r'^forwarding/edit/ReferCaseRepeater/(?P<repeater_id>\w+)/$', EditReferCaseRepeaterView.as_view(),
+        {'repeater_type': 'ReferCaseRepeater'}, name=EditReferCaseRepeaterView.urlname),
+    url(
+        r'^forwarding/edit/DataRegistryCaseUpdateRepeater/(?P<repeater_id>\w+)/$',
+        EditDataRegistryCaseUpdateRepeater.as_view(),
+        {'repeater_type': 'DataRegistryCaseUpdateRepeater'}, name=EditDataRegistryCaseUpdateRepeater.urlname
+    ),
     url(r'^forwarding/edit/OpenmrsRepeater/(?P<repeater_id>\w+)/$', EditOpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'}, name=EditOpenmrsRepeaterView.urlname),
     url(r'^forwarding/edit/Dhis2Repeater/(?P<repeater_id>\w+)/$', EditDhis2RepeaterView.as_view(),

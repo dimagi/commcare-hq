@@ -3,7 +3,7 @@ import uuid
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -230,15 +230,11 @@ class EditRepeaterView(BaseRepeaterView):
 
     def post_save(self, request, repeater):
         messages.success(request, _("Repeater Successfully Updated"))
-        if self.request.GET.get('repeater_type'):
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=[self.domain, repeater.repeater_id])
-                + '?repeater_type=' + self.kwargs['repeater_type']
-            )
-        else:
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=[self.domain, repeater.repeater_id])
-            )
+        try:
+            url = reverse(self.urlname, args=[self.domain, repeater.repeater_id])
+        except NoReverseMatch:
+            url = reverse(self.urlname, args=[self.domain, repeater.repeater_type, repeater.repeater_id])
+        return HttpResponseRedirect(url)
 
 
 class AddFormRepeaterView(AddRepeaterView):
@@ -291,6 +287,14 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     @property
     def page_url(self):
         return reverse(AddCaseRepeaterView.urlname, args=[self.domain])
+
+
+class EditReferCaseRepeaterView(EditCaseRepeaterView):
+    urlname = "edit_refer_case_repeater"
+
+
+class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
+    urlname = "edit_data_registry_case_update_repeater"
 
 
 @require_POST
