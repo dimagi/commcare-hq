@@ -63,6 +63,7 @@ jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_
 jsonschema
 kafka-python
 laboratory
+looseversion
 lxml
 markdown
 oic
