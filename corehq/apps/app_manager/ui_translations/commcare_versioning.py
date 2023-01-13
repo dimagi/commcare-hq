@@ -1,4 +1,4 @@
-from packaging.version import Version as StrictVersion
+from looseversion import LooseVersion
 
 import openpyxl
 
@@ -14,14 +14,14 @@ def get_commcare_version_from_workbook(workbook):
             if keyword.startswith(KEYWORD_PREFIX):
                 version = keyword[len(KEYWORD_PREFIX):]
                 try:
-                    return str(StrictVersion(version))
+                    return str(LooseVersion(version))
                 except ValueError:
                     pass
 
 
 def set_commcare_version_in_workbook(workbook, commcare_version):
     try:
-        commcare_version = str(StrictVersion(commcare_version))
+        commcare_version = str(LooseVersion(commcare_version))
     except ValueError:
         return
     assert isinstance(workbook, openpyxl.Workbook)
