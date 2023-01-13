@@ -1443,8 +1443,17 @@ class FormDataView(BaseProjectReportSectionView):
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
-    # Open form attachment in browser
-    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+    # View audio/video form attachment in browser
+    # download option is restricted in html
+    context = {
+        'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
+        'content_name': attachment_id,
+    }
+    return render(
+        request,
+        template_name='reports/reportdata/view_form_attachment.html',
+        context=context
+    )
 
 
 def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
