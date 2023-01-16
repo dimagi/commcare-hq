@@ -80,6 +80,7 @@ class TestPartnerAnalyticsDataUtils(TestCase):
 
         cls.date_start, cls.date_end = get_start_and_end_dates_of_month(2021, 11)
         cls.domain = Domain.get_or_create_with_name('test-partner-analytics', is_active=True)
+        cls.addClassCleanup(cls.domain.delete)
 
         # Data for Mobile Workers Tests
         DomainUserHistory.objects.create(
@@ -117,9 +118,17 @@ class TestPartnerAnalyticsDataUtils(TestCase):
                 date=cls.date_start + datetime.timedelta(days=6)
             ),
         ]
+
+        def delete_user(user):
+            from couchdbkit import ResourceNotFound
+            try:
+                user.delete(cls.domain.name, None)
+            except ResourceNotFound:
+                pass
         for user in cls.users:
             elastic_user = transform_user_for_elasticsearch(user.to_json())
             send_to_elasticsearch('users', elastic_user)
+            cls.addClassCleanup(delete_user, user)
 
         invitations = [
             Invitation.objects.create(
@@ -170,19 +179,8 @@ class TestPartnerAnalyticsDataUtils(TestCase):
 
         cls.es.indices.refresh(USER_INDEX_INFO.alias)
         cls.es.indices.refresh(XFORM_INDEX_INFO.alias)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX_INFO.alias)
-        ensure_index_deleted(XFORM_INDEX_INFO.alias)
-        for user in cls.users:
-            user.delete(cls.domain.name, None)
-        FormProcessorTestUtils.delete_all_sql_forms(cls.domain.name)
-        FormProcessorTestUtils.delete_all_sql_cases(cls.domain.name)
-        Invitation.objects.all().delete()
-        DomainUserHistory.objects.all().delete()
-        cls.domain.delete()
-        super().tearDownClass()
+        cls.addClassCleanup(ensure_index_deleted, USER_INDEX_INFO.alias)
+        cls.addClassCleanup(ensure_index_deleted, XFORM_INDEX_INFO.alias)
 
     def test_get_number_of_mobile_workers(self):
         self.assertEqual(

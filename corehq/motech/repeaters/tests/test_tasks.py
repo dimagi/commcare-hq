@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+import uuid
 
 from django.test import TestCase
 from django.utils import timezone
@@ -19,7 +20,7 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import FormRepeater, SQLFormRepeater
+from ..models import SQLFormRepeater
 from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
@@ -83,18 +84,11 @@ class TestProcessRepeater(TestCase):
             name='Test API',
             url="http://localhost/api/"
         )
-        cls.repeater = FormRepeater(
-            domain=DOMAIN,
-            connection_settings_id=cls.connection_settings.id,
-            format="form_xml"
-        )
-        # We are creating SQLRepeater on setup so skipping creation here
-        cls.repeater.save(sync_to_sql=False)
 
     def setUp(self):
         self.sql_repeater = SQLFormRepeater.objects.create(
             domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
+            repeater_id=uuid.uuid4().hex,
             format='form_xml',
             connection_settings=self.connection_settings
         )
@@ -112,7 +106,6 @@ class TestProcessRepeater(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.repeater.delete()
         cls.connection_settings.delete()
         cls.domain.delete()
         super().tearDownClass()
