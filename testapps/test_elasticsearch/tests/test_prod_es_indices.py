@@ -1,22 +1,14 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from django.test.utils import override_settings
 from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
-from pillowtop.es_utils import (
-    XFORM_HQ_INDEX_NAME,
-    CASE_HQ_INDEX_NAME,
-    USER_HQ_INDEX_NAME,
-    DOMAIN_HQ_INDEX_NAME,
-    APP_HQ_INDEX_NAME,
-    GROUP_HQ_INDEX_NAME,
-    SMS_HQ_INDEX_NAME,
-    CASE_SEARCH_HQ_INDEX_NAME,
-)
 
 
 @es_test
 class ProdIndexManagementTest(SimpleTestCase):
+
+    maxDiff = None  # show the entire diff for test failures
+
     @classmethod
     def setUpClass(cls):
         super(ProdIndexManagementTest, cls).setUpClass()
@@ -30,21 +22,14 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT="production", ES_SETTINGS={
-        "default": {"number_of_replicas": 1},
-        CASE_SEARCH_HQ_INDEX_NAME: {},
-        APP_HQ_INDEX_NAME: {},
-        CASE_HQ_INDEX_NAME: {},
-        DOMAIN_HQ_INDEX_NAME: {},
-        GROUP_HQ_INDEX_NAME: {},
-        USER_HQ_INDEX_NAME: {},
-        SMS_HQ_INDEX_NAME: {},
-        XFORM_HQ_INDEX_NAME: {},
-    })
     def test_prod_config(self):
         # TODO: implement index verification in a way that is reindex-friendly
-        found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
-        for info in found_prod_indices:
+        found_prod_indices = []
+        for index_info in get_all_expected_es_indices():
+            if index_info.alias == "pillowtop_tests":
+                continue  # skip this one
+            info = index_info.to_json()
+            found_prod_indices.append(info)
             # for now don"t test this property, just ensure it exist
             self.assertTrue(info["mapping"])
             del info["mapping"]
@@ -113,7 +98,8 @@ EXPECTED_PROD_INDICES = [
         "type": "app",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -133,7 +119,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -156,7 +142,8 @@ EXPECTED_PROD_INDICES = [
         "type": "hqdomain",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -180,7 +167,7 @@ EXPECTED_PROD_INDICES = [
         "type": "group",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -204,7 +191,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_shards": 2,
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -224,7 +211,7 @@ EXPECTED_PROD_INDICES = [
         "type": "sms",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -247,7 +234,7 @@ EXPECTED_PROD_INDICES = [
         "type": "xform",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {

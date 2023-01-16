@@ -66,8 +66,8 @@ msgid ""
 "p><p>Continuing ahead will allow you to schedule your current <%- oldPlan %> "
 "Edition Plan subscription to be paused on <strong> <%- date %> </strong></"
 "p><p>If you have questions or if you would like to speak to us about your "
-"subscription, please reach out to <a href='mailto: <%- invoicingContact %>'><"
-"%- invoicingContact %></a>.</p>"
+"subscription, please reach out to <a href='mailto: <%- invoicingContact "
+"%>'><%- invoicingContact %></a>.</p>"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/pricing_table.js
@@ -2814,6 +2814,12 @@ msgstr ""
 msgid "Page <%-num%>"
 msgstr ""
 
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views.js
+msgid ""
+"You have selected more than the maximum selection limit of <%= value %> . "
+"Please uncheck some values to continue."
+msgstr ""
+
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/views/query.js
 msgid ""
 "Sorry, this input is not supported because your project doesn't have a "
@@ -4320,6 +4326,20 @@ msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js
 msgid "Allow changing workers at a location."
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid ""
+"<strong>Data Dictionary</strong> &mdash; manage case properties within "
+"CommCare HQ"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "Edit & View Data Dictionary"
+msgstr ""
+
+#: corehq/apps/users/static/users/js/roles.js
+msgid "View-Only Data Dictionary"
 msgstr ""
 
 #: corehq/apps/users/static/users/js/roles.js

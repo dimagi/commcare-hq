@@ -170,7 +170,8 @@ def run_case_update_rules_for_domain_and_db(domain, now, run_id, case_type, db=N
 
     if run.status == DomainCaseRuleRun.STATUS_FINISHED:
         for rule in rules:
-            AutomaticUpdateRule.objects.filter(pk=rule.pk).update(last_run=now)
+            rule.last_run = now
+            rule.save(update_fields=['last_run'])
 
 
 @task(serializer='pickle', queue='background_queue', acks_late=True, ignore_result=True)

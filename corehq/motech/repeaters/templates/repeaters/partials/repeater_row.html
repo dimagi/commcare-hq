@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <tr>
-    <td>{{ repeater.name }}
+    <td>{{ repeater.repeater_name }}
         {% if repeater.white_listed_case_types %}
             <br/>Case Type: {{ repeater.white_listed_case_types|join:", " }}
         {% endif %}
@@ -53,7 +53,7 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.name as name %}
+                                {% blocktrans with repeater.repeater_name as name %}
                                     Are you sure you want to resume forwarding to: "{{ name }}" ?
                                     <br/>
                                     All records enqueued for this forwarder with be triggered
@@ -87,7 +87,7 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.name as name %}
+                                {% blocktrans with repeater.repeater_name as name %}
                                     Are you sure you want to pause forwarding to: "{{ name }}" ?
                                     <br/>
                                     Please note that new records would get enqueued but would get triggered
@@ -126,7 +126,7 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.name as name %}
+                                {% blocktrans with repeater.repeater_name as name %}
                                     Are you sure you want to stop forwarding to: {{ name }} ?
                                     <br/>
                                     Forwarder and its data would not be deleted but no new records would get added for

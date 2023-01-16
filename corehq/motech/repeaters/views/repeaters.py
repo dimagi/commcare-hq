@@ -1,8 +1,9 @@
 from collections import namedtuple
+import uuid
 
 from django.contrib import messages
 from django.http import Http404, HttpResponseRedirect
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -26,7 +27,6 @@ from ..models import (
     RepeatRecord,
     SQLRepeater,
     are_repeat_records_migrated,
-    get_all_repeater_types,
     get_all_sqlrepeater_types,
 )
 
@@ -108,11 +108,11 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     @memoized
     def repeater_class(self):
         try:
-            return get_all_repeater_types()[self.repeater_type]
+            return get_all_sqlrepeater_types()[self.repeater_type]
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, list(get_all_repeater_types())
+                    self.repeater_type, list(get_all_sqlrepeater_types())
                 )
             )
 
@@ -135,7 +135,8 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         return self.set_repeater_attr(repeater, self.add_repeater_form.cleaned_data)
 
     def set_repeater_attr(self, repeater, cleaned_data):
-        # set repeater.repeater_id when couch classes would be removed
+        if not repeater.repeater_id:
+            repeater.repeater_id = uuid.uuid4().hex
         repeater.domain = self.domain
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
@@ -174,7 +175,7 @@ class AddRepeaterView(BaseRepeaterView):
         return self.repeater_class()
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Forwarding set up to {}").format(repeater.name))
+        messages.success(request, _("Forwarding set up to {}").format(repeater.repeater_name))
         return HttpResponseRedirect(
             reverse(DomainForwardingOptionsView.urlname, args=[self.domain])
         )
@@ -229,15 +230,11 @@ class EditRepeaterView(BaseRepeaterView):
 
     def post_save(self, request, repeater):
         messages.success(request, _("Repeater Successfully Updated"))
-        if self.request.GET.get('repeater_type'):
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=[self.domain, repeater.repeater_id])
-                + '?repeater_type=' + self.kwargs['repeater_type']
-            )
-        else:
-            return HttpResponseRedirect(
-                reverse(self.urlname, args=[self.domain, repeater.repeater_id])
-            )
+        try:
+            url = reverse(self.urlname, args=[self.domain, repeater.repeater_id])
+        except NoReverseMatch:
+            url = reverse(self.urlname, args=[self.domain, repeater.repeater_type, repeater.repeater_id])
+        return HttpResponseRedirect(url)
 
 
 class AddFormRepeaterView(AddRepeaterView):
@@ -290,6 +287,14 @@ class EditCaseRepeaterView(EditRepeaterView, AddCaseRepeaterView):
     @property
     def page_url(self):
         return reverse(AddCaseRepeaterView.urlname, args=[self.domain])
+
+
+class EditReferCaseRepeaterView(EditCaseRepeaterView):
+    urlname = "edit_refer_case_repeater"
+
+
+class EditDataRegistryCaseUpdateRepeater(EditCaseRepeaterView):
+    urlname = "edit_data_registry_case_update_repeater"
 
 
 @require_POST

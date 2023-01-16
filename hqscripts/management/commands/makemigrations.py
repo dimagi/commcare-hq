@@ -71,7 +71,8 @@ class Command(makemigrations.Command):
 
     def write_migration_files(self, changes):
         super().write_migration_files(changes)
-        self.write_migrations_lock()
+        if not self.dry_run:
+            self.write_migrations_lock()
 
     def get_migrations_list(self, preamble=LOCK_PREAMBLE):
         """Generate and return the full list of existing migrations.

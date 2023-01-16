@@ -45,7 +45,7 @@ def JSON(obj):
 
 def escape_script_tags(unsafe_str):
     # seriously: http://stackoverflow.com/a/1068548/8207
-    return unsafe_str.replace('</script>', '<" + "/script>')
+    return unsafe_str.replace('</script>', '<\\/script>')
 
 
 @register.filter

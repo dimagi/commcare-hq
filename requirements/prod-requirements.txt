@@ -37,7 +37,7 @@ celery==5.2.7
     #   -r base-requirements.in
     #   django-celery-results
     #   flower
-certifi==2022.9.24
+certifi==2022.12.7
     # via
     #   -r prod-requirements.in
     #   requests
@@ -178,7 +178,7 @@ django-websocket-redis @ https://raw.githubusercontent.com/dimagi/django-websock
     # via -r base-requirements.in
 djangorestframework==3.13.1
     # via -r base-requirements.in
-dropbox==9.3.0
+dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
     # via -r base-requirements.in
@@ -331,6 +331,7 @@ ply==3.11
     # via
     #   eulxml
     #   jsonpath-ng
+    #   stone
 polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.14.1
@@ -504,6 +505,7 @@ six==1.16.0
     #   pyzxcvbn
     #   qrcode
     #   quickcache
+    #   stone
     #   tenacity
 socketpool==0.5.3
     # via -r base-requirements.in
@@ -520,6 +522,8 @@ sqlparse==0.3.1
     # via django
 stack-data==0.1.4
     # via ipython
+stone==3.3.1
+    # via dropbox
 stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0

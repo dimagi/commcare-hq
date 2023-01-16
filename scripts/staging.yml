@@ -61,10 +61,7 @@ branches:
     - bmb/sso/api/test-001  # Biyeun June 15
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
-    - ap/sql-repeater/phase-2+cs/fix/duplicate_relationships # Chris Nov 30
-    - cs/fix/duplicate_relationships # Chris Nov 30
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - jls/new-instance-connectors # Jenny Sept 27
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
@@ -73,11 +70,22 @@ branches:
     # - ml/lookup-table-UI # Minha Oct 19
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
-    - pkv/case-list-explorer-labels # Pawan Nov 22
-    - revert-32380-revert-32369-sk/shadow-module-form-links # Simon Nov 30
-    - gh/audit-conditional-alerts # Graham Nov 30
-    - jt/data_dict_permission_restriction_USH-2600 # Jonathan T. Nov 30
-    - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
-    - jt/data_dict_migration_USH-2678 # Jonathan T. Nov 30
+    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
+    - sk/sentry-js  # Simon Dec 21
+    - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
+    - gh/refactor-orphaned-ucr-code # Graham Dec 26
+    - jls/new-instance-connectors # Steph Dec 27
+    - ad/user-syncing-UI # Addison Jan 3
+    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
+    - bmb/compile-scss-with-less  # Biyeun Jan 9
+    - jm/refactor-api-es  # Joel Jan 10
+    - jm/refactor-user-pillow  # Joel Jan 10
+    - cs/migration/repeater_name_length # Chris Jan 10
+    - ap/repeaters/remove-couch-models # Amit Jan 11
+    - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
+    - ap/fix-repeater-urls # Amit Jan 13
+    - ad/user-syncing-task # Addison Jan 13
+    - mk/disable-download-on-attachment # MK Jan 13
+    - ad/test-incomplete-forms-hotfix # AD Jan 13
 submodules: { }

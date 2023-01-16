@@ -315,6 +315,14 @@ def save_copy(request, domain, app_id):
         with report_build_time(domain, app._id, 'new_release'):
             copy = make_app_build(app, comment, user_id)
         CouchUser.get(user_id).set_has_built_app()
+        if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+            ApplicationReleaseLog.objects.create(
+                domain=domain,
+                action=ApplicationReleaseLog.ACTION_CREATED,
+                version=copy.version,
+                app_id=app_id,
+                user_id=user_id
+            )
     except AppValidationError as e:
         lang, langs = get_langs(request, app)
         return JsonResponse({
@@ -403,11 +411,23 @@ def revert_to_copy(request, domain, app_id):
         copy_build_comment_template = _("Reverted to version {old_version}")
 
     try:
+        user_id = request.couch_user.get_id
         copy = app.make_build(
             comment=copy_build_comment_template.format(**copy_build_comment_params),
-            user_id=request.couch_user.get_id,
+            user_id=user_id,
         )
         copy.save(increment_version=False)
+        if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+            ApplicationReleaseLog.objects.create(
+                domain=domain,
+                action=ApplicationReleaseLog.ACTION_REVERTED,
+                version=app.version,
+                app_id=app_id,
+                user_id=user_id,
+                info={
+                    'version': copy_build_comment_params['old_version']
+                }
+            )
     except AppValidationError:
         messages.error(
             request,
@@ -428,6 +448,14 @@ def delete_copy(request, domain, app_id):
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
     app.delete_copy(copy)
+    if toggles.APPLICATION_RELEASE_LOGS.enabled(domain):
+        ApplicationReleaseLog.objects.create(
+            domain=domain,
+            action=ApplicationReleaseLog.ACTION_DELETED,
+            version=copy.version,
+            app_id=app_id,
+            user_id=request.couch_user.get_id
+        )
     return json_response({})
 
 
@@ -699,4 +727,7 @@ def populate_data_app_release_logs(log, timezone):
     return_log = log.to_json()
     return_log["created_at_string"] = timestamp.ui_string(USER_DATETIME_FORMAT)
     return_log["user_email"] = cached_user_id_to_user_display(log.user_id)
+    return_log["info"] = ""
+    if log.action == ApplicationReleaseLog.ACTION_REVERTED:
+        return_log["info"] = _(f"Reverted to version {log.info['version']}")
     return return_log
