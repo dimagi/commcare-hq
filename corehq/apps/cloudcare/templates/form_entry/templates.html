@@ -437,7 +437,7 @@
 </script>
 <script type="text/html" id="select-entry-ko-template">
   <fieldset>
-  <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
+  <legend class="sr-only" data-bind="text: question.caption()"></legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
         <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
