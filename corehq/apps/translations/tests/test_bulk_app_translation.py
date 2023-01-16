@@ -349,6 +349,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
             ("search_again_label", "list", "Find Another Mother", "Mère! Encore!"),
             ("title_label", "list", "Find a Mom", "Maman!"),
             ("description", "list", "More information", "Plus d'information"),
+            ("no_items_text", "list", "List is empty", "Lista Vacía"),
             ("name", "list", "Name", "Nom"),
             ("Tab 0", "detail", "Name", "Nom"),
             ("Tab 1", "detail", "Other", "Autre"),
@@ -403,6 +404,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBaseWithApp):
           ("menu1", "search_again_label", "list", "", "Find Another Mother", "", "", "", ""),
           ("menu1", "title_label", "list", "Find a Mom", "Maman!", "", "", "", ""),
           ("menu1", "description", "list", "More information", "Plus d'information", "", "", "", ""),
+          ("menu1", "no_items_text", "list", "List is empty", "Lista Vacía", "", "", "", ""),
           ("menu1", "name", "list", "", "Name", "", "", "", ""),
           ("menu1", "Tab 0", "detail", "", "Name", "", "", "", ""),
           ("menu1", "Tab 1", "detail", "", "Other", "", "", "", ""),
@@ -1093,6 +1095,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
 
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
+            ('no_items_text' 'list', 'List is empty')
             ('name', 'list', 'Name'),
             ('name', 'detail', 'Name'),
         ])
