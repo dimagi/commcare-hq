@@ -83,7 +83,6 @@ branches:
     - bmb/compile-scss-with-less  # Biyeun Jan 9
     - jm/refactor-api-es  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
-    - ap/repeaters/remove-couch-models # Amit Jan 11
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     - ad/user-syncing-task # Addison Jan 13
     - mk/disable-download-on-attachment # MK Jan 13
