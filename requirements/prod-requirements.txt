@@ -194,7 +194,7 @@ executing==0.8.3
     # via stack-data
 flower @ git+https://github.com/mher/flower@a4fc7c97d897a3172d1058d5269115eb88d811de
     # via -r prod-requirements.in
-future==0.18.2
+future==0.18.3
     # via pyjwkest
 gevent==21.8.0
     # via
