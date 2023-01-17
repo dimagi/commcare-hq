@@ -34,16 +34,12 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
             it('should retrieve saved display options', function () {
                 let options = { option: 'yes' };
                 Utils.saveDisplayOptions(options);
-                $.when(Utils.getSavedDisplayOptions(), function (response) {
-                    assert.deepEqual(response, options);
-                });
+                assert.deepEqual(Utils.getSavedDisplayOptions(), options);
             });
 
             it('should not fail on bad json saved', function () {
                 localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-                $.when(Utils.getSavedDisplayOptions(), function (response) {
-                    assert.deepEqual(response, {});
-                });
+                assert.deepEqual(Utils.getSavedDisplayOptions(), {});
             });
 
         });
