@@ -84,6 +84,8 @@ accounting
  0062_add_release_management_to_enterprise
  0063_replace_linked_projects_ff_with_erm
  0064_add_form_link_workflow_priv
+ 0065_toggleprivilegerecord
+ 0066_record_toggle_priv_for_form_link_workflow
 admin
  0001_initial
  0002_logentry_remove_auto_add

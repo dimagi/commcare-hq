@@ -124,7 +124,11 @@ def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
 
 @quickcache(domain_has_privilege_cache_args, timeout=10)
 def domain_has_privilege(domain, privilege_slug, **assignment):
-    from corehq.apps.accounting.models import Subscription
+    from corehq.apps.accounting.models import Subscription, TogglePrivilegeRecord
+    if TogglePrivilegeRecord.enabled_for_domain(privilege_slug, domain):
+        # If it were historically a toggle and was enabled, return True
+        #   regardless of subscription
+        return True
     try:
         plan_version = Subscription.get_subscribed_plan_by_domain(domain)
         privilege = Role.get_privilege(privilege_slug, assignment)

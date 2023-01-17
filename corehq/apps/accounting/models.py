@@ -3847,3 +3847,56 @@ class InvoiceCommunicationHistory(CommunicationHistoryBase):
 
 class CustomerInvoiceCommunicationHistory(CommunicationHistoryBase):
     invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
+
+
+class TogglePrivilegeRecord(models.Model):
+    """
+    A special one-off model to record privileges that
+    were historically a feature-flag/toggle with domains
+    that may not have the privilege anymore
+    """
+
+    privilege_slug = models.CharField(
+        max_length=256,
+        unique=True,
+    )
+    toggle_slug = models.CharField(
+        max_length=256,
+        unique=True,
+    )
+    enabled_domains = ArrayField(
+        models.CharField(max_length=256)
+    )
+
+    class Meta(object):
+        app_label = 'accounting'
+
+    @classmethod
+    def create_from_toggle(cls, toggle_slug, privilege_slug):
+        from corehq.toggles import StaticToggle
+        # StaticToggle could be removed from corehq.toggles
+        #   code base, but the associated Toggle could still exist
+        #   so initialize one here just to fetch enabled domains
+        domains = StaticToggle(toggle_slug, '', '').get_enabled_domains()
+        # hardfail with IntegrityError if created again
+        cls.objects.create(
+            privilege_slug=privilege_slug,
+            toggle_slug=toggle_slug,
+            enabled_domains=domains
+        )
+
+    @classmethod
+    @quickcache(['privilege_slug'], timeout=60 * 60)
+    def get_by_privilege_slug(cls, privilege_slug):
+        try:
+            return cls.objects.get(privilege_slug=privilege_slug)
+        except cls.DoesNotExist:
+            return None
+
+    @classmethod
+    def enabled_for_domain(cls, privilege_slug, domain):
+        record = cls.get_by_privilege_slug(privilege_slug)
+        if record:
+            return domain in record.enabled_domains
+        else:
+            return False
