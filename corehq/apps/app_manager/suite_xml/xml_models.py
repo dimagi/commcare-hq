@@ -819,7 +819,7 @@ class Detail(OrderedXmlObject, IdNode):
             <extra key="" value = "" />
             <response key ="" />
         </lookup>
-        <no_items_text><text/</no_items_text>
+        <no_items_text><text></no_items_text>
         <variables>
             <__ function=""/>
         </variables>
