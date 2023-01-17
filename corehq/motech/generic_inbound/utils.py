@@ -31,6 +31,9 @@ EXCLUDE_HEADERS = [
 ]
 
 
+def get_headers_for_api_context(request):
+    return get_standard_headers(request.META, exclude=EXCLUDE_HEADERS)
+
 def make_url_key():
     raw_key = urlsafe_b64encode(uuid.uuid4().bytes).decode()
     return raw_key.removesuffix("==")
@@ -59,7 +62,7 @@ class ApiRequest:
             user_agent=request.META.get('HTTP_USER_AGENT'),
             data=request_json,
             query=dict(request.GET.lists()),
-            headers=get_standard_headers(request.META, exclude=EXCLUDE_HEADERS)
+            headers=get_headers_for_api_context(request)
         )
 
     @classmethod
