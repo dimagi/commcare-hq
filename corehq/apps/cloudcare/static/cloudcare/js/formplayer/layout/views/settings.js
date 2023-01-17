@@ -14,7 +14,6 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
     FormplayerFrontend,
     AppsAPI,
     UsersModels,
-    Utils,
 ) {
     var slugs = {
         SET_LANG: 'lang',
@@ -41,7 +40,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         onLanguageChange: function (e) {
             this.currentUser.displayOptions.language = $(e.currentTarget).val();
-            Utils.saveDisplayOptions(this.currentUser.displayOptions);
+            UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
         },
         templateContext: function () {
             var appId = FormplayerFrontend.getChannel().request('getCurrentAppId');
@@ -77,7 +76,7 @@ hqDefine("cloudcare/js/formplayer/layout/views/settings", [
         },
         onChangeOneQuestionPerScreen: function (e, switchValue) {
             this.currentUser.displayOptions.oneQuestionPerScreen = switchValue;
-            Utils.saveDisplayOptions(this.currentUser.displayOptions);
+            UsersModels.saveDisplayOptions(this.currentUser.displayOptions);
         },
     });
 

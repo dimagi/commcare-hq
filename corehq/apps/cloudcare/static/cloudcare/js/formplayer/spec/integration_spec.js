@@ -11,8 +11,7 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", [
     Backbone,
     sinon,
     FormplayerFrontend,
-    UsersModels,
-    Utils
+    UsersModels
 ) {
     describe('FormplayerFrontend Integration', function () {
         describe('Start up', function () {
@@ -63,7 +62,7 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", [
                 FormplayerFrontend.start(newOptions);
 
                 user = UsersModels.getCurrentUser();
-                Utils.saveDisplayOptions(user.displayOptions);
+                UsersModels.saveDisplayOptions(user.displayOptions);
 
                 // New session, but old options
                 FormplayerFrontend.start(options);
