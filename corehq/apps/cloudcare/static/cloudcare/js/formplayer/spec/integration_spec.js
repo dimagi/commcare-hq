@@ -45,8 +45,8 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", [
                 Backbone.history.start.restore();
             });
 
-            it('should start the formplayer frontend app', function () {
-                FormplayerFrontend.start(options);
+            it('should initialize user', function () {
+                UsersModels.setCurrentUser(options);
 
                 let user = UsersModels.getCurrentUser();
                 assert.equal(user.username, options.username);
@@ -60,13 +60,13 @@ hqDefine("cloudcare/js/formplayer/spec/integration_spec", [
                 newOptions.oneQuestionPerScreen = true;
                 newOptions.language = 'sindarin';
 
-                FormplayerFrontend.start(newOptions);
+                UsersModels.setCurrentUser(newOptions);
 
                 user = UsersModels.getCurrentUser();
                 UsersModels.saveDisplayOptions(user.displayOptions);
 
                 // New session, but old options
-                FormplayerFrontend.start(options);
+                UsersModels.setCurrentUser(options);
                 user = UsersModels.getCurrentUser();
 
                 assert.deepEqual(user.displayOptions, {
