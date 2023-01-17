@@ -8,9 +8,12 @@ from corehq.apps.linked_domain.models import DomainLink
 from corehq.apps.linked_domain.updates import update_user_roles
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.linked_domain.exceptions import UnsupportedActionError
 from corehq.apps.userreports.util import get_ucr_class_name
 from corehq.apps.users.models import HqPermissions, UserRole
 from corehq.util.test_utils import flag_enabled
+
+from corehq.apps.users.role_utils import UserRolePresets
 
 
 class TestUpdateRoles(TestCase):
@@ -68,23 +71,90 @@ class TestUpdateRoles(TestCase):
         self.assertEqual(1, len(roles))
         self.assertIsNotNone(roles.get('test'))
 
-    def test_matching_names_are_not_overwritten(self):
-        self._create_user_role(self.downstream_domain, name='test', couch_id='local_role')
+    def test_unsynced_matching_names_raise_an_error(self):
         self._create_user_role(self.upstream_domain, name='test')
+        self._create_user_role(self.downstream_domain, name='test', upstream_id=None)
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync the following roles due to a conflict: "test".'
+                ' Please remove or rename these roles before syncing again'):
+            update_user_roles(self.domain_link)
+
+    def test_cannot_sync_name_change_if_name_is_taken(self):
+        upstream_role = self._create_user_role(self.upstream_domain, name='new_name')
+        self._create_user_role(self.downstream_domain, name='old_name', upstream_id=upstream_role.get_id)
+        self._create_user_role(self.downstream_domain, name='new_name', upstream_id=None)
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync the following roles due to a conflict: "new_name".'
+                ' Please remove or rename these roles before syncing again'):
+            update_user_roles(self.domain_link)
+
+    # TODO: Determine whether this should be turned into a parameterized test for all built-in roles
+    def test_syncing_built_in_roles_turns_them_into_linked_roles(self):
+        role_name = UserRolePresets.APP_EDITOR
+        built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
+
+        upstream_role = self._create_user_role(self.upstream_domain, name=role_name,
+            permissions=built_in_permissions)
+        self._create_user_role(self.downstream_domain, name=role_name, permissions=built_in_permissions,
+            upstream_id=None)
 
         update_user_roles(self.domain_link)
 
-        role_ids = {r.get_id for r in UserRole.objects.get_by_domain(self.downstream_domain)}
-        self.assertEqual(2, len(role_ids))
-        self.assertIn('local_role', role_ids)
+        roles = {r.name: r for r in UserRole.objects.get_by_domain(self.downstream_domain)}
+        self.assertEqual(roles[role_name].upstream_id, upstream_role.get_id)
 
-    def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
-        if not permissions:
-            permissions = HqPermissions(edit_web_users=True, view_locations=True)
-        role = UserRole.create(domain, name, permissions, **kwargs)
-        if assignable_by_ids:
-            role.set_assignable_by(assignable_by_ids)
-        return role
+    def test_built_in_roles_raise_conflict_if_upstream_changed(self):
+        role_name = UserRolePresets.APP_EDITOR
+        built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
+
+        modified_permissions = self._copy_permissions(built_in_permissions)
+        modified_permissions.edit_web_users = not built_in_permissions.edit_web_users
+
+        self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
+        self._create_user_role(self.downstream_domain, name=role_name, permissions=built_in_permissions)
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+    def test_built_in_roles_raise_conflict_if_downstream_changed(self):
+        role_name = UserRolePresets.APP_EDITOR
+        built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
+
+        modified_permissions = self._copy_permissions(built_in_permissions)
+        modified_permissions.edit_web_users = not built_in_permissions.edit_web_users
+
+        self._create_user_role(self.upstream_domain, name=role_name, permissions=built_in_permissions)
+        self._create_user_role(self.downstream_domain, name=role_name, permissions=modified_permissions)
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+    def test_built_in_roles_raise_conflict_if_not_default(self):
+        role_name = UserRolePresets.APP_EDITOR
+        built_in_permissions = UserRolePresets.INITIAL_ROLES[role_name]()
+
+        modified_permissions = self._copy_permissions(built_in_permissions)
+        modified_permissions.edit_web_users = not built_in_permissions.edit_web_users
+
+        self._create_user_role(self.upstream_domain, name=role_name, permissions=modified_permissions)
+        self._create_user_role(self.downstream_domain, name=role_name, permissions=modified_permissions)
+
+        with self.assertRaises(UnsupportedActionError):
+            update_user_roles(self.domain_link)
+
+    def test_conflicts_are_reported_in_bulk(self):
+        self._create_user_role(self.upstream_domain, name='Role1')
+        self._create_user_role(self.upstream_domain, name='Role2')
+
+        self._create_user_role(self.downstream_domain, name='Role1')
+        self._create_user_role(self.downstream_domain, name='Role2')
+
+        with self.assertRaisesMessage(UnsupportedActionError,
+                'Failed to sync the following roles due to a conflict: "Role1", "Role2".'
+                ' Please remove or rename these roles before syncing again'):
+            update_user_roles(self.domain_link)
 
     @flag_enabled('EMBEDDED_TABLEAU')
     def test_tableau_report_permissions(self):
@@ -137,6 +207,19 @@ class TestUpdateRoles(TestCase):
         # viz_3 should be included because it's in the downstream role's permission list and isn't linked upstream
         self.assertListEqual([str(downstream_viz_1.id), str(downstream_viz_3.id)],
                              roles['tableau_test'].permissions.view_tableau_list)
+
+    def _create_user_role(self, domain, name='test', permissions=None, assignable_by_ids=None, **kwargs):
+        if not permissions:
+            permissions = HqPermissions(edit_web_users=True, view_locations=True)
+        role = UserRole.create(domain, name, permissions, **kwargs)
+        if assignable_by_ids:
+            role.set_assignable_by(assignable_by_ids)
+        return role
+
+    @classmethod
+    def _copy_permissions(cls, permissions):
+        # A hacky way to clone permissions
+        return HqPermissions.from_permission_list(permissions.to_list())
 
 
 class TestUpdateRolesRemote(TestCase):
