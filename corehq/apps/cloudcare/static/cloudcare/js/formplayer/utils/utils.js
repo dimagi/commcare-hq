@@ -120,34 +120,28 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     };
 
     Utils.saveDisplayOptions = function (displayOptions) {
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
-        });
+        var displayOptionsKey = Utils.getDisplayOptionsKey();
+        localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
     };
 
     Utils.getSavedDisplayOptions = function () {
-        var defer = $.Deferred();
-        $.when(Utils.getDisplayOptionsKey()).done(function (displayOptionsKey) {
-            try {
-                defer.resolve(JSON.parse(localStorage.getItem(displayOptionsKey)));
-            } catch (e) {
-                window.console.warn('Unabled to parse saved display options');
-                defer.resolve({});
-            }
-        });
-        return defer.promise();
+        var displayOptionsKey = Utils.getDisplayOptionsKey();
+        try {
+            return JSON.parse(localStorage.getItem(displayOptionsKey));
+        } catch (e) {
+            window.console.warn('Unabled to parse saved display options');
+            return {};
+        }
     };
 
     Utils.getDisplayOptionsKey = function () {
-        var defer = $.Deferred();
         var user = UsersModels.getCurrentUser();
-        defer.resolve([
+        return [
             user.environment,
             user.domain,
             user.username,
             'displayOptions',
-        ].join(':'));
-        return defer.promise();
+        ].join(':');
     };
 
     // This method takes current page number on which user has clicked and total possible pages
