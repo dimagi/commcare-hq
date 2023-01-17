@@ -322,7 +322,7 @@ hqDefine("cloudcare/js/formplayer/app", [
         });
 
         var savedDisplayOptions = _.pick(
-            FormplayerUtils.getSavedDisplayOptions(),
+            UsersModels.getSavedDisplayOptions(),
             Const.ALLOWED_SAVED_OPTIONS
         );
         user.displayOptions = _.defaults(savedDisplayOptions, {

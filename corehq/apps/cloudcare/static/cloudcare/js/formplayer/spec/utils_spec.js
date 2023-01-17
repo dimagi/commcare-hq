@@ -8,6 +8,7 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     "cloudcare/js/formplayer/app",
     "cloudcare/js/formplayer/menus/api",
     "cloudcare/js/formplayer/spec/fake_formplayer",
+    "cloudcare/js/formplayer/users/models",
     "cloudcare/js/formplayer/utils/utils",
     "cloudcare/js/formplayer/router",   // needed for navigation events, like menu:select
 ], function (
@@ -18,28 +19,29 @@ hqDefine("cloudcare/js/formplayer/spec/utils_spec", [
     FormplayerFrontend,
     API,
     FakeFormplayer,
+    UsersModels,
     Utils
 ) {
     describe('Utils', function () {
         describe('#displayOptions', function () {
             beforeEach(function () {
-                sinon.stub(Utils, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
+                sinon.stub(UsersModels, 'getDisplayOptionsKey').callsFake(function () { return 'mykey'; });
                 window.localStorage.clear();
             });
 
             afterEach(function () {
-                Utils.getDisplayOptionsKey.restore();
+                UsersModels.getDisplayOptionsKey.restore();
             });
 
             it('should retrieve saved display options', function () {
                 let options = { option: 'yes' };
-                Utils.saveDisplayOptions(options);
-                assert.deepEqual(Utils.getSavedDisplayOptions(), options);
+                UsersModels.saveDisplayOptions(options);
+                assert.deepEqual(UsersModels.getSavedDisplayOptions(), options);
             });
 
             it('should not fail on bad json saved', function () {
-                localStorage.setItem(Utils.getDisplayOptionsKey(), 'bad json');
-                assert.deepEqual(Utils.getSavedDisplayOptions(), {});
+                localStorage.setItem(UsersModels.getDisplayOptionsKey(), 'bad json');
+                assert.deepEqual(UsersModels.getSavedDisplayOptions(), {});
             });
 
         });
