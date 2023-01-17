@@ -121,7 +121,7 @@ def _all_domains_enabled_toggle(domains, toggle_slug):
 
 def _get_all_domains_with_toggle_enabled(toggle_slug):
     # StaticToggle could be removed from corehq.toggles
-    #   code base, but the associated Toggle could exist if 
+    #   code base, but the associated Toggle could exist if
     #   this migration is not applied,
     #   so initialize one here just to fetch enabled domains
     return set(StaticToggle(toggle_slug, '', '').get_enabled_domains())

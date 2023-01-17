@@ -16,6 +16,12 @@ def _grandfather_form_link_workflow_privs(apps, schema_editor):
         skip_edition='Paused,Community,Standard',
         noinput=True,
     )
+    call_command(
+        'migrate_feature_flag_to_privilege',
+        # toggle and priv names are the same in this case
+        FORM_LINK_WORKFLOW,
+        FORM_LINK_WORKFLOW,
+    )
 
 
 class Migration(migrations.Migration):
