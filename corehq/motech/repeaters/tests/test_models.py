@@ -115,7 +115,7 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
 class TestRepeaterName(RepeaterTestCase):
 
     def test_repeater_name(self):
-        self.assertEqual(self.sql_repeater.repeater_name, self.conn.name)
+        self.assertEqual(self.sql_repeater.name, self.conn.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):
