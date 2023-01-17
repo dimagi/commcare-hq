@@ -1,4 +1,3 @@
-import traceback
 from django.db import migrations
 
 from django.core.management import call_command
