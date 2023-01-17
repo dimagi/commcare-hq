@@ -7,9 +7,9 @@ from functools import cached_property
 
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
-from django.utils.functional import classproperty
 
 from memoized import memoized
+from corehq.apps.es.filters import term
 
 from dimagi.utils.chunked import chunked
 
@@ -29,6 +29,7 @@ from .const import (
     SCROLL_SIZE,
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
+from .index.analysis import DEFAULT_ANALYSIS
 from .utils import ElasticJSONSerializer
 
 log = logging.getLogger(__name__)
@@ -149,6 +150,17 @@ class ElasticManageAdapter(BaseAdapter):
         return self._parse_task_result(self._es.tasks.list(task_id=task_id,
                                                            detailed=True))
 
+    def cancel_task(self, task_id):
+        """
+        Cancells a running task in ES
+
+        :param task_id: ``str`` ID of the task
+        :returns: ``dict`` of task details
+        :raises: ``TaskError`` or ``TaskMissing`` (subclass of ``TaskError``)
+        """
+        result = self._es.tasks.cancel(task_id)
+        return self._parse_task_result(result)
+
     @staticmethod
     def _parse_task_result(result, *, _return_one=True):
         """Parse the ``tasks.list()`` output and return a dictionary of task
@@ -185,14 +197,14 @@ class ElasticManageAdapter(BaseAdapter):
             pass
         raise TaskError(result)
 
-    def index_create(self, index, settings=None):
+    def index_create(self, index, metadata=None):
         """Create a new index.
 
         :param index: ``str`` index name
-        :param settings: ``dict`` of index settings
+        :param metadata: ``dict`` full index metadata (mappings, settings, etc)
         """
         self._validate_single_index(index)
-        self._es.indices.create(index, settings)
+        self._es.indices.create(index, metadata)
 
     def index_delete(self, index):
         """Delete an existing index.
@@ -293,8 +305,43 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, {type_: mapping}, index,
+        return self._es.indices.put_mapping(type_, mapping, index,
                                             expand_wildcards="none")
+
+    def index_get_mapping(self, index, type_):
+        """Returns the current mapping for a doc type on an index.
+
+        :param index: ``str`` index to fetch the mapping from
+        :param type_: ``str`` doc type to fetch the mapping for
+        :returns: mapping ``dict`` or ``None`` if index does not have a mapping
+        """
+        self._validate_single_index(index)
+        response = self._es.indices.get_mapping(index, type_, expand_wildcards="none")
+        try:
+            index_data = response[index]
+        except KeyError:
+            return None  # index exists but does not have a mapping
+        return index_data["mappings"][type_]
+
+    def index_get_settings(self, index, values=None):
+        """Returns the current settings for an index.
+
+        :param index: ``str`` index to fetch settings for
+        :param values: Optional collection of explicit settings to provide in
+            the return value. If ``None`` (the default) all settings are
+            returned.
+        :returns: ``dict``
+        :raises: ``KeyError`` (only if invalid ``values`` are provided)
+        """
+        self._validate_single_index(index)
+        settings = self._es.indices.get_settings(
+            index,
+            expand_wildcards="none",
+            # include_defaults=bool(values),  # unavailable in elasticsearch2
+        )[index]["settings"]["index"]
+        if values is None:
+            return settings
+        return {k: settings[k] for k in values}
 
     @staticmethod
     def _validate_single_index(index):
@@ -318,6 +365,40 @@ class ElasticManageAdapter(BaseAdapter):
         elif "*" in index:
             raise ValueError(f"refusing to operate with index wildcards: {index}")
 
+    def reindex(self, source, dest, wait_for_completion=False, refresh=False):
+        """
+        Starts the reindex process in elastic search cluster
+
+        :param source: ``str`` name of the source index
+        :param dest: ``str`` name of the destination index
+        :param wait_for_completion: ``bool`` would block the request until reindex is complete
+        :param refresh: ``bool`` refreshes index
+
+        :returns: None if wait_for_completion is True else would return task_id of reindex task
+        """
+
+        # More info on "op_type" and "version_type"
+        # https://www.elastic.co/guide/en/elasticsearch/reference/2.4/docs-reindex.html
+
+        reindex_body = {
+            "source": {
+                "index": source,
+            },
+            "dest": {
+                "index": dest,
+                "op_type": "create",
+                "version_type": "external"
+            },
+            "conflicts": "proceed"
+        }
+        reindex_info = self._es.reindex(
+            reindex_body,
+            wait_for_completion=wait_for_completion,
+            refresh=refresh
+        )
+        if not wait_for_completion:
+            return reindex_info['task']
+
 
 class ElasticDocumentAdapter(BaseAdapter):
     """Base for subclassing document-specific adapters.
@@ -327,6 +408,9 @@ class ElasticDocumentAdapter(BaseAdapter):
     - ``mapping``: attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
     """
+
+    analysis = DEFAULT_ANALYSIS
+    settings_key = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -346,10 +430,6 @@ class ElasticDocumentAdapter(BaseAdapter):
         adapter = copy.copy(self)
         adapter._es = get_client(for_export=True)
         return adapter
-
-    @classproperty
-    def settings(cls):
-        return settings.ELASTIC_ADAPTER_SETTINGS.get(cls.__name__, {})
 
     @classmethod
     def from_python(cls, doc):
@@ -824,6 +904,25 @@ class ElasticDocumentAdapter(BaseAdapter):
             shard_info = json.dumps(result["_shards"])
             raise ESShardFailure(f"_shards: {shard_info}")
 
+    def delete_tombstones(self):
+        """
+        Deletes all tombstones documents present in the index
+
+        TODO:  This should be replaced by delete_by_query
+        https://www.elastic.co/guide/en/elasticsearch/reference/5.1/docs-delete-by-query.html
+        when on ES version >= 5
+        """
+        tombstone_ids = self._get_tombstone_ids()
+        self.bulk_delete(tombstone_ids, refresh=True)
+
+    def _get_tombstone_ids(self):
+        query = {
+            "query": term(Tombstone.PROPERTY_NAME, True),
+            "_source": False
+        }
+        scroll_iter = self.scroll(query, size=1000)
+        return [doc['_id'] for doc in scroll_iter]
+
     def __repr__(self):
         return f"<{self.__class__.__name__} index={self.index_name!r}, type={self.type!r}>"
 
@@ -896,12 +995,15 @@ class ElasticMultiplexAdapter(BaseAdapter):
         super().__init__()
         self.index_name = primary_adapter.index_name
         self.type = primary_adapter.type
-        self.mapping = primary_adapter.mapping
 
         self.primary = primary_adapter
         self.secondary = secondary_adapter
         # TODO document this better
         self.secondary.from_python = self.from_python
+
+    @property
+    def mapping(self):
+        return self.primary.mapping
 
     def export_adapter(self):
         adapter = copy.copy(self)
@@ -918,10 +1020,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
     # meta methods and Elastic index read methods (pass-through on the primary
     # adapter)
     @property
-    def settings(self):
-        # TODO: this is a classproperty on the the document adapter, but should
-        # be converted to a property
-        return self.primary.settings
+    def analysis(self):
+        return self.primary.analysis
+
+    @property
+    def settings_key(self):
+        return self.primary.settings_key
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should

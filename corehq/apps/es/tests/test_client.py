@@ -8,6 +8,7 @@ import uuid
 from django.test import SimpleTestCase, override_settings
 from nose.tools import nottest
 from unittest.mock import patch
+from corehq.apps.es.utils import check_task_progress
 
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
@@ -291,6 +292,58 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             patched.assert_called_once_with(task_id=task_id, detailed=True)
             self.assertIn("running_time_in_nanos", task)
 
+    def test_cancel_task_with_invalid_task_id(self):
+        host, task = 'eCjqYKEeRAasMPL5hN6hsg', '280170'
+        task_id = f'{host}:{task}'
+        # Task failure response for ES 2.4
+        # TODO - Verify for future ES versions
+        response = {
+            'node_failures': [
+                {
+                    'type': 'failed_node_exception',
+                    'reason': f'Failed node [{host}]',
+                    'caused_by': {
+                        'type': 'resource_not_found_exception',
+                        'reason': f"task [{task_id}] doesn't support cancellation"
+                    }
+                }
+            ],
+            'nodes': {}
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            with self.assertRaises(TaskMissing):
+                self.adapter.cancel_task(task_id)
+
+    def test_cancel_task_with_valid_task_id(self):
+        task_id = 'eCjqYKEeRAasMPL5hN6hsg:281173'
+        task_info = {
+            'node': 'eCjqYKEeRAasMPL5hN6hsg',
+            'id': 281173,
+            'type': 'transport',
+            'action': 'indices:data/write/reindex',
+            'start_time_in_millis': 1669719946726,
+            'running_time_in_nanos': 7948360400
+        }
+        # Cancel Task success response for ES 2.4
+        # TODO - Verify for future ES versions
+
+        response = {
+            'nodes': {
+                'eCjqYKEeRAasMPL5hN6hsg': {
+                    'name': 'Scarlet Beetle',
+                    'transport_address': '172.18.0.6:9300',
+                    'host': '172.18.0.6',
+                    'ip': '172.18.0.6:9300',
+                    'tasks': {
+                        'eCjqYKEeRAasMPL5hN6hsg:281173': task_info
+                    }
+                }
+            }
+        }
+        with patch.object(self.adapter._es.tasks, "cancel", return_value=response):
+            result = self.adapter.cancel_task(task_id)
+            self.assertEqual(result, task_info)
+
     @contextmanager
     def _mock_single_task_response(self):
         """A context manager that fetches a real list of all tasks from
@@ -417,6 +470,51 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
         with patch.object(self.adapter, "indices_refresh") as patched:
             self.adapter.index_refresh(self.index)
             patched.assert_called_once_with([self.index])
+
+    def test_reindex_with_wait_for_completion_is_true(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                manager.reindex(test_adapter.index_name, SECONDARY_INDEX, wait_for_completion=True, refresh=True)
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def test_reindex_with_wait_for_completion_is_false(self):
+        SECONDARY_INDEX = 'secondary_index'
+
+        with temporary_index(test_adapter.index_name, test_adapter.type, test_adapter.mapping):
+
+            all_ids = self._index_test_docs_for_reindex()
+
+            with temporary_index(SECONDARY_INDEX, test_adapter.type, test_adapter.mapping):
+
+                task_id = manager.reindex(
+                    test_adapter.index_name, SECONDARY_INDEX,
+                    wait_for_completion=False, refresh=True
+                )
+
+                with patch("corehq.apps.es.utils.TASK_POLL_DELAY", 0):
+                    print("")  # improve test output when using --nocapture option
+                    check_task_progress(task_id)
+
+                self.assertEqual(self._get_all_doc_ids_in_index(SECONDARY_INDEX), all_ids)
+
+    def _index_test_docs_for_reindex(self):
+        all_ids = set([str(i) for i in range(1, 10)])
+
+        for id in all_ids:
+            doc = TestDoc(str(id), f"val_{id}")
+            test_adapter.index(doc, refresh=True)
+        return all_ids
+
+    def _get_all_doc_ids_in_index(self, index):
+        docs = test_adapter._es.search(index, body={}, _source=False)
+        return set([doc['_id'] for doc in docs['hits']['hits']])
 
     def test_indices_refresh(self):
         def get_search_hits():
@@ -553,16 +651,86 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             }
         }
         self.adapter.index_create(self.index)
-
-        def get_mapping(index, type_):
-            info = self.adapter._es.indices.get_mapping(index, type_)
-            if info:
-                return info[index]["mappings"][type_]
-            return info
-
-        self.assertEqual(get_mapping(self.index, type_), {})
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, type_))
         self.adapter.index_put_mapping(self.index, type_, mapping)
-        self.assertEqual(get_mapping(self.index, type_), mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_put_mapping_clears_existing_mapping_metadata(self):
+        type_ = "test_doc"
+        mapping = {
+            "_meta": {"created": "now"},
+            "properties": {"value": {"type": "string"}},
+        }
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+        del mapping["_meta"]
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_put_mapping_updates_existing_mapping_properties(self):
+        type_ = "test_doc"
+        mapping1 = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping1}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping1)
+        mapping2 = {"properties": {"number": {"type": "integer"}}}
+        self.adapter.index_put_mapping(self.index, type_, mapping2)
+        self.assertEqual(
+            self.adapter.index_get_mapping(self.index, type_),
+            {"properties": {
+                "value": {"type": "string"},
+                "number": {"type": "integer"},
+            }},
+        )
+
+    def test_index_get_mapping(self):
+        type_ = "test_doc"
+        mapping = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(mapping, self.adapter.index_get_mapping(self.index, type_))
+
+    def test_index_get_mapping_returns_none_if_no_mapping(self):
+        self.adapter.index_create(self.index)
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, "test_doc"))
+
+    def test_index_get_settings(self):
+        settings = {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "filter": ["lowercase"],
+                        "type": "custom",
+                        "tokenizer": "whitespace"
+                    }
+                }
+            },
+            "number_of_replicas": "2",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.adapter.index_refresh(self.index)
+        all_settings = self.adapter.index_get_settings(self.index)
+        self.maxDiff = None
+        self.assertEqual(
+            settings,
+            {k: v for k, v in all_settings.items() if k in settings},
+        )
+
+    def test_index_get_settings_for_specific_values(self):
+        settings = {
+            "number_of_replicas": "1",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.assertEqual(
+            {"number_of_replicas": "1"},
+            self.adapter.index_get_settings(self.index, values=["number_of_replicas"])
+        )
+
+    def test_index_get_settings_for_invalid_value_raises_keyerror(self):
+        settings = {"number_of_replicas": "1"}
+        self.adapter.index_create(self.index, {"settings": settings})
+        with self.assertRaisesRegex(KeyError, "^'foo'$"):
+            self.adapter.index_get_settings(self.index, values=["foo"])
 
     def test__validate_single_index(self):
         self.adapter._validate_single_index(self.index)  # does not raise
@@ -597,8 +765,8 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     def index_exists(self):
         return manager.index_exists(self.index_name)
 
-    def create_index(self, settings=None):
-        manager.index_create(self.index_name, settings)
+    def create_index(self, metadata=None):
+        manager.index_create(self.index_name, metadata)
 
     def delete_index(self):
         manager.index_delete(self.index_name)
@@ -656,6 +824,11 @@ class ESTestHelpers:
         exc_args = (f"_shards: {json.dumps(shards_obj)}",)
         return exc_args, wrapper
 
+    def _index_tombstones(self, quantity):
+        tombstone_ids = [str(i) for i in list(range(1, quantity))]
+        for tombstone_id in tombstone_ids:
+            self.adapter._index(tombstone_id, Tombstone.create_document(), True)
+
 
 @es_test
 class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
@@ -674,6 +847,10 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test_exists(self):
         doc = self._index_new_doc()
         self.assertTrue(self.adapter.exists(doc["_id"]))
+
+    def test_not_exists_returns_bool(self):
+        self.assertEqual([], docs_from_result(self.adapter.search({})))
+        self.assertFalse(self.adapter.exists("does_not_exist"))
 
     def test_get(self):
         doc = self._index_new_doc()
@@ -1210,6 +1387,23 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
         with self.assertRaises(ValueError):
             self.adapter._report_and_fail_on_shard_failures([])
 
+    def test_get_all_tombstones(self):
+        self._index_tombstones(10)
+        es_tombstone_ids = self.adapter._get_tombstone_ids()
+        es_tombstone_ids.sort()
+        self.assertEqual(
+            [str(i) for i in list(range(1, 10))],
+            es_tombstone_ids
+        )
+
+    def test_delete_tombstones(self):
+        self._index_tombstones(10)
+        self.adapter.delete_tombstones()
+        self.assertEqual(
+            self.adapter._get_tombstone_ids(),
+            []
+        )
+
 
 @es_test
 class TestElasticDocumentAdapterWithoutRequests(SimpleTestCase):
@@ -1447,9 +1641,6 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         TestDocumentAdapter("primary", "doc"),
         TestDocumentAdapter("secondary", "doc"),
     )
-
-    def test_settings(self):
-        self.assertEqual(self.adapter.settings, self.adapter.primary.settings)
 
     def test_to_json(self):
         doc = self._make_doc()

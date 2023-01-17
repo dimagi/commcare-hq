@@ -7,5 +7,5 @@ from corehq.motech.repeaters.signals import create_repeat_records
 
 @receiver(successful_form_received, dispatch_uid="create_fhir_repeat_records")
 def create_fhir_repeat_records(sender, xform, **kwargs):
-    from .repeaters import FHIRRepeater
-    create_repeat_records(FHIRRepeater, xform)
+    from .repeaters import SQLFHIRRepeater
+    create_repeat_records(SQLFHIRRepeater, xform)

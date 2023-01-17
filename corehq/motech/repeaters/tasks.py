@@ -183,6 +183,11 @@ def _process_repeat_record(repeat_record):
     if repeat_record.cancelled:
         return
 
+    if repeat_record.is_repeater_deleted():
+        if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
+            repeat_record.doc_type += DELETED_SUFFIX
+            repeat_record.save()
+
     repeater = repeat_record.repeater
     if not repeater:
         repeat_record.cancel()
@@ -190,11 +195,7 @@ def _process_repeat_record(repeat_record):
         return
 
     try:
-        if repeater.doc_type.endswith(DELETED_SUFFIX):
-            if not repeat_record.doc_type.endswith(DELETED_SUFFIX):
-                repeat_record.doc_type += DELETED_SUFFIX
-                repeat_record.save()
-        elif repeater.paused:
+        if repeater.is_paused:
             # postpone repeat record by MAX_RETRY_WAIT so that these don't get picked in each cycle and
             # thus clogging the queue with repeat records with paused repeater
             repeat_record.postpone_by(MAX_RETRY_WAIT)
@@ -227,12 +228,12 @@ def process_repeater(repeater_id: int):
     ):
         for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
             try:
-                payload = get_payload(repeater.repeater, repeat_record)
+                payload = get_payload(repeater, repeat_record)
             except Exception:
                 # The repeat record is cancelled if there is an error
                 # getting the payload. We can safely move to the next one.
                 continue
-            should_retry = not send_request(repeater.repeater,
+            should_retry = not send_request(repeater,
                                             repeat_record, payload)
             if should_retry:
                 break

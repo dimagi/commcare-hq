@@ -174,6 +174,9 @@ class HqPermissions(DocumentSchema):
     view_locations = BooleanProperty(default=False)
     edit_users_in_locations = BooleanProperty(default=False)
 
+    view_data_dict = BooleanProperty(default=False)
+    edit_data_dict = BooleanProperty(default=False)
+
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
@@ -232,6 +235,8 @@ class HqPermissions(DocumentSchema):
             self.view_roles = False
             self.edit_reports = False
             self.edit_billing = False
+            self.edit_data_dict = False
+            self.view_data_dict = False
 
         if self.edit_web_users:
             self.view_web_users = True
@@ -248,6 +253,9 @@ class HqPermissions(DocumentSchema):
             self.view_locations = True
         else:
             self.edit_users_in_locations = False
+
+        if self.edit_data_dict:
+            self.view_data_dict = True
 
         if self.edit_apps:
             self.view_apps = True
@@ -751,19 +759,15 @@ class DeviceAppMeta(DocumentSchema):
         if other.last_request <= self.last_request:
             return
 
-        for key, prop in self.properties().items():
+        for key, prop in other.properties().items():
             new_val = getattr(other, key)
-            if new_val:
+            if new_val is not None:
                 old_val = getattr(self, key)
-                if not old_val:
-                    setattr(self, key, new_val)
-                    continue
 
                 prop_is_date = isinstance(prop, DateTimeProperty)
-                if prop_is_date and new_val > old_val:
-                    setattr(self, key, new_val)
-                elif not prop_is_date and old_val != new_val:
-                    setattr(self, key, new_val)
+                if prop_is_date and (old_val and new_val <= old_val):
+                    continue  # do not overwrite dates with older ones
+                setattr(self, key, new_val)
 
         self._update_latest_request()
 
@@ -2900,6 +2904,11 @@ class UserReportingMetadataStaging(models.Model):
         unique_together = ('domain', 'user_id', 'app_id')
 
 
+class ApiKeyManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class HQApiKey(models.Model):
     user = models.ForeignKey(User, related_name='api_keys', on_delete=models.CASCADE)
     key = models.CharField(max_length=128, blank=True, default='', db_index=True)
@@ -2908,6 +2917,12 @@ class HQApiKey(models.Model):
     ip_allowlist = ArrayField(models.GenericIPAddressField(), default=list)
     domain = models.CharField(max_length=255, blank=True, default='')
     role_id = models.CharField(max_length=40, blank=True, default='')
+    is_active = models.BooleanField(default=True)
+    deactivated_on = models.DateTimeField(blank=True, null=True)
+    expiration_date = models.DateTimeField(blank=True, null=True)  # Not yet used
+
+    objects = ApiKeyManager()
+    all_objects = models.Manager()
 
     class Meta(object):
         unique_together = ('user', 'name')

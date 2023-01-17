@@ -316,6 +316,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('app_manager', 'LatestEnabledBuildProfiles', 'domain'),
     ModelDeletion('app_manager', 'ResourceOverride', 'domain'),
     ModelDeletion('app_manager', 'GlobalAppConfig', 'domain'),
+    ModelDeletion('app_manager', 'ApplicationReleaseLog', 'domain'),
     ModelDeletion('case_importer', 'CaseUploadRecord', 'domain', [
         'CaseUploadFileMeta', 'CaseUploadFormRecord'
     ]),
@@ -351,7 +352,7 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('data_interfaces', 'CaseRuleCriteria', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'rule__domain'),
     ModelDeletion('data_interfaces', 'CaseRuleSubmission', 'domain'),  # TODO
-    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain'),
+    ModelDeletion('data_interfaces', 'AutomaticUpdateRule', 'domain', audit_action=AuditAction.AUDIT),
     ModelDeletion('data_interfaces', 'DomainCaseRuleRun', 'domain'),
     ModelDeletion('integration', 'DialerSettings', 'domain'),
     ModelDeletion('integration', 'GaenOtpServerSettings', 'domain'),
@@ -399,7 +400,6 @@ DOMAIN_DELETE_OPERATIONS = [
     ModelDeletion('reports', 'TableauVisualization', 'domain'),
     ModelDeletion('reports', 'TableauConnectedApp', 'server__domain'),
     ModelDeletion('reports', 'TableauUser', 'server__domain'),
-    ModelDeletion('reports', 'TableauGroup', 'server__domain'),
     ModelDeletion('smsforms', 'SQLXFormsSession', 'domain'),
     ModelDeletion('translations', 'TransifexOrganization', 'transifexproject__domain'),
     ModelDeletion('translations', 'SMSTranslations', 'domain'),

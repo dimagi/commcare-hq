@@ -9,6 +9,7 @@ hqDefine("data_dictionary/js/data_dictionary", [
     "DOMPurify/dist/purify.min",
     "hqwebapp/js/toggles",
     "hqwebapp/js/knockout_bindings.ko",
+    "data_interfaces/js/make_read_only",
 ], function (
     $,
     ko,
@@ -77,6 +78,9 @@ hqDefine("data_dictionary/js/data_dictionary", [
             10 /* maxDisplay */
         );
         self.allowedValues.val(allowedValues);
+        if (initialPageData.get('read_only_mode')) {
+            self.allowedValues.setEdit(false);
+        }
         self.$allowedValues = self.allowedValues.ui;
 
         self.toggle = function () {

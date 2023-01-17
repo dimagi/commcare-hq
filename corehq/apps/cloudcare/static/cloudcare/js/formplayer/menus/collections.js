@@ -15,6 +15,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'appVersion',
             'breadcrumbs',
             'clearSession',
+            'description',
             'notification',
             'persistentCaseTile',
             'queryKey',
@@ -42,6 +43,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'useUniformUnits',
             'widthHints',
             'multiSelect',
+            'maxSelectValue',
         ],
 
         commandProperties: [

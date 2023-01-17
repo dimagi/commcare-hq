@@ -1135,25 +1135,12 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
-        is_rebuilding = (
-            self.config.meta.build.initiated
-            and (
-                not self.config.meta.build.finished
-                and not self.config.meta.build.rebuilt_asynchronously
-            )
-        )
-        is_rebuilding_inplace = (
-            self.config.meta.build.initiated_in_place
-            and not self.config.meta.build.finished_in_place
-        )
         allowed_ucr_expression = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.request.domain)
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
-            'is_rebuilding': is_rebuilding,
-            'is_rebuilding_inplace': is_rebuilding_inplace,
             'allowed_ucr_expressions': allowed_ucr_expression,
         }
 
@@ -1760,7 +1747,10 @@ class UCRExpressionEditView(BaseProjectDataView):
 
     @property
     def expression_id(self):
-        return self.kwargs['expression_id']
+        try:
+            return int(self.kwargs['expression_id'])
+        except ValueError:
+            raise Http404
 
     @property
     @memoized

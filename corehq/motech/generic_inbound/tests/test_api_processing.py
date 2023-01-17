@@ -9,7 +9,7 @@ from corehq.apps.userreports.models import UCRExpression
 from corehq.motech.generic_inbound.core import (
     _apply_api_filter,
     _validate_api_request,
-    execute_generic_api,
+    _execute_generic_api,
 )
 from corehq.motech.generic_inbound.exceptions import (
     GenericInboundRequestFiltered,
@@ -42,7 +42,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         user = MockUser()
         context = get_evaluation_context(user, 'post', {}, {}, {})
         with self.assertRaises(BadSpecError):
-            execute_generic_api(self.domain_name, user, "device_id", context, api_model)
+            _execute_generic_api(self.domain_name, user, "device_id", context, api_model)
 
     def test_no_filter(self):
         api_model = ConfigurableAPI(
@@ -92,7 +92,7 @@ class TestGenericInboundAPI(SimpleTestCase):
         # 1st validation should fail, 2nd should succeed
         context = get_evaluation_context(user, 'post', {}, {}, {"resource": {"type": "employee"}})
         with self.assertRaises(GenericInboundValidationError) as cm:
-            execute_generic_api(self.domain_name, user, "device_id", context, api_model)
+            _execute_generic_api(self.domain_name, user, "device_id", context, api_model)
 
         self.assertEqual(cm.exception.errors, [
             {"name": "is patient", "message": "must be patient"},

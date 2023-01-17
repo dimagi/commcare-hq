@@ -874,13 +874,32 @@ class FormLink(DocumentSchema):
 
     xpath: XPath condition that must be true in order to execute link
     form_id: ID of next form to open, mutually exclusive with module_unique_id
+    form_module_id: ID of the form's module (this is used for shadow modules)
     module_unique_id: ID of next module to open, mutually exclusive with form_id
     datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    form_module_id = StringProperty()
     module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
+
+    def get_unique_id(self, app):
+        """"Get a unique ID for this link. For links to modules this is just the ID
+        of the module since that is already unique in the app.
+
+        For links to forms this is a combination of the form and module ID which is
+        necessary to support linking to forms in shadow modules.
+        """
+        if self.module_unique_id:
+            return self.module_unique_id
+
+        if self.form_module_id:
+            return f"{self.form_module_id}.{self.form_id}"
+
+        # legacy data does not have 'form_module_id'
+        form = app.get_form(self.form_id)
+        return f"{form.get_module().unique_id}.{self.form_id}"
 
 
 class FormSchedule(DocumentSchema):
@@ -2266,6 +2285,7 @@ class CaseSearch(DocumentSchema):
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
     title_label = LabelProperty(default={})
+    description = LabelProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2286,7 +2306,8 @@ class CaseSearch(DocumentSchema):
     def get_search_title_label(self, app, lang, for_default=False):
         if for_default:
             lang = app.default_language
-        return self.title_label.get(lang, '')
+        # Some apps have undefined labels incorrectly set to None, normalize here
+        return self.title_label.get(lang) or ''
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2385,6 +2406,7 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
             self.search_config.title_label._module = self
+            self.search_config.description._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -6272,6 +6294,38 @@ class LatestEnabledBuildProfiles(models.Model):
     def to_json(self, app_names):
         from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
         return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
+
+class ApplicationReleaseLog(models.Model):
+    ACTION_RELEASED = "released"
+    ACTION_IN_TEST = "in_test"
+    ACTION_CREATED = "created"
+    ACTION_REVERTED = "reverted"
+    ACTION_DELETED = "deleted"
+
+    ACTION_DISPLAY = {
+        ACTION_RELEASED: _("Released"),
+        ACTION_IN_TEST: _("In Test"),
+        ACTION_CREATED: _("Created"),
+        ACTION_REVERTED: _("Reverted"),
+        ACTION_DELETED: _("Deleted")
+    }
+
+    domain = models.CharField(max_length=255, null=False, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=255)
+    version = models.IntegerField()
+    app_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+    info = models.JSONField(default=dict)
+
+    def to_json(self):
+        return {
+            "created_at": self.created_at,
+            "action": self.ACTION_DISPLAY[self.action],
+            "version": self.version,
+            "user_id": self.user_id,
+        }
 
 
 # backwards compatibility with suite-1.0.xml

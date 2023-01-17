@@ -1,6 +1,9 @@
 from django.core.management import BaseCommand
 
-from corehq.apps.es.registry import get_registry, registry_entry
+from corehq.apps.es.transient_util import (
+    index_info_from_cname,
+    iter_index_infos,
+)
 from corehq.elastic import get_es_new
 from pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
@@ -50,9 +53,9 @@ class Command(BaseCommand):
                 return
 
         if index:
-            indices = [registry_entry(index)]
+            indices = [index_info_from_cname(index)]
         else:
-            indices = get_registry().values()
+            indices = iter_index_infos()
         for index in indices:
             if set_for_usage:
                 prepare_index_for_usage(es, index)

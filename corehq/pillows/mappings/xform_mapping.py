@@ -219,9 +219,6 @@ XFORM_MAPPING = {
     }
 }
 
-if form_adapter.settings.get("DISABLE_ALL"):
-    XFORM_MAPPING["_all"] = {"enabled": False}
-
 XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
     alias=XFORM_ALIAS,

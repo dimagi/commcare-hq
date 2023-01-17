@@ -8,7 +8,6 @@ refactored to use the new "adapters".
 """
 
 from .client import ElasticDocumentAdapter
-from .registry import get_registry
 
 
 def get_adapter_mapping(adapter):
@@ -47,11 +46,41 @@ def doc_adapter_from_alias(index_alias, for_export=False):
     return _get_doc_adapter(_DOC_ADAPTERS_BY_ALIAS[index_alias], for_export)
 
 
+def doc_adapter_from_cname(index_cname, for_export=False):
+    """Return the document adapter for the provided ``index_cname``.
+
+    :param index_cname: ``str`` canonical name of the index
+    :param for_export: ``bool`` used to instantiate the adapter instance
+    :returns: instance of an ``ElasticDocumentAdapter`` subclass
+    """
+    return doc_adapter_from_info(index_info_from_cname(index_cname), for_export)
+
+
 def _get_doc_adapter(adapter, for_export):
     """Helper function to keep things DRY. Returns an adapter instance that is
     configured for export (or not).
     """
     return adapter.export_adapter() if for_export else adapter
+
+
+def index_info_from_cname(cname):
+    """Get the index info object for a canonical index name.
+
+    :param cname: canonical name of Elastic index
+    :returns: index info object
+    """
+    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+    return CANONICAL_NAME_INFO_MAP[cname]
+
+
+def iter_index_infos():
+    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+    yield from CANONICAL_NAME_INFO_MAP.values()
+
+
+def iter_index_cnames():
+    from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
+    yield from CANONICAL_NAME_INFO_MAP
 
 
 def report_and_fail_on_shard_failures(search_result):
@@ -83,23 +112,25 @@ def populate_doc_adapter_map():
             (doc_adapter.index_name, _DOC_ADAPTERS_BY_INDEX)
         _DOC_ADAPTERS_BY_INDEX[doc_adapter.index_name] = doc_adapter
     # aliases and mappings
-    for index_info in get_registry().values():
+    for index_info in iter_index_infos():
         _DOC_ADAPTERS_BY_ALIAS[index_info.alias] = _DOC_ADAPTERS_BY_INDEX[index_info.index]
         mapping_key = (index_info.index, index_info.type)
         _DOC_MAPPINGS_BY_INDEX[mapping_key] = index_info.mapping
 
     if settings.UNIT_TESTING:
+        from corehq.pillows.mappings import CANONICAL_NAME_INFO_MAP
         from pillowtop.tests.utils import TEST_INDEX_INFO
-        add_dynamic_es_adapter("PillowTop", TEST_INDEX_INFO.index,
-                               TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
-                               TEST_INDEX_INFO.alias)
+        _add_test_adapter("PillowTop", TEST_INDEX_INFO.index,
+                        TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
+                        TEST_INDEX_INFO.alias)
+        CANONICAL_NAME_INFO_MAP[TEST_INDEX_INFO.alias] = TEST_INDEX_INFO
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
-        add_dynamic_es_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
-                               TEST_ES_MAPPING, TEST_ES_INFO.alias)
+        _add_test_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
+                        TEST_ES_MAPPING, TEST_ES_INFO.alias)
 
 
-def add_dynamic_es_adapter(descriptor, index_, type_, mapping_, alias):
+def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
 
     class Adapter(ElasticDocumentAdapter):
         mapping = mapping_
