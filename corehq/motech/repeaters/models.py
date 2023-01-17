@@ -187,6 +187,7 @@ class RepeaterSuperProxy(models.Model):
         # If repeater_id is not set then set one
         if not self.repeater_id:
             self.repeater_id = uuid.uuid4().hex
+        self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
