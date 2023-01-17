@@ -235,6 +235,8 @@ def update_tracked_entity_instance(
         response.raise_for_status()
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+    summaries = response.json()["response"]["importSummaries"]
+    # TODO: Parse conflicts. Raise Dhis2Exception(error_message_from_DHIS2)
 
 
 def update_enrollments(
@@ -291,6 +293,7 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         case_trigger_info.extra_fields[case_property] = tei_id
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+    # TODO: Parse conflicts. Raise Dhis2Exception(error_message_from_DHIS2)
 
 
 def create_relationships(
