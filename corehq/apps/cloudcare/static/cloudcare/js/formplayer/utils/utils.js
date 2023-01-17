@@ -109,31 +109,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         options.contentType = "application/json;charset=UTF-8";
     };
 
-    Utils.saveDisplayOptions = function (displayOptions) {
-        var displayOptionsKey = Utils.getDisplayOptionsKey();
-        localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
-    };
-
-    Utils.getSavedDisplayOptions = function () {
-        var displayOptionsKey = Utils.getDisplayOptionsKey();
-        try {
-            return JSON.parse(localStorage.getItem(displayOptionsKey));
-        } catch (e) {
-            window.console.warn('Unabled to parse saved display options');
-            return {};
-        }
-    };
-
-    Utils.getDisplayOptionsKey = function () {
-        var user = UsersModels.getCurrentUser();
-        return [
-            user.environment,
-            user.domain,
-            user.username,
-            'displayOptions',
-        ].join(':');
-    };
-
     // This method takes current page number on which user has clicked and total possible pages
     // and calculate the range of page numbers (start and end) that has to be shown on pagination widget.
     // totalItems can be either the total on the current page or across all pages.
