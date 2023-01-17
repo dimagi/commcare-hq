@@ -305,32 +305,14 @@ hqDefine("cloudcare/js/formplayer/app", [
     });
 
     FormplayerFrontend.on("start", function (model, options) {
-        var user = UsersModels.getCurrentUser();
-            self = this;
-        user.username = options.username;
-        user.domain = options.domain;
-        user.formplayer_url = options.formplayer_url;
-        user.debuggerEnabled = options.debuggerEnabled;
-        user.environment = options.environment;
-        user.changeFormLanguage = options.changeFormLanguage;
+        var self = this,
+            user = UsersModels.setCurrentUser(options);
 
         hqRequire([
             "cloudcare/js/formplayer/users/utils",  // restoreAsUser
         ], function () {
             user.restoreAs = FormplayerFrontend.getChannel().request('restoreAsUser', user.domain, user.username);
             AppsAPI.primeApps(user.restoreAs, options.apps);
-        });
-
-        var savedDisplayOptions = _.pick(
-            UsersModels.getSavedDisplayOptions(),
-            Const.ALLOWED_SAVED_OPTIONS
-        );
-        user.displayOptions = _.defaults(savedDisplayOptions, {
-            singleAppMode: options.singleAppMode,
-            landingPageAppMode: options.landingPageAppMode,
-            phoneMode: options.phoneMode,
-            oneQuestionPerScreen: options.oneQuestionPerScreen,
-            language: options.language,
         });
 
         FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
