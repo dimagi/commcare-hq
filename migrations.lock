@@ -811,6 +811,7 @@ sms
  0053_alter_messagingsubevent_date_last_activity
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
+ 0056_backfill_sms_event_date
 smsbillables
  0001_initial
  0002_bootstrap
