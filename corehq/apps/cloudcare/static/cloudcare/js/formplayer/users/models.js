@@ -1,13 +1,19 @@
 'use strict';
 hqDefine("cloudcare/js/formplayer/users/models", [
+    "underscore",
     "backbone",
     "analytix/js/kissmetrix",
+    "cloudcare/js/formplayer/constants",
 ], function (
+    _,
     Backbone,
-    kissmetrics
+    kissmetrics,
+    Const
 ) {
-    var User = Backbone.Model.extend();
-    var CurrentUser = Backbone.Model.extend({
+    var self = {};
+
+    self.User = Backbone.Model.extend();
+    self.CurrentUser = Backbone.Model.extend({
         initialize: function () {
             this.on('change:versionInfo', function (model) {
                 if (model.previous('versionInfo') && model.get('versionInfo')) {
@@ -38,23 +44,23 @@ hqDefine("cloudcare/js/formplayer/users/models", [
         },
     });
 
-    var saveDisplayOptions = function (displayOptions) {
-        var displayOptionsKey = getDisplayOptionsKey();
+    self.saveDisplayOptions = function (displayOptions) {
+        var displayOptionsKey = self.getDisplayOptionsKey();
         localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
     };
 
-    var getSavedDisplayOptions = function () {
-        var displayOptionsKey = getDisplayOptionsKey();
+    self.getSavedDisplayOptions = function () {
+        var displayOptionsKey = self.getDisplayOptionsKey();
         try {
             return JSON.parse(localStorage.getItem(displayOptionsKey));
         } catch (e) {
-            window.console.warn('Unabled to parse saved display options');
+            window.console.warn('Unable to parse saved display options');
             return {};
         }
     };
 
-    var getDisplayOptionsKey = function () {
-        var user = getCurrentUser();
+    self.getDisplayOptionsKey = function () {
+        var user = self.getCurrentUser();
         return [
             user.environment,
             user.domain,
@@ -64,18 +70,37 @@ hqDefine("cloudcare/js/formplayer/users/models", [
     };
 
     var userInstance;
-    var getCurrentUser = function () {
+    self.getCurrentUser = function () {
         if (!userInstance) {
-            userInstance = new CurrentUser();
+            userInstance = new self.CurrentUser();
         }
         return userInstance;
     };
 
-    return {
-        User: User,
-        getCurrentUser: getCurrentUser,
-        getDisplayOptionsKey: getDisplayOptionsKey,
-        getSavedDisplayOptions: getSavedDisplayOptions,
-        saveDisplayOptions: saveDisplayOptions,
+    self.setCurrentUser = function (options) {
+        self.getCurrentUser();       // ensure userInstance is populated
+
+        userInstance.username = options.username;
+        userInstance.domain = options.domain;
+        userInstance.formplayer_url = options.formplayer_url;
+        userInstance.debuggerEnabled = options.debuggerEnabled;
+        userInstance.environment = options.environment;
+        userInstance.changeFormLanguage = options.changeFormLanguage;
+
+        var savedDisplayOptions = _.pick(
+            self.getSavedDisplayOptions(),
+            Const.ALLOWED_SAVED_OPTIONS
+        );
+        userInstance.displayOptions = _.defaults(savedDisplayOptions, {
+            singleAppMode: options.singleAppMode,
+            landingPageAppMode: options.landingPageAppMode,
+            phoneMode: options.phoneMode,
+            oneQuestionPerScreen: options.oneQuestionPerScreen,
+            language: options.language,
+        });
+
+        return userInstance;
     };
+
+    return self;
 });
