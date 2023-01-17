@@ -13,8 +13,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
     Backbone,
     DOMPurify,
     initialPageData,
-    toggles,
-    UsersModels
+    toggles
 ) {
     var Utils = {};
 
@@ -117,31 +116,6 @@ hqDefine("cloudcare/js/formplayer/utils/utils", [
         options.crossDomain = {crossDomain: true};
         options.xhrFields = {withCredentials: true};
         options.contentType = "application/json;charset=UTF-8";
-    };
-
-    Utils.saveDisplayOptions = function (displayOptions) {
-        var displayOptionsKey = Utils.getDisplayOptionsKey();
-        localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
-    };
-
-    Utils.getSavedDisplayOptions = function () {
-        var displayOptionsKey = Utils.getDisplayOptionsKey();
-        try {
-            return JSON.parse(localStorage.getItem(displayOptionsKey));
-        } catch (e) {
-            window.console.warn('Unabled to parse saved display options');
-            return {};
-        }
-    };
-
-    Utils.getDisplayOptionsKey = function () {
-        var user = UsersModels.getCurrentUser();
-        return [
-            user.environment,
-            user.domain,
-            user.username,
-            'displayOptions',
-        ].join(':');
     };
 
     // This method takes current page number on which user has clicked and total possible pages

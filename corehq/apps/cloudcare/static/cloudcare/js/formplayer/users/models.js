@@ -37,6 +37,32 @@ hqDefine("cloudcare/js/formplayer/users/models", [
             );
         },
     });
+
+    var saveDisplayOptions = function (displayOptions) {
+        var displayOptionsKey = getDisplayOptionsKey();
+        localStorage.setItem(displayOptionsKey, JSON.stringify(displayOptions));
+    };
+
+    var getSavedDisplayOptions = function () {
+        var displayOptionsKey = getDisplayOptionsKey();
+        try {
+            return JSON.parse(localStorage.getItem(displayOptionsKey));
+        } catch (e) {
+            window.console.warn('Unabled to parse saved display options');
+            return {};
+        }
+    };
+
+    var getDisplayOptionsKey = function () {
+        var user = getCurrentUser();
+        return [
+            user.environment,
+            user.domain,
+            user.username,
+            'displayOptions',
+        ].join(':');
+    };
+
     var userInstance;
     var getCurrentUser = function () {
         if (!userInstance) {
@@ -48,5 +74,8 @@ hqDefine("cloudcare/js/formplayer/users/models", [
     return {
         User: User,
         getCurrentUser: getCurrentUser,
+        getDisplayOptionsKey: getDisplayOptionsKey,
+        getSavedDisplayOptions: getSavedDisplayOptions,
+        saveDisplayOptions: saveDisplayOptions,
     };
 });
