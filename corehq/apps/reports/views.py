@@ -1443,7 +1443,7 @@ class FormDataView(BaseProjectReportSectionView):
 @toggles.PLAY_FORM_ATTACHMENT_IN_BROWSER.required_decorator()
 @require_form_view_permission
 @location_safe
-def play_form_attachment(request, domain, instance_id, attachment_id):
+def view_form_attachment(request, domain, instance_id, attachment_id):
     # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
     # by using login_and_domain_required as auth to allow domain aware login page
     # in browser
@@ -1455,7 +1455,7 @@ def play_form_attachment(request, domain, instance_id, attachment_id):
     }
     return render(
         request,
-        template_name='reports/reportdata/play_form_attachment.html',
+        template_name='reports/reportdata/view_form_attachment.html',
         context=context
     )
 
