@@ -1446,6 +1446,9 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
     # by using login_and_domain_required as auth to allow domain aware login page
     # in browser
+    # This is not used in HQ anywhere but the link for the same is created
+    # in the apps and saved as case properties
+    # example: https://india.commcarehq.org/a/gcc-sangath/reports/case_data/b7dcdb76-d58a-4aa6-80d1-de35d7f600d0/
     # View image/audio/video form attachment in browser
     # download option is restricted in html for audio/video if FF enabled
     _ensure_form_access(request, domain, instance_id, attachment_id)
