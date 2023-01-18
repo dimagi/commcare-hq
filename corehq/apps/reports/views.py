@@ -1446,12 +1446,15 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
     # by using login_and_domain_required as auth to allow domain aware login page
     # in browser
-    # View audio/video form attachment in browser
-    # download option is restricted in html
+    # View image/audio/video form attachment in browser
+    # download option is restricted in html for audio/video if FF enabled
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+    attachment_meta = XFormInstance.objects.get_attachment_by_name(instance_id, attachment_id)
     context = {
         'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
         'content_name': attachment_id,
-        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request)
+        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request),
+        'is_image': attachment_meta.is_image
     }
     return render(
         request,
@@ -1460,12 +1463,16 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     )
 
 
-def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+def _ensure_form_access(request, domain, instance_id, attachment_id):
     if not instance_id or not attachment_id:
         raise Http404
 
     # this raises a PermissionDenied error if necessary
     safely_get_form(request, domain, instance_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    _ensure_form_access(request, domain, instance_id, attachment_id)
 
     try:
         content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)

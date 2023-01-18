@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html>
   <body style="background: black;">
-    <video controls {% if disable_download %} controlsList="nodownload" {% endif %} autoplay name="{{ content_name }}" style="top: 20%; left: 20%; position: absolute;">
-      <source src="{{ download_url }}">
-    </video>
+    {% if is_image %}
+      <img src="{{ download_url }}">
+    {% else %}
+      <video controls {% if disable_download %} controlsList="nodownload" {% endif %} autoplay name="{{ content_name }}" style="top: 20%; left: 20%; position: absolute;">
+        <source src="{{ download_url }}">
+      </video>
+    {% endif %}
   </body>
 </html>
