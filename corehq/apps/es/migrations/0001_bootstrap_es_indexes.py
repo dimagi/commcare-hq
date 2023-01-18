@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='apps-20230118',
             type_='app',
             mapping={
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqapps',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='case-search-20230118',
             type_='case',
             mapping={
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
             },
             settings_key='case_search',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='cases-20230118',
             type_='case',
             mapping={
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqcases',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='domains-20230118',
             type_='hqdomain',
             mapping={
@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqdomains',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='forms-20230118',
             type_='xform',
             mapping={
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
             },
             settings_key='xforms',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='groups-20230118',
             type_='group',
             mapping={
@@ -98,7 +98,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqgroups',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='sms-20230118',
             type_='sms',
             mapping={
@@ -113,7 +113,7 @@ class Migration(migrations.Migration):
             },
             settings_key='smslogs',
         ),
-        corehq.apps.es.migration_operations.CreateIndex(
+        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
             name='users-20230118',
             type_='user',
             mapping={
