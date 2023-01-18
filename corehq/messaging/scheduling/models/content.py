@@ -16,6 +16,7 @@ from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling.exceptions import ContentException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
@@ -136,15 +137,10 @@ class EmailContent(Content):
             logged_subevent.error(MessagingEvent.ERROR_NO_MESSAGE)
             return
 
-        email_address = recipient.get_email()
-        if not email_address:
-            logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
-            return
-
         try:
-            validate_email(email_address)
-        except ValidationError as exc:
-            logged_subevent.error(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, additional_error_text=str(exc))
+            email_address = self.get_recipient_email(recipient)
+        except ContentException as e:
+            logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
         if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
@@ -169,6 +165,18 @@ class EmailContent(Content):
         email.save()
 
         email_usage.update_count()
+
+    def get_recipient_email(self, recipient):
+        email_address = recipient.get_email()
+        if not email_address:
+            raise ContentException(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+        try:
+            validate_email(email_address)
+        except ValidationError as exc:
+            raise ContentException(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, str(exc))
+
+        return email_address
 
 
 class SMSSurveyContent(Content):

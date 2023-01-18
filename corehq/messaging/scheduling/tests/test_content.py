@@ -9,11 +9,14 @@ from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.models import CommCareUser
+from corehq.messaging.scheduling.exceptions import ContentException
 from corehq.messaging.scheduling.models import (
     Content as AbstractContent,
     CustomContent,
     Schedule as AbstractSchedule,
+    EmailContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
@@ -212,6 +215,28 @@ class TestContent(TestCase):
             message_dict['*']
         )
 
+    def test_email_validation_valid(self):
+        email = RecipientWithEmail("test@example.com")
+        EmailContent().get_recipient_email(email)
+
+    def test_email_validation_empty_email(self):
+        email = RecipientWithEmail("")
+        with self.assertRaises(ContentException) as e:
+            EmailContent().get_recipient_email(email)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+    def test_email_validation_no_email(self):
+        email = RecipientWithEmail(None)
+        with self.assertRaises(ContentException) as e:
+            EmailContent().get_recipient_email(email)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+    def test_email_validation_invalid_email(self):
+        email = RecipientWithEmail("bob")
+        with self.assertRaises(ContentException) as e:
+            EmailContent().get_recipient_email(email)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS)
+
 
 @unregistered_django_model
 class Content(AbstractContent):
@@ -221,3 +246,11 @@ class Content(AbstractContent):
 @unregistered_django_model
 class Schedule(AbstractSchedule):
     pass
+
+
+class RecipientWithEmail:
+    def __init__(self, email_address):
+        self.email_address = email_address
+
+    def get_email(self):
+        return self.email_address
