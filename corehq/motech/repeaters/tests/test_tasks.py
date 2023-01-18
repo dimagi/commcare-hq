@@ -133,7 +133,7 @@ class TestProcessRepeater(TestCase):
         with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
-            post_mock.return_value = Mock(status_code=400, reason='Bad request')
+            post_mock.return_value = Mock(status_code=400, reason='Bad request', text='')
             process_repeater(self.sql_repeater.id)
 
         # Only the first record was attempted, the rest are still pending
