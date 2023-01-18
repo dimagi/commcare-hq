@@ -124,6 +124,12 @@
   export LDFLAGS="-L/opt/homebrew/opt/libpq/lib"
   pip install psycopg2-binary
   ```
+  
+  Or try: ([reference](https://rogulski.it/blog/install-psycopg2-on-apple-m1/))
+    ```sh
+    export LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib"
+    export CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include"
+  ```
 
 ### M1 Issues
 
