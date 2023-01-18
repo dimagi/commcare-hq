@@ -187,6 +187,7 @@ class RepeaterSuperProxy(models.Model):
         # If repeater_id is not set then set one
         if not self.repeater_id:
             self.repeater_id = uuid.uuid4().hex
+        self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
@@ -282,11 +283,6 @@ class SQLRepeater(RepeaterSuperProxy):
 
     _has_config = False
 
-    @property
-    def repeater_name(self):
-        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
-        # time. This method/property will be removed in a subsequent PR.
-        return self.connection_settings.name
 
     @cached_property
     def _optionvalue_fields(self):
