@@ -1443,16 +1443,39 @@ class FormDataView(BaseProjectReportSectionView):
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
-    # Open form attachment in browser
-    return get_form_attachment_response(request, domain, instance_id, attachment_id)
+    # This view differs from corehq.apps.api.object_fetch_api.view_form_attachment
+    # by using login_and_domain_required as auth to allow domain aware login page
+    # in browser
+    # This is not used in HQ anywhere but the link for the same is created
+    # in the apps and saved as case properties
+    # example: https://india.commcarehq.org/a/gcc-sangath/reports/case_data/b7dcdb76-d58a-4aa6-80d1-de35d7f600d0/
+    # View image/audio/video form attachment in browser
+    # download option is restricted in html for audio/video if FF enabled
+    _ensure_form_access(request, domain, instance_id, attachment_id)
+    attachment_meta = XFormInstance.objects.get_attachment_by_name(instance_id, attachment_id)
+    context = {
+        'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
+        'content_name': attachment_id,
+        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request),
+        'is_image': attachment_meta.is_image
+    }
+    return render(
+        request,
+        template_name='reports/reportdata/view_form_attachment.html',
+        context=context
+    )
 
 
-def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+def _ensure_form_access(request, domain, instance_id, attachment_id):
     if not instance_id or not attachment_id:
         raise Http404
 
     # this raises a PermissionDenied error if necessary
     safely_get_form(request, domain, instance_id)
+
+
+def get_form_attachment_response(request, domain, instance_id=None, attachment_id=None):
+    _ensure_form_access(request, domain, instance_id, attachment_id)
 
     try:
         content = XFormInstance.objects.get_attachment_content(instance_id, attachment_id)

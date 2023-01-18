@@ -201,7 +201,7 @@ flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
     # via -r test-requirements.in
-future==0.18.2
+future==0.18.3
     # via
     #   pyjwkest
     #   radon

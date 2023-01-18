@@ -15,9 +15,6 @@ class ElasticsearchInterface:
     def get_aliases(self):
         return manager.get_aliases()
 
-    def put_mapping(self, doc_type, mapping, index):
-        return manager.index_put_mapping(index, doc_type, mapping)
-
     def update_index_settings_reindex(self, index):
         manager.index_configure_for_reindex(index)
 
