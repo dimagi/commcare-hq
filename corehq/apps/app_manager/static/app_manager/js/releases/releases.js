@@ -249,7 +249,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
-        self.showReleaseOperations = ko.observable(false);
+        self.showReleaseOperations = ko.observable(true);
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);

@@ -80,7 +80,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function () {
 
         var releaseControlEl = $('#release-control');
         if (releaseControlEl.length) {
-
+            releasesMain.showReleaseOperations(false);
             var setReleaseLockButtons = function () {
                 if (releasesMain.showReleaseOperations()) {
                     $("#btn-release-unlocked").show();
