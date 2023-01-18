@@ -2,6 +2,7 @@
 
 import corehq.apps.es.migration_operations
 from django.db import migrations
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -18,7 +19,7 @@ class Migration(migrations.Migration):
             },
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name='case_search_2018-05-29',
+            name=getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
             type_='case',
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
@@ -39,7 +40,7 @@ class Migration(migrations.Migration):
             },
         ),
         corehq.apps.es.migration_operations.UpdateIndexMapping(
-            name='xforms_2016-07-07',
+            name=getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
             type_='xform',
             properties={
                 '__is_tombstone__': {'type': 'boolean'},
