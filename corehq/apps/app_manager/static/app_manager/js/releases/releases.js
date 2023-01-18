@@ -249,7 +249,7 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.buildComment = ko.observable();
         self.upstreamBriefsById = _.indexBy(self.options.upstreamBriefs, '_id');
         self.upstreamUrl = self.options.upstreamUrl;
-        self.releasesEnabled = ko.observable(true);
+        self.showReleaseOperations = ko.observable(true);
 
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
@@ -504,8 +504,8 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
 
-        self.showReleaseControl = function (enableRelease) {
-            self.releasesEnabled(enableRelease);
+        self.showReleaseControl = function (showReleaseOp) {
+            self.showReleaseOperations(showReleaseOp);
         };
 
         return self;
