@@ -282,6 +282,63 @@ class TestCreateIndex(BaseCase):
 
 
 @es_test
+class TestCreateIndexIfNotExists(BaseCase):
+
+    type = "test_doc"
+    mapping = {
+        "_meta": {},
+        "properties": {
+            "value": {"type": "string"},
+        },
+    }
+    analysis = {"analyzer": {"default": {
+        "filter": ["lowercase"],
+        "type": "custom",
+        "tokenizer": "whitespace",
+    }}}
+    settings_key = "test"
+    create_index_args = (BaseCase.index, type, mapping, analysis, settings_key)
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # It's not possible to import files starting with number
+        # Therefore using import_module to import migration file
+        from importlib import import_module
+        migration_module = import_module("corehq.apps.es.migrations.0001_bootstrap_es_indexes")
+        cls.CreateIndexIfNotExists = migration_module.CreateIndexIfNotExists
+
+    def test_does_not_fail_if_index_exists(self):
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+
+        # Index still exists after running migration
+        self.assertIndexExists(self.index)
+
+        fetched_mapping = manager.index_get_mapping(self.index, self.type)
+        # existing mapping is not changed
+        self.assertIsNone(fetched_mapping)
+
+    def test_creates_index_if_not_exists(self):
+        self.assertIndexDoesNotExist(self.index)
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+        # Index is created with new mappings
+        self.assertIndexExists(self.index)
+        self.assertIndexMappingMatches(self.index, self.type, self.mapping)
+
+    def test_reverse_is_noop(self):
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+        self.assertIndexExists(self.index)
+        migration.unapply()
+        self.assertIndexExists(self.index)
+
+
+@es_test
 class TestDeleteIndex(BaseCase):
 
     def test_deletes_index(self):
