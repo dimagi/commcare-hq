@@ -2353,6 +2353,15 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
+PLAY_FORM_ATTACHMENT_IN_BROWSER = StaticToggle(
+    'play_form_attachment_in_browser',
+    'Allow users to play media form attachments in browser & restrict download option',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     'formplayer_include_state_hash',
     'Make Formplayer include the state hash in sync and restore requests',

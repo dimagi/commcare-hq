@@ -1440,6 +1440,7 @@ class FormDataView(BaseProjectReportSectionView):
 
 
 @login_and_domain_required
+@toggles.PLAY_FORM_ATTACHMENT_IN_BROWSER.required_decorator()
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
