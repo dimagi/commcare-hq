@@ -13,13 +13,17 @@ logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
 
-def get_all_app_ids(domain=None, include_builds=False):
+def get_all_app_ids(domain=None, include_builds=False, deleted_apps_only=False):
     key = [domain]
     if not include_builds:
         key += [None]
 
+    if deleted_apps_only:
+        view_name = 'app_manager/deleted_applications'
+    else:
+        view_name = 'app_manager/applications'
     return {r['id'] for r in Application.get_db().view(
-        'app_manager/applications',
+        view_name,
         startkey=key,
         endkey=key + [{}],
         reduce=False,
@@ -66,6 +70,12 @@ class AppMigrationCommandBase(BaseCommand):
             default=False,
             help="If existing progress files for this command exist, turn this flag on to ignore them and start"
                  "from scratch.",
+        )
+        parser.add_argument(
+            '--deleted-apps-only',
+            action='store_true',
+            default=False,
+            help='''Only include deleted apps in the migration.''',
         )
 
     def handle(self, **options):
@@ -134,7 +144,8 @@ class AppMigrationCommandBase(BaseCommand):
         return app_doc
 
     def get_app_ids(self, domain=None):
-        return get_all_app_ids(domain=domain, include_builds=self.include_builds)
+        return get_all_app_ids(domain=domain, include_builds=self.include_builds,
+                               deleted_apps_only=self.options.get('deleted_apps_only', None))
 
     def get_domains(self):
         return None
