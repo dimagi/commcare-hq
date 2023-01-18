@@ -3,6 +3,9 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
 from corehq import toggles
 from corehq.apps.accounting.utils import domain_is_on_trial
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_released_app
@@ -136,6 +139,12 @@ class EmailContent(Content):
         email_address = recipient.get_email()
         if not email_address:
             logged_subevent.error(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+            return
+
+        try:
+            validate_email(email_address)
+        except ValidationError as exc:
+            logged_subevent.error(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, additional_error_text=str(exc))
             return
 
         if is_trial and EmailUsage.get_total_count(logged_event.domain) >= self.TRIAL_MAX_EMAILS:
