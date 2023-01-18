@@ -2353,6 +2353,15 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
+DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
+    'disable_form_attachment_download_in_browser',
+    'Restrict users from downloading audio/video form attachments in browser',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     'formplayer_include_state_hash',
     'Make Formplayer include the state hash in sync and restore requests',
