@@ -210,7 +210,7 @@ def _log_api_request(api, request, response):
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),
         request_body=request.body.decode('utf-8'),
-        request_headers=get_headers_for_api_context(request.META),
+        request_headers=get_headers_for_api_context(request),
         request_ip=get_ip(request),
     )
     make_processing_attempt(response, log)
