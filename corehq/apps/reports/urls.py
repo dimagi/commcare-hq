@@ -57,7 +57,7 @@ from .views import (
     restore_edit,
     send_test_scheduled_report,
     unarchive_form,
-    view_form_attachment,
+    play_form_attachment,
     view_scheduled_report,
 )
 
@@ -119,8 +119,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', view_form_attachment,
-        name='form_attachment_view'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/attachment/(?P<attachment_id>.*)$', play_form_attachment),
 
     # project health ajax
     url(r'^project_health/ajax/(?P<user_id>[\w\-]+)/$', project_health_user_details,
