@@ -195,6 +195,10 @@ class DetailContributor(SectionContributor):
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
 
+            # Add no items text
+            if detail_type.endswith('short'):
+                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
+
             # Add variables
             variables = list(
                 schedule_detail_variables(module, detail, detail_column_infos)
