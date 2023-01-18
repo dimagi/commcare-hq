@@ -14,7 +14,6 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
-    CreateIndexIfNotExists,
     DeleteIndex,
     MappingUpdateFailed,
     UpdateIndexMapping,
@@ -300,11 +299,20 @@ class TestCreateIndexIfNotExists(BaseCase):
     settings_key = "test"
     create_index_args = (BaseCase.index, type, mapping, analysis, settings_key)
 
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        # It's not possible to import files starting with number
+        # Therefore using import_module to import migration file
+        from importlib import import_module
+        migration_module = import_module("corehq.apps.es.migrations.0001_bootstrap_es_indexes")
+        cls.CreateIndexIfNotExists = migration_module.CreateIndexIfNotExists
+
     def test_does_not_fail_if_index_exists(self):
         manager.index_create(self.index)
         self.assertIndexExists(self.index)
 
-        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
         migration.apply()
 
         # Index still exists after running migration
@@ -316,14 +324,14 @@ class TestCreateIndexIfNotExists(BaseCase):
 
     def test_creates_index_if_not_exists(self):
         self.assertIndexDoesNotExist(self.index)
-        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
         migration.apply()
         # Index is created with new mappings
         self.assertIndexExists(self.index)
         self.assertIndexMappingMatches(self.index, self.type, self.mapping)
 
     def test_reverse_is_noop(self):
-        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration = TestMigration(self.CreateIndexIfNotExists(*self.create_index_args))
         migration.apply()
         self.assertIndexExists(self.index)
         migration.unapply()
