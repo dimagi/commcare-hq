@@ -65,8 +65,10 @@ class Command(BaseCommand):
             print("  or it could have died without completing (less common).")
             exit(1)
 
-        if get_preindex_complete(head) and email:
-            self.mail_admins('Already preindexed', "Skipping this step")
+        if get_preindex_complete(head):
+            if email:
+                self.mail_admins('Already preindexed', "Skipping this step")
+            print('Already preindexed')
             return
         else:
             clear_preindex_complete()

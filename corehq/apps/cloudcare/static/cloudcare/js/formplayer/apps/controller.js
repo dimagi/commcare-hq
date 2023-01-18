@@ -5,17 +5,11 @@ hqDefine("cloudcare/js/formplayer/apps/controller", function () {
         FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
         settingsViews = hqImport("cloudcare/js/formplayer/layout/views/settings"),
         views = hqImport("cloudcare/js/formplayer/apps/views");
-
     return {
         listApps: function () {
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
-                let apps = appCollection.toJSON();
-                let isIncompleteFormsDisabled = (app) => (app.profile.properties || {})['cc-show-incomplete'] === 'no';
-                let isAllIncompleteFormsDisabled = apps.every(isIncompleteFormsDisabled);
-
+            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (apps) {
                 var appGridView = views.GridView({
-                    collection: appCollection,
-                    shouldShowIncompleteForms: !isAllIncompleteFormsDisabled,
+                    collection: apps,
                 });
                 FormplayerFrontend.regions.getRegion('main').show(appGridView);
             });

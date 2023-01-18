@@ -63,9 +63,9 @@ DELETE_CHUNK_SIZE = 5000
 )
 def delete_old_request_logs():
     """
-    Delete RequestLogs older than 90 days.
+    Delete RequestLogs older than 6 weeks
     """
-    ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+    ninety_days_ago = datetime.utcnow() - timedelta(days=42)
     while True:
         queryset = (RequestLog.objects
                     .filter(timestamp__lt=ninety_days_ago)
@@ -228,12 +228,12 @@ def process_repeater(repeater_id: int):
     ):
         for repeat_record in repeater.repeat_records_ready[:RECORDS_AT_A_TIME]:
             try:
-                payload = get_payload(repeater.repeater, repeat_record)
+                payload = get_payload(repeater, repeat_record)
             except Exception:
                 # The repeat record is cancelled if there is an error
                 # getting the payload. We can safely move to the next one.
                 continue
-            should_retry = not send_request(repeater.repeater,
+            should_retry = not send_request(repeater,
                                             repeat_record, payload)
             if should_retry:
                 break

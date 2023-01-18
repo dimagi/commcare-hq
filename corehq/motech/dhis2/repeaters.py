@@ -16,13 +16,12 @@ from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (
     DateTimeProperty,
     Document,
-    SchemaProperty,
     StringProperty,
 )
 
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
-from corehq.motech.dhis2.dhis2_config import Dhis2Config, Dhis2EntityConfig
+from corehq.motech.dhis2.dhis2_config import Dhis2EntityConfig, Dhis2FormConfig
 from corehq.motech.dhis2.entities_helpers import send_dhis2_entities
 from corehq.motech.dhis2.events_helpers import send_dhis2_event
 from corehq.motech.dhis2.exceptions import Dhis2Exception
@@ -31,8 +30,6 @@ from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
 from corehq.motech.repeaters.models import (
-    CaseRepeater,
-    FormRepeater,
     OptionValue,
     SQLCaseRepeater,
     SQLFormRepeater,
@@ -86,155 +83,6 @@ class Dhis2Instance(Document):
         self.dhis2_version = dhis2_version
         self.dhis2_version_last_modified = datetime.now()
         self.save()
-
-
-class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
-    class Meta(object):
-        app_label = 'repeaters'
-
-    include_app_id_param = False
-    friendly_name = _("Forward Cases as DHIS2 Tracked Entities")
-    payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
-
-    dhis2_entity_config = SchemaProperty(Dhis2EntityConfig)
-
-    _has_config = True
-
-    def allowed_to_forward(self, payload):
-        # If the payload is the system form for updating a case with its
-        # DHIS2 TEI ID then don't send it back.
-        return payload.xmlns != XMLNS_DHIS2
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-
-    @property
-    def form_class_name(self):
-        return self.__class__.__name__
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        return DHIS2_INTEGRATION.enabled(domain)
-
-    def get_payload(self, repeat_record):
-        payload = super().get_payload(repeat_record)
-        return json.loads(payload)
-
-    def send_request(self, repeat_record, payload):
-        # Notify admins if API version is not supported
-        self.get_api_version()
-
-        value_source_configs = []
-        for case_config in self.dhis2_entity_config.case_configs:
-            value_source_configs.append(case_config.org_unit_id)
-            value_source_configs.append(case_config.tei_id)
-            for value_source_config in case_config.attributes.values():
-                value_source_configs.append(value_source_config)
-
-        case_trigger_infos = get_relevant_case_updates_from_form_json(
-            self.domain, payload, case_types=self.white_listed_case_types,
-            extra_fields=[c['case_property'] for c in value_source_configs
-                          if 'case_property' in c],
-            form_question_values=get_form_question_values(payload),
-        )
-        requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        try:
-            return send_dhis2_entities(requests, self, case_trigger_infos)
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            requests.notify_error(
-                f"Error sending Entities to {self}: {exc_value!r}",
-                details="".join(tb_lines)
-            )
-            raise
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "dhis2_entity_config",
-            "dhis2_version",
-            "dhis2_version_last_modified"
-        ]
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLDhis2EntityRepeater
-
-
-class Dhis2Repeater(FormRepeater, Dhis2Instance):
-    class Meta(object):
-        app_label = 'repeaters'
-
-    include_app_id_param = False
-    friendly_name = _("Forward Forms to DHIS2 as Anonymous Events")
-    payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
-
-    dhis2_config = SchemaProperty(Dhis2Config)
-
-    _has_config = True
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__)
-            and self.get_id == other.get_id
-        )
-
-    def __hash__(self):
-        return hash(self.get_id)
-
-    @memoized
-    def payload_doc(self, repeat_record):
-        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
-
-    @property
-    def form_class_name(self):
-        """
-        The class name used to determine which edit form to use
-        """
-        return self.__class__.__name__
-
-    @classmethod
-    def available_for_domain(cls, domain):
-        return DHIS2_INTEGRATION.enabled(domain)
-
-    def get_payload(self, repeat_record):
-        payload = super(Dhis2Repeater, self).get_payload(repeat_record)
-        return json.loads(payload)
-
-    def send_request(self, repeat_record, payload):
-        """
-        Sends API request and returns response if ``payload`` is a form
-        that is configured to be forwarded to DHIS2.
-
-        If ``payload`` is a form that isn't configured to be forwarded,
-        returns True.
-        """
-        # Notify admins if API version is not supported
-        self.get_api_version()
-
-        requests = self.connection_settings.get_requests(repeat_record.payload_id)
-        for form_config in self.dhis2_config.form_configs:
-            if form_config.xmlns == payload['form']['@xmlns']:
-                try:
-                    return send_dhis2_event(
-                        requests,
-                        form_config,
-                        payload,
-                    )
-                except (RequestException, HTTPError, ConfigurationError) as err:
-                    requests.notify_error(f"Error sending Events to {self}: {err}")
-                    raise
-        return True
-
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLDhis2Repeater
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["dhis2_config", "dhis2_version", "dhis2_version_last_modified"]
 
 
 class SQLDhis2Instance(object):
@@ -344,16 +192,14 @@ class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
                     raise
         return True
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Dhis2Repeater
+    def _validate_dhis2_form_config(self):
+        for config in self.dhis2_config.get('form_configs', []):
+            Dhis2FormConfig.wrap(config).validate()
 
-    def _wrap_schema_attrs(self, couch_object):
-        couch_object.dhis2_config = Dhis2Config.wrap(self.dhis2_config)
-
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + ["dhis2_version", "dhis2_version_last_modified"]
+    def save(self, *args, **kwargs):
+        # ensuring that the valid config is passed while saving
+        self._validate_dhis2_form_config()
+        super().save(*args, **kwargs)
 
 
 class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
@@ -419,19 +265,14 @@ class SQLDhis2EntityRepeater(SQLCaseRepeater, SQLDhis2Instance):
             )
             raise
 
-    def _wrap_schema_attrs(self, couch_object):
-        couch_object.dhis2_entity_config = Dhis2EntityConfig.wrap(self.dhis2_entity_config)
+    def _validate_dhis2_entity_config(self):
+        for config in self.dhis2_entity_config.get('case_configs', []):
+            Dhis2EntityConfig.wrap(config).validate()
 
-    @classmethod
-    def _migration_get_fields(cls):
-        return super()._migration_get_fields() + [
-            "dhis2_version",
-            "dhis2_version_last_modified"
-        ]
-
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Dhis2EntityRepeater
+    def save(self, *args, **kwargs):
+        # ensuring that the valid config is passed while saving
+        self._validate_dhis2_entity_config()
+        super().save(*args, **kwargs)
 
 
 def get_api_version(dhis2_version):

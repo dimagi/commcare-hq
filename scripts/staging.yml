@@ -72,20 +72,22 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     - cs/SC-2360-auto-update-rule-overwrites-case-property
+    #- jls/web-apps-requirejs+sk/sentry-js
     - sk/sentry-js  # Simon Dec 21
+    #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
     - ad/user-syncing-UI # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - bmb/compile-scss-with-less  # Biyeun Jan 9
     - jm/refactor-api-es  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
-    - cs/migration/repeater_name_length # Chris Jan 10
-    - ap/repeaters/remove-couch-models # Amit Jan 11
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
-    - ap/fix-repeater-urls # Amit Jan 13
     - ad/user-syncing-task # Addison Jan 13
-    - mk/disable-download-on-attachment # MK Jan 13
+#     - mk/disable-download-on-attachment # MK Jan 13
     - ad/test-incomplete-forms-hotfix # AD Jan 13
+    - cs/configurable_repeater_name # Chris jan 17
+    - ap/bootstrap-es-indexes # Amit Jan 18
+    - jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 18
+#     - em/case-search-filter-feature-flag # Evan Jan 18
 submodules: { }

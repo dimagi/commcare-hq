@@ -47,5 +47,5 @@ class Command(BaseCommand):
             _update_objects(MessagingEvent, event.domain, event.form_unique_id)
 
         subevents = MessagingSubEvent.objects.filter(form_unique_id__isnull=False, app_id__isnull=True)
-        for subevent in subevents.distinct('parent__domain', 'form_unique_id'):
+        for subevent in subevents.distinct('domain', 'form_unique_id'):
             _update_objects(MessagingSubEvent, subevent.parent.domain, subevent.form_unique_id)

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
+import uuid
 
 from django.test import TestCase
 from django.utils import timezone
@@ -19,7 +20,7 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import FormRepeater, SQLFormRepeater
+from ..models import SQLFormRepeater
 from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
@@ -34,7 +35,7 @@ class TestDeleteOldRequestLogs(TestCase):
 
     def test_raw_delete_logs_old(self):
         log = RequestLog.objects.create(domain=DOMAIN)
-        log.timestamp = datetime.utcnow() - timedelta(days=91)
+        log.timestamp = datetime.utcnow() - timedelta(days=43)
         log.save()  # Replace the value set by auto_now_add=True
         delete_old_request_logs.apply()
 
@@ -43,7 +44,7 @@ class TestDeleteOldRequestLogs(TestCase):
 
     def test_raw_delete_logs_new(self):
         log = RequestLog.objects.create(domain=DOMAIN)
-        log.timestamp = datetime.utcnow() - timedelta(days=89)
+        log.timestamp = datetime.utcnow() - timedelta(days=41)
         log.save()
         delete_old_request_logs.apply()
 
@@ -83,18 +84,11 @@ class TestProcessRepeater(TestCase):
             name='Test API',
             url="http://localhost/api/"
         )
-        cls.repeater = FormRepeater(
-            domain=DOMAIN,
-            connection_settings_id=cls.connection_settings.id,
-            format="form_xml"
-        )
-        # We are creating SQLRepeater on setup so skipping creation here
-        cls.repeater.save(sync_to_sql=False)
 
     def setUp(self):
         self.sql_repeater = SQLFormRepeater.objects.create(
             domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
+            repeater_id=uuid.uuid4().hex,
             format='form_xml',
             connection_settings=self.connection_settings
         )
@@ -112,7 +106,6 @@ class TestProcessRepeater(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls.repeater.delete()
         cls.connection_settings.delete()
         cls.domain.delete()
         super().tearDownClass()
@@ -140,7 +133,7 @@ class TestProcessRepeater(TestCase):
         with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
-            post_mock.return_value = Mock(status_code=400, reason='Bad request')
+            post_mock.return_value = Mock(status_code=400, reason='Bad request', text='')
             process_repeater(self.sql_repeater.id)
 
         # Only the first record was attempted, the rest are still pending
