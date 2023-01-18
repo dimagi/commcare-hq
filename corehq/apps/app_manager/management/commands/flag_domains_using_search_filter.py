@@ -23,9 +23,13 @@ def flag_domains_using_search_filter():
 
 def _any_app_uses_search_filter(domain):
     for app_id in get_app_ids_in_domain(domain):
-        app = get_current_app(domain, app_id)
-        if app.modules and _any_module_uses_search_filter(app):
-            return True
+        try:
+            app = get_current_app(domain, app_id)
+        except Exception:
+            pass
+        else:
+            if app.modules and _any_module_uses_search_filter(app):
+                return True
     return False
 
 
