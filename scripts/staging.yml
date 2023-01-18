@@ -89,5 +89,5 @@ branches:
     - cs/configurable_repeater_name # Chris jan 17
     - ap/bootstrap-es-indexes # Amit Jan 18
     - jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 18
-    - em/case-search-filter-feature-flag # Evan Jan 18
+#     - em/case-search-filter-feature-flag # Evan Jan 18
 submodules: { }
