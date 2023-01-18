@@ -504,10 +504,6 @@ hqDefine('app_manager/js/releases/releases', function () {
             });
         };
 
-        self.showReleaseControl = function (showReleaseOp) {
-            self.showReleaseOperations(showReleaseOp);
-        };
-
         return self;
     }
 
