@@ -6,6 +6,7 @@ from django.db import migrations
 
 from corehq.apps.es.migration_operations import CreateIndex
 
+
 log = logging.getLogger(__name__)
 
 
@@ -51,7 +52,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='hqapps_2020-02-26',
             type_='app',
             mapping={
@@ -66,7 +67,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqapps',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name=getattr(settings, "ES_CASE_SEARCH_INDEX_NAME", "case_search_2018-05-29"),
             type_='case',
             mapping={
@@ -82,7 +83,7 @@ class Migration(migrations.Migration):
             },
             settings_key='case_search',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='hqcases_2016-03-04',
             type_='case',
             mapping={
@@ -96,7 +97,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqcases',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='hqdomains_2021-03-08',
             type_='hqdomain',
             mapping={
@@ -111,7 +112,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqdomains',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name=getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
             type_='xform',
             mapping={
@@ -125,7 +126,7 @@ class Migration(migrations.Migration):
             },
             settings_key='xforms',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='hqgroups_2017-05-29',
             type_='group',
             mapping={
@@ -139,7 +140,7 @@ class Migration(migrations.Migration):
             },
             settings_key='hqgroups',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='smslogs_2020-01-28',
             type_='sms',
             mapping={
@@ -154,7 +155,7 @@ class Migration(migrations.Migration):
             },
             settings_key='smslogs',
         ),
-        corehq.apps.es.migration_operations.CreateIndexIfNotExists(
+        CreateIndexIfNotExists(
             name='hqusers_2017-09-07',
             type_='user',
             mapping={
