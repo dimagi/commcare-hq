@@ -1440,7 +1440,6 @@ class FormDataView(BaseProjectReportSectionView):
 
 
 @login_and_domain_required
-@toggles.PLAY_FORM_ATTACHMENT_IN_BROWSER.required_decorator()
 @require_form_view_permission
 @location_safe
 def view_form_attachment(request, domain, instance_id, attachment_id):
@@ -1452,6 +1451,7 @@ def view_form_attachment(request, domain, instance_id, attachment_id):
     context = {
         'download_url': reverse('api_form_attachment', args=[domain, instance_id, attachment_id]),
         'content_name': attachment_id,
+        'disable_download': toggles.DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER.enabled_for_request(request)
     }
     return render(
         request,

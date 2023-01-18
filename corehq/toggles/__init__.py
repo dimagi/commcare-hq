@@ -2354,9 +2354,9 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
 )
 
 
-PLAY_FORM_ATTACHMENT_IN_BROWSER = StaticToggle(
-    'play_form_attachment_in_browser',
-    'Allow users to play media form attachments in browser & restrict download option',
+DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
+    'disable_form_attachment_download_in_browser',
+    'Restrict users from downloading audio/video form attachments in browser',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN]
 )
