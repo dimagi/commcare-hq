@@ -14,6 +14,7 @@ from corehq.apps.es.client import manager
 from corehq.apps.es.index.settings import render_index_tuning_settings
 from corehq.apps.es.migration_operations import (
     CreateIndex,
+    CreateIndexIfNotExists,
     DeleteIndex,
     MappingUpdateFailed,
     UpdateIndexMapping,
@@ -279,6 +280,54 @@ class TestCreateIndex(BaseCase):
                 {"comment": "this is the comment"},
             ),
         )
+
+
+@es_test
+class TestCreateIndexIfNotExists(BaseCase):
+
+    type = "test_doc"
+    mapping = {
+        "_meta": {},
+        "properties": {
+            "value": {"type": "string"},
+        },
+    }
+    analysis = {"analyzer": {"default": {
+        "filter": ["lowercase"],
+        "type": "custom",
+        "tokenizer": "whitespace",
+    }}}
+    settings_key = "test"
+    create_index_args = (BaseCase.index, type, mapping, analysis, settings_key)
+
+    def test_does_not_fail_if_index_exists(self):
+        manager.index_create(self.index)
+        self.assertIndexExists(self.index)
+
+        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+
+        # Index still exists after running migration
+        self.assertIndexExists(self.index)
+
+        fetched_mapping = manager.index_get_mapping(self.index, self.type)
+        # existing mapping is not changed
+        self.assertIsNone(fetched_mapping)
+
+    def test_creates_index_if_not_exists(self):
+        self.assertIndexDoesNotExist(self.index)
+        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+        # Index is created with new mappings
+        self.assertIndexExists(self.index)
+        self.assertIndexMappingMatches(self.index, self.type, self.mapping)
+
+    def test_reverse_is_noop(self):
+        migration = TestMigration(CreateIndexIfNotExists(*self.create_index_args))
+        migration.apply()
+        self.assertIndexExists(self.index)
+        migration.unapply()
+        self.assertIndexExists(self.index)
 
 
 @es_test
