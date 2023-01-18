@@ -80,7 +80,6 @@ branches:
     - jls/new-instance-connectors # Steph Dec 27
     - ad/user-syncing-UI # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - bmb/compile-scss-with-less  # Biyeun Jan 9
     - jm/refactor-api-es  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
