@@ -35,6 +35,11 @@
           <locale id="cchq.case"></locale>
         </text>
       </title>
+      <no_items_text>
+        <text>
+          <locale id="m0_no_items_text"/>
+        </text>
+      </no_items_text>
       <field>
         <header>
           <text>
@@ -78,6 +83,11 @@
           <locale id="cchq.case"></locale>
         </text>
       </title>
+      <no_items_text>
+        <text>
+          <locale id="m1_no_items_text"/>
+        </text>
+      </no_items_text>
       <field>
         <header>
           <text>
@@ -121,6 +131,11 @@
           <locale id="cchq.case"></locale>
         </text>
       </title>
+      <no_items_text>
+        <text>
+          <locale id="m2_no_items_text"/>
+        </text>
+      </no_items_text>
       <field>
         <header>
           <text>
