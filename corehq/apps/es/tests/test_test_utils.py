@@ -50,6 +50,25 @@ dogs_adapter = TestDocumentAdapter("dogs", "dog")
 pigs_adapter = TestDocumentAdapter("pigs", "pig")
 
 
+def test_setup_tolerates_existing_index():
+
+    @es_test(requires=[cats_adapter])
+    class TestCatsRequired(SimpleTestCase):
+        def test_index_exists(self):
+            assert_index_exists(cats_adapter)
+
+    dirty_test = TestCatsRequired()
+    dirty_test.setUp()
+    dirty_test.test_index_exists()
+    # dirty test never cleans up
+    tolerant_test = TestCatsRequired()
+    tolerant_test.setUp()  # does not raise "index_already_exists_exception"
+    tolerant_test.test_index_exists()
+    tolerant_test.doCleanups()
+    # tolerant test still cleans up
+    assert_not_index_exists(cats_adapter)
+
+
 def test_setup_cleanup_index():
 
     @es_test(requires=[pigs_adapter])

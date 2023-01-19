@@ -18,6 +18,7 @@ from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.tests.util.warnings import filter_warnings
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.test_utils import trap_extra_setup
 
 from ..client import ElasticDocumentAdapter, manager
@@ -125,7 +126,20 @@ def es_test(test=None, requires=[], setup_class=False):
         return es_test_attr(test)
 
     def setup_func():
-        for operation in operations.values():
+        for index_name, operation in operations.items():
+            # ------------------------------------------------------------------
+            # TODO: This preemptive delete will be removed in the future.
+            #
+            # Prior to creating the index, an attempt is made to preemptively
+            # delete it in case it already exists. This workaround is only
+            # necessary because there are (many, at the time of this writing)
+            # existing tests that create indexes but do not delete them
+            # afterwards.
+            try:
+                manager.index_delete(index_name)
+            except NotFoundError:
+                pass
+            # ------------------------------------------------------------------
             operation.run()
 
     def cleanup_func():
