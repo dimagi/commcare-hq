@@ -11,7 +11,7 @@ from corehq.apps.sms.forms import (
 )
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling.exceptions import ContentException
+from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models import (
     Content as AbstractContent,
     CustomContent,
@@ -216,25 +216,25 @@ class TestContent(TestCase):
         )
 
     def test_email_validation_valid(self):
-        email = RecipientWithEmail("test@example.com")
-        EmailContent().get_recipient_email(email)
+        recipient = MockRecipient("test@example.com")
+        EmailContent().get_recipient_email(recipient)
 
     def test_email_validation_empty_email(self):
-        email = RecipientWithEmail("")
-        with self.assertRaises(ContentException) as e:
-            EmailContent().get_recipient_email(email)
+        recipient = MockRecipient("")
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
         self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
 
     def test_email_validation_no_email(self):
-        email = RecipientWithEmail(None)
-        with self.assertRaises(ContentException) as e:
-            EmailContent().get_recipient_email(email)
+        recipient = MockRecipient(None)
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
         self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
 
     def test_email_validation_invalid_email(self):
-        email = RecipientWithEmail("bob")
-        with self.assertRaises(ContentException) as e:
-            EmailContent().get_recipient_email(email)
+        recipient = MockRecipient("bob")
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
         self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS)
 
 
@@ -248,7 +248,7 @@ class Schedule(AbstractSchedule):
     pass
 
 
-class RecipientWithEmail:
+class MockRecipient:
     def __init__(self, email_address):
         self.email_address = email_address
 

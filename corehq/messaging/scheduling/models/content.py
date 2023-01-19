@@ -16,7 +16,7 @@ from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.tasks import send_first_message
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling.exceptions import ContentException
+from corehq.messaging.scheduling.exceptions import EmailValidationException
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.models import EmailUsage
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist, Email
@@ -139,7 +139,7 @@ class EmailContent(Content):
 
         try:
             email_address = self.get_recipient_email(recipient)
-        except ContentException as e:
+        except EmailValidationException as e:
             logged_subevent.error(e.error_type, additional_error_text=e.additional_text)
             return
 
@@ -169,12 +169,12 @@ class EmailContent(Content):
     def get_recipient_email(self, recipient):
         email_address = recipient.get_email()
         if not email_address:
-            raise ContentException(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+            raise EmailValidationException(MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
 
         try:
             validate_email(email_address)
         except ValidationError as exc:
-            raise ContentException(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, str(exc))
+            raise EmailValidationException(MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS, str(exc))
 
         return email_address
 

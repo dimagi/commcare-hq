@@ -1,4 +1,4 @@
-class ContentException(Exception):
+class EmailValidationException(Exception):
     def __init__(self, error_type, additional_text=None):
         self.error_type = error_type
         self.additional_text = additional_text
