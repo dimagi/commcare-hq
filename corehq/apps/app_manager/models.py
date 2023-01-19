@@ -2118,6 +2118,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
 
     print_template = DictProperty()
 
+    #Only applies to 'short' details
+    no_items_text = LabelProperty(default={'en': 'List is empty.'})
+
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
         if value_is_the_default:
