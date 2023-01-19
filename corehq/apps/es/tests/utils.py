@@ -101,17 +101,17 @@ class ElasticTestMixin(object):
 @nottest
 def es_test(test=None, requires=[], setup_class=False):
     """Decorator for Elasticsearch tests.
-    The decorator sets the `es_test` nose attribute and optionally performs
-    index setup/teardown before and after the test(s).
+    The decorator sets the ``es_test`` nose attribute and optionally performs
+    index setup/cleanup before and after the test(s).
 
-    :param test: A test class, method, or function (only used via the @decorator
-        syntax).
+    :param test: A test class, method, or function -- only used via the
+        ``@decorator`` format (i.e. not the ``@decorator(...)`` format).
     :param requires: A list of document adapters whose indexes are required by
         the test(s).
-    :param setup_class: Set to `True` to perform index setup/teardown in the
-        `setUpClass` and `tearDownClass` (instead of the default `setUp` and
-        `tearDown`) methods. Invalid if true when decorating non-class objects
-        (raises ValueError).
+    :param setup_class: Optional (default: ``False``). Set to ``True`` to
+        perform index setup/add-cleanup in the ``setUpClass`` method (instead of
+        ``setUp``). Invalid if true when decorating non-class objects (raises
+        ValueError).
     :raises: ``ValueError``
 
     See test_test_utils.py for examples.
@@ -129,9 +129,9 @@ def es_test(test=None, requires=[], setup_class=False):
         for adapter in iter_all_doc_adapters():
             setup_test_index(adapter, comment)
 
-    def teardown_func():
+    def cleanup_func():
         for adapter in iter_all_doc_adapters():
-            teardown_test_index(adapter)
+            cleanup_test_index(adapter)
 
     def iter_all_doc_adapters():
         for adapter in adapters:
@@ -143,15 +143,15 @@ def es_test(test=None, requires=[], setup_class=False):
 
     adapters = list(requires)
     if isclass(test):
-        test = _add_setup_and_teardown(test, setup_class, setup_func, teardown_func)
+        test = _add_setup_and_cleanup(test, setup_class, setup_func, cleanup_func)
     else:
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
-        test = _decorate_test_function(test, setup_func, teardown_func)
+        test = _decorate_test_function(test, setup_func, cleanup_func)
     return es_test_attr(test)
 
 
-def _decorate_test_function(test, setup_func, teardown_func):
+def _decorate_test_function(test, setup_func, cleanup_func):
 
     @wraps(test)
     def wrapper(*args, **kw):
@@ -159,48 +159,54 @@ def _decorate_test_function(test, setup_func, teardown_func):
         try:
             return test(*args, **kw)
         finally:
-            teardown_func()
+            cleanup_func()
 
     return wrapper
 
 
-def _add_setup_and_teardown(test_class, setup_class, setup_func, teardown_func):
+def _add_setup_and_cleanup(test_class, setup_class, setup_func, cleanup_func):
+    """Decorates ``test_class.setUp[Class]`` to call ``setup_func()`` and
+    ``test_class.add[Class]Cleanup(cleanup_func)``.
+
+    :param test_class: the test case class being decorated
+    :param setup_class: whether or not the *class* methods (e.g.
+        ``setUpClass()`` and ``addClassCleanup()``) should be used.
+    :param setup_func: a callable that performs the Elastic index setup
+    :param cleanup_func: a callable that tears down what ``setup_func`` did
+    """
 
     def setup_decorator(setup):
         @wraps(setup)
         def wrapper(self, *args, **kw):
+            if setup_class:
+                cleanup_args = (cleanup_func,)
+                cleanup_meth = "addClassCleanup"
+            else:
+                cleanup_args = (self, cleanup_func)
+                cleanup_meth = "addCleanup"
             setup_func()
+            getattr(test_class, cleanup_meth)(*cleanup_args)
             if setup is not None:
+                # call the existing 'setUp[Class]()' method
                 return setup(self, *args, **kw)
         return wrapper
 
-    def teardown_decorator(teardown):
-        @wraps(teardown)
-        def wrapper(*args, **kw):
+    func_name = "setUpClass" if setup_class else "setUp"
+    func = getattr(test_class, func_name, None)
+    if setup_class:
+        # decorate setUpClass
+        if func is not None:
+            # 'func' is the classmethod decoration, get the function it wraps
             try:
-                if teardown is not None:
-                    return teardown(*args, **kw)
-            finally:
-                teardown_func()
-        return wrapper
-
-    def decorate(name, decorator):
-        func_name = f"{name}Class" if setup_class else name
-        func = getattr(test_class, func_name, None)
-        if setup_class:
-            if func is not None:
-                try:
-                    func = func.__func__
-                except AttributeError:
-                    raise ValueError(f"'setup_class' expects a classmethod, "
-                                     f"got {func} (test_class={test_class})")
-            decorated = classmethod(decorator(func))
-        else:
-            decorated = decorator(func)
-        setattr(test_class, func_name, decorated)
-
-    decorate("setUp", setup_decorator)
-    decorate("tearDown", teardown_decorator)
+                func = func.__func__
+            except AttributeError:
+                raise ValueError(f"'setup_class' expects a classmethod, "
+                                 f"got {func} (test_class={test_class})")
+        decorated = classmethod(setup_decorator(func))
+    else:
+        # decorate setUp
+        decorated = setup_decorator(func)
+    setattr(test_class, func_name, decorated)
     return test_class
 
 
@@ -217,7 +223,7 @@ def setup_test_index(adapter, comment):
 
 
 @nottest
-def teardown_test_index(adapter):
+def cleanup_test_index(adapter):
     manager.index_delete(adapter.index_name)
 
 
