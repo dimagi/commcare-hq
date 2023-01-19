@@ -84,7 +84,6 @@ branches:
     - jm/refactor-user-pillow  # Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     - ad/user-syncing-task # Addison Jan 13
-#     - mk/disable-download-on-attachment # MK Jan 13
     - ad/test-incomplete-forms-hotfix # AD Jan 13
     - cs/configurable_repeater_name # Chris jan 17
     - ap/bootstrap-es-indexes # Amit Jan 18
