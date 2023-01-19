@@ -125,35 +125,14 @@ def es_test(test=None, requires=[], setup_class=False):
     if not requires:
         return es_test_attr(test)
 
-    def setup_func():
-        for index_name, operation in operations.items():
-            # ------------------------------------------------------------------
-            # TODO: This preemptive delete will be removed in the future.
-            #
-            # Prior to creating the index, an attempt is made to preemptively
-            # delete it in case it already exists. This workaround is only
-            # necessary because there are (many, at the time of this writing)
-            # existing tests that create indexes but do not delete them
-            # afterwards.
-            try:
-                manager.index_delete(index_name)
-            except NotFoundError:
-                pass
-            # ------------------------------------------------------------------
-            operation.run()
-
-    def cleanup_func():
-        for operation in operations.values():
-            operation.reverse_run()
-
     comment = f"created for {test.__module__}.{test.__qualname__}"
     operations = _index_operations(requires, comment)
     if isclass(test):
-        test = _add_setup_and_cleanup(test, setup_class, setup_func, cleanup_func)
+        test = _add_setup_and_cleanup(test, setup_class, operations)
     else:
         if setup_class:
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
-        test = _decorate_test_function(test, setup_func, cleanup_func)
+        test = _decorate_test_function(test, operations)
     return es_test_attr(test)
 
 
@@ -180,41 +159,47 @@ def _index_operations(adapters, comment):
     return operations
 
 
-def _decorate_test_function(test, setup_func, cleanup_func):
+def _decorate_test_function(test, operations):
 
     @wraps(test)
     def wrapper(*args, **kw):
-        setup_func()
+        created = []
         try:
+            for index_name, operation in operations.items():
+                _run_create_index_operation(index_name, operation)
+                created.append(operation)
             return test(*args, **kw)
         finally:
-            cleanup_func()
+            for operation in created:
+                operation.reverse_run()
 
     return wrapper
 
 
-def _add_setup_and_cleanup(test_class, setup_class, setup_func, cleanup_func):
-    """Decorates ``test_class.setUp[Class]`` to call ``setup_func()`` and
-    ``test_class.add[Class]Cleanup(cleanup_func)``.
+def _add_setup_and_cleanup(test_class, setup_class, operations):
+    """Decorates ``test_class.setUp[Class]`` to create Elasticsearch index(es)
+    and clean them up afterwards.
 
     :param test_class: the test case class being decorated
-    :param setup_class: whether or not the *class* methods (e.g.
-        ``setUpClass()`` and ``addClassCleanup()``) should be used.
-    :param setup_func: a callable that performs the Elastic index setup
-    :param cleanup_func: a callable that tears down what ``setup_func`` did
+    :param operations: a dictionary of ``CreateIndex`` operations (keyed by
+        index name) to use for creating and cleaning up the required Elastic
+        index(es).
     """
 
     def setup_decorator(setup):
         @wraps(setup)
         def wrapper(self, *args, **kw):
             if setup_class:
-                cleanup_args = (cleanup_func,)
+                cleanup_args = []
                 cleanup_meth = "addClassCleanup"
             else:
-                cleanup_args = (self, cleanup_func)
+                cleanup_args = [self]
                 cleanup_meth = "addCleanup"
-            setup_func()
-            getattr(test_class, cleanup_meth)(*cleanup_args)
+            add_cleanup = getattr(test_class, cleanup_meth)
+            for index_name, operation in operations.items():
+                _run_create_index_operation(index_name, operation)
+                # only add a cleanup after the index is successfully created
+                add_cleanup(*(cleanup_args + [operation.reverse_run]))
             if setup is not None:
                 # call the existing 'setUp[Class]()' method
                 return setup(self, *args, **kw)
@@ -237,6 +222,22 @@ def _add_setup_and_cleanup(test_class, setup_class, setup_func, cleanup_func):
         decorated = setup_decorator(func)
     setattr(test_class, func_name, decorated)
     return test_class
+
+
+def _run_create_index_operation(index_name, operation):
+    # --------------------------------------------------------------------------
+    # TODO: This preemptive delete will be removed in the future.
+    #
+    # Prior to creating the index, an attempt is made to preemptively delete it
+    # in case it already exists. This workaround is only necessary because there
+    # are (many, at the time of this writing) existing tests that create indexes
+    # but do not delete them afterwards.
+    try:
+        manager.index_delete(index_name)
+    except NotFoundError:
+        pass
+    # --------------------------------------------------------------------------
+    operation.run()
 
 
 @contextmanager
