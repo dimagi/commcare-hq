@@ -403,9 +403,12 @@ class TableauAPISession(object):
                 + f'/sites/{self.site_id}/groups/{group_id}/users?pageSize={page_size}&pageNumber={page_number}'),
                 {}
             )
-            tableau_users += response_body['users']['user']
+            # If it's the first page, grab the total user count.
             if page_number == 1:
                 total_users = int(response_body['pagination']['totalAvailable'])
+                if total_users == 0:
+                    return []
+            tableau_users += response_body['users']['user']
             page_number += 1
         return tableau_users
 
