@@ -1,7 +1,6 @@
 import io
 import re
 from collections import defaultdict
-from looseversion import LooseVersion
 
 from django.utils.translation import gettext as _
 
