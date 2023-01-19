@@ -41,7 +41,7 @@ from corehq.motech.generic_inbound.utils import (
     make_processing_attempt,
     reprocess_api_request,
 )
-from corehq.util import reverse
+from corehq.util import reverse, as_text
 from corehq.util.view_utils import json_error
 
 
@@ -210,7 +210,7 @@ def _log_api_request(api, request, response):
         username=request.couch_user.username,
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),
-        request_body=request.body.decode('utf-8'),
+        request_body=as_text(request.body),
         request_headers=get_standard_headers(request.META),
         request_ip=get_ip(request),
     )
