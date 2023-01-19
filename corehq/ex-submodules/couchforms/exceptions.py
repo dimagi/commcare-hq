@@ -51,7 +51,7 @@ class EmptyPayload(BadSubmissionRequest):
 class PayloadTooLarge(BadSubmissionRequest):
     def __init__(self):
         super().__init__(
-            "Form exceeds 50MB size limit\n",
+            "Form exceeds 10MB size limit\n",
             413
         )
 
