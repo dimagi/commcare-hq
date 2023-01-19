@@ -1500,7 +1500,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1563,9 +1562,6 @@ COUCHDB_APPS = [
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
 
-    # fixtures
-    ('fixtures', FIXTURES_DB),
-
     # domains
     ('domain', DOMAINS_DB),
 
@@ -1576,7 +1572,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
