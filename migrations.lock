@@ -346,7 +346,8 @@ enterprise
  0003_enterprisepermissions_modify_account
  0004_enterprisemobileworkersettings
 es
- 0001_add_tombstones
+ 0001_bootstrap_es_indexes
+ 0002_add_tombstones
 export
  0001_initial
  0002_datafile
@@ -701,6 +702,7 @@ repeaters
  0009_add_create_update_info
  00010_add_repeater_name
  0011_alter_sqlrepeater_name
+ 00012_create_default_names_for_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -813,6 +815,7 @@ sms
  0053_alter_messagingsubevent_date_last_activity
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
+ 0056_backfill_sms_event_date
 smsbillables
  0001_initial
  0002_bootstrap

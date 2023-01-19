@@ -108,7 +108,7 @@ from corehq.form_processor.models import (
     CommCareCase,
     XFormInstance,
 )
-from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import ONE_MB, REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from corehq.motech.repeaters.optionvalue import OptionValue
@@ -187,6 +187,7 @@ class RepeaterSuperProxy(models.Model):
         # If repeater_id is not set then set one
         if not self.repeater_id:
             self.repeater_id = uuid.uuid4().hex
+        self.name = self.name or self.connection_settings.name
         return super().save(*args, **kwargs)
 
     def __new__(cls, *args, **kwargs):
@@ -282,11 +283,6 @@ class SQLRepeater(RepeaterSuperProxy):
 
     _has_config = False
 
-    @property
-    def repeater_name(self):
-        # This is a temporary name change. We can't have the 'name' property and the name attribute at the same
-        # time. This method/property will be removed in a subsequent PR.
-        return self.connection_settings.name
 
     @cached_property
     def _optionvalue_fields(self):
@@ -1049,7 +1045,7 @@ class RepeatRecord(Document):
     def _format_response(response):
         if not is_response(response):
             return None
-        response_body = getattr(response, "text", "")
+        response_body = getattr(response, "text", "")[:ONE_MB]
         return '{}: {}.\n{}'.format(
             response.status_code, response.reason, response_body)
 
@@ -1426,7 +1422,7 @@ def has_failed(record):
 def format_response(response) -> Optional[str]:
     if not is_response(response):
         return None
-    response_text = getattr(response, "text", "")
+    response_text = getattr(response, "text", "")[:ONE_MB]
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'
     return f'{response.status_code}: {response.reason}'

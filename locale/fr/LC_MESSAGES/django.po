@@ -39113,12 +39113,12 @@ msgstr ""
 msgid "Please map CommCare values to DHIS2 data elements."
 msgstr ""
 
-#: corehq/motech/dhis2/repeaters.py
-msgid "Forward Cases as DHIS2 Tracked Entities"
-msgstr ""
-
 #: corehq/motech/dhis2/repeaters.py corehq/motech/dhis2/views.py
 msgid "Forward Forms to DHIS2 as Anonymous Events"
+msgstr ""
+
+#: corehq/motech/dhis2/repeaters.py
+msgid "Forward Cases as DHIS2 Tracked Entities"
 msgstr ""
 
 #: corehq/motech/dhis2/tasks.py
@@ -39759,10 +39759,6 @@ msgstr ""
 msgid ""
 "Items to add to the end of the URL. Please see the documentation for more "
 "information."
-msgstr ""
-
-#: corehq/motech/repeaters/expression/repeaters.py
-msgid "Configurable Case Forwarder"
 msgstr ""
 
 #: corehq/motech/repeaters/expression/repeaters.py

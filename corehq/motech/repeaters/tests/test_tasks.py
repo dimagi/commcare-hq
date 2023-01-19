@@ -35,7 +35,7 @@ class TestDeleteOldRequestLogs(TestCase):
 
     def test_raw_delete_logs_old(self):
         log = RequestLog.objects.create(domain=DOMAIN)
-        log.timestamp = datetime.utcnow() - timedelta(days=91)
+        log.timestamp = datetime.utcnow() - timedelta(days=43)
         log.save()  # Replace the value set by auto_now_add=True
         delete_old_request_logs.apply()
 
@@ -44,7 +44,7 @@ class TestDeleteOldRequestLogs(TestCase):
 
     def test_raw_delete_logs_new(self):
         log = RequestLog.objects.create(domain=DOMAIN)
-        log.timestamp = datetime.utcnow() - timedelta(days=89)
+        log.timestamp = datetime.utcnow() - timedelta(days=41)
         log.save()
         delete_old_request_logs.apply()
 
@@ -133,7 +133,7 @@ class TestProcessRepeater(TestCase):
         with patch('corehq.motech.repeaters.models.simple_request') as post_mock, \
                 patch('corehq.motech.repeaters.tasks.metrics_counter'), \
                 form_context(PAYLOAD_IDS):
-            post_mock.return_value = Mock(status_code=400, reason='Bad request')
+            post_mock.return_value = Mock(status_code=400, reason='Bad request', text='')
             process_repeater(self.sql_repeater.id)
 
         # Only the first record was attempted, the rest are still pending

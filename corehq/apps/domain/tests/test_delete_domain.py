@@ -226,7 +226,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(ExpectedCallback.objects.filter(domain=domain).count(), number)
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
-        self.assertEqual(MessagingSubEvent.objects.filter(parent__domain=domain).count(), number)
+        self.assertEqual(MessagingSubEvent.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
