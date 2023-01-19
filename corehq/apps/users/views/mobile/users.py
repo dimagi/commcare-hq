@@ -71,7 +71,7 @@ from corehq.apps.users.account_confirmation import (
 )
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.bulk_download import get_domains_from_user_filters
+from corehq.apps.users.bulk_download import get_domains_from_user_filters, load_memoizer
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.decorators import (
     require_can_edit_commcare_users,
@@ -1380,6 +1380,7 @@ def _count_users(request, domain, user_type):
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
             user_count += count_mobile_users_by_filters(current_domain, user_filters)
+            user_count += len(load_memoizer(current_domain).groups)
         else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
