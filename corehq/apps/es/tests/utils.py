@@ -125,23 +125,15 @@ def es_test(test=None, requires=[], setup_class=False):
         return es_test_attr(test)
 
     def setup_func():
-        comment = f"created for {test.__module__}.{test.__qualname__}"
-        for adapter in iter_all_doc_adapters():
-            setup_test_index(adapter, comment)
+        for operation in operations.values():
+            operation.run()
 
     def cleanup_func():
-        for adapter in iter_all_doc_adapters():
-            cleanup_test_index(adapter)
+        for operation in operations.values():
+            operation.reverse_run()
 
-    def iter_all_doc_adapters():
-        for adapter in adapters:
-            if isinstance(adapter, ElasticMultiplexAdapter):
-                yield adapter.primary
-                yield adapter.secondary
-            else:
-                yield adapter
-
-    adapters = list(requires)
+    comment = f"created for {test.__module__}.{test.__qualname__}"
+    operations = _index_operations(requires, comment)
     if isclass(test):
         test = _add_setup_and_cleanup(test, setup_class, setup_func, cleanup_func)
     else:
@@ -149,6 +141,29 @@ def es_test(test=None, requires=[], setup_class=False):
             raise ValueError(f"keyword 'setup_class' is for class decorators, test={test}")
         test = _decorate_test_function(test, setup_func, cleanup_func)
     return es_test_attr(test)
+
+
+def _index_operations(adapters, comment):
+
+    def iter_all_adapters():
+        for adapter in adapters:
+            if isinstance(adapter, ElasticMultiplexAdapter):
+                yield adapter.primary
+                yield adapter.secondary
+            else:
+                yield adapter
+
+    operations = {}
+    for adapter in iter_all_adapters():
+        operations[adapter.index_name] = CreateIndex(
+            adapter.index_name,
+            adapter.type,
+            adapter.mapping,
+            adapter.analysis,
+            adapter.settings_key,
+            comment=comment,
+        )
+    return operations
 
 
 def _decorate_test_function(test, setup_func, cleanup_func):
@@ -208,23 +223,6 @@ def _add_setup_and_cleanup(test_class, setup_class, setup_func, cleanup_func):
         decorated = setup_decorator(func)
     setattr(test_class, func_name, decorated)
     return test_class
-
-
-@nottest
-def setup_test_index(adapter, comment):
-    CreateIndex(
-        adapter.index_name,
-        adapter.type,
-        adapter.mapping,
-        adapter.analysis,
-        adapter.settings_key,
-        comment=comment,
-    ).run()
-
-
-@nottest
-def cleanup_test_index(adapter):
-    manager.index_delete(adapter.index_name)
 
 
 @contextmanager
