@@ -7,6 +7,13 @@ from time import time
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import Application
+from corehq.apps.domain_migration_flags.api import (
+    ALL_DOMAINS,
+    migration_in_progress,
+    set_migration_complete,
+    set_migration_started,
+    get_migration_complete
+)
 from corehq.util.couch import DocUpdate, iter_update
 
 logger = logging.getLogger('app_migration')
@@ -77,10 +84,26 @@ class AppMigrationCommandBase(BaseCommand):
             default=False,
             help='''Only include deleted apps in the migration.''',
         )
+        parser.add_argument(
+            '--only-run-once',
+            action='store_true',
+            default=False,
+            help='''If the migration has been run with this flag before and completed succesfully, this command
+                    will exit without attempting to migrate.''',
+        )
 
     def handle(self, **options):
-        start_time = time()
         self.options = options
+
+        if self.options.get('only_run_once', False) and not self.is_dry_run:
+            self.command_name = self.__module__[self.__module__.rindex('.') + 1:]
+            if get_migration_complete(ALL_DOMAINS, self.command_name):
+                logger.info("This migration command has already been run on this environment. Exiting...")
+                return
+            elif not migration_in_progress(ALL_DOMAINS, self.command_name):
+                set_migration_started(ALL_DOMAINS, self.command_name)
+
+        self.start_time = time()
         self.check_filenames_set()
 
         if self.options['domain']:
@@ -98,10 +121,7 @@ class AppMigrationCommandBase(BaseCommand):
             logger.info('migrating {} apps{}'.format(len(app_ids), f" in {domain}" if domain else ""))
             iter_update(Application.get_db(), self._migrate_app, app_ids, verbose=True, chunksize=self.chunk_size)
             domain_list_position = self.increment_progress(domain_list_position)
-        self.remove_storage_files()
-        end_time = time()
-        execution_time_seconds = end_time - start_time
-        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
+        self.end_migration()
 
     @property
     def is_dry_run(self):
@@ -190,3 +210,14 @@ class AppMigrationCommandBase(BaseCommand):
             os.remove(self.DOMAIN_PROGRESS_NUMBER_FILENAME)
         except FileNotFoundError:
             pass
+
+    def end_migration(self):
+        self.remove_storage_files()
+        end_time = time()
+        execution_time_seconds = end_time - self.start_time
+
+        if (not self.is_dry_run and self.options.get('only_run_once', False)
+           and migration_in_progress(ALL_DOMAINS, self.command_name)):
+            set_migration_complete(ALL_DOMAINS, self.command_name)
+
+        logger.info(f"Completed in {timedelta(seconds=execution_time_seconds)}.")
