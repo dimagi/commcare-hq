@@ -13,6 +13,7 @@ from casexml.apps.phone.xml import get_registration_element_data
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
+from corehq.motech.const import FIFTY_MB
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.util import as_text
 from corehq.util.view_utils import get_form_or_404
@@ -36,8 +37,16 @@ class ApiRequest:
     @classmethod
     def from_request(cls, request):
         try:
-            request_json = json.loads(as_text(request.body))
-        except (UnicodeDecodeError, json.JSONDecodeError):
+            body = as_text(request.body)
+        except UnicodeDecodeError:
+            raise GenericInboundUserError(_("Unable to decode request body"))
+
+        if len(body) > FIFTY_MB:
+            raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
+
+        try:
+            request_json = json.loads(body)
+        except json.JSONDecodeError:
             raise GenericInboundUserError(_("Payload must be valid JSON"))
         return cls(
             domain=request.domain,
