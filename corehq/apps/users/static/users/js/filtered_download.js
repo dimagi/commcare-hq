@@ -36,7 +36,7 @@ hqDefine('users/js/filtered_download', [
             if (self.count() === null) {
                 return "<i class='fa fa-spin fa-spinner'></i>";
             }
-            var template = self.count()[USER_COUNT] === 1 ? gettext("Download <%- user_count %> user") : gettext("Download <%- user_count %> users");
+            var template = self.count()[USER_COUNT] === 1 ? gettext("<%- user_count %> user") : gettext("<%- user_count %> users");
             if (self.count()[1] !== 0) {
                 template += self.count()[GROUPS_COUNT] === 1 ? gettext(" and <%- groups_count %> group") : gettext(" and <%- groups_count %> groups");
             }
