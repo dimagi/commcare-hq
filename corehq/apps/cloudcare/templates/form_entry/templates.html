@@ -17,13 +17,13 @@
            clickable: collapsible
         },
         attr: collapsible ? {
-                role: 'button',
+                'role': 'button',
                 'aria-expanded': showChildren() ? 'true' : 'false',
                 'aria-labelledby': captionId(),
-                tabindex: ko.utils.unwrapObservable($data.caption_markdown) || caption() ? '0' : '-1'
+                'tabindex': ko.utils.unwrapObservable($data.caption_markdown) || caption() ? '0' : '-1'
               } : {
                 'aria-labelledby': captionId(),
-                tabindex: ko.utils.unwrapObservable($data.caption_markdown) || caption() ? '0' : '-1'
+                'tabindex': ko.utils.unwrapObservable($data.caption_markdown) || caption() ? '0' : '-1'
               },
         click: toggleChildren,
         event: {keypress: keyPressAction}">
