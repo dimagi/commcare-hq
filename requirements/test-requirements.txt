@@ -274,7 +274,7 @@ jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
-jsonschema==3.2.0
+jsonschema==4.17.3
     # via -r base-requirements.in
 jwcrypto==1.4
     # via django-oauth-toolkit
@@ -333,6 +333,8 @@ pillow==9.3.0
     # via
     #   -r base-requirements.in
     #   reportlab
+pip==21.3.1
+    # via pip-tools
 pip-tools==6.8.0
     # via -r test-requirements.in
 ply==3.11
@@ -471,6 +473,14 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.9.0
     # via -r base-requirements.in
+setuptools==65.5.1
+    # via
+    #   django-websocket-redis
+    #   gevent
+    #   gunicorn
+    #   pip-tools
+    #   zope-event
+    #   zope-interface
 sh==1.14.2
     # via -r base-requirements.in
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
@@ -499,7 +509,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   jsonschema
     #   mando
     #   pyjwkest
     #   python-dateutil
@@ -599,16 +608,3 @@ zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0
     # via gevent
-
-# The following packages are considered to be unsafe in a requirements file:
-pip==21.3.1
-    # via pip-tools
-setuptools==65.5.1
-    # via
-    #   django-websocket-redis
-    #   gevent
-    #   gunicorn
-    #   jsonschema
-    #   pip-tools
-    #   zope-event
-    #   zope-interface
