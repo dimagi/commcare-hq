@@ -32,7 +32,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.ElasticUserUpdater.__call__')
+    @patch('corehq.apps.users.signals._update_user_in_es')
     def test_commcareuser_save(self, send_to_es, invalidate, sync_usercases,
                                update_hubspot_properties):
         CommCareUser(username='test').save()
@@ -45,7 +45,7 @@ class TestUserSignals(SimpleTestCase):
     @patch('corehq.apps.analytics.signals.update_hubspot_properties.delay')
     @patch('corehq.apps.callcenter.tasks.sync_usercases')
     @patch('corehq.apps.cachehq.signals.invalidate_document')
-    @patch('corehq.apps.users.signals.ElasticUserUpdater.__call__')
+    @patch('corehq.apps.users.signals._update_user_in_es')
     def test_webuser_save(self, send_to_es, invalidate, sync_usercases,
                           update_hubspot_properties):
         WebUser().save()
@@ -127,10 +127,10 @@ class TestElasticSyncPatch(SimpleTestCase):
 
     @sync_users_to_es()
     def test_user_sync_is_enabled_with_decorator(self):
-        def passthru(self, value):
-            return value
+        def simple_doc(user):
+            return user.to_json()
         user = self.MockUser()
         self.assertFalse(user_adapter.exists(user.user_id))
-        with patch("corehq.apps.users.signals.ElasticUserUpdater.transform", passthru):
+        with patch("corehq.apps.users.signals._transform_for_es", simple_doc):
             update_user_in_es(None, user)
         self.assertTrue(user_adapter.exists(user.user_id))
