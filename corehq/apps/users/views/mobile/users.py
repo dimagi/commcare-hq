@@ -96,7 +96,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
-    WebUser,
+    check_and_send_limit_email
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -149,8 +149,6 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "/Create+and+Manage+CommCare+Mobile+Workers#Createand"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
-ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
-                            "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
 DEFAULT_USER_LIST_LIMIT = 10
 BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
@@ -763,44 +761,11 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             send_account_confirmation_sms_if_necessary(couch_user)
 
         plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
-        self.check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
+        check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,
         }
-
-    @staticmethod
-    def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
-        ENTERPRISE_LIMIT = -1
-        if plan_limit == ENTERPRISE_LIMIT:
-            return None
-
-        WARNING_PERCENT = 0.9
-        if user_count >= plan_limit > prev_count:
-            at_capacity = True
-        elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
-            at_capacity = False
-        else:
-            return None
-
-        billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
-        admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
-
-        if at_capacity:
-            subject = _("User count has reached the Plan limit for {}").format(domain)
-        else:
-            subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
-        send_html_email_async(
-            subject,
-            admins + billing_admins,
-            render_to_string('users/email/user_limit_notice.html', context={
-                'at_capacity': at_capacity,
-                'url': ADDITIONAL_USERS_PRICING,
-                'user_count': user_count,
-                'plan_limit': plan_limit,
-            }),
-        )
-        return None
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']

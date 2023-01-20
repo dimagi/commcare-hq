@@ -3062,3 +3062,38 @@ class DeactivateMobileWorkerTrigger(models.Model):
         if not existing_trigger.exists():
             return None
         return existing_trigger.first().deactivate_after
+
+
+def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
+    ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                                "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
+    ENTERPRISE_LIMIT = -1
+    if plan_limit == ENTERPRISE_LIMIT:
+        return
+
+    WARNING_PERCENT = 0.9
+    if user_count >= plan_limit > prev_count:
+        at_capacity = True
+    elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
+        at_capacity = False
+    else:
+        return
+
+    billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
+    admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
+
+    if at_capacity:
+        subject = _("User count has reached the Plan limit for {}").format(domain)
+    else:
+        subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
+    send_html_email_async(
+        subject,
+        admins + billing_admins,
+        render_to_string('users/email/user_limit_notice.html', context={
+            'at_capacity': at_capacity,
+            'url': ADDITIONAL_USERS_PRICING,
+            'user_count': user_count,
+            'plan_limit': plan_limit,
+        }),
+    )
+    return

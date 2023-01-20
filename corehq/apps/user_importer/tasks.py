@@ -11,7 +11,7 @@ from soil.progress import get_task_progress
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
 from corehq.apps.user_importer.models import UserUploadRecord
-from corehq.apps.users.models import WebUser
+from corehq.apps.users.models import WebUser, check_and_send_limit_email
 
 USER_UPLOAD_CHUNK_SIZE = 1000
 
@@ -103,7 +103,6 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
     def _update_progress(value, start=0):
         DownloadBase.set_progress(task, start + value, total)
 
-    from corehq.apps.users.views.mobile.users import MobileWorkerListView
     plan_limit, prev_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
 
     if is_web_upload:
@@ -124,7 +123,7 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
     plan_limit, post_user_count = Subscription.get_plan_and_user_count_by_domain(domain)
-    MobileWorkerListView.check_and_send_limit_email(domain, plan_limit, post_user_count, prev_user_count)
+    check_and_send_limit_email(domain, plan_limit, post_user_count, prev_user_count)
 
     results = {
         'errors': group_results['errors'] + user_results['errors'],
