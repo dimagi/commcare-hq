@@ -923,10 +923,12 @@ class FormBaseValidator(object):
 
         errors = []
         meta = self.error_meta(module)
-
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
+            if not self.form.get_module().is_multi_select() and module.root_module and \
+                    module.root_module.is_multi_select():
+                errors.append(dict(type='multi select form links', **meta))
             for form_link in self.form.form_links:
                 if form_link.form_id:
                     try:
