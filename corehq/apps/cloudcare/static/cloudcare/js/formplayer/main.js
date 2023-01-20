@@ -2,12 +2,12 @@
 hqDefine("cloudcare/js/formplayer/main", function () {
     let initSentry = function () {
         let initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-        const dsn = initialPageData('sentry_dsn');
-        if (dsn) {
+        const sentryConfig = initialPageData('sentry');
+        if (sentryConfig.dsn) {
             Sentry.init({
-                dsn: dsn,
-                environment: initialPageData('sentry_environment'),
-                release: initialPageData('sentry_release'),
+                dsn: sentryConfig.dsn,
+                environment: sentryConfig.environment,
+                release: sentryConfig.release,
                 initialScope: {
                     tags: { "domain": initialPageData('domain') },
                     user: { "username": initialPageData('username') },
