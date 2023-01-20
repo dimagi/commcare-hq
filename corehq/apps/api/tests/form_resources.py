@@ -3,24 +3,25 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.test import TestCase
-from django.utils.http import urlencode
 from django.urls import reverse
+from django.utils.http import urlencode
+
+from django_prbac.models import Role
 
 from casexml.apps.case.mock import CaseBlock
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_4
+from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.tests.utils import create_form_for_test
-from corehq.apps.es.forms import form_adapter
-from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.apps.users.models import WebUser
-from corehq.apps.domain.models import Domain
-from django_prbac.models import Role
+from corehq.form_processor.tests.utils import create_form_for_test
+from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.util.test_utils import flag_enabled
 
 from .utils import APIResourceTest, FakeFormESView
-from corehq.util.test_utils import flag_enabled
 
 
 @es_test(requires=[form_adapter])
