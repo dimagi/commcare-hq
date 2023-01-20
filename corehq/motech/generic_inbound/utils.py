@@ -36,13 +36,13 @@ class ApiRequest:
 
     @classmethod
     def from_request(cls, request):
+        if int(request.META.get('CONTENT_LENGTH') or 0) > FIFTY_MB:
+            raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
+
         try:
             body = as_text(request.body)
         except UnicodeDecodeError:
             raise GenericInboundUserError(_("Unable to decode request body"))
-
-        if len(body) > FIFTY_MB:
-            raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
 
         try:
             request_json = json.loads(body)
