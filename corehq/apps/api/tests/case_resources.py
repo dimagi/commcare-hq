@@ -9,10 +9,10 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.apps.es.cases import case_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import transform_case_for_elasticsearch
 
