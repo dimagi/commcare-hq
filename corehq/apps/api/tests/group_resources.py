@@ -1,9 +1,9 @@
 import json
 
 from corehq.apps.api.resources import v0_5
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
-from corehq.apps.es.groups import group_adapter
 
 from .utils import APIResourceTest
 
