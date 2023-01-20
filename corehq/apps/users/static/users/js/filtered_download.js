@@ -16,6 +16,9 @@ hqDefine('users/js/filtered_download', [
     function FiltersModel(options) {
         var self = {};
 
+        const USER_COUNT = 0;
+        const GROUPS_COUNT = 1;
+
         self.role_id = ko.observable();
         self.search_string = ko.observable();
         self.location_id = ko.observable();
@@ -33,9 +36,13 @@ hqDefine('users/js/filtered_download', [
             if (self.count() === null) {
                 return "<i class='fa fa-spin fa-spinner'></i>";
             }
-            var template = self.count() === 1 ? gettext("Download <%- count %> user") : gettext("Download <%- count %> users");
+            var template = self.count()[USER_COUNT] === 1 ? gettext("Download <%- user_count %> user") : gettext("Download <%- user_count %> users");
+            if (self.count()[1] !== 0) {
+                template += self.count()[GROUPS_COUNT] === 1 ? gettext(" and <%- groups_count %> group") : gettext(" and <%- groups_count %> groups");
+            }
             return _.template(template)({
-                count: self.count(),
+                user_count: self.count()[USER_COUNT],
+                groups_count: self.count()[GROUPS_COUNT],
             });
         });
 

@@ -1667,10 +1667,12 @@ class UserFilterForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Download All Users"),
+                    _("Download"),
                     type="submit",
                     css_class="btn btn-primary",
-                    data_bind="html: buttonHTML",
+                ),
+                crispy.HTML(
+                    "<p style='display:inline' data-bind='html: buttonHTML'>Calculating download size.</p>"
                 )
             ),
         )
