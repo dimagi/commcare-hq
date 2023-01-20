@@ -26,8 +26,8 @@ from corehq.apps.data_analytics.malt_generator import (
 )
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
-from corehq.apps.es.forms import form_adapter
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
