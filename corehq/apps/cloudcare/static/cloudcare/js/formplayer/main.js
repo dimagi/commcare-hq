@@ -1,5 +1,29 @@
+/* globals Sentry */
 hqDefine("cloudcare/js/formplayer/main", function () {
+    let initSentry = function () {
+        let initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+        const dsn = initialPageData('sentry_dsn');
+        if (dsn) {
+            Sentry.init({
+                dsn: dsn,
+                environment: initialPageData('sentry_environment'),
+                release: initialPageData('sentry_release'),
+                initialScope: {
+                    tags: { "domain": initialPageData('domain') },
+                    user: { "username": initialPageData('username') },
+                },
+                integrations: [
+                    new Sentry.Integrations.Breadcrumbs({
+                        dom: false,
+                    }),
+                ],
+            });
+        }
+    };
+
     $(function () {
+        initSentry();
+
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
             toggles = hqImport("hqwebapp/js/toggles"),
             FormplayerFrontEnd = hqImport("cloudcare/js/formplayer/app"),
