@@ -30,10 +30,10 @@ from corehq.apps.app_manager.views.forms import (
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.apps.es.apps import app_adapter
 from corehq.util.test_utils import flag_enabled, timelimit
 
 from .app_factory import AppFactory
