@@ -38,7 +38,7 @@ class ApiRequest:
 
     @classmethod
     def from_request(cls, request):
-        if int(request.META.get('CONTENT_LENGTH') or 0) > settings.MAX_UPLOAD_SIZE:
+        if _request_too_large(request):
             raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
 
         try:
@@ -165,6 +165,10 @@ def revert_api_request_from_form(form_id):
 
 
 def log_api_request(api, request, response):
+    if _request_too_large(request):
+        body = '<truncated>'
+    else:
+        body = as_text(request.body)
     log = RequestLog.objects.create(
         domain=request.domain,
         api=api,
@@ -173,8 +177,12 @@ def log_api_request(api, request, response):
         username=request.couch_user.username,
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),
-        request_body=as_text(request.body),
+        request_body=body,
         request_headers=get_standard_headers(request.META),
         request_ip=get_ip(request),
     )
     make_processing_attempt(response, log)
+
+
+def _request_too_large(request):
+    return int(request.META.get('CONTENT_LENGTH') or 0) > settings.MAX_UPLOAD_SIZE
