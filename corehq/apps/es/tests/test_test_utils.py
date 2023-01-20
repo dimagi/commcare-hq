@@ -25,6 +25,7 @@ class TestSetupAndCleanups(SimpleTestCase):
         test = es_test(self.TestSimpleTestCase)()
         test.setUp()
         with patch.object(manager, "index_delete") as mock:
+            test.tearDown()
             test.doCleanups()
         mock.assert_not_called()
 
@@ -64,6 +65,7 @@ def test_setup_tolerates_existing_index():
     tolerant_test = TestCatsRequired()
     tolerant_test.setUp()  # does not raise "index_already_exists_exception"
     tolerant_test.test_index_exists()
+    tolerant_test.tearDown()
     tolerant_test.doCleanups()
     # tolerant test still cleans up
     assert_not_index_exists(cats_adapter)
@@ -80,6 +82,7 @@ def test_setup_cleanup_index():
     test = Test()
     test.setUp()
     test.test_index_exists()
+    test.tearDown()
     test.doCleanups()
     assert_not_index_exists(pigs_adapter)
 
@@ -94,6 +97,7 @@ def test_setup_cleanup_class_index():
     assert_not_index_exists(pigs_adapter)
     Test.setUpClass()
     Test().test_index_exists()
+    Test.tearDownClass()
     Test.doClassCleanups()
     assert_not_index_exists(pigs_adapter)
 
