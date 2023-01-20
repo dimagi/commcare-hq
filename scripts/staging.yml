@@ -71,7 +71,6 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
-    - cs/SC-2360-auto-update-rule-overwrites-case-property
     #- jls/web-apps-requirejs+sk/sentry-js
     - sk/sentry-js  # Simon Dec 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
@@ -86,7 +85,8 @@ branches:
     - ad/user-syncing-task # Addison Jan 13
     - ad/test-incomplete-forms-hotfix # AD Jan 13
     - cs/configurable_repeater_name # Chris jan 17
-    - ap/bootstrap-es-indexes # Amit Jan 18
     - jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 18
     - em/case-search-filter-feature-flag # Evan Jan 18
+    - akj/ush-2613-commcare-user-case # Akash Jan 19
+    - ad/hide-incomplete-forms # Addison Jan 19
 submodules: { }

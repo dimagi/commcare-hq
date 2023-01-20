@@ -277,7 +277,6 @@ class LookupTableRowOwner(models.Model):
     owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
     owner_id = CharIdField(max_length=126, default=None)
     row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
-    couch_id = CharIdField(max_length=126, null=True, db_index=True)
 
     class Meta:
         app_label = 'fixtures'
