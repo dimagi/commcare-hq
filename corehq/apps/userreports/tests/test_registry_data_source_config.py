@@ -2,15 +2,20 @@ import datetime
 from unittest.mock import MagicMock, create_autospec, patch
 
 from django.test import SimpleTestCase, TestCase
+
 from jsonobject.exceptions import BadValueError
 
 from corehq.apps.domain.shortcuts import create_user
 from corehq.apps.registry.exceptions import RegistryAccessDenied
 from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.registry.tests.utils import create_registry_for_test, Invitation
+from corehq.apps.registry.tests.utils import (
+    Invitation,
+    create_registry_for_test,
+)
 from corehq.apps.userreports.models import RegistryDataSourceConfiguration
 from corehq.apps.userreports.tests.utils import (
-    get_sample_doc_and_indicators, get_sample_registry_data_source,
+    get_sample_doc_and_indicators,
+    get_sample_registry_data_source,
 )
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
@@ -108,37 +113,40 @@ class RegistryDataSourceConfigurationDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(RegistryDataSourceConfigurationDbTest, cls).setUpClass()
+        super().setUpClass()
         cls.user = create_user("admin", "123")
+        cls.addClassCleanup(cls.user.delete, None, None)
 
         cls.owning_domain = 'foo_bar'
         cls.registry = create_registry_for_test(cls.user, cls.owning_domain, invitations=[
             Invitation('foo'), Invitation('bar'),
         ], name='foo_bar')
 
-        for domain, table in [('foo', 'foo1'), ('foo', 'foo2'), ('bar', 'bar1')]:
-            RegistryDataSourceConfiguration(
-                domain=domain, table_id=table,
-                referenced_doc_type='CommCareCase', registry_slug=cls.registry.slug
-            ).save()
+        for domain, table in [('foo', 'foo1'),
+                              ('foo', 'foo2'),
+                              ('bar', 'bar1')]:
+            config = RegistryDataSourceConfiguration(
+                domain=domain,
+                table_id=table,
+                referenced_doc_type='CommCareCase',
+                registry_slug=cls.registry.slug)
+            config.save()
+            cls.addClassCleanup(config.delete)
 
-    @classmethod
-    def tearDownClass(cls):
-        for config in RegistryDataSourceConfiguration.all():
-            config.delete()
-        super(RegistryDataSourceConfigurationDbTest, cls).tearDownClass()
-
-    def test_get_by_domain(self):
+    def test_by_domain_returns_relevant_report_configs(self):
         results = RegistryDataSourceConfiguration.by_domain('foo')
-        self.assertEqual(2, len(results))
-        for item in results:
-            self.assertTrue(item.table_id in ('foo1', 'foo2'))
+        self.assertEqual(len(results), 2)
+        self.assertEqual({r.table_id for r in results}, {'foo1', 'foo2'})
 
+    def test_by_domain_returns_empty(self):
         results = RegistryDataSourceConfiguration.by_domain('not-foo')
-        self.assertEqual(0, len(results))
+        self.assertEqual(results, [])
 
-    def test_get_all(self):
-        self.assertEqual(3, len(list(RegistryDataSourceConfiguration.all())))
+    def test_all_returns_expected_result(self):
+        results = list(RegistryDataSourceConfiguration.all())
+        self.assertEqual(len(results), 3)
+        self.assertEqual({r.table_id for r in results},
+                         {'foo1', 'foo2', 'bar1'})
 
     def test_registry_slug_is_required(self):
         with self.assertRaises(BadValueError):
@@ -148,14 +156,17 @@ class RegistryDataSourceConfigurationDbTest(TestCase):
 
     def test_registry_global_validation(self):
         # global config in owning domain
-        RegistryDataSourceConfiguration(
+        config = RegistryDataSourceConfiguration(
             domain=self.owning_domain, table_id='table', referenced_doc_type='CommCareCase',
             globally_accessible=True, registry_slug=self.registry.slug
-        ).save()
+        )
+        config.save()
+        self.addCleanup(config.delete)
 
         # global config in participating domain (not owner)
         with self.assertRaises(RegistryAccessDenied):
             RegistryDataSourceConfiguration(
-                domain='foo', table_id='table', referenced_doc_type='CommCareCase',
+                domain='foo', table_id='table',
+                referenced_doc_type='CommCareCase',
                 globally_accessible=True, registry_slug=self.registry.slug
             ).save()
