@@ -13,10 +13,12 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauAPISession, TableauUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
@@ -456,17 +458,22 @@ def add_tableau_user(domain, username):
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
-    user, created = TableauUser.objects.get_or_create(
-        server=session.tableau_connected_app.server,
-        username=username,
-        role='Viewer',
-    )
-    if not created:
-        return
-    new_id = session.create_user('HQ/' + username, 'Viewer')
-    user.tableau_user_id = new_id
-    user.save()
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user, created = TableauUser.objects.get_or_create(
+            server=session.tableau_connected_app.server,
+            username=username,
+            role=TableauUser.Roles.UNLICENSED.value,
+        )
+        if not created:
+            return
+        new_id = session.create_user(tableau_username(username), TableauUser.Roles.UNLICENSED.value)
+        user.tableau_user_id = new_id
+        user.save()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
 
 
 @atomic
@@ -474,15 +481,20 @@ def delete_tableau_user(domain, username):
     '''
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    id = user.tableau_user_id
-    # Delete on server before removing the object so that we still have the object in case the server deletion
-    # fails.
-    session.delete_user(id)
-    user.delete()
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        id = user.tableau_user_id
+        # Delete on server before removing the object so that we still have the object in case the server deletion
+        # fails.
+        session.delete_user(id)
+        user.delete()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
 
 
 @atomic

@@ -884,16 +884,7 @@ def remove_web_user(request, domain, couch_user_id):
     # if no user, very likely they just pressed delete twice in rapid succession so
     # don't bother doing anything.
     if user:
-        try:
-            record = user.delete_domain_membership(domain, create_record=True)
-        except (TableauAPIError, TableauUser.DoesNotExist) as e:
-            messages.error(request, _('''There was an error deleting the associated Tableau user.
-                                        Please contanct support if this problem persists.'''))
-            notify_exception(request, str(e), details={
-                'domain': domain,
-                'exception_type': type(e)
-            })
-            record = user.delete_domain_membership(domain, create_record=True, skip_tableau=True)
+        record = user.delete_domain_membership(domain, create_record=True)
         user.save()
         # web user's membership is bound to the domain, so log as a change for that domain
         log_user_change(by_domain=request.domain, for_domain=domain, couch_user=user,
