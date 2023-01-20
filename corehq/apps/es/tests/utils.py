@@ -170,7 +170,7 @@ def _decorate_test_function(test, operations):
                 created.append(operation)
             return test(*args, **kw)
         finally:
-            for operation in created:
+            for operation in reversed(created):
                 operation.reverse_run()
 
     return wrapper
