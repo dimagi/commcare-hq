@@ -20,6 +20,7 @@ hqDefine('cloudcare/js/sentry', [
                 integrations: [
                     new Sentry.Integrations.Breadcrumbs({
                         dom: false,
+                        console: false,
                     }),
                 ],
             });
