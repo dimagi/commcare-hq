@@ -17,6 +17,7 @@ from corehq.apps.custom_data_fields.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.users.analytics import update_analytics_indexes
 from corehq.apps.users.audit.change_messages import UserChangeMessage
@@ -33,13 +34,9 @@ from corehq.apps.users.role_utils import (
 )
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.const import USER_CHANGE_VIA_API
-from corehq.apps.es.users import user_adapter
 from corehq.util.es.testing import sync_users_to_es
 
-from ..resources.v0_5 import (
-    BadRequest,
-    UserDomainsResource,
-)
+from ..resources.v0_5 import BadRequest, UserDomainsResource
 from .utils import APIResourceTest
 
 
