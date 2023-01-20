@@ -23,7 +23,12 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     FormplayerFrontend.on("before:start", function (app, options) {
         // Make a get call if the csrf token isn't available when the page loads.
         if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get({url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }});
+            $.get({
+                url: options.formplayer_url + '/serverup',
+                global: false,
+                async: false,
+                xhrFields: { withCredentials: true },
+            });
         }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
