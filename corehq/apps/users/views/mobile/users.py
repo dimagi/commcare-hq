@@ -1379,8 +1379,9 @@ def _count_users(request, domain, user_type):
     (is_cross_domain, domains_list) = get_domains_from_user_filters(domain, user_filters)
     for current_domain in domains_list:
         if user_type == MOBILE_USER_TYPE:
-            user_count += count_mobile_users_by_filters(current_domain, user_filters)
-            user_count += len(load_memoizer(current_domain).groups)
+            user_count = count_mobile_users_by_filters(current_domain, user_filters)
+            group_count = len(load_memoizer(current_domain).groups)
+            user_count = (user_count, group_count)
         else:
             user_count += count_web_users_by_filters(current_domain, user_filters)
             user_count += count_invitations_by_filters(current_domain, user_filters)
