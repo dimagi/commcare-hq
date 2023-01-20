@@ -24,11 +24,7 @@ class BaseCalculatedPropertiesTest(TestCase):
         super(BaseCalculatedPropertiesTest, cls).setUpClass()
         cls.domain = Domain(name='test-b9289e19d819')
         cls.domain.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain.delete()
-        super(BaseCalculatedPropertiesTest, cls).tearDownClass()
+        cls.addClassCleanup(cls.domain.delete)
 
     def setUp(self):
         super().setUp()
