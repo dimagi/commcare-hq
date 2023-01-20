@@ -17,6 +17,8 @@ hqDefine('cloudcare/js/sentry', [
                     tags: { "domain": initialPageData.get('domain') },
                     user: { "username": initialPageData.get('username') },
                 },
+                // interim measure, ideally we would clear breadcrumbs between sessions
+                maxBreadcrumbs: 50,
                 integrations: [
                     new Sentry.Integrations.Breadcrumbs({
                         dom: false,
