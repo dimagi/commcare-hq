@@ -125,13 +125,22 @@ Label descriptions can be seen on the GitHub `labels`_ page or in the
 Reindex / migration
 ~~~~~~~~~~~~~~~~~~~
 Any PR that will require a database migration or some kind of data reindexing to be done
-must be labeled with the `reindex/migration` label. This label will get automatically applied
+must be labeled with the **reindex/migration** label. This label will get automatically applied
 if the PR changes `certain files`_ but it can also be added manually.
+
+It is necessary to manually add a `ReindexCouchViews`_ Django migration operation, which may
+also require adding a new migration file, if the **reindex/migration** label is added to a PR on
+account of Couch ``_design`` doc changes (or if a new Elasticsearch index is added, but this
+will soon change). A change log entry should be published in `commcare-cloud`_ to alert
+operators to run the migration before deploying if it may disrupt the normal deploy cycle (if it
+will run for a long time on any environment, for example).
 
 Any PR with this label will fail the `required-labels` check. This is intentional to prevent
 premature merging of the PR.
 
 .. _certain files: .github/labels.yml#L12-L13
+.. _ReindexCouchViews: corehq/ex-submodules/dimagi/utils/couch/migration_operations.py
+.. _commcare-cloud: https://github.com/dimagi/commcare-cloud/
 
 Risk
 ~~~~
