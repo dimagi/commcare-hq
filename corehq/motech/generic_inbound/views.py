@@ -9,12 +9,9 @@ from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
 
-from dimagi.utils.web import get_ip
-
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
-from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -30,7 +27,6 @@ from corehq.motech.generic_inbound.forms import (
 )
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
-    ProcessingAttempt,
     RequestLog,
 )
 from corehq.motech.generic_inbound.reports import ApiLogDetailView
@@ -38,10 +34,9 @@ from corehq.motech.generic_inbound.utils import (
     ApiRequest,
     ApiResponse,
     archive_api_request,
-    make_processing_attempt,
-    reprocess_api_request,
+    reprocess_api_request, log_api_request,
 )
-from corehq.util import reverse, as_text
+from corehq.util import reverse
 from corehq.util.view_utils import json_error
 
 
@@ -194,27 +189,11 @@ def generic_inbound_api(request, domain, api_id):
         response = ApiResponse(status=400, data={'error': str(e)})
     else:
         response = execute_generic_api(api, request_data)
-    _log_api_request(api, request, response)
+    log_api_request(api, request, response)
 
     if response.status == 204:
         return HttpResponse(status=204)  # no body for 204 (RFC 7230)
     return JsonResponse(response.data, status=response.status)
-
-
-def _log_api_request(api, request, response):
-    log = RequestLog.objects.create(
-        domain=request.domain,
-        api=api,
-        status=RequestLog.Status.from_status_code(response.status),
-        response_status=response.status,
-        username=request.couch_user.username,
-        request_method=request.method,
-        request_query=request.META.get('QUERY_STRING'),
-        request_body=as_text(request.body),
-        request_headers=get_standard_headers(request.META),
-        request_ip=get_ip(request),
-    )
-    make_processing_attempt(response, log)
 
 
 @can_administer_generic_inbound

@@ -15,8 +15,10 @@ from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
+from corehq.motech.generic_inbound.models import RequestLog
 from corehq.util import as_text
 from corehq.util.view_utils import get_form_or_404
+from dimagi.utils.web import get_ip
 
 
 def make_url_key():
@@ -160,3 +162,19 @@ def revert_api_request_from_form(form_id):
         _revert_api_request_log(attempt.log)
     except ProcessingAttempt.DoesNotExist:
         return
+
+
+def log_api_request(api, request, response):
+    log = RequestLog.objects.create(
+        domain=request.domain,
+        api=api,
+        status=RequestLog.Status.from_status_code(response.status),
+        response_status=response.status,
+        username=request.couch_user.username,
+        request_method=request.method,
+        request_query=request.META.get('QUERY_STRING'),
+        request_body=as_text(request.body),
+        request_headers=get_standard_headers(request.META),
+        request_ip=get_ip(request),
+    )
+    make_processing_attempt(response, log)
