@@ -250,6 +250,7 @@ class TableauUser(models.Model):
         EXPLORER_CAN_PUBLISH = 'ExplorerCanPublish', 'Explorer (can publish)'
         SITE_ADMINISTRATOR_EXPLORER = 'SiteAdministratorExplorer', 'Site Administrator (Explorer)'
         VIEWER = 'Viewer', 'Viewer'
+        UNLICENSED = 'Unlicensed', 'Unlicensed'
 
 
 logger = logging.getLogger('tableau_api')
