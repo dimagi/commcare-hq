@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 
-_sync_user_to_es_patch = patch('corehq.apps.users.signals.update_user_in_es')
+_sync_user_to_es_patch = patch('corehq.apps.users.signals.ElasticUserUpdater.__call__')
 
 
 def patch_es_user_signals():
