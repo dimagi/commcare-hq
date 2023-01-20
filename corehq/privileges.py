@@ -183,7 +183,7 @@ class Titles(object):
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
             ZAPIER_INTEGRATION: _('Zapier Integration'),
-            LOGIN_AS: _('Login As for App Preview'),
+            LOGIN_AS: _('Log In As for App Preview'),
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
