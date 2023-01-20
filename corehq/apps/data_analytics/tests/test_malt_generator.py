@@ -6,7 +6,6 @@ from django.http import Http404
 from django.test import SimpleTestCase, TestCase
 
 from dimagi.utils.dates import DateSpan
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import (
     AMPLIFIES_NO,
@@ -27,17 +26,15 @@ from corehq.apps.data_analytics.malt_generator import (
 )
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.data_analytics.tests.utils import save_to_es_analytics_db
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.const import MISSING_APP_ID
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import disable_quickcache
 
 
-@es_test
+@es_test(requires=[form_adapter])
 class MaltGeneratorTest(TestCase):
     """
     End to end tests for malt generation. Use sparingly.
@@ -50,7 +47,6 @@ class MaltGeneratorTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.es = get_es_new()
         cls._setup_domain()
         cls._setup_user()
         cls._setup_app()
@@ -87,19 +83,10 @@ class MaltGeneratorTest(TestCase):
             app_id=app_id,
         )
 
-    def setUp(self) -> None:
-        super().setUp()
-        initialize_index_and_mapping(self.es, XFORM_INDEX_INFO)
-
-    def tearDown(self) -> None:
-        ensure_index_deleted(XFORM_INDEX_INFO.index)
-        super().tearDown()
-
     def test_successfully_creates(self):
         self._save_form_data(self.app_id, datetime.datetime(2019, 12, 31))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 1))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 31))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
         generate_malt([monthspan], domains=[self.domain.name])
@@ -115,7 +102,6 @@ class MaltGeneratorTest(TestCase):
 
     def test_successfully_updates(self):
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
         generate_malt([monthspan], domains=[self.domain.name])
