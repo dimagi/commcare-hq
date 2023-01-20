@@ -31,6 +31,7 @@ from corehq.motech.const import (
     OAUTH1,
     OAUTH2_CLIENT,
     OAUTH2_PWD,
+    ONE_MB,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
@@ -289,5 +290,5 @@ class RequestLog(models.Model):
             request_error=log_entry.error,
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
-            response_body=as_text(log_entry.response_body),
+            response_body=as_text(log_entry.response_body)[:ONE_MB],
         )

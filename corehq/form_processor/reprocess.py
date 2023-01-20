@@ -8,11 +8,12 @@ from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
-from corehq.form_processor.exceptions import XFormNotFound, PostSaveError
+from corehq.form_processor.exceptions import XFormNotFound, PostSaveError, AttachmentNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import CommCareCase, XFormInstance, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.metrics.load_counters import form_load_counter
+from couchforms.const import MAX_FORM_LENGTH
 from dimagi.utils.couch import LockManager
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
@@ -48,6 +49,15 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
     if form.is_deleted:
         save and stub.delete()
         return ReprocessingResult(form, None, None, None)
+
+    try:
+        attachment = form.get_attachment_meta('form.xml')
+        if attachment.content_length > MAX_FORM_LENGTH:
+            return ReprocessingResult(
+                form, None, None,
+                f"Refusing to reprocess form larger than {MAX_CONTENT_LENGTH_FOR_REPROCESSING} bytes")
+    except AttachmentNotFound:
+        pass
 
     if stub.saved:
         complete_ = (form.is_normal, form.initial_processing_complete)

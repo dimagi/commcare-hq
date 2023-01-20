@@ -50,6 +50,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'useUniformUnits',
             'widthHints',
             'multiSelect',
+            'maxSelectValue',
         ],
 
         commandProperties: [

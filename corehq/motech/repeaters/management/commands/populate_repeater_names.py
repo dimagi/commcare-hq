@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from corehq.motech.repeaters.models import SQLRepeater
 
-CHUNKSIZE = 100
+CHUNKSIZE = 1000
 
 
 class Command(BaseCommand):

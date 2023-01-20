@@ -900,6 +900,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -1499,7 +1500,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1562,9 +1562,6 @@ COUCHDB_APPS = [
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
 
-    # fixtures
-    ('fixtures', FIXTURES_DB),
-
     # domains
     ('domain', DOMAINS_DB),
 
@@ -1575,7 +1572,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url

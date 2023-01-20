@@ -19,7 +19,7 @@ from corehq.apps.hqwebapp.management.commands.resource_static import \
     Command as ResourceStaticCommand
 from corehq.util.log import with_progress_bar
 
-logger = logging.getLogger('__name__')
+logger = logging.getLogger(__name__)
 ROOT_DIR = settings.FILEPATH
 BUILD_JS_FILENAME = "staticfiles/build.js"
 BUILD_TXT_FILENAME = "staticfiles/build.txt"
@@ -213,7 +213,8 @@ def _get_main_js_modules_by_dir(html_files):
                 main = match.group(1)
                 directory = match.group(2)
                 if os.path.exists(os.path.join(ROOT_DIR, 'staticfiles', main + '.js')):
-                    dirs[directory].add(main)
+                    if not re.search(r'/spec/', main):
+                        dirs[directory].add(main)
     return dirs
 
 
