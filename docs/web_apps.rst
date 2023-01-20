@@ -176,7 +176,7 @@ These are HQ users, although the model has very few of the many attributes of Co
 
 Most of the time you're only concerned with the current user, who is accessible by requesting ``currentUser`` from the FormplayerFrontEnd's channel (see below for more on channels).
 
-The users code also deals with the Log In As workflow. Login As is often described as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Login As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Login As screen. The current Login As user is stored in a cookie so that users do not need to re-Login-As often.
+The users code also deals with the Log In As workflow. Log In As is often described as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Log In As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Log In As screen. The current Log In As user is stored in a cookie so that users do not need to repeat the workflow often.
 
 Menus
 -----
