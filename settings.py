@@ -1027,6 +1027,11 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+# 10MB max upload size - applied to specific views
+# consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 

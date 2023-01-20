@@ -2,6 +2,7 @@ import json
 import uuid
 from base64 import urlsafe_b64encode
 
+from django.conf import settings
 from django.db import transaction
 from django.http import QueryDict
 from django.utils.translation import gettext as _
@@ -13,7 +14,6 @@ from casexml.apps.phone.xml import get_registration_element_data
 from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.users.models import CouchUser
-from corehq.motech.const import FIFTY_MB
 from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.util import as_text
 from corehq.util.view_utils import get_form_or_404
@@ -36,7 +36,7 @@ class ApiRequest:
 
     @classmethod
     def from_request(cls, request):
-        if int(request.META.get('CONTENT_LENGTH') or 0) > FIFTY_MB:
+        if int(request.META.get('CONTENT_LENGTH') or 0) > settings.MAX_UPLOAD_SIZE:
             raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
 
         try:
