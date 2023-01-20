@@ -1,43 +1,41 @@
 import calendar
 import datetime
-
 from unittest import mock
 
-from django.test import TestCase, SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+
+from dimagi.utils.dates import get_start_and_end_dates_of_month
 
 from corehq.apps.accounting.models import DomainUserHistory
 from corehq.apps.analytics.models import (
     PartnerAnalyticsContact,
-    PartnerAnalyticsReport,
     PartnerAnalyticsDataPoint,
+    PartnerAnalyticsReport,
 )
 from corehq.apps.analytics.utils.partner_analytics import (
-    get_number_of_mobile_workers,
-    get_number_of_web_users,
-    get_number_of_submissions,
-    generate_monthly_mobile_worker_statistics,
-    track_partner_access,
-    generate_monthly_web_user_statistics,
-    generate_monthly_submissions_statistics,
-    get_csv_details_for_partner,
-    send_partner_emails,
-    NUMBER_OF_MOBILE_WORKERS,
-    NUMBER_OF_WEB_USERS,
-    NUMBER_OF_SUBMISSIONS,
     ACCESS_ODATA,
+    NUMBER_OF_MOBILE_WORKERS,
+    NUMBER_OF_SUBMISSIONS,
+    NUMBER_OF_WEB_USERS,
     _get_csv_value,
+    generate_monthly_mobile_worker_statistics,
+    generate_monthly_submissions_statistics,
+    generate_monthly_web_user_statistics,
+    get_csv_details_for_partner,
+    get_number_of_mobile_workers,
+    get_number_of_submissions,
+    get_number_of_web_users,
+    send_partner_emails,
+    track_partner_access,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.models import WebUser, Invitation
-from corehq.form_processor.tests.utils import (
-    create_form_for_test,
-)
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+from corehq.apps.users.models import Invitation, WebUser
+from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from dimagi.utils.dates import get_start_and_end_dates_of_month
 
 
 def _get_fake_number_of_mobile_workers(domain, _year, _month):
