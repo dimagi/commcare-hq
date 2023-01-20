@@ -414,6 +414,10 @@ class DatatablesParams(object):
 TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
 
 
+def tableau_username(HQ_username):
+    return 'HQ/' + HQ_username
+
+
 def _group_json_to_tuples(group_json):
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group:
@@ -493,7 +497,7 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     ).get(username=username)
     if role:
         user.role = role
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=('HQ/' + username))
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=(tableau_username(username)))
     user.tableau_user_id = new_id
     user.save()
     for group in groups:
