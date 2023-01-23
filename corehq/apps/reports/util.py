@@ -13,10 +13,12 @@ from django.utils.translation import gettext as _
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauAPISession, TableauUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
@@ -414,6 +416,10 @@ class DatatablesParams(object):
 TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
 
 
+def tableau_username(HQ_username):
+    return 'HQ/' + HQ_username
+
+
 def _group_json_to_tuples(group_json):
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
     # Remove default Tableau group:
@@ -452,15 +458,22 @@ def add_tableau_user(domain, username):
     Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
     these details to the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.create(
-        server=session.tableau_connected_app.server,
-        username=username,
-        role='Viewer',
-    )
-    new_id = session.create_user(username, 'Viewer')
-    user.tableau_user_id = new_id
-    user.save()
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user, created = TableauUser.objects.get_or_create(
+            server=session.tableau_connected_app.server,
+            username=username,
+            role=TableauUser.Roles.UNLICENSED.value,
+        )
+        if not created:
+            return
+        new_id = session.create_user(tableau_username(username), TableauUser.Roles.UNLICENSED.value)
+        user.tableau_user_id = new_id
+        user.save()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
 
 
 @atomic
@@ -468,15 +481,20 @@ def delete_tableau_user(domain, username):
     '''
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
-    session = TableauAPISession.create_session_for_domain(domain)
-    user = TableauUser.objects.filter(
-        server=session.tableau_connected_app.server
-    ).get(username=username)
-    id = user.tableau_user_id
-    # Delete on server before removing the object so that we still have the object in case the server deletion
-    # fails.
-    session.delete_user(id)
-    user.delete()
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        id = user.tableau_user_id
+        # Delete on server before removing the object so that we still have the object in case the server deletion
+        # fails.
+        session.delete_user(id)
+        user.delete()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
 
 
 @atomic
@@ -491,7 +509,7 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     ).get(username=username)
     if role:
         user.role = role
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=username)
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=(tableau_username(username)))
     user.tableau_user_id = new_id
     user.save()
     for group in groups:
