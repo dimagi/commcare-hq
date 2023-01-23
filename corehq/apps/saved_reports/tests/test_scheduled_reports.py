@@ -1,17 +1,17 @@
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.es.tests.utils import es_test
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.reports.views import get_scheduled_report_response
 from corehq.apps.saved_reports.models import ReportConfig, ReportNotification
 from corehq.apps.saved_reports.scheduled import (
     get_scheduled_report_ids,
     guess_reporting_minute,
 )
-from corehq.apps.es.cases import case_adapter
-from corehq.apps.es.forms import form_adapter
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 
 
