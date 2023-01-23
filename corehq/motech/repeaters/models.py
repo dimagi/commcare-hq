@@ -772,7 +772,7 @@ class ShortFormRepeater(Repeater):
         return headers
 
 
-class SQLAppStructureRepeater(Repeater):
+class AppStructureRepeater(Repeater):
 
     class Meta:
         proxy = True
