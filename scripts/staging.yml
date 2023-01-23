@@ -82,7 +82,7 @@ branches:
     - jm/refactor-api-es  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
-    - ad/user-syncing-task # Addison Jan 13
+    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
     - ad/test-incomplete-forms-hotfix # AD Jan 13
     - cs/configurable_repeater_name # Chris jan 17
     - jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 18
