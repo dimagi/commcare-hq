@@ -11,7 +11,7 @@ from corehq.motech.repeaters.expression.repeaters import (
 )
 
 from ..models import (
-    SQLCaseRepeater,
+    CaseRepeater,
     SQLCreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
     SQLReferCaseRepeater,
@@ -46,7 +46,7 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         super().setUp()
         self.repeater_classes = [
             SQLDhis2EntityRepeater, SQLCaseExpressionRepeater,
-            SQLCaseRepeater, SQLDataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
+            CaseRepeater, SQLDataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
         for r in self.repeater_classes:
             mock_data = self.repeater_data
             r(
@@ -65,7 +65,7 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
     def setUp(self):
         super().setUp()
         self.createcase_repeater_obj = SQLCreateCaseRepeater(**self.repeater_data)
-        self.case_repeater_obj = SQLCaseRepeater(**self.repeater_data)
+        self.case_repeater_obj = CaseRepeater(**self.repeater_data)
         self.refercase_repeater_obj = SQLReferCaseRepeater(**self.repeater_data)
         self.dataregistry_repeater_obj = SQLDataRegistryCaseUpdateRepeater(**self.repeater_data)
         self.case_repeater_obj.save()
@@ -77,7 +77,7 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
         self.assertEqual(self.createcase_repeater_obj.repeater_type, "CreateCaseRepeater")
         self.assertEqual(self.case_repeater_obj.repeater_type, "CaseRepeater")
         self.assertIsInstance(self.createcase_repeater_obj, SQLCreateCaseRepeater)
-        self.assertIsInstance(self.case_repeater_obj, SQLCaseRepeater)
+        self.assertIsInstance(self.case_repeater_obj, CaseRepeater)
 
     def test_repeat_records_refer_correct_model_class(self):
         self.createcase_repeater_obj.repeat_records.create(
@@ -98,12 +98,12 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
 
         self.assertEqual(len(createcase_repeat_records), 1)
         self.assertEqual(len(case_repeat_records), 1)
-        self.assertIsInstance(case_repeat_records[0].repeater, SQLCaseRepeater)
+        self.assertIsInstance(case_repeat_records[0].repeater, CaseRepeater)
         self.assertIsInstance(createcase_repeat_records[0].repeater, SQLCreateCaseRepeater)
 
     def test_query_results_are_correct(self):
         self.assertEqual(len(SQLCreateCaseRepeater.objects.all()), 1)
-        self.assertEqual(len(SQLCaseRepeater.objects.all()), 1)
+        self.assertEqual(len(CaseRepeater.objects.all()), 1)
         self.assertEqual(len(SQLReferCaseRepeater.objects.all()), 1)
         self.assertEqual(len(SQLDataRegistryCaseUpdateRepeater.objects.all()), 1)
         self.assertEqual(len(Repeater.objects.all()), 4)

@@ -40,7 +40,7 @@ from corehq.motech.repeaters.dbaccessors import (
 )
 from corehq.motech.repeaters.models import (
     RepeatRecord,
-    SQLCaseRepeater,
+    CaseRepeater,
     FormRepeater,
     SQLLocationRepeater,
     Repeater,
@@ -145,7 +145,7 @@ class RepeaterTest(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.case_repeater = SQLCaseRepeater(
+        self.case_repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.case_connx.id,
             format='case_json',
@@ -553,7 +553,7 @@ class CaseRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=self.domain,
             url="case-repeater-url",
         )
-        self.repeater = SQLCaseRepeater(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_xml',
@@ -691,7 +691,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = SQLCaseRepeater(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
@@ -709,7 +709,7 @@ class RepeaterFailureTest(BaseRepeaterTest):
     def test_get_payload_exception(self):
         repeat_record = self.repeater.register(CommCareCase.objects.get_case(CASE_ID, self.domain))
         with self.assertRaises(Exception):
-            with patch.object(SQLCaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
+            with patch.object(CaseRepeater, 'get_payload', side_effect=Exception('Boom!')):
                 repeat_record.fire()
 
         self.assertEqual(repeat_record.failure_reason, 'Boom!')
@@ -811,7 +811,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
 
-        RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator)
+        RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
         cls.new_generator = NewCaseGenerator
 
     def setUp(self):
@@ -821,7 +821,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = SQLCaseRepeater(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='new_format',
@@ -844,7 +844,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return self.payload
 
         with self.assertRaises(DuplicateFormatException):
-            RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator)
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
 
     def test_new_format_second_default(self):
         class NewCaseGenerator(BasePayloadGenerator):
@@ -855,7 +855,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 return self.payload
 
         with self.assertRaises(DuplicateFormatException):
-            RegisterGenerator.get_collection(SQLCaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     def test_new_format_payload(self):
         case = CommCareCase.objects.get_case(CASE_ID, self.domain)
@@ -880,7 +880,7 @@ class TestRepeaterFormat(BaseRepeaterTest):
             )
 
     def test_get_format_by_deprecated_name(self):
-        self.assertIsInstance(SQLCaseRepeater(
+        self.assertIsInstance(CaseRepeater(
             domain=self.domain,
             connection_settings=self.connx,
             format='new_format_alias',
@@ -1057,7 +1057,7 @@ class TestRepeaterPause(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = SQLCaseRepeater(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',
@@ -1111,7 +1111,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
             domain=self.domain,
             url='case-repeater-url',
         )
-        self.repeater = SQLCaseRepeater(
+        self.repeater = CaseRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='case_json',

@@ -129,7 +129,7 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
-    SQLCaseRepeater,
+    CaseRepeater,
     Repeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
@@ -966,7 +966,7 @@ class TestDeleteDomain(TestCase):
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLCaseRepeater.objects.create(
+            repeater = CaseRepeater.objects.create(
                 domain=domain_name,
                 connection_settings=conn
             )

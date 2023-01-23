@@ -28,9 +28,9 @@ def create_form_repeat_records(sender, xform, **kwargs):
 
 
 def create_case_repeat_records(sender, case, **kwargs):
-    from corehq.motech.repeaters.models import SQLCaseRepeater
+    from corehq.motech.repeaters.models import CaseRepeater
     from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeater
-    create_repeat_records(SQLCaseRepeater, case)
+    create_repeat_records(CaseRepeater, case)
     create_repeat_records(SQLCreateCaseRepeater, case)
     create_repeat_records(SQLUpdateCaseRepeater, case)
     create_repeat_records(SQLReferCaseRepeater, case)

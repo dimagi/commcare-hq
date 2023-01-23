@@ -591,7 +591,7 @@ class FormRepeater(Repeater):
         return headers
 
 
-class SQLCaseRepeater(Repeater):
+class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
 
@@ -639,7 +639,7 @@ class SQLCaseRepeater(Repeater):
         return headers
 
 
-class SQLCreateCaseRepeater(SQLCaseRepeater):
+class SQLCreateCaseRepeater(CaseRepeater):
     class Meta:
         proxy = True
 
@@ -650,7 +650,7 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
 
 
-class SQLUpdateCaseRepeater(SQLCaseRepeater):
+class SQLUpdateCaseRepeater(CaseRepeater):
     """
     Just like CaseRepeater but only create records if the case is being updated.
     Used by the Zapier integration.
