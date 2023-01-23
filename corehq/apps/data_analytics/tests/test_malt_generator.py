@@ -115,8 +115,6 @@ class MaltGeneratorTest(TestCase):
         malt_row.save()
 
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 20))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
-
         # mock bulk_create to avoid raising an actual error in the db transaction because this results in errors
         # when trying to make future changes within the same transaction
         with patch.object(MALTRow.objects, 'bulk_create', side_effect=IntegrityError):
@@ -130,7 +128,6 @@ class MaltGeneratorTest(TestCase):
 
     def test_does_not_update(self):
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspan = DateSpan.from_month(1, 2020)
         generate_malt([monthspan], domains=[self.domain.name])
@@ -157,7 +154,6 @@ class MaltGeneratorTest(TestCase):
         self._save_form_data(self.app_id, datetime.datetime(2019, 12, 15))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 15))
         self._save_form_data(self.app_id, datetime.datetime(2020, 1, 16))
-        self.es.indices.refresh(XFORM_INDEX_INFO.index)
 
         monthspans = [DateSpan.from_month(12, 2019), DateSpan.from_month(1, 2020)]
         generate_malt(monthspans, domains=[self.domain.name])
