@@ -369,6 +369,30 @@ class TableauAPISession(object):
                 raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
             return response_body['groups']['group']
 
+    def get_user_on_site(self, username):
+        '''
+        Returns a dict for the Tableau user with the given username, None if user can't be found:
+        {
+            'email': '',
+            'fullName': ...,
+            'id': ...,
+            'name': ...,
+            'siteRole': ...,
+            ...
+        }
+        '''
+        url = self.base_url + f'/sites/{self.site_id}/users?filter=name:eq:{username}'
+        response_body = self._make_request(
+            self.GET,
+            'Query Groups',
+            url,
+            {}
+        )
+        if response_body['users']:
+            return response_body['users']['user'][0]
+        else:
+            return None
+
     def get_users_in_group(self, group_id):
         '''
         Returns a list of users in the group with the given ID. Return value format:
