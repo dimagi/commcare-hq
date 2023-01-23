@@ -1,8 +1,8 @@
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.views import get_domain_languages
 
 
