@@ -1,8 +1,11 @@
 from django.http.request import QueryDict
 from django.test import TestCase
 from django.test.client import RequestFactory
-from corehq.apps.es.tests.utils import es_test
 
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.users.models import (
     CommCareUser,
@@ -10,9 +13,6 @@ from corehq.apps.users.models import (
     DomainMembership,
     WebUser,
 )
-from corehq.apps.es.cases import case_adapter
-from corehq.apps.es.users import user_adapter
-from corehq.apps.es.groups import group_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.user import transform_user_for_elasticsearch
 
