@@ -3,21 +3,15 @@ import re
 import sys
 import traceback
 from datetime import datetime, timedelta
-from looseversion import LooseVersion
 
 from django.utils.translation import gettext_lazy as _
 
+from looseversion import LooseVersion
 from memoized import memoized
 from requests import RequestException
 from urllib3.exceptions import HTTPError
-from corehq.motech.repeaters.optionvalue import DateTimeCoder
 
 from couchforms.signals import successful_form_received
-from dimagi.ext.couchdbkit import (
-    DateTimeProperty,
-    Document,
-    StringProperty,
-)
 
 from corehq.form_processor.models import XFormInstance
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION, XMLNS_DHIS2
@@ -30,10 +24,11 @@ from corehq.motech.repeater_helpers import (
     get_relevant_case_updates_from_form_json,
 )
 from corehq.motech.repeaters.models import (
-    OptionValue,
     CaseRepeater,
     FormRepeater,
+    OptionValue,
 )
+from corehq.motech.repeaters.optionvalue import DateTimeCoder
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -42,47 +37,6 @@ from corehq.motech.value_source import get_form_question_values
 from corehq.toggles import DHIS2_INTEGRATION
 
 api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
-
-
-class Dhis2Instance(Document):
-
-    dhis2_version = StringProperty(default=None)
-    dhis2_version_last_modified = DateTimeProperty(default=None)
-
-    def get_api_version(self) -> int:
-        if (
-            self.dhis2_version is None
-            or self.dhis2_version_last_modified + timedelta(days=365) < datetime.now()
-        ):
-            # Fetching DHIS2 metadata is expensive. Only do it if we
-            # don't know the version of DHIS2, or if we haven't checked
-            # for over a year.
-            self.update_dhis2_version()
-        return get_api_version(self.dhis2_version)
-
-    def update_dhis2_version(self):
-        """
-        Fetches metadata from DHIS2 instance and saves DHIS2 version.
-
-        Notifies administrators if the version of DHIS2 exceeds the
-        maximum supported version, but still saves and continues.
-        """
-        requests = self.connection_settings.get_requests(self)
-        metadata = fetch_metadata(requests)
-        dhis2_version = metadata["system"]["version"]
-        try:
-            get_api_version(dhis2_version)
-        except Dhis2Exception as err:
-            requests.notify_exception(str(err))
-            raise
-        if LooseVersion(dhis2_version) > DHIS2_MAX_KNOWN_GOOD_VERSION:
-            requests.notify_error(
-                "Integration has not yet been tested for DHIS2 version "
-                f"{dhis2_version}. Its API may not be supported."
-            )
-        self.dhis2_version = dhis2_version
-        self.dhis2_version_last_modified = datetime.now()
-        self.save()
 
 
 class SQLDhis2Instance(object):
