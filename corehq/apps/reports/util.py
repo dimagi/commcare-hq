@@ -15,16 +15,20 @@ from memoized import memoized
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.logging import notify_exception
 
+from celery.schedules import crontab
+
+from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.exceptions import TableauAPIError
-from corehq.apps.reports.models import TableauAPISession, TableauUser
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 
@@ -531,3 +535,60 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     user.save()
     for group in groups:
         session.add_user_to_group(user.tableau_user_id, group.id)
+
+
+@periodic_task(run_every=crontab(minute=0, hour='*/1'), queue='background_queue')
+def sync_all_tableau_users():
+    def _sync_tableau_users_with_hq(domain):
+        tableau_user_names = [tableau_user.username for tableau_user in TableauUser.objects.filter(
+            server=TableauServer.objects.get(domain=domain)
+        )]
+        web_users_names = [web_user.username for web_user in WebUser.by_domain(domain)]
+        # If there's a web user that isn't in the TableauUser model, create a new Tableau user
+        for web_user_name in web_users_names:
+            if web_user_name not in tableau_user_names:
+                _add_tableau_user_local(domain, web_user_name)
+        # If there's a TableauUser with no corresponding WebUser, delete the Tableau user
+        for tableau_user_name in tableau_user_names:
+            if tableau_user_name not in web_users_names:
+                _delete_user_local(domain, tableau_user_name)
+
+    def _sync_tableau_users_with_remote(domain):
+        remote_groups = get_all_tableau_groups(domain)
+        session = TableauAPISession.create_session_for_domain(domain)
+
+        remote_HQ_group = None
+        for group in remote_groups:
+            if group.name == 'HQ':
+                remote_HQ_group = group
+                remote_groups.remove(group)
+                remote_HQ_group_users = session.get_users_in_group(remote_HQ_group.id)
+        local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
+
+        # Create a group called 'HQ' on Tableau if one doesn't exist
+        if not remote_HQ_group:
+            session.create_group('HQ', DEFAULT_TABLEAU_ROLE)
+
+        # If a remote user doesn't exist locally, delete it
+        local_users_ids = [local_user.tableau_user_id for local_user in local_users]
+        for remote_user in remote_HQ_group_users:
+            if remote_user['id'] not in local_users_ids:
+                _delete_user_remote(session, remote_user['id'])
+
+        # If local user doesn't exist on the remote Tableau instace, add it
+        remote_HQ_group_users_ids = [remote_user['id'] for remote_user in remote_HQ_group_users]
+        for local_user in local_users:
+            if local_user.tableau_user_id not in remote_HQ_group_users_ids:
+                remote_user_dict = session.get_user_on_site(tableau_username(local_user.username))
+                # If the remote id didn't match, override it by deleting and re-adding since you can't change
+                # a remote user's id.
+                if remote_user_dict:
+                    _delete_user_remote(session, remote_user_dict['id'])
+                new_id = _add_tableau_user_remote(session, local_user, local_user.role)
+                session.add_user_to_group(new_id, remote_HQ_group.id)
+
+    for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
+        # Sync the web users on HQ with the TableauUser model
+        _sync_tableau_users_with_hq(domain)
+        # Sync the TableauUser model with Tableau users on the remote Tableau instance
+        _sync_tableau_users_with_remote(domain)
