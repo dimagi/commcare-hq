@@ -7,28 +7,20 @@ from corehq.apps.es.sms import SMSES
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms, get_sms_count
 from corehq.apps.domain.models import Domain
-from corehq.elastic import get_es_new, refresh_elasticsearch_index
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.elastic import send_to_elasticsearch
+from corehq.apps.es.sms import sms_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.cases import case_adapter
 
 
-@es_test
+@es_test(requires=[sms_adapter, case_adapter, form_adapter, user_adapter], setup_class=True)
 class BaseCalculatedPropertiesTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(BaseCalculatedPropertiesTest, cls).setUpClass()
-        cls.es = [{
-            'info': index_info,
-            'instance': get_es_new(),
-        } for index_info in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO, USER_INDEX_INFO]]
 
         cls.domain = Domain(name='test-b9289e19d819')
         cls.domain.save()
@@ -36,14 +28,7 @@ class BaseCalculatedPropertiesTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
-        for es in cls.es:
-            ensure_index_deleted(es['info'].index)
-        super(BaseCalculatedPropertiesTest, cls).tearDownClass()
-
-    def setUp(self):
-        for es in self.es:
-            ensure_index_deleted(es['info'].index)
-            initialize_index_and_mapping(es['instance'], es['info'])
+        super().tearDownClass()
 
     @staticmethod
     def create_sms_in_es(domain_name, direction):
@@ -52,16 +37,14 @@ class BaseCalculatedPropertiesTest(TestCase):
             'domain': domain_name,
             'direction': direction,
             'date': json_format_datetime(datetime.datetime.utcnow()),
-            'doc_type': SMS_INDEX_INFO.type,
+            'doc_type': sms_adapter.type,
         }
-        send_to_elasticsearch("sms", sms_doc)
-        refresh_elasticsearch_index('sms')
+        sms_adapter.index(sms_doc, refresh=True)
         return sms_doc
 
     @staticmethod
     def delete_sms_in_es(sms_doc):
-        send_to_elasticsearch("sms", sms_doc, delete=True)
-        refresh_elasticsearch_index('sms')
+        sms_adapter.delete(sms_doc['_id'], refresh=True)
 
 
 class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
