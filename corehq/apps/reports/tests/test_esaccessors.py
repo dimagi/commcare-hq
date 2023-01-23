@@ -5,7 +5,6 @@ from unittest.mock import MagicMock, patch
 from django.test import SimpleTestCase, TestCase
 
 import pytz
-from corehq.util.test_utils import make_es_ready_form
 
 from dimagi.utils.dates import DateSpan
 
@@ -76,6 +75,7 @@ from corehq.pillows.case import transform_case_for_elasticsearch
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
+from corehq.util.test_utils import make_es_ready_form
 
 
 @es_test(requires=[form_adapter, group_adapter])
