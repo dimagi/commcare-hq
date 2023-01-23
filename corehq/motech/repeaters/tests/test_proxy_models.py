@@ -7,7 +7,7 @@ from corehq.motech.models import ConnectionSettings
 from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.expression.repeaters import (
-    SQLCaseExpressionRepeater,
+    CaseExpressionRepeater,
 )
 
 from ..models import (
@@ -45,7 +45,7 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
     def setUp(self):
         super().setUp()
         self.repeater_classes = [
-            SQLDhis2EntityRepeater, SQLCaseExpressionRepeater,
+            SQLDhis2EntityRepeater, CaseExpressionRepeater,
             CaseRepeater, DataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
         for r in self.repeater_classes:
             mock_data = self.repeater_data

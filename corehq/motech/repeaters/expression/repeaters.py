@@ -63,7 +63,7 @@ class BaseExpressionRepeater(Repeater):
         return base_url
 
 
-class SQLCaseExpressionRepeater(BaseExpressionRepeater):
+class CaseExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Case Repeater")
 
