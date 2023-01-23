@@ -32,7 +32,7 @@ from corehq.motech.repeater_helpers import (
 from corehq.motech.repeaters.models import (
     OptionValue,
     SQLCaseRepeater,
-    SQLFormRepeater,
+    FormRepeater,
 )
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
@@ -126,7 +126,7 @@ class SQLDhis2Instance(object):
         self.save()
 
 
-class SQLDhis2Repeater(SQLFormRepeater, SQLDhis2Instance):
+class SQLDhis2Repeater(FormRepeater, SQLDhis2Instance):
     class Meta:
         proxy = True
         app_label = 'repeaters'

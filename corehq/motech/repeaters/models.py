@@ -535,7 +535,7 @@ class Repeater(RepeaterSuperProxy):
         return self._repeater_type
 
 
-class SQLFormRepeater(Repeater):
+class FormRepeater(Repeater):
 
     include_app_id_param = OptionValue(default=True)
     white_listed_form_xmlns = OptionValue(default=list)

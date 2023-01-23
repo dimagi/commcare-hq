@@ -41,7 +41,7 @@ from corehq.motech.repeaters.dbaccessors import (
 from corehq.motech.repeaters.models import (
     RepeatRecord,
     SQLCaseRepeater,
-    SQLFormRepeater,
+    FormRepeater,
     SQLLocationRepeater,
     Repeater,
     SQLShortFormRepeater,
@@ -157,7 +157,7 @@ class RepeaterTest(BaseRepeaterTest):
             domain=self.domain,
             url='form-repeater-url',
         )
-        self.form_repeater = SQLFormRepeater(
+        self.form_repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.form_connx.id,
             format='form_json',
@@ -439,7 +439,7 @@ class FormPayloadGeneratorTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             url="form-repeater-url",
         )
-        cls.repeater = SQLFormRepeater(
+        cls.repeater = FormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
@@ -478,7 +478,7 @@ class FormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             url="form-repeater-url",
         )
-        cls.repeater = SQLFormRepeater(
+        cls.repeater = FormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             format='form_xml',
@@ -759,7 +759,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
             def get_payload(self, repeat_record, payload_doc):
                 raise IgnoreDocument
 
-        RegisterGenerator.get_collection(SQLFormRepeater).add_new_format(NewFormGenerator)
+        RegisterGenerator.get_collection(FormRepeater).add_new_format(NewFormGenerator)
 
     def setUp(self):
         super().setUp()
@@ -767,7 +767,7 @@ class IgnoreDocumentTest(BaseRepeaterTest):
             domain=self.domain,
             url='form-repeater-url',
         )
-        self.repeater = SQLFormRepeater(
+        self.repeater = FormRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             format='new_format',

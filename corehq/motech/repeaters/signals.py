@@ -22,9 +22,9 @@ from dimagi.utils.logging import notify_exception
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
-    from corehq.motech.repeaters.models import SQLFormRepeater
+    from corehq.motech.repeaters.models import FormRepeater
     if not xform.is_duplicate:
-        create_repeat_records(SQLFormRepeater, xform)
+        create_repeat_records(FormRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):

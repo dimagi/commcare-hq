@@ -26,7 +26,7 @@ from ..const import (
 )
 from ..models import (
     RepeatRecord,
-    SQLFormRepeater,
+    FormRepeater,
     Repeater,
     are_repeat_records_migrated,
     format_response,
@@ -68,7 +68,7 @@ class RepeaterTestCase(TestCase):
         super().setUp()
         url = 'https://www.example.com/api/'
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.sql_repeater = SQLFormRepeater(
+        self.sql_repeater = FormRepeater(
             domain=DOMAIN,
             repeater_id=uuid.uuid4().hex,
             connection_settings=self.conn,
@@ -81,7 +81,7 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
         super().setUp()
         self.all_sql_repeaters = [self.sql_repeater]
         for i in range(5):
-            r = SQLFormRepeater(
+            r = FormRepeater(
                 domain=DOMAIN,
                 connection_settings=self.conn,
                 repeater_id=uuid4().hex
@@ -90,14 +90,14 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
             self.all_sql_repeaters.append(r)
 
     def test_soft_deletion(self):
-        self.assertEqual(SQLFormRepeater.objects.all().count(), 6)
+        self.assertEqual(FormRepeater.objects.all().count(), 6)
         self.all_sql_repeaters[1].is_deleted = True
         self.all_sql_repeaters[1].save()
         self.all_sql_repeaters[0].is_deleted = True
         self.all_sql_repeaters[0].save()
-        self.assertEqual(SQLFormRepeater.objects.all().count(), 4)
+        self.assertEqual(FormRepeater.objects.all().count(), 4)
         self.assertEqual(
-            set(SQLFormRepeater.objects.all().values_list('repeater_id', flat=True)),
+            set(FormRepeater.objects.all().values_list('repeater_id', flat=True)),
             set([r.repeater_id for r in self.all_sql_repeaters if not r.is_deleted])
         )
 
@@ -444,7 +444,7 @@ class TestConnectionSettingsUsedBy(TestCase):
         super().setUp()
         url = 'https://www.example.com/api/'
         self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = SQLFormRepeater(
+        self.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=self.conn.id
         )
