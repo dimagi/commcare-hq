@@ -2,23 +2,24 @@ import datetime
 
 from django.test import TestCase
 
+from dimagi.utils.dates import add_months_to_date
+from pillowtop.processors.form import mark_latest_submission
+
 from corehq import toggles
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
 from corehq.apps.enterprise.tests.utils import (
-    get_enterprise_account,
     add_domains_to_enterprise_account,
+    get_enterprise_account,
     get_enterprise_software_plan,
 )
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.test_utils import make_es_ready_form
-from dimagi.utils.dates import add_months_to_date
-from pillowtop.processors.form import mark_latest_submission
 
 
 @es_test(requires=[user_adapter, form_adapter], setup_class=True)
