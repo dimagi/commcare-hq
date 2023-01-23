@@ -211,7 +211,7 @@ class RepeaterSuperProxy(models.Model):
                         'kwargs': kwargs
                     }
                     notify_error(UnknownRepeater(proxy_class_name), details=details)
-                    # Fallback to creating SQLRepeater if repeater class is not found
+                    # Fallback to creating Repeater if repeater class is not found
                     repeater_class = cls
 
         return super().__new__(repeater_class)
@@ -221,7 +221,7 @@ class RepeaterManager(models.Manager):
 
     def all_ready(self):
         """
-        Return all SQLRepeaters ready to be forwarded.
+        Return all Repeaters ready to be forwarded.
         """
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
@@ -834,8 +834,7 @@ def get_repeater_response_from_submission_response(response):
     return response
 
 
-def get_all_sqlrepeater_types():
-    # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
+def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 

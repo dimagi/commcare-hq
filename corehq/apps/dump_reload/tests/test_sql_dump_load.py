@@ -732,7 +732,6 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             url='example.com',
             user_id='user_id',
         )
-        # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
         self._dump_and_load(Counter({CreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
     def test_lookup_table(self):
