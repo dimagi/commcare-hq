@@ -14,7 +14,7 @@ from ..models import (
     CaseRepeater,
     CreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
-    SQLReferCaseRepeater,
+    ReferCaseRepeater,
     Repeater,
 )
 
@@ -66,7 +66,7 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
         super().setUp()
         self.createcase_repeater_obj = CreateCaseRepeater(**self.repeater_data)
         self.case_repeater_obj = CaseRepeater(**self.repeater_data)
-        self.refercase_repeater_obj = SQLReferCaseRepeater(**self.repeater_data)
+        self.refercase_repeater_obj = ReferCaseRepeater(**self.repeater_data)
         self.dataregistry_repeater_obj = SQLDataRegistryCaseUpdateRepeater(**self.repeater_data)
         self.case_repeater_obj.save()
         self.createcase_repeater_obj.save()
@@ -104,6 +104,6 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
     def test_query_results_are_correct(self):
         self.assertEqual(len(CreateCaseRepeater.objects.all()), 1)
         self.assertEqual(len(CaseRepeater.objects.all()), 1)
-        self.assertEqual(len(SQLReferCaseRepeater.objects.all()), 1)
+        self.assertEqual(len(ReferCaseRepeater.objects.all()), 1)
         self.assertEqual(len(SQLDataRegistryCaseUpdateRepeater.objects.all()), 1)
         self.assertEqual(len(Repeater.objects.all()), 4)

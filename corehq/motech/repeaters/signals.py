@@ -14,7 +14,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
-    SQLReferCaseRepeater,
+    ReferCaseRepeater,
     UpdateCaseRepeater,
     domain_can_forward,
 )
@@ -33,7 +33,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(CaseRepeater, case)
     create_repeat_records(CreateCaseRepeater, case)
     create_repeat_records(UpdateCaseRepeater, case)
-    create_repeat_records(SQLReferCaseRepeater, case)
+    create_repeat_records(ReferCaseRepeater, case)
     create_repeat_records(SQLCaseExpressionRepeater, case)
 
 
