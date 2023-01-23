@@ -156,7 +156,7 @@ class Dhis2Repeater(FormRepeater, Dhis2Instance):
         super().save(*args, **kwargs)
 
 
-class SQLDhis2EntityRepeater(CaseRepeater, Dhis2Instance):
+class Dhis2EntityRepeater(CaseRepeater, Dhis2Instance):
     class Meta():
         proxy = True
         app_label = 'repeaters'
@@ -270,7 +270,7 @@ def create_dhis2_event_repeat_records(sender, xform, **kwargs):
 
 
 def create_dhis2_entity_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(SQLDhis2EntityRepeater, xform)
+    create_repeat_records(Dhis2EntityRepeater, xform)
 
 
 successful_form_received.connect(create_dhis2_event_repeat_records)
