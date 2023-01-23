@@ -1,11 +1,18 @@
-from django.test import TestCase
 from django.core import mail
+from django.test import TestCase
+
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.users.models import UserRole, HqPermissions, WebUser, CouchUser
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.forms import form_adapter
-from ...models import ReportNotification, ReportConfig
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.models import (
+    CouchUser,
+    HqPermissions,
+    UserRole,
+    WebUser,
+)
+
+from ...models import ReportConfig, ReportNotification
 
 
 @es_test(requires=[case_adapter, form_adapter], setup_class=True)
