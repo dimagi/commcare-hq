@@ -1,16 +1,15 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
-
-from unittest.mock import MagicMock, patch
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 # Also, you need to patch the path to the function in the file where the signal
 # handler uses it, not where it's actually defined.  That's quite a gotcha.
 from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.elastic import doc_exists_in_es, get_es_new
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.es.elasticsearch import ConnectionError
