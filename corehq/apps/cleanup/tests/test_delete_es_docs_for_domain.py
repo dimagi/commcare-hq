@@ -3,14 +3,14 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import FormES
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.apps import app_adapter
-from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.cases import case_adapter
 from corehq.apps.es.client import manager
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.form_processor.models import XFormInstance
 from corehq.form_processor.tests.utils import create_form_for_test
 from corehq.pillows.xform import transform_xform_for_elasticsearch
