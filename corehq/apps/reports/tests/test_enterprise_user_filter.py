@@ -1,15 +1,14 @@
 from django.http import HttpRequest
 from django.test import TestCase
 
-
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.enterprise.tests.utils import create_enterprise_permissions
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.filters.controllers import (
     EnterpriseUserOptionsController,
 )
-from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.filters.users import EnterpriseUserFilter
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.pillows.user import transform_user_for_elasticsearch
