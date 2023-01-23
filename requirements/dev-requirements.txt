@@ -88,7 +88,7 @@ contextlib2==21.6.0
     #   schema
 coverage==5.5
     # via -r test-requirements.in
-cryptography==37.0.4
+cryptography==39.0.0
     # via
     #   jwcrypto
     #   oic
@@ -181,7 +181,7 @@ django-phonenumber-field==5.2.0
     #   django-two-factor-auth
 django-prbac==1.0.1
     # via -r base-requirements.in
-django-recaptcha==2.0.6
+django-recaptcha==3.0.0
     # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
@@ -321,7 +321,7 @@ jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
-jsonschema==3.2.0
+jsonschema==4.17.3
     # via -r base-requirements.in
 jwcrypto==1.4
     # via django-oauth-toolkit
@@ -466,7 +466,7 @@ pyjwt==2.4.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==22.0.0
+pyopenssl==23.0.0
     # via -r sso-requirements.in
 pyparsing==2.4.7
     # via
@@ -591,7 +591,6 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   jsonschema
     #   mando
     #   packaging
     #   pyjwkest
@@ -739,7 +738,6 @@ setuptools==65.5.1
     #   gevent
     #   gunicorn
     #   ipython
-    #   jsonschema
     #   pip-tools
     #   python-termstyle
     #   sphinx

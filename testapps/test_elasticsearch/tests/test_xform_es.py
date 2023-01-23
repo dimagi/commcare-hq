@@ -4,8 +4,8 @@ from collections import namedtuple
 
 from django.test import SimpleTestCase
 
-from corehq.apps.es import FormES
-from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.client import manager
+from corehq.apps.es.forms import FormES, form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import make_es_ready_form
@@ -13,13 +13,12 @@ from corehq.util.test_utils import make_es_ready_form
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
 
 
-@es_test(requires=[form_adapter], setup_class=True)
+@es_test(requires=[form_adapter])
 class XFormESTestCase(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
         super(XFormESTestCase, cls).setUpClass()
-        cls.now = datetime.datetime.utcnow()
         cls.forms = []
 
     def setUp(self):
@@ -32,15 +31,22 @@ class XFormESTestCase(SimpleTestCase):
             form_metadata = form_metadata or TestFormMetadata()
             form_pair = make_es_ready_form(form_metadata)
             cls.forms.append(form_pair)
-            form_adapter.index(form_pair.json_form, refresh=True)
+            form_adapter.index(form_pair.json_form)
+        # have to refresh the index to make sure changes show up
+        manager.index_refresh(form_adapter.index_name)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.forms = []
+        super(XFormESTestCase, cls).tearDownClass()
 
     def test_forms_are_in_index(self):
         for form in self.forms:
-            self.assertFalse(form_adapter.get(form.wrapped_form.form_id))
+            self.assertFalse(form_adapter.exists(form.wrapped_form.form_id))
         self._ship_forms_to_es([None, None])
         self.assertEqual(2, len(self.forms))
         for form in self.forms:
-            self.assertTrue(form_adapter.get(form.wrapped_form.form_id))
+            self.assertTrue(form_adapter.exists(form.wrapped_form.form_id))
 
     def test_query_by_domain(self):
         domain1 = 'test1-{}'.format(self.test_id)
