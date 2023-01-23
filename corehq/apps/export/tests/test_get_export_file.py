@@ -1,17 +1,18 @@
 import json
 import re
+from unittest.mock import patch
 
 from django.core.cache import cache
 from django.test import SimpleTestCase
 
-from corehq.apps.es.tests.utils import es_test
-from unittest.mock import patch
 from openpyxl import load_workbook
 
 from couchexport.export import get_writer
 from couchexport.models import Format
 from couchexport.transforms import couch_to_excel_datetime
 
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.const import (
     CASE_NAME_TRANSFORM,
     DEID_DATE_TRANSFORM,
@@ -46,7 +47,6 @@ from corehq.apps.export.tests.util import (
     get_export_json,
     new_case,
 )
-from corehq.apps.es.cases import case_adapter
 from corehq.util.files import TransientTempfile
 from corehq.util.test_utils import flag_enabled
 
