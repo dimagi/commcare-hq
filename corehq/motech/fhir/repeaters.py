@@ -32,7 +32,7 @@ from .repeater_helpers import (
 )
 
 
-class SQLFHIRRepeater(CaseRepeater):
+class FHIRRepeater(CaseRepeater):
     class Meta:
         proxy = True
         app_label = 'repeaters'
