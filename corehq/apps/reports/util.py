@@ -461,20 +461,29 @@ def add_tableau_user(domain, username):
     '''
     try:
         session = TableauAPISession.create_session_for_domain(domain)
-        user, created = TableauUser.objects.get_or_create(
-            server=session.tableau_connected_app.server,
-            username=username,
-            role=TableauUser.Roles.UNLICENSED.value,
-        )
+        user, created = _add_tableau_user_local(session, username)
         if not created:
             return
-        new_id = session.create_user(tableau_username(username), TableauUser.Roles.UNLICENSED.value)
-        user.tableau_user_id = new_id
-        user.save()
+        _add_tableau_user_remote(session, user)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
         notify_exception(None, str(e), details={
             'domain': domain
         })
+
+
+def _add_tableau_user_local(session, username, role=DEFAULT_TABLEAU_ROLE):
+    return TableauUser.objects.get_or_create(
+        server=session.tableau_connected_app.server,
+        username=username,
+        role=role,
+    )
+
+
+def _add_tableau_user_remote(session, user, role=DEFAULT_TABLEAU_ROLE):
+    new_id = session.create_user(tableau_username(user.username), role)
+    user.tableau_user_id = new_id
+    user.save()
+    return new_id
 
 
 @atomic
@@ -484,18 +493,25 @@ def delete_tableau_user(domain, username):
     '''
     try:
         session = TableauAPISession.create_session_for_domain(domain)
-        user = TableauUser.objects.filter(
-            server=session.tableau_connected_app.server
-        ).get(username=username)
-        id = user.tableau_user_id
-        # Delete on server before removing the object so that we still have the object in case the server deletion
-        # fails.
-        session.delete_user(id)
-        user.delete()
+        deleted_user_id = _delete_user_local(session, username)
+        session.delete_user(deleted_user_id)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
         notify_exception(None, str(e), details={
             'domain': domain
         })
+
+
+def _delete_user_local(session, username):
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    id = user.tableau_user_id
+    user.delete()
+    return id
+
+
+def _delete_user_remote(session, deleted_user_id):
+    session.delete_user(deleted_user_id)
 
 
 @atomic
