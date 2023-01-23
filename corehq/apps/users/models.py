@@ -286,6 +286,23 @@ class HqPermissions(DocumentSchema):
             if isinstance(value, BooleanProperty)
         }
 
+    @classmethod
+    def diff(cls, left, right):
+        left_dict = {info.name: info.allow for info in left.to_list()}
+        right_dict = {info.name: info.allow for info in right.to_list()}
+
+        all_names = set(left_dict.keys()).union(right_dict.keys())
+
+        diffs = []
+
+        for name in all_names:
+            if (name not in left_dict
+                    or name not in right_dict
+                    or left_dict[name] != right_dict[name]):
+                diffs.append(name)
+
+        return diffs
+
     def to_list(self) -> List[PermissionInfo]:
         """Returns a list of Permission objects for those permissions that are enabled."""
         return list(self._yield_enabled())
