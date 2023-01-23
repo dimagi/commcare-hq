@@ -39,7 +39,7 @@ from corehq.toggles import DHIS2_INTEGRATION
 api_version_re = re.compile(r'^2\.\d+(\.\d)?$')
 
 
-class SQLDhis2Instance(object):
+class Dhis2Instance(object):
 
     dhis2_version = OptionValue(default=None)
     dhis2_version_last_modified = OptionValue(default=None, coder=DateTimeCoder)
@@ -80,7 +80,7 @@ class SQLDhis2Instance(object):
         self.save()
 
 
-class SQLDhis2Repeater(FormRepeater, SQLDhis2Instance):
+class SQLDhis2Repeater(FormRepeater, Dhis2Instance):
     class Meta:
         proxy = True
         app_label = 'repeaters'
@@ -156,7 +156,7 @@ class SQLDhis2Repeater(FormRepeater, SQLDhis2Instance):
         super().save(*args, **kwargs)
 
 
-class SQLDhis2EntityRepeater(CaseRepeater, SQLDhis2Instance):
+class SQLDhis2EntityRepeater(CaseRepeater, Dhis2Instance):
     class Meta():
         proxy = True
         app_label = 'repeaters'
