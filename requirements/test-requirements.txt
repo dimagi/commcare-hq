@@ -284,6 +284,8 @@ kombu==5.2.4
     # via celery
 laboratory==0.2.0
     # via -r base-requirements.in
+looseversion==1.0.3
+    # via -r base-requirements.in
 lxml==4.9.1
     # via
     #   -r base-requirements.in
@@ -601,7 +603,7 @@ zope-interface==5.4.0
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.3.1
     # via pip-tools
-setuptools==50.3.0
+setuptools==65.5.1
     # via
     #   django-websocket-redis
     #   gevent
