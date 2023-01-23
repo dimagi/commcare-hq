@@ -1,25 +1,24 @@
 from datetime import datetime
 
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.es.tests.utils import es_test
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.util import enable_usercase
 from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
-from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
+from corehq.apps.data_interfaces.tests.test_auto_case_updates import (
+    BaseCaseRuleTest,
+)
 from corehq.apps.data_interfaces.tests.util import create_empty_rule
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import normalize_username
 from corehq.form_processor.models import CommCareCase
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    sharded,
-)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from custom.covid.rules.custom_actions import (
     close_cases_assigned_to_checkin,
