@@ -179,6 +179,10 @@ class Command(BaseCommand):
         Role(slug=privileges.LOADTEST_USERS,
              name='Loadtest Users',
              description='Allows creating loadtest users'),
+        Role(slug=privileges.PHONE_APK_HEARTBEAT,
+             name='Phone Heartbeat',
+             description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
+                         'app and apk'),
     ]
 
     BOOTSTRAP_PLANS = [
