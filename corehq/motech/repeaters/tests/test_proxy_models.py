@@ -15,7 +15,7 @@ from ..models import (
     SQLCreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
     SQLReferCaseRepeater,
-    SQLRepeater,
+    Repeater,
 )
 
 
@@ -54,7 +54,7 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
             ).save()
 
     def test_repeater_all_returns_correct_instance(self):
-        all_repeaters = SQLRepeater.objects.all()
+        all_repeaters = Repeater.objects.all()
         self.assertEqual(
             {r.__class__.__name__ for r in all_repeaters},
             {r.__name__ for r in self.repeater_classes},
@@ -106,4 +106,4 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
         self.assertEqual(len(SQLCaseRepeater.objects.all()), 1)
         self.assertEqual(len(SQLReferCaseRepeater.objects.all()), 1)
         self.assertEqual(len(SQLDataRegistryCaseUpdateRepeater.objects.all()), 1)
-        self.assertEqual(len(SQLRepeater.objects.all()), 4)
+        self.assertEqual(len(Repeater.objects.all()), 4)

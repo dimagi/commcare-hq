@@ -17,7 +17,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.models import SQLCreateCaseRepeater, SQLRepeater, SQLUpdateCaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import SQLCreateCaseRepeater, Repeater, SQLUpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -486,7 +486,7 @@ def get_repeaters_for_type_in_domain(domain, repeater_types):
     :param domain: domain to search in
     :param repeater_types: a tuple of repeater class types
     """
-    repeaters = SQLRepeater.objects.filter(
+    repeaters = Repeater.objects.filter(
         domain=domain,
         repeater_type__in=repeater_types
     )

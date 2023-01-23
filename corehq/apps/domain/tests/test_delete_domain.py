@@ -130,7 +130,7 @@ from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
     SQLCaseRepeater,
-    SQLRepeater,
+    Repeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -954,7 +954,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLRepeater.objects.filter(domain=domain_name),
+            Repeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)

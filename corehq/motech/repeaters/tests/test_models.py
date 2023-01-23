@@ -27,7 +27,7 @@ from ..const import (
 from ..models import (
     RepeatRecord,
     SQLFormRepeater,
-    SQLRepeater,
+    Repeater,
     are_repeat_records_migrated,
     format_response,
     get_all_sqlrepeater_types,
@@ -104,11 +104,11 @@ class TestSoftDeleteRepeaters(RepeaterTestCase):
     def test_repeatrs_retired_from_sql(self):
         self.all_sql_repeaters[0].retire()
         self.all_sql_repeaters[4].retire()
-        sql_repeater_count = SQLRepeater.objects.all().count()
+        sql_repeater_count = Repeater.objects.all().count()
         self.assertEqual(sql_repeater_count, 4)
 
     def tearDown(self):
-        SQLRepeater.all_objects.all().delete()
+        Repeater.all_objects.all().delete()
         return super().tearDown()
 
 
@@ -169,49 +169,49 @@ class TestConnectionSettingsSoftDelete(TestCase):
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
-        sql_repeaters = SQLRepeater.objects.all_ready()
+        sql_repeaters = Repeater.objects.all_ready()
         self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_pending_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 
     def test_all_ready_failed_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_FAILURE_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 
     def test_all_ready_succeeded_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_SUCCESS_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_CANCELLED_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_paused(self):
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 pause(self.sql_repeater):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.sql_repeater, in_five_mins):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.sql_repeater, five_mins_ago):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 

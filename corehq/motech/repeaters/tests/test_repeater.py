@@ -43,7 +43,7 @@ from corehq.motech.repeaters.models import (
     SQLCaseRepeater,
     SQLFormRepeater,
     SQLLocationRepeater,
-    SQLRepeater,
+    Repeater,
     SQLShortFormRepeater,
     SQLUserRepeater,
     _get_retry_interval,
@@ -1065,7 +1065,7 @@ class TestRepeaterPause(BaseRepeaterTest):
         )
         self.repeater.save()
         self.post_xml(self.xform_xml, self.domain)
-        self.repeater = SQLRepeater.objects.get(repeater_id=self.repeater.repeater_id)
+        self.repeater = Repeater.objects.get(repeater_id=self.repeater.repeater_id)
 
     def tearDown(self):
         self.repeater.delete()
@@ -1122,7 +1122,7 @@ class TestRepeaterDeleted(BaseRepeaterTest):
     def tearDown(self):
         self.repeater.delete()
         # Making sure that SQL repeater are deleted after retire is called.
-        SQLRepeater.all_objects.all().delete()
+        Repeater.all_objects.all().delete()
         self.connx.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         delete_all_repeat_records()
@@ -1170,7 +1170,7 @@ class Response(object):
         return '' if self.content is None else self.content.decode(self.encoding, errors='replace')
 
 
-class DummyRepeater(SQLRepeater):
+class DummyRepeater(Repeater):
 
     class Meta:
         proxy = True

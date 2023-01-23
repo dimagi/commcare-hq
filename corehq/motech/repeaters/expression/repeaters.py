@@ -9,11 +9,11 @@ from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.expression.repeater_generators import (
     ExpressionPayloadGenerator,
 )
-from corehq.motech.repeaters.models import OptionValue, SQLRepeater
+from corehq.motech.repeaters.models import OptionValue, Repeater
 from corehq.toggles import EXPRESSION_REPEATER
 
 
-class SQLBaseExpressionRepeater(SQLRepeater):
+class SQLBaseExpressionRepeater(Repeater):
     """Uses a UCR dict expression to send a generic json response
     """
     class Meta:
