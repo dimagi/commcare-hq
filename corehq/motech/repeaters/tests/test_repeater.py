@@ -42,7 +42,7 @@ from corehq.motech.repeaters.models import (
     RepeatRecord,
     CaseRepeater,
     FormRepeater,
-    SQLLocationRepeater,
+    LocationRepeater,
     Repeater,
     ShortFormRepeater,
     UserRepeater,
@@ -982,7 +982,7 @@ class LocationRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             url='super-cool-url',
         )
-        self.repeater = SQLLocationRepeater(
+        self.repeater = LocationRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
         )

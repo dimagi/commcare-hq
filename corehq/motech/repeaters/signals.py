@@ -86,10 +86,10 @@ def create_user_repeat_records(sender, couch_user, **kwargs):
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_location_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
-    from corehq.motech.repeaters.models import SQLLocationRepeater
+    from corehq.motech.repeaters.models import LocationRepeater
     if raw:
         return
-    create_repeat_records(SQLLocationRepeater, kwargs['instance'])
+    create_repeat_records(LocationRepeater, kwargs['instance'])
 
 
 @receiver(sql_case_post_save, sender=CommCareCase, dispatch_uid="fire_synchronous_repeaters")

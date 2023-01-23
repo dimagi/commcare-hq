@@ -799,7 +799,7 @@ class UserRepeater(Repeater):
         return CommCareUser.get(repeat_record.payload_id)
 
 
-class SQLLocationRepeater(Repeater):
+class LocationRepeater(Repeater):
 
     class Meta:
         proxy = True
