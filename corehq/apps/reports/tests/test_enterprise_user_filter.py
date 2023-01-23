@@ -1,7 +1,6 @@
 from django.http import HttpRequest
 from django.test import TestCase
 
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
@@ -10,15 +9,13 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.reports.filters.controllers import (
     EnterpriseUserOptionsController,
 )
+from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.filters.users import EnterpriseUserFilter
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[user_adapter], setup_class=True)
 class BaseEnterpriseUserFilterTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -47,13 +44,11 @@ class BaseEnterpriseUserFilterTest(TestCase):
         # Set up permissions
         create_enterprise_permissions(cls.web_user.username, 'state', ['county'], ['staging'])
 
-        cls.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-
         for user_obj in cls.mobile_users:
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user_obj.to_json()))
-        cls.es.indices.refresh(USER_INDEX)
+            user_adapter.index(
+                transform_user_for_elasticsearch(user_obj.to_json()),
+                refresh=True
+            )
 
     @classmethod
     def tearDownClass(cls):
@@ -61,7 +56,6 @@ class BaseEnterpriseUserFilterTest(TestCase):
             user.delete('state', deleted_by=None)
         for domain_obj in cls.domains:
             Domain.get_db().delete_doc(domain_obj)
-        ensure_index_deleted(USER_INDEX)
         super().tearDownClass()
 
 
