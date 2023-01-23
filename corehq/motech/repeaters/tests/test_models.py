@@ -465,7 +465,7 @@ class TestConnectionSettingsUsedBy(TestCase):
         super().tearDown()
 
 
-class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
+class TestRepeaterConnectionSettings(RepeaterTestCase):
 
     def test_connection_settings_are_accessible(self):
         self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
@@ -481,7 +481,7 @@ def test_attempt_forward_now_kwargs():
         rr.attempt_forward_now(True)
 
 
-class TestSQLRepeaterModelMethods(RepeaterTestCase):
+class TestRepeaterModelMethods(RepeaterTestCase):
 
     def test_register(self):
         case_id = uuid.uuid4().hex

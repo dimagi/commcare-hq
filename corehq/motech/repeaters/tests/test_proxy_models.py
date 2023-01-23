@@ -41,7 +41,7 @@ class RepeaterProxyTests(TestCase):
         return super().tearDown()
 
 
-class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
+class TestRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
     def setUp(self):
         super().setUp()
         self.repeater_classes = [
