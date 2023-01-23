@@ -61,7 +61,7 @@ class TestRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         )
 
 
-class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
+class TestCreateCaseRepeaterSubModels(RepeaterProxyTests):
     def setUp(self):
         super().setUp()
         self.createcase_repeater_obj = CreateCaseRepeater(**self.repeater_data)
