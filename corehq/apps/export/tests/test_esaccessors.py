@@ -2,10 +2,10 @@ import uuid
 
 from django.test import SimpleTestCase
 
-from corehq.apps.export.esaccessors import get_groups_user_ids
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.groups.models import Group
 from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.export.esaccessors import get_groups_user_ids
+from corehq.apps.groups.models import Group
 
 
 @es_test(requires=[group_adapter], setup_class=True)
