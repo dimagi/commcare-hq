@@ -1,12 +1,12 @@
-from corehq.apps.es.tests.utils import es_test
-from corehq.pillows.user import transform_user_for_elasticsearch
+from unittest.mock import patch
+
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
-from unittest.mock import patch
-
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import clear_domain_names
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.locations.models import LocationType
 from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -19,10 +19,15 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilter,
     FormsByApplicationFilterParams,
 )
-from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
-from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembership, WebUser
+from corehq.apps.users.models import (
+    CommCareUser,
+    CouchUser,
+    DomainMembership,
+    WebUser,
+)
+from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 class TestEmwfPagination(SimpleTestCase):
