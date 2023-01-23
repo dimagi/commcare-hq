@@ -17,7 +17,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.models import SQLCreateCaseRepeater, Repeater, SQLUpdateCaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, SQLUpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -235,7 +235,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
 
         if missing_count > 0:
             if should_create:
-                if isinstance(repeater, SQLCreateCaseRepeater) and len(case.transactions) > 1:
+                if isinstance(repeater, CreateCaseRepeater) and len(case.transactions) > 1:
                     create_case_repeater_register(repeater, domain, case)
                     logger.info(f"Registering case {case.get_id} for create case repeater {repeater.repeater_id}")
                 else:
@@ -245,7 +245,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
                 logger.info(f"Missing case {case.get_id} for repeater {repeater.repeater_id}")
 
         missing_all_count += missing_count
-        if isinstance(repeater, SQLCreateCaseRepeater):
+        if isinstance(repeater, CreateCaseRepeater):
             missing_create_count += missing_count
         elif isinstance(repeater, SQLUpdateCaseRepeater):
             missing_update_count += missing_count
@@ -266,7 +266,7 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
     Based on a case's transactions, and the number of repeat records
     """
     filtered_transactions = []
-    if isinstance(repeater, SQLCreateCaseRepeater):
+    if isinstance(repeater, CreateCaseRepeater):
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
         if create_case_repeater_allowed_to_forward(repeater, case):
             filtered_transactions = case.transactions[0:1]
@@ -506,7 +506,7 @@ def create_case_repeater_register(repeater, domain, payload):
     If a CreateCaseRepeater has a missing repeat record, but the case now contains update transactions
     This can be used to properly trigger the missing repeat record.
     """
-    if not isinstance(repeater, SQLCreateCaseRepeater):
+    if not isinstance(repeater, CreateCaseRepeater):
         logger.error(f"Error - cannot call create_case_repeater_register on repeater type f{type(repeater)}")
         return
 

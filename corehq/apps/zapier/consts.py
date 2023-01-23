@@ -1,6 +1,6 @@
 from corehq.motech.repeaters.models import (
     CaseRepeater,
-    SQLCreateCaseRepeater,
+    CreateCaseRepeater,
     SQLUpdateCaseRepeater,
 )
 
@@ -13,7 +13,7 @@ class EventTypes(object):
 
 
 CASE_TYPE_REPEATER_CLASS_MAP = {
-    EventTypes.NEW_CASE: SQLCreateCaseRepeater,
+    EventTypes.NEW_CASE: CreateCaseRepeater,
     EventTypes.UPDATE_CASE: SQLUpdateCaseRepeater,
     EventTypes.CHANGED_CASE: CaseRepeater,
 }

@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import (
-    SQLCreateCaseRepeater,
+    CreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
     SQLReferCaseRepeater,
     SQLUpdateCaseRepeater,
@@ -31,7 +31,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.models import CaseRepeater
     from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeater
     create_repeat_records(CaseRepeater, case)
-    create_repeat_records(SQLCreateCaseRepeater, case)
+    create_repeat_records(CreateCaseRepeater, case)
     create_repeat_records(SQLUpdateCaseRepeater, case)
     create_repeat_records(SQLReferCaseRepeater, case)
     create_repeat_records(SQLCaseExpressionRepeater, case)

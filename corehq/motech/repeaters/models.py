@@ -639,7 +639,7 @@ class CaseRepeater(Repeater):
         return headers
 
 
-class SQLCreateCaseRepeater(CaseRepeater):
+class CreateCaseRepeater(CaseRepeater):
     class Meta:
         proxy = True
 
@@ -664,7 +664,7 @@ class SQLUpdateCaseRepeater(CaseRepeater):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-class SQLReferCaseRepeater(SQLCreateCaseRepeater):
+class SQLReferCaseRepeater(CreateCaseRepeater):
     """
     A repeater that triggers off case creation but sends a form creating cases in
     another commcare project
@@ -697,7 +697,7 @@ class SQLReferCaseRepeater(SQLCreateCaseRepeater):
         )
 
 
-class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
+class SQLDataRegistryCaseUpdateRepeater(CreateCaseRepeater):
     """
     A repeater that triggers off case creation but sends a form to update cases in
     another commcare project space.
