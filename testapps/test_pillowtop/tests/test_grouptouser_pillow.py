@@ -1,19 +1,25 @@
 import uuid
+
 from django.test import SimpleTestCase, TestCase
 
 from corehq.apps.change_feed import data_sources, topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
-from corehq.apps.es.client import manager
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
-from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
+from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
+    reindex_and_clean,
+)
 from corehq.apps.users.models import CommCareUser
-from corehq.pillows.groups_to_user import update_es_user_with_groups, get_group_pillow, \
-    remove_group_from_users
+from corehq.pillows.groups_to_user import (
+    get_group_pillow,
+    remove_group_from_users,
+    update_es_user_with_groups,
+)
 
 
 @es_test(requires=[user_adapter])
