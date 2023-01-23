@@ -45,7 +45,7 @@ from corehq.motech.repeaters.models import (
     SQLLocationRepeater,
     Repeater,
     ShortFormRepeater,
-    SQLUserRepeater,
+    UserRepeater,
     _get_retry_interval,
 )
 from corehq.motech.repeaters.repeater_generators import (
@@ -905,7 +905,7 @@ class UserRepeaterTest(TestCase, DomainSubscriptionMixin):
             domain=self.domain,
             url='super-cool-url',
         )
-        self.repeater = SQLUserRepeater(
+        self.repeater = UserRepeater(
             domain=self.domain,
             connection_settings_id=self.connx.id,
             repeater_id=uuid.uuid4().hex

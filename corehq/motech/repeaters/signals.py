@@ -80,8 +80,8 @@ def _create_repeat_records(repeater_cls, payload, fire_synchronously=False):
 
 @receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
 def create_user_repeat_records(sender, couch_user, **kwargs):
-    from corehq.motech.repeaters.models import SQLUserRepeater
-    create_repeat_records(SQLUserRepeater, couch_user)
+    from corehq.motech.repeaters.models import UserRepeater
+    create_repeat_records(UserRepeater, couch_user)
 
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_location_repeat_records")

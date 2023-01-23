@@ -785,7 +785,7 @@ class AppStructureRepeater(Repeater):
         return None
 
 
-class SQLUserRepeater(Repeater):
+class UserRepeater(Repeater):
 
     class Meta:
         proxy = True
