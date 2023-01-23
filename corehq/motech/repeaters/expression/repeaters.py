@@ -13,7 +13,7 @@ from corehq.motech.repeaters.models import OptionValue, Repeater
 from corehq.toggles import EXPRESSION_REPEATER
 
 
-class SQLBaseExpressionRepeater(Repeater):
+class BaseExpressionRepeater(Repeater):
     """Uses a UCR dict expression to send a generic json response
     """
     class Meta:
@@ -63,7 +63,7 @@ class SQLBaseExpressionRepeater(Repeater):
         return base_url
 
 
-class SQLCaseExpressionRepeater(SQLBaseExpressionRepeater):
+class SQLCaseExpressionRepeater(BaseExpressionRepeater):
 
     friendly_name = _("Configurable Case Repeater")
 
