@@ -19,7 +19,7 @@ from custom.cowin.repeater_generators import (
     BeneficiaryVaccinationPayloadGenerator,
 )
 from custom.cowin.repeaters import (
-    SQLBeneficiaryRegistrationRepeater,
+    BeneficiaryRegistrationRepeater,
     SQLBeneficiaryVaccinationRepeater,
 )
 
@@ -46,7 +46,7 @@ class TestRepeaters(SimpleTestCase):
                             server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
-        repeater = SQLBeneficiaryRegistrationRepeater()
+        repeater = BeneficiaryRegistrationRepeater()
         generator = BeneficiaryRegistrationPayloadGenerator(repeater)
         repeat_record = RepeatRecord()
 
@@ -93,7 +93,7 @@ class TestRepeaters(SimpleTestCase):
         json_response_mock.return_value = response_json
 
         repeat_record = RepeatRecord(payload_id=case_id)
-        repeater = SQLBeneficiaryRegistrationRepeater(domain=self.domain)
+        repeater = BeneficiaryRegistrationRepeater(domain=self.domain)
         repeat_record_repeater_mock.return_value = repeater
 
         repeater.handle_response(response, repeat_record)

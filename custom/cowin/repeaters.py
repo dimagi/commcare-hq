@@ -32,7 +32,7 @@ class BaseCOWINRepeater(CaseRepeater):
         return headers
 
 
-class SQLBeneficiaryRegistrationRepeater(BaseCOWINRepeater):
+class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
