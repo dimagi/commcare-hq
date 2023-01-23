@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import ResourceNotFound
 from tastypie.bundle import Bundle
+from corehq.apps.locations.models import SQLLocation
 
 
 def get_object_or_not_exist(cls, doc_id, domain, additional_doc_types=None):
@@ -118,3 +119,10 @@ def django_date_filter(field_name, gt=None, gte=None, lt=None, lte=None):
         for param, value in params.items()
         if value is not None
     }
+
+
+def get_user_assigned_location_ids(couch_user, domain):
+    return [
+        loc.location_id
+        for loc in SQLLocation.objects.accessible_to_user(domain, couch_user)
+    ]

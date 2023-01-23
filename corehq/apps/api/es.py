@@ -11,7 +11,7 @@ from no_exceptions.exceptions import Http400
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
-from corehq.apps.api.util import object_does_not_exist
+from corehq.apps.api.util import object_does_not_exist, get_user_assigned_location_ids
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
 from corehq.apps.es.cases import CaseES
@@ -482,10 +482,10 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(search_params, domain, doc_type='form'):
+def es_query_from_get_request(request, domain, doc_type='form'):
     query_params = {
         param: value
-        for param, value in search_params.items()
+        for param, value in request.GET.items()
         if param not in RESERVED_QUERY_PARAMS and not param.endswith('__full')
     }
 
@@ -501,6 +501,14 @@ def es_query_from_get_params(search_params, domain, doc_type='form'):
         query_param_consumers = xform_param_consumers
     elif doc_type == 'case':
         query = CaseES().domain(domain)
+
+        # This should be done outside the if-block, since it has to be
+        # applied for 'form' type also, but FormES does not currently allow
+        # for location filtering
+        location_ids = get_user_assigned_location_ids(request.couch_user, domain)
+        if location_ids:
+            # Bind the query by the location of the user
+            query.location(location_ids)
         query_param_consumers = case_param_consumers
     else:
         raise AssertionError("unknown doc type")

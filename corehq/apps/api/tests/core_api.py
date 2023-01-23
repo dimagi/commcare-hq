@@ -17,7 +17,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanEdition,
     Subscription,
 )
-from corehq.apps.api.es import ElasticAPIQuerySet, es_query_from_get_params
+from corehq.apps.api.es import ElasticAPIQuerySet, es_query_from_get_request
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -632,7 +632,7 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
             "size": 1000000
         }
         self.checkQuery(
-            es_query_from_get_params(request.GET, 'test_domain'),
+            es_query_from_get_request(request, 'test_domain'),
             expected,
             is_raw_query=True
         )
@@ -677,7 +677,7 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
             "size": 1000000
         }
         self.checkQuery(
-            es_query_from_get_params(request.GET, 'test_domain'),
+            es_query_from_get_request(request, 'test_domain'),
             expected,
             is_raw_query=True
         )
@@ -696,7 +696,7 @@ class TestParamstoESFilters(ElasticTestMixin, SimpleTestCase):
             data={'_search': json.dumps(query)}
         )
         with self.assertRaises(Http400):
-            es_query_from_get_params(request.GET, 'test_domain')
+            es_query_from_get_request(request, 'test_domain')
 
 
 class TestApiThrottle(APIResourceTest):

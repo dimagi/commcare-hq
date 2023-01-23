@@ -14,7 +14,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.api.query_adapters import GroupQuerySetAdapter
 from corehq.apps.api.resources.pagination import DoesNothingPaginatorCompat
 
-from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_params
+from corehq.apps.api.es import ElasticAPIQuerySet, FormESView, es_query_from_get_request
 from corehq.apps.api.fields import (
     ToManyDictField,
     ToManyDocumentsField,
@@ -146,7 +146,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
 
     def obj_get_list(self, bundle, domain, **kwargs):
         try:
-            es_query = es_query_from_get_params(bundle.request.GET, domain)
+            es_query = es_query_from_get_request(bundle.request, domain)
         except Http400 as e:
             raise BadRequest(str(e))
 
