@@ -150,7 +150,7 @@ django-phonenumber-field==5.2.0
     #   django-two-factor-auth
 django-prbac==1.0.1
     # via -r base-requirements.in
-django-recaptcha==2.0.6
+django-recaptcha==3.0.0
     # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
@@ -424,6 +424,14 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.9.0
     # via -r base-requirements.in
+setuptools==65.5.1
+    # via
+    #   django-websocket-redis
+    #   gevent
+    #   gunicorn
+    #   jsonschema
+    #   zope-event
+    #   zope-interface
 sh==1.14.2
     # via -r base-requirements.in
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
@@ -534,13 +542,3 @@ zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0
     # via gevent
-
-# The following packages are considered to be unsafe in a requirements file:
-setuptools==65.5.1
-    # via
-    #   django-websocket-redis
-    #   gevent
-    #   gunicorn
-    #   jsonschema
-    #   zope-event
-    #   zope-interface
