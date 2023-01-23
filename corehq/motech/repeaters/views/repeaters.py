@@ -27,7 +27,7 @@ from ..models import (
     RepeatRecord,
     Repeater,
     are_repeat_records_migrated,
-    get_all_sqlrepeater_types,
+    get_all_repeater_types,
 )
 
 RepeaterTypeInfo = namedtuple('RepeaterTypeInfo',
@@ -53,7 +53,7 @@ class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
                 has_config=r._has_config,
                 instances=r.objects.by_domain(self.domain),
             )
-            for r in get_all_sqlrepeater_types().values()
+            for r in get_all_repeater_types().values()
             if r.available_for_domain(self.domain)
         ]
 
@@ -108,11 +108,11 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
     @memoized
     def repeater_class(self):
         try:
-            return get_all_sqlrepeater_types()[self.repeater_type]
+            return get_all_repeater_types()[self.repeater_type]
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, list(get_all_sqlrepeater_types())
+                    self.repeater_type, list(get_all_repeater_types())
                 )
             )
 

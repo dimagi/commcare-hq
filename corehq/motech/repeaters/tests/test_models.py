@@ -30,7 +30,7 @@ from ..models import (
     Repeater,
     are_repeat_records_migrated,
     format_response,
-    get_all_sqlrepeater_types,
+    get_all_repeater_types,
     is_response,
 )
 
@@ -56,7 +56,7 @@ ALL_REPEATERS = [
 
 
 def test_get_all_repeater_types():
-    types = get_all_sqlrepeater_types()
+    types = get_all_repeater_types()
     for cls in settings.REPEATER_CLASSES:
         name = cls.split('.')[-1]
         assert_in(name, types)
