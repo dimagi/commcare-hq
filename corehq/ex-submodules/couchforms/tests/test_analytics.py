@@ -3,7 +3,6 @@ import uuid
 
 from django.test import TestCase
 
-from corehq.const import MISSING_APP_ID
 from couchforms.analytics import (
     app_has_been_submitted_to_in_last_30_days,
     domain_has_submission_in_last_30_days,
@@ -14,15 +13,18 @@ from couchforms.analytics import (
     get_last_form_submission_received,
     get_number_of_forms_in_domain,
 )
-from testapps.test_pillowtop.utils import process_pillow_changes
 
+from corehq.apps.es.client import manager
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
-from corehq.apps.es.forms import form_adapter
-from corehq.apps.es.client import manager
+from corehq.const import MISSING_APP_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstance
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, create_form_for_test
+from corehq.form_processor.tests.utils import (
+    FormProcessorTestUtils,
+    create_form_for_test,
+)
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import (
@@ -31,6 +33,7 @@ from corehq.util.test_utils import (
     flaky_slow,
     get_form_ready_to_save,
 )
+from testapps.test_pillowtop.utils import process_pillow_changes
 
 
 @es_test(requires=[form_adapter], setup_class=True)
@@ -42,7 +45,8 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
     def setUpClass(cls):
         super(ExportsFormsAnalyticsTest, cls).setUpClass()
         from casexml.apps.case.tests.util import delete_all_xforms
-        from corehq.apps.app_manager.models import Application, Module, Form
+
+        from corehq.apps.app_manager.models import Application, Form, Module
         delete_all_xforms()
 
         cls.domain = 'exports_forms_analytics_domain'
