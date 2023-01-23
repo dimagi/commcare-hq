@@ -339,8 +339,7 @@ class Repeater(RepeaterSuperProxy):
     @classmethod
     @property
     def _repeater_type(cls):
-        name = cls.__name__
-        return name[3:] if name.startswith('SQL') else name
+        return cls.__name__
 
     @property
     def repeat_records_ready(self):
