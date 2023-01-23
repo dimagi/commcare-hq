@@ -20,6 +20,11 @@
 </locale>
 <detail id="m0_case_short">
     <title><text><locale id="cchq.case"/></text></title>
+    <no_items_text>
+      <text>
+        <locale id="m0_no_items_text"/>
+      </text>
+    </no_items_text>
     <field sort="default">
         <header>
             <text><locale id="m0.case_short.case_dob_1.header"/></text>
