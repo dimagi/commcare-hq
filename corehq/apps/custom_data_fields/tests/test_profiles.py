@@ -1,15 +1,15 @@
 from django.test import TestCase
 
 from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
     CustomDataFieldsDefinition,
     CustomDataFieldsProfile,
     Field,
-    PROFILE_SLUG,
 )
 from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.apps.es.users import user_adapter
 from corehq.pillows.user import transform_user_for_elasticsearch
 
 
