@@ -10,7 +10,7 @@ from custom.cowin.repeater_generators import (
 )
 
 
-class SQLBaseCOWINRepeater(CaseRepeater):
+class BaseCOWINRepeater(CaseRepeater):
     class Meta:
         proxy = True
         app_label = 'repeaters'
@@ -32,7 +32,7 @@ class SQLBaseCOWINRepeater(CaseRepeater):
         return headers
 
 
-class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
+class SQLBeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
@@ -66,7 +66,7 @@ class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
         return allowed
 
 
-class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
+class SQLBeneficiaryVaccinationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
