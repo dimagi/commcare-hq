@@ -1,15 +1,12 @@
 import uuid
 from datetime import datetime, timedelta
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
-
-from unittest import mock
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.domains import domain_adapter
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
@@ -24,21 +21,23 @@ from corehq.apps.callcenter.utils import (
     get_call_center_domains,
     is_midnight_for_domain,
 )
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.apps.es.domains import domain_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
-)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
