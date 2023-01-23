@@ -44,7 +44,7 @@ from corehq.motech.repeaters.models import (
     FormRepeater,
     SQLLocationRepeater,
     Repeater,
-    SQLShortFormRepeater,
+    ShortFormRepeater,
     SQLUserRepeater,
     _get_retry_interval,
 )
@@ -515,7 +515,7 @@ class ShortFormRepeaterTest(BaseRepeaterTest, TestXmlMixin):
             domain=cls.domain,
             url="short-form-repeater-url",
         )
-        cls.repeater = SQLShortFormRepeater(
+        cls.repeater = ShortFormRepeater(
             domain=cls.domain,
             connection_settings_id=cls.connx.id,
             repeater_id=uuid.uuid4().hex

@@ -743,7 +743,7 @@ class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
         return True
 
 
-class SQLShortFormRepeater(Repeater):
+class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
 
