@@ -9,8 +9,8 @@ from corehq.apps.data_interfaces.views import (
     DeduplicationRuleEditView,
     HttpResponseRedirect,
 )
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import es_test
 
 
 @es_test(requires=[case_adapter], setup_class=True)
