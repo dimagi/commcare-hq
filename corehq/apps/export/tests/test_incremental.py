@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from couchexport.models import Format
-from pillowtop.es_utils import initialize_index_and_mapping
 
 import requests_mock
 from corehq.apps.export.models import (
@@ -28,26 +27,17 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import setup_locations_and_types
 from corehq.apps.export.tests.util import DEFAULT_CASE_TYPE, new_case
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.users import user_adapter
 from corehq.motech.const import BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.util.es.interface import ElasticsearchInterface
-from corehq.util.test_utils import trap_extra_setup
 
 
-@es_test
+@es_test(requires=[case_adapter, user_adapter], setup_class=True)
 class TestIncrementalExport(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        with trap_extra_setup(ConnectionError, msg="cannot connect to elasicsearch"):
-            cls.es = get_es_new()
-            initialize_index_and_mapping(cls.es, CASE_INDEX_INFO)
-            initialize_index_and_mapping(cls.es, USER_INDEX_INFO)
-
         cls.domain = uuid.uuid4().hex
         create_domain(cls.domain)
         cls.now = datetime.utcnow()
@@ -61,14 +51,7 @@ class TestIncrementalExport(TestCase):
         ]
 
         for case in cases:
-            send_to_elasticsearch('cases', case.to_json())
-
-        cls.es.indices.refresh(CASE_INDEX_INFO.index)
-
-    @classmethod
-    def tearDownClass(cls):
-        ensure_index_deleted(CASE_INDEX_INFO.index)
-        super().tearDownClass()
+            case_adapter.index(case.to_json(), refresh=True)
 
     def setUp(self):
         super().setUp()
@@ -122,9 +105,7 @@ class TestIncrementalExport(TestCase):
 
     def _cleanup_case(self, case_id):
         def _clean():
-            interface = ElasticsearchInterface(self.es)
-            interface.delete_doc(CASE_INDEX_INFO.alias, CASE_INDEX_INFO.type, case_id)
-            self.es.indices.refresh(CASE_INDEX_INFO.index)
+            case_adapter.delete(case_id, refresh=True)
         return _clean
 
     def test_initial(self):
@@ -152,8 +133,7 @@ class TestIncrementalExport(TestCase):
             case_json={"foo": "peach", "bar": "plumb"},
             server_modified_on=datetime.utcnow(),
         )
-        send_to_elasticsearch('cases', case.to_json())
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+        case_adapter.index(case.to_json(), refresh=True)
         self.addCleanup(self._cleanup_case(case.case_id))
 
         checkpoint = _generate_incremental_export(self.incremental_export, last_doc_date=checkpoint.last_doc_date)
@@ -210,8 +190,7 @@ class TestIncrementalExport(TestCase):
         self.addCleanup(delete_all_locations)
 
         user = CommCareUser.create(self.domain, 'm2', 'abc', None, None, location=team1)
-        send_to_elasticsearch('users', user.to_json())
-        self.es.indices.refresh(USER_INDEX_INFO.index)
+        user_adapter.index(user.to_json(), refresh=True)
         self.addCleanup(delete_all_users)
 
         cases = [
@@ -234,10 +213,8 @@ class TestIncrementalExport(TestCase):
             ),
         ]
         for case in cases:
-            send_to_elasticsearch("cases", case.to_json())
+            case_adapter.index(case.to_json(), refresh=True)
             self.addCleanup(self._cleanup_case(case.case_id))
-
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
 
         self.export_instance.filters.show_project_data = False
         self.export_instance.filters.locations = [health_department.location_id]
