@@ -6,15 +6,14 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.apps.es.users import user_adapter
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCustomDataFieldsProfile(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -93,20 +92,13 @@ class TestCustomDataFieldsProfile(TestCase):
         }])
 
     def test_users_assigned(self):
-        self.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
-
         user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
             PROFILE_SLUG: self.profile5.id,
         })
         self.addCleanup(user.delete, self.domain, deleted_by=None)
-        send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+        user_adapter.index(transform_user_for_elasticsearch(user.to_json()), refresh=True)
 
         self.assertFalse(self.profile3.has_users_assigned)
         self.assertEqual([], self.profile3.user_ids_assigned())
         self.assertTrue(self.profile5.has_users_assigned)
         self.assertEqual([user._id], self.profile5.user_ids_assigned())
-
-        ensure_index_deleted(USER_INDEX)
