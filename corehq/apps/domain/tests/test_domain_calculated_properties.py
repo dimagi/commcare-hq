@@ -3,17 +3,21 @@ import json
 
 from django.test import TestCase
 
-from corehq.apps.es.sms import SMSES
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
 
-from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms, get_sms_count
+from corehq.apps.domain.calculations import (
+    all_domain_stats,
+    calced_props,
+    get_sms_count,
+    sms,
+)
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.sms import sms_adapter
-from corehq.apps.es.forms import form_adapter
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.sms import SMSES, sms_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+from corehq.apps.sms.models import INCOMING, OUTGOING
 
 
 @es_test(requires=[sms_adapter, case_adapter, form_adapter, user_adapter], setup_class=True)
