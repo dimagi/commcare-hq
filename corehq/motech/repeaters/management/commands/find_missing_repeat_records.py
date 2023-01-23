@@ -12,7 +12,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
@@ -208,7 +208,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
         fired_repeater_ids_and_counts_after_enddate[record.repeater_id] += 1
 
     for repeater in repeaters:
-        repeaters_to_ignore = (SQLDhis2EntityRepeater, SQLOpenmrsRepeater)
+        repeaters_to_ignore = (SQLDhis2EntityRepeater, OpenmrsRepeater)
         if isinstance(repeater, repeaters_to_ignore):
             # not dealing with these right now because their expected payload appears to be a form?
             continue

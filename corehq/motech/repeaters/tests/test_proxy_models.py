@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from corehq.motech.dhis2.repeaters import SQLDhis2EntityRepeater
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.motech.repeaters.expression.repeaters import (
     CaseExpressionRepeater,
@@ -46,7 +46,7 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         super().setUp()
         self.repeater_classes = [
             SQLDhis2EntityRepeater, CaseExpressionRepeater,
-            CaseRepeater, DataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
+            CaseRepeater, DataRegistryCaseUpdateRepeater, OpenmrsRepeater]
         for r in self.repeater_classes:
             mock_data = self.repeater_data
             r(

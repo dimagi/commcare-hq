@@ -61,7 +61,7 @@ class AtomFeedStatus(DocumentSchema):
     last_page = StringProperty(default='recent')
 
 
-class SQLOpenmrsRepeater(CaseRepeater):
+class OpenmrsRepeater(CaseRepeater):
     """
     ``OpenmrsRepeater`` is responsible for updating OpenMRS patients
     with changes made to cases in CommCare. It is also responsible for
@@ -287,7 +287,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(SQLOpenmrsRepeater, xform)
+    create_repeat_records(OpenmrsRepeater, xform)
 
 
 successful_form_received.connect(create_openmrs_repeat_records)
