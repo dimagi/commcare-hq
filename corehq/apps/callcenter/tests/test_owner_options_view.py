@@ -3,10 +3,12 @@ import math
 
 from django.test import TestCase
 
+from django_digest.test import Client
+
 from corehq.apps.callcenter.views import CallCenterOwnerOptionsView
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import LocationType
@@ -14,7 +16,6 @@ from corehq.apps.locations.tests.util import make_loc
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.toggles import CALL_CENTER_LOCATION_OWNERS, NAMESPACE_DOMAIN
 from corehq.util import reverse
-from django_digest.test import Client
 
 TEST_DOMAIN = "cc-location-owner-test-domain"
 CASE_TYPE = "cc-case-type"
