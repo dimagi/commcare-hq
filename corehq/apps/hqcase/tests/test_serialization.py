@@ -1,15 +1,14 @@
 import uuid
-from unittest.mock import patch
 from datetime import datetime
+from unittest.mock import patch
 
 from django.test import TestCase
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.case_search import CaseSearchES, case_search_adapter
 from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.case_search import case_search_adapter
 from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 
