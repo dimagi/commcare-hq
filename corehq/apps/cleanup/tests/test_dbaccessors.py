@@ -8,13 +8,13 @@ from corehq.apps.cleanup.dbaccessors import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es import FormES
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.apps import app_adapter
-from corehq.apps.es.groups import group_adapter
 from corehq.apps.es.case_search import case_search_adapter
-from corehq.apps.es.users import user_adapter
 from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
