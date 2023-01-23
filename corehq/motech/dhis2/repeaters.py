@@ -80,7 +80,7 @@ class Dhis2Instance(object):
         self.save()
 
 
-class SQLDhis2Repeater(FormRepeater, Dhis2Instance):
+class Dhis2Repeater(FormRepeater, Dhis2Instance):
     class Meta:
         proxy = True
         app_label = 'repeaters'
@@ -266,7 +266,7 @@ def fetch_metadata(requests):
 
 
 def create_dhis2_event_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(SQLDhis2Repeater, xform)
+    create_repeat_records(Dhis2Repeater, xform)
 
 
 def create_dhis2_entity_repeat_records(sender, xform, **kwargs):
