@@ -91,4 +91,5 @@ branches:
     - ad/hide-incomplete-forms # Addison Jan 19
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - akj/case-detail-close-accessibility # Akash Jan 21
+    - jm/refactor-user-signals  # Joel Jan 23
 submodules: { }
