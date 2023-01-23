@@ -697,7 +697,7 @@ class ReferCaseRepeater(CreateCaseRepeater):
         )
 
 
-class SQLDataRegistryCaseUpdateRepeater(CreateCaseRepeater):
+class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
     """
     A repeater that triggers off case creation but sends a form to update cases in
     another commcare project space.

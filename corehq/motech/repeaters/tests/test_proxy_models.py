@@ -13,7 +13,7 @@ from corehq.motech.repeaters.expression.repeaters import (
 from ..models import (
     CaseRepeater,
     CreateCaseRepeater,
-    SQLDataRegistryCaseUpdateRepeater,
+    DataRegistryCaseUpdateRepeater,
     ReferCaseRepeater,
     Repeater,
 )
@@ -46,7 +46,7 @@ class TestSQLRepeaterCreatesCorrectRepeaterObjects(RepeaterProxyTests):
         super().setUp()
         self.repeater_classes = [
             SQLDhis2EntityRepeater, SQLCaseExpressionRepeater,
-            CaseRepeater, SQLDataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
+            CaseRepeater, DataRegistryCaseUpdateRepeater, SQLOpenmrsRepeater]
         for r in self.repeater_classes:
             mock_data = self.repeater_data
             r(
@@ -67,7 +67,7 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
         self.createcase_repeater_obj = CreateCaseRepeater(**self.repeater_data)
         self.case_repeater_obj = CaseRepeater(**self.repeater_data)
         self.refercase_repeater_obj = ReferCaseRepeater(**self.repeater_data)
-        self.dataregistry_repeater_obj = SQLDataRegistryCaseUpdateRepeater(**self.repeater_data)
+        self.dataregistry_repeater_obj = DataRegistryCaseUpdateRepeater(**self.repeater_data)
         self.case_repeater_obj.save()
         self.createcase_repeater_obj.save()
         self.refercase_repeater_obj.save()
@@ -105,5 +105,5 @@ class TestSQLCreateCaseRepeaterSubModels(RepeaterProxyTests):
         self.assertEqual(len(CreateCaseRepeater.objects.all()), 1)
         self.assertEqual(len(CaseRepeater.objects.all()), 1)
         self.assertEqual(len(ReferCaseRepeater.objects.all()), 1)
-        self.assertEqual(len(SQLDataRegistryCaseUpdateRepeater.objects.all()), 1)
+        self.assertEqual(len(DataRegistryCaseUpdateRepeater.objects.all()), 1)
         self.assertEqual(len(Repeater.objects.all()), 4)

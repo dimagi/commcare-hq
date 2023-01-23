@@ -13,7 +13,7 @@ from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCase
 from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
-    SQLDataRegistryCaseUpdateRepeater,
+    DataRegistryCaseUpdateRepeater,
     ReferCaseRepeater,
     UpdateCaseRepeater,
     domain_can_forward,
@@ -97,7 +97,7 @@ def fire_synchronous_case_repeaters(sender, case, **kwargs):
     """These repeaters need to fire synchronously since the changes they make to cases
     must reflect by the end of form submission processing
     """
-    _create_repeat_records(SQLDataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
+    _create_repeat_records(DataRegistryCaseUpdateRepeater, case, fire_synchronously=True)
 
 
 successful_form_received.connect(create_form_repeat_records)
