@@ -92,4 +92,5 @@ branches:
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - akj/case-detail-close-accessibility # Akash Jan 21
     - jm/refactor-user-signals  # Joel Jan 23
+    - akj/nav-bar-icons-accessibility # Akash Jan 24
 submodules: { }
