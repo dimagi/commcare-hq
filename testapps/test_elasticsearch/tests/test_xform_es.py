@@ -1,11 +1,12 @@
-from collections import namedtuple
-import uuid
 import datetime
+import uuid
+from collections import namedtuple
+
 from django.test import SimpleTestCase
 
 from corehq.apps.es import FormES
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.util.test_utils import make_es_ready_form
 
