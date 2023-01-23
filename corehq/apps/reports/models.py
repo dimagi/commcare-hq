@@ -302,7 +302,11 @@ class TableauAPISession(object):
                 body = json.loads(response.text)
                 return body
         else:
-            error_code = json.loads(response.text)['error']['code']
+            error_code = None
+            if 400 <= response.status_code and response.status_code < 500:
+                error_code = json.loads(response.text)['error']['code']
+            else:
+                error_code = response.status_code
             raise TableauAPIError(
                 f"Tableau API request '{request_name}' failed. Response body: {response.text}",
                 error_code
