@@ -1,5 +1,6 @@
 import uuid
 from io import StringIO
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -7,7 +8,6 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
-from unittest import mock
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.cases import case_adapter
@@ -15,7 +15,6 @@ from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
-
 from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     FormDocumentStore,
