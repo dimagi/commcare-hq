@@ -3,8 +3,10 @@ from django.test.client import Client
 from django.urls import reverse
 
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import get_simple_form, patch_validate_xform
-
+from corehq.apps.app_manager.tests.util import (
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
