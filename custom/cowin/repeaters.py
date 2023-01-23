@@ -66,7 +66,7 @@ class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
         return allowed
 
 
-class SQLBeneficiaryVaccinationRepeater(BaseCOWINRepeater):
+class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
