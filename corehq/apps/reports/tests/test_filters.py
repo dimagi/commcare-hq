@@ -1,7 +1,5 @@
+from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
@@ -21,10 +19,10 @@ from corehq.apps.reports.filters.forms import (
     FormsByApplicationFilter,
     FormsByApplicationFilterParams,
 )
+from corehq.apps.es.users import user_adapter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.tests.test_analytics import SetupSimpleAppMixin
 from corehq.apps.users.models import CommCareUser, CouchUser, DomainMembership, WebUser
-from pillowtop.es_utils import initialize_index_and_mapping
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -39,7 +37,7 @@ class TestEmwfPagination(SimpleTestCase):
             return len(matching_objects(query))
 
         def get_objects(query, start, size):
-            return matching_objects(query)[start:start+size]
+            return matching_objects(query)[start:start + size]
 
         return (get_size, get_objects)
 
@@ -228,6 +226,7 @@ def _make_filter(slug, value):
     return {'slug': slug, 'value': value}
 
 
+@es_test(requires=[user_adapter])
 class TestEMWFilterOutput(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -250,22 +249,20 @@ class TestEMWFilterOutput(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
         self._send_users_to_es()
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         for user in cls.user_list:
             user.delete(cls.domain, deleted_by=None)
         super().tearDownClass()
 
     def _send_users_to_es(self):
         for user_obj in self.user_list:
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user_obj.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+            user_adapter.index(
+                transform_user_for_elasticsearch(user_obj.to_json()),
+                refresh=True
+            )
 
     def test_with_active_slug(self):
         mobile_user_and_group_slugs = ['t__0']
