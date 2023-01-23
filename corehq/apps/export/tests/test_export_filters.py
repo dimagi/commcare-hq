@@ -2,11 +2,12 @@ import uuid
 
 from django.test import SimpleTestCase
 
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.groups import group_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.export.esaccessors import get_case_export_base_query
 from corehq.apps.export.export import get_export_documents
-from corehq.apps.es.forms import form_adapter
-from corehq.apps.es.cases import case_adapter
-from corehq.apps.es.groups import group_adapter
 from corehq.apps.export.filters import (
     OR,
     FormSubmittedByFilter,
@@ -27,7 +28,6 @@ from corehq.apps.export.tests.util import (
     new_case,
     new_form,
 )
-from corehq.apps.es.tests.utils import es_test
 from corehq.apps.groups.models import Group
 
 
