@@ -414,6 +414,7 @@ class DatatablesParams(object):
 # --- Tableau API util methods ---
 
 TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
+DEFAULT_TABLEAU_ROLE = TableauUser.Roles.UNLICENSED.value
 
 
 def tableau_username(HQ_username):
