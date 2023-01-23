@@ -4,18 +4,14 @@ from django.test import SimpleTestCase
 
 from unittest.mock import MagicMock, patch
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
+from corehq.apps.es.users import user_adapter
 from corehq.pillows.user import transform_user_for_elasticsearch
-from corehq.util.elastic import ensure_index_deleted
 
 
-@es_test
+@es_test(requires=[user_adapter])
 class TestLoginAsUserQuery(SimpleTestCase):
 
     @classmethod
@@ -26,17 +22,6 @@ class TestLoginAsUserQuery(SimpleTestCase):
         cls.last_name = 'kent'
         cls.doc_type = 'CommCareUser'
         cls.domain = 'user-esaccessors-test'
-        cls.es = get_es_new()
-
-    def setUp(self):
-        initialize_index_and_mapping(self.es, USER_INDEX_INFO)
-
-    def tearDown(self):
-        ensure_index_deleted(USER_INDEX)
-
-    @classmethod
-    def tearDownClass(cls):
-        super(TestLoginAsUserQuery, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
         user = CommCareUser(
@@ -50,8 +35,10 @@ class TestLoginAsUserQuery(SimpleTestCase):
         )
 
         with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
-            send_to_elasticsearch('users', transform_user_for_elasticsearch(user.to_json()))
-        self.es.indices.refresh(USER_INDEX)
+            user_adapter.index(
+                transform_user_for_elasticsearch(user.to_json()),
+                refresh=True
+            )
         return user
 
     def test_login_as_user_query_username(self):
