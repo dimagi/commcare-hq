@@ -15,7 +15,7 @@ from corehq.motech.repeaters.models import (
     CreateCaseRepeater,
     SQLDataRegistryCaseUpdateRepeater,
     SQLReferCaseRepeater,
-    SQLUpdateCaseRepeater,
+    UpdateCaseRepeater,
     domain_can_forward,
 )
 from dimagi.utils.logging import notify_exception
@@ -32,7 +32,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     from corehq.motech.repeaters.expression.repeaters import SQLCaseExpressionRepeater
     create_repeat_records(CaseRepeater, case)
     create_repeat_records(CreateCaseRepeater, case)
-    create_repeat_records(SQLUpdateCaseRepeater, case)
+    create_repeat_records(UpdateCaseRepeater, case)
     create_repeat_records(SQLReferCaseRepeater, case)
     create_repeat_records(SQLCaseExpressionRepeater, case)
 

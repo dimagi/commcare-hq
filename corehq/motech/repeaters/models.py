@@ -650,7 +650,7 @@ class CreateCaseRepeater(CaseRepeater):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
 
 
-class SQLUpdateCaseRepeater(CaseRepeater):
+class UpdateCaseRepeater(CaseRepeater):
     """
     Just like CaseRepeater but only create records if the case is being updated.
     Used by the Zapier integration.

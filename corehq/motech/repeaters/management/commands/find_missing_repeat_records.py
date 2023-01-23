@@ -17,7 +17,7 @@ from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_repeat_records_by_payload_id
 )
-from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, SQLUpdateCaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import CreateCaseRepeater, Repeater, UpdateCaseRepeater, RepeatRecord
 from corehq.util.argparse_types import date_type
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -247,7 +247,7 @@ def find_missing_case_repeat_records_for_case(case, domain, repeaters, startdate
         missing_all_count += missing_count
         if isinstance(repeater, CreateCaseRepeater):
             missing_create_count += missing_count
-        elif isinstance(repeater, SQLUpdateCaseRepeater):
+        elif isinstance(repeater, UpdateCaseRepeater):
             missing_update_count += missing_count
 
         successful_count += actual_record_count
@@ -270,7 +270,7 @@ def expected_number_of_repeat_records_fired_for_case(case, repeater, startdate, 
         # to avoid modifying CreateCaseRepeater's allowed_to_forward method
         if create_case_repeater_allowed_to_forward(repeater, case):
             filtered_transactions = case.transactions[0:1]
-    elif isinstance(repeater, SQLUpdateCaseRepeater):
+    elif isinstance(repeater, UpdateCaseRepeater):
         if repeater.allowed_to_forward(case):
             filtered_transactions = case.transactions[1:]
     else:
