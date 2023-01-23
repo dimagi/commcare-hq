@@ -15,9 +15,9 @@ from corehq.apps.es.case_search import (
     CaseSearchES,
     case_property_geo_distance,
     case_property_query,
+    case_search_adapter,
 )
 from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
-from corehq.apps.es.case_search import case_search_adapter
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 
