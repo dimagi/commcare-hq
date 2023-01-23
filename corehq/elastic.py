@@ -1,10 +1,9 @@
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
-from corehq.apps.es.client import get_client, manager
+from corehq.apps.es.client import get_client
 from corehq.apps.es.exceptions import ESError  # noqa: F401
 from corehq.apps.es.transient_util import (  # noqa: F401
     index_info_from_cname,
-    doc_adapter_from_cname,
     doc_adapter_from_info,
     report_and_fail_on_shard_failures,
 )
@@ -47,7 +46,3 @@ def send_to_elasticsearch(index_cname, doc, delete=False, es_merge_update=False)
         delete=delete,
         es_merge_update=es_merge_update,
     )
-
-
-def refresh_elasticsearch_index(index_cname):
-    manager.index_refresh(doc_adapter_from_cname(index_cname).index_name)
