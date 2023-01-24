@@ -21,13 +21,13 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var FormplayerFrontend = new Marionette.Application();
 
     FormplayerFrontend.on("before:start", function (app, options) {
-        const xsrfRequest = new $.Deferred(); // create Deferred object
-        this.xsrfPromise = xsrfRequest.promise(); // returns only the promise of the object
+        const xsrfRequest = new $.Deferred();
+        this.xsrfRequest = xsrfRequest.promise();
         // Make a get call if the csrf token isn't available when the page loads.
         if ($.cookie('XSRF-TOKEN') === undefined) {
             $.get(
                 {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
-            ).always(xsrfRequest.resolve());
+            ).always(() => { xsrfRequest.resolve(); });
         } else {
             // resolve immediately
             xsrfRequest.resolve();
@@ -307,10 +307,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
-        $.when(
-            FormplayerUtils.getSavedDisplayOptions(),
-            FormplayerFrontend.xsrfPromise
-        ).done(function (savedDisplayOptions) {
+        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
             savedDisplayOptions = _.pick(
                 savedDisplayOptions,
                 Const.ALLOWED_SAVED_OPTIONS
@@ -324,7 +321,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
             });
 
             FormplayerFrontend.getChannel().request('gridPolyfillPath', options.gridPolyfillPath);
-            $.when(FormplayerFrontend.getChannel().request("appselect:apps")).done(function (appCollection) {
+            $.when(
+                FormplayerFrontend.getChannel().request("appselect:apps"),
+                FormplayerFrontend.xsrfRequest
+            ).done(function (appCollection) {
                 var appId;
                 var apps = appCollection.toJSON();
                 if (Backbone.history) {
