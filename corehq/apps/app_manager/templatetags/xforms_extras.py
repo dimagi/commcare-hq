@@ -129,7 +129,7 @@ def input_trans(name, langs=None, input_name='name', input_id=None, data_bind=No
                    placeholder="{placeholder}" />
         '''
     elif element_type == 'textarea':
-        options = _get_dynamic_input_trans_options(name, langs=langs, value_escape="html")
+        options = _get_dynamic_input_trans_options(name, langs=langs, is_textarea=True)
         template = '''
             <textarea name="{input_name}" {input_id_attribute} {data_bind_attribute}
                       class="form-control vertical-resize"
@@ -181,7 +181,7 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
     return format_html(template, **options)
 
 
-def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, value_escape="js"):
+def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, is_textarea=False):
     if langs is None:
         langs = ["default"]
     placeholder = _("Untitled")
@@ -201,7 +201,7 @@ def _get_dynamic_input_trans_options(name, langs=None, allow_blank=True, value_e
                 options['placeholder'] = name[lang] if (allow_blank or name[lang] != '') else placeholder
                 options['lang'] = lang
             break
-    if value_escape == "html":
+    if is_textarea:
         options = _escape_options(options, keys_to_html_escape=['value'])
     else:
         options = _escape_options(options)
