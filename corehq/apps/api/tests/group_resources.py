@@ -127,5 +127,5 @@ class TestGroupResource(APIResourceTest):
         self.addCleanup(group.delete)
         if send_to_es:
             group_adapter.index(group.to_json(), refresh=True)
-            self.addCleanup(lambda: group_adapter.delete(group._id))
+            self.addCleanup(group_adapter.delete, group._id)
         return group
