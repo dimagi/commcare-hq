@@ -91,7 +91,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
             transform_xform_for_elasticsearch(form.to_json()),
             refresh=True
         )
-        self.addCleanup(lambda: form_adapter.delete(form.form_id))
+        self.addCleanup(form_adapter.delete, form.form_id)
         counts_by_domain = find_es_docs_for_deleted_domains()
 
         es_doc_counts = counts_by_domain[self.deleted_domain.name]
@@ -103,7 +103,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
             transform_xform_for_elasticsearch(form.to_json()),
             refresh=True
         )
-        self.addCleanup(lambda: form_adapter.delete(form.form_id))
+        self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()
         self.assertTrue('missing-domain' not in counts_by_domain)
@@ -114,7 +114,7 @@ class TestFindESDocsForDeletedDomains(TestCase):
             transform_xform_for_elasticsearch(form.to_json()),
             refresh=True
         )
-        self.addCleanup(lambda: form_adapter.delete(form.form_id))
+        self.addCleanup(form_adapter.delete, form.form_id)
 
         counts_by_domain = find_es_docs_for_deleted_domains()
 
