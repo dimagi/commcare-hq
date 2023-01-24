@@ -1,9 +1,9 @@
 from datetime import datetime
 import traceback
-from corehq.apps.app_manager.dbaccessors import wrap_app
-from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase
-from corehq.apps.domain.models import Domain
 import random
+from corehq.apps.app_manager.dbaccessors import wrap_app
+from corehq.apps.app_manager.management.commands.helpers import AppMigrationCommandBase, get_deleted_app_ids
+from corehq.apps.domain.models import Domain
 
 
 def get_new_case_update_json(name_path):
@@ -36,6 +36,12 @@ class Command(AppMigrationCommandBase):
             default=None,
             help='''For a dry run, use this argument to test on X number of domains. Dry run flag must be
                     included and domain flag cannot be included.''',
+        )
+        parser.add_argument(
+            '--deleted-apps-only',
+            action='store_true',
+            default=False,
+            help='''Only include deleted apps in the migration.''',
         )
 
     def _has_been_migrated(self, app_doc):
@@ -96,3 +102,11 @@ class Command(AppMigrationCommandBase):
             error_string = (f"{datetime.now()}\nOn domain: {app_doc['domain']}, "
                             f"App ID: {app_doc['_id']}\n{traceback.format_exc().strip()}\n")
             f.write(error_string)
+
+    def get_app_ids(self, domain=None):
+        if self.options.get('deleted_apps_only', None):
+            if not domain:
+                raise(Exception("Getting delted app IDs requires domain specficity."))
+            return get_deleted_app_ids(domain)
+        else:
+            return super().get_app_ids(domain)

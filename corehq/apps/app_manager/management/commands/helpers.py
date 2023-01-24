@@ -21,23 +21,24 @@ logger = logging.getLogger('app_migration')
 logger.setLevel('DEBUG')
 
 
-def get_all_app_ids(domain=None, include_builds=False, deleted_apps_only=False):
+def get_all_app_ids(domain=None, include_builds=False):
     key = [domain]
     if not include_builds:
         key += [None]
 
-    if deleted_apps_only:
-        db = get_db_by_doc_type('Application')
-        return (list(iterate_doc_ids_in_domain_by_type(domain, 'Application-Deleted', database=db))
-            + list(iterate_doc_ids_in_domain_by_type(domain, 'LinkedApplication-Deleted', database=db))
-            + list(iterate_doc_ids_in_domain_by_type(domain, 'RemoteApp-Deleted', database=db)))
-    else:
-        return {r['id'] for r in Application.get_db().view(
-            'app_manager/applications',
-            startkey=key,
-            endkey=key + [{}],
-            reduce=False,
-        ).all()}
+    return {r['id'] for r in Application.get_db().view(
+        'app_manager/applications',
+        startkey=key,
+        endkey=key + [{}],
+        reduce=False,
+    ).all()}
+
+
+def get_deleted_app_ids(domain=None):
+    db = get_db_by_doc_type('Application')
+    return (list(iterate_doc_ids_in_domain_by_type(domain, 'Application-Deleted', database=db))
+        + list(iterate_doc_ids_in_domain_by_type(domain, 'LinkedApplication-Deleted', database=db))
+        + list(iterate_doc_ids_in_domain_by_type(domain, 'RemoteApp-Deleted', database=db)))
 
 
 SaveError = namedtuple('SaveError', 'id error reason')
@@ -80,12 +81,6 @@ class AppMigrationCommandBase(BaseCommand):
             default=False,
             help="If existing progress files for this command exist, turn this flag on to ignore them and start"
                  "from scratch.",
-        )
-        parser.add_argument(
-            '--deleted-apps-only',
-            action='store_true',
-            default=False,
-            help='''Only include deleted apps in the migration.''',
         )
         parser.add_argument(
             '--only-run-once',
@@ -167,8 +162,7 @@ class AppMigrationCommandBase(BaseCommand):
         return app_doc
 
     def get_app_ids(self, domain=None):
-        return get_all_app_ids(domain=domain, include_builds=self.include_builds,
-                               deleted_apps_only=self.options.get('deleted_apps_only', None))
+        return get_all_app_ids(domain=domain, include_builds=self.include_builds)
 
     def get_domains(self):
         return None
