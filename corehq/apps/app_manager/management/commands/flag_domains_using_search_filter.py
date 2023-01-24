@@ -10,6 +10,7 @@ from corehq.util.log import with_progress_bar
 
 APP_WRAPPING_ERRORS_LOG = "migrate_to_search_filter_flag_wrapping_errors.txt"
 
+
 class Command(BaseCommand):
     help = "One-time command to enable search filter flag where 'search filter' is already in use"
 
