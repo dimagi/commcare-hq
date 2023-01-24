@@ -1,3 +1,6 @@
+from datetime import datetime
+import traceback
+
 from django.core.management import BaseCommand
 
 from dimagi.utils.chunked import chunked
@@ -5,6 +8,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_app_ids_in_domain, get_current_app
 from corehq.util.log import with_progress_bar
 
+APP_WRAPPING_ERRORS_LOG = "migrate_to_search_filter_flag_wrapping_errors.txt"
 
 class Command(BaseCommand):
     help = "One-time command to enable search filter flag where 'search filter' is already in use"
@@ -26,7 +30,7 @@ def _any_app_uses_search_filter(domain):
         try:
             app = get_current_app(domain, app_id)
         except Exception:
-            pass
+            log_error(domain, app_id)
         else:
             if app.modules and _any_module_uses_search_filter(app):
                 return True
@@ -38,3 +42,10 @@ def _any_module_uses_search_filter(app):
         if hasattr(module, 'search_config') and module.search_config.search_filter:
             return True
     return False
+
+
+def log_error(domain, app_id):
+    with open(APP_WRAPPING_ERRORS_LOG, 'a') as f:
+        error_string = (f"{datetime.now()}\nOn domain: {domain}, "
+                        f"App ID: {app_id}\n{traceback.format_exc().strip()}\n")
+        f.write(error_string)
