@@ -44,7 +44,7 @@ class UserCountTest(TestCase):
         content = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(content, {'count': [5, 1]})
+        self.assertEqual(content, {'user_count': 5, 'group_count': 1})
 
     @mock.patch('corehq.apps.users.dbaccessors.count_web_users_by_filters')
     @mock.patch('corehq.apps.users.dbaccessors.count_invitations_by_filters')
@@ -58,4 +58,4 @@ class UserCountTest(TestCase):
         content = json.loads(response.content)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(content, {'count': 6})
+        self.assertEqual(content, {'user_count': 6, 'group_count': 0})
