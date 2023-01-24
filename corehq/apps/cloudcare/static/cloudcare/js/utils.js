@@ -201,6 +201,7 @@ hqDefine('cloudcare/js/utils', [
                         errorType: data.type,
                     },
                     extra: sentryData,
+                    level: "error"
                 });
 
                 $.ajax({
