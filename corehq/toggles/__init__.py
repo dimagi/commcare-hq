@@ -2387,5 +2387,6 @@ TABLEAU_USER_SYNCING = StaticToggle(
     description="""
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
-    """
+    """,
+    parent_toggles=[EMBEDDED_TABLEAU]
 )
