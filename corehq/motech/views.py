@@ -53,7 +53,7 @@ class MotechLogListView(BaseProjectSettingsView, ListView):
         )
 
     def get_context_data(self, **kwargs):
-        context = super(MotechLogListView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context.update({
             "filter_from_date": self.request.GET.get("filter_from_date",
                                                      _a_week_ago()),
@@ -78,6 +78,13 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
     def get_queryset(self):
         return RequestLog.objects.filter(domain=self.domain)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            "is_dimagi": self.request.couch_user.is_dimagi
+        })
+        return context
 
     @property
     def object(self):
