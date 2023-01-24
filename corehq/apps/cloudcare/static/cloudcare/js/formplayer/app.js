@@ -21,14 +21,16 @@ hqDefine("cloudcare/js/formplayer/app", function () {
     var FormplayerFrontend = new Marionette.Application();
 
     FormplayerFrontend.on("before:start", function (app, options) {
+        const xsrfRequest = new $.Deferred(); // create Deferred object
+        this.xsrfPromise = xsrfRequest.promise(); // returns only the promise of the object
         // Make a get call if the csrf token isn't available when the page loads.
         if ($.cookie('XSRF-TOKEN') === undefined) {
-            $.get({
-                url: options.formplayer_url + '/serverup',
-                global: false,
-                async: false,
-                xhrFields: { withCredentials: true },
-            });
+            $.get(
+                {url: options.formplayer_url + '/serverup', global: false, xhrFields: { withCredentials: true }}
+            ).always(xsrfRequest.resolve());
+        } else {
+            // resolve immediately
+            xsrfRequest.resolve();
         }
         var RegionContainer = Marionette.View.extend({
             el: "#menu-container",
@@ -305,8 +307,10 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         hqRequire(["cloudcare/js/formplayer/apps/api"], function (AppsAPI) {
             AppsAPI.primeApps(user.restoreAs, options.apps);
         });
-
-        $.when(FormplayerUtils.getSavedDisplayOptions()).done(function (savedDisplayOptions) {
+        $.when(
+            FormplayerUtils.getSavedDisplayOptions(),
+            FormplayerFrontend.xsrfPromise
+        ).done(function (savedDisplayOptions) {
             savedDisplayOptions = _.pick(
                 savedDisplayOptions,
                 Const.ALLOWED_SAVED_OPTIONS
