@@ -65,7 +65,6 @@ from corehq.apps.domain.utils import (
     guess_domain_language,
 )
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.sms.mixin import CommCareMobileContactMixin, apply_leniency
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.exceptions import IllegalAccountConfirmation
