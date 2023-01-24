@@ -1115,7 +1115,8 @@ class TestCaseESAccessors(TestCase):
         self.owner_id = 'batman'
         self.user_id = 'robin'
         self.case_type = 'heroes'
-        self.domain = uuid.uuid4().hex
+        self.domain = 'es-test-accessor-test'
+        self.addCleanup(get_case_types_for_domain_es.clear, self.domain)
 
     def _send_case_to_es(self,
             domain=None,
