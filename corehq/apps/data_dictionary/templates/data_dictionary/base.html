@@ -192,10 +192,15 @@
             <td class="main-form">
                 <span data-bind="text: name"></span>
 
-                <input class="form-control"
-                      data-bind="value: $data.label, rows: 1, attr: {'placeholder': name}"
-                      style="margin-top: 8px;"
-                ></input>
+                <div class="row" style="margin-top: 16px;">
+                  <label class="col-xs-1" for="prop-label" style="padding: 8px 0;">Label </label>
+                  <span class="col-xs-8">
+                    <input class="form-control"
+                          data-bind="value: $data.label, attr: {'placeholder': 'Click here to add Label'}"
+                          id="prop-label"
+                    />
+                  </span>
+                </div>
             </td>
             <td class="main-form">
               <select class="form-control"
