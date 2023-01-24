@@ -11,7 +11,7 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
 from io import BytesIO, open
 from itertools import chain

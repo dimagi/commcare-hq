@@ -651,16 +651,86 @@ class TestElasticManageAdapter(AdapterWithIndexTestCase):
             }
         }
         self.adapter.index_create(self.index)
-
-        def get_mapping(index, type_):
-            info = self.adapter._es.indices.get_mapping(index, type_)
-            if info:
-                return info[index]["mappings"][type_]
-            return info
-
-        self.assertEqual(get_mapping(self.index, type_), {})
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, type_))
         self.adapter.index_put_mapping(self.index, type_, mapping)
-        self.assertEqual(get_mapping(self.index, type_), mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_put_mapping_clears_existing_mapping_metadata(self):
+        type_ = "test_doc"
+        mapping = {
+            "_meta": {"created": "now"},
+            "properties": {"value": {"type": "string"}},
+        }
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+        del mapping["_meta"]
+        self.adapter.index_put_mapping(self.index, type_, mapping)
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping)
+
+    def test_index_put_mapping_updates_existing_mapping_properties(self):
+        type_ = "test_doc"
+        mapping1 = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping1}})
+        self.assertEqual(self.adapter.index_get_mapping(self.index, type_), mapping1)
+        mapping2 = {"properties": {"number": {"type": "integer"}}}
+        self.adapter.index_put_mapping(self.index, type_, mapping2)
+        self.assertEqual(
+            self.adapter.index_get_mapping(self.index, type_),
+            {"properties": {
+                "value": {"type": "string"},
+                "number": {"type": "integer"},
+            }},
+        )
+
+    def test_index_get_mapping(self):
+        type_ = "test_doc"
+        mapping = {"properties": {"value": {"type": "string"}}}
+        self.adapter.index_create(self.index, {"mappings": {type_: mapping}})
+        self.assertEqual(mapping, self.adapter.index_get_mapping(self.index, type_))
+
+    def test_index_get_mapping_returns_none_if_no_mapping(self):
+        self.adapter.index_create(self.index)
+        self.assertIsNone(self.adapter.index_get_mapping(self.index, "test_doc"))
+
+    def test_index_get_settings(self):
+        settings = {
+            "analysis": {
+                "analyzer": {
+                    "default": {
+                        "filter": ["lowercase"],
+                        "type": "custom",
+                        "tokenizer": "whitespace"
+                    }
+                }
+            },
+            "number_of_replicas": "2",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.adapter.index_refresh(self.index)
+        all_settings = self.adapter.index_get_settings(self.index)
+        self.maxDiff = None
+        self.assertEqual(
+            settings,
+            {k: v for k, v in all_settings.items() if k in settings},
+        )
+
+    def test_index_get_settings_for_specific_values(self):
+        settings = {
+            "number_of_replicas": "1",
+            "number_of shards": "2",
+        }
+        self.adapter.index_create(self.index, {"settings": settings})
+        self.assertEqual(
+            {"number_of_replicas": "1"},
+            self.adapter.index_get_settings(self.index, values=["number_of_replicas"])
+        )
+
+    def test_index_get_settings_for_invalid_value_raises_keyerror(self):
+        settings = {"number_of_replicas": "1"}
+        self.adapter.index_create(self.index, {"settings": settings})
+        with self.assertRaisesRegex(KeyError, "^'foo'$"):
+            self.adapter.index_get_settings(self.index, values=["foo"])
 
     def test__validate_single_index(self):
         self.adapter._validate_single_index(self.index)  # does not raise
@@ -695,8 +765,8 @@ class TestDocumentAdapterWithExtras(TestDocumentAdapter):
     def index_exists(self):
         return manager.index_exists(self.index_name)
 
-    def create_index(self, settings=None):
-        manager.index_create(self.index_name, settings)
+    def create_index(self, metadata=None):
+        manager.index_create(self.index_name, metadata)
 
     def delete_index(self):
         manager.index_delete(self.index_name)
@@ -777,6 +847,10 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test_exists(self):
         doc = self._index_new_doc()
         self.assertTrue(self.adapter.exists(doc["_id"]))
+
+    def test_not_exists_returns_bool(self):
+        self.assertEqual([], docs_from_result(self.adapter.search({})))
+        self.assertFalse(self.adapter.exists("does_not_exist"))
 
     def test_get(self):
         doc = self._index_new_doc()

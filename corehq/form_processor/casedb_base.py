@@ -154,7 +154,7 @@ class AbstractCaseDbCache(metaclass=ABCMeta):
         actions = {action.action_type_slug for action in case_update.actions}
         if case is None:
             if xform.metadata and xform.metadata.commcare_version:
-                from distutils.version import LooseVersion
+                from looseversion import LooseVersion
                 commcare_version = xform.metadata.commcare_version
                 message = "Case created without create block"
                 send_to = None
