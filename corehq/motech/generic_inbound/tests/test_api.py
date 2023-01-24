@@ -6,7 +6,7 @@ from django.urls import reverse
 
 import attrs
 
-import settings
+from django.conf import settings
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import (
