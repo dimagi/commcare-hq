@@ -277,22 +277,32 @@ Design Details
 Reindex Procedure Details
 '''''''''''''''''''''''''
 
-1. Configure multiplexing on an index by passing in `secondary` index name to `create_document_adapter`.
+1. Configure multiplexing on an index by passing in ``secondary`` index name to
+   ``create_document_adapter``.
 
    - Ensure that there is a migration in place for creating the index.
-   **Note** Tooling around this is a WIP
+
+     **Note** Tooling around this is a WIP
+
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
-    **Note** Currently the Adapter will not support reindexing on specific environments but it would be compatible to accommodate it in future. This support will be added once we get to V5 of ES.
-   - Configure `create_document_adapter` to return an instance of `ElasticMultiplexAdapter` by passing in `secondary` index name.
-    ```python
-    case_adapter = create_document_adapter(
-      ElasticCase,
-      "hqcases_2016-03-04",
-      "case",
-      secondary="hqcase_2022-10-20"
-    )
-    ```
+
+     **Note** Currently the Adapter will not support reindexing on specific
+     environments but it would be compatible to accommodate it in future. This
+     support will be added once we get to V5 of ES.
+
+   - Configure ``create_document_adapter`` to return an instance of
+     ``ElasticMultiplexAdapter`` by passing in ``secondary`` index name.
+
+     .. code-block:: python
+
+         case_adapter = create_document_adapter(
+             ElasticCase,
+             "hqcases_2016-03-04",
+             "case",
+             secondary="hqcase_2022-10-20"
+         )
+
    - Add a migration which performs all cluster-level operations required for
      the new (secondary) index. For example:
 
@@ -441,8 +451,8 @@ subclass must define the following:
 
 - A ``mapping`` which defines the structure and properties for documents managed
   by the adapter.
-- A ``from_python()`` classmethod which can convert a Python model object into the
-  JSON-serializable format for writing into the adapter's index.
+- A ``from_python()`` classmethod which can convert a Python model object into
+  the JSON-serializable format for writing into the adapter's index.
 
 The combination of ``(index_name, type)`` constrains the document adapter to
 a specific HQ document mapping.  Comparing an Elastic cluster to a Postgres
@@ -504,30 +514,46 @@ Using this adapter in practice might look as follows:
 Tombstone
 '''''''''
 
-The concept of Tombstone in the ES mulitplexer is there to be placeholder for the docs that are deleted in the primary index. It means that whenever an adapter is multiplexed and a document is deleted from the primary index, then the secondary index will create tombstone entry for that document. The python class defined to represent these tombstones is  `corehq.apps.es.client.Tombstone`
+The concept of Tombstone in the ES mulitplexer is there to be placeholder for
+the docs that are deleted in the primary index. It means that whenever an
+adapter is multiplexed and a document is deleted from the primary index, then
+the secondary index will create tombstone entry for that document. The python
+class defined to represent these tombstones is
+``corehq.apps.es.client.Tombstone``.
 
-Scenario without tomstones: If a multiplexing adapter deletes a document in the secondary index (which turns out to be a no-op because the document does not exist there yet), and then that same document is copied to the secondary index by the reindexer, then it will exist indefinitely in the secondary even though it has been deleted in the primary.
+Scenario without tombstones: If a multiplexing adapter deletes a document in the
+secondary index (which turns out to be a no-op because the document does not
+exist there yet), and then that same document is copied to the secondary index
+by the reindexer, then it will exist indefinitely in the secondary even though
+it has been deleted in the primary.
 
 Put another way:
 
 - Reindexer: gets batch of objects from primary index to copy to secondary.
-- Multiplexer: deletes a document in that batch (in both primary and secondary indexes).
+- Multiplexer: deletes a document in that batch (in both primary and secondary
+  indexes).
 - Reindexer: writes deleted (now stale) document into secondary index.
 - Result: secondary index contains a document that has been deleted.
 
-With tombstsones: this will not happen because the reindexer uses a "ignore existing documents" copy mode, so it will never overwrite a tombstone with a stale (deleted) document.
+With tombstsones: this will not happen because the reindexer uses a "ignore
+existing documents" copy mode, so it will never overwrite a tombstone with a
+stale (deleted) document.
 
-The tombstones would **only exist** in the secondary index and would be deleted when we are switching from primary to secondary.
+The tombstones would **only exist** in the secondary index and would be deleted
+when we are switching from primary to secondary.
 
 A sample tombstone document would look like
 
-```
-{
-  "__is_tombstone__" : True
-}
-```
+.. code-block:: python
 
-Current mapping does not index `__is_tombstone__` property but it would be added to mappings before we start reindexing. This would help us in ensuring that we can ignore them in the ES queries.
+    {
+      "__is_tombstone__" : True
+    }
+
+Current mapping does not index ``__is_tombstone__`` property but it would be added
+to mappings before we start reindexing. This would help us in ensuring that we
+can ignore them in the ES queries.
+
 
 Code Documentation
 ''''''''''''''''''
