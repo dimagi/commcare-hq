@@ -413,6 +413,18 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      mkdir fauxton
+      cd fauxton
+      npm install fauxton
+      ./node_modules/.bin/fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
