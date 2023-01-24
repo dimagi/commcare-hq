@@ -39,7 +39,7 @@ class ApiRequest:
     @classmethod
     def from_request(cls, request):
         if _request_too_large(request):
-            raise GenericInboundUserError(_("Request exceeds 50MB size limit"))
+            raise GenericInboundUserError(_("Request exceeds the allowed size limit"))
 
         try:
             body = as_text(request.body)

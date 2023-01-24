@@ -6,6 +6,7 @@ from django.urls import reverse
 
 import attrs
 
+import settings
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import (
@@ -137,7 +138,7 @@ class TestGenericInboundAPIView(TestCase):
         self.assertEqual(response.json(), {"error": "Unexpected type for transformed request"})
 
     def test_post_body_too_large(self):
-        data_51_mb = "a" * 1024 * 1024 * 51
+        data_51_mb = "a" * (settings.MAX_UPLOAD_SIZE + 1)
         generic_api = self._make_api({})
         url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
         response = self.client.post(
@@ -145,7 +146,7 @@ class TestGenericInboundAPIView(TestCase):
             content_type="text"
         )
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {"error": "Request exceeds 50MB size limit"})
+        self.assertEqual(response.json(), {"error": "Request exceeds the allowed size limit"})
 
     def test_post(self):
         response_json = self._test_generic_api({
