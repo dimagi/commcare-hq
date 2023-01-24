@@ -151,6 +151,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 }
                 const sentryData = _.pick(data, ["selections", "query_data", "app_id"]);
                 Sentry.addBreadcrumb({
+                    category: "formplayer",
                     message: "[request] " + route,
                     data: _.pick(sentryData, _.identity),
                 });
