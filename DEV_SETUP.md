@@ -324,7 +324,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)

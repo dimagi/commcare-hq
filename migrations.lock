@@ -345,6 +345,9 @@ enterprise
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
  0004_enterprisemobileworkersettings
+es
+ 0001_bootstrap_es_indexes
+ 0002_add_tombstones
 export
  0001_initial
  0002_datafile
@@ -380,6 +383,7 @@ fixtures
  0004_userlookuptablestatus
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
+ 0009_remove_lookuptablerowowner_couch_id
 form_processor
  0001_initial
  0002_xformattachmentsql

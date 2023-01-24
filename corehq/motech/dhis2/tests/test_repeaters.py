@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from unittest import skip
 import uuid
 

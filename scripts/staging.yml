@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging
+#     $ scripts/rebuildstaging (--deploy)
+#     OR run deploy separately
 #     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
@@ -71,7 +72,6 @@ branches:
     - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
-    - cs/SC-2360-auto-update-rule-overwrites-case-property
     #- jls/web-apps-requirejs+sk/sentry-js
     - sk/sentry-js  # Simon Dec 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
@@ -83,11 +83,15 @@ branches:
     - jm/refactor-api-es  # Joel Jan 10
     - jm/refactor-user-pillow  # Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
-    - ad/user-syncing-task # Addison Jan 13
-#     - mk/disable-download-on-attachment # MK Jan 13
+    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
     - ad/test-incomplete-forms-hotfix # AD Jan 13
     - cs/configurable_repeater_name # Chris jan 17
-    - ap/bootstrap-es-indexes # Amit Jan 18
     - jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 18
-#     - em/case-search-filter-feature-flag # Evan Jan 18
+    - em/case-search-filter-feature-flag # Evan Jan 18
+    - akj/ush-2613-commcare-user-case # Akash Jan 19
+    - ad/hide-incomplete-forms # Addison Jan 19
+    - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
+    - akj/case-detail-close-accessibility # Akash Jan 21
+    - jm/refactor-user-signals  # Joel Jan 23
+    - akj/nav-bar-icons-accessibility # Akash Jan 24
 submodules: { }
