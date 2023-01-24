@@ -6,14 +6,14 @@ from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsProfile,
     Field,
 )
+from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.util.es.testing import sync_users_to_es
 
 
-@es_test(requires=[user_adapter], setup_class=True)
 class TestCustomDataFieldsProfile(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -91,12 +91,14 @@ class TestCustomDataFieldsProfile(TestCase):
             },
         }])
 
+    @es_test(requires=[user_adapter])
+    @sync_users_to_es()
     def test_users_assigned(self):
         user = CommCareUser.create(self.domain, 'pentagon', '*****', None, None, metadata={
             PROFILE_SLUG: self.profile5.id,
         })
+        manager.index_refresh(user_adapter.index_name)
         self.addCleanup(user.delete, self.domain, deleted_by=None)
-        user_adapter.index(transform_user_for_elasticsearch(user.to_json()), refresh=True)
 
         self.assertFalse(self.profile3.has_users_assigned)
         self.assertEqual([], self.profile3.user_ids_assigned())
