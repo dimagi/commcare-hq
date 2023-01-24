@@ -9,7 +9,7 @@ from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.conf import settings
 
 from memoized import memoized
-from corehq.apps.es.filters import term
+from corehq.apps.es.filters import missing, term
 
 from dimagi.utils.chunked import chunked
 
@@ -1038,26 +1038,92 @@ class ElasticMultiplexAdapter(BaseAdapter):
         # be converted to an instance method
         return self.primary.to_json(doc)
 
-    def count(self, *args, **kw):
-        return self.primary.count(*args, **kw)
+    def count(self, query):
+        return self.primary.count(self._exclude_tombstones(query))
 
-    def exists(self, *args, **kw):
-        return self.primary.exists(*args, **kw)
+    def exists(self, doc_id):
+        try:
+            doc = self.primary.get(doc_id, [Tombstone.PROPERTY_NAME])
+        except NotFoundError:
+            return False
+        return Tombstone.PROPERTY_NAME not in doc
 
-    def get(self, *args, **kw):
-        return self.primary.get(*args, **kw)
+    def get(self, doc_id, source_includes=None):
+        if source_includes:
+            source_includes = list(source_includes) + [Tombstone.PROPERTY_NAME]
+        doc = self.primary.get(doc_id, source_includes)
+        if Tombstone.PROPERTY_NAME in doc:
+            raise NotFoundError(doc_id)
+        return doc
 
-    def get_docs(self, *args, **kw):
-        return self.primary.get_docs(*args, **kw)
+    def get_docs(self, doc_ids):
+        docs = self.primary.get_docs(doc_ids)
+        return [doc for doc in docs if Tombstone.PROPERTY_NAME not in doc]
 
     def iter_docs(self, *args, **kw):
-        return self.primary.iter_docs(*args, **kw)
+        for doc in self.primary.iter_docs(*args, **kw):
+            if Tombstone.PROPERTY_NAME not in doc:
+                yield doc
 
-    def scroll(self, *args, **kw):
-        return self.primary.scroll(*args, **kw)
+    def scroll(self, query, *args, **kw):
+        return self.primary.scroll(self._exclude_tombstones(query), *args, **kw)
 
-    def search(self, *args, **kw):
-        return self.primary.search(*args, **kw)
+    def search(self, query, **kw):
+        return self.primary.search(self._exclude_tombstones(query), **kw)
+
+    @staticmethod
+    def _exclude_tombstones(query):
+        """Add a ``missing(Tombstone.PROPERTY_NAME)`` filter to ``query``
+        without mutating ``query`` itself.
+
+        :param query: raw Elasticsearch query
+
+        Examples:
+
+        .. code-block:: python
+
+            >>> q = {}
+            >>> _exclude_tombstones(q)
+            {'query': {'bool': {'filter': [{'bool': {'must_not': {'exists': {'field': '__is_tombstone__'}}}}]}}}
+            >>> q
+            {}
+
+            >>> q = {'query': {}}
+            >>> _exclude_tombstones(q)
+            {'query': {'bool': {'filter': [{'bool': {'must_not': {'exists': {'field': '__is_tombstone__'}}}}]}}}
+            >>> q
+            {'query': {}}
+
+            >>> q = {'query': {'bool': {}}}
+            >>> _exclude_tombstones(q)
+            {'query': {'bool': {'filter': [{'bool': {'must_not': {'exists': {'field': '__is_tombstone__'}}}}]}}}
+            >>> q
+            {'query': {'bool': {}}}
+
+            >>> q = {'query': {'bool': {'filter': []}}}
+            >>> _exclude_tombstones(q)
+            {'query': {'bool': {'filter': [{'bool': {'must_not': {'exists': {'field': '__is_tombstone__'}}}}]}}}
+            >>> q
+            {'query': {'bool': {'filter': []}}}
+
+            >>> q = {'query': {'bool': {'filter': [{'term': {'domain.exact': 'test-domain'}}]}}}
+            >>> _exclude_tombstones(q)
+            {'query': {'bool': {'filter': [
+                {'term': {'domain.exact': 'test-domain'}},
+                {'bool': {'must_not': {'exists': {'field': '__is_tombstone__'}}}}
+            ]}}}
+            >>> q
+            {'query': {'bool': {'filter': [{'term': {'domain.exact': 'test-domain'}}]}}}
+        """
+        query = inner = dict(query)  # make a shallow copy
+        levels = {"query": {}, "bool": {}, "filter": []}
+        # traverse in to the filter level, replacing (or adding) each level with
+        # a shallow copy of itself
+        for key, default in levels.items():
+            # replace with a shallow copy (or new, if missing)
+            inner[key] = inner = type(default)(inner.get(key, default))
+        inner.append(missing(Tombstone.PROPERTY_NAME))
+        return query
 
     # Elastic index write methods (multiplexed between both adapters)
     def bulk(self, actions, refresh=False, raise_errors=True):
