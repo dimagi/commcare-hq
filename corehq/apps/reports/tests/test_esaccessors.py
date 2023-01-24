@@ -78,7 +78,8 @@ from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import make_es_ready_form
 
 
-@es_test(requires=[form_adapter, group_adapter])
+@es_test(requires=[form_adapter])
+@es_test(requires=[group_adapter], setup_class=True)
 class TestFormESAccessors(TestCase):
 
     @classmethod
@@ -1107,7 +1108,8 @@ class TestGroupESAccessors(SimpleTestCase):
         )
 
 
-@es_test(requires=[case_adapter, user_adapter])
+@es_test(requires=[case_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
 class TestCaseESAccessors(TestCase):
 
     def setUp(self):
