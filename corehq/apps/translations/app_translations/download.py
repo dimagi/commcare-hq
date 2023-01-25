@@ -261,7 +261,7 @@ def get_module_detail_rows(langs, module, domain):
 def _get_module_detail_no_items_text(langs, detail, domain):
     if not toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(domain):
         return []
-    return[
+    return [
         ("no_items_text", "list")
         + tuple(detail.no_items_text.get(lang, '') for lang in langs)
     ]
