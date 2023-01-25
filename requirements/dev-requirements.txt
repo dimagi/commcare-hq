@@ -397,6 +397,8 @@ pillow==9.3.0
     # via
     #   -r base-requirements.in
     #   reportlab
+pip==21.3.1
+    # via pip-tools
 pip-tools==6.8.0
     # via -r test-requirements.in
 platformdirs==2.4.1
@@ -506,7 +508,7 @@ pyyaml==6.0
     #   git-build-branch
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.3.1
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -559,6 +561,17 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.9.0
     # via -r base-requirements.in
+setuptools==65.5.1
+    # via
+    #   django-websocket-redis
+    #   gevent
+    #   gunicorn
+    #   ipython
+    #   pip-tools
+    #   python-termstyle
+    #   sphinx
+    #   zope-event
+    #   zope-interface
 sh==1.14.2
     # via
     #   -r base-requirements.in
@@ -596,7 +609,6 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   requests-mock
     #   sqlalchemy-postgres-copy
@@ -728,18 +740,3 @@ zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0
     # via gevent
-
-# The following packages are considered to be unsafe in a requirements file:
-pip==21.3.1
-    # via pip-tools
-setuptools==65.5.1
-    # via
-    #   django-websocket-redis
-    #   gevent
-    #   gunicorn
-    #   ipython
-    #   pip-tools
-    #   python-termstyle
-    #   sphinx
-    #   zope-event
-    #   zope-interface

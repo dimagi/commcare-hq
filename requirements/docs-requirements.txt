@@ -404,7 +404,7 @@ pyyaml==6.0
     #   myst-parser
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.3.1
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -452,6 +452,14 @@ schema==0.7.5
     # via -r base-requirements.in
 sentry-sdk==1.9.0
     # via -r base-requirements.in
+setuptools==65.5.1
+    # via
+    #   django-websocket-redis
+    #   gevent
+    #   gunicorn
+    #   sphinx
+    #   zope-event
+    #   zope-interface
 sh==1.14.2
     # via -r base-requirements.in
 simpleeval @ git+https://github.com/dimagi/simpleeval.git@d85c5a9f972c0f0416a1716bb06d1a3ebc83e7ec
@@ -482,7 +490,6 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   stone
     #   tenacity
@@ -581,13 +588,3 @@ zope-event==4.5.0
     # via gevent
 zope-interface==5.4.0
     # via gevent
-
-# The following packages are considered to be unsafe in a requirements file:
-setuptools==65.5.1
-    # via
-    #   django-websocket-redis
-    #   gevent
-    #   gunicorn
-    #   sphinx
-    #   zope-event
-    #   zope-interface
