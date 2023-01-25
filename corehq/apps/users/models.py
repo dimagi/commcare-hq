@@ -3088,7 +3088,7 @@ def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
         subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
     send_html_email_async(
         subject,
-        admins + billing_admins,
+        set(admins + billing_admins),
         render_to_string('users/email/user_limit_notice.html', context={
             'at_capacity': at_capacity,
             'url': ADDITIONAL_USERS_PRICING,

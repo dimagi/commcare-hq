@@ -58,9 +58,6 @@ class TestUserLimitWarnings(TestSnsEmailBase):
         self.mock_get_billing_admins.return_value = [WebUser(username=self.recipients[1])]
         self.addCleanup(billing_admin_patcher.stop)
 
-    def tearDown(self):
-        super().tearDown()
-
     def dont_send_email_below_threshold(self):
         # email should not send if user count is still below the 90% threshold
         prev_user_count = 79
