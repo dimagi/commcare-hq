@@ -66,10 +66,7 @@ branches:
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
-    # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
-    # - ml/lookup-table-UI # Minha Oct 19
-    - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
     # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     #- jls/web-apps-requirejs+sk/sentry-js
