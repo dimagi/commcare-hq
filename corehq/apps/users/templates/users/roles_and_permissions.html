@@ -40,17 +40,19 @@
 
   <div class="row ko-template" id="infobar">
     <div class="col-sm-8 col-md-9">
-      <i class="fa fa-info-circle"></i>
-      {% blocktrans %}
-        <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
-          target="_blank">Learn more</a> about how roles &amp; permissions are used.
-      {% endblocktrans %}
+      <p>
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+          <a href="https://confluence.dimagi.com/display/commcarepublic/Roles+and+Permissions"
+            target="_blank">Learn more</a> about how roles &amp; permissions are used.
+        {% endblocktrans %}
+      </p>
     </div>
     <div class="col-sm-4 col-md-3" data-bind="if: hasLinkedRoles">
-      <div class="pull-right">
+      <p class="pull-right">
         <!-- ko if: allowEdit -->
           <span data-bind="ifnot: unlockLinkedRoles">
-            <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal_linked_roles">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal_linked_roles">
               <i class="fa fa-link"></i>
               {% trans 'Unlock Linked Roles For Me' %}
             </button>
@@ -78,7 +80,7 @@
               {% endblocktrans %}">
         </span>
       </div>
-    </div>
+    </p>
   </div>
 
 
