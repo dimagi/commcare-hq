@@ -175,9 +175,11 @@ def claim(request, domain):
             last_sync_date = synclog.date
         except MissingSyncLog:
             return False
-        for case in synclog.case_ids_on_phone:
-            if case.last_modified_by > last_sync_date:
-                return True
+        cases_on_phone = CommCareCase.objects.get_cases(list(synclog.case_ids_on_phone), domain)
+        for case in cases_on_phone:
+            if case.modified_on and last_sync_date:
+                if case.modified_on > last_sync_date:
+                    return True
         return False
 
     if not cases_on_phone_modified_since_last_synclog_date(request) and phone_holds_all_cases(request):
