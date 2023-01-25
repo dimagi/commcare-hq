@@ -12,9 +12,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameModel(
-            old_name='SQLRepeater',
-            new_name='Repeater',
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RenameModel(
+                    old_name='SQLRepeater',
+                    new_name='Repeater',
+                ),
+            ]
         ),
         migrations.DeleteModel(
             name='SQLAppStructureRepeater',
