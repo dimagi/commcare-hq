@@ -7,8 +7,8 @@ class Config(AppConfig):
     name = "corehq.preindex"
 
     def autodetect_migrations(self, add_operation):
-        from dimagi.utils.couch.migration_operations import ReindexCouchViews
         from .django_migrations import (
+            ReindexCouchViews,
             designs_did_change,
             iter_couch_lock_lines,
             write_designs_lock_file
