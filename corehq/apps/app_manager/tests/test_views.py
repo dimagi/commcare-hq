@@ -8,8 +8,6 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from pillowtop.es_utils import initialize_index_and_mapping
-
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.models import (
     AdvancedModule,
@@ -32,11 +30,10 @@ from corehq.apps.app_manager.views.forms import (
 )
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.apps import app_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import HQApiKey, WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.test_utils import flag_enabled, timelimit
 
 from .app_factory import AppFactory
@@ -47,7 +44,7 @@ User = get_user_model()
 
 @flag_enabled('CUSTOM_PROPERTIES')
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
-@es_test
+@es_test(requires=[app_adapter], setup_class=True)
 class TestViews(TestCase):
     app = None
     build = None
@@ -62,8 +59,6 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
 
     def setUp(self):
         self.app = Application.new_app(self.project.name, "TestApp")
@@ -153,8 +148,7 @@ class TestViews(TestCase):
         return json.loads(response.content)
 
     def _send_to_es(self, app):
-        send_to_elasticsearch('apps', app.to_json())
-        self.es.indices.refresh(APP_INDEX_INFO.index)
+        app_adapter.index(app.to_json(), refresh=True)
 
     @timelimit(90)
     @patch('corehq.apps.app_manager.views.formdesigner.form_has_submissions', return_value=True)

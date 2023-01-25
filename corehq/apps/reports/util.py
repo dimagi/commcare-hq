@@ -530,7 +530,7 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     ).get(username=username)
     if role:
         user.role = role
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=(tableau_username(username)))
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(username))
     user.tableau_user_id = new_id
     user.save()
     for group in groups:

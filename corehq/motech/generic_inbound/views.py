@@ -14,7 +14,6 @@ from dimagi.utils.web import get_ip
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.api.decorators import allow_cors, api_throttle
-from corehq.apps.auditcare.models import get_standard_headers
 from corehq.apps.domain.decorators import api_auth
 from corehq.apps.domain.views import BaseProjectSettingsView
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -30,15 +29,16 @@ from corehq.motech.generic_inbound.forms import (
 )
 from corehq.motech.generic_inbound.models import (
     ConfigurableAPI,
-    ProcessingAttempt,
     RequestLog,
 )
 from corehq.motech.generic_inbound.reports import ApiLogDetailView
 from corehq.motech.generic_inbound.utils import (
     ApiRequest,
     ApiResponse,
+    archive_api_request,
     make_processing_attempt,
     reprocess_api_request,
+    get_headers_for_api_context,
 )
 from corehq.util import reverse
 from corehq.util.view_utils import json_error
@@ -210,7 +210,7 @@ def _log_api_request(api, request, response):
         request_method=request.method,
         request_query=request.META.get('QUERY_STRING'),
         request_body=request.body.decode('utf-8'),
-        request_headers=get_standard_headers(request.META),
+        request_headers=get_headers_for_api_context(request),
         request_ip=get_ip(request),
     )
     make_processing_attempt(response, log)
@@ -220,4 +220,11 @@ def _log_api_request(api, request, response):
 def retry_api_request(request, domain, log_id):
     request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
     reprocess_api_request(request_log)
+    return redirect(ApiLogDetailView.urlname, domain, log_id)
+
+
+@can_administer_generic_inbound
+def revert_api_request(request, domain, log_id):
+    request_log = get_object_or_404(RequestLog, domain=domain, id=log_id)
+    archive_api_request(request_log, request.couch_user._id)
     return redirect(ApiLogDetailView.urlname, domain, log_id)

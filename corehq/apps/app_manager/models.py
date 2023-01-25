@@ -11,7 +11,7 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
 from io import BytesIO, open
 from itertools import chain
@@ -2117,6 +2117,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     pull_down_tile = BooleanProperty()
 
     print_template = DictProperty()
+
+    #Only applies to 'short' details
+    no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'

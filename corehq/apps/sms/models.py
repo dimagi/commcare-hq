@@ -1056,6 +1056,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
+    ERROR_INVALID_EMAIL_ADDRESS = 'ERROR_INVALID_EMAIL_ADDRESS'
     ERROR_TRIAL_EMAIL_LIMIT_REACHED = 'TRIAL_EMAIL_LIMIT_REACHED'
     ERROR_EMAIL_BOUNCED = 'EMAIL_BOUNCED'
     ERROR_EMAIL_GATEWAY = 'EMAIL_GATEWAY_ERROR'
@@ -1107,6 +1108,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             gettext_noop('Gateway could not be found.'),
         ERROR_NO_EMAIL_ADDRESS:
             gettext_noop('Recipient has no email address.'),
+        ERROR_INVALID_EMAIL_ADDRESS:
+            gettext_noop("Recipient's email address is not valid."),
         ERROR_TRIAL_EMAIL_LIMIT_REACHED:
             gettext_noop("Cannot send any more reminder emails. The limit for "
                 "sending reminder emails on a Trial plan has been reached."),

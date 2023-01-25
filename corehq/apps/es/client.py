@@ -29,6 +29,7 @@ from .const import (
     SCROLL_SIZE,
 )
 from .exceptions import ESError, ESShardFailure, TaskError, TaskMissing
+from .index.analysis import DEFAULT_ANALYSIS
 from .utils import ElasticJSONSerializer
 
 log = logging.getLogger(__name__)
@@ -196,14 +197,14 @@ class ElasticManageAdapter(BaseAdapter):
             pass
         raise TaskError(result)
 
-    def index_create(self, index, settings=None):
+    def index_create(self, index, metadata=None):
         """Create a new index.
 
         :param index: ``str`` index name
-        :param settings: ``dict`` of index settings
+        :param metadata: ``dict`` full index metadata (mappings, settings, etc)
         """
         self._validate_single_index(index)
-        self._es.indices.create(index, settings)
+        self._es.indices.create(index, metadata)
 
     def index_delete(self, index):
         """Delete an existing index.
@@ -304,8 +305,43 @@ class ElasticManageAdapter(BaseAdapter):
         :param mapping: ``dict`` mapping for the provided doc type
         """
         self._validate_single_index(index)
-        return self._es.indices.put_mapping(type_, {type_: mapping}, index,
+        return self._es.indices.put_mapping(type_, mapping, index,
                                             expand_wildcards="none")
+
+    def index_get_mapping(self, index, type_):
+        """Returns the current mapping for a doc type on an index.
+
+        :param index: ``str`` index to fetch the mapping from
+        :param type_: ``str`` doc type to fetch the mapping for
+        :returns: mapping ``dict`` or ``None`` if index does not have a mapping
+        """
+        self._validate_single_index(index)
+        response = self._es.indices.get_mapping(index, type_, expand_wildcards="none")
+        try:
+            index_data = response[index]
+        except KeyError:
+            return None  # index exists but does not have a mapping
+        return index_data["mappings"][type_]
+
+    def index_get_settings(self, index, values=None):
+        """Returns the current settings for an index.
+
+        :param index: ``str`` index to fetch settings for
+        :param values: Optional collection of explicit settings to provide in
+            the return value. If ``None`` (the default) all settings are
+            returned.
+        :returns: ``dict``
+        :raises: ``KeyError`` (only if invalid ``values`` are provided)
+        """
+        self._validate_single_index(index)
+        settings = self._es.indices.get_settings(
+            index,
+            expand_wildcards="none",
+            # include_defaults=bool(values),  # unavailable in elasticsearch2
+        )[index]["settings"]["index"]
+        if values is None:
+            return settings
+        return {k: settings[k] for k in values}
 
     @staticmethod
     def _validate_single_index(index):
@@ -372,6 +408,9 @@ class ElasticDocumentAdapter(BaseAdapter):
     - ``mapping``: attribute (``dict``)
     - ``from_python(...)``: classmethod for converting models into Elastic format
     """
+
+    analysis = DEFAULT_ANALYSIS
+    settings_key = None
 
     def __init__(self, index_name, type_):
         """A document adapter for a single index.
@@ -816,7 +855,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
-        if Tombstone.PROPERTY_NAME in source:
+        if source.get(Tombstone.PROPERTY_NAME, False):
             raise ValueError(f"property {Tombstone.PROPERTY_NAME} is reserved")
 
     @staticmethod
@@ -981,10 +1020,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
     # meta methods and Elastic index read methods (pass-through on the primary
     # adapter)
     @property
-    def settings(self):
-        # TODO: this is a classproperty on the the document adapter, but should
-        # be converted to a property
-        return self.primary.settings
+    def analysis(self):
+        return self.primary.analysis
+
+    @property
+    def settings_key(self):
+        return self.primary.settings_key
 
     def to_json(self, doc):
         # TODO: this is a classmethod on the the document adapter, but should

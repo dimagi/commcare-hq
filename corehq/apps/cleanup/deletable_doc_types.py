@@ -7,7 +7,7 @@ clean up these docs.
 from django.conf import settings
 
 MAIN_DB = None
-FIXTURES_DB = None
+FIXTURES_DB = 'fixtures'
 
 # Doc types for classes we've removed from our code
 # but may still have docs lying around from

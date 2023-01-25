@@ -100,16 +100,6 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
         syncKeyAction: _.extend(BaseAppView.syncKeyAction),
         restoreAsKeyAction: _.extend(BaseAppView.restoreAsKeyAction),
         settingsKeyAction: _.extend(BaseAppView.settingsKeyAction),
-
-        initialize: function (options) {
-            this.shouldShowIncompleteForms = options.shouldShowIncompleteForms;
-        },
-
-        templateContext: function () {
-            return {
-                shouldShowIncompleteForms: this.shouldShowIncompleteForms,
-            };
-        },
     });
 
     /**
@@ -144,7 +134,7 @@ hqDefine("cloudcare/js/formplayer/apps/views", function () {
                 appName;
             appName = currentApp.get('name');
             return {
-                shouldShowIncompleteForms: function () {
+                showIncompleteForms: function () {
                     return FormplayerFrontend.getChannel()
                         .request('getAppDisplayProperties')['cc-show-incomplete'] === 'yes';
                 },

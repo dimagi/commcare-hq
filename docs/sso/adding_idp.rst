@@ -59,10 +59,10 @@ another Identity Provider (like Azure AD or One Login) that previously used this
 to test on staging, the `Dimagi SSO` enterprise account mapped to the `dimagi-sso-1`, `dimagi-sso-2`, and `dimagi-sso-3`
 domains will be ready to test this new IdP.
 
-3. Login as an SSO user
-~~~~~~~~~~~~~~~~~~~~~~~
+3. Log in as an SSO user
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-With the new `IdentityProvider` configured and active, you can now login as an SSO user from the login screen. During this
+With the new `IdentityProvider` configured and active, you can now log in as an SSO user from the login screen. During this
 test you can identify any additional code changes that need to be made. For instance, a new `OIDC` IdentityProvider might
 not send the expected `user_data` through, so changes might need to be made where that data is accessed
 (see `corehq.apps.sso.views.oidc`). A new `SAML` provider might require changes to `get_saml2_config()` that are specific
