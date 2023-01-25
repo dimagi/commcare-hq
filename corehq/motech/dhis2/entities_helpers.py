@@ -64,7 +64,18 @@ def send_dhis2_entities(requests, repeater, case_trigger_infos):
             if tracked_entity:
                 update_tracked_entity_instance(requests, tracked_entity, etag, info, case_config)
             else:
-                register_tracked_entity_instance(requests, info, case_config)
+                tracked_entity, case_updates = build_tracked_entity(
+                    requests,
+                    info,
+                    case_config,
+                )
+                register_tracked_entity_instance(
+                    requests,
+                    tracked_entity,
+                    case_updates,
+                    info,
+                    case_config,
+                )
         except (Dhis2Exception, HTTPError) as err:
             errors.append(str(err))
 
@@ -257,14 +268,13 @@ def update_enrollments(
     return list(enrollments_by_program_id.values())
 
 
-def register_tracked_entity_instance(requests, case_trigger_info, case_config):
+def build_tracked_entity(requests, case_trigger_info, case_config):
     case_updates = {}
     tracked_entity = {
         "trackedEntityType": case_config['te_type_id'],
         "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
         "attributes": [],
     }
-
     for attr_id, value_source_config in case_config['attributes'].items():
         value, case_update = get_or_generate_value(
             requests, attr_id, value_source_config, case_trigger_info
@@ -275,8 +285,22 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
     if enrollments:
         tracked_entity["enrollments"] = enrollments
     validate_tracked_entity(tracked_entity)
+    return tracked_entity, case_updates
+
+
+def register_tracked_entity_instance(
+    requests,
+    tracked_entity,
+    case_updates,
+    case_trigger_info,
+    case_config,
+):
     endpoint = "/api/trackedEntityInstances/"
-    response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
+    response = requests.post(
+        endpoint,
+        json=tracked_entity,
+        raise_for_status=True,
+    )
     summaries = response.json()["response"]["importSummaries"]
     if len(summaries) != 1:
         raise Dhis2Exception(_(
@@ -290,7 +314,11 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         # when we create relationships.
         case_trigger_info.extra_fields[case_property] = tei_id
     if case_updates:
-        save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+        save_case_updates(
+            requests.domain_name,
+            case_trigger_info.case_id,
+            case_updates,
+        )
 
 
 def create_relationships(
