@@ -137,9 +137,10 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        relevant = self.get_post_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if not toggles.ADD_MODIFICATION_DATE_CHECK_TO_CASE_CLAIM.enabled(self.domain, toggles.NAMESPACE_DOMAIN):
+            relevant = self.get_post_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def build_case_id_query_data(self):
