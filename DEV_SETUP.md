@@ -417,10 +417,8 @@ that to the new install. If not, proceed to Step 5B.
       be installed separately:
 
       ```sh
-      mkdir fauxton
-      cd fauxton
-      npm install fauxton
-      ./node_modules/.bin/fauxton
+      npm install -g fauxton
+      fauxton
       ```
 
       Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
