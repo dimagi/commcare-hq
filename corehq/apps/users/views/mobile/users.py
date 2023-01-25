@@ -35,6 +35,7 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
     EntryPoint,
+    Subscription,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -54,6 +55,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.crispy import make_form_readonly
 from corehq.apps.hqwebapp.decorators import use_multiselect
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.locations.models import SQLLocation
@@ -94,6 +96,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
+    check_and_send_limit_email
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -756,6 +759,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
+        check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,
