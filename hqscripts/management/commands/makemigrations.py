@@ -7,6 +7,8 @@ from django.conf import settings
 from django.core.management.base import CommandError, no_translations
 from django.core.management.commands import makemigrations, showmigrations
 
+from corehq.util.django_migrations import patch_migration_autodetector
+
 
 class Command(makemigrations.Command):
 
@@ -67,7 +69,8 @@ class Command(makemigrations.Command):
             assert_exclusive_options("--lock-update", ["lock_check"])
             self.write_migrations_lock()
         else:
-            super().handle(*app_labels, **options)
+            with patch_migration_autodetector(self):
+                super().handle(*app_labels, **options)
 
     def write_migration_files(self, changes):
         super().write_migration_files(changes)
