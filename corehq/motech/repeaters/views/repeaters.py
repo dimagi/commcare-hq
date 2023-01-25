@@ -221,7 +221,7 @@ class EditRepeaterView(BaseRepeaterView):
                 domain=self.domain,
                 repeater_class=self.repeater_class,
                 data=data,
-                submit_btn_text=_("Update Repeater"),
+                submit_btn_text=_("Update Forwarder"),
             )
 
     @method_decorator(domain_admin_required)
@@ -234,7 +234,7 @@ class EditRepeaterView(BaseRepeaterView):
         return SQLRepeater.objects.get(repeater_id=self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Repeater Successfully Updated"))
+        messages.success(request, _("Forwarder Successfully Updated"))
         try:
             url = reverse(self.urlname, args=[self.domain, repeater.repeater_id])
         except NoReverseMatch:
