@@ -93,4 +93,5 @@ branches:
     - akj/case-detail-close-accessibility # Akash Jan 21
     - jm/refactor-user-signals  # [QA] Joel Jan 23
     - akj/nav-bar-icons-accessibility # Akash Jan 24
+    - em/switching-project-spaces-bugfix # Evan Jan 25
 submodules: { }
