@@ -290,6 +290,7 @@ data_interfaces
  0029_locationfilterdefinition_include_child_locations
  0030_add_workflow_choices
  0031_add_domaincaserulerun_status_choices
+ 0032_bootstrap_audit_events_for_update_rules
 dhis2
  0001_initial
  0002_auto_20170322_1323
@@ -344,6 +345,9 @@ enterprise
  0002_enterprisepermissions_account_unique
  0003_enterprisepermissions_modify_account
  0004_enterprisemobileworkersettings
+es
+ 0001_bootstrap_es_indexes
+ 0002_add_tombstones
 export
  0001_initial
  0002_datafile
@@ -379,6 +383,7 @@ fixtures
  0004_userlookuptablestatus
  0005_sqllookuptablemodels (3 squashed migrations)
  0008_sqllookuptables
+ 0009_remove_lookuptablerowowner_couch_id
 form_processor
  0001_initial
  0002_xformattachmentsql
@@ -515,6 +520,7 @@ hqwebapp
  0007_user_access_agent
  0008_hqoauthapplication
  0009_truncate_authtoken_table
+ 0010_maintenancealert_scheduling
 integration
  0001_initial
  0002_dialersettings
@@ -696,6 +702,8 @@ repeaters
  0008_add_related_name_in_connection_settings
  0009_add_create_update_info
  00010_add_repeater_name
+ 0011_alter_sqlrepeater_name
+ 00012_create_default_names_for_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803
@@ -808,6 +816,7 @@ sms
  0053_alter_messagingsubevent_date_last_activity
  0054_messagingsubevent_domain
  0055_messagingsubevent_index_domain_date_id
+ 0056_backfill_sms_event_date
 smsbillables
  0001_initial
  0002_bootstrap

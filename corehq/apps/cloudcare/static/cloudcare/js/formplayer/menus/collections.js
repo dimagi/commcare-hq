@@ -23,6 +23,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'tiles',
             'title',
             'type',
+            'noItemsText',
         ],
 
         entityProperties: [
@@ -43,6 +44,7 @@ hqDefine("cloudcare/js/formplayer/menus/collections", function () {
             'useUniformUnits',
             'widthHints',
             'multiSelect',
+            'maxSelectValue',
         ],
 
         commandProperties: [
