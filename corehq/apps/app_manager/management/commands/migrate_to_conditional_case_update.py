@@ -106,7 +106,7 @@ class Command(AppMigrationCommandBase):
     def get_app_ids(self, domain=None):
         if self.options.get('deleted_apps_only', None):
             if not domain:
-                raise(Exception("Getting delted app IDs requires domain specficity."))
+                raise Exception("Getting deleted app IDs requires a domain.")
             return get_deleted_app_ids(domain)
         else:
             return super().get_app_ids(domain)

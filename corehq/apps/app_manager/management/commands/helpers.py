@@ -7,7 +7,7 @@ from time import time
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.models import Application
-from corehq.apps.domain.dbaccessors import iterate_doc_ids_in_domain_by_type
+from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.domain_migration_flags.api import (
     ALL_DOMAINS,
     migration_in_progress,
@@ -36,9 +36,9 @@ def get_all_app_ids(domain=None, include_builds=False):
 
 def get_deleted_app_ids(domain=None):
     db = get_db_by_doc_type('Application')
-    return (list(iterate_doc_ids_in_domain_by_type(domain, 'Application-Deleted', database=db))
-        + list(iterate_doc_ids_in_domain_by_type(domain, 'LinkedApplication-Deleted', database=db))
-        + list(iterate_doc_ids_in_domain_by_type(domain, 'RemoteApp-Deleted', database=db)))
+    return (get_doc_ids_in_domain_by_type(domain, 'Application-Deleted', database=db)
+        + get_doc_ids_in_domain_by_type(domain, 'LinkedApplication-Deleted', database=db)
+        + get_doc_ids_in_domain_by_type(domain, 'RemoteApp-Deleted', database=db))
 
 
 SaveError = namedtuple('SaveError', 'id error reason')
