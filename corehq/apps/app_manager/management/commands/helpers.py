@@ -83,17 +83,17 @@ class AppMigrationCommandBase(BaseCommand):
                  "from scratch.",
         )
         parser.add_argument(
-            '--only-run-once',
+            '--force-run-again',
             action='store_true',
             default=False,
-            help='''If the migration has been run with this flag before and completed succesfully, this command
-                    will exit without attempting to migrate.''',
+            help='''By default, this migration will not run a second time once it has been run. This flag forces
+                    the migration to run a second time, even if it has been run before on the environment.''',
         )
 
     def handle(self, **options):
         self.options = options
 
-        if self.options.get('only_run_once', False) and not self.is_dry_run:
+        if not self.options.get('force_run_again', False) and not self.is_dry_run:
             self.command_name = self.__module__[self.__module__.rindex('.') + 1:]
             if get_migration_complete(ALL_DOMAINS, self.command_name):
                 logger.info("This migration command has already been run on this environment. Exiting...")
@@ -213,7 +213,7 @@ class AppMigrationCommandBase(BaseCommand):
         end_time = time()
         execution_time_seconds = end_time - self.start_time
 
-        if (not self.is_dry_run and self.options.get('only_run_once', False)
+        if (not self.is_dry_run and not self.options.get('force_run_again', False)
            and migration_in_progress(ALL_DOMAINS, self.command_name)):
             set_migration_complete(ALL_DOMAINS, self.command_name)
 
