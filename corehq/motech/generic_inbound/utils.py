@@ -17,6 +17,22 @@ from corehq.motech.generic_inbound.exceptions import GenericInboundUserError
 from corehq.util.view_utils import get_form_or_404
 
 
+# exclude these headers as the may expose internal / sensitive information
+EXCLUDE_HEADERS = [
+    'X_FORWARDED_HOST',
+    'X_FORWARDED_SERVER',
+    'VIA',
+    'HTTP_CONNECTION',
+    'HTTP_COOKIE',
+    'SERVER_NAME',
+    'SERVER_PORT',
+    'HTTP_X_AMZN_TRACE_ID'
+]
+
+
+def get_headers_for_api_context(request):
+    return get_standard_headers(request.META, exclude=EXCLUDE_HEADERS)
+
 def make_url_key():
     raw_key = urlsafe_b64encode(uuid.uuid4().bytes).decode()
     return raw_key.removesuffix("==")
@@ -45,7 +61,7 @@ class ApiRequest:
             user_agent=request.META.get('HTTP_USER_AGENT'),
             data=request_json,
             query=dict(request.GET.lists()),
-            headers=get_standard_headers(request.META)
+            headers=get_headers_for_api_context(request)
         )
 
     @classmethod

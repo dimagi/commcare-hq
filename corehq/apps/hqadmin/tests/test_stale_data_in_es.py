@@ -1,5 +1,6 @@
 import uuid
 from io import StringIO
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -7,12 +8,13 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
-from unittest import mock
 from corehq.apps.domain.models import Domain
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.hqadmin.management.commands.stale_data_in_es import DataRow
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     FormDocumentStore,
@@ -22,20 +24,14 @@ from corehq.form_processor.utils.xform import (
     TestFormMetadata,
 )
 from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.xform import transform_xform_for_elasticsearch
-from corehq.util.elastic import reset_es_index
-from corehq.util.es import elasticsearch
-from corehq.util.es.interface import ElasticsearchInterface
 
 
 class ExitEarlyException(Exception):
     pass
 
 
-@es_test
+@es_test(requires=[case_search_adapter, case_adapter, form_adapter], setup_class=True)
 class TestStaleDataInESSQL(TestCase):
 
     project_name = 'sql-project'
@@ -252,9 +248,8 @@ class TestStaleDataInESSQL(TestCase):
             es_form = transform_xform_for_elasticsearch(
                 FormDocumentStore(form.domain, form.xmlns).get_document(form.form_id)
             )
-            send_to_elasticsearch('forms', es_form)
+            form_adapter.index(es_form, refresh=True)
 
-        self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         self.forms_to_delete_from_es.update(form.form_id for form in forms)
 
     def _send_cases_to_es(self, cases, refetch_doc=True):
@@ -265,32 +260,17 @@ class TestStaleDataInESSQL(TestCase):
                 )
             else:
                 es_case = transform_case_for_elasticsearch(case.to_json())
-            send_to_elasticsearch('cases', es_case)
+            case_adapter.index(es_case, refresh=True)
 
-        self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
         self.cases_to_delete_from_es.update(case.case_id for case in cases)
 
     @classmethod
     def _delete_forms_from_es(cls, form_ids):
-        cls._delete_docs_from_es(form_ids, index_info=XFORM_INDEX_INFO)
+        form_adapter.bulk_delete(form_ids, refresh=True)
 
     @classmethod
     def _delete_cases_from_es(cls, case_ids):
-        cls._delete_docs_from_es(case_ids, index_info=CASE_INDEX_INFO)
-
-    @classmethod
-    def _delete_docs_from_es(cls, doc_ids, index_info):
-        es_interface = ElasticsearchInterface(cls.elasticsearch)
-        refresh = False
-        for doc_id in doc_ids:
-            try:
-                es_interface.delete_doc(index_info.alias, index_info.type, doc_id)
-            except elasticsearch.NotFoundError:
-                pass
-            else:
-                refresh = True
-        if refresh:
-            cls.elasticsearch.indices.refresh(index_info.index)
+        case_adapter.bulk_delete(case_ids, refresh=True)
 
     def _assert_in_sync(self, output):
         self.assertEqual(
@@ -310,10 +290,6 @@ class TestStaleDataInESSQL(TestCase):
         delete_all_cases()
         cls.project = Domain.get_or_create_with_name(cls.project_name, is_active=True)
         cls.project.save()
-        cls.elasticsearch = get_es_new()
-        reset_es_index(XFORM_INDEX_INFO)
-        reset_es_index(CASE_INDEX_INFO)
-        reset_es_index(CASE_SEARCH_INDEX_INFO)
 
     @classmethod
     def tearDownClass(cls):

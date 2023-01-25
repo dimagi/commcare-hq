@@ -1,17 +1,14 @@
 import uuid
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase
 
-from unittest.mock import MagicMock, patch
-
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-# Also, you need to patch the path to the function in the file where the signal
-# handler uses it, not where it's actually defined.  That's quite a gotcha.
 
-from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.apps.es.client import manager
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
+from corehq.apps.reports.analytics.esaccessors import get_user_stubs
 from corehq.util.es.testing import sync_users_to_es
 from corehq.util.test_utils import mock_out_couch
 
@@ -20,6 +17,9 @@ from ..signals import update_user_in_es
 
 # Note that you can't directly patch the signal handler, as that code has
 # already been called.  It's easier to patch something that the handler calls.
+
+# Also, you need to patch the path to the function in the file where the signal
+# handler uses it, not where it's actually defined.  That's quite a gotcha.
 
 
 @mock_out_couch()
@@ -61,7 +61,7 @@ class TestUserSignals(SimpleTestCase):
 @patch('corehq.apps.analytics.signals.update_hubspot_properties')
 @patch('corehq.apps.callcenter.tasks.sync_usercases')
 @patch('corehq.apps.cachehq.signals.invalidate_document')
-@es_test(requires=[user_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
 class TestUserSyncToEs(SimpleTestCase):
 
     @sync_users_to_es()
