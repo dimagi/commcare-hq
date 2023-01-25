@@ -80,8 +80,8 @@ branches:
     - jls/new-instance-connectors # Steph Dec 27
     - ad/user-syncing-UI # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - jm/refactor-api-es  # Joel Jan 10
-    - jm/refactor-user-pillow  # Joel Jan 10
+    - jm/refactor-api-es  # [QA] Joel Jan 10
+    - jm/refactor-user-pillow  # [QA] Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
     - ad/test-incomplete-forms-hotfix # AD Jan 13
@@ -92,6 +92,6 @@ branches:
     - ad/hide-incomplete-forms # Addison Jan 19
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - akj/case-detail-close-accessibility # Akash Jan 21
-    #- jm/refactor-user-signals  # Joel Jan 23
+    - jm/refactor-user-signals  # [QA] Joel Jan 23
     - akj/nav-bar-icons-accessibility # Akash Jan 24
 submodules: { }
