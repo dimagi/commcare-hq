@@ -91,4 +91,5 @@ branches:
     - jm/refactor-user-signals  # [QA] Joel Jan 23
     - akj/nav-bar-icons-accessibility # Akash Jan 24
     - em/switching-project-spaces-bugfix # Evan Jan 25
+    - ap/rename-sql-repeaters # Amit Jan 26
 submodules: { }
