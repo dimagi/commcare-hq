@@ -949,6 +949,14 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
+USH_SEARCH_FILTER = StaticToggle(
+    'case_search_filter',
+    "USH Specific toggle to use Search Filter in case search options.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
 USH_INLINE_SEARCH = StaticToggle(
     'inline_case_search',
     "USH Specific toggle to making case search user input available to other parts of the app.",
