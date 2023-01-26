@@ -2,6 +2,7 @@ import logging
 
 from sqlalchemy.exc import ProgrammingError
 
+from corehq.apps.cleanup.utils import DeletedDomains
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.util import (
@@ -188,20 +189,25 @@ def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True):
     :param ignore_active_domains: if True, only searches within deleted domains
     :return: list of tablenames
     """
-
-    if domain and not Domain.is_domain_deleted(domain):
+    deleted_domains_cache = DeletedDomains()
+    if domain and not deleted_domains_cache.is_domain_deleted(domain):
         assert not ignore_active_domains,\
             f"{domain} is active but ignore_active_domains is True"
 
     ucrs_with_datasources = _get_ucrs_with_datasources(engine_id,
                                                        domain,
-                                                       ignore_active_domains)
-    all_ucrs = _get_existing_ucrs(engine_id, domain, ignore_active_domains)
+                                                       ignore_active_domains,
+                                                       deleted_domains_cache)
+    all_ucrs = _get_existing_ucrs(engine_id,
+                                  domain,
+                                  ignore_active_domains,
+                                  deleted_domains_cache)
     suspected_orphaned_ucrs = set(all_ucrs) - set(ucrs_with_datasources)
     return _get_confirmed_orphaned_ucrs(engine_id, suspected_orphaned_ucrs)
 
 
-def _get_ucrs_with_datasources(engine_id, domain, ignore_active_domains):
+def _get_ucrs_with_datasources(engine_id, domain, ignore_active_domains,
+                               deleted_domains_cache):
     ucrs_with_datasources = []
     if domain:
         datasources = get_datasources_for_domain(domain)
@@ -212,8 +218,8 @@ def _get_ucrs_with_datasources(engine_id, domain, ignore_active_domains):
         if datasource.engine_id != engine_id:
             continue
 
-        if ignore_active_domains and not Domain.is_domain_deleted(
-                datasource.domain):
+        if ignore_active_domains and not \
+                deleted_domains_cache.is_domain_deleted(datasource.domain):
             continue
 
         ucr = get_table_name(datasource.domain, datasource.table_id)
@@ -222,7 +228,8 @@ def _get_ucrs_with_datasources(engine_id, domain, ignore_active_domains):
     return ucrs_with_datasources
 
 
-def _get_existing_ucrs(engine_id, domain, ignore_active_domains):
+def _get_existing_ucrs(engine_id, domain, ignore_active_domains,
+                       deleted_domains_cache):
     try:
         engine = connection_manager.get_engine(engine_id)
     except KeyError:
@@ -251,7 +258,7 @@ def _get_existing_ucrs(engine_id, domain, ignore_active_domains):
     elif ignore_active_domains:
         # can use elif because this is redundant after a domain filter
         all_existing_ucrs = [ucr for ucr in all_existing_ucrs if
-                             Domain.is_domain_deleted(
+                             deleted_domains_cache.is_domain_deleted(
                                  get_domain_for_ucr_table_name(ucr))]
 
     return all_existing_ucrs
