@@ -38,8 +38,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, **options):
-        """
-        """
         command = options.get('command')
         domain = options.get('domain')
 

@@ -269,7 +269,8 @@ def _get_confirmed_orphaned_ucrs(engine_id, suspected_orphaned_ucrs):
                 connection.execute(
                     f'SELECT COUNT(*), MAX(inserted_at) FROM "{suspected_orphaned_ucr}"')
             except ProgrammingError:
-                print(f"\t{suspected_orphaned_ucr}: no inserted_at column, probably not UCR")
+                print(f"\tEncountered ProgrammingError for {suspected_orphaned_ucr}\n"
+                      f"\tCould be due to no inserted_at column which would mean this is not a UCR")
             except Exception as e:
                 print(
                     f"\tAn error was encountered when attempting to read from "
