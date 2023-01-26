@@ -37,14 +37,25 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         self.name = ko.observable(name).trimmed();
         self.label = ko.observable(label).trimmed();
 
-        self.meta_type = ko.computed(function () {
-            var value = _.find($parent.allSuggestions, function (prop) {
+        self._value = function () {
+            return _.find($parent.allSuggestions, function (prop) {
                 return prop.name === self.name();
             });
+        };
+
+        self.meta_type = ko.computed(() => {
+            var value = self._value();
             if (value) {
                 return value.meta_type;
             }
             return null;
+        });
+
+        self.name.subscribe(() => {
+            var value = self._value();
+            if (value) {
+                self.label(value.label || self.name());
+            }
         });
 
         return self;
