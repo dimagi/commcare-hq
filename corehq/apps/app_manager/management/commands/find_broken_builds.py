@@ -44,6 +44,10 @@ def form_filter_error(build):
             prev_form_filter = form_filter
 
 
+def all_builds(build):
+    return "error"
+
+
 def broken_suite_files(build):
     db = Application.get_db()
     code = Application._blobdb_type_code
@@ -71,6 +75,7 @@ CHECK_FUNCTIONS = {
     'broken_suite_files': broken_suite_files,
     'form_filter_error': form_filter_error,
     'premature_auto_gps': premature_auto_gps,
+    'all': all_builds,
 }
 
 
@@ -103,6 +108,13 @@ class Command(BaseCommand):
             default='',
             help='End date',
         )
+        parser.add_argument(
+            '--flag-with-reason',
+            action='store',
+            dest='reason',
+            default='',
+            help='If provided, set build_broken to True and build_broken_reason to this string',
+        )
 
     def handle(self, check_function, **options):
         check_fn = CHECK_FUNCTIONS[check_function]
@@ -110,6 +122,7 @@ class Command(BaseCommand):
         start = options['startdate']
         end = options['enddate']
         ids = options['build_ids']
+        reason = options['reason']
 
         print('Starting...\n')
         if not ids:
@@ -118,7 +131,7 @@ class Command(BaseCommand):
             ids = ids.split(',')
 
         print('Checking {} builds\n'.format(len(ids)))
-        for message in find_broken_builds(check_fn, ids):
+        for message in find_broken_builds(check_fn, ids, reason):
             self.stderr.write(message)
 
 
@@ -133,7 +146,7 @@ def get_build_ids(start, end):
     return builds_ids
 
 
-def find_broken_builds(checker, builds_ids):
+def find_broken_builds(checker, builds_ids, reason=None):
     for build in iter_docs(Application.get_db(), builds_ids):
         error = checker(build)
         if error:
@@ -144,3 +157,8 @@ def find_broken_builds(checker, builds_ids):
                 build.get('copy_of'),
                 error,
             )
+            if reason:
+                build = Application.wrap(build)
+                build.build_broken = True
+                build.build_broken_reason = reason
+                build.save()
