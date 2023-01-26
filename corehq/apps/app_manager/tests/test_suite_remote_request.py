@@ -211,6 +211,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
@@ -223,6 +224,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -231,6 +233,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
     def test_duplicate_remote_request(self, *args):
         """
@@ -286,6 +289,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_case_search_filter(self, *args):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -304,6 +308,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
