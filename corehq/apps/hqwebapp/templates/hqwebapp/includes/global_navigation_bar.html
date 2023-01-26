@@ -6,8 +6,9 @@
 <ul class="nav navbar-nav" role="menu">
     <li class="dropdown">
         <a href="#" class="dropdown-toggle dropdown-toggle-with-icon track-usage-link"
-           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Gear Icon">
-            <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
+           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Gear Icon"
+           aria-label='{% trans_html_attr "Manage Settings" %}'>
+            <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage Settings" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
             <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
@@ -88,7 +89,8 @@
         {# In non-enterprise mode, the bubble is always shown #}
         <li class="dropdown">
         <a href="#" class="dropdown-toggle dropdown-toggle-with-icon track-usage-link"
-           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Question Mark">
+           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Question Mark"
+           aria-label='{% trans_html_attr "Help and Resources" %}'>
             <i class="fa fa-question-circle nav-main-icon"></i> <span class="responsive-label">{% trans "Help &amp; Resources" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
