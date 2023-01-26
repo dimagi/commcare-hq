@@ -9,6 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('es', '0001_bootstrap_es_indexes'),
     ]
 
     operations = [
