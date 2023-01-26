@@ -647,7 +647,8 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             xpath="true()",
         )]
         self.assertIn({'type': 'multi select form links',
-                'form_type': 'module_form',
-               'module': {'id': 1, 'name': {'en': 'Multi Loner module'}, 'unique_id': 'Multi Loner_module'},
-               'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'
-        }, self.factory.app.validate_app())
+                       'form_type': 'module_form',
+                       'module': {'id': 1, 'name': {'en': 'Multi Loner module'},
+                                  'unique_id': 'Multi Loner_module'},
+                       'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
+                       }, self.factory.app.validate_app())
