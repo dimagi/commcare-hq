@@ -4,7 +4,6 @@ hqDefine('app_manager/js/manage_releases_by_app_profile', [
     'underscore',
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/assert_properties',
-    'hqwebapp/js/toggles',
     'translations/js/app_translations',
 ], function (
     $,
