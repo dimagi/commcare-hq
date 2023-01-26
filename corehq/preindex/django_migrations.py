@@ -65,7 +65,7 @@ def iter_couch_lock_lines(preamble=LOCK_PREAMBLE):
     rootlen = len(str(corehq.parent)) + 1
     for design in sorted(get_preindex_designs(), key=attrgetter("design_path")):
         doc = document(design.design_path).doc()
-        for relpath in doc["couchapp"]["manifest"]:
+        for relpath in sorted(doc["couchapp"]["manifest"]):
             fullpath = os.path.join(design.design_path, relpath)
             viewpath = fullpath[rootlen:]
             if os.path.isdir(fullpath):
