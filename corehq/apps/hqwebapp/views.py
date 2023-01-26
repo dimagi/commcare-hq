@@ -1452,3 +1452,8 @@ def check_sso_login_status(request):
         'sso_url': sso_url,
         'continue_text': continue_text,
     })
+
+
+@require_superuser
+def bootstrap5_tests(request):
+    return render(request, "hqwebapp/bootstrap5_tests.html")

@@ -35,6 +35,7 @@ from corehq.apps.hqwebapp.views import (
     server_up,
     temporary_google_verify,
     check_sso_login_status,
+    bootstrap5_tests,
 )
 from corehq.apps.settings.views import (
     TwoFactorBackupTokensView,
@@ -98,6 +99,7 @@ urlpatterns = [
     ),
     url(r'^oauth/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^check_sso_login_status/', check_sso_login_status, name='check_sso_login_status'),
+    url(r'^bootstrap5/', bootstrap5_tests, name='bootstrap5_tests'),
 ]
 
 domain_specific = [
