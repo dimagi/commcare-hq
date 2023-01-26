@@ -19,7 +19,7 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import SQLFormRepeater, send_request
+from corehq.motech.repeaters.models import FormRepeater, send_request
 from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
@@ -38,7 +38,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
         url = 'https://www.example.com/api/'
         conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        cls.repeater = SQLFormRepeater(
+        cls.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
@@ -69,7 +69,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         super().tearDown()
 
     def reget_sql_repeater(self):
-        return SQLFormRepeater.objects.get(pk=self.repeater.pk)
+        return FormRepeater.objects.get(pk=self.repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')

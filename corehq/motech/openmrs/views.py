@@ -33,7 +33,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_patient_identifier_types,
     get_person_attribute_types,
 )
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tasks import import_patients_to_domain
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView, EditRepeaterView
@@ -82,7 +82,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def repeater(self):
-        repeater = SQLOpenmrsRepeater.objects.get(repeater_id=self.repeater_id)
+        repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater_id)
         assert repeater.domain == self.domain
         return repeater
 
@@ -114,7 +114,7 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
-    repeater = SQLOpenmrsRepeater.objects.get(repeater_id=repeater_id)
+    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
     assert repeater.domain == domain
     raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
@@ -124,7 +124,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 
 @login_and_domain_required
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = SQLOpenmrsRepeater.objects.get(repeater_id=repeater_id)
+    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
     record = RepeatRecord.get(record_id)
     assert repeater.domain == domain
     assert record.domain == domain
