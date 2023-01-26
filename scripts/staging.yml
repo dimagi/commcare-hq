@@ -68,7 +68,6 @@ branches:
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     - es/redirect-domain  # Ethan Nov 21
-    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
     #- jls/web-apps-requirejs+sk/sentry-js
     - sk/sentry-js  # Simon Dec 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
@@ -89,4 +88,5 @@ branches:
     - em/switching-project-spaces-bugfix # Evan Jan 25
     - ap/rename-sql-repeaters # Amit Jan 26
     - ad/remove-entered-wrap-functions # Addison Jan 26
+    - revert-32492-ad/incomplete-forms-hotfix # Jonathan T. Jan 26
 submodules: { }
