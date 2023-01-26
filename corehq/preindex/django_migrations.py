@@ -86,7 +86,7 @@ def designs_did_change(lines, lock_path=LOCK_PATH):
 def write_designs_lock_file(lines, lock_path=LOCK_PATH):
     """Write a new .lock file."""
     with open(lock_path, "w") as file:
-        file.write("".join(lines))
+        file.writelines(lines)
 
 
 def sha256sum(filename):
