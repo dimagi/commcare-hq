@@ -170,6 +170,7 @@ MIDDLEWARE = [
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
     # middleware that adds cookies must come before SecureCookiesMiddleware
     'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -220,6 +221,7 @@ DEFAULT_APPS = (
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -243,6 +245,11 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
 )
+
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
 
 HQ_APPS = (
     'django_digest',
@@ -282,7 +289,7 @@ HQ_APPS = (
     'corehq.sql_accessors',
     'corehq.sql_proxy_accessors',
     'corehq.sql_proxy_standby_accessors',
-    'corehq.pillows.app_config.PillowsAppConfig',
+    'corehq.pillows',
     'couchforms',
     'couchexport',
     'dimagi.utils',
@@ -365,6 +372,7 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.motech.generic_inbound',
     'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
@@ -381,7 +389,6 @@ HQ_APPS = (
 
     'custom.common',
 
-    'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.covid',
@@ -389,6 +396,7 @@ HQ_APPS = (
     'custom.onse',
     'custom.nutrition_project',
     'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -517,11 +525,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
-
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
 
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
@@ -897,6 +900,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -906,7 +910,10 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {
@@ -1019,8 +1026,6 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 # used for creating releases and deploys
 SENTRY_API_KEY = None
 
-OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
-RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
@@ -1048,22 +1053,8 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
-ELASTIC_ADAPTER_SETTINGS = {
-    "ElasticCase": {
-        # Set to True to remove the `actions` and `xform_id` fields from the
-        # Elastic "hqcases_..." index. These fields contribute high load to the
-        # shard databases.
-        "DROP_FORM_FIELDS": False,
-    },
-    "ElasticForm": {
-        # TODO: document what this is for
-        "DISABLE_ALL": False,
-    },
-}
-
-# TODO: remove these Elastic settings:
-ES_SETTINGS = None  # [do not use] legacy mechanism for tests
-CASE_ES_DROP_FORM_FIELDS = ELASTIC_ADAPTER_SETTINGS["ElasticCase"]["DROP_FORM_FIELDS"]
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
+ES_SETTINGS = None
 
 PHI_API_KEY = None
 PHI_PASSWORD = None
@@ -1098,9 +1089,6 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1118,6 +1106,7 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1229,13 +1218,14 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1248,7 +1238,7 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -1409,7 +1399,7 @@ LOGGING = {
         'celery.task': {
             'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -1511,7 +1501,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1564,7 +1553,6 @@ COUCHDB_APPS = [
 
     # custom reports
     'accounting',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
@@ -1574,9 +1562,6 @@ COUCHDB_APPS = [
     # users and groups
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
-
-    # fixtures
-    ('fixtures', FIXTURES_DB),
 
     # domains
     ('domain', DOMAINS_DB),
@@ -1588,7 +1573,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -2035,20 +2020,14 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
-        }
-    ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 

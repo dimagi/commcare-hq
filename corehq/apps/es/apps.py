@@ -3,8 +3,9 @@ AppES
 -----
 """
 from . import filters, queries
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -25,8 +26,7 @@ class AppES(HQESQuery):
 
 class ElasticApp(ElasticDocumentAdapter):
 
-    _index_name = "hqapps_2020-02-26"
-    type = "app"
+    settings_key = IndexSettingsKey.APPS
 
     @property
     def mapping(self):
@@ -35,6 +35,13 @@ class ElasticApp(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+app_adapter = create_document_adapter(
+    ElasticApp,
+    "hqapps_2020-02-26",
+    "app",
+)
 
 
 def build_comment(comment):

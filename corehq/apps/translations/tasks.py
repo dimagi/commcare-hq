@@ -8,8 +8,8 @@ from django.core.mail.message import EmailMessage
 from django.template.defaultfilters import linebreaksbr
 
 import six
-from celery.task import task
 
+from corehq.apps.celery import task
 from corehq.apps.translations.generators import AppTranslationsGenerator
 from corehq.apps.translations.integrations.transifex.parser import (
     TranslationsParser,

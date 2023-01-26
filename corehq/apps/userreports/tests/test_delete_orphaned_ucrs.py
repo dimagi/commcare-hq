@@ -75,6 +75,27 @@ class DeleteOrphanedUCRsTests(TestCase):
 
         self.assertFalse(adapter.table_exists)
 
+    def test_limit_deletion_to_one_domain(self):
+        active_config = self._create_data_source_config(self.active_domain.name)
+        active_config.save()
+        active_adapter = get_indicator_adapter(active_config, raise_errors=True)
+        active_adapter.build_table()
+        self.addCleanup(active_adapter.drop_table)
+
+        deleted_config = self._create_data_source_config(self.deleted_domain.name)
+        deleted_config.save()
+        deleted_adapter = get_indicator_adapter(deleted_config, raise_errors=True)
+        deleted_adapter.build_table()
+        self.addCleanup(deleted_adapter.drop_table)
+        # orphan table by deleting config
+        active_config.delete()
+        deleted_config.delete()
+
+        call_command('delete_orphaned_ucrs', engine_id='ucr', force_delete=True, domain='test')
+
+        self.assertTrue(deleted_adapter.table_exists)
+        self.assertFalse(active_adapter.table_exists)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()

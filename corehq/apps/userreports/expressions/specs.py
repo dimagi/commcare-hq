@@ -727,45 +727,77 @@ class EvalExpressionSpec(JsonObject):
            "context_variables": {
                "a": 1,
                "b": 20,
-               "c": 2
+               "c": {
+                   "type": "property_name",
+                   "property_name": "the_number_two"
+               }
            }
        }
 
-    This returns 25 (1 + 20 - 2 + 6).
+    This returns **25** (1 + 20 - 2 + 6).
 
-    ``statement`` can be any statement that returns a valid number. All
-    python math
-    `operators <https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators>`__
-    except power operator are available for use.
+    ``statement``
 
-    ``context_variables`` is a dictionary of Expressions where keys are
-    names of variables used in the ``statement`` and values are expressions
-    to generate those variables. Variables can be any valid numbers (Python
-    datatypes ``int``, ``float`` and ``long`` are considered valid numbers.)
-    or also expressions that return numbers. In addition to numbers the
-    following types are supported:
+        The expression statement to be evaluated.
 
-    -  ``date``
-    -  ``datetime``
+    ``context_variables``
 
-    Only the following functions are permitted:
+        A dictionary of Expressions where keys are names of variables used in the ``statement``
+        and values are expressions to generate those variables.
 
-    -  ``rand()``: generate a random number between 0 and 1
-    -  ``randint(max)``: generate a random integer between 0 and ``max``
-    -  ``int(value)``: convert ``value`` to an int. Value can be a number or
-       a string representation of a number
-    -  ``float(value)``: convert ``value`` to a floating point number
-    -  ``str(value)``: convert ``value`` to a string
-    -  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
-       seconds. This is useful for getting the number of seconds between two
-       dates.
+        Variable types must be one of:
 
-       -  e.g. ``timedelta_to_seconds(time_end - time_start)``
+        -  ``str``
+        -  ``int``
+        -  ``float``
+        -  ``bool``
+        -  ``date``
+        -  ``datetime``
 
-    -  ``range(start, [stop], [skip])``: the same as the python ```range``
-       function <https://docs.python.org/2/library/functions.html#range>`__.
-       Note that for performance reasons this is limited to 100 items or
-       less.
+    **Expression limitations**
+
+        Only a single expression is permitted.
+
+        Available operators:
+
+        - `math operators`_ (except the power operator)
+        - `modulus`_
+        - `negation`_
+        - `comparison operators`_
+        - `logical operators`_
+
+        In addition, expressions can perform index and slice operations as well as simple ``if else`` statements.
+
+        Most function calls are disabled except for the following:
+
+        -  ``rand()``: generate a random number between 0 and 1
+        -  ``randint(max)``: generate a random integer between 0 and ``max``
+        -  ``int(value)``: convert ``value`` to an int. Value can be a number or
+           a string representation of a number
+        -  ``float(value)``: convert ``value`` to a floating point number
+        -  ``str(value)``: convert ``value`` to a string
+        -  ``round(value, [ndigits])``: round a number to the nearest integer or ``ndigits``
+           after the decimal point. See `round`_.
+        -  ``timedelta_to_seconds(time_delta)``: convert a TimeDelta object into
+           seconds. This is useful for getting the number of seconds between two
+           dates.
+
+           -  e.g. ``timedelta_to_seconds(time_end - time_start)``
+
+        -  ``range(start, [stop], [skip])``: the same as the Python `range function`_.
+           Note that for performance reasons this is limited to 100 items or
+           less.
+        -  ``today()``: return the current UTC date
+
+    .. _math operators: https://en.wikibooks.org/wiki/Python_Programming/Basic_Math#Mathematical_Operators
+    .. _modulus: https://en.wikibooks.org/wiki/Python_Programming/Operators#Modulus
+    .. _negation: https://en.wikibooks.org/wiki/Python_Programming/Operators#Negation
+    .. _comparison operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Comparison
+    .. _logical operators: https://en.wikibooks.org/wiki/Python_Programming/Operators#Logical_Operators
+    .. _round: https://docs.python.org/3/library/functions.html?#round
+    .. _range function: https://docs.python.org/3/library/functions.html?#range
+
+    See also :ref:`ucr-evaluator-examples`.
     """
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)

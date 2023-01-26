@@ -19,7 +19,6 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
@@ -317,7 +316,7 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
 def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
     # Pull doc ids from elasticsearch and stream to disk
     query = get_export_query(export_instance, filters, are_filters_es_formatted)
-    return iter_es_docs_from_query(query)
+    return query.scroll_ids_to_disk_and_iter_docs()
 
 
 def get_export_query(export_instance, filters, are_filters_es_formatted=False):

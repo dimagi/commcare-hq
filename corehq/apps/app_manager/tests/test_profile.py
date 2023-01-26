@@ -1,8 +1,9 @@
 import uuid
 import xml.etree.cElementTree as ET
+from itertools import combinations
 
 from django.conf import settings
-from django.test import SimpleTestCase, override_settings, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from corehq.apps.app_manager.commcare_settings import (
     get_commcare_settings_lookup,
@@ -10,12 +11,17 @@ from corehq.apps.app_manager.commcare_settings import (
 )
 from corehq.apps.app_manager.models import Application, BuildProfile
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, get_simple_form, patch_validate_xform
+from corehq.apps.app_manager.tests.util import (
+    TestXmlMixin,
+    get_simple_form,
+    patch_validate_xform,
+)
 from corehq.apps.builds.models import BuildSpec
 from corehq.util.test_utils import flag_enabled
 
 
 @flag_enabled('CUSTOM_PROPERTIES')
+@flag_enabled('APP_DEPENDENCIES')
 class ProfileTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data',)
 
@@ -41,7 +47,10 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         for p_type, test_method in types.items():
             for key, value in app.profile.get(p_type, {}).items():
                 setting = get_commcare_settings_lookup()[p_type][key]
-                test_method(profile_xml, key, value, setting)
+                if p_type == 'features' and key == 'dependencies':
+                    self._test_dependencies(profile_xml, key, value, setting)
+                else:
+                    test_method(profile_xml, key, value, setting)
 
     def _get_node(self, profile, key, xpath_template):
         xpath = xpath_template.format(key)
@@ -74,6 +83,15 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
                 '"force" incorrect for property "{}"'.format(key)
             )
 
+    def _test_dependencies(self, profile, key, value, setting):
+        node = profile.find('./features/dependencies')
+        if node:
+            app_dependencies = node.findall('./android_package')
+            actual_value = [n.get('id') for n in app_dependencies]
+        else:
+            actual_value = []
+        self.assertEqual(actual_value, value, f'Feature "{key}"')
+
     def _test_custom_property(self, profile, key, value):
         node = self._get_node(profile, key, "./property[@key='{}']")
         self.assertEqual(node.get('value'), value, 'Property "{}"'.format(key))
@@ -89,13 +107,22 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         for setting in get_custom_commcare_settings():
             if setting['id'] == 'users':
                 continue
-            for value in setting.get('values', []):
-                self.app.profile = {
-                    setting['type']: {
-                        setting['id']: value
+            if setting.get('widget') == 'multiSelect':
+                for values in all_combinations(setting['values']):
+                    self.app.profile = {
+                        setting['type']: {
+                            setting['id']: values
+                        }
                     }
-                }
-                self._test_profile(self.app)
+                    self._test_profile(self.app)
+            else:
+                for value in setting.get('values', []):
+                    self.app.profile = {
+                        setting['type']: {
+                            setting['id']: value
+                        }
+                    }
+                    self._test_profile(self.app)
 
         # custom properties do not rely on SETTINGS so need to be tested separately
         self.app.profile = {
@@ -170,3 +197,11 @@ class ProfileBuildTests(TestCase):
         for xpath, value in property_xpaths.items():
             node = profile.find(xpath)
             self.assertEqual(node.get('value'), value)
+
+
+def all_combinations(collection):
+    # Is testing _all_ combinations overkill?
+    yield []
+    for length in range(len(collection)):
+        for combination in combinations(collection, length + 1):
+            yield list(combination)

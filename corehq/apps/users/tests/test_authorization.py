@@ -36,7 +36,6 @@ class BaseAuthorizationTest(TestCase):
         super().tearDownClass()
 
     def setUp(self):
-        UserRole.commcare_user_default.clear(UserRole.__class__, self.domain)
         self.user.has_permission.reset_cache(self.user)
         try:
             self.user.is_domain_admin.reset_cache(self.user)

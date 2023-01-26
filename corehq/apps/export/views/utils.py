@@ -310,7 +310,7 @@ class DailySavedExportPaywall(BaseProjectDataView):
 
 
 class DashboardFeedPaywall(BaseProjectDataView):
-    urlname = 'dashbaord_feeds_paywall'
+    urlname = 'dashboard_feeds_paywall'
     template_name = 'export/paywall.html'
 
 
@@ -319,7 +319,7 @@ class DashboardFeedPaywall(BaseProjectDataView):
 class DataFileDownloadList(BaseProjectDataView):
     urlname = 'download_data_files'
     template_name = 'export/download_data_files.html'
-    page_title = gettext_lazy("Download Data Files")
+    page_title = gettext_lazy("Secure File Transfer")
 
     def dispatch(self, request, *args, **kwargs):
         if can_download_data_files(self.domain, request.couch_user):
@@ -415,3 +415,5 @@ def clean_odata_columns(export_instance):
             # truncate labels for PowerBI and Tableau limits
             if len(column.label) >= 255:
                 column.label = column.label[:255]
+            if column.label in ['formid'] and column.is_deleted:
+                column.label = f"{column.label}_deleted"

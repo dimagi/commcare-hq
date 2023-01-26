@@ -1,15 +1,21 @@
-from celery.task import task
-from django.conf import settings
-
 import datetime
 
-from freezegun import freeze_time
+from django.conf import settings
 
-from corehq.celery_monitoring.heartbeat import Heartbeat, HeartbeatNeverRecorded, \
-    HEARTBEAT_FREQUENCY
+from freezegun import freeze_time
 from testil import assert_raises, eq
 
-from corehq.celery_monitoring.signals import TimeToStartTimer, TimingNotAvailable, get_domain_from_task
+from corehq.apps.celery import task
+from corehq.celery_monitoring.heartbeat import (
+    HEARTBEAT_FREQUENCY,
+    Heartbeat,
+    HeartbeatNeverRecorded,
+)
+from corehq.celery_monitoring.signals import (
+    TimeToStartTimer,
+    TimingNotAvailable,
+    get_domain_from_task,
+)
 
 
 def test_heartbeat():

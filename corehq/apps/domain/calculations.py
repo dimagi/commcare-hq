@@ -26,7 +26,7 @@ from corehq.apps.export.dbaccessors import (
     get_export_count_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
@@ -44,7 +44,7 @@ from corehq.apps.users.dbaccessors import (
 from corehq.apps.users.models import CouchUser, UserRole
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.messaging.scheduling.util import domain_has_reminders
-from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.models import SQLRepeater
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 
@@ -469,7 +469,7 @@ def num_case_sharing_groups(domain):
 
 
 def num_repeaters(domain):
-    return len(Repeater.by_domain(domain))
+    return SQLRepeater.objects.filter(domain=domain).count()
 
 
 def _get_domain_exports(domain):
@@ -490,7 +490,7 @@ def num_saved_exports(domain):
 
 
 def num_lookup_tables(domain):
-    return len(FixtureDataType.by_domain(domain))
+    return LookupTable.objects.by_domain(domain).count()
 
 
 def has_domain_icon(domain_obj):

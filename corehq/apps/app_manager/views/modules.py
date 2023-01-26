@@ -2,7 +2,7 @@ import json
 import logging
 from collections import OrderedDict
 from functools import partial
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.contrib import messages
 from django.http import (
@@ -39,6 +39,7 @@ from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_TYPE,
+    MULTI_SELECT_MAX_SELECT_VALUE,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import (
@@ -109,7 +110,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_app, REPORT_FIXTURE, LOOKUP_TABLE_FIXTURE
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.hqmedia.controller import MultimediaHTMLUploadController
 from corehq.apps.hqmedia.models import (
     ApplicationMediaReference,
@@ -246,6 +247,10 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                     module.search_config.search_label.label if hasattr(module, 'search_config') else "",
                 'search_again_label':
                     module.search_config.search_again_label.label if hasattr(module, 'search_config') else "",
+                'title_label':
+                    module.search_config.title_label if hasattr(module, 'search_config') else "",
+                'description':
+                    module.search_config.description if hasattr(module, 'search_config') else "",
                 'data_registry': module.search_config.data_registry if module.search_config.data_registry else "",
                 'data_registry_workflow': module.search_config.data_registry_workflow,
                 'additional_registry_cases': module.search_config.additional_registry_cases,
@@ -388,8 +393,8 @@ def _get_report_module_context(app, module):
 
 def _get_fixture_columns_by_type(domain):
     return {
-        fixture.tag: [field.field_name for field in fixture.fields]
-        for fixture in FixtureDataType.by_domain(domain)
+        fixture.tag: [field.name for field in fixture.fields]
+        for fixture in LookupTable.objects.by_domain(domain)
     }
 
 
@@ -915,6 +920,8 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         'search_claim_options',
     }
     short_attrs = {a for a in short_attrs if request.POST.get(a) == 'on'}
+    if 'multi_select' in short_attrs:
+        short_attrs.update({'auto_select', 'max_select_value'})
 
     error_list = _validate_overwrite_request(request, detail_type, dest_module_unique_ids, short_attrs)
     if error_list:
@@ -971,6 +978,8 @@ def _update_module_short_detail(src_module, dest_module, attrs):
     if src_module.module_type == "shadow":
         if 'multi_select' in attrs:
             src_detail.multi_select = src_module.is_multi_select()
+            src_detail.auto_select = src_module.is_auto_select()
+            src_detail.max_select_value = src_module.max_select_value
 
     if attrs:
         dest_detail = getattr(dest_module.case_details, "short")
@@ -1023,6 +1032,16 @@ def _update_search_properties(module, search_properties, lang='en'):
             values[lang] = new_value
         return values
 
+    def _get_itemset(prop):
+        fixture_props = json.loads(prop['fixture'])
+        keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
+        missing = [key for key in keys if not fixture_props.get(key)]
+        if missing:
+            raise CaseSearchConfigError(_("""
+                The case search property '{}' is missing the following lookup table attributes: {}
+            """).format(prop['name'], ", ".join(missing)))
+        return {key: fixture_props[key] for key in keys}
+
     props_by_name = {p.name: p for p in module.search_config.properties}
     for prop in search_properties:
         current = props_by_name.get(prop['name'])
@@ -1057,23 +1076,15 @@ def _update_search_properties(module, search_properties, lang='en'):
                 ret['default_value'] = prop['default_value']
             else:
                 ret['input_'] = 'select1'
-            fixture_props = json.loads(prop['fixture'])
-            keys = {'instance_uri', 'instance_id', 'nodeset', 'label', 'value', 'sort'}
-            missing = [key for key in keys if not fixture_props.get(key)]
-            if missing:
-                raise CaseSearchConfigError(_("""
-                    The case search property '{}' is missing the following lookup table attributes: {}
-                """).format(prop['name'], ", ".join(missing)))
-            ret['itemset'] = {
-                key: fixture_props[key]
-                for key in keys
-            }
-
+            ret['itemset'] = _get_itemset(prop)
+        elif prop.get('appearance', '') == 'checkbox':
+            ret['input_'] = 'checkbox'
+            ret['itemset'] = _get_itemset(prop)
         elif prop.get('appearance', '') == 'barcode_scan':
             ret['appearance'] = 'barcode_scan'
         elif prop.get('appearance', '') == 'address':
             ret['appearance'] = 'address'
-        elif prop.get('appearance', '') in ['date', 'daterange']:
+        elif prop.get('appearance', '') in ('date', 'daterange'):
             ret['input_'] = prop['appearance']
 
         if prop.get('appearance', '') == 'fixture' or not prop.get('appearance', ''):
@@ -1126,7 +1137,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
         'long': params.get("long_custom_variables", None)
     }
     multi_select = params.get('multi_select', None)
-
+    auto_select = params.get('auto_select', None)
+    max_select_value = params.get('max_select_value') or MULTI_SELECT_MAX_SELECT_VALUE
     app = get_app(domain, app_id)
 
     try:
@@ -1147,6 +1159,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     if short is not None:
         detail.short.columns = list(map(DetailColumn.from_json, short))
         detail.short.multi_select = multi_select
+        detail.short.auto_select = auto_select
+        detail.short.max_select_value = max_select_value
         if persist_case_context is not None:
             detail.short.persist_case_context = persist_case_context
             detail.short.persistent_case_context_xml = persistent_case_context_xml
@@ -1223,6 +1237,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 search_properties.get('properties') is not None
                 or search_properties.get('default_properties') is not None
         ):
+            title_label = module.search_config.title_label
+            title_label[lang] = search_properties.get('title_label', '')
+
+            description = module.search_config.description
+            description[lang] = search_properties.get('description', '')
+
             search_label = module.search_config.search_label
             search_label.label[lang] = search_properties.get('search_label', '')
             if search_properties.get('search_label_image_for_all'):
@@ -1296,6 +1316,8 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
             module.search_config = CaseSearch(
                 search_label=search_label,
                 search_again_label=search_again_label,
+                title_label=title_label,
+                description=description,
                 properties=properties,
                 additional_case_types=module.search_config.additional_case_types,
                 additional_relevant=search_properties.get('additional_relevant', ''),

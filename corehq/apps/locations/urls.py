@@ -1,5 +1,7 @@
 from django.conf.urls import re_path as url
 
+from corehq.apps.hqwebapp.decorators import waf_allow
+
 from .views import (
     DowngradeLocationsView,
     DownloadLocationStatusView,
@@ -30,7 +32,7 @@ settings_urls = [
     url(r'^list/$', LocationsListView.as_view(), name=LocationsListView.urlname),
     url(r'^location_search/$', LocationsSearchView.as_view(), name='location_search'),
     url(r'^location_types/$', LocationTypesView.as_view(), name=LocationTypesView.urlname),
-    url(r'^import/$', LocationImportView.as_view(), name=LocationImportView.urlname),
+    url(r'^import/$', waf_allow('XSS_BODY')(LocationImportView.as_view()), name=LocationImportView.urlname),
     url(r'^import_status/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$', LocationImportStatusView.as_view(),
         name=LocationImportStatusView.urlname),
     url(r'^location_importer_job_poll/(?P<download_id>(?:dl-)?[0-9a-fA-Z]{25,32})/$',

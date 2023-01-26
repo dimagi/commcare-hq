@@ -1,13 +1,15 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils.translation import gettext
 
-from unittest.mock import patch
-
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.data_dictionary.tests.utils import setup_data_dictionary
-from corehq.apps.data_dictionary.util import generate_data_dictionary, get_values_hints_dict
+from corehq.apps.data_dictionary.util import (
+    generate_data_dictionary,
+    get_values_hints_dict,
+)
 
 
 @patch('corehq.apps.data_dictionary.util._get_all_case_properties')

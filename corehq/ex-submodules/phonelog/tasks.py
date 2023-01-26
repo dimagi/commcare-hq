@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
 
-from celery.schedules import crontab
-from celery.task import periodic_task
 from django.conf import settings
 from django.db import connection
+
+from celery.schedules import crontab
 from requests import Session
 from requests.adapters import HTTPAdapter
 from requests.exceptions import RequestException
 
-from corehq.util.celery_utils import no_result_task
 from phonelog.models import ForceCloseEntry, UserEntry, UserErrorEntry
+
+from corehq.apps.celery import periodic_task
+from corehq.util.celery_utils import no_result_task
 
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))

@@ -14,7 +14,7 @@ from dimagi.utils.dates import DateSpan
 import custom.inddex.reports.r4_nutrient_stats
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
+from corehq.apps.fixtures.models import LookupTable
 from corehq.form_processor.models import CommCareCase
 from corehq.util.test_utils import require_db_context
 
@@ -115,8 +115,8 @@ class TestSetupUtils(TestCase):
         ))
 
     def test_fixtures_created(self):
-        data_types = get_fixture_data_types(DOMAIN)
-        self.assertEqual(len(data_types), 6)
+        data_types = LookupTable.objects.by_domain(DOMAIN).count()
+        self.assertEqual(data_types, 6)
 
 
 class TestUcrAdapter(TestCase):

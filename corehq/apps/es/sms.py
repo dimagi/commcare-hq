@@ -3,8 +3,9 @@ SMSES
 --------
 """
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -33,8 +34,7 @@ class SMSES(HQESQuery):
 
 class ElasticSMS(ElasticDocumentAdapter):
 
-    _index_name = "smslogs_2020-01-28"
-    type = "sms"
+    settings_key = IndexSettingsKey.SMS
 
     @property
     def mapping(self):
@@ -43,6 +43,13 @@ class ElasticSMS(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+sms_adapter = create_document_adapter(
+    ElasticSMS,
+    "smslogs_2020-01-28",
+    "sms",
+)
 
 
 def incoming_messages():

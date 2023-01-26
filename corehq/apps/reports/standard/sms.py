@@ -543,7 +543,7 @@ class MessageLogReport(BaseCommConnectLogReport):
             if m.xforms_session_couch_id and not m.messaging_subevent_id
         ]
         subevents = (MessagingSubEvent.objects
-                     .filter(parent__domain=self.domain,
+                     .filter(domain=self.domain,
                              xforms_session__couch_id__in=session_ids)
                      .values_list(
                          'xforms_session__couch_id',

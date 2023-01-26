@@ -3,7 +3,6 @@ import math
 from collections import namedtuple
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -1272,10 +1271,6 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     NO_FORMS_TEXT = gettext_noop('None')
 
     @property
-    def include_active_cases(self):
-        return not settings.CASE_ES_DROP_FORM_FIELDS
-
-    @property
     def fields(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return [
@@ -1549,17 +1544,13 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = _get_owner_ids_from_users(users)
 
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
-            if self.include_active_cases:
-                active_cases = sum([
-                    int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-                ])
-                active_cases_cell = util.numcell(active_cases)
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
-                )
-            else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            active_cases_cell = util.numcell(active_cases)
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             active_users = int(active_users_by_group.get(group, 0))
             total_users = len(self.users_by_group.get(group, []))
@@ -1613,24 +1604,20 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             owner_ids = set([user["user_id"].lower(), user["location_id"]] + user["group_ids"])
             total_cases = sum([int(report_data.total_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids])
 
-            if self.include_active_cases:
-                active_cases = sum([
-                    int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
-                ])
-                if today_or_tomorrow(self.datespan.enddate):
-                    active_cases_cell = util.numcell(
-                        self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
-                        active_cases,
-                    )
-                else:
-                    active_cases_cell = util.numcell(active_cases)
-
-                pct_active = util.numcell(
-                    (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            active_cases = sum([
+                int(report_data.active_cases_by_owner.get(owner_id, 0)) for owner_id in owner_ids
+            ])
+            if today_or_tomorrow(self.datespan.enddate):
+                active_cases_cell = util.numcell(
+                    self._html_anchor_tag(self._case_list_url_active_cases(user['user_id']), active_cases),
+                    active_cases,
                 )
             else:
-                active_cases_cell = util.numcell('---')
-                pct_active = util.numcell('---')
+                active_cases_cell = util.numcell(active_cases)
+
+            pct_active = util.numcell(
+                (float(active_cases) / total_cases) * 100 if total_cases else 'nan', convert='float'
+            )
 
             cases_opened = int(report_data.cases_opened_by_user.get(user["user_id"].lower(), 0))
             cases_closed = int(report_data.cases_closed_by_user.get(user["user_id"].lower(), 0))
@@ -1692,12 +1679,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         case_owners = _get_owner_ids_from_users(users_to_iterate)
         user_ids = user_ids
 
-        if self.include_active_cases:
-            active_cases_by_owner = get_active_case_counts_by_owner(
-                self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
-            )
-        else:
-            active_cases_by_owner = {}
+        active_cases_by_owner = get_active_case_counts_by_owner(
+            self.domain, self.datespan, self.case_types, owner_ids=case_owners, export=export
+        )
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(
@@ -1734,7 +1718,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         total_row[6] = sum(
             [int(report_data.active_cases_by_owner.get(id, 0))
-             for id in case_owners]) if self.include_active_cases else '---'
+             for id in case_owners])
 
         total_row[7] = sum(
             [int(report_data.total_cases_by_owner.get(id, 0))
@@ -1765,8 +1749,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
             self.domain, self.request.GET.getlist(EMWF.slug), self.request.couch_user
         )
         chunk_size = 50000
-        from corehq.elastic import iter_es_docs_from_query
-        user_iterator = iter_es_docs_from_query(user_es_query)
+        user_iterator = user_es_query.scroll_ids_to_disk_and_iter_docs()
         for user_chunk in chunked(user_iterator, chunk_size):
             users = [util._report_user(user) for user in user_chunk]
             formatted_data = self._report_data(users_to_iterate=users)

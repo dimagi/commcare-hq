@@ -143,6 +143,9 @@ MOBILE_WORKER_CREATION = 'mobile_worker_creation'
 ACCOUNTING_ADMIN = 'accounting_admin'
 OPERATIONS_TEAM = 'dimagi_ops'
 
+# This is a special privilege that is meant for Dev and Support team which allows access to Global SMS Gateway Page
+GLOBAL_SMS_GATEWAY = 'global_sms_gateway'
+
 
 class Titles(object):
 
@@ -180,7 +183,7 @@ class Titles(object):
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
             ZAPIER_INTEGRATION: _('Zapier Integration'),
-            LOGIN_AS: _('Login As for App Preview'),
+            LOGIN_AS: _('Log In As for App Preview'),
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),

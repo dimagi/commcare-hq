@@ -1,12 +1,17 @@
 import inspect
 import time
-from datetime import timedelta
 
 from django.core.management.base import BaseCommand, CommandError
+from corehq.apps.es.utils import check_task_progress
 
-from corehq.apps.es.registry import get_registry, registry_entry
-from corehq.elastic import get_es_export
 from pillowtop.es_utils import initialize_index, set_index_reindex_settings
+
+from corehq.apps.es.client import manager
+from corehq.apps.es.transient_util import (
+    index_info_from_cname,
+    iter_index_cnames,
+)
+from corehq.elastic import get_es_export
 
 USAGE = """Reindex data from one ES index into another ES index using Elasticsearch reindex API
     https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html#reindex-from-remote.
@@ -22,7 +27,7 @@ class Command(BaseCommand):
             help="Index to be used as the source",
         )
         parser.add_argument(
-            "target_index_name", choices=get_registry().keys(),
+            "target_index_name", choices=list(iter_index_cnames()),
             help="Index to be used as the target"
         )
         parser.add_argument(
@@ -42,7 +47,7 @@ class Command(BaseCommand):
         if not es.indices.exists(source_index):
             raise CommandError(f"Source index does not exist: '{source_index}'")
 
-        target_index_info = registry_entry(target_index_name)
+        target_index_info = index_info_from_cname(target_index_name)
         target_index = target_index_info.index
         _initialize_target(es, target_index_info)
 
@@ -122,71 +127,11 @@ def start_reindex(es, source_index, target_index):
         "conflicts": "proceed"
     }
 
-    result = es.reindex(reindex_query, wait_for_completion=False, request_timeout=300)
+    result = manager.reindex(reindex_query, wait_for_completion=False)
     task_id = result["task"]
     return task_id
-
-
-def check_task_progress(es, task_id):
-    node_id = task_id.split(':')[0]
-    node_name = es.nodes.info(node_id, metric="name")["nodes"][node_id]["name"]
-    print(f"Task with ID '{task_id}' running on '{node_name}'")
-    progress_data = []
-    while True:
-        result = es.tasks.list(task_id=task_id, detailed=True)
-        if not result["nodes"]:
-            node_failure = result["node_failures"][0]
-            error = node_failure["caused_by"]["type"]
-            if error == "resource_not_found_exception":
-                return  # task completed
-            else:
-                raise CommandError(f"Fetching task failed: {node_failure}")
-
-        task_details = result["nodes"][node_id]["tasks"][task_id]
-        status = task_details["status"]
-        total = status["total"]
-        if total:  # total can be 0 initially
-            created, updated, deleted = status["created"], status["updated"], status["deleted"]
-            progress = created + updated + deleted
-            progress_percent = progress / total * 100
-
-            running_time_nanos = task_details["running_time_in_nanos"]
-            run_time = timedelta(microseconds=running_time_nanos / 1000)
-
-            remaining_time_absolute = 'unknown'
-            remaining_time_relative = ''
-            if progress:
-                progress_data.append({
-                    "progress": progress,
-                    "time": time.monotonic() * 1000000000
-                })
-
-                remaining = total - progress
-                # estimate based on progress since beginning of task
-                remaining_nanos_absolute = running_time_nanos / progress * remaining
-                remaining_time_absolute = timedelta(microseconds=remaining_nanos_absolute / 1000)
-                if len(progress_data) > 1:
-                    # estimate based on last 12 loops of data
-                    progress_nanos = progress_data[-1]["time"] - progress_data[0]["time"]
-                    progress_diff = progress_data[-1]["progress"] - progress_data[0]["progress"]
-                    progress_data = progress_data[-12:]  # truncate progress data
-                    remaining_nanos = progress_nanos / progress_diff * remaining
-                    remaining_time_relative = timedelta(microseconds=remaining_nanos / 1000)
-
-            print(f"Progress {progress_percent:.2f}% ({progress} / {total}). "
-                  f"Elapsed time: {_format_timedelta(run_time)}. "
-                  f"Estimated remaining time: "
-                  f"(average since start = {_format_timedelta(remaining_time_absolute)}) "
-                  f"(recent average = {_format_timedelta(remaining_time_relative)})")
-
-        time.sleep(10)
 
 
 def _get_doc_count(es, index):
     es.indices.refresh(index)
     return es.indices.stats(index=index)['indices'][index]['primaries']['docs']['count']
-
-
-def _format_timedelta(td):
-    out = str(td)
-    return out.split(".")[0]

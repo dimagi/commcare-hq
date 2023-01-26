@@ -19,8 +19,6 @@ from corehq.apps.user_importer.helpers import UserChangeLogger
 from corehq.apps.users.models import CommCareUser, HqPermissions, WebUser
 from corehq.const import USER_CHANGE_VIA_API
 
-TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
-
 
 class UserResource(CouchResourceMixin, HqBaseResource, DomainSpecificResourceMixin):
     type = "user"

@@ -1,13 +1,13 @@
 /* eslint-env mocha */
 
 describe('Debugger', function () {
-    var EvaluateXPath = hqImport('cloudcare/js/debugger/debugger').EvaluateXPath,
+    let EvaluateXPath = hqImport('cloudcare/js/debugger/debugger').EvaluateXPath,
         API = hqImport('cloudcare/js/debugger/debugger').API,
         CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry;
 
     describe('EvaluateXPath', function () {
         it('should correctly match xpath input', function () {
-            var evalXPath = new EvaluateXPath(),
+            let evalXPath = new EvaluateXPath(),
                 result;
 
             result = evalXPath.matcher('', '');
@@ -32,7 +32,7 @@ describe('Debugger', function () {
     });
 
     describe('Update logic', function () {
-        var ccDebugger;
+        let ccDebugger;
 
         beforeEach(function () {
             ccDebugger = new CloudCareDebugger();
@@ -60,7 +60,7 @@ describe('Debugger', function () {
     });
 
     describe('Format Result', function () {
-        var evalXPath = new EvaluateXPath();
+        let evalXPath = new EvaluateXPath();
         it('Should handle single values correctly', function () {
             assert.equal(
                 evalXPath.formatResult("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<result>fun</result>\n"),

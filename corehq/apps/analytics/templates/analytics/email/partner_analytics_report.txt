@@ -3,4 +3,4 @@ Hello,
 Here is the analytics report for {{ month_name }} {{ year }}.
 
 Thank you,
-The CommCareHQ Team
+The CommCare HQ Team

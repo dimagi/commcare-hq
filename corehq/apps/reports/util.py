@@ -6,18 +6,20 @@ from datetime import datetime
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.transaction import atomic
 from django.http import Http404
 from django.utils.translation import gettext as _
 
-import pytz
 from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
+from dimagi.utils.logging import notify_exception
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
-from corehq.apps.reports.exceptions import EditFormValidationError
+from corehq.apps.reports.exceptions import TableauAPIError
+from corehq.apps.reports.models import TableauAPISession, TableauUser
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
@@ -25,7 +27,6 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
-from corehq.util.timezones.utils import get_timezone_for_user
 
 from .analytics.esaccessors import (
     get_all_user_ids_submitted,
@@ -355,14 +356,6 @@ def get_INFilter_bindparams(base_name, values):
     return tuple(get_INFilter_element_bindparam(base_name, i) for i, val in enumerate(values))
 
 
-def validate_xform_for_edit(xform):
-    for node in xform.bind_nodes:
-        if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
-            raise EditFormValidationError(_('Form cannot be edited because it will create a new case'))
-
-    return None
-
-
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
 def is_query_too_big(domain, mobile_user_and_group_slugs, request_user):
     from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
@@ -416,3 +409,108 @@ class DatatablesParams(object):
         search = query.get("sSearch", "")
 
         return DatatablesParams(count, start, desc, echo, search)
+
+
+# --- Tableau API util methods ---
+
+TableauGroupTuple = namedtuple('TableauGroupTuple', ['name', 'id'])
+
+
+def tableau_username(HQ_username):
+    return 'HQ/' + HQ_username
+
+
+def _group_json_to_tuples(group_json):
+    group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
+    # Remove default Tableau group:
+    for group in group_tuples:
+        if group.name == 'All Users':
+            group_tuples.remove(group)
+            break
+    return group_tuples
+
+
+@quickcache(['domain'], timeout=30 * 60)
+def get_all_tableau_groups(domain):
+    '''
+    Returns a list of all Tableau groups on the site as list of TableauGroupTuples.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    group_json = session.query_groups()
+    return _group_json_to_tuples(group_json)
+
+
+def get_tableau_groups_for_user(domain, username):
+    '''
+    Returns a list of Tableau groups that the given user belongs to.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    group_json = session.get_groups_for_user_id(user.tableau_user_id)
+    return _group_json_to_tuples(group_json)
+
+
+@atomic
+def add_tableau_user(domain, username):
+    '''
+    Creates a TableauUser object with the given username and a default role of Viewer, and adds a new user with
+    these details to the Tableau instance.
+    '''
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user, created = TableauUser.objects.get_or_create(
+            server=session.tableau_connected_app.server,
+            username=username,
+            role=TableauUser.Roles.UNLICENSED.value,
+        )
+        if not created:
+            return
+        new_id = session.create_user(tableau_username(username), TableauUser.Roles.UNLICENSED.value)
+        user.tableau_user_id = new_id
+        user.save()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
+
+
+@atomic
+def delete_tableau_user(domain, username):
+    '''
+    Deletes the TableauUser object with the given username and removes it from the Tableau instance.
+    '''
+    try:
+        session = TableauAPISession.create_session_for_domain(domain)
+        user = TableauUser.objects.filter(
+            server=session.tableau_connected_app.server
+        ).get(username=username)
+        id = user.tableau_user_id
+        # Delete on server before removing the object so that we still have the object in case the server deletion
+        # fails.
+        session.delete_user(id)
+        user.delete()
+    except (TableauAPIError, TableauUser.DoesNotExist) as e:
+        notify_exception(None, str(e), details={
+            'domain': domain
+        })
+
+
+@atomic
+def update_tableau_user(domain, username, role=None, groups=[]):
+    '''
+    Update the TableauUser object to have the given role and new group details. The `groups` arg should be a list
+    of TableauGroupTuples.
+    '''
+    session = TableauAPISession.create_session_for_domain(domain)
+    user = TableauUser.objects.filter(
+        server=session.tableau_connected_app.server
+    ).get(username=username)
+    if role:
+        user.role = role
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(username))
+    user.tableau_user_id = new_id
+    user.save()
+    for group in groups:
+        session.add_user_to_group(user.tableau_user_id, group.id)

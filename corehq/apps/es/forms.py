@@ -7,8 +7,9 @@ from django.conf import settings
 from corehq.pillows.mappings.const import NULL_VALUE
 
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -50,8 +51,7 @@ class FormES(HQESQuery):
 
 class ElasticForm(ElasticDocumentAdapter):
 
-    _index_name = getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07")
-    type = "xform"
+    settings_key = IndexSettingsKey.FORMS
 
     @property
     def mapping(self):
@@ -60,6 +60,13 @@ class ElasticForm(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+form_adapter = create_document_adapter(
+    ElasticForm,
+    getattr(settings, "ES_XFORM_INDEX_NAME", "xforms_2016-07-07"),
+    "xform",
+)
 
 
 def form_ids(form_ids):

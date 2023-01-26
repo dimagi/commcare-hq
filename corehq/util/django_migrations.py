@@ -4,7 +4,6 @@ from datetime import datetime
 from functools import wraps
 
 from django.conf import settings
-from django.core.management import call_command
 from django.db import migrations
 from django.db.backends.postgresql.schema import DatabaseSchemaEditor
 from django.db.migrations import RunPython
@@ -176,23 +175,6 @@ def prompt_for_historical_migration(app_name, migration_name, required_commit):
         sys.exit(1)
 
     return migrations.RunPython(_run_command, reverse_code=migrations.RunPython.noop)
-
-
-def update_es_mapping(index_name, quiet=False):
-    """Returns a django migration Operation which calls the `update_es_mapping`
-    management command to update the mapping on an Elastic index.
-
-    :param index_name: name of the target index for mapping updates
-    :param quiet: (optional) suppress non-error management command output"""
-    @skip_on_fresh_install
-    def update_es_mapping(*args, **kwargs):
-        argv = ["update_es_mapping", index_name]
-        if quiet:
-            argv.append("--quiet")
-        else:
-            print(f"\nupdating mapping for index: {index_name} ...")
-        return call_command(*argv, noinput=True)
-    return migrations.RunPython(update_es_mapping, reverse_code=migrations.RunPython.noop, elidable=True)
 
 
 def get_migration_name(file_path):

@@ -1,9 +1,11 @@
 /* globals moment, MapboxGeocoder, DOMPurify */
 hqDefine("cloudcare/js/form_entry/entries", function () {
-    var kissmetrics = hqImport("analytix/js/kissmetrix");
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Utils = hqImport("cloudcare/js/form_entry/utils"),
-        initialPageData = hqImport("hqwebapp/js/initial_page_data");
+    var kissmetrics = hqImport("analytix/js/kissmetrix"),
+        cloudcareUtils = hqImport("cloudcare/js/utils"),
+        constants = hqImport("cloudcare/js/form_entry/const"),
+        formEntryUtils = hqImport("cloudcare/js/form_entry/utils"),
+        initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+        toggles = hqImport("hqwebapp/js/toggles");
 
     /**
      * The base Object for all entries. Each entry takes a question object
@@ -15,6 +17,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.answer = question.answer;
         self.datatype = question.datatype();
         self.entryId = _.uniqueId(this.datatype);
+        self.xformAction = constants.ANSWER;
+        self.xformParams = function () { return {}; };
 
         // Returns true if the rawAnswer is valid, false otherwise
         self.isValid = function (rawAnswer) {
@@ -27,7 +31,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         };
 
         self.clear = function () {
-            self.answer(Const.NO_ANSWER);
+            self.answer(constants.NO_ANSWER);
         };
         self.afterRender = function () {
             // Override with any logic that comes after rendering the Entry
@@ -69,7 +73,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EntryArrayAnswer.prototype = Object.create(Entry.prototype);
     EntryArrayAnswer.prototype.constructor = Entry;
     EntryArrayAnswer.prototype.onAnswerChange = function () {
-        if (Utils.answersEqual(this.answer(), this.previousAnswer)) {
+        if (formEntryUtils.answersEqual(this.answer(), this.previousAnswer)) {
             return;
         }
         this.question.onchange();
@@ -81,10 +85,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (newValue.length) {
                 processed = _.map(newValue, function (d) { return +d; });
             } else {
-                processed = Const.NO_ANSWER;
+                processed = constants.NO_ANSWER;
             }
 
-            if (!Utils.answersEqual(processed, this.answer())) {
+            if (!formEntryUtils.answersEqual(processed, this.answer())) {
                 this.previousAnswer = this.answer();
                 this.answer(processed);
             }
@@ -102,7 +106,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var getRawAnswer = function (answer) {
             // Zero is a perfectly valid answer
             if (answer !== 0 && !answer) {
-                return Const.NO_ANSWER;
+                return constants.NO_ANSWER;
             }
             return answer;
         };
@@ -118,7 +122,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             self.valueUpdate = 'keyup';
             self.answer.extend({
                 rateLimit: {
-                    timeout: Const.KO_ENTRY_TIMEOUT,
+                    timeout: constants.KO_ENTRY_TIMEOUT,
                     method: "notifyWhenChangesStop",
                 },
             });
@@ -136,9 +140,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             if (match) {
                 var receiveTopic = match[1];
                 var receiveTopicField = match[2];
-                question.parentPubSub.subscribe(function (message) {
-                    if (message === Const.NO_ANSWER) {
-                        self.rawAnswer(Const.NO_ANSWER);
+                question.broadcastPubSub.subscribe(function (message) {
+                    if (message === constants.NO_ANSWER) {
+                        self.rawAnswer(constants.NO_ANSWER);
                     } else if (message) {
                         self.receiveMessage(message, receiveTopicField);
                     }
@@ -152,7 +156,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         if (message[field]) {
             self.rawAnswer(message[field]);
         } else {
-            self.rawAnswer(Const.NO_ANSWER);
+            self.rawAnswer(constants.NO_ANSWER);
         }
     };
 
@@ -188,7 +192,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     function FreeTextEntry(question, options) {
         var self = this;
         EntrySingleAnswer.call(self, question, options);
-        var isPassword = ko.utils.unwrapObservable(question.control) === Const.CONTROL_SECRET;
+        var isPassword = ko.utils.unwrapObservable(question.control) === constants.CONTROL_SECRET;
         if (isPassword) {
             self.templateType = 'password';
         } else {
@@ -216,7 +220,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 return gettext('Password');
             }
             switch (self.datatype) {
-                case Const.BARCODE:
+                case constants.BARCODE:
                     return gettext('Barcode');
                 default:
                     return gettext('Free response');
@@ -228,7 +232,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     FreeTextEntry.prototype.constructor = EntrySingleAnswer;
     FreeTextEntry.prototype.onPreProcess = function (newValue) {
         if (this.isValid(newValue)) {
-            this.answer(newValue === '' ? Const.NO_ANSWER : newValue);
+            this.answer(newValue === '' ? constants.NO_ANSWER : newValue);
         }
         this.question.error(this.getErrorMessage(newValue));
     };
@@ -261,12 +265,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.geocoderItemCallback = function (item) {
             self.rawAnswer(item.place_name);
             self.editing = false;
-            var broadcastObj = Utils.getBroadcastObject(item);
+            var broadcastObj = formEntryUtils.getBroadcastObject(item);
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.parentPubSub.notifySubscribers(broadcastObj, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(broadcastObj, broadcastTopic);
             });
             if (_.isEmpty(broadcastObj)) {
-                question.answer(Const.NO_ANSWER);
+                question.answer(constants.NO_ANSWER);
             } else {
                 question.answer(JSON.stringify(broadcastObj));
             }
@@ -276,11 +280,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         // geocoder function called when user presses 'x', broadcast a no answer to subscribers.
         self.geocoderOnClearCallback = function () {
-            self.rawAnswer(Const.NO_ANSWER);
+            self.rawAnswer(constants.NO_ANSWER);
             self.question.error(null);
             self.editing = true;
             self.broadcastTopics.forEach(function (broadcastTopic) {
-                question.parentPubSub.notifySubscribers(Const.NO_ANSWER, broadcastTopic);
+                question.broadcastPubSub.notifySubscribers(constants.NO_ANSWER, broadcastTopic);
             });
         };
 
@@ -294,7 +298,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 });
             }
 
-            Utils.renderMapboxInput(
+            formEntryUtils.renderMapboxInput(
                 self.entryId,
                 self.geocoderItemCallback,
                 self.geocoderOnClearCallback,
@@ -305,7 +309,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self._inputOnKeyDown = function (event) {
             // On key down, switch to editing mode so we unregister an answer.
             if (!self.editing && self.rawAnswer() !== event.target.value) {
-                self.rawAnswer(Const.NO_ANSWER);
+                self.rawAnswer(constants.NO_ANSWER);
                 self.question.error('Please select an address from the options');
                 self.editing = true;
             }
@@ -321,8 +325,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var self = this;
         FreeTextEntry.call(self, question, options);
         self.templateType = 'str';
-        self.lengthLimit = options.lengthLimit || Const.INT_LENGTH_LIMIT;
-        var valueLimit = options.valueLimit || Const.INT_VALUE_LIMIT;
+        self.lengthLimit = options.lengthLimit || constants.INT_LENGTH_LIMIT;
+        var valueLimit = options.valueLimit || constants.INT_VALUE_LIMIT;
 
         self.getErrorMessage = function (rawAnswer) {
             if (isNaN(+rawAnswer) || +rawAnswer !== Math.floor(+rawAnswer)) {
@@ -346,7 +350,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     IntEntry.prototype.onPreProcess = function (newValue) {
         if (this.isValid(newValue)) {
             if (newValue === '') {
-                this.answer(Const.NO_ANSWER);
+                this.answer(constants.NO_ANSWER);
             } else {
                 this.answer(+newValue);
             }
@@ -382,8 +386,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     function FloatEntry(question, options) {
         IntEntry.call(this, question, options);
         this.templateType = 'str';
-        this.lengthLimit = options.lengthLimit || Const.FLOAT_LENGTH_LIMIT;
-        var valueLimit = options.valueLimit || Const.FLOAT_VALUE_LIMIT;
+        this.lengthLimit = options.lengthLimit || constants.FLOAT_LENGTH_LIMIT;
+        var valueLimit = options.valueLimit || constants.FLOAT_VALUE_LIMIT;
 
         this.getErrorMessage = function (rawAnswer) {
             if (isNaN(+rawAnswer)) {
@@ -416,7 +420,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         self.rawAnswer = ko.pureComputed({
             read: () => {
                 let answer = this.answer();
-                if (answer === Const.NO_ANSWER) {
+                if (answer === constants.NO_ANSWER) {
                     return [];
                 }
 
@@ -481,7 +485,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             read: () => {
                 let answer = this.answer();
                 if (!answer) {
-                    return Const.NO_ANSWER;
+                    return constants.NO_ANSWER;
                 }
 
                 let choices = this.choices();
@@ -491,12 +495,12 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 let choices = this.choices.peek();
                 let answer = _.indexOf(choices, value);
                 // answer is based on a 1 indexed index of the choices
-                this.answer(answer === -1 ? Const.NO_ANSWER : answer + 1);
+                this.answer(answer === -1 ? constants.NO_ANSWER : answer + 1);
             },
         });
 
         self.onClear = function () {
-            self.rawAnswer(Const.NO_ANSWER);
+            self.rawAnswer(constants.NO_ANSWER);
         };
 
         self.enableReceiver(question, options);
@@ -516,7 +520,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }
         }
         // either field is not in message or message[field] is not an option.
-        self.rawAnswer(Const.NO_ANSWER);
+        self.rawAnswer(constants.NO_ANSWER);
     };
 
     /**
@@ -536,7 +540,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         });
 
         self.onClear = function () {
-            self.rawAnswer(Const.NO_ANSWER);
+            self.rawAnswer(constants.NO_ANSWER);
         };
         self.isValid = function () {
             return true;
@@ -546,7 +550,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     ChoiceLabelEntry.prototype.constructor = EntrySingleAnswer;
     ChoiceLabelEntry.prototype.onPreProcess = function (newValue) {
         if (this.isValid(newValue)) {
-            if (newValue === Const.NO_ANSWER) {
+            if (newValue === constants.NO_ANSWER) {
                 this.answer(newValue);
             } else {
                 this.answer(+newValue);
@@ -591,8 +595,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     DropdownEntry.prototype.onAnswerChange = select2AnswerChange(EntrySingleAnswer);
     DropdownEntry.prototype.onPreProcess = function (newValue) {
         // When newValue is undefined it means we've unset the select question.
-        if (newValue === Const.NO_ANSWER || newValue === undefined) {
-            this.answer(Const.NO_ANSWER);
+        if (newValue === constants.NO_ANSWER || newValue === undefined) {
+            this.answer(constants.NO_ANSWER);
         } else {
             this.answer(+newValue);
         }
@@ -644,7 +648,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var match,
             wordsInQuery = query.split(/\s+/),
             wordsInChoice = haystack.split(/\s+/);
-        if (matchType === Const.COMBOBOX_MULTIWORD) {
+        if (matchType === constants.COMBOBOX_MULTIWORD) {
             // Multiword filter, matches any choice that contains all of the words in the query
             //
             // Assumption is both query and choice will not be very long. Runtime is O(nm)
@@ -653,7 +657,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             match = _.all(wordsInQuery, function (word) {
                 return _.include(wordsInChoice, word);
             });
-        } else if (matchType === Const.COMBOBOX_FUZZY) {
+        } else if (matchType === constants.COMBOBOX_FUZZY) {
             var isFuzzyMatch = function (haystack, query, distanceThreshold) {
                 return (
                     haystack === query ||
@@ -695,8 +699,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     ComboboxEntry.prototype.constructor = DropdownEntry;
     ComboboxEntry.prototype.onPreProcess = function (newValue) {
         var value;
-        if (newValue === Const.NO_ANSWER || newValue === '') {
-            this.answer(Const.NO_ANSWER);
+        if (newValue === constants.NO_ANSWER || newValue === '') {
+            this.answer(constants.NO_ANSWER);
             this.question.error(null);
             return;
         }
@@ -730,7 +734,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }
         }
         // no options match message[field]
-        self.rawAnswer(Const.NO_ANSWER);
+        self.rawAnswer(constants.NO_ANSWER);
     };
 
     /**
@@ -757,8 +761,8 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            self.$picker.datetimepicker(_.extend(hqImport("cloudcare/js/util").dateTimePickerOptions(), {
-                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : Const.NO_ANSWER,
+            cloudcareUtils.initDateTimePicker(self.$picker, _.extend({
+                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER,
                 format: self.clientFormat,
                 minDate: minDate,
                 maxDate: maxDate,
@@ -770,7 +774,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             }, self.extraOptions));
             self.$picker.on("dp.change", function (e) {
                 if (!e.date) {
-                    self.answer(Const.NO_ANSWER);
+                    self.answer(constants.NO_ANSWER);
                     return;
                 }
                 self.answer(moment(e.date.toDate()).format(self.serverFormat));
@@ -810,7 +814,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
             is12Hour = false;
         if (question.style) {
             style = ko.utils.unwrapObservable(question.style.raw);
-            if (style === Const.TIME_12_HOUR) {
+            if (style === constants.TIME_12_HOUR) {
                 this.clientFormat = 'h:mm a';
                 is12Hour = true;
             }
@@ -864,7 +868,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     if (dates.length) {
                         self.answer(self._formatDateForAnswer(dates[0].toJSDate()));
                     } else {
-                        self.answer(Const.NO_ANSWER);
+                        self.answer(constants.NO_ANSWER);
                     }
                 },
             });
@@ -893,12 +897,106 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     EthiopianDateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
     EthiopianDateEntry.prototype.constructor = EntrySingleAnswer;
 
+    /**
+     * Base class for entry types that involve uploading a file: multimedia and signatures.
+     */
+    function FileEntry(question, options) {
+        var self = this;
+        EntrySingleAnswer.call(this, question, options);
+        self.templateType = 'file';
+        self.xformAction = constants.ANSWER_MEDIA;
+        self.xformParams = function () {
+            return { file: self.file() };
+        };
+
+        self.file = ko.observable();
+
+    }
+    FileEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+    FileEntry.prototype.constructor = EntrySingleAnswer;
+    FileEntry.prototype.onAnswerChange = function (newValue) {
+        var self = this;
+        if (newValue !== constants.NO_ANSWER) {
+            var $input = $('#' + self.entryId);
+            self.answer(newValue.replace(constants.FILE_PREFIX, ""));
+            self.file($input[0].files[0]);
+        } else {
+            self.answer(newValue);
+            self.file(null);
+        }
+        this.question.onchange();
+    };
+
+    /**
+     * Represents an image upload.
+     */
+    function ImageEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*";
+
+        self.helpText = function () {
+            return gettext("Upload image");
+        };
+
+    }
+    ImageEntry.prototype = Object.create(FileEntry.prototype);
+    ImageEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents an audio upload.
+     */
+    function AudioEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "audio/*";
+
+        self.helpText = function () {
+            return gettext("Upload audio file");
+        };
+
+    }
+    AudioEntry.prototype = Object.create(FileEntry.prototype);
+    AudioEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a video upload.
+     */
+    function VideoEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "video/*";
+
+        self.helpText = function () {
+            return gettext("Upload video file");
+        };
+
+    }
+    VideoEntry.prototype = Object.create(FileEntry.prototype);
+    VideoEntry.prototype.constructor = FileEntry;
+
+    /**
+     * Represents a signature, which requires the user to upload a signature file.
+     */
+    function SignatureEntry(question, options) {
+        var self = this;
+        FileEntry.call(this, question, options);
+        self.accept = "image/*,.pdf,.doc,.docx";
+
+        self.helpText = function () {
+            return gettext("Upload signature file");
+        };
+
+    }
+    SignatureEntry.prototype = Object.create(FileEntry.prototype);
+    SignatureEntry.prototype.constructor = FileEntry;
+
     function GeoPointEntry(question, options) {
         var self = this;
         EntryArrayAnswer.call(self, question, options);
         self.templateType = 'geo';
         self.map = null;
-        self.control_width = Const.CONTROL_WIDTH;
+        self.control_width = constants.CONTROL_WIDTH;
 
         self.DEFAULT = {
             lat: 30,
@@ -1008,9 +1106,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
         var receiveStyle = (question.stylesContains(/receive-*/)) ? question.stylesContaining(/receive-*/)[0] : null;
 
         switch (question.datatype()) {
-            case Const.STRING:
+            case constants.STRING:
                 // Barcode uses text box for CloudCare so it's possible to still enter a barcode field
-            case Const.BARCODE:     // eslint-disable-line no-fallthrough
+            case constants.BARCODE:     // eslint-disable-line no-fallthrough
                 // If it's a receiver, it cannot autoupdate because updates will come quickly which messes with the
                 // autoupdate rate limiting.
                 if (receiveStyle) {
@@ -1018,7 +1116,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                 } else {
                     options.enableAutoUpdate = isPhoneMode;
                 }
-                if (question.stylesContains(Const.ADDRESS)) {
+                if (question.stylesContains(constants.ADDRESS)) {
                     if (hasGeocoderPrivs) {
                         entry = new AddressEntry(question, {
                             broadcastStyles: question.stylesContaining(/broadcast-*/),
@@ -1027,37 +1125,37 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                         window.console.warn('No active entry for: ' + question.datatype());
                         entry = new UnsupportedEntry(question, options);
                     }
-                } else if (question.stylesContains(Const.NUMERIC)) {
+                } else if (question.stylesContains(constants.NUMERIC)) {
                     entry = new PhoneEntry(question, options);
                 } else {
                     entry = new FreeTextEntry(question, options);
                 }
                 break;
-            case Const.INT:
+            case constants.INT:
                 entry = new IntEntry(question, {
                     enableAutoUpdate: isPhoneMode,
                 });
                 break;
-            case Const.LONGINT:
+            case constants.LONGINT:
                 entry = new IntEntry(question, {
-                    lengthLimit: Const.LONGINT_LENGTH_LIMIT,
-                    valueLimit: Const.LONGINT_VALUE_LIMIT,
+                    lengthLimit: constants.LONGINT_LENGTH_LIMIT,
+                    valueLimit: constants.LONGINT_VALUE_LIMIT,
                     enableAutoUpdate: isPhoneMode,
                 });
                 break;
-            case Const.FLOAT:
+            case constants.FLOAT:
                 entry = new FloatEntry(question, {
                     enableAutoUpdate: isPhoneMode,
                 });
                 break;
-            case Const.SELECT:
-                isMinimal = style === Const.MINIMAL;
+            case constants.SELECT:
+                isMinimal = style === constants.MINIMAL;
                 if (style) {
-                    isCombobox = question.stylesContains(Const.COMBOBOX);
+                    isCombobox = question.stylesContains(constants.COMBOBOX);
                 }
                 if (style) {
-                    isLabel = style === Const.LABEL || style === Const.LIST_NOLABEL;
-                    hideLabel = style === Const.LIST_NOLABEL;
+                    isLabel = style === constants.LABEL || style === constants.LIST_NOLABEL;
+                    hideLabel = style === constants.LIST_NOLABEL;
                 }
 
                 if (isMinimal) {
@@ -1098,11 +1196,11 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     });
                 }
                 break;
-            case Const.MULTI_SELECT:
-                isMinimal = style === Const.MINIMAL;
+            case constants.MULTI_SELECT:
+                isMinimal = style === constants.MINIMAL;
                 if (style) {
-                    isLabel = style === Const.LABEL;
-                    hideLabel = style === Const.LIST_NOLABEL;
+                    isLabel = style === constants.LABEL;
+                    hideLabel = style === constants.LIST_NOLABEL;
                 }
 
                 if (isMinimal) {
@@ -1130,25 +1228,46 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
                     entry = new MultiSelectEntry(question, {});
                 }
                 break;
-            case Const.DATE:
-                if (style === Const.ETHIOPIAN) {
+            case constants.DATE:
+                if (style === constants.ETHIOPIAN) {
                     entry = new EthiopianDateEntry(question, {});
                 } else {
                     entry = new DateEntry(question, {});
                 }
                 break;
-            case Const.TIME:
+            case constants.TIME:
                 entry = new TimeEntry(question, {});
                 break;
-            case Const.GEO:
+            case constants.GEO:
                 entry = new GeoPointEntry(question, {});
                 break;
-            case Const.INFO:
+            case constants.INFO:
                 entry = new InfoEntry(question, {});
                 break;
-            default:
-                window.console.warn('No active entry for: ' + question.datatype());
-                entry = new UnsupportedEntry(question, options);
+            case constants.BINARY:
+                if (!toggles.toggleEnabled('WEB_APPS_UPLOAD_QUESTIONS')) {
+                    // do nothing, fall through to unsupported
+                } else if (style === constants.SIGNATURE) {
+                    entry = new SignatureEntry(question, {});
+                    break;
+                } else {
+                    switch (question.control()) {
+                        case constants.CONTROL_IMAGE_CHOOSE:
+                            entry = new ImageEntry(question, {});
+                            break;
+                        case constants.CONTROL_AUDIO_CAPTURE:
+                            entry = new AudioEntry(question, {});
+                            break;
+                        case constants.CONTROL_VIDEO_CAPTURE:
+                            entry = new VideoEntry(question, {});
+                            break;
+                        // any other control types are unsupported
+                    }
+                }
+        }
+        if (!entry) {
+            window.console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
         }
         return entry;
     }
@@ -1165,19 +1284,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * Utility that gets the display options from a parent form of a question.
      * */
     function _getDisplayOptions(question) {
-        var maxIter = 10; // protect against a potential infinite loop
-        var form = question.parent;
-
+        const form = formEntryUtils.getRootForm(question);
         if (form === undefined) {
             return {};
         }
-
-        // logic in case the question is in a group or repeat or nested group, etc.
-        while (form.displayOptions === undefined && maxIter > 0) {
-            maxIter--;
-            form = parent.parent;
-        }
-
         return form.displayOptions || {};
     }
 
@@ -1211,18 +1321,23 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     return {
         getEntry: getEntry,
         AddressEntry: AddressEntry,
+        AudioEntry: AudioEntry,
         ComboboxEntry: ComboboxEntry,
         DateEntry: DateEntry,
         DropdownEntry: DropdownEntry,
         EthiopianDateEntry: EthiopianDateEntry,
         FloatEntry: FloatEntry,
         FreeTextEntry: FreeTextEntry,
+        ImageEntry: ImageEntry,
         InfoEntry: InfoEntry,
         IntEntry: IntEntry,
         MultiSelectEntry: MultiSelectEntry,
         MultiDropdownEntry: MultiDropdownEntry,
         PhoneEntry: PhoneEntry,
         SingleSelectEntry: SingleSelectEntry,
+        SignatureEntry: SignatureEntry,
         TimeEntry: TimeEntry,
+        UnsupportedEntry: UnsupportedEntry,
+        VideoEntry: VideoEntry,
     };
 });

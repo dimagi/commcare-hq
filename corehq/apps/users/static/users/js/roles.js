@@ -96,6 +96,7 @@ hqDefine('users/js/roles',[
                         };
                     }),
                 };
+                data.permissions.download_reports = true;  // the user must explicitly disable this when visible
 
                 data.tableauPermissions = {
                     all: data.permissions.view_tableau,
@@ -154,10 +155,14 @@ hqDefine('users/js/roles',[
                 self.tableauPermissions.filteredSpecific = filterSpecific(self.tableauPermissions);
                 self.manageRegistryPermission.filteredSpecific = filterSpecific(self.manageRegistryPermission);
                 self.viewRegistryContentsPermission.filteredSpecific = filterSpecific(self.viewRegistryContentsPermission);
+                self.canSeeAnyReports = ko.computed(function () {
+                    return self.reportPermissions.all() || _.any(self.reportPermissions.specific(), (p) => p.value());
+                });
+
                 self.unwrap = function () {
                     return cls.unwrap(self);
                 };
-                self.hasUsersAssigned = data.hasUsersAssigned;
+                self.preventRoleDelete = data.preventRoleDelete;
                 self.hasUnpermittedLocationRestriction = data.has_unpermitted_location_restriction || false;
                 if (self.hasUnpermittedLocationRestriction) {
                     self.permissions.access_all_locations(true);
@@ -226,6 +231,22 @@ hqDefine('users/js/roles',[
                         allowCheckboxText: gettext("Allow changing workers at a location."),
                         allowCheckboxId: "edit-users-locations-checkbox",
                         allowCheckboxPermission: self.permissions.edit_users_in_locations,
+                    },
+                    {
+                        showOption: toggles.toggleEnabled("DATA_DICTIONARY"),
+                        editPermission: self.permissions.edit_data_dict,
+                        viewPermission: self.permissions.view_data_dict,
+                        text: gettext("<strong>Data Dictionary</strong> &mdash; manage case properties within CommCare HQ"),
+                        showEditCheckbox: true,
+                        editCheckboxLabel: "edit-data-dict-checkbox",
+                        showViewCheckbox: true,
+                        viewCheckboxLabel: "view-data-dict-checkbox",
+                        screenReaderEditAndViewText: gettext("Edit & View Data Dictionary"),
+                        screenReaderViewOnlyText: gettext("View-Only Data Dictionary"),
+                        showAllowCheckbox: false,
+                        allowCheckboxText: null,
+                        allowCheckboxId: null,
+                        allowCheckboxPermission: null,
                     },
                     {
                         showOption: true,
@@ -485,6 +506,11 @@ hqDefine('users/js/roles',[
                 data.permissions.view_tableau = data.tableauPermissions.all;
                 data.permissions.view_tableau_list = unwrapItemList(data.tableauPermissions.specific);
 
+                // Set download_reports to true only if the user can see reports
+                data.permissions.download_reports = data.permissions.download_reports && (
+                    data.permissions.view_reports || data.permissions.view_report_list.length !== 0
+                );
+
                 data.permissions.manage_data_registry = data.manageRegistryPermission.all;
                 data.permissions.manage_data_registry_list = unwrapItemList(data.manageRegistryPermission.specific);
 
@@ -550,7 +576,7 @@ hqDefine('users/js/roles',[
             self.roleBeingEdited(undefined);
         };
         self.setRoleBeingDeleted = function (role) {
-            if (!role._id || !role.hasUsersAssigned) {
+            if (!role._id || !role.preventRoleDelete) {
                 var title = gettext("Delete Role: ") + role.name();
                 var context = {role: role.name()};
                 var modalConfirmation = _.template(gettext(

@@ -1,5 +1,5 @@
 from django.utils.datastructures import MultiValueDictKeyError
-from couchforms.const import MAGIC_PROPERTY
+from couchforms.const import MAGIC_PROPERTY, MAX_FORM_LENGTH
 import logging
 from datetime import datetime
 from django.conf import settings
@@ -8,6 +8,7 @@ from couchforms.exceptions import (
     EmptyPayload,
     MultipartEmptyPayload,
     MultipartFilenameError,
+    PayloadTooLarge,
     InvalidSubmissionFileExtensionError,
 )
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -44,6 +45,9 @@ def get_instance_and_attachment(request):
         except MultiValueDictKeyError:
             raise MultipartFilenameError()
         else:
+            if instance_file.size > MAX_FORM_LENGTH:
+                logging.info("Domain {request.domain} attempted to submit a form exceeding 50MB")
+                raise PayloadTooLarge()
             if not _valid_file_extension(instance_file):
                 raise InvalidSubmissionFileExtensionError()
             instance = instance_file.read()

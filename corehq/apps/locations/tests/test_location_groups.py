@@ -175,7 +175,8 @@ class UnsetLocationGroupTest(LocationGroupBase):
         Ensures that a user without a location will still receive an empty fixture
         """
         assert self.user.location is None
-        fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
+        restore_user = self.user.to_ota_restore_user(self.domain.name)
+        fixture = call_fixture_generator(location_fixture_generator, restore_user)
         self.assertEqual(len(fixture), 1)
         self.assertEqual(len(fixture[0].findall('.//state')), 0)
 
@@ -185,5 +186,6 @@ class UnsetLocationGroupTest(LocationGroupBase):
         location fixture
         """
         assert self.user.location is None
-        fixture = call_fixture_generator(location_fixture_generator, self.user.to_ota_restore_user())
+        restore_user = self.user.to_ota_restore_user(self.domain.name)
+        fixture = call_fixture_generator(location_fixture_generator, restore_user)
         self.assertEqual(len(fixture), 0)

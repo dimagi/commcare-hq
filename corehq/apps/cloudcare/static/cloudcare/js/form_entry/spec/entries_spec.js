@@ -1,9 +1,10 @@
 /* eslint-env mocha */
 
 describe('Entries', function () {
-    var Const = hqImport("cloudcare/js/form_entry/const"),
-        Controls = hqImport("cloudcare/js/form_entry/entries"),
-        UI = hqImport("cloudcare/js/form_entry/form_ui"),
+    var constants = hqImport("cloudcare/js/form_entry/const"),
+        entries = hqImport("cloudcare/js/form_entry/entries"),
+        formUI = hqImport("cloudcare/js/form_entry/form_ui"),
+        utils = hqImport("cloudcare/js/utils"),
         questionJSON,
         spy;
 
@@ -11,6 +12,12 @@ describe('Entries', function () {
         hqImport("hqwebapp/js/initial_page_data").register(
             "has_geocoder_privs",
             true
+        );
+        hqImport("hqwebapp/js/initial_page_data").register(
+            "toggles_dict",
+            {
+                WEB_APPS_UPLOAD_QUESTIONS: true,
+            }
         );
     });
 
@@ -33,8 +40,8 @@ describe('Entries', function () {
             "caption_video": null,
         };
         spy = sinon.spy();
-        $.subscribe('formplayer.' + Const.ANSWER, spy);
-        this.clock = sinon.useFakeTimers();
+        $.subscribe('formplayer.' + constants.ANSWER, spy);
+        this.clock = sinon.useFakeTimers(new Date("2020-03-15 15:41").getTime());
     });
 
     afterEach(function () {
@@ -43,8 +50,8 @@ describe('Entries', function () {
     });
 
     it('Should return the IntEntry', function () {
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.IntEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.IntEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('1234');
@@ -58,12 +65,12 @@ describe('Entries', function () {
     it('Should return DropdownEntry', function () {
         var entry;
 
-        questionJSON.datatype = Const.SELECT;
-        questionJSON.style = { raw: Const.MINIMAL };
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.MINIMAL };
         questionJSON.choices = ['a', 'b'];
 
-        entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.DropdownEntry);
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.DropdownEntry);
         assert.equal(entry.templateType, 'dropdown');
         var options = _.rest(entry.options());      // drop placeholder
         assert.deepEqual(options, [{
@@ -88,13 +95,13 @@ describe('Entries', function () {
         // This behavior is necessary for changing the in-form language
         var entry,
             question;
-        questionJSON.datatype = Const.SELECT;
-        questionJSON.style = { raw: Const.MINIMAL };
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.MINIMAL };
         questionJSON.choices = ['one', 'two'];
-        question = UI.Question(questionJSON);
+        question = formUI.Question(questionJSON);
 
         entry = question.entry;
-        assert.isTrue(entry instanceof Controls.DropdownEntry);
+        assert.isTrue(entry instanceof entries.DropdownEntry);
 
         entry.rawAnswer(2);     // 'two'
         assert.equal(entry.answer(), 2);
@@ -104,9 +111,9 @@ describe('Entries', function () {
     });
 
     it('Should return FloatEntry', function () {
-        questionJSON.datatype = Const.FLOAT;
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.FloatEntry);
+        questionJSON.datatype = constants.FLOAT;
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.FloatEntry);
         assert.equal(entry.templateType, 'str');
 
         entry.rawAnswer('2.3');
@@ -123,36 +130,36 @@ describe('Entries', function () {
 
     it('Should return ComboboxEntry', function () {
         var entry;
-        questionJSON.datatype = Const.SELECT;
-        questionJSON.style = { raw: Const.COMBOBOX };
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.COMBOBOX };
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 2;
 
-        entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.ComboboxEntry);
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.ComboboxEntry);
         assert.equal(entry.rawAnswer(), 2);
 
         entry.rawAnswer(1);
         assert.equal(entry.answer(), 1);
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        assert.equal(entry.answer(), constants.NO_ANSWER);
 
         entry.rawAnswer(15);
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        assert.equal(entry.answer(), constants.NO_ANSWER);
     });
 
     it('Should retain Combobox value on options change', function () {
         // This behavior is necessary for changing the in-form language
         var entry,
             question;
-        questionJSON.datatype = Const.SELECT;
-        questionJSON.style = { raw: Const.COMBOBOX };
+        questionJSON.datatype = constants.SELECT;
+        questionJSON.style = { raw: constants.COMBOBOX };
         questionJSON.choices = ['one', 'two'];
-        question = UI.Question(questionJSON);
+        question = formUI.Question(questionJSON);
 
         entry = question.entry;
-        assert.isTrue(entry instanceof Controls.ComboboxEntry);
+        assert.isTrue(entry instanceof entries.ComboboxEntry);
 
         entry.rawAnswer(2);     // 'two'
         assert.equal(entry.answer(), 2);
@@ -163,54 +170,54 @@ describe('Entries', function () {
 
     it('Should properly filter combobox', function () {
         // Standard filter
-        assert.isTrue(Controls.ComboboxEntry.filter('o', { text: 'one two', id: 1 }, null));
-        assert.isFalse(Controls.ComboboxEntry.filter('t', { text: 'one two', id: 1 }, null));
+        assert.isTrue(entries.ComboboxEntry.filter('o', { text: 'one two', id: 1 }, null));
+        assert.isFalse(entries.ComboboxEntry.filter('t', { text: 'one two', id: 1 }, null));
 
         // Multiword filter
         assert.isTrue(
-            Controls.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            entries.ComboboxEntry.filter('one three', { text: 'one two three', id: 1 }, constants.COMBOBOX_MULTIWORD)
         );
         assert.isFalse(
-            Controls.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, Const.COMBOBOX_MULTIWORD)
+            entries.ComboboxEntry.filter('two three', { text: 'one two', id: 1 }, constants.COMBOBOX_MULTIWORD)
         );
 
         // Fuzzy filter
         assert.isTrue(
-            Controls.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onet', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onet', { text: 'onetwothree', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isFalse(
-            Controls.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('onwt', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('OneT', { text: 'onetwo', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('one tt', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('o', { text: 'one', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('o', { text: 'one', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('on', { text: 'on', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('on', { text: 'on', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('three', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isTrue(
-            Controls.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('tree', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
         );
         assert.isFalse(
-            Controls.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, Const.COMBOBOX_FUZZY)
+            entries.ComboboxEntry.filter('thirty', { text: 'one two three', id: 1 }, constants.COMBOBOX_FUZZY)
         );
     });
 
     it('Should return FreeTextEntry', function () {
-        questionJSON.datatype = Const.STRING;
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.FreeTextEntry);
+        questionJSON.datatype = constants.STRING;
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.FreeTextEntry);
         assert.equal(entry.templateType, 'text');
 
         entry.answer('harry');
@@ -218,16 +225,16 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        assert.equal(entry.answer(), constants.NO_ANSWER);
     });
 
     it('Should return MultiSelectEntry', function () {
-        questionJSON.datatype = Const.MULTI_SELECT;
+        questionJSON.datatype = constants.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.MultiSelectEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.MultiSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.sameMembers(entry.answer(), [1]);
         assert.sameMembers(entry.rawAnswer(), ['a']);
@@ -244,12 +251,12 @@ describe('Entries', function () {
     });
 
     it('Should retain MultiSelectEntry when choices change', function () {
-        questionJSON.datatype = Const.MULTI_SELECT;
+        questionJSON.datatype = constants.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = [1, 2]; // answer is based on a 1 indexed index of the choices
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.MultiSelectEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.MultiSelectEntry);
         assert.sameMembers(entry.answer(), [1, 2]);
         assert.sameMembers(entry.rawAnswer(), ['a', 'b']);
 
@@ -262,12 +269,12 @@ describe('Entries', function () {
     });
 
     it('Should return SingleSelectEntry', function () {
-        questionJSON.datatype = Const.SELECT;
+        questionJSON.datatype = constants.SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.SingleSelectEntry);
         assert.equal(entry.templateType, 'select');
         assert.equal(entry.rawAnswer(), 'a');
 
@@ -279,12 +286,12 @@ describe('Entries', function () {
     });
 
     it('Should retain SingleSelect value on choices change with valid value', function () {
-        questionJSON.datatype = Const.SELECT;
+        questionJSON.datatype = constants.SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.SingleSelectEntry);
         assert.equal(entry.rawAnswer(), 'a');
 
         entry.choices(['c', 'a', 'b']);
@@ -296,12 +303,12 @@ describe('Entries', function () {
     });
 
     it('Should retain SingleSelect value on choices change with invalid value', function () {
-        questionJSON.datatype = Const.SELECT;
+        questionJSON.datatype = constants.SELECT;
         questionJSON.choices = ['a', 'b'];
         questionJSON.answer = 1;
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.SingleSelectEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.SingleSelectEntry);
         assert.equal(entry.rawAnswer(), 'a');
 
         entry.choices(['c', 'b']);
@@ -313,11 +320,11 @@ describe('Entries', function () {
     });
 
     it('Should return DateEntry', function () {
-        questionJSON.datatype = Const.DATE;
+        questionJSON.datatype = constants.DATE;
         questionJSON.answer = '1990-09-26';
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.DateEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.DateEntry);
         assert.equal(entry.templateType, 'date');
 
         entry.answer('1987-11-19');
@@ -325,12 +332,19 @@ describe('Entries', function () {
         assert.isTrue(spy.calledOnce);
     });
 
+    it('Should convert two-digit dates to four-digit dates', function () {
+        assert.equal(utils.convertTwoDigitYear("03-04-50"), "03-04-1950");
+        assert.equal(utils.convertTwoDigitYear("03-04-28"), "03-04-2028");
+        assert.equal(utils.convertTwoDigitYear("3/4/1928"), "3/4/1928");
+        assert.equal(utils.convertTwoDigitYear("not-a-date"), "not-a-date");
+    });
+
     it('Should return TimeEntry', function () {
-        questionJSON.datatype = Const.TIME;
+        questionJSON.datatype = constants.TIME;
         questionJSON.answer = '12:30';
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.TimeEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.TimeEntry);
         assert.equal(entry.templateType, 'time');
 
         entry.rawAnswer('12:45');
@@ -339,13 +353,13 @@ describe('Entries', function () {
     });
 
     it('Should return EthiopanDateEntry', function () {
-        questionJSON.datatype = Const.DATE;
+        questionJSON.datatype = constants.DATE;
         questionJSON.answer = '2021-01-29'; // 2013-05-21 in Ethiopian
         questionJSON.style = { raw: 'ethiopian' };
 
-        var entry = UI.Question(questionJSON).entry;
+        var entry = formUI.Question(questionJSON).entry;
         entry.entryId = 'date-entry-ethiopian';
-        assert.isTrue(entry instanceof Controls.EthiopianDateEntry);
+        assert.isTrue(entry instanceof entries.EthiopianDateEntry);
         assert.equal(entry.templateType, 'ethiopian-date');
 
         entry.afterRender();
@@ -358,24 +372,24 @@ describe('Entries', function () {
         assert.equal(entry.answer(), '2021-01-30');
 
         entry.$picker.calendarsPicker('clear');
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        assert.equal(entry.answer(), constants.NO_ANSWER);
 
         this.clock.tick(1000);
         assert.isTrue(spy.calledTwice);
     });
 
     it('Should return InfoEntry', function () {
-        questionJSON.datatype = Const.INFO;
-        var entry = UI.Question(questionJSON).entry;
+        questionJSON.datatype = constants.INFO;
+        var entry = formUI.Question(questionJSON).entry;
 
-        assert.isTrue(entry instanceof Controls.InfoEntry);
+        assert.isTrue(entry instanceof entries.InfoEntry);
     });
 
     it('Should return a GeoPointEntry', function () {
-        questionJSON.datatype = Const.GEO;
+        questionJSON.datatype = constants.GEO;
         questionJSON.answer = [1.2, 3.4];
 
-        var entry = UI.Question(questionJSON).entry;
+        var entry = formUI.Question(questionJSON).entry;
         assert.equal(entry.answer()[0], 1.2);
         assert.equal(entry.answer()[1], 3.4);
 
@@ -388,11 +402,11 @@ describe('Entries', function () {
     });
 
     it('Should return a PhoneEntry', function () {
-        questionJSON.datatype = Const.STRING;
+        questionJSON.datatype = constants.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.PhoneEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.PhoneEntry);
         assert.equal(entry.answer(), null);
         assert.equal(entry.templateType, 'str');
 
@@ -406,22 +420,22 @@ describe('Entries', function () {
         assert.isOk(entry.question.error());
 
         entry.rawAnswer('');
-        assert.equal(entry.answer(), Const.NO_ANSWER);
+        assert.equal(entry.answer(), constants.NO_ANSWER);
     });
 
     it('Should return a AddressEntry', function () {
-        questionJSON.datatype = Const.STRING;
-        questionJSON.style = { raw: Const.ADDRESS };
+        questionJSON.datatype = constants.STRING;
+        questionJSON.style = { raw: constants.ADDRESS };
 
-        var entry = UI.Question(questionJSON).entry;
-        assert.isTrue(entry instanceof Controls.AddressEntry);
+        var entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.AddressEntry);
     });
 
     it('Should allow decimals in a PhoneEntry', function () {
-        questionJSON.datatype = Const.STRING;
+        questionJSON.datatype = constants.STRING;
         questionJSON.style = { raw: 'numeric' };
 
-        var entry = UI.Question(questionJSON).entry;
+        var entry = formUI.Question(questionJSON).entry;
         entry.rawAnswer('-123.4');
         assert.equal(entry.answer(), '-123.4');
 
@@ -430,5 +444,50 @@ describe('Entries', function () {
 
         entry.rawAnswer('...123');
         assert.isOk(entry.question.error());
+    });
+
+    it('Should return ImageEntry', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.control = constants.CONTROL_IMAGE_CHOOSE;
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.ImageEntry);
+    });
+
+    it('Should return AudioEntry', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.control = constants.CONTROL_AUDIO_CAPTURE;
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.AudioEntry);
+    });
+
+    it('Should return VideoEntry', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.control = constants.CONTROL_VIDEO_CAPTURE;
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.VideoEntry);
+    });
+
+    it('Should return SignatureEntry', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.style = { raw: constants.SIGNATURE };
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.SignatureEntry);
+    });
+
+    it('Should return UnsuportedEntry when binary question has an unsupported control', function () {
+        var entry;
+        questionJSON.datatype = constants.BINARY;
+        questionJSON.control = constants.CONTROL_UPLOAD;
+
+        entry = formUI.Question(questionJSON).entry;
+        assert.isTrue(entry instanceof entries.UnsupportedEntry);
     });
 });

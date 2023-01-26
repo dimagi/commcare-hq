@@ -968,7 +968,7 @@ class CommCareCaseIndexManager(RequireDBManager):
         return list(query.filter(case_id=case_id, domain=domain))
 
     def get_related_indices(self, domain, case_ids, exclude_indices):
-        """Get indices (forward and reverse) for the given set of case ids
+        """Get indices (forward and reverse) for the given set of case ids.
 
         :param case_ids: A list of case ids.
         :param exclude_indices: A set or dict of index id strings with

@@ -7,6 +7,7 @@ from datetime import datetime
 from django.db import DEFAULT_DB_ALIAS
 
 from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.util import generate_mobile_username
 from dimagi.utils.logging import notify_exception
 from django.utils.translation import gettext as _
 
@@ -47,7 +48,6 @@ from corehq.apps.users.models import (
     UserRole,
     InvitationStatus
 )
-from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 from corehq.apps.sms.util import validate_phone_number
@@ -485,9 +485,19 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
             update_progress(current)
             current += 1
 
+        status_row = {}
         username = row.get('username')
         domain = row.get('domain') or upload_domain
-        username = normalize_username(str(username), domain) if username else None
+        try:
+            username = generate_mobile_username(str(username), domain, False) if username else None
+        except ValidationError:
+            status_row = {
+                'username': username,
+                'row': row,
+                'flag': _("Username must not contain blank spaces or special characters."),
+            }
+            ret["rows"].append(status_row)
+            continue
         status_row = {
             'username': username,
             'row': row,

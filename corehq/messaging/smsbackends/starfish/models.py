@@ -22,9 +22,7 @@ class StarfishBackend(SQLSMSBackend):
     def get_available_extra_fields(cls):
         return []
 
-    @classmethod
-    def get_url(cls):
-        return 'http://154.72.79.86/services/jsi/broadcast'
+    url = 'http://154.72.79.86/services/jsi/broadcast'
 
     @classmethod
     def get_api_id(cls):
@@ -62,7 +60,7 @@ class StarfishBackend(SQLSMSBackend):
             "message": msg.text.encode('utf-8'),
         }
         response = requests.get(
-            self.get_url(),
+            self.url,
             params=payload,
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
