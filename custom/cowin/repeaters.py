@@ -2,7 +2,7 @@ from django.utils.translation import gettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.hqcase.utils import update_case
-from corehq.motech.repeaters.models import SQLCaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater
 from custom.cowin.const import COWIN_API_DATA_REGISTRATION_IDENTIFIER, COWIN_API_DATA_VACCINATION_IDENTIFIER
 from custom.cowin.repeater_generators import (
     BeneficiaryRegistrationPayloadGenerator,
@@ -10,7 +10,7 @@ from custom.cowin.repeater_generators import (
 )
 
 
-class SQLBaseCOWINRepeater(SQLCaseRepeater):
+class BaseCOWINRepeater(CaseRepeater):
     class Meta:
         proxy = True
         app_label = 'repeaters'
@@ -32,7 +32,7 @@ class SQLBaseCOWINRepeater(SQLCaseRepeater):
         return headers
 
 
-class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
+class BeneficiaryRegistrationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
@@ -66,7 +66,7 @@ class SQLBeneficiaryRegistrationRepeater(SQLBaseCOWINRepeater):
         return allowed
 
 
-class SQLBeneficiaryVaccinationRepeater(SQLBaseCOWINRepeater):
+class BeneficiaryVaccinationRepeater(BaseCOWINRepeater):
 
     class Meta:
         app_label = 'repeaters'
