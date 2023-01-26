@@ -961,13 +961,6 @@ USH_INLINE_SEARCH = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
-USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
-    'empty_case_list_text',
-    "USH: Allow customizing the text displayed when case list contains no cases in web apps",
-    TAG_CUSTOM,
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
     "In case search, show the filters on the left and results on the right.",

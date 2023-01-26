@@ -819,7 +819,6 @@ class Detail(OrderedXmlObject, IdNode):
             <extra key="" value = "" />
             <response key ="" />
         </lookup>
-        <no_items_text><text></no_items_text>
         <variables>
             <__ function=""/>
         </variables>
@@ -831,14 +830,13 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
+    ORDER = ('title', 'lookup', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
     print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
-    no_items_text = NodeField('no_items_text/text', Text)
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
