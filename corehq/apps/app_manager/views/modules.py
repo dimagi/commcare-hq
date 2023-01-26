@@ -602,7 +602,6 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         "media_image": None,
         "module_filter": None,
         "name": None,
-        "no_items_text": None,
         "parent_module": None,
         "put_in_root": None,
         "report_context_tile": None,
@@ -651,8 +650,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
-    if should_edit("no_items_text"):
-        module.case_details.short.no_items_text[lang] = request.POST.get("no_items_text")
+
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):

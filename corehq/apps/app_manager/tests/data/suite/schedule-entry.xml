@@ -5,11 +5,6 @@
                 <locale id="cchq.case"/>
             </text>
         </title>
-        <no_items_text>
-            <text>
-                <locale id="m1_no_items_text"/>
-            </text>
-        </no_items_text>
         <variables>
             <date_opened function="date_opened"/>
             <anchor_हिन्दी function="edd"/>

@@ -283,7 +283,6 @@
           "custom_xml": null,
           "persist_tile_on_forms": null,
           "display": "short",
-          "no_items_text": {"en": "Empty List"},
           "columns": [
             {
               "case_tile_field": null,

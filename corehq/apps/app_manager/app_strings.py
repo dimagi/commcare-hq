@@ -124,18 +124,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
 
 def _create_module_details_app_strings(module, langs):
-    from corehq.apps.app_manager.models import Detail
-    if toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(module.get_app().domain):
-        yield (
-            id_strings.no_items_text_detail(module),
-            clean_trans(module.case_details.short.no_items_text, langs)
-        )
-    else:
-        yield (
-            id_strings.no_items_text_detail(module),
-            clean_trans(Detail.no_items_text.default(), langs)
-        )
-
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
             yield (

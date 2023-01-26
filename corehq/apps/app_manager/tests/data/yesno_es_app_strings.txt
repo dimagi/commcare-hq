@@ -11,5 +11,4 @@ forms.m0f0=Yes/No
 forms.m0f1=PIL
 homescreen.title=Yes / No
 lang.current=es
-m0_no_items_text=List is empty.
 modules.m0=Untitled Module in Spanish

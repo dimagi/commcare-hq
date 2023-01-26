@@ -475,7 +475,6 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
                 useGrid: this.options.numEntitiesPerRow > 1,
                 useTiles: false,
                 hasNoItems: this.hasNoItems,
-                noItemsText: this.options.collection.noItemsText,
                 sortIndices: this.options.sortIndices,
                 selectedCaseIds: this.selectedCaseIds,
                 isMultiSelect: false,
