@@ -1,3 +1,4 @@
+/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
@@ -117,7 +118,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     },
                 };
                 var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-                options.data = JSON.stringify({
+                const data = {
                     "username": user.username,
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
@@ -139,7 +140,8 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
-                });
+                };
+                options.data = JSON.stringify(data);
                 options.url = formplayerUrl + '/' + route;
 
                 menus = Collections();
@@ -147,6 +149,12 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 if (Object.freeze) {
                     Object.freeze(options);
                 }
+                const sentryData = _.pick(data, ["selections", "query_data", "app_id"]);
+                Sentry.addBreadcrumb({
+                    category: "formplayer",
+                    message: "[request] " + route,
+                    data: _.pick(sentryData, _.identity),
+                });
                 menus.fetch($.extend(true, {}, options));
             });
 
@@ -172,7 +180,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
         if (options.forceLoginAs && !user.restoreAs) {
             // Workflow requires a mobile user, likely because we're trying to access
             // a session endpoint as a web user. If user isn't logged in as, send them
-            // to Login As and save the current request options for when that's done.
+            // to Log In As and save the current request options for when that's done.
             FormplayerFrontend.trigger("setLoginAsNextOptions", options);
             FormplayerFrontend.trigger("restore_as:list");
 

@@ -63,9 +63,9 @@ DELETE_CHUNK_SIZE = 5000
 )
 def delete_old_request_logs():
     """
-    Delete RequestLogs older than 90 days.
+    Delete RequestLogs older than 6 weeks
     """
-    ninety_days_ago = datetime.utcnow() - timedelta(days=90)
+    ninety_days_ago = datetime.utcnow() - timedelta(days=42)
     while True:
         queryset = (RequestLog.objects
                     .filter(timestamp__lt=ninety_days_ago)

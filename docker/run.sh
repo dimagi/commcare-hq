@@ -31,6 +31,11 @@ function setup {
 
     rm *.log || true
 
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        # create the artifacts dir with container-write ownership
+        install -dm0755 -o cchq -g cchq ./artifacts
+    fi
+
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs

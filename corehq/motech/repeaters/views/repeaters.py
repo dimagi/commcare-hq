@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
-
+from corehq.motech.models import ConnectionSettings
 from memoized import memoized
 
 from corehq import privileges, toggles
@@ -141,6 +141,11 @@ class BaseRepeaterView(BaseAdminProjectSettingsView):
         repeater.connection_settings_id = int(cleaned_data['connection_settings_id'])
         repeater.request_method = cleaned_data['request_method']
         repeater.format = cleaned_data['format']
+        name = cleaned_data.get('name')
+        if not name:
+            conn_settings = ConnectionSettings.objects.get(pk=repeater.connection_settings_id)
+            name = conn_settings.name
+        repeater.name = name
         return repeater
 
     def post_save(self, request, repeater):
@@ -175,7 +180,7 @@ class AddRepeaterView(BaseRepeaterView):
         return self.repeater_class()
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Forwarding set up to {}").format(repeater.repeater_name))
+        messages.success(request, _("Forwarding set up to {}").format(repeater.name))
         return HttpResponseRedirect(
             reverse(DomainForwardingOptionsView.urlname, args=[self.domain])
         )
@@ -216,7 +221,7 @@ class EditRepeaterView(BaseRepeaterView):
                 domain=self.domain,
                 repeater_class=self.repeater_class,
                 data=data,
-                submit_btn_text=_("Update Repeater"),
+                submit_btn_text=_("Update Forwarder"),
             )
 
     @method_decorator(domain_admin_required)
@@ -229,7 +234,7 @@ class EditRepeaterView(BaseRepeaterView):
         return SQLRepeater.objects.get(repeater_id=self.kwargs['repeater_id'])
 
     def post_save(self, request, repeater):
-        messages.success(request, _("Repeater Successfully Updated"))
+        messages.success(request, _("Forwarder Successfully Updated"))
         try:
             url = reverse(self.urlname, args=[self.domain, repeater.repeater_id])
         except NoReverseMatch:

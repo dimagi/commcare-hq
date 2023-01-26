@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from urllib.parse import unquote
 
 from django.conf import settings

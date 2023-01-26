@@ -1,5 +1,5 @@
 import functools
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext
 

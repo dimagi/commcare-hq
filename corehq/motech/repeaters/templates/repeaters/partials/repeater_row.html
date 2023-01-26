@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 <tr>
-    <td>{{ repeater.repeater_name }}
+    <td>{{ repeater.name }}
         {% if repeater.white_listed_case_types %}
             <br/>Case Type: {{ repeater.white_listed_case_types|join:", " }}
         {% endif %}
@@ -53,7 +53,7 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.repeater_name as name %}
+                                {% blocktrans with repeater.name as name %}
                                     Are you sure you want to resume forwarding to: "{{ name }}" ?
                                     <br/>
                                     All records enqueued for this forwarder with be triggered
@@ -87,7 +87,7 @@
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.repeater_name as name %}
+                                {% blocktrans with repeater.name as name %}
                                     Are you sure you want to pause forwarding to: "{{ name }}" ?
                                     <br/>
                                     Please note that new records would get enqueued but would get triggered
@@ -111,33 +111,33 @@
             {% trans "Configure" %}
         </a>
         {% endif %}
-        <a class="btn btn-danger" href="#stop_forwarding_{{ repeater.repeater_id }}" data-toggle="modal"><i
-                class="fa fa-remove"></i> {% trans "Stop" %}</a>
+        <a class="btn btn-danger" href="#delete_{{ repeater.repeater_id }}" data-toggle="modal"><i
+                class="fa fa-remove"></i> {% trans "Delete" %}</a>
 
-        <div class="modal fade" id="stop_forwarding_{{ repeater.repeater_id }}">
+        <div class="modal fade" id="delete_{{ repeater.repeater_id }}">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">{% trans "Stop Forwarding" %}</h4>
+                        <h4 class="modal-title">{% trans "Delete Configuration" %}</h4>
                     </div>
                     <form name="drop_repeater" action="{% url 'drop_repeater' domain repeater.repeater_id %}"
                           method="post">
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
-                                {% blocktrans with repeater.repeater_name as name %}
-                                    Are you sure you want to stop forwarding to: {{ name }} ?
-                                    <br/>
-                                    Forwarder and its data would not be deleted but no new records would get added for
-                                    this forwarder and it would not appear in this list anymore.
+                                {% blocktrans with repeater.name as name %}
+                                    Are you sure you want to delete the configuration for: {{ name }} ?
+                                    <br/><br />
+                                    Data forwarding records will not be deleted, but no new records will be
+                                    forwarded, and this configuration will no longer appear on this page.
                                 {% endblocktrans %}
                             </p>
                         </div>
                         <div class="modal-footer">
                             <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
                             <button type="submit" class="btn btn-danger"><i
-                                    class="fa fa-remove"></i> {% trans 'Stop Forwarding' %}
+                                    class="fa fa-remove"></i> {% trans 'Delete' %}
                             </button>
                         </div>
                     </form>

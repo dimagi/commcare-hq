@@ -54,6 +54,7 @@ WHITELIST = [
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
+    ("redis.connection", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",
