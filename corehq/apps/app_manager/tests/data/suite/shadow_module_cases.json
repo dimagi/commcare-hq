@@ -384,7 +384,9 @@
               }
             },
             "open_case": {
-              "name_path": "\/data\/name",
+              "name_update": {
+                "question_path": "\/data\/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -539,7 +541,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
