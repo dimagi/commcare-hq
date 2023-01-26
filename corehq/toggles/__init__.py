@@ -902,7 +902,7 @@ DISABLE_WEB_APPS = StaticToggle(
 
 WEB_APPS_DOMAIN_BANNER = StaticToggle(
     'web_apps_domain_banner',
-    'USH: Show current domain in web apps Login As banner',
+    'USH: Show current domain in web apps Log In As banner',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
@@ -2020,17 +2020,17 @@ PARALLEL_USER_IMPORTS = StaticToggle(
 
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
-    'USH: Limit allowed users for login as',
+    'USH: Limit allowed users for Log In As',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Adds a permission that can be set on user roles to allow login as, but only
-    as a limited set of users. Users with this enabled can "login as" other
+    Adds a permission that can be set on user roles to allow log in as, but only
+    as a limited set of users. Users with this enabled can "log in as" other
     users that set custom user property "login_as_user" to the first user's
     username.
 
     For example, if web user a@a.com has this permission set on their role,
-    they can only login as mobile users who have the custom property
+    they can only log in as mobile users who have the custom property
     "login_as_user" set to "a@a.com".
     """,
     help_link="https://confluence.dimagi.com/display/saas/Limited+Login+As",
@@ -2353,6 +2353,15 @@ VIEW_FORM_ATTACHMENT = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+
+DISABLE_FORM_ATTACHMENT_DOWNLOAD_IN_BROWSER = StaticToggle(
+    'disable_form_attachment_download_in_browser',
+    'Restrict users from downloading audio/video form attachments in browser',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+
 FORMPLAYER_INCLUDE_STATE_HASH = FeatureRelease(
     'formplayer_include_state_hash',
     'Make Formplayer include the state hash in sync and restore requests',
@@ -2377,4 +2386,16 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
+)
+
+TABLEAU_USER_SYNCING = StaticToggle(
+    'tableau_user_syncing',
+    'Automatically sync HQ users with users on Tableau',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
+    will be added/deleted/updated on the linked Tableau server.
+    """,
+    parent_toggles=[EMBEDDED_TABLEAU]
 )

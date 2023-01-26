@@ -324,7 +324,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)
@@ -413,6 +413,16 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      npm install -g fauxton
+      fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -507,7 +517,20 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
+```
+
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 

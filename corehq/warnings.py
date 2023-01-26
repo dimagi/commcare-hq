@@ -43,9 +43,18 @@ WHITELIST = [
     ("", "property_match are deprecated. Use boolean_expression instead."),
     ("corehq.util.validation", "metaschema specified by $schema was not found"),
     ("corehq.apps.userreports.util", "'collections.abc'"),
+    (
+        # TODO: Removed this prior to the Elasticsearch upgrade. It is currently
+        # needed due to the heavy use of 'pillowtop.es_utils.initialize_index[_and_mapping]'
+        # in testing code, which is pending a future cleanup effort.
+        "corehq.apps.es.index.settings",
+        re.compile(r"Invalid index settings key .+, expected one of \["),
+        UserWarning,
+    ),
 
     # other, resolution not obvious
     ("IPython.core.interactiveshell", "install IPython inside the virtualenv.", UserWarning),
+    ("redis.connection", "distutils Version classes are deprecated. Use packaging.version instead."),
     ("sqlalchemy.", re.compile(r"^Predicate of partial index .* ignored during reflection"), SAWarning),
     ("sqlalchemy.",
         "Skipped unsupported reflection of expression-based index form_processor_xformattachmentsql_blobmeta_key",

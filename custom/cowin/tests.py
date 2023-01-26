@@ -19,16 +19,16 @@ from custom.cowin.repeater_generators import (
     BeneficiaryVaccinationPayloadGenerator,
 )
 from custom.cowin.repeaters import (
-    BeneficiaryRegistrationRepeater,
-    BeneficiaryVaccinationRepeater,
+    SQLBeneficiaryRegistrationRepeater,
+    SQLBeneficiaryVaccinationRepeater,
 )
 
 
 class TestRepeaters(SimpleTestCase):
     domain = 'test-cowin'
 
-    @patch('corehq.motech.repeaters.models.Repeater.connection_settings', new_callable=PropertyMock)
-    @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
+    @patch('corehq.motech.repeaters.models.SQLRepeater.connection_settings', new_callable=PropertyMock)
+    @patch('corehq.motech.repeaters.models.SQLCaseRepeater.payload_doc')
     def test_registration_payload(self, payload_doc_mock, connection_settings_mock):
         connection_settings_mock.return_value = ConnectionSettings(password="secure-api-key")
 
@@ -46,7 +46,7 @@ class TestRepeaters(SimpleTestCase):
                             server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
-        repeater = BeneficiaryRegistrationRepeater()
+        repeater = SQLBeneficiaryRegistrationRepeater()
         generator = BeneficiaryRegistrationPayloadGenerator(repeater)
         repeat_record = RepeatRecord()
 
@@ -68,7 +68,7 @@ class TestRepeaters(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
     @patch('corehq.motech.repeaters.models.RepeatRecord.repeater', new_callable=PropertyMock)
-    @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
+    @patch('corehq.motech.repeaters.models.SQLCaseRepeater.payload_doc')
     @patch('custom.cowin.repeaters.update_case')
     @patch('requests.Response.json')
     def test_registration_response(self, json_response_mock, update_case_mock, payload_doc_mock,
@@ -93,7 +93,7 @@ class TestRepeaters(SimpleTestCase):
         json_response_mock.return_value = response_json
 
         repeat_record = RepeatRecord(payload_id=case_id)
-        repeater = BeneficiaryRegistrationRepeater(domain=self.domain)
+        repeater = SQLBeneficiaryRegistrationRepeater(domain=self.domain)
         repeat_record_repeater_mock.return_value = repeater
 
         repeater.handle_response(response, repeat_record)
@@ -103,8 +103,8 @@ class TestRepeaters(SimpleTestCase):
             device_id='custom.cowin.repeaters.BeneficiaryRegistrationRepeater'
         )
 
-    @patch('corehq.motech.repeaters.models.Repeater.connection_settings', new_callable=PropertyMock)
-    @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
+    @patch('corehq.motech.repeaters.models.SQLRepeater.connection_settings', new_callable=PropertyMock)
+    @patch('corehq.motech.repeaters.models.SQLCaseRepeater.payload_doc')
     def test_vaccination_payload(self, payload_doc_mock, connection_settings_mock):
         connection_settings_mock.return_value = ConnectionSettings(password="my-secure-api-key")
 
@@ -113,7 +113,7 @@ class TestRepeaters(SimpleTestCase):
                             server_modified_on=datetime.datetime.utcnow())
         payload_doc_mock.return_value = case
 
-        repeater = BeneficiaryVaccinationRepeater()
+        repeater = SQLBeneficiaryVaccinationRepeater()
         generator = BeneficiaryVaccinationPayloadGenerator(repeater)
         repeat_record = RepeatRecord()
 
@@ -171,7 +171,7 @@ class TestRepeaters(SimpleTestCase):
 
     @patch('corehq.motech.repeaters.models.RepeatRecord.handle_success', lambda *_: None)
     @patch('corehq.motech.repeaters.models.RepeatRecord.repeater', new_callable=PropertyMock)
-    @patch('corehq.motech.repeaters.models.CaseRepeater.payload_doc')
+    @patch('corehq.motech.repeaters.models.SQLCaseRepeater.payload_doc')
     @patch('custom.cowin.repeaters.update_case')
     def test_vaccination_response(self, update_case_mock, payload_doc_mock, repeat_record_repeater_mock):
         case_id = uuid.uuid4().hex
@@ -189,7 +189,7 @@ class TestRepeaters(SimpleTestCase):
         response.status_code = 204
 
         repeat_record = RepeatRecord(payload_id=case_id)
-        repeater = BeneficiaryVaccinationRepeater(domain=self.domain)
+        repeater = SQLBeneficiaryVaccinationRepeater(domain=self.domain)
 
         repeat_record_repeater_mock.return_value = repeater
         repeater.handle_response(response, repeat_record)

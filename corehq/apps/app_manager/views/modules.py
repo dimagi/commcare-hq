@@ -2,7 +2,7 @@ import json
 import logging
 from collections import OrderedDict
 from functools import partial
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.contrib import messages
 from django.http import (

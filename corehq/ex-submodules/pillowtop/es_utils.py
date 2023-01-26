@@ -1,101 +1,24 @@
-from dimagi.ext import jsonobject
-from django.conf import settings
-from copy import copy, deepcopy
-from datetime import datetime
+from copy import deepcopy
+
+from corehq.apps.es.index.settings import (
+    IndexSettingsKey,
+    render_index_tuning_settings,
+)
+from corehq.apps.es.migration_operations import CreateIndex
+from corehq.apps.es.transient_util import doc_adapter_from_info
 from corehq.util.es.elasticsearch import TransportError
 from corehq.util.es.interface import ElasticsearchInterface
+from dimagi.ext import jsonobject
 from pillowtop.logger import pillow_logging
 
-
-def _get_analysis(*names):
-    return {
-        "analyzer": {name: ANALYZERS[name] for name in names}
-    }
-
-
-ANALYZERS = {
-    "default": {
-        "type": "custom",
-        "tokenizer": "whitespace",
-        "filter": ["lowercase"]
-    },
-    "comma": {
-        "type": "pattern",
-        "pattern": r"\s*,\s*"
-    },
-    "phonetic": {
-        "filter": ["standard", "lowercase", "soundex"],
-        "tokenizer": "standard"
-    }
-}
-
-XFORM_HQ_INDEX_NAME = "xforms"
-CASE_HQ_INDEX_NAME = "hqcases"
-USER_HQ_INDEX_NAME = "hqusers"
-DOMAIN_HQ_INDEX_NAME = "hqdomains"
-APP_HQ_INDEX_NAME = "hqapps"
-GROUP_HQ_INDEX_NAME = "hqgroups"
-SMS_HQ_INDEX_NAME = "smslogs"
-CASE_SEARCH_HQ_INDEX_NAME = "case_search"
-TEST_HQ_INDEX_NAME = "pillowtop_tests"
-
-phonetic_analysis = _get_analysis('default', 'phonetic')
-phonetic_analysis.update({
-    "filter": {
-        "soundex": {
-            "replace": "true",
-            "type": "phonetic",
-            "encoder": "soundex"
-        }
-    }})
-
-ES_INDEX_SETTINGS = {
-    # Default settings for all indexes on ElasticSearch
-    'default': {
-        "settings": {
-            "number_of_replicas": 0,
-            "number_of_shards": 5,
-            "analysis": _get_analysis('default'),
-        },
-    },
-    # Apply phonetic analysis to case search index only
-    CASE_SEARCH_HQ_INDEX_NAME: {
-        "settings": {
-            "number_of_replicas": 1,
-            "number_of_shards": 5,
-            "analysis": phonetic_analysis,
-        },
-    },
-    # Default settings for aliases on all environments (overrides default settings)
-    DOMAIN_HQ_INDEX_NAME: {
-        "settings": {
-            "number_of_replicas": 0,
-            "analysis": _get_analysis('default', 'comma'),
-        },
-    },
-
-    APP_HQ_INDEX_NAME: {
-        "settings": {
-            "number_of_replicas": 0,
-            "analysis": _get_analysis('default'),
-        },
-    },
-
-    USER_HQ_INDEX_NAME: {
-        "settings": {
-            "number_of_shards": 2,
-            "number_of_replicas": 0,
-            "analysis": _get_analysis('default'),
-        },
-    },
-}
-
-# Allow removing settings from defaults by setting
-# the value to this constant in settings.ES_SETTINGS
-# TODO: change this constant to an object that isn't actually a meaningful
-# Elastic index settings value (`None` is how you revert a setting to its
-# cluster-default value).
-REMOVE_SETTING = None
+XFORM_HQ_INDEX_NAME = IndexSettingsKey.FORMS
+CASE_HQ_INDEX_NAME = IndexSettingsKey.CASES
+USER_HQ_INDEX_NAME = IndexSettingsKey.USERS
+DOMAIN_HQ_INDEX_NAME = IndexSettingsKey.DOMAINS
+APP_HQ_INDEX_NAME = IndexSettingsKey.APPS
+GROUP_HQ_INDEX_NAME = IndexSettingsKey.GROUPS
+SMS_HQ_INDEX_NAME = IndexSettingsKey.SMS
+CASE_SEARCH_HQ_INDEX_NAME = IndexSettingsKey.CASE_SEARCH
 
 
 class ElasticsearchIndexInfo(jsonobject.JsonObject):
@@ -110,23 +33,10 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
 
     @property
     def meta(self):
-        meta_settings = deepcopy(ES_INDEX_SETTINGS['default'])
-        meta_settings.update(
-            ES_INDEX_SETTINGS.get(self.hq_index_name, {})
-        )
-        meta_settings.update(
-            ES_INDEX_SETTINGS.get(settings.SERVER_ENVIRONMENT, {}).get(self.hq_index_name, {})
-        )
-
-        if settings.ES_SETTINGS is not None:
-            for hq_index_name in ['default', self.hq_index_name]:
-                for key, value in settings.ES_SETTINGS.get(hq_index_name, {}).items():
-                    if value is REMOVE_SETTING:
-                        del meta_settings['settings'][key]
-                    else:
-                        meta_settings['settings'][key] = value
-
-        return meta_settings
+        adapter = doc_adapter_from_info(self)
+        settings = {"analysis": deepcopy(adapter.analysis)}
+        settings.update(render_index_tuning_settings(adapter.settings_key))
+        return {"settings": settings}
 
     def to_json(self):
         json = super(ElasticsearchIndexInfo, self).to_json()
@@ -156,15 +66,14 @@ def initialize_index_and_mapping(es, index_info):
 
 
 def initialize_index(es, index_info):
-    index = index_info.index
-    mapping = index_info.mapping
-    mapping['_meta']['created'] = datetime.isoformat(datetime.utcnow())
-    meta = copy(index_info.meta)
-    meta.update({'mappings': {index_info.type: mapping}})
-
     pillow_logging.info("Initializing elasticsearch index for [%s]" % index_info.type)
-    es.indices.create(index=index, body=meta)
-    set_index_normal_settings(es, index)
+    CreateIndex(
+        index_info.index,
+        index_info.type,
+        index_info.mapping,
+        index_info.meta["settings"]["analysis"],
+        index_info.hq_index_name,
+    ).run()
 
 
 def mapping_exists(es, index_info):

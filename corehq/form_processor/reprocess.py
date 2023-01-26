@@ -13,13 +13,12 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface, P
 from corehq.form_processor.models import CommCareCase, XFormInstance, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.util.metrics.load_counters import form_load_counter
+from couchforms.const import MAX_FORM_LENGTH
 from dimagi.utils.couch import LockManager
 
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
 
 logger = logging.getLogger('reprocess')
-
-MAX_CONTENT_LENGTH_FOR_REPROCESSING = 50 * 1024 * 1024
 
 
 class ReprocessingError(Exception):
@@ -53,7 +52,7 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
 
     try:
         attachment = form.get_attachment_meta('form.xml')
-        if attachment.content_length > MAX_CONTENT_LENGTH_FOR_REPROCESSING:
+        if attachment.content_length > MAX_FORM_LENGTH:
             return ReprocessingResult(
                 form, None, None,
                 f"Refusing to reprocess form larger than {MAX_CONTENT_LENGTH_FOR_REPROCESSING} bytes")

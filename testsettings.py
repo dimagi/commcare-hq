@@ -38,6 +38,7 @@ NOSE_PLUGINS = [
     'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
     'corehq.tests.noseplugins.output.OutputPlugin',
+    'corehq.tests.noseplugins.elasticsnitch.ElasticSnitchPlugin',
 
     # Uncomment to debug tests. Plugins have nice hooks for inspecting state
     # before/after each test or context setup/teardown, etc.

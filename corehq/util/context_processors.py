@@ -274,3 +274,13 @@ def status_page(request):
     return {
         'show_status_page': settings.IS_SAAS_ENVIRONMENT
     }
+
+
+def sentry(request):
+    return {
+        "sentry": {
+            "dsn": settings.SENTRY_DSN,
+            "environment": settings.SERVER_ENVIRONMENT,
+            "release": settings.COMMCARE_RELEASE
+        }
+    }

@@ -37,7 +37,7 @@
       {% block core_libraries %}
         {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
       {% endblock %}
-      <script src="{% static 'hqwebapp/js/mocha.js' %}"></script>
+      <script src="{% static 'mocha/js/main.js' %}"></script>
       <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
     {% endif %}
 
@@ -58,7 +58,7 @@
 
     {% if not requirejs_main %}
       <script charset="utf-8">
-        hqImport("hqwebapp/js/mocha").run();
+        hqImport("mocha/js/main").run();
       </script>
     {% endif %}
   </body>

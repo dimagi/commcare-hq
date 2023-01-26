@@ -21,6 +21,11 @@ from corehq.motech.views import ConnectionSettingsListView
 class GenericRepeaterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
+        self.repeater_name = ""
+        data = kwargs.get('data')
+        if data:
+            self.repeater_name = data.get("name")
+
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
         self.formats = RegisterGenerator.all_formats_by_repeater(self.repeater_class, for_domain=self.domain)
@@ -45,6 +50,12 @@ class GenericRepeaterForm(forms.Form):
             choices=self.connection_settings_choices,
             required=True,
             help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
+        )
+        self.fields['name'] = forms.CharField(
+            label=_('Name'),
+            help_text='The name of this forwarder',
+            initial=self.repeater_name,
+            required=False
         )
         self.fields['request_method'] = forms.ChoiceField(
             label=_("HTTP Request Method"),
@@ -84,7 +95,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to change the order of the crispy form fields and add extra crispy fields
         """
-        form_fields = ["connection_settings_id", "request_method"]
+        form_fields = ["connection_settings_id", "name", "request_method"]
         if self.formats and len(self.formats) > 1:
             form_fields.append('format')
         return form_fields

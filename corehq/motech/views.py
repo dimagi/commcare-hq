@@ -285,7 +285,8 @@ def test_connection_settings(request, domain):
     ):
         raise Http404
 
-    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER:
+    # If auth_type is set to None, we ignore this check
+    if request.POST.get('plaintext_password') == PASSWORD_PLACEHOLDER and request.POST.get('auth_type'):
         # The user is editing an existing instance, and the form is
         # showing the password placeholder. (We don't tell the user what
         # the API password is.)

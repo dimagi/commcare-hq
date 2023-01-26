@@ -900,6 +900,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -1224,6 +1225,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1499,7 +1501,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1562,9 +1563,6 @@ COUCHDB_APPS = [
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
 
-    # fixtures
-    ('fixtures', FIXTURES_DB),
-
     # domains
     ('domain', DOMAINS_DB),
 
@@ -1575,7 +1573,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -2022,10 +2020,11 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
