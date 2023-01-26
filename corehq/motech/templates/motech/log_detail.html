@@ -17,9 +17,10 @@
             <th>{% trans "Payload ID" %}:</th>
             <td>
               {{ log.payload_id }} {% if is_dimagi %}
-              <a href="{% url 'doc_in_es' %}?id={{ log.payload_id }}" target="_blank" title="Search in ES">
-                <i class="fa fa-search"></i>
-              </a>{% endif %}
+                <a href="{% url 'global_quick_find' %}?q={{ log.payload_id }}" title="Search">
+                  <i class="fa fa-search"></i>
+                </a>
+              {% endif %}
             </td>
           </tr>
           {% endif %}
