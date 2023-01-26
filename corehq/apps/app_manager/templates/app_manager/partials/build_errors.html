@@ -79,20 +79,14 @@
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "multi select form links" %}
               {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a multi-select form, which is not supported.
+                Linking for a form in a a multi-select case list is restricted to multi-select forms only.
+                Please ensure your form is multi-select.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
-            {% case "parent multi select form links" %}
+            {% case "mismatch multi select form links" %}
               {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a parent menu that uses multi-select, which is not supported.
-              {% endblocktrans %}
-              {% include "app_manager/partials/form_error_message.html" %}
-            {% case "previous multi select form links" %}
-              {% blocktrans %}
-                Please check that end of form navigation is correct. It appears to involve
-                a multi-select case list and the "Previous Screen" workflow, which are not compatible.
+                Please check that end of form navigation is correct. It appears to involve both
+                a multi-select form and a single select-form, which is not supported.
               {% endblocktrans %}
               {% include "app_manager/partials/form_error_message.html" %}
             {% case "workflow previous inline search" %}
