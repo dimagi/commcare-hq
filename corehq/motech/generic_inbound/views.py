@@ -34,7 +34,10 @@ from corehq.motech.generic_inbound.utils import (
     ApiRequest,
     ApiResponse,
     archive_api_request,
-    reprocess_api_request, log_api_request,
+    make_processing_attempt,
+    reprocess_api_request,
+    get_headers_for_api_context,
+    log_api_request
 )
 from corehq.util import reverse
 from corehq.util.view_utils import json_error

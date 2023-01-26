@@ -473,7 +473,7 @@ msgstr ""
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/messaging/smsbackends/telerivet/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/generic_inbound/views.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/repeaters/forms.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/views.py custom/abt/reports/late_pmt_2020.py
 msgid "Name"
@@ -9137,6 +9137,12 @@ msgid ""
 "case details."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid "Case List"
+msgid "Empty Case List Text"
+msgstr "Lista de Casos"
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
 msgstr ""
@@ -11856,7 +11862,9 @@ msgid "No recent queries"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-msgid "Login as"
+#, fuzzy
+#| msgid "Login as"
+msgid "Log in as"
 msgstr "Entrar como"
 
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
@@ -17926,7 +17934,7 @@ msgstr ""
 #: corehq/apps/export/system_properties.py
 msgid ""
 "The HQ user who submitted the form. This will be the same as username unless "
-"the form was submitted via Login As."
+"the form was submitted via Log In As."
 msgstr ""
 
 #: corehq/apps/export/system_properties.py
@@ -20695,7 +20703,7 @@ msgstr ""
 #: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
 msgid ""
 "\n"
-"          Use this form to login as a mobile user.\n"
+"          Use this form to log in as a mobile user.\n"
 "          You can fill out the fully qualified username of\n"
 "          a mobile worker in the username box\n"
 "          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
@@ -31041,6 +31049,12 @@ msgid "Recipient has no email address."
 msgstr "Destinatário sem endereço de e-mail."
 
 #: corehq/apps/sms/models.py
+#, fuzzy
+#| msgid "Recipient has no email address."
+msgid "Recipient's email address is not valid."
+msgstr "Destinatário sem endereço de e-mail."
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Cannot send any more reminder emails. The limit for sending reminder emails "
 "on a Trial plan has been reached."
@@ -36237,7 +36251,7 @@ msgid "Login-As All Users"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as any mobile worker in Web Apps."
+msgid "Allow the user to log in as any mobile worker in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -36245,7 +36259,7 @@ msgid "Limit Login-As"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as only specified users in Web Apps."
+msgid "Allow the user to log in as only specified users in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -36253,7 +36267,7 @@ msgid "Login-As Default User"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as the default user in Web Apps."
+msgid "Allow the user to log in as the default user in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -40522,7 +40536,7 @@ msgid "Zapier Integration"
 msgstr ""
 
 #: corehq/privileges.py
-msgid "Login As for App Preview"
+msgid "Log In As for App Preview"
 msgstr ""
 
 #: corehq/privileges.py

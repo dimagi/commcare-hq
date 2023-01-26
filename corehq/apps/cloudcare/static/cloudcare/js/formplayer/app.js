@@ -479,7 +479,7 @@ hqDefine("cloudcare/js/formplayer/app", function () {
         return FormplayerFrontend.DisplayProperties || {};
     });
 
-    // Support for workflows that require Login As before moving on to the
+    // Support for workflows that require Log In As before moving on to the
     // screen that the user originally requested.
     FormplayerFrontend.on('setLoginAsNextOptions', function (options) {
         FormplayerFrontend.LoginAsNextOptions = options;
