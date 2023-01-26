@@ -30,10 +30,13 @@ hqDefine('users/js/filtered_download', [
 
         self.user_count = ko.observable(null);
         self.group_count = ko.observable(null);
-        self.buttonHTML = ko.computed(function () {
-            if (self.user_count() === null) {
-                return "<i class='fa fa-spin fa-spinner'></i>";
-            }
+        self.areStatsLoading = ko.computed(function () {
+            return self.user_count() === null;
+        });
+        self.haveStatsLoaded = ko.computed(function () {
+            return !self.areStatsLoading();
+        });
+        self.statsText = ko.computed(function () {
             var template = self.user_count() === 1 ? gettext("<%- user_count %> user") : gettext("<%- user_count %> users");
             if (self.group_count() !== 0) {
                 template += self.group_count() === 1 ? gettext(" and <%- group_count %> group") : gettext(" and <%- group_count %> groups");

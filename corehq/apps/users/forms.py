@@ -1665,8 +1665,9 @@ class UserFilterForm(forms.Form):
                     type="submit",
                     css_class="btn btn-primary",
                 ),
-                crispy.HTML(
-                    "<p style='display:inline' data-bind='html: buttonHTML'>Calculating download size.</p>"
+                crispy.Div(
+                    data_bind="template: {name: 'ko-template-download-statistics'}",
+                    style="display: inline;",
                 )
             ),
         )
