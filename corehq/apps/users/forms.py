@@ -1667,10 +1667,13 @@ class UserFilterForm(forms.Form):
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Download All Users"),
+                    _("Download"),
                     type="submit",
                     css_class="btn btn-primary",
-                    data_bind="html: buttonHTML",
+                ),
+                crispy.Div(
+                    data_bind="template: {name: 'ko-template-download-statistics'}",
+                    style="display: inline;",
                 )
             ),
         )
