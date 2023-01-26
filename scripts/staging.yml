@@ -75,13 +75,11 @@ branches:
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    - ad/user-syncing-UI # Addison Jan 3
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
     - jm/refactor-api-es  # [QA] Joel Jan 10
     - jm/refactor-user-pillow  # [QA] Joel Jan 10
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - ad/test-incomplete-forms-hotfix # AD Jan 13
     - cs/configurable_repeater_name # Chris jan 17
     - em/case-search-filter-feature-flag # Evan Jan 18
     - akj/ush-2613-commcare-user-case # Akash Jan 19
@@ -92,4 +90,5 @@ branches:
     - akj/nav-bar-icons-accessibility # Akash Jan 24
     - em/switching-project-spaces-bugfix # Evan Jan 25
     - ap/rename-sql-repeaters # Amit Jan 26
+    - ad/remove-entered-wrap-functions # Addison Jan 26
 submodules: { }
