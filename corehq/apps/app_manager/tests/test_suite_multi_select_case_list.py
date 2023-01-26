@@ -588,6 +588,24 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             "./entry[4]/stack",
         )
 
+    def test_eof_nav_multi_to_single(self, *args):
+        form = self.multi_child.get_form(0)
+        form.post_form_workflow = WORKFLOW_PARENT_MODULE
+        self.assertXmlPartialEqual(
+            """
+            <partial>
+              <stack>
+                <create>
+                  <command value="'m2'"/>
+                  <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
+                </create>
+              </stack>
+            </partial>
+            """,
+            self.factory.app.create_suite(),
+            "./entry[4]/stack",
+        )
+
     def test_eof_nav_form_link_multi_to_single(self, *args):
         m1f0 = self.multi_loner.get_form(0)
         m0f0 = self.single_loner.get_form(0)
@@ -617,3 +635,19 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./entry[2]/stack",
         )
+
+    def test_eof_nav_form_link_multi_to_single_validate(self, *args):
+        single_form = self.single_loner.get_form(0)
+        multi_form = self.multi_loner.get_form(0)
+
+        multi_form.post_form_workflow = WORKFLOW_FORM
+        multi_form.form_links = [FormLink(
+            form_id=single_form.unique_id,
+            form_module_id=self.single_loner.unique_id,
+            xpath="true()",
+        )]
+        self.assertIn({'type': 'multi select form links',
+                'form_type': 'module_form',
+               'module': {'id': 1, 'name': {'en': 'Multi Loner module'}, 'unique_id': 'Multi Loner_module'},
+               'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'
+        }, self.factory.app.validate_app())
