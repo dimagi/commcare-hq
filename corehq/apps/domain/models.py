@@ -683,12 +683,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             return map(cls.wrap, iter_docs(cls.get_db(), [d['id'] for d in domains]))
 
     @classmethod
-    @quickcache([], timeout=24 * 60 * 60)
     def get_all_names(cls):
         return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
-    @quickcache([], timeout=24 * 60 * 60)
     def get_deleted_domain_names(cls):
         domains = Domain.view("domain/deleted_domains", include_docs=False, reduce=False).all()
         return {d['key'] for d in domains}
@@ -780,7 +778,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             if not domain.doc_type.endswith('-Deleted'):
                 domain.doc_type = '{}-Deleted'.format(domain.doc_type)
                 domain.save()
-                self.get_deleted_domain_names.clear()
         else:
             super().delete()
 
@@ -877,8 +874,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         """
         Ensure that the domain exists in the deleted_domain view, AND not in
         the active domain view
-        NOTE: relies on caching get_deleted_domain_names and get_all_names
-        :param domain: name of domain
+        :param domain:
         :return: True if deleted, False if not
         """
         deleted_domains = Domain.get_deleted_domain_names()
