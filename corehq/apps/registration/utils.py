@@ -141,6 +141,7 @@ def request_new_domain(request, project_name, is_new_user=True, is_new_sso_user=
     if not new_domain.name:
         new_domain.name = new_domain._id
         new_domain.save()  # we need to get the name from the _id
+    Domain.get_all_names.clear()
     dom_req.domain = new_domain.name
 
     if not settings.ENTERPRISE_MODE:
