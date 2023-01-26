@@ -227,7 +227,11 @@ class HqdbContext(DatabaseContext):
             # pass this on to the Django runner to avoid creating databases
             # that already exist
             self.runner.keepdb = True
-        super(HqdbContext, self).setup()
+        # HACK patch to prevent ReindexCouchViews from raising
+        # TransportError(404, 'index_not_found_exception', 'no such index')
+        # Can be removed when ptop commands are removed from ReindexCouchViews
+        with patch("corehq.pillows.utils.CANONICAL_NAME_INFO_MAP", new={}):
+            super(HqdbContext, self).setup()
 
     def reset_databases(self):
         self.delete_couch_databases()
