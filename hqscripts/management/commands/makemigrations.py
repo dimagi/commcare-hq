@@ -84,6 +84,10 @@ class Command(makemigrations.Command):
                          returned migration list.
         """
         stream = StringIO()
+        # NOTE: showmigrations will exclude initial migrations for apps
+        # that had a "migrations" directory without an __init__.py file
+        # (a namespace package) prior to running "makemigrations" because of
+        # https://github.com/django/django/blob/2b1242abb3989f5d74e787b091/django/db/migrations/loader.py#L99-L106
         command = showmigrations.Command(stdout=stream, no_color=True)
         # Use `run_from_argv()` to avoid extra command setup boilerplate.
         # First two argv items are `prog` and `subcommand`, used to setup the
