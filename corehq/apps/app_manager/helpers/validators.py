@@ -926,9 +926,6 @@ class FormBaseValidator(object):
         if self.form.post_form_workflow == WORKFLOW_FORM:
             if not self.form.form_links:
                 errors.append(dict(type="no form links", **meta))
-            if not self.form.get_module().is_multi_select() and module.root_module and \
-                    module.root_module.is_multi_select():
-                errors.append(dict(type='multi select form links', **meta))
             for form_link in self.form.form_links:
                 if form_link.form_id:
                     try:
@@ -936,7 +933,6 @@ class FormBaseValidator(object):
                     except FormNotFoundException:
                         errors.append(dict(type='bad form link', **meta))
                         continue
-
                     if form_link.form_module_id:
                         linked_module = None
                         try:
@@ -952,6 +948,8 @@ class FormBaseValidator(object):
                                 errors.append(dict(type='bad form link', **meta))
                         elif linked_module.unique_id != linked_form.get_module().unique_id:
                             errors.append(dict(type='bad form link', **meta))
+                        if not linked_module.is_multi_select() and self.form.get_module().is_multi_select():
+                            errors.append(dict(type='multi select form links', **meta))
         elif self.form.post_form_workflow == WORKFLOW_MODULE:
             if module.put_in_root:
                 errors.append(dict(type='form link to display only forms', **meta))
