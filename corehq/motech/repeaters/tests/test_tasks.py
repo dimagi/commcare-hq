@@ -20,7 +20,7 @@ from ..const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
 )
-from ..models import SQLFormRepeater
+from ..models import FormRepeater
 from ..tasks import process_repeater, delete_old_request_logs
 
 DOMAIN = 'gaidhlig'
@@ -86,7 +86,7 @@ class TestProcessRepeater(TestCase):
         )
 
     def setUp(self):
-        self.sql_repeater = SQLFormRepeater.objects.create(
+        self.sql_repeater = FormRepeater.objects.create(
             domain=DOMAIN,
             repeater_id=uuid.uuid4().hex,
             format='form_xml',
