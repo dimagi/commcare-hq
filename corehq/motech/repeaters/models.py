@@ -108,7 +108,7 @@ from corehq.form_processor.models import (
     CommCareCase,
     XFormInstance,
 )
-from corehq.motech.const import ONE_MB, REQUEST_METHODS, REQUEST_POST
+from corehq.motech.const import MAX_REQUEST_LOG_LENGTH, REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.apps import REPEATER_CLASS_MAP
 from corehq.motech.repeaters.optionvalue import OptionValue
@@ -1045,7 +1045,7 @@ class RepeatRecord(Document):
     def _format_response(response):
         if not is_response(response):
             return None
-        response_body = getattr(response, "text", "")[:ONE_MB]
+        response_body = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
         return '{}: {}.\n{}'.format(
             response.status_code, response.reason, response_body)
 
@@ -1422,7 +1422,7 @@ def has_failed(record):
 def format_response(response) -> Optional[str]:
     if not is_response(response):
         return None
-    response_text = getattr(response, "text", "")[:ONE_MB]
+    response_text = getattr(response, "text", "")[:MAX_REQUEST_LOG_LENGTH]
     if response_text:
         return f'{response.status_code}: {response.reason}\n{response_text}'
     return f'{response.status_code}: {response.reason}'

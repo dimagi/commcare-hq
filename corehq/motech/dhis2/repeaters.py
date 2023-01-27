@@ -3,7 +3,7 @@ import re
 import sys
 import traceback
 from datetime import datetime, timedelta
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 
 from django.utils.translation import gettext_lazy as _
 
