@@ -13,6 +13,7 @@ from corehq.apps.es.utils import check_task_progress
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
+    NotFoundError,
     TransportError,
 )
 
@@ -211,8 +212,8 @@ class AdapterWithIndexTestCase(SimpleTestCase):
     def _purge_test_index(self):
         try:
             manager.index_delete(self.index)
-        except TransportError:
-            # TransportError(404, 'index_not_found_exception', 'no such index')
+        except NotFoundError:
+            # NotFoundError: TransportError(404, 'index_not_found_exception', 'no such index')
             pass
 
 
@@ -1173,7 +1174,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test_update_fails_if_missing(self):
         self.assertEqual([], docs_from_result(self.adapter.search({})))
         doc = self._make_doc()
-        with self.assertRaises(TransportError) as test:
+        with self.assertRaises(NotFoundError) as test:
             self.adapter.update(doc.id, {"value": "test"}, refresh=True)
         self.assertEqual(test.exception.status_code, 404)
         self.assertEqual(test.exception.error, "document_missing_exception")
@@ -1208,7 +1209,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test_update_performs_upsert_for_missing_doc_with_private_kwarg(self):
         doc = self._make_doc()
         doc_id, doc_source = self.adapter.from_python(doc)
-        with self.assertRaises(TransportError):
+        with self.assertRaises(NotFoundError):
             self.adapter.get(doc_id)
         self.adapter.update(doc_id, doc_source, refresh=True, _upsert=True)  # doesn't raise
         doc_source["_id"] = doc_id
@@ -1269,7 +1270,7 @@ class TestElasticDocumentAdapter(AdapterWithIndexTestCase, ESTestHelpers):
     def test_delete_fails_if_missing(self):
         missing_id = self._make_doc().id
         self.assertEqual([], docs_from_result(self.adapter.search({})))
-        with self.assertRaises(TransportError) as test:
+        with self.assertRaises(NotFoundError) as test:
             self.adapter.delete(missing_id)
         self.assertEqual(test.exception.status_code, 404)
         error_info = test.exception.info
