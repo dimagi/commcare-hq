@@ -5,7 +5,7 @@ from testil import assert_raises
 from corehq import privileges
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import SQLFormRepeater
+from corehq.motech.repeaters.models import FormRepeater
 from corehq.util.test_utils import privilege_enabled
 
 
@@ -23,7 +23,7 @@ class TestRepeaterViews(BaseViewTest):
 
     @privilege_enabled(privileges.DATA_FORWARDING)
     def test_drop_repeater(self):
-        repeater = SQLFormRepeater.objects.create(
+        repeater = FormRepeater.objects.create(
             domain=self.domain.name,
             connection_settings=self.connection_setting,
         )
@@ -34,12 +34,12 @@ class TestRepeaterViews(BaseViewTest):
         response = self.client.post(reverse('drop_repeater', kwargs=url_kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
-        with assert_raises(SQLFormRepeater.DoesNotExist):
-            SQLFormRepeater.objects.get(id=repeater.id)
+        with assert_raises(FormRepeater.DoesNotExist):
+            FormRepeater.objects.get(id=repeater.id)
 
     @privilege_enabled(privileges.DATA_FORWARDING)
     def test_pause_repeater(self):
-        repeater = SQLFormRepeater.objects.create(
+        repeater = FormRepeater.objects.create(
             domain=self.domain.name,
             connection_settings=self.connection_setting,
         )
@@ -50,11 +50,11 @@ class TestRepeaterViews(BaseViewTest):
         response = self.client.post(reverse('pause_repeater', kwargs=url_kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
-        self.assertEqual(SQLFormRepeater.objects.get(id=repeater.id).is_paused, True)
+        self.assertEqual(FormRepeater.objects.get(id=repeater.id).is_paused, True)
 
     @privilege_enabled(privileges.DATA_FORWARDING)
     def test_resume_repeater(self):
-        repeater = SQLFormRepeater.objects.create(
+        repeater = FormRepeater.objects.create(
             domain=self.domain.name,
             connection_settings=self.connection_setting,
             is_paused=True
@@ -66,4 +66,4 @@ class TestRepeaterViews(BaseViewTest):
         response = self.client.post(reverse('resume_repeater', kwargs=url_kwargs))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, f'/a/{self.domain.name}/motech/forwarding/')
-        self.assertEqual(SQLFormRepeater.objects.get(id=repeater.id).is_paused, False)
+        self.assertEqual(FormRepeater.objects.get(id=repeater.id).is_paused, False)

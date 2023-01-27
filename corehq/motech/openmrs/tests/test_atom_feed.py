@@ -33,7 +33,7 @@ from corehq.motech.openmrs.exceptions import (
     OpenmrsFeedRuntimeException,
     OpenmrsFeedSyntaxError,
 )
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.openmrs.tasks import poll_openmrs_atom_feeds
 from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from ...repeaters.tests.data.repeaters import ENCOUNTER_FEED_XML, PATIENT_FEED_XML
@@ -215,7 +215,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 "case_property": "hypothermia_date"
             }
         ]
-        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
+        self.repeater = OpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def setUpRepeaterForExtCase(self):
         observations = [
@@ -296,7 +296,7 @@ class ImportEncounterTest(TestCase, TestFileMixin):
                 }
             }
         ]
-        self.repeater = SQLOpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
+        self.repeater = OpenmrsRepeater(**self.get_repeater_dict(observations, diagnoses))
 
     def get_repeater_dict(self, observations, diagnoses):
         return {
@@ -600,7 +600,7 @@ class TestPollOpenmrsAtomFeeds(TestCase, TestFileMixin):
             name="http://abc.com"
         )
         from corehq.motech.repeaters.tests.data.repeaters import openmrs_repeater
-        self.repeater = SQLOpenmrsRepeater(**openmrs_repeater).save()
+        self.repeater = OpenmrsRepeater(**openmrs_repeater).save()
 
         self.encounter_feed_xml = inspect.cleandoc(ENCOUNTER_FEED_XML)
         self.encounter_feed_elem = etree.XML(self.encounter_feed_xml.encode('utf-8'))
