@@ -68,8 +68,6 @@ branches:
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     - es/redirect-domain  # Ethan Nov 21
-    #- jls/web-apps-requirejs+sk/sentry-js
-    - sk/sentry-js  # Simon Dec 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
@@ -90,4 +88,5 @@ branches:
     - revert-32492-ad/incomplete-forms-hotfix # Jonathan T. Jan 26
     - pkv/accessibility-tree-change-1932 # Pawan Jan 27
     - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
+    - sk/sentry-local  # Simon Jan 27
 submodules: { }
