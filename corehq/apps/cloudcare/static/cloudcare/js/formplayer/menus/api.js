@@ -1,4 +1,3 @@
-/* global Sentry */
 /**
  * Backbone model for listing and selecting CommCare menus (modules, forms, and cases)
  */
@@ -118,7 +117,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     },
                 };
                 var casesPerPage = parseInt($.cookie("cases-per-page-limit")) || 10;
-                const data = {
+                options.data = JSON.stringify({
                     "username": user.username,
                     "restoreAs": user.restoreAs,
                     "domain": user.domain,
@@ -140,8 +139,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     "tz_offset_millis": timezoneOffsetMillis,
                     "tz_from_browser": tzFromBrowser,
                     "selected_values": params.selectedValues,
-                };
-                options.data = JSON.stringify(data);
+                });
                 options.url = formplayerUrl + '/' + route;
 
                 menus = Collections();
@@ -149,12 +147,6 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 if (Object.freeze) {
                     Object.freeze(options);
                 }
-                const sentryData = _.pick(data, ["selections", "query_data", "app_id"]);
-                Sentry.addBreadcrumb({
-                    category: "formplayer",
-                    message: "[request] " + route,
-                    data: _.pick(sentryData, _.identity),
-                });
                 menus.fetch($.extend(true, {}, options));
             });
 
