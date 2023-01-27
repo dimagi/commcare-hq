@@ -83,10 +83,6 @@ def iter_index_cnames():
     yield from CANONICAL_NAME_INFO_MAP
 
 
-def report_and_fail_on_shard_failures(search_result):
-    ElasticDocumentAdapter._report_and_fail_on_shard_failures(search_result)
-
-
 def populate_doc_adapter_map():
     """Populate "map" dictionaries needed to allow `ElasticsearchInterface`
     instances to acquire adapters by their index names/aliases.
