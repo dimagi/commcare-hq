@@ -108,13 +108,6 @@ class Command(BaseCommand):
             default='',
             help='End date',
         )
-        parser.add_argument(
-            '--flag-with-reason',
-            action='store',
-            dest='reason',
-            default='',
-            help='If provided, set build_broken to True and build_broken_reason to this string',
-        )
 
     def handle(self, check_function, **options):
         check_fn = CHECK_FUNCTIONS[check_function]
@@ -122,7 +115,6 @@ class Command(BaseCommand):
         start = options['startdate']
         end = options['enddate']
         ids = options['build_ids']
-        reason = options['reason']
 
         print('Starting...\n')
         if not ids:
@@ -131,6 +123,8 @@ class Command(BaseCommand):
             ids = ids.split(',')
 
         print('Checking {} builds\n'.format(len(ids)))
+        reason = input("Reason to use as build_broken_reason (leave blank to skip flagging)? ")
+
         for message in find_broken_builds(check_fn, ids, reason):
             self.stderr.write(message)
 
