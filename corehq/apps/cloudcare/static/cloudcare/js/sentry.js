@@ -25,6 +25,7 @@ hqDefine('cloudcare/js/sentry', [
                         console: false,
                     }),
                 ],
+                tunnel: initialPageData.reverse('report_sentry_error')
             });
         }
     };

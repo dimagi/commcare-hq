@@ -2,6 +2,7 @@ import json
 import re
 import string
 
+import requests
 import sentry_sdk
 from django.conf import settings
 from django.contrib import messages
@@ -26,7 +27,7 @@ from text_unidecode import unidecode
 
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.util.metrics import metrics_counter
-from dimagi.utils.logging import notify_error
+from dimagi.utils.logging import notify_error, notify_exception
 from dimagi.utils.web import get_url_base, json_response
 
 from corehq import privileges, toggles
@@ -492,6 +493,34 @@ def report_formplayer_error(request, domain):
         })
         notify_error(message='[Cloudcare] unknown error type', details=data)
     return JsonResponse({'status': 'ok'})
+
+
+@waf_allow('XSS_BODY')
+@csrf_exempt
+@location_safe
+@login_and_domain_required
+def report_sentry_error(request, domain):
+    # code modified from Sentry example:
+    # https://github.com/getsentry/examples/blob/master/tunneling/python/app.py
+
+    try:
+        envelope = request.body.decode("utf-8")
+        json_lines = envelope.split("\n")
+        header = json.loads(json_lines[0])
+        if header.get("dsn") != settings.SENTRY_DSN:
+            raise Exception(f"Invalid Sentry DSN: {header.get('dsn')}")
+
+        dsn = urllib.parse.urlparse(header.get("dsn"))
+        project_id = dsn.path.strip("/")
+        if project_id != settings.SENTRY_DSN.split('/')[-1]:
+            raise Exception(f"Invalid Sentry Project ID: {project_id}")
+
+        url = f"https://{dsn.hostname}/api/{project_id}/envelope/"
+        requests.post(url=url, data=envelope)
+    except Exception:
+        notify_exception(request, "Error sending frontend data to Sentry")
+
+    return JsonResponse({})
 
 
 def _message_to_tag_value(message, allowed_chars=string.ascii_lowercase + string.digits + '_'):
