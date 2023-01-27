@@ -75,7 +75,7 @@ CHECK_FUNCTIONS = {
 
 
 class Command(BaseCommand):
-    help = "Print a list of broken builds"
+    help = "Print a list of broken builds, and set their build_broken and build_broken_reason attributes."
 
     def add_arguments(self, parser):
         parser.add_argument(
