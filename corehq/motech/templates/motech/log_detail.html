@@ -16,8 +16,8 @@
           <tr>
             <th>{% trans "Payload ID" %}:</th>
             <td>
-              {{ log.payload_id }} {% if has_permission %}
-                <a href="{% url 'global_quick_find' %}?q={{ log.payload_id }}" title="Search">
+              {{ log.payload_id }} {% if doc_link %}
+                <a href="{{ doc_link }}" title="Search">
                   <i class="fa fa-search"></i>
                 </a>
               {% endif %}

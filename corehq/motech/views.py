@@ -84,15 +84,17 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         result = lookup_doc_id(context['log'].payload_id)
-        has_permission = False
+        doc_link = None
         if result:
             doc_info = get_doc_info(result.doc)
             if doc_info:
                 user = self.request.couch_user
                 has_permission = doc_info.user_has_permissions(context['log'].domain, user, result.doc)
+                if has_permission:
+                    doc_link = doc_info.link
 
         context.update({
-            "has_permission": has_permission,
+            "doc_link": doc_link
         })
         return context
 
