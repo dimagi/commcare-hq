@@ -559,38 +559,39 @@ def sync_all_tableau_users():
                 _delete_user_local(domain, tableau_user_name)
 
     def _sync_tableau_users_with_remote(domain):
-        remote_groups = get_all_tableau_groups(domain)
+
+        # Setup
+        remote_HQ_group_id = [group.id for group in get_all_tableau_groups(domain) if group.name == 'HQ']
         session = TableauAPISession.create_session_for_domain(domain)
 
-        remote_HQ_group = None
-        for group in remote_groups:
-            if group.name == 'HQ':
-                remote_HQ_group = group
-                remote_groups.remove(group)
-                remote_HQ_group_users = session.get_users_in_group(remote_HQ_group.id)
+        # More setup - parse/get remote group ID and users in group
+        if remote_HQ_group_id:
+            remote_HQ_group_id = remote_HQ_group_id[0]
+            remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
+        else:
+            remote_HQ_group_id = session.create_group('HQ', DEFAULT_TABLEAU_ROLE)
+            remote_HQ_group_users = []
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
 
-        # Create a group called 'HQ' on Tableau if one doesn't exist
-        if not remote_HQ_group:
-            session.create_group('HQ', DEFAULT_TABLEAU_ROLE)
-
-        # If a remote user doesn't exist locally, delete it
-        local_users_ids = [local_user.tableau_user_id for local_user in local_users]
-        for remote_user in remote_HQ_group_users:
-            if remote_user['id'] not in local_users_ids:
-                _delete_user_remote(session, remote_user['id'])
-
-        # If local user doesn't exist on the remote Tableau instace, add it
-        remote_HQ_group_users_ids = [remote_user['id'] for remote_user in remote_HQ_group_users]
+        # Add/delete/update remote users to match with local reality
+        def _add_new_user_to_HQ_group(session, local_user):
+            new_user_id = _add_tableau_user_remote(session, local_user, local_user.role)
+            session.add_user_to_group(new_user_id, remote_HQ_group_id)
         for local_user in local_users:
-            if local_user.tableau_user_id not in remote_HQ_group_users_ids:
-                remote_user_dict = session.get_user_on_site(tableau_username(local_user.username))
-                # If the remote id didn't match, override it by deleting and re-adding since you can't change
-                # a remote user's id.
-                if remote_user_dict:
-                    _delete_user_remote(session, remote_user_dict['id'])
-                new_id = _add_tableau_user_remote(session, local_user, local_user.role)
-                session.add_user_to_group(new_id, remote_HQ_group.id)
+            remote_user = session.get_user_on_site(tableau_username(local_user.username))
+            if not remote_user:
+                _add_new_user_to_HQ_group(session, local_user)
+            elif local_user.tableau_user_id != remote_user['id']:
+                _delete_user_remote(session, remote_user['id'])
+                _add_new_user_to_HQ_group(session, local_user)
+            elif local_user.role != remote_user['siteRole']:
+                _update_user_remote(session, local_user)
+
+        # Remove any remote users that don't exist locally
+        local_users_usernames = [tableau_username(user.username) for user in local_users]
+        for remote_user in remote_HQ_group_users:
+            if remote_user['name'] not in local_users_usernames:
+                _delete_user_remote(session, remote_user['id'])
 
     for domain in TABLEAU_USER_SYNCING.get_enabled_domains():
         # Sync the web users on HQ with the TableauUser model
