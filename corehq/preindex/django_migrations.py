@@ -53,7 +53,6 @@ class ReindexCouchViews(RunPython):
     def run(self, apps, schema_editor):
         call_command("preindex_everything", 8)
         call_command("sync_finish_couchdb_hq")
-        # TODO remove patch for ReindexCouchViews in HqdbContext when removing ptop_es_manage
         call_command("ptop_es_manage", flip_all_aliases=True)
 
 
