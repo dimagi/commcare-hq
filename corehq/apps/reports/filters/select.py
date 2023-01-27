@@ -130,7 +130,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        return [(r.repeater_id, f"{r.repeater_type}: {r.repeater_name}") for r in self._get_repeaters()]
+        return [(r.repeater_id, f"{r.repeater_type}: {r.name}") for r in self._get_repeaters()]
 
     def _get_repeaters(self):
         return SQLRepeater.objects.by_domain(self.domain)

@@ -1,7 +1,9 @@
+from pillowtop.es_utils import SMS_HQ_INDEX_NAME, ElasticsearchIndexInfo
+
+from corehq.apps.es.client import Tombstone
 from corehq.apps.es.sms import sms_adapter
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, SMS_HQ_INDEX_NAME
 
 SMS_INDEX = sms_adapter.index_name
 SMS_TYPE = sms_adapter.type
@@ -79,6 +81,9 @@ SMS_MAPPING = {
         },
         "xforms_session_couch_id": {
             "type": "string"
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
         }
     }
 }

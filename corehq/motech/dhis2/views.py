@@ -426,7 +426,7 @@ def config_dhis2_entity_repeater(request, domain, repeater_id):
             return JsonResponse({'success': _('DHIS2 Tracked Entity configuration saved')})
 
     else:
-        case_configs = repeater.dhis2_entity_config['case_configs']
+        case_configs = repeater.dhis2_entity_config.get('case_configs', [])
     return render(request, 'dhis2/dhis2_entity_config.html', {
         'domain': domain,
         'repeater_id': repeater_id,

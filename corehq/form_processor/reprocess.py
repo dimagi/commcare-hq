@@ -2,6 +2,7 @@ import logging
 from collections import namedtuple
 from datetime import datetime
 
+import settings
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -18,8 +19,6 @@ from dimagi.utils.couch import LockManager
 ReprocessingResult = namedtuple('ReprocessingResult', 'form cases ledgers error')
 
 logger = logging.getLogger('reprocess')
-
-MAX_CONTENT_LENGTH_FOR_REPROCESSING = 50 * 1024 * 1024
 
 
 class ReprocessingError(Exception):
@@ -53,10 +52,10 @@ def reprocess_unfinished_stub_with_form(stub, form, save=True, lock=True):
 
     try:
         attachment = form.get_attachment_meta('form.xml')
-        if attachment.content_length > MAX_CONTENT_LENGTH_FOR_REPROCESSING:
+        if attachment.content_length > settings.MAX_UPLOAD_SIZE:
             return ReprocessingResult(
                 form, None, None,
-                f"Refusing to reprocess form larger than {MAX_CONTENT_LENGTH_FOR_REPROCESSING} bytes")
+                f"Refusing to reprocess form larger than {settings.MAX_UPLOAD_SIZE} bytes")
     except AttachmentNotFound:
         pass
 

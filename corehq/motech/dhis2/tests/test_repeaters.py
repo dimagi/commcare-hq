@@ -3,8 +3,9 @@ from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
 
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from unittest import skip
+import uuid
 
 from django.test import SimpleTestCase, TestCase
 
@@ -13,8 +14,8 @@ from nose.tools import assert_equal, assert_true
 
 from corehq.motech.dhis2.const import DHIS2_MAX_KNOWN_GOOD_VERSION as KNOWN_GOOD
 from corehq.motech.dhis2.exceptions import Dhis2Exception
-from corehq.motech.dhis2.repeaters import Dhis2Repeater
-from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
+from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
+from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
 
 dhis2_version = "2.32.2"
@@ -170,24 +171,24 @@ class ApiVersionTests(SimpleTestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.just_now = datetime.now().isoformat(timespec='seconds') + 'Z'
+        self.just_now = datetime.now().isoformat() + 'Z'
 
     def test_major_minor_patch(self):
-        repeater = Dhis2Repeater.wrap({
+        repeater = SQLDhis2Repeater(**{
             "dhis2_version": "2.31.6",
             "dhis2_version_last_modified": self.just_now,
         })
         self.assertEqual(repeater.get_api_version(), 31)
 
     def test_major_minor(self):
-        repeater = Dhis2Repeater.wrap({
+        repeater = SQLDhis2Repeater(**{
             "dhis2_version": "2.31",
             "dhis2_version_last_modified": self.just_now,
         })
         self.assertEqual(repeater.get_api_version(), 31)
 
     def test_major_raises_exception(self):
-        repeater = Dhis2Repeater.wrap({
+        repeater = SQLDhis2Repeater(**{
             "dhis2_version": "2",
             "dhis2_version_last_modified": self.just_now,
         })
@@ -195,7 +196,7 @@ class ApiVersionTests(SimpleTestCase):
             repeater.get_api_version()
 
     def test_blank_raises_exception(self):
-        repeater = Dhis2Repeater.wrap({
+        repeater = SQLDhis2Repeater(**{
             "dhis2_version": "",
             "dhis2_version_last_modified": self.just_now,
         })
@@ -206,17 +207,18 @@ class ApiVersionTests(SimpleTestCase):
 class SlowApiVersionTest(TestCase):
 
     def setUp(self):
-        self.repeater = Dhis2Repeater.wrap({
-            "domain": "test-domain",
-            "url": "https://dhis2.example.com/",
-            "username": "admin",
-            "password": "district",
-        })
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_all_repeaters()
-        return super().tearDownClass()
+        self.conn = ConnectionSettings(
+            url="https://dhis2.example.com/",
+            username="admin",
+            password="district",
+            domain="test-domain"
+        )
+        self.conn.save()
+        self.repeater = SQLDhis2Repeater(
+            domain="test-domain",
+            connection_settings=self.conn,
+            repeater_id=uuid.uuid4().hex
+        )
 
     def test_none_fetches_metadata(self):
         self.assertIsNone(self.repeater.dhis2_version)

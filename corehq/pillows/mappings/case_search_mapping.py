@@ -1,8 +1,12 @@
+from pillowtop.es_utils import (
+    CASE_SEARCH_HQ_INDEX_NAME,
+    ElasticsearchIndexInfo,
+)
+
 from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.client import Tombstone
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import prefix_for_tests
-from pillowtop.es_utils import ElasticsearchIndexInfo, CASE_SEARCH_HQ_INDEX_NAME
-
 
 CASE_SEARCH_INDEX = case_search_adapter.index_name
 CASE_SEARCH_ALIAS = prefix_for_tests('case_search')
@@ -169,7 +173,10 @@ CASE_SEARCH_MAPPING = {
         "user_id": {
             "index": "not_analyzed",
             "type": "string"
-        }
+        },
+        Tombstone.PROPERTY_NAME: {
+            "type": "boolean"
+        },
     }
 }
 
