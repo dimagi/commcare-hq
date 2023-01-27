@@ -9,7 +9,7 @@ from corehq.motech.models import ConnectionSettings
 
 from ..const import RECORD_SUCCESS_STATE
 from ..models import (
-    SQLFormRepeater,
+    FormRepeater,
 )
 from ..views.repeat_record_display import RepeatRecordDisplay
 from .test_models import make_repeat_record
@@ -23,7 +23,7 @@ class RepeaterTestCase(TestCase):
         super().setUp()
         self.url = 'https://www.example.com/api/'
         conn = ConnectionSettings.objects.create(domain=DOMAIN, name=self.url, url=self.url)
-        self.repeater = SQLFormRepeater(
+        self.repeater = FormRepeater(
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
