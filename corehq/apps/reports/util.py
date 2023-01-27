@@ -498,7 +498,7 @@ def delete_tableau_user(domain, username):
     try:
         session = TableauAPISession.create_session_for_domain(domain)
         deleted_user_id = _delete_user_local(session, username)
-        session.delete_user(deleted_user_id)
+        _delete_user_remote(deleted_user_id)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
         notify_exception(None, str(e), details={
             'domain': domain
@@ -530,7 +530,12 @@ def update_tableau_user(domain, username, role=None, groups=[]):
     ).get(username=username)
     if role:
         user.role = role
-    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(username))
+    user.save()
+    _update_user_remote(session, user, groups)
+
+
+def _update_user_remote(session, user, groups=[]):
+    new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     user.tableau_user_id = new_id
     user.save()
     for group in groups:

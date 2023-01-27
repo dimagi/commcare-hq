@@ -303,7 +303,7 @@ class TableauAPISession(object):
                 return body
         else:
             error_code = None
-            if 400 <= response.status_code and response.status_code < 500:
+            if 400 <= response.status_code < 500:
                 error_code = json.loads(response.text)['error']['code']
             else:
                 error_code = response.status_code
@@ -384,7 +384,7 @@ class TableauAPISession(object):
         url = self.base_url + f'/sites/{self.site_id}/users?filter=name:eq:{username}'
         response_body = self._make_request(
             self.GET,
-            'Query Groups',
+            'Get User on Site',
             url,
             {}
         )
