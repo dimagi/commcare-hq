@@ -44,10 +44,6 @@ def form_filter_error(build):
             prev_form_filter = form_filter
 
 
-def all_builds(build):
-    return "error"
-
-
 def broken_suite_files(build):
     db = Application.get_db()
     code = Application._blobdb_type_code
@@ -75,7 +71,6 @@ CHECK_FUNCTIONS = {
     'broken_suite_files': broken_suite_files,
     'form_filter_error': form_filter_error,
     'premature_auto_gps': premature_auto_gps,
-    'all': all_builds,
 }
 
 
@@ -84,7 +79,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'check_function',
+            '--check_function',
             choices=list(CHECK_FUNCTIONS),
         )
         parser.add_argument(
@@ -109,9 +104,8 @@ class Command(BaseCommand):
             help='End date',
         )
 
-    def handle(self, check_function, **options):
-        check_fn = CHECK_FUNCTIONS[check_function]
-
+    def handle(self, **options):
+        check_fn = CHECK_FUNCTIONS.get(options['check_function'])
         start = options['startdate']
         end = options['enddate']
         ids = options['build_ids']
@@ -125,7 +119,7 @@ class Command(BaseCommand):
         print('Checking {} builds\n'.format(len(ids)))
         reason = input("Reason to use as build_broken_reason (leave blank to skip flagging)? ")
 
-        for message in find_broken_builds(check_fn, ids, reason):
+        for message in find_broken_builds(ids, check_fn, reason):
             self.stderr.write(message)
 
 
@@ -140,9 +134,9 @@ def get_build_ids(start, end):
     return builds_ids
 
 
-def find_broken_builds(checker, builds_ids, reason=None):
+def find_broken_builds(builds_ids, checker=None, reason=None):
     for build in iter_docs(Application.get_db(), builds_ids):
-        error = checker(build)
+        error = checker(build) if checker else "error"
         if error:
             yield '%s\t%s\t%s\t%s\t%s\n' % (
                 build.get('built_on'),
