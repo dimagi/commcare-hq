@@ -761,7 +761,7 @@ class ElasticDocumentAdapter(BaseAdapter):
             raise ValueError(f"Invalid 'refresh' value, expected bool, got {refresh!r}")
         return "true" if refresh else "false"
 
-    def bulk(self, actions, refresh=False, **kw):
+    def bulk(self, actions, refresh=False, raise_errors=True):
         """Use the Elasticsearch library's ``bulk()`` helper function to process
         documents en masse.
 
@@ -771,40 +771,40 @@ class ElasticDocumentAdapter(BaseAdapter):
         :param actions: iterable of ``BulkActionItem`` instances
         :param refresh: ``bool`` refresh the effected shards to make this
                         operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param raise_errors: whether or not exceptions should be raised if bulk
+            actions fail. The default (``True``) matches that of the
+            elasticsearch-py library's ``bulk()`` helper function (i.e. raise).
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         payload = [self._render_bulk_action(action) for action in actions]
-        return bulk(self._es, payload, refresh=self._refresh_value(refresh), **kw)
+        return bulk(
+            self._es,
+            payload,
+            refresh=self._refresh_value(refresh),
+            raise_on_exception=raise_errors,
+            raise_on_error=raise_errors,
+        )
 
-    def bulk_index(self, docs, refresh=False, **kw):
+    def bulk_index(self, docs, **bulk_kw):
         """Convenience method for bulk indexing many documents without the
         BulkActionItem boilerplate.
 
         :param docs: iterable of (Python model) documents to be indexed
-        :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param **bulk_kw: extra parameters passed verbatim to the
+            ``ElasticDocumentAdapter.bulk()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.index(doc) for doc in docs)
-        return self.bulk(action_gen, refresh, **kw)
+        return self.bulk(action_gen, **bulk_kw)
 
-    def bulk_delete(self, doc_ids, refresh=False, **kw):
+    def bulk_delete(self, doc_ids, **bulk_kw):
         """Convenience method for bulk deleting many documents by ID without the
         BulkActionItem boilerplate.
 
         :param doc_ids: iterable of document IDs to be deleted
-        :param refresh: ``bool`` refresh the effected shards to make this
-                        operation visible to search
-        :param **kw: extra parameters passed directly to the underlying
-                     ``elasticsearch.helpers.bulk()`` function.
+        :param **bulk_kw: extra parameters passed verbatim to the
+            ``ElasticDocumentAdapter.bulk()`` method.
         """
-        # TODO: remove **kw and standardize which arguments HQ uses
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
-        return self.bulk(action_gen, refresh, **kw)
+        return self.bulk(action_gen, **bulk_kw)
 
     def _render_bulk_action(self, action):
         """Return a "raw" action object in the format required by the
