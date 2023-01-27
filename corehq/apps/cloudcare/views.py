@@ -474,7 +474,7 @@ def report_formplayer_error(request, domain):
             'domain': domain,
             'cloudcare_env': data.get('cloudcareEnv'),
         })
-        message = data.get("readableErrorMessage") or "request failure in web form session"
+        message = data.get("message") or "request failure in web form session"
         thread_topic = _message_to_sentry_thread_topic(message)
         notify_error(message=f'[Cloudcare] {thread_topic}', details=data)
     elif error_type == 'show_error_notification':
