@@ -46,7 +46,7 @@ def get_instance_and_attachment(request):
             raise MultipartFilenameError()
         else:
             if instance_file.size > settings.MAX_UPLOAD_SIZE:
-                logging.info("Domain {request.domain} attempted to submit a form exceeding 50MB")
+                logging.info("Domain {request.domain} attempted to submit a form exceeding the allowed size")
                 raise PayloadTooLarge()
             if not _valid_file_extension(instance_file):
                 raise InvalidSubmissionFileExtensionError()
