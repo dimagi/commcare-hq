@@ -18,6 +18,8 @@ from requests import RequestException
 from corehq import privileges, toggles
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
+from corehq.apps.hqwebapp.doc_info import get_doc_info
+from corehq.apps.hqwebapp.doc_lookup import lookup_doc_id
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import HqPermissions
@@ -81,8 +83,16 @@ class MotechLogDetailView(BaseProjectSettingsView, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        result = lookup_doc_id(context['log'].payload_id)
+        has_permission = False
+        if result:
+            doc_info = get_doc_info(result.doc)
+            if doc_info:
+                user = self.request.couch_user
+                has_permission = doc_info.user_has_permissions(context['log'].domain, user, result.doc)
+
         context.update({
-            "is_dimagi": self.request.couch_user.is_dimagi
+            "has_permission": has_permission,
         })
         return context
 
