@@ -2,6 +2,7 @@ import sys
 
 from django.conf import settings
 from django.core.management import color_style
+from django.utils.functional import cached_property
 
 from corehq.apps.domain.models import Domain
 
