@@ -39,19 +39,13 @@ class DeletedDomains:
     and active domains.
     """
 
-    def __init__(self, deleted_domains=None, active_domains=None):
-        self._deleted_domains = deleted_domains
-        self._active_domains = active_domains
+    @cached_property
+    def _deleted_domains(self):
+        return Domain.get_deleted_domain_names()
 
-    def get_deleted_domains(self):
-        if not self._deleted_domains:
-            self._deleted_domains = Domain.get_deleted_domain_names()
-        return self._deleted_domains
-
-    def get_active_domains(self):
-        if not self._active_domains:
-            self._active_domains = set(Domain.get_all_names())
-        return self._active_domains
+    @cached_property
+    def _active_domains(self):
+        return set(Domain.get_all_names())
 
     def is_domain_deleted(self, domain):
-        return domain in self.get_deleted_domains() and domain not in self.get_active_domains()
+        return domain in self._deleted_domains and domain not in self._active_domains
