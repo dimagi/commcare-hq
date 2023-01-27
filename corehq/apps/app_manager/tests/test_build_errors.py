@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from django.test import SimpleTestCase
 
+from corehq import privileges
 from corehq.apps.app_manager.const import (
     REGISTRY_WORKFLOW_LOAD_CASE,
     REGISTRY_WORKFLOW_SMART_LINK,
@@ -21,7 +22,7 @@ from corehq.apps.app_manager.models import (
     Module,
 )
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import flag_enabled, privilege_enabled
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -282,7 +283,7 @@ class BuildErrorsTest(SimpleTestCase):
             'form': {'id': 0, 'name': {'en': 'register form 0'}},
         }, errors)
 
-    @flag_enabled('FORM_LINK_WORKFLOW')
+    @privilege_enabled(privileges.FORM_LINK_WORKFLOW)
     def test_form_link_validation_ok(self, *args):
         factory = AppFactory(build_version='2.24.0', include_xmlns=True)
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
@@ -297,7 +298,7 @@ class BuildErrorsTest(SimpleTestCase):
         errors = factory.app.validate_app()
         self.assertNotIn('bad form link', [error['type'] for error in errors])
 
-    @flag_enabled('FORM_LINK_WORKFLOW')
+    @privilege_enabled(privileges.FORM_LINK_WORKFLOW)
     def test_form_link_validation_mismatched_module(self, *args):
         factory = AppFactory(build_version='2.24.0', include_xmlns=True)
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
@@ -318,7 +319,7 @@ class BuildErrorsTest(SimpleTestCase):
             'form': {'id': 0, 'name': {'en': 'm0 form 0'}},
         }, errors)
 
-    @flag_enabled('FORM_LINK_WORKFLOW')
+    @privilege_enabled(privileges.FORM_LINK_WORKFLOW)
     def test_form_link_validation_shadow_module_ok(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('parent', 'mother')
@@ -334,7 +335,7 @@ class BuildErrorsTest(SimpleTestCase):
         errors = factory.app.validate_app()
         self.assertNotIn('bad form link', [error['type'] for error in errors])
 
-    @flag_enabled('FORM_LINK_WORKFLOW')
+    @privilege_enabled(privileges.FORM_LINK_WORKFLOW)
     def test_form_link_validation_mismatched_shadow_module(self, *args):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'mother')
