@@ -154,9 +154,22 @@ def get_tracked_entity_and_etag(requests, case_trigger_info, case_config):
                 '{n} tracked entity instances were found for case {case}'
             ).format(n=len(tracked_entities), case=case_trigger_info))
         tei_id = tracked_entities[0]["trackedEntityInstance"]
-    return get_tracked_entity_instance_and_etag_by_id(
+    tracked_entity, etag = get_tracked_entity_instance_and_etag_by_id(
         requests, tei_id, case_trigger_info
     )
+    if 'attributes' not in tracked_entity:
+        # `tracked_entity` looks something like:
+        #     {
+        #         "deleted": false,
+        #         "inactive": false,
+        #         "lastUpdatedAtClient": "2023-01-09T12:53:58.290"
+        #     }
+        # Add the keys that we need
+        tracked_entity.update({
+            'attributes': [],
+            'trackedEntityInstance': tei_id,
+        })
+    return tracked_entity, etag
 
 
 def get_tracked_entity_instance_id(case_trigger_info, case_config):
