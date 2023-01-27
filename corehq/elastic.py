@@ -2,10 +2,9 @@ from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 from corehq.apps.es.client import get_client
 from corehq.apps.es.exceptions import ESError  # noqa: F401
-from corehq.apps.es.transient_util import (  # noqa: F401
+from corehq.apps.es.transient_util import (
     index_info_from_cname,
     doc_adapter_from_info,
-    report_and_fail_on_shard_failures,
 )
 
 
