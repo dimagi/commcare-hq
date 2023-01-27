@@ -38,7 +38,7 @@ hqDefine('users/js/filtered_download', [
         });
         self.statsText = ko.computed(function () {
             var template = self.user_count() === 1 ? gettext("<%- user_count %> user") : gettext("<%- user_count %> users");
-            if (self.group_count() !== 0) {
+            if (self.group_count() !== 0 && self.columns() !== 'usernames') {
                 template += self.group_count() === 1 ? gettext(" and <%- group_count %> group") : gettext(" and <%- group_count %> groups");
             }
             return _.template(template)({

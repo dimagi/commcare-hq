@@ -1569,7 +1569,7 @@ class UserFilterForm(forms.Form):
         required=False,
         label=gettext_noop("Columns"),
         choices=COLUMNS_CHOICES,
-        widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=False),
+        widget=SelectToggle(choices=COLUMNS_CHOICES, attrs={'ko_value': 'columns'}),
     )
     domains = forms.MultipleChoiceField(
         required=False,
