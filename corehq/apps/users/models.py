@@ -87,6 +87,7 @@ from corehq.apps.users.util import (
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.models import CommCareCase
+from corehq.toggles import TABLEAU_USER_SYNCING
 from corehq.util.dates import get_timestamp
 from corehq.util.models import BouncedEmail
 from corehq.util.quickcache import quickcache
@@ -2356,6 +2357,18 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                                  by_domain_required_for_log=by_domain_required_for_log)
         return web_user
 
+    def add_domain_membership(self, domain, timezone=None, **kwargs):
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            from corehq.apps.reports.util import add_tableau_user
+            add_tableau_user(domain, self.username)
+        super().add_domain_membership(domain, timezone, **kwargs)
+
+    def delete_domain_membership(self, domain, create_record=False):
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            from corehq.apps.reports.util import delete_tableau_user
+            delete_tableau_user(domain, self.username)
+        return super().delete_domain_membership(domain, create_record=create_record)
+
     def is_commcare_user(self):
         return False
 
@@ -2405,6 +2418,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             web_user = cls.wrap(user_doc)
             if web_user.is_domain_admin(domain):
                 yield web_user
+
+    @classmethod
+    def get_billing_admins_by_domain(cls, domain):
+        from corehq.apps.users.role_utils import UserRolePresets
+        users = cls.by_domain(domain)
+        for user in users:
+            if user.role_label(domain) == UserRolePresets.BILLING_ADMIN:
+                yield user
 
     @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
@@ -2723,6 +2744,9 @@ class DomainRemovalRecord(DeleteRecord):
         user.domain_memberships.append(self.domain_membership)
         user.domains.append(self.domain)
         user.save()
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            from corehq.apps.reports.util import add_tableau_user
+            add_tableau_user(self.domain, user.username)
 
 
 class UserReportingMetadataStaging(models.Model):
@@ -3069,3 +3093,38 @@ class DeactivateMobileWorkerTrigger(models.Model):
         if not existing_trigger.exists():
             return None
         return existing_trigger.first().deactivate_after
+
+
+def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
+    ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                                "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
+    ENTERPRISE_LIMIT = -1
+    if plan_limit == ENTERPRISE_LIMIT:
+        return
+
+    WARNING_PERCENT = 0.9
+    if user_count >= plan_limit > prev_count:
+        at_capacity = True
+    elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
+        at_capacity = False
+    else:
+        return
+
+    billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
+    admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
+
+    if at_capacity:
+        subject = _("User count has reached the Plan limit for {}").format(domain)
+    else:
+        subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
+    send_html_email_async(
+        subject,
+        set(admins + billing_admins),
+        render_to_string('users/email/user_limit_notice.html', context={
+            'at_capacity': at_capacity,
+            'url': ADDITIONAL_USERS_PRICING,
+            'user_count': user_count,
+            'plan_limit': plan_limit,
+        }),
+    )
+    return

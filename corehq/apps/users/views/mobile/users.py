@@ -35,6 +35,7 @@ from corehq.apps.accounting.models import (
     BillingAccount,
     BillingAccountType,
     EntryPoint,
+    Subscription,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.analytics.tasks import track_workflow
@@ -94,6 +95,7 @@ from corehq.apps.users.models import (
     CommCareUser,
     CouchUser,
     DeactivateMobileWorkerTrigger,
+    check_and_send_limit_email
 )
 from corehq.apps.users.models_role import UserRole
 from corehq.apps.users.tasks import (
@@ -756,6 +758,9 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             phone_number = self.new_mobile_worker_form.cleaned_data['phone_number']
             couch_user.set_default_phone_number(phone_number)
             send_account_confirmation_sms_if_necessary(couch_user)
+
+        plan_limit, user_count = Subscription.get_plan_and_user_count_by_domain(self.domain)
+        check_and_send_limit_email(self.domain, plan_limit, user_count, user_count - 1)
         return {
             'success': True,
             'user_id': couch_user.userID,

@@ -2387,3 +2387,15 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
 )
+
+TABLEAU_USER_SYNCING = StaticToggle(
+    'tableau_user_syncing',
+    'Automatically sync HQ users with users on Tableau',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
+    will be added/deleted/updated on the linked Tableau server.
+    """,
+    parent_toggles=[EMBEDDED_TABLEAU]
+)

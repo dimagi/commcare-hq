@@ -1971,6 +1971,14 @@ class Subscription(models.Model):
         else:
             return True
 
+    @classmethod
+    def get_plan_and_user_count_by_domain(cls, domain):
+        from corehq.apps.accounting.usage import FeatureUsageCalculator
+        subscription = cls.get_active_subscription_by_domain(domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        user_rate = next(rate for rate in plan_version.feature_rates.all() if rate.feature.feature_type == 'User')
+        return user_rate.monthly_limit, FeatureUsageCalculator(user_rate, domain).get_usage()
+
 
 class InvoiceBaseManager(models.Manager):
 

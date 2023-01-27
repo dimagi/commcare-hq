@@ -1,6 +1,7 @@
-from collections import namedtuple
-import uuid
 import datetime
+import uuid
+from collections import namedtuple
+
 from django.test import SimpleTestCase
 
 from corehq.apps.es.client import manager
