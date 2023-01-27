@@ -1,12 +1,9 @@
 hqDefine("cloudcare/js/preview_app/main", function () {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
         previewApp = hqImport("cloudcare/js/preview_app/preview_app"),
-        utils = hqImport("cloudcare/js/utils"),
-        sentry = hqImport("cloudcare/js/sentry");
+        utils = hqImport("cloudcare/js/utils");
 
     $(function () {
-        sentry.initSentry();
-
         window.MAPBOX_ACCESS_TOKEN = initialPageData.get('mapbox_access_token'); // maps api is loaded on-demand
         previewApp.start({
             apps: [initialPageData.get('app')],
