@@ -68,7 +68,7 @@ class Command(BaseCommand):
             task_id = start_reindex(es, source_index, target_index)
         else:
             task_id = options["monitor_task_id"]
-        check_task_progress(es, task_id)
+        check_task_progress(task_id)
 
         print("\nReindex task complete.")
         source_count = _get_doc_count(es, source_index)
@@ -117,19 +117,8 @@ def _initialize_target(es, target_index_info):
 
 
 def start_reindex(es, source_index, target_index):
-    reindex_query = {
-        "source": {
-            "index": source_index,
-        },
-        "dest": {
-            "index": target_index
-        },
-        "conflicts": "proceed"
-    }
-
-    result = manager.reindex(reindex_query, wait_for_completion=False)
-    task_id = result["task"]
-    return task_id
+    result = manager.reindex(source_index, target_index, wait_for_completion=False)
+    return result
 
 
 def _get_doc_count(es, index):
