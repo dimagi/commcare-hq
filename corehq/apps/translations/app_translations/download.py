@@ -248,7 +248,7 @@ def get_case_search_rows(langs, module, domain):
 
 def get_module_detail_rows(langs, module, domain):
     rows = []
-    rows += _get_module_detail_no_items_text(langs, module.case_details.short, domain)
+    rows += _get_module_detail_no_items_text(langs, module, domain)
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
@@ -258,12 +258,14 @@ def get_module_detail_rows(langs, module, domain):
     return rows
 
 
-def _get_module_detail_no_items_text(langs, detail, domain):
-    if not toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(domain):
+def _get_module_detail_no_items_text(langs, module, domain):
+    app = module.get_app()
+    short_detail = module.case_details.short
+    if not (toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(domain) and app.supports_ush_empty_case_list_text_2_54):
         return []
     return [
         ("no_items_text", "list")
-        + tuple(detail.no_items_text.get(lang, '') for lang in langs)
+        + tuple(short_detail.no_items_text.get(lang, '') for lang in langs)
     ]
 
 
