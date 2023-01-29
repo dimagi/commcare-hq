@@ -89,4 +89,5 @@ branches:
     - pkv/accessibility-tree-change-1932 # Pawan Jan 27
     - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
     - revert-32548-revert-32435-sk/sentry-js  # Simon Jan 27
+    - akj/ush-1508-checkbox-accessibility # Akash Jan 29
 submodules: { }
