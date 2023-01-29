@@ -1230,7 +1230,6 @@ TEMPLATES = [
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
-                'corehq.util.context_processors.sentry',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -2025,11 +2024,10 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
-COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
+    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
