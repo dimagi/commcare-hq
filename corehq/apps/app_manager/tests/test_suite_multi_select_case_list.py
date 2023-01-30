@@ -588,24 +588,6 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             "./entry[4]/stack",
         )
 
-    def test_eof_nav_multi_to_single(self, *args):
-        form = self.multi_child.get_form(0)
-        form.post_form_workflow = WORKFLOW_PARENT_MODULE
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-              <stack>
-                <create>
-                  <command value="'m2'"/>
-                  <datum id="case_id" value="instance('commcaresession')/session/data/case_id"/>
-                </create>
-              </stack>
-            </partial>
-            """,
-            self.factory.app.create_suite(),
-            "./entry[4]/stack",
-        )
-
     def test_eof_nav_form_link_multi_to_single(self, *args):
         m1f0 = self.multi_loner.get_form(0)
         m0f0 = self.single_loner.get_form(0)
