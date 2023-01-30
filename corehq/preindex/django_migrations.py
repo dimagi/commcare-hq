@@ -32,30 +32,6 @@ LOCK_PREAMBLE = """\
 """
 
 
-class ReindexCouchViews(RunPython):
-    """Reindex Couch DB views and Elasticsearch indexes
-
-    Use as needed whenever Couch views are changed and need to be
-    reindexed. This operation may take a long time, depending on what is
-    being reindexed.
-
-    It is planned for the Elasticsearch index building features to move
-    to migration operations dedicated to that purpose alone.
-    See corehq/apps/es/migration_operations.py
-    """
-
-    def __init__(self):
-        super().__init__(self.run, RunPython.noop)
-
-    def deconstruct(self):
-        return (self.__class__.__qualname__, [], {})
-
-    def run(self, apps, schema_editor):
-        call_command("preindex_everything", 8)
-        call_command("sync_finish_couchdb_hq")
-        call_command("ptop_es_manage", flip_all_aliases=True)
-
-
 def iter_couch_lock_lines(preamble=LOCK_PREAMBLE):
     yield from preamble.splitlines(keepends=True)
     seen = set()
@@ -97,3 +73,27 @@ def sha256sum(filename):
         while n := f.readinto(mv):
             h.update(mv[:n])
     return h.hexdigest()
+
+
+class ReindexCouchViews(RunPython):
+    """Reindex Couch DB views and Elasticsearch indexes
+
+    Use as needed whenever Couch views are changed and need to be
+    reindexed. This operation may take a long time, depending on what is
+    being reindexed.
+
+    It is planned for the Elasticsearch index building features to move
+    to migration operations dedicated to that purpose alone.
+    See corehq/apps/es/migration_operations.py
+    """
+
+    def __init__(self):
+        super().__init__(self.run, RunPython.noop)
+
+    def deconstruct(self):
+        return (self.__class__.__qualname__, [], {})
+
+    def run(self, apps, schema_editor):
+        call_command("preindex_everything", 8)
+        call_command("sync_finish_couchdb_hq")
+        call_command("ptop_es_manage", flip_all_aliases=True)
