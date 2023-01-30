@@ -158,10 +158,10 @@ def get_case_owners(request, domain, mobile_user_and_group_slugs):
     return owner_ids
 
 
-def _get_location_accessible_ids(request):
+def _get_location_accessible_ids(domain, couch_user):
     accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
-        request.domain,
-        request.couch_user
+        domain,
+        couch_user
     ))
     accessible_user_ids = mobile_user_ids_at_locations(accessible_location_ids)
     accessible_ids = accessible_user_ids + list(accessible_location_ids)
@@ -169,10 +169,16 @@ def _get_location_accessible_ids(request):
 
 
 def query_location_restricted_cases(query, request):
-    accessible_ids = _get_location_accessible_ids(request)
+    accessible_ids = _get_location_accessible_ids(
+        request.domain,
+        request.couch_user,
+    )
     return query.filter(case_es.owner(accessible_ids))
 
 
 def query_location_restricted_forms(query, request):
-    accessible_ids = _get_location_accessible_ids(request)
+    accessible_ids = _get_location_accessible_ids(
+        request.domain,
+        request.couch_user,
+    )
     return query.filter(form_es.user_id(accessible_ids))
