@@ -36,7 +36,7 @@ from .dbaccessors import (
 )
 from .models import (
     RepeatRecord,
-    SQLRepeater,
+    Repeater,
     domain_can_forward,
     get_payload,
     send_request,
@@ -221,7 +221,7 @@ def process_repeater(repeater_id: int):
     This function assumes that ``repeater`` checks have already
     been performed. Call via ``models.attempt_forward_now()``.
     """
-    repeater = SQLRepeater.objects.get(id=repeater_id)
+    repeater = Repeater.objects.get(id=repeater_id)
     with CriticalSection(
         [f'process-repeater-{repeater.repeater_id}'],
         fail_hard=False, block=False, timeout=5 * 60 * 60,
