@@ -982,7 +982,11 @@ class ODataCaseResource(BaseODataResource):
         if not bundle.request.couch_user.has_permission(
             domain, 'access_all_locations'
         ):
-            query = query_location_restricted_cases(query, bundle.request)
+            query = query_location_restricted_cases(
+                query,
+                bundle.request.domain,
+                bundle.request.couch_user,
+            )
 
         return query
 
