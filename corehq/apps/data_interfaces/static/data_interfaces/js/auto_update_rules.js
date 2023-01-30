@@ -100,6 +100,17 @@ hqDefine("data_interfaces/js/auto_update_rules", [
             self.modalModel(model);
         };
 
+        self.has_linked_data = initialPageData.get('has_linked_data');
+
+        self.unlockLinkedData = ko.observable(false);
+        self.toggleLinkedLock = function () {
+            self.unlockLinkedData(!self.unlockLinkedData());
+        };
+
+        self.hasLinkedModels = ko.pureComputed(function () {
+            return self.rules().some(rule => rule.upstream_id());
+        });
+
         return self;
     };
 
