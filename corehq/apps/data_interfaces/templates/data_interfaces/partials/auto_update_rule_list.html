@@ -9,6 +9,21 @@
     </button>
   </a>
 
+  <p class="pull-right" id="lock-container" data-bind="if: hasLinkedModels">
+    <span data-bind="ifnot: unlockLinkedData">
+      <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+        <i class="fa fa-link"></i>
+        {% trans 'Unlock Linked Rules For Me' %}
+      </button>
+    </span>
+    <span data-bind="if: unlockLinkedData">
+      <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+        <i class="fa fa-link"></i>
+        {% trans "Lock Linked Rules For Me" %}
+      </button>
+    </span>
+  </p>
+
   <div class="spacer"></div>
 
   <div class="panel panel-default">
@@ -21,21 +36,20 @@
           <th>{% trans "Status" %}</th>
           <th>{% trans "Last Run" %}</th>
           <th>{% trans "Action" %}</th>
+          <!-- ko if: $root.has_linked_data -->
+            <th></th> <!-- Empty linked header -->
+          <!-- /ko -->
         </tr>
         </thead>
         <tbody data-bind="foreach: paginatedRules">
           <tr>
             <td>
-              <span data-bind="if: upstream_id">
-                <a data-bind="attr: {href: view_url}">
-                  <strong data-bind="text: name"></strong>
-                </a>
-              </span>
-              <span data-bind="ifnot: upstream_id">
-                <a data-bind="attr: {href: edit_url}">
-                  <strong data-bind="text: name"></strong>
-                </a>
-              </span>
+              <!-- ko if: upstream_id() && !$root.unlockLinkedData() -->
+                <a data-bind="attr: {href: view_url}"><strong data-bind="text: name"></strong></a>
+              <!-- /ko -->
+              <!-- ko ifnot: upstream_id() && !$root.unlockLinkedData() -->
+                  <a data-bind="attr: {href: edit_url}"><strong data-bind="text: name"></strong></a>
+              <!-- /ko -->
             </td>
             <td data-bind="text: case_type"></td>
             <td>
@@ -44,14 +58,16 @@
             </td>
             <td data-bind="text: last_run"></td>
             <td>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active()">
+              <button type="button" class="btn btn-default"
+                data-bind="click: $root.updateRule.bind($data, 'activate'), visible: !active(), enable: !upstream_id() || $root.unlockLinkedData">
                 {% trans "Activate" %}
               </button>
-              <button type="button" class="btn btn-default" data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active()">
+              <button type="button" class="btn btn-default"
+                data-bind="click: $root.updateRule.bind($data, 'deactivate'), visible: active(), enable: !upstream_id() || $root.unlockLinkedData">
                 {% trans "Deactivate" %}
               </button>
               <button type="button" data-toggle="modal" class="btn btn-danger"
-                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }">
+                      data-bind="attr: { 'data-target': '#delete-rule-' + id() }, enable: !upstream_id() || $root.unlockLinkedData">
                 <i class="fa fa-remove"></i>
                 {% trans "Delete" %}
               </button>
@@ -88,6 +104,11 @@
                 <span data-bind="text: action_error"></span>
               </p>
             </td>
+            <!-- ko if: $root.has_linked_data -->
+              <td data-bind="if: upstream_id">
+                <i class="fa fa-link"></i>
+              </td>
+            <!-- /ko -->
           </tr>
         </tbody>
       </table>
