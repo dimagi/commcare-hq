@@ -2385,6 +2385,7 @@ EMBED_TABLEAU_REPORT_BY_USER = StaticToggle(
     description='By default, a Tableau username "HQ/{role name}" is sent to Tableau to get the embedded report. '
                 'Turn on this flag to instead send "HQ/{the user\'s HQ username}", i.e. "HQ/jdoe@dimagi.com", '
                 'to Tableau to get the embedded report.',
+    parent_toggles=[EMBEDDED_TABLEAU]
 )
 
 APPLICATION_RELEASE_LOGS = StaticToggle(
@@ -2404,5 +2405,5 @@ TABLEAU_USER_SYNCING = StaticToggle(
     Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
     will be added/deleted/updated on the linked Tableau server.
     """,
-    parent_toggles=[EMBEDDED_TABLEAU]
+    parent_toggles=[EMBEDDED_TABLEAU, EMBED_TABLEAU_REPORT_BY_USER]
 )
