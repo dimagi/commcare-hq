@@ -91,4 +91,5 @@ branches:
     - revert-32548-revert-32435-sk/sentry-js  # Simon Jan 27
     - akj/ush-1508-checkbox-accessibility # Akash Jan 29
     - jls/remove-a-lot-of-wrapping # Jenny Jan 30
+    - revert-32543-revert-32491-jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 30
 submodules: { }
