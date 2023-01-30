@@ -75,12 +75,11 @@ def sha256sum(filename):
     return h.hexdigest()
 
 
-class ReindexCouchViews(RunPython):
-    """Reindex Couch DB views and Elasticsearch indexes
+class RequestReindex(RunPython):
+    """Set flag to trigger reindex of Couch views and Elasticsearch indexes
 
     Use as needed whenever Couch views are changed and need to be
-    reindexed. This operation may take a long time, depending on what is
-    being reindexed.
+    reindexed.
 
     It is planned for the Elasticsearch index building features to move
     to migration operations dedicated to that purpose alone.
@@ -94,6 +93,18 @@ class ReindexCouchViews(RunPython):
         return (self.__class__.__qualname__, [], {})
 
     def run(self, apps, schema_editor):
-        call_command("preindex_everything", 8)
-        call_command("sync_finish_couchdb_hq")
-        call_command("ptop_es_manage", flip_all_aliases=True)
+        global should_reindex
+        should_reindex = True
+
+
+should_reindex = False
+
+
+def run_reindex():
+    # This may take a long time, depending on what is being reindexed.
+    call_command("preindex_everything", 8)
+    call_command("sync_finish_couchdb_hq")
+    call_command("ptop_es_manage", flip_all_aliases=True)
+
+    global should_reindex
+    should_reindex = False

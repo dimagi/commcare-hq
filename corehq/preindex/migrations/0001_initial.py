@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        corehq.preindex.django_migrations.ReindexCouchViews(
+        corehq.preindex.django_migrations.RequestReindex(
         ),
     ]
