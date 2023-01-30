@@ -15,9 +15,9 @@
       </tbody>
     </table>
   </div>
-  <div class="pull-right">
-      <ul id="sessions-paginator" class="pagination-sm"></ul>
-  </div>
+  <% if (endPage) { %>
+    {% include 'formplayer/pagination.html' %}
+  <% } %>
 </script>
 
 <script type="text/template" id="session-view-list-web-apps-template">
@@ -38,9 +38,9 @@
       </tbody>
     </table>
   </div>
-  <div class="pull-right">
-      <ul id="sessions-paginator" class="pagination-lg"></ul>
-  </div>
+  <% if (endPage) { %>
+    {% include 'formplayer/pagination.html' %}
+  <% } %>
 </script>
 
 <script type="text/template" id="session-view-item-template">
