@@ -60,6 +60,7 @@ class CaseProperty(models.Model):
         related_query_name='property'
     )
     name = models.CharField(max_length=255, default=None)
+    label = models.CharField(max_length=255, default='', blank=True)
     description = models.TextField(default='', blank=True)
     deprecated = models.BooleanField(default=False)
     data_type = models.CharField(
