@@ -11,7 +11,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.repeaters.models import OptionValue, SQLCaseRepeater
+from corehq.motech.repeaters.models import OptionValue, CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )
@@ -32,7 +32,7 @@ from .repeater_helpers import (
 )
 
 
-class SQLFHIRRepeater(SQLCaseRepeater):
+class FHIRRepeater(CaseRepeater):
     class Meta:
         proxy = True
         app_label = 'repeaters'

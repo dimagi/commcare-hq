@@ -9,7 +9,7 @@ from corehq.apps.users.models import WebUser
 from corehq.motech.dhis2.const import DHIS2_DATA_TYPE_DATE, LOCATION_DHIS_ID
 from corehq.motech.dhis2.events_helpers import get_event
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.value_source import CaseTriggerInfo, get_form_question_values
 
@@ -96,7 +96,7 @@ class TestDhis2EventsHelpers(TestCase):
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
         conn = ConnectionSettings.objects.create(url="http://dummy.com", domain=DOMAIN)
-        self.repeater = SQLDhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
+        self.repeater = Dhis2Repeater(domain=DOMAIN, connection_settings_id=conn.id)
         self.repeater.dhis2_config['form_configs'] = data['form_configs']
         self.repeater.save()
 

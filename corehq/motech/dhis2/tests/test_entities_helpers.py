@@ -26,7 +26,7 @@ from corehq.motech.dhis2.entities_helpers import (
     validate_tracked_entity,
 )
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.exceptions import ConfigurationError
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.requests import Requests
@@ -157,7 +157,7 @@ class TestDhis2EntitiesHelpers(TestCase):
         config_form = Dhis2ConfigForm(data=config)
         self.assertTrue(config_form.is_valid())
         data = config_form.cleaned_data
-        repeater = SQLDhis2Repeater(domain=DOMAIN)
+        repeater = Dhis2Repeater(domain=DOMAIN)
         conn = ConnectionSettings(domain=DOMAIN, url="http://dummy.com")
         conn.save()
         repeater.dhis2_config['form_configs'] = data['form_configs']

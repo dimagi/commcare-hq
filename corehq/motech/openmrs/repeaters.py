@@ -40,7 +40,7 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import OptionValue, SQLCaseRepeater
+from corehq.motech.repeaters.models import OptionValue, CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -61,7 +61,7 @@ class AtomFeedStatus(DocumentSchema):
     last_page = StringProperty(default='recent')
 
 
-class SQLOpenmrsRepeater(SQLCaseRepeater):
+class OpenmrsRepeater(CaseRepeater):
     """
     ``OpenmrsRepeater`` is responsible for updating OpenMRS patients
     with changes made to cases in CommCare. It is also responsible for
@@ -148,7 +148,7 @@ class SQLOpenmrsRepeater(SQLCaseRepeater):
         case_blocks = extract_case_blocks(payload)
         case_ids = [case_block['@case_id'] for case_block in case_blocks]
         cases = CommCareCase.objects.get_cases(case_ids, payload.domain, ordered=True)
-        if not any(SQLCaseRepeater.allowed_to_forward(self, case) for case in cases):
+        if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
             # If none of the case updates in the payload are allowed to
             # be forwarded, drop it.
             return False
@@ -287,7 +287,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
 
 
 def create_openmrs_repeat_records(sender, xform, **kwargs):
-    create_repeat_records(SQLOpenmrsRepeater, xform)
+    create_repeat_records(OpenmrsRepeater, xform)
 
 
 successful_form_received.connect(create_openmrs_repeat_records)
