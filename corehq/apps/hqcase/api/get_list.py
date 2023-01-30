@@ -68,7 +68,7 @@ COMPOUND_FILTERS = {
 }
 
 
-def get_list(domain, params):
+def get_list(domain, couch_user, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string).dict()

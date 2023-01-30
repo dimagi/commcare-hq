@@ -26,6 +26,7 @@ BAD_GUYS_ID = str(uuid.uuid4())
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
+    couch_user = object()
 
     @classmethod
     def setUpClass(cls):
@@ -75,7 +76,11 @@ class TestCaseListAPI(TestCase):
         super().tearDownClass()
 
     def test_pagination(self):
-        res = get_list(self.domain, {"limit": "3", "case_type": "person"})
+        res = get_list(
+            self.domain,
+            self.couch_user,
+            {"limit": "3", "case_type": "person"},
+        )
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
@@ -89,7 +94,7 @@ class TestCaseListAPI(TestCase):
         self.assertIn('indexed_on.gte', cursor)
         self.assertIn('last_case_id', cursor)
 
-        res = get_list(self.domain, res['next'])
+        res = get_list(self.domain, self.couch_user, res['next'])
         self.assertEqual(res['matching_records'], 2)
         self.assertEqual(
             ['chaney', 'ned'],
@@ -126,7 +131,8 @@ class TestCaseListAPI(TestCase):
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
     params = QueryDict(querystring).dict()
-    actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
+    case_list = get_list(self.domain, self.couch_user, params)
+    actual = [c['external_id'] for c in case_list['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
 
@@ -147,5 +153,5 @@ def test_case_list_queries(self, querystring, expected):
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
         params = QueryDict(querystring).dict()
-        get_list(self.domain, params)
+        get_list(self.domain, self.couch_user, params)
     self.assertEqual(str(e.exception), error_msg)

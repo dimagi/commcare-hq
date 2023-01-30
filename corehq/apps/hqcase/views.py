@@ -154,7 +154,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, request.GET.dict())
+        res = get_list(request.domain, request.couch_user, request.GET.dict())
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
