@@ -90,4 +90,5 @@ branches:
     - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
     - revert-32548-revert-32435-sk/sentry-js  # Simon Jan 27
     - akj/ush-1508-checkbox-accessibility # Akash Jan 29
+    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
 submodules: { }
