@@ -173,9 +173,6 @@ def query_location_restricted_cases(query, domain, couch_user):
     return query.filter(case_es.owner(accessible_ids))
 
 
-def query_location_restricted_forms(query, request):
-    accessible_ids = _get_location_accessible_ids(
-        request.domain,
-        request.couch_user,
-    )
+def query_location_restricted_forms(query, domain, couch_user):
+    accessible_ids = _get_location_accessible_ids(domain, couch_user)
     return query.filter(form_es.user_id(accessible_ids))
