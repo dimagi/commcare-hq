@@ -699,9 +699,13 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
         context.update({
             'rules': [self._format_rule(rule) for rule in self._rules()],
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
-            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()]
+            'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()],
+            'has_linked_data': self.has_linked_data(),
         })
         return context
+
+    def has_linked_data(self):
+        return bool(self._rules().exclude(upstream_id=None)[:1])
 
     def post(self, request, *args, **kwargs):
         response = self._update_rule(request.POST['id'], request.POST['action'])
