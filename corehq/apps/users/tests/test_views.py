@@ -318,7 +318,7 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)
 
     def test_admin_location_user_sees_all_web_users(self):
         self.client.login(
@@ -326,4 +326,4 @@ class TestCountWebUsers(TestCase):
             password='badpassword',
         )
         result = self.client.get(reverse(self.view, kwargs={'domain': self.domain}))
-        self.assertEqual(json.loads(result.content)['count'], 2)
+        self.assertEqual(json.loads(result.content)['user_count'], 2)
