@@ -71,6 +71,7 @@ node_modules/
 /sharedfiles/
 docker/data
 *.lock
+!couchviews.lock
 !migrations.lock
 !serializer-pickle-files.lock
 !yarn.lock
