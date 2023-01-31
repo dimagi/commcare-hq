@@ -131,11 +131,6 @@ def _create_module_details_app_strings(module, langs):
                 id_strings.no_items_text_detail(module),
                 clean_trans(module.case_details.short.no_items_text, langs)
             )
-        else:
-            yield (
-                id_strings.no_items_text_detail(module),
-                clean_trans(Detail.no_items_text.default(), langs)
-            )
 
     for detail_type, detail, _ in module.get_details():
         for column in detail.get_columns():
