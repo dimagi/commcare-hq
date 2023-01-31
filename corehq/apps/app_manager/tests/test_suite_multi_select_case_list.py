@@ -535,87 +535,23 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             for form in module.get_forms():
                 form.requires = 'case'
 
-    @patch('corehq.apps.app_manager.helpers.validators.domain_has_privilege', return_value=True)
-    def test_block_form_linking(self, *args):
-        form0 = self.multi_loner.get_form(0)
-        form1 = self.single_loner.get_form(0)
-        form2 = self.single_parent.get_form(0)
+    def test_mismatch_form_linking(self, *args):
+        form0 = self.single_child.get_form(0)
+        form1 = self.multi_child.get_form(0)
 
-        form0.post_form_workflow = WORKFLOW_FORM  # can link *from* multi-select form
-        form0.form_links = [FormLink(
-            xpath="true()",
-            form_id=form1.unique_id,
-            form_module_id=self.single_loner.unique_id
-        )]
-
-        form1.post_form_workflow = WORKFLOW_FORM  # can't link *to* multi-select form
-        form1.form_links = [FormLink(
-            xpath="true()",
-            form_id=form0.unique_id,
-            form_module_id=self.multi_loner.unique_id
-        )]
-
-        form2.post_form_workflow = WORKFLOW_FORM    # can't link *to* multi-select module
-        form2.form_links = [FormLink(
-            xpath="true()",
-            module_unique_id=self.multi_loner.unique_id,
-        )]
-
-        errors = self.factory.app.validate_app()
-        self.assertIn({
-            'type': 'multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 0, 'unique_id': 'Single Loner_module', 'name': {'en': 'Single Loner module'}},
-            'form': {'id': 0, 'name': {'en': 'Single Loner form 0'}, 'unique_id': 'Single Loner_form_0'}
-        }, errors)
-        self.assertIn({
-            'type': 'multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 2, 'unique_id': 'Single Parent_module', 'name': {'en': 'Single Parent module'}},
-            'form': {'id': 0, 'name': {'en': 'Single Parent form 0'}, 'unique_id': 'Single Parent_form_0'},
-        }, errors)
-
-    def test_block_eof_nav_multi_parent(self, *args):
-        form = self.single_child.get_form(0)
-
-        form.post_form_workflow = WORKFLOW_MODULE
-        self.assertIn({
-            'type': 'parent multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
-            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        form0.post_form_workflow = WORKFLOW_PREVIOUS  # can link *from* multi-select form to single select form
+        self.assertIn({'type': 'mismatch multi select form links',
+             'form_type': 'module_form',
+             'module': {'id': 5, 'name': {'en': 'Single Child module'}, 'unique_id': 'Single Child_module'},
+             'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
         }, self.factory.app.validate_app())
 
-        form.post_form_workflow = WORKFLOW_FORM
-        form.form_links = [FormLink(
-            xpath="true()",
-            form_id=form.unique_id,
-            form_module_id=self.single_child.unique_id
-        )]
-        self.assertIn({
-            'type': 'parent multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
-            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
+        form1.post_form_workflow = WORKFLOW_PREVIOUS  # can link *from* multi-select form to single select form
+        self.assertIn({'type': 'mismatch multi select form links',
+             'form_type': 'module_form',
+             'module': {'id': 3, 'name': {'en': 'Multi child module'}, 'unique_id': 'Multi child_module'},
+             'form': {'id': 0, 'name': {'en': 'Multi child form 0'}, 'unique_id': 'Multi child_form_0'}
         }, self.factory.app.validate_app())
-
-    def test_block_previous_screen(self, *args):
-        self.multi_loner.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
-        self.single_child.get_form(0).post_form_workflow = WORKFLOW_PREVIOUS
-
-        errors = self.factory.app.validate_app()
-        self.assertIn({
-            'type': 'previous multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 1, 'unique_id': 'Multi Loner_module', 'name': {'en': 'Multi Loner module'}},
-            'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
-        }, errors)
-        self.assertIn({
-            'type': 'previous multi select form links',
-            'form_type': 'module_form',
-            'module': {'id': 5, 'unique_id': 'Single Child_module', 'name': {'en': 'Single Child module'}},
-            'form': {'id': 0, 'name': {'en': 'Single Child form 0'}, 'unique_id': 'Single Child_form_0'}
-        }, errors)
 
     def test_eof_nav_multi_to_multi(self, *args):
         form = self.multi_loner.get_form(0)
@@ -681,3 +617,20 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
             self.factory.app.create_suite(),
             "./entry[2]/stack",
         )
+
+    def test_eof_nav_form_link_multi_to_single_validate(self, *args):
+        single_form = self.single_loner.get_form(0)
+        multi_form = self.multi_loner.get_form(0)
+
+        multi_form.post_form_workflow = WORKFLOW_FORM
+        multi_form.form_links = [FormLink(
+            form_id=single_form.unique_id,
+            form_module_id=self.single_loner.unique_id,
+            xpath="true()",
+        )]
+        self.assertIn({'type': 'multi select form links',
+                       'form_type': 'module_form',
+                       'module': {'id': 1, 'name': {'en': 'Multi Loner module'},
+                                  'unique_id': 'Multi Loner_module'},
+                       'form': {'id': 0, 'name': {'en': 'Multi Loner form 0'}, 'unique_id': 'Multi Loner_form_0'}
+                       }, self.factory.app.validate_app())

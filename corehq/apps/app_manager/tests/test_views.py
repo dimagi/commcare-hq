@@ -308,6 +308,18 @@ class TestViews(TestCase):
             {
                 'allow_manual_linking': False,
                 'auto_link': True,
+                'name': 'm1 module',
+                'unique_id': 'm1_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': True,
+                'name': 'm1 module > m1 form 0',
+                'unique_id': 'm1_module.m1_form_0'
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
                 'name': 'm2 module',
                 'unique_id': 'm2_module'
             },
@@ -335,7 +347,6 @@ class TestViews(TestCase):
         factory = AppFactory(build_version='2.9.0')
         factory.new_basic_module('m0', 'frog')
 
-        # multiselect module (can't be linked to)
         m1, m2f0 = factory.new_basic_module('m1', 'frog')
         m1.case_details.short.multi_select = True
 
@@ -354,7 +365,19 @@ class TestViews(TestCase):
                 'auto_link': False,
                 'name': 'm0 module > m0 form 0',
                 'unique_id': 'm0_module.m0_form_0'
-            }
+            },
+            {
+                'allow_manual_linking': False,
+                'auto_link': True,
+                'name': 'm1 module',
+                'unique_id': 'm1_module'
+            },
+            {
+                'allow_manual_linking': True,
+                'auto_link': False,
+                'name': 'm1 module > m1 form 0',
+                'unique_id': 'm1_module.m1_form_0'
+            },
         ])
 
     def test_form_links_context(self, _):
