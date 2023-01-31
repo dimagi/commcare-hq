@@ -89,10 +89,13 @@ class ExplodeCasesView(BaseProjectSettingsView, TemplateView):
 @requires_privilege_with_fallback(privileges.API_ACCESS)
 @api_throttle
 def case_api(request, domain, case_id=None):
+    # TODO: Make all handle functions location-safe,
+    #       then decorate view @location_safe
+    #       Context: SC-2368
     if request.method == 'GET' and case_id:
         return _handle_get(request, case_id)
     if request.method == 'GET' and not case_id:
-        return _handle_list_view(request)
+        return _handle_list_view(request)  # is location-safe
     if request.method == 'POST' and not case_id:
         return _handle_case_update(request, is_creation=True)
     if request.method == 'PUT':

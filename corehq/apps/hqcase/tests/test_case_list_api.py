@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from base64 import b64decode
+from unittest.mock import Mock
 
 from django.http import QueryDict
 from django.test import TestCase
@@ -26,7 +27,7 @@ BAD_GUYS_ID = str(uuid.uuid4())
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
-    couch_user = object()
+    couch_user = Mock(has_permission=lambda domain, permission: True)
 
     @classmethod
     def setUpClass(cls):
