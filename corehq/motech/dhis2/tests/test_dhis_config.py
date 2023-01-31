@@ -7,7 +7,7 @@ from jsonobject.base_properties import BadValueError
 
 from corehq.motech.dhis2.dhis2_config import Dhis2CaseConfig
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
-from corehq.motech.dhis2.repeaters import SQLDhis2Repeater
+from corehq.motech.dhis2.repeaters import Dhis2Repeater
 from corehq.motech.models import ConnectionSettings
 
 
@@ -35,7 +35,7 @@ class TestDhisConfigValidation(TestCase):
         config = {
             'form_configs': [{}]
         }
-        repeater = SQLDhis2Repeater(
+        repeater = Dhis2Repeater(
             connection_settings=self.conn,
             domain=self.domain
         )
@@ -53,7 +53,7 @@ class TestDhisConfigValidation(TestCase):
                 'xmlns': 'test_xmlns',
             }]
         }
-        repeater = SQLDhis2Repeater(connection_settings=self.conn, domain=self.domain)
+        repeater = Dhis2Repeater(connection_settings=self.conn, domain=self.domain)
         repeater.dhis2_config = config
         with self.assertRaises(BadValueError) as e:
             repeater.save()
@@ -81,7 +81,7 @@ class TestDhisConfigValidation(TestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = SQLDhis2Repeater(
+        repeater = Dhis2Repeater(
             connection_settings=self.conn,
             domain=self.domain
         )
@@ -110,7 +110,7 @@ class TestDhisConfigValidation(TestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = SQLDhis2Repeater(
+        repeater = Dhis2Repeater(
             connection_settings=self.conn,
             domain=self.domain
         )
@@ -150,7 +150,7 @@ class TestDhisConfigValidation(TestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = SQLDhis2Repeater(
+        repeater = Dhis2Repeater(
             connection_settings=self.conn,
             domain=self.domain
         )
@@ -181,7 +181,7 @@ class TestDhisConfigValidation(TestCase):
         form = Dhis2ConfigForm(data=config)
         self.assertTrue(form.is_valid())
 
-        repeater = SQLDhis2Repeater(
+        repeater = Dhis2Repeater(
             connection_settings=self.conn,
             domain=self.domain
         )
