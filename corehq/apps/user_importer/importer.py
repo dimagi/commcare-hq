@@ -28,6 +28,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.reports.util import import_tableau_user
 from corehq.apps.user_importer.exceptions import UserUploadError
 from corehq.apps.user_importer.helpers import (
     spec_value_to_boolean_or_none,
@@ -49,7 +50,7 @@ from corehq.apps.users.models import (
     InvitationStatus
 )
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
-from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR, TABLEAU_USER_SYNCING
 from corehq.apps.sms.util import validate_phone_number
 
 required_headers = set(['username'])
@@ -87,6 +88,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
         allowed_headers.add('deactivate_after')
+
+    if TABLEAU_USER_SYNCING.enabled(domain):
+        allowed_headers.add('tableau_role')
 
     illegal_headers = headers - allowed_headers
 
@@ -751,6 +755,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
         location_codes = row.get('location_code', []) if 'location_code' in row else None
         location_codes = format_location_codes(location_codes)
 
+        tableau_user_syncing_is_on = TABLEAU_USER_SYNCING.enabled(domain)
+
         try:
             remove = spec_value_to_boolean_or_none(row, 'remove')
             check_user_role(username, role)
@@ -765,6 +771,8 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                                                     via=USER_CHANGE_VIA_BULK_IMPORTER,
                                                     upload_record_id=upload_record_id)
                 user_change_logger = web_user_importer.logger
+                if tableau_user_syncing_is_on:
+                    import_tableau_user(domain, user, remove, row.get('tableau_role'))
                 if remove:
                     remove_web_user_from_domain(domain, user, username, upload_user, user_change_logger,
                                                 is_web_upload=True)

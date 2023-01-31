@@ -612,3 +612,11 @@ def add_on_tableau_details(domain, web_user_dicts):
             tableau_user = tableau_users_for_domain.get(username=web_user_dict['username'])
             web_user_dict['tableau_role'] = tableau_user.role
     return web_user_dicts
+
+
+# Attaches to the create_or_update_web_users method
+def import_tableau_user(domain, user, remove, role):
+    if remove:
+        delete_tableau_user(domain, user.username)
+    elif user.get_domain_membership(domain):
+        update_tableau_user(domain, user.username, role=role)
