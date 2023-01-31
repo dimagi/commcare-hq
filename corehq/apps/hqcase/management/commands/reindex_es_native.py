@@ -117,8 +117,7 @@ def _initialize_target(es, target_index_info):
 
 
 def start_reindex(es, source_index, target_index):
-    result = manager.reindex(source_index, target_index, wait_for_completion=False)
-    return result
+    return manager.reindex(source_index, target_index, wait_for_completion=False)
 
 
 def _get_doc_count(es, index):
