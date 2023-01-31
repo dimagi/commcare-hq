@@ -141,7 +141,6 @@ from corehq.apps.app_manager.util import (
     update_form_unique_ids,
     update_report_module_ids,
     module_loads_registry_case,
-    wrap_transition_from_old_update_case_action,
     module_uses_inline_search,
 )
 from corehq.apps.app_manager.xform import XForm
@@ -334,8 +333,6 @@ class FormAction(DocumentSchema):
         action_properties = action.properties()
         if 'name_path' in action_properties and action.name_path:
             yield 'name', action.name_path
-        if 'case_name' in action_properties:
-            yield 'name', action.case_name
         if getattr(action_properties, 'name_update', None) and action.name_update.question_path:
             yield 'name', action.name_update.question_path
         if 'external_id' in action_properties and action.external_id:
@@ -394,18 +391,6 @@ class OpenCaseAction(FormAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
     external_id = StringProperty()
 
-    # This method transitions us during a change to the name_update field, which used to be
-    # called name_path and was just a StringProperty that held the name prop's question path.
-    @classmethod
-    def wrap(cls, data):
-        if 'name_path' in data:
-            path = data['name_path']
-            data['name_update'] = {
-                'question_path': path
-            }
-            data.pop('name_path', None)
-        return super(OpenCaseAction, cls).wrap(data)
-
 
 class OpenSubCaseAction(FormAction, IndexedSchema):
 
@@ -423,20 +408,6 @@ class OpenSubCaseAction(FormAction, IndexedSchema):
     @property
     def form_element_name(self):
         return 'subcase_{}'.format(self.id)
-
-    # This method transitions us during a change to the name_update field, which used to be
-    # called case_name.
-    @classmethod
-    def wrap(cls, data):
-        if 'case_name' in data:
-            path = data['case_name']
-            data['name_update'] = {
-                'question_path': path
-            }
-            data.pop('case_name', None)
-        if 'case_properties' in data:
-            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
-        return super(OpenSubCaseAction, cls).wrap(data)
 
 
 class FormActions(DocumentSchema):
@@ -471,18 +442,6 @@ class FormActions(DocumentSchema):
 
     def count_subcases_per_repeat_context(self):
         return Counter([action.repeat_context for action in self.subcases])
-
-    @classmethod
-    def wrap(cls, data):
-        if 'update_case' in data and 'update' in data['update_case']:
-            data['update_case']['update'] = wrap_transition_from_old_update_case_action(
-                data['update_case']['update']
-            )
-        if 'usercase_update' in data and 'update' in data['usercase_update']:
-            data['usercase_update']['update'] = wrap_transition_from_old_update_case_action(
-                data['usercase_update']['update']
-            )
-        return super(FormActions, cls).wrap(data)
 
 
 class CaseIndex(DocumentSchema):
@@ -523,12 +482,6 @@ class AdvancedAction(IndexedSchema):
     @property
     def form_element_name(self):
         return "case_{}".format(self.case_tag)
-
-    @classmethod
-    def wrap(cls, data):
-        if 'case_properties' in data:
-            data['case_properties'] = wrap_transition_from_old_update_case_action(data['case_properties'])
-        return super(AdvancedAction, cls).wrap(data)
 
 
 class AutoSelectCase(DocumentSchema):
@@ -678,14 +631,6 @@ class AdvancedOpenCaseAction(AdvancedAction):
             del data['parent_tag']
             data.pop('parent_reference_id', None)
             data.pop('relationship', None)
-        # This statement transitions us during a change to the name_update field, which used
-        # to be called name_path.
-        if 'name_path' in data:
-            path = data['name_path']
-            data['name_update'] = {
-                'question_path': path
-            }
-            data.pop('name_path', None)
         return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
