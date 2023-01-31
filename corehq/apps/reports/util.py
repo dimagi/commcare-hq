@@ -498,7 +498,7 @@ def delete_tableau_user(domain, username):
     try:
         session = TableauAPISession.create_session_for_domain(domain)
         deleted_user_id = _delete_user_local(session, username)
-        _delete_user_remote(deleted_user_id)
+        _delete_user_remote(session, deleted_user_id)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
         notify_exception(None, str(e), details={
             'domain': domain
@@ -585,7 +585,11 @@ def sync_all_tableau_users():
                 _delete_user_remote(session, remote_user['id'])
                 _add_new_user_to_HQ_group(session, local_user)
             elif local_user.role != remote_user['siteRole']:
-                _update_user_remote(session, local_user)
+                _update_user_remote(
+                    session,
+                    local_user,
+                    groups=_group_json_to_tuples(session.get_groups_for_user_id(local_user.tableau_user_id))
+                )
 
         # Remove any remote users that don't exist locally
         local_users_usernames = [tableau_username(user.username) for user in local_users]
