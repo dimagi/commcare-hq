@@ -258,10 +258,10 @@ def get_module_detail_rows(langs, module, domain):
     return rows
 
 
-def _get_module_detail_no_items_text(langs, module, domain):
+def _get_module_detail_no_items_text(langs, module):
     app = module.get_app()
     short_detail = module.case_details.short
-    if not (toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(domain) and app.supports_ush_empty_case_list_text_2_54):
+    if not (app.supports_ush_empty_case_list_text_2_54):
         return []
     return [
         ("no_items_text", "list")
