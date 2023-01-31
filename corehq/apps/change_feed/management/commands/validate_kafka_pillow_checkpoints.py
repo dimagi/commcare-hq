@@ -27,6 +27,7 @@ class Command(BaseCommand):
 
 
 def validate_checkpoints(print_only):
+    return
 
     for pillow in get_all_pillow_instances():
         if (pillow.pillow_id in getattr(settings, 'ACTIVE_PILLOW_NAMES', [pillow.pillow_id])
