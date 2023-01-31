@@ -602,3 +602,13 @@ def sync_all_tableau_users():
         _sync_tableau_users_with_hq(domain)
         # Sync the TableauUser model with Tableau users on the remote Tableau instance
         _sync_tableau_users_with_remote(domain)
+
+
+# Attaches to the parse_web_users method
+def add_on_tableau_details(domain, web_user_dicts):
+    tableau_users_for_domain = TableauUser.objects.filter(server=TableauServer.objects.get(domain=domain))
+    for web_user_dict in web_user_dicts:
+        if not web_user_dict['last_login (read only)'] == 'N/A':
+            tableau_user = tableau_users_for_domain.get(username=web_user_dict['username'])
+            web_user_dict['tableau_role'] = tableau_user.role
+    return web_user_dicts
