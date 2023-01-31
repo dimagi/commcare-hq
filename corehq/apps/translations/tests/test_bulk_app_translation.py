@@ -1096,7 +1096,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
                          [('name', 'case_search_display', 'Name of Mother'),
                           ('name', 'case_search_hint', '')])
 
-    @patch.object(Application, 'supports_ush_empty_case_list_text_2_54', lambda: True)
+    @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
     def test_module_detail_rows(self):
         self.assertListEqual(get_module_detail_rows(self.app.langs, self.app.modules[0]), [
             ('no_items_text', 'list', 'Empty List'),
@@ -1123,7 +1123,7 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
              '', '', ''],
         ])
 
-    @patch.object(Application, 'supports_ush_empty_case_list_text_2_54', lambda: True)
+    @patch.object(Application, 'supports_empty_case_list_text', lambda: True)
     def test_bulk_app_sheet_rows(self):
         actual_headers = get_bulk_app_sheet_headers(self.app)
         actual_sheets = get_bulk_app_sheets_by_name(self.app)

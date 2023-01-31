@@ -261,7 +261,7 @@ def get_module_detail_rows(langs, module):
 def _get_module_detail_no_items_text(langs, module):
     app = module.get_app()
     short_detail = module.case_details.short
-    if not (app.supports_ush_empty_case_list_text_2_54):
+    if not (app.supports_empty_case_list_text):
         return []
     return [
         ("no_items_text", "list")

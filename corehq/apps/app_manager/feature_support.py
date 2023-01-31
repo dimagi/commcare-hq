@@ -210,7 +210,7 @@ class CommCareFeatureSupportMixin(object):
         )
 
     @property
-    def supports_ush_empty_case_list_text_2_54(self):
+    def supports_empty_case_list_text(self):
         return (
             toggles.USH_EMPTY_CASE_LIST_TEXT.enabled(self.domain)
             and self._require_minimum_version('2.54')
