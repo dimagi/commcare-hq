@@ -163,9 +163,10 @@ class TableauServer(models.Model):
     target_site = models.CharField(max_length=64, default='Default')
 
     def __str__(self):
-        return '{server} {server_type} {site}'.format(server=self.server_name,
-                                                      server_type=self.server_type,
-                                                      site=self.target_site)
+        return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
+                                                               server=self.server_name,
+                                                               server_type=self.server_type,
+                                                               site=self.target_site)
 
 
 class TableauVisualization(models.Model):
