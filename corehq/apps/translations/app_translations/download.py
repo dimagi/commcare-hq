@@ -175,7 +175,7 @@ def get_module_rows(langs, module, domain):
     return get_module_case_list_form_rows(langs, module) + \
         get_module_case_list_menu_item_rows(langs, module) + \
         get_module_search_command_rows(langs, module, domain) + \
-        get_module_detail_rows(langs, module, domain) + \
+        get_module_detail_rows(langs, module) + \
         get_case_search_rows(langs, module, domain)
 
 
@@ -246,9 +246,9 @@ def get_case_search_rows(langs, module, domain):
     return ret
 
 
-def get_module_detail_rows(langs, module, domain):
+def get_module_detail_rows(langs, module):
     rows = []
-    rows += _get_module_detail_no_items_text(langs, module, domain)
+    rows += _get_module_detail_no_items_text(langs, module)
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
