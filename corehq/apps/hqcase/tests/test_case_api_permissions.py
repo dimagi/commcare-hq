@@ -152,22 +152,27 @@ class TestCaseAPIPermissions(TestCase):
                 {'Joe', 'Cyril'},
             )
 
-    # def test_get_list_location_restricted(self):
-    #     permissions = {
-    #         'edit_data': True,
-    #         'access_api': True,
-    #         'access_all_locations': False,
-    #     }
-    #     with get_web_user(
-    #         self.domain,
-    #         self.user_location,
-    #         permissions,
-    #         self.client,
-    #     ) as web_user:
-    #
-    #         result = get_list(self.domain, web_user, params={})
-    #         self.assertEqual(result['matching_records'], 1)
-    #         self.assertEqual(result['cases'][0]['case_name'], 'Cyril')
+    def test_get_list_location_restricted(self):
+        permissions = {
+            'edit_data': True,
+            'access_api': True,
+            'access_all_locations': False,
+        }
+
+        with sync_users_to_es():
+            with get_web_user(
+                self.domain,
+                self.user_location,
+                permissions,
+                self.client,
+            ) as web_user:
+                get_es_new().indices.refresh(USER_INDEX)
+
+                result = get_list(self.domain, web_user, params={})
+                self.assertEqual(result['matching_records'], 1)
+                self.assertEqual(result['cases'][0]['case_name'], 'Cyril')
+
+                ensure_index_deleted(USER_INDEX)
 
 
 @contextmanager
@@ -180,7 +185,6 @@ def get_web_user(domain, location, permissions, client):
         permissions=HqPermissions(**permissions),
     )
 
-    # with sync_users_to_es():
     web_user = WebUser.create(
         domain,
         username,
@@ -190,14 +194,12 @@ def get_web_user(domain, location, permissions, client):
         role_id=role.get_id,
     )
     web_user.set_location(domain, location)
-    # get_es_new().indices.refresh(USER_INDEX)
     client.login(username=username, password=password)
     try:
         yield web_user
     finally:
         web_user.delete(domain, deleted_by=None)
         role.delete()
-        # ensure_index_deleted(USER_INDEX)
 
 
 def get_case_blocks(names_locations):
