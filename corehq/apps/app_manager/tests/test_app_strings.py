@@ -227,7 +227,7 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             )
 
     def test_no_items_text_app_strings(self):
-        factory = AppFactory(build_version='2.40.0')
+        factory = AppFactory(build_version='2.54.0')
         factory.app.langs = ['en', 'es']
         factory.app.build_profiles = OrderedDict({
             'en': BuildProfile(langs=['en'], name='en-profile'),
@@ -238,16 +238,6 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
 
         # wrap to have assign_references called
         app = Application.wrap(factory.app.to_json())
-
-        with flag_disabled('USH_EMPTY_CASE_LIST_TEXT'):
-            # default language
-            self.assertEqual(app.default_language, 'en')
-            en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
-            self.assertEqual(en_app_strings['m0_no_items_text'], 'List is empty.')
-
-            # non-default language
-            es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
-            self.assertEqual(es_app_strings['m0_no_items_text'], 'List is empty.')
 
         with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
             # default language
