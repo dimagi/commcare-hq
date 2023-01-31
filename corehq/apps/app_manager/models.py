@@ -580,20 +580,6 @@ class LoadUpdateAction(AdvancedAction):
     def case_session_var(self):
         return 'case_id_{0}'.format(self.case_tag)
 
-    @classmethod
-    def wrap(cls, data):
-        if 'parent_tag' in data:
-            if data['parent_tag']:
-                data['case_index'] = {
-                    'tag': data['parent_tag'],
-                    'reference_id': data.get('parent_reference_id', 'parent'),
-                    'relationship': data.get('relationship', 'child')
-                }
-            del data['parent_tag']
-            data.pop('parent_reference_id', None)
-            data.pop('relationship', None)
-        return super(LoadUpdateAction, cls).wrap(data)
-
 
 class AdvancedOpenCaseAction(AdvancedAction):
     name_update = SchemaProperty(ConditionalCaseUpdate)
@@ -614,24 +600,6 @@ class AdvancedOpenCaseAction(AdvancedAction):
     @property
     def case_session_var(self):
         return 'case_id_new_{}_{}'.format(self.case_type, self.id)
-
-    @classmethod
-    def wrap(cls, data):
-        if 'parent_tag' in data:
-            if data['parent_tag']:
-                index = {
-                    'tag': data['parent_tag'],
-                    'reference_id': data.get('parent_reference_id', 'parent'),
-                    'relationship': data.get('relationship', 'child')
-                }
-                if hasattr(data.get('case_indices'), 'append'):
-                    data['case_indices'].append(index)
-                else:
-                    data['case_indices'] = [index]
-            del data['parent_tag']
-            data.pop('parent_reference_id', None)
-            data.pop('relationship', None)
-        return super(AdvancedOpenCaseAction, cls).wrap(data)
 
 
 class ArbitraryDatum(DocumentSchema):
@@ -1441,25 +1409,6 @@ class NavMenuItemMediaMixin(DocumentSchema):
     use_default_image_for_all = BooleanProperty(default=False)
     use_default_audio_for_all = BooleanProperty(default=False)
 
-    @classmethod
-    def wrap(cls, data):
-        # Lazy migration from single-language media to localizable media
-        for media_attr in ('media_image', 'media_audio'):
-            old_media = data.get(media_attr, None)
-            if old_media:
-                # Single-language media was stored in a plain string.
-                # Convert this to a dict, using a dummy key because we
-                # don't know the app's supported or default lang yet.
-                if isinstance(old_media, str):
-                    new_media = {'default': old_media}
-                    data[media_attr] = new_media
-                elif isinstance(old_media, dict):
-                    # Once the media has localized data, discard the dummy key
-                    if 'default' in old_media and len(old_media) > 1:
-                        old_media.pop('default')
-
-        return super(NavMenuItemMediaMixin, cls).wrap(data)
-
     def get_app(self):
         raise NotImplementedError
 
@@ -1610,13 +1559,6 @@ class Form(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     form_filter = StringProperty(exclude_if_none=True)
     requires = StringProperty(choices=["case", "referral", "none"], default="none")
     actions = SchemaProperty(FormActions)
-
-    @classmethod
-    def wrap(cls, data):
-        # rare schema bug: http://manage.dimagi.com/default.asp?239236
-        if data.get('case_references') == []:
-            del data['case_references']
-        return super(Form, cls).wrap(data)
 
     def add_stuff_to_xform(self, xform, build_profile_id=None):
         super(Form, self).add_stuff_to_xform(xform, build_profile_id)
@@ -1921,44 +1863,6 @@ class DetailColumn(IndexedSchema):
         else:
             return self.field
 
-    class TimeAgoInterval(object):
-        map = {
-            'day': 1.0,
-            'week': 7.0,
-            'month': 30.4375,
-            'year': 365.25
-        }
-
-        @classmethod
-        def get_from_old_format(cls, format):
-            if format == 'years-ago':
-                return cls.map['year']
-            elif format == 'months-ago':
-                return cls.map['month']
-
-    @classmethod
-    def wrap(cls, data):
-        if data.get('format') in ('months-ago', 'years-ago'):
-            data['time_ago_interval'] = cls.TimeAgoInterval.get_from_old_format(data['format'])
-            data['format'] = 'time-ago'
-
-        # Lazy migration: enum used to be a dict, now is a list
-        if isinstance(data.get('enum'), dict):
-            data['enum'] = sorted(
-                [{'key': key, 'value': value} for key, value in data['enum'].items()],
-                key=lambda d: d['key'],
-            )
-
-        # Lazy migration: xpath expressions from format to first-class property
-        if data.get('format') == 'calculate':
-            property_xpath = PropertyXpathGenerator(None, None, None, super(DetailColumn, cls).wrap(data)).xpath
-            data['field'] = dot_interpolate(data.get('calc_xpath', '.'), property_xpath)
-            data['useXpathExpression'] = True
-            data['hasAutocomplete'] = False
-            data['format'] = 'plain'
-
-        return super(DetailColumn, cls).wrap(data)
-
     @classmethod
     def from_json(cls, data):
         from corehq.apps.app_manager.views.media_utils import interpolate_media_path
@@ -2173,21 +2077,6 @@ class CaseSearchProperty(DocumentSchema):
     # applicable when appearance is a receiver
     receiver_expression = StringProperty(exclude_if_none=True)
     itemset = SchemaProperty(Itemset)
-
-    @classmethod
-    def wrap(cls, data):
-        required = data.get('required')
-        if required and isinstance(required, str):
-            data['required'] = {'test': required}
-
-        old_validations = data.pop('validation', None)  # it was changed to plural
-        if old_validations:
-            data['validations'] = [{
-                'test': old['xpath'],
-                'text': old['message'],
-            } for old in old_validations if old.get('xpath')]
-
-        return super().wrap(data)
 
 
 class DefaultCaseSearchProperty(DocumentSchema):
@@ -2527,29 +2416,8 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
 
         return True
 
+
 class ModuleDetailsMixin(object):
-
-    @classmethod
-    def wrap_details(cls, data):
-        if 'details' in data:
-            try:
-                case_short, case_long, ref_short, ref_long = data['details']
-            except ValueError:
-                # "need more than 0 values to unpack"
-                pass
-            else:
-                data['case_details'] = {
-                    'short': case_short,
-                    'long': case_long,
-                }
-                data['ref_details'] = {
-                    'short': ref_short,
-                    'long': ref_long,
-                }
-            finally:
-                del data['details']
-        return data
-
     @property
     def case_list_filter(self):
         try:
@@ -2605,11 +2473,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
     parent_select = SchemaProperty(ParentSelect)
     search_config = SchemaProperty(CaseSearch)
     display_style = StringProperty(default='list')
-
-    @classmethod
-    def wrap(cls, data):
-        data = cls.wrap_details(data)
-        return super(Module, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -2728,18 +2591,6 @@ class AdvancedForm(IndexedFormBase, FormMediaMixin, NavMenuItemMediaMixin):
     actions = SchemaProperty(AdvancedFormActions)
     arbitrary_datums = SchemaListProperty(ArbitraryDatum)
     schedule = SchemaProperty(FormSchedule, default=None)
-
-    @classmethod
-    def wrap(cls, data):
-        # lazy migration to swap keys with values in action preload dict.
-        # http://manage.dimagi.com/default.asp?162213
-        load_actions = data.get('actions', {}).get('load_update_cases', [])
-        for action in load_actions:
-            preload = action['preload']
-            if preload and list(preload.values())[0].startswith('/'):
-                action['preload'] = {v: k for k, v in preload.items()}
-
-        return super(AdvancedForm, cls).wrap(data)
 
     def pre_delete_hook(self):
         try:
@@ -3114,14 +2965,6 @@ class AdvancedModule(ModuleBase):
     @property
     def is_surveys(self):
         return False
-
-    @classmethod
-    def wrap(cls, data):
-        # lazy migration to accommodate search_config as empty list
-        # http://manage.dimagi.com/default.asp?231186
-        if data.get('search_config') == []:
-            data['search_config'] = {}
-        return super(AdvancedModule, cls).wrap(data)
 
     @classmethod
     def new_module(cls, name, lang):
@@ -3612,13 +3455,6 @@ class CustomMonthFilter(ReportAppFilter):
         validators=(is_gte(0),)
     )
 
-    @classmethod
-    def wrap(cls, doc):
-        doc['start_of_month'] = int(doc['start_of_month'])
-        if 'period' in doc:
-            doc['period'] = int(doc['period'] or DEFAULT_MONTH_FILTER_PERIOD_LENGTH)
-        return super(CustomMonthFilter, cls).wrap(doc)
-
     def get_filter_value(self, user, ui_filter):
         def get_last_month(this_month):
             return datetime.date(this_month.year, this_month.month, 1) - datetime.timedelta(days=1)
@@ -3683,11 +3519,6 @@ class NumericFilter(ReportAppFilter):
     operator = StringProperty(choices=['=', '!=', '<', '<=', '>', '>=']),
     operand = FloatProperty()
 
-    @classmethod
-    def wrap(cls, doc):
-        doc['operand'] = float(doc['operand'])
-        return super(NumericFilter, cls).wrap(doc)
-
     def get_filter_value(self, user, ui_filter):
         return {
             'operator': self.operator,
@@ -3720,20 +3551,6 @@ class ReportAppConfig(DocumentSchema):
         super(ReportAppConfig, self).__init__(*args, **kwargs)
         if not self.uuid:
             self.uuid = uuid.uuid4().hex
-
-    @classmethod
-    def wrap(cls, doc):
-        # for backwards compatibility with apps that have localized or xpath descriptions
-        old_description = doc.get('description')
-        if old_description:
-            if isinstance(old_description, str) and not doc.get('xpath_description'):
-                doc['xpath_description'] = old_description
-            elif isinstance(old_description, dict) and not doc.get('localized_description'):
-                doc['localized_description'] = old_description
-        if not doc.get('xpath_description'):
-            doc['xpath_description'] = '""'
-
-        return super(ReportAppConfig, cls).wrap(doc)
 
     def report(self, domain):
         if self._report is None:
@@ -3855,11 +3672,6 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
     shadow_module_version = IntegerProperty(default=1)
 
     get_forms = IndexedSchema.Getter('forms')
-
-    @classmethod
-    def wrap(cls, data):
-        data = cls.wrap_details(data)
-        return super(ShadowModule, cls).wrap(data)
 
     @property
     def source_module(self):
@@ -4286,54 +4098,11 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         else:
             return self.doc_type
 
-    @staticmethod
-    def _scrap_old_conventions(data):
-        should_save = False
-        # scrape for old conventions and get rid of them
-        if 'commcare_build' in data:
-            version, build_number = data['commcare_build'].split('/')
-            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
-            del data['commcare_build']
-        if 'commcare_tag' in data:
-            version, build_number = current_builds.TAG_MAP[data['commcare_tag']]
-            data['build_spec'] = BuildSpec.from_string("%s/latest" % version).to_json()
-            del data['commcare_tag']
-        if "built_with" in data and isinstance(data['built_with'], str):
-            data['built_with'] = BuildSpec.from_string(data['built_with']).to_json()
-
-        if 'native_input' in data:
-            if 'text_input' not in data:
-                data['text_input'] = 'native' if data['native_input'] else 'roman'
-            del data['native_input']
-
-        if 'build_langs' in data:
-            if data['build_langs'] != data['langs'] and 'build_profiles' not in data:
-                data['build_profiles'] = {
-                    uuid.uuid4().hex: dict(
-                        name=', '.join(data['build_langs']),
-                        langs=data['build_langs']
-                    )
-                }
-                should_save = True
-            del data['build_langs']
-
-        if 'original_doc' in data:
-            data['copy_history'] = [data.pop('original_doc')]
-            should_save = True
-        return should_save
-
     @classmethod
-    def wrap(cls, data, scrap_old_conventions=True):
-        if scrap_old_conventions:
-            should_save = cls._scrap_old_conventions(data)
-        data["description"] = data.get('description') or data.get('short_description')
-
+    def wrap(cls, data):
         self = super(ApplicationBase, cls).wrap(data)
         if not self.build_spec or self.build_spec.is_null():
             self.build_spec = get_default_build_spec()
-
-        if scrap_old_conventions and should_save:
-            self.save()
 
         return self
 
@@ -4812,10 +4581,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
 
     @classmethod
     def wrap(cls, data):
-        data.pop('commtrack_enabled', None)  # Remove me after migrating apps
-        data.pop('media_language_map', None)
-        data['modules'] = [module for module in data.get('modules', [])
-                           if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies
