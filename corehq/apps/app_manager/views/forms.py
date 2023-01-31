@@ -379,7 +379,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
         form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -808,7 +808,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled(domain)
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 

@@ -67,7 +67,7 @@ class TestTableauAPIUtil(TestTableauAPISession):
         add_tableau_user(self.domain, new_username)
         created_user = TableauUser.objects.get(username=new_username)
         self.assertEqual(created_user.tableau_user_id, 'gh23jk')
-        self.assertEqual(created_user.role, 'Viewer')
+        self.assertEqual(created_user.role, TableauUser.Roles.UNLICENSED.value)
         self.assertEqual(created_user.server, self.test_server)
 
     @mock.patch('corehq.apps.reports.models.requests.request')

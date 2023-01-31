@@ -179,6 +179,9 @@ class Command(BaseCommand):
         Role(slug=privileges.LOADTEST_USERS,
              name='Loadtest Users',
              description='Allows creating loadtest users'),
+        Role(slug=privileges.FORM_LINK_WORKFLOW,
+             name='Link to other forms',
+             description='Link to other forms in End of Form Navigation'),
         Role(slug=privileges.PHONE_APK_HEARTBEAT,
              name='Phone Heartbeat',
              description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
