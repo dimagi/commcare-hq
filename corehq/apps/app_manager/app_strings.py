@@ -124,7 +124,6 @@ def _create_custom_app_strings(app, lang, for_default=False, build_profile_id=No
 
 
 def _create_module_details_app_strings(module, langs):
-    from corehq.apps.app_manager.models import Detail
     if module.get_app().supports_ush_empty_case_list_text_2_54:
         yield (
             id_strings.no_items_text_detail(module),
