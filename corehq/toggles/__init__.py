@@ -2464,3 +2464,12 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
+
+ALLOW_SUBMISSION_WITHOUT_METADATA = StaticToggle(
+    'allow_submission_without_metadata',
+    'Allows submission API calls without metadata',  # reword this
+    TAG_PRODUCT,  # idk if this is the right tag. might be solutions.
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature allows for form and case submissions via the Submission API '
+                'without the metadata node.'
+)
