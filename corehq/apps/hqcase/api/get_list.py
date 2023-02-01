@@ -71,7 +71,7 @@ COMPOUND_FILTERS = {
 def get_list(domain, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
-        params = QueryDict(params_string).dict()
+        params = unpack_query_dict(QueryDict(params_string))
         last_date = params.pop(INDEXED_AFTER, None)
         last_id = params.pop(LAST_CASE_ID, None)
         query = _get_cursor_query(domain, params, last_date, last_id)
@@ -94,6 +94,22 @@ def get_list(domain, params):
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
+
+
+def unpack_query_dict(query_dict):
+    """
+    Unpacks a ``QueryDict`` so that the values of duplicate keys are not
+    lost.
+
+    >>> qd = QueryDict('foo=one&bar=two&bar=three')
+    >>> unpack_query_dict(qd)
+    {'foo': 'one', 'bar': ['two', 'three']}
+
+    """
+    def unpack(list_):
+        return list_[0] if len(list_) == 1 else list_
+
+    return {k: unpack(v) for k, v in query_dict.lists()}
 
 
 def _get_cursor_query(domain, params, last_date, last_id):
@@ -119,7 +135,12 @@ def _get_query(domain, params):
              .sort("@indexed_on")
              .sort("_id", reset_sort=False))
     for key, val in params.items():
-        query = query.filter(_get_filter(domain, key, val))
+        if isinstance(val, list):
+            # e.g. key='owner_id', val=['abc123', 'def456']
+            filter_list = [_get_filter(domain, key, v) for v in val]
+            query = query.filter(filters.OR(*filter_list))
+        else:
+            query = query.filter(_get_filter(domain, key, val))
     return query
 
 

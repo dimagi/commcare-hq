@@ -1,4 +1,5 @@
 import datetime
+import doctest
 import uuid
 from base64 import b64decode
 
@@ -16,7 +17,7 @@ from corehq.apps.es.tests.utils import (
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
-from ..api.get_list import MAX_PAGE_SIZE, get_list
+from ..api.get_list import MAX_PAGE_SIZE, get_list, unpack_query_dict
 
 GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
@@ -105,6 +106,8 @@ class TestCaseListAPI(TestCase):
     ("external_id=the-man-with-no-name", []),
     ("case_type=team", ["good_guys", "bad_guys"]),
     ("owner_id=person_owner", ['mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ("owner_id=person_owner&owner_id=team_owner",
+     ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("case_name=Mattie Ross", ["mattie"]),
     ("case_name=Mattie+Ross", ["mattie"]),
     ("case_name=Mattie", []),
@@ -125,7 +128,7 @@ class TestCaseListAPI(TestCase):
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
-    params = QueryDict(querystring).dict()
+    params = unpack_query_dict(QueryDict(querystring))
     actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
@@ -146,6 +149,12 @@ def test_case_list_queries(self, querystring, expected):
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
-        params = QueryDict(querystring).dict()
+        params = unpack_query_dict(QueryDict(querystring))
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)
+
+
+def test_doctests():
+    import corehq.apps.hqcase.api.get_list
+    results = doctest.testmod(corehq.apps.hqcase.api.get_list)
+    assert results.failed == 0
