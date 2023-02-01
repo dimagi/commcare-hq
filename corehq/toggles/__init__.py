@@ -2459,7 +2459,7 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
+DISPLAY_CONDITION_ON_TABS = FrozenPrivilegeToggle(
     privileges.DISPLAY_CONDITION_ON_TABS,
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
