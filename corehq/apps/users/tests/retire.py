@@ -13,6 +13,7 @@ from casexml.apps.case.mock import (
 )
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.dbaccessors import delete_all_users
@@ -328,6 +329,8 @@ class RetireUserTestCase(TestCase):
             self.assertTrue(XFormInstance.objects.get_form(form_id, self.domain).is_deleted)
 
         self.assertTrue(CommCareCase.objects.get_case(usercase_id, self.domain).is_deleted)
+        self.assertIsNone(CommCareCase.objects.get_case_by_external_id(
+            self.domain, self.commcare_user._id, USERCASE_TYPE))
 
     def test_forms_touching_live_case_not_deleted(self):
         case_id = uuid.uuid4().hex
