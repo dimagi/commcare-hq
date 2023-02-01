@@ -65,7 +65,7 @@
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->
       <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-      {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+      {% if request|request_has_privilege:'DISPLAY_CONDITION_ON_TABS' %}
         <td class="col-sm-3 form-group">
           <div data-bind="jqueryElement: relevant.ui"></div>
         </td>
@@ -79,7 +79,7 @@
       </td>
       <!--/ko-->
       <!--ko ifnot: $data.hasNodeset -->
-      {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+      {% if request|request_has_privilege:'DISPLAY_CONDITION_ON_TABS' %}
         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
         <td class="col-sm-3 form-group">
           <div data-bind="jqueryElement: relevant.ui"></div>

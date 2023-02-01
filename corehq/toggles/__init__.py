@@ -1567,13 +1567,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
 )
 
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)
-
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
     'Make _remove_indices_from_deleted_cases_task into a no-op.',
@@ -2463,5 +2456,13 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     'phone_apk_heartbeat',
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN]
+)
+
+DISPLAY_CONDITION_ON_TABS = StaticToggle(
+    privileges.DISPLAY_CONDITION_ON_TABS,
+    'display_condition_on_nodeset',
+    'Show Display Condition on Case Detail Tabs',
+    TAG_SOLUTIONS_OPEN,
     [NAMESPACE_DOMAIN]
 )

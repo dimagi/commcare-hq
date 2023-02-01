@@ -31,7 +31,8 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 from memoized import memoized
 
-from corehq import toggles
+from corehq import toggles, privileges
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
@@ -163,7 +164,9 @@ class DetailContributor(SectionContributor):
             for tab in tabs:
                 # relevant should be set to None even in case its ''
                 tab_relevant = None
-                if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
+                if tab.relevant and domain_has_privilege(
+                    module.get_app().domain, privileges.DISPLAY_CONDITION_ON_TABS
+                ):
                     tab_relevant = tab.relevant
 
                 sub_detail = self.build_detail(

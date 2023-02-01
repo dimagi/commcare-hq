@@ -186,6 +186,9 @@ class Command(BaseCommand):
              name='Phone Heartbeat',
              description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
                          'app and apk'),
+        Role(slug=privileges.DISPLAY_CONDITION_ON_TABS,
+             name='Display Condition on Case Detail Tabs',
+             description='Show Display Condition on Case Detail Tabs'),
     ]
 
     BOOTSTRAP_PLANS = [
