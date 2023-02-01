@@ -63,14 +63,8 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         tagName: "div",
         childView: SessionView,
         childViewContainer: "tbody",
-        getTemplate: function () {
-            var user = FormplayerFrontend.getChannel().request('currentUser');
-            var id = "#session-view-list-web-apps-template";
-            if (user.environment === constants.PREVIEW_APP_ENVIRONMENT) {
-                id = "#session-view-list-preview-template";
-            }
-            return _.template($(id).html() || "");
-        },
+        template: _.template($("#session-view-list-template").html() || ""),
+
         initialize: function (options) {
             this.model = new Backbone.Model({
                 page: options.pageNumber + 1 || 1,
@@ -128,6 +122,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
             }
         },
         templateContext: function () {
+            var user = FormplayerFrontend.getChannel().request('currentUser');
             var paginationConfig = utils.paginateOptions(this.options.pageNumber, this.options.totalPages);
             return {
                 total: this.collection.totalSessions,
@@ -139,6 +134,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
                 rowRange: [10, 25, 50, 100],
                 limit: this.model.get("limit"),
                 pageNumLabel: _.template(gettext("Page <%-num%>")),
+                isPreviewEnv: user.environment === constants.PREVIEW_APP_ENVIRONMENT,
             };
         },
     });
