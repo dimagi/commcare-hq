@@ -13,7 +13,7 @@ def _grandfather_form_link_workflow_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         FORM_LINK_WORKFLOW,
-        skip_edition='Paused,Community,Standard',
+        skip_edition='Paused,Community',
         noinput=True,
     )
 
