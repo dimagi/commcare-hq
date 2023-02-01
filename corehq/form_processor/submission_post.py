@@ -17,11 +17,11 @@ from casexml.apps.case.xform import close_extension_cases
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
-    CaseValueError
+    CaseValueError, MetadataError
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER, ALLOW_SUBMISSION_WITHOUT_METADATA
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -36,7 +36,6 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
-from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
 from corehq.util.quickcache import quickcache
@@ -56,6 +55,8 @@ CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
     'case_result, case_models, stock_result'
 )
+required_create_tags = ['case_name', 'owner_id', 'case_type']
+required_metadata_tags = ['timeEnd', 'userID', 'instanceID']
 
 
 class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
@@ -155,16 +156,7 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
-        if instance.metadata and (not instance.metadata.userID or not instance.metadata.instanceID):
-            metrics_counter('commcare.xform_submissions.partial_metadata', tags={
-                'domain': instance.domain,
-            })
-        elif not instance.metadata:
-            metrics_counter('commcare.xform_submissions.no_metadata', tags={
-                'domain': instance.domain,
-            })
-            return '   √   '
-        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
         user = CouchUser.get_by_user_id(instance.user_id)
@@ -328,7 +320,12 @@ class SubmissionPost(object):
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
-                        case_stock_result = self.process_xforms_for_cases(xforms, case_db, self.timing_context)
+                        case_stock_result = self.process_xforms_for_cases(xforms, case_db,
+                                                                          self.domain, self.timing_context)
+                    except MetadataError as e:
+                        instance.problem = e
+                        instance.state = XFormInstance.ERROR
+                        submission_type = 'error'
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
@@ -500,14 +497,30 @@ class SubmissionPost(object):
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
-    def process_xforms_for_cases(xforms, case_db, timing_context=None):
+    def process_xforms_for_cases(xforms, case_db, domain=None, timing_context=None):
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
-        timing_context = timing_context or TimingContext()
-
         instance = xforms[0]
 
+        # INSERT "NOT" HERE when done w testing
+        if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(domain):
+            form_data = instance.form_data
+            if 'case' in form_data:
+                if 'create' in form_data['case']:
+                    for tag in required_create_tags:
+                        if tag not in form_data['case']['create']:
+                            raise MetadataError('One or more required tags missing in the create node')
+                elif 'update' in form_data['case'] and not isinstance(form_data['case']['update'], dict):
+                    raise MetadataError('Missing nodes in the update node.')
+            if instance.metadata:
+                for attr in required_metadata_tags:
+                    if getattr(instance.metadata, attr) is None:
+                        raise MetadataError('One or more required tags missing in the metadata node')
+            else:
+                raise MetadataError('Missing metadata node.')
+
+        timing_context = timing_context or TimingContext()
         with timing_context("process_cases"):
             case_result = process_cases_with_casedb(xforms, case_db)
         with timing_context("process_ledgers"):
