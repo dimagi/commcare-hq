@@ -77,10 +77,10 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         },
         events: {
             'click @ui.paginators': 'onClickPageNumber',
-            'click @ui.paginationGoButton': 'paginationGoAction',
-            'change @ui.sessionsPerPageLimit': 'onPerPageLimitChange',
-            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
             'keypress @ui.paginators': 'paginateKeyAction',
+            'click @ui.paginationGoButton': 'paginationGoAction',
+            'keypress @ui.paginationGoTextBox': 'paginationGoKeyAction',
+            'change @ui.sessionsPerPageLimit': 'onPerPageLimitChange',
         },
         ui: {
             paginators: '.js-page',
