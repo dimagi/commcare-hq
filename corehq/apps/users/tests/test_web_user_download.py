@@ -9,7 +9,7 @@ from corehq.apps.users.bulk_download import parse_web_users
 from corehq.apps.users.models import Invitation, UserRole, WebUser
 
 
-@es_test(requires=[user_adapter])
+@es_test(requires=[user_adapter], setup_class=True)
 class TestDownloadWebUsers(TestCase):
 
     @classmethod
