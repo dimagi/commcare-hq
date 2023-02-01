@@ -9,10 +9,11 @@ def login_as_user_query(
         limit,
         offset):
     '''
-    Takes in various parameters to determine which users to populate the login as screen.
+    Takes in various parameters to determine which users to populate the
+    Log In As screen.
 
     :param domain: String domain
-    :param couch_user: The CouchUser that is using the Login As feature
+    :param couch_user: The CouchUser that is using the Log In As feature
     :param search_string: The query that filters the users returned. Filters based on the
         `search_fields` as well as any fields defined in `user_data_fields`.
     :param limit: The max amount of users returned.

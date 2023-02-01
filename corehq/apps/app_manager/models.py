@@ -11,7 +11,7 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
 from io import BytesIO, open
 from itertools import chain
@@ -4242,9 +4242,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
-    # not used yet, but nice for tagging/debugging
-    # currently only canonical value is 'incomplete-build',
-    # for when build resources aren't found where they should be
+    # for internal use only, not user-facing
     build_broken_reason = StringProperty()
 
     # watch out for a past bug:

@@ -87,6 +87,8 @@ LITE_RELEASE_MANAGEMENT = 'lite_release_management'
 
 LOADTEST_USERS = 'loadtest_users'
 
+FORM_LINK_WORKFLOW = 'form_link_workflow'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -134,6 +136,7 @@ MAX_PRIVILEGES = [
     RELEASE_MANAGEMENT,
     LITE_RELEASE_MANAGEMENT,
     LOADTEST_USERS,
+    FORM_LINK_WORKFLOW,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -183,7 +186,7 @@ class Titles(object):
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
             ZAPIER_INTEGRATION: _('Zapier Integration'),
-            LOGIN_AS: _('Login As for App Preview'),
+            LOGIN_AS: _('Log In As for App Preview'),
             PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
             CASE_SHARING_GROUPS: _('Case Sharing via Groups'),
             CHILD_CASES: _('Child Cases'),
@@ -196,4 +199,5 @@ class Titles(object):
             RELEASE_MANAGEMENT: _("Enterprise Release Management"),
             LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
             LOADTEST_USERS: _('Loadtest Users'),
+            FORM_LINK_WORKFLOW: _("Link to other forms in End of Form Navigation"),
         }.get(privilege, privilege)

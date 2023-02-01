@@ -17,7 +17,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
-
+from corehq import privileges
 from .models import Toggle
 from .shortcuts import set_toggle, toggle_enabled
 
@@ -537,7 +537,13 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, toggle_class):
+            if toggle_class == FrozenPrivilegeToggle:
+                # Include only FrozenPrivilegeToggle types
+                include = type(toggle) == FrozenPrivilegeToggle
+            else:
+                # Exclude FrozenPrivilegeToggle but include other subclasses such as FeatureRelease
+                include = isinstance(toggle, toggle_class) and type(toggle) != FrozenPrivilegeToggle
+            if include:
                 result[toggle_name] = toggle
     return result
 
@@ -902,7 +908,7 @@ DISABLE_WEB_APPS = StaticToggle(
 
 WEB_APPS_DOMAIN_BANNER = StaticToggle(
     'web_apps_domain_banner',
-    'USH: Show current domain in web apps Login As banner',
+    'USH: Show current domain in web apps Log In As banner',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/USH%3A+Show+current+domain+in+web+apps+Login+As+banner',
@@ -946,6 +952,14 @@ USH_CASE_CLAIM_UPDATES = StaticToggle(
     "search first", "see more", and "skip to default case search results", Geocoder
     and other options in Webapps Case Search.
     """,
+    parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
+)
+
+USH_SEARCH_FILTER = StaticToggle(
+    'case_search_filter',
+    "USH Specific toggle to use Search Filter in case search options.",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
     parent_toggles=[SYNC_SEARCH_CASE_CLAIM]
 )
 
@@ -1099,14 +1113,6 @@ TRANSFER_DOMAIN = StaticToggle(
     'Transfer domains to different users',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
-)
-
-FORM_LINK_WORKFLOW = StaticToggle(
-    'form_link_workflow',
-    'Form linking workflow available on forms',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
@@ -2020,17 +2026,17 @@ PARALLEL_USER_IMPORTS = StaticToggle(
 
 RESTRICT_LOGIN_AS = StaticToggle(
     'restrict_login_as',
-    'USH: Limit allowed users for login as',
+    'USH: Limit allowed users for Log In As',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
     description="""
-    Adds a permission that can be set on user roles to allow login as, but only
-    as a limited set of users. Users with this enabled can "login as" other
+    Adds a permission that can be set on user roles to allow log in as, but only
+    as a limited set of users. Users with this enabled can "log in as" other
     users that set custom user property "login_as_user" to the first user's
     username.
 
     For example, if web user a@a.com has this permission set on their role,
-    they can only login as mobile users who have the custom property
+    they can only log in as mobile users who have the custom property
     "login_as_user" set to "a@a.com".
     """,
     help_link="https://confluence.dimagi.com/display/saas/Limited+Login+As",
@@ -2386,4 +2392,75 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_DOMAIN],
     description='This feature provides the release logs for application.'
+)
+
+TABLEAU_USER_SYNCING = StaticToggle(
+    'tableau_user_syncing',
+    'Automatically sync HQ users with users on Tableau',
+    TAG_INTERNAL,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Each time a user is added/deleted/updated on HQ, an equivalent Tableau user with the username "HQ/{username}"
+    will be added/deleted/updated on the linked Tableau server.
+    """,
+    parent_toggles=[EMBEDDED_TABLEAU]
+)
+
+
+class FrozenPrivilegeToggle(StaticToggle):
+    """
+    A special toggle to represent a legacy toggle that should't be
+    edited via the UI or the code and its new associated privilege.
+
+    This can be used when releasing a domain-only Toggle to general
+    availability as a new paid privilege to support domains that
+    may not have the privilege but had the toggle enabled historically.
+
+    To do this, simply change the toggle type to FrozenPrivilegeToggle
+    and pass the privilege as the first argument to it.
+
+    For e.g.
+    If a toggle were defined as below
+        MY_DOMAIN_TOGGLE = StaticToggle(
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    It can be converted to a FrozenPrivilegeToggle by defining.
+        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
+            privilege_name
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    """
+
+    def __init__(self, privilege_slug, *args, **kwargs):
+        self.privilege_slug = privilege_slug
+        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
+
+
+def frozen_toggles_by_privilege():
+    return {
+        t.privilege_slug: t
+        for t in all_toggles_by_name_in_scope(globals(), FrozenPrivilegeToggle).values()
+    }
+
+
+def domain_has_privilege_from_toggle(privilege_slug, domain):
+    toggle = frozen_toggles_by_privilege().get(privilege_slug)
+    return toggle and toggle.enabled(domain)
+
+
+FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
+    privileges.FORM_LINK_WORKFLOW,
+    'form_link_workflow',
+    'Form linking workflow available on forms',
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
