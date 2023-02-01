@@ -2457,3 +2457,10 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
+
+PHONE_HEARTBEAT = FrozenPrivilegeToggle(
+    'phone_apk_heartbeat',
+    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN]
+)
