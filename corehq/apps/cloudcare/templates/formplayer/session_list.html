@@ -32,7 +32,9 @@
     </table>
   </div>
   <% if (endPage) { %>
-    {% include 'formplayer/pagination.html' %}
+    {% block pagination_templates %}
+      {% include 'formplayer/pagination.html' %}
+    {% endblock %}
   <% } %>
 </script>
 
