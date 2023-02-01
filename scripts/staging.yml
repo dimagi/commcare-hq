@@ -85,7 +85,7 @@ branches:
     - revert-32543-revert-32491-jt/ush-2683_custom_text_for_case_list_empty_state # Jonathan T. Jan 30
     - dm/reindex-migrations # Daniel Jan 31
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
+    - cs/SC-2473-GA-phone_apk_heartbeat-ff+ml/ff-enforce-metadata # Charl/Minha Feb 1
     - cs/SC-2473-GA-phone_apk_heartbeat-ff # Charl Feb 1
     - ml/ff-enforce-metadata # Minha Feb 1
-    - cs/SC-2473-GA-phone_apk_heartbeat-ff+ml/ff-enforce-metadata # Charl/Minha Feb 1
 submodules: { }
