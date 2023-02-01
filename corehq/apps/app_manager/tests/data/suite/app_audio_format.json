@@ -44,7 +44,9 @@
             }, 
             "open_case": {
               "doc_type": "OpenCaseAction", 
-              "name_path": "/data/name", 
+              "name_update": {
+                "question_path": "/data/name"
+              },
               "external_id": null, 
               "condition": {
                 "doc_type": "FormActionCondition", 
