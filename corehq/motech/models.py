@@ -28,10 +28,10 @@ from corehq.motech.const import (
     BASIC_AUTH,
     BEARER_AUTH,
     DIGEST_AUTH,
+    MAX_REQUEST_LOG_LENGTH,
     OAUTH1,
     OAUTH2_CLIENT,
     OAUTH2_PWD,
-    ONE_MB,
     PASSWORD_PLACEHOLDER,
 )
 from corehq.motech.utils import b64_aes_decrypt, b64_aes_encrypt
@@ -286,9 +286,9 @@ class RequestLog(models.Model):
             request_url=log_entry.url,
             request_headers=log_entry.headers,
             request_params=log_entry.params,
-            request_body=as_json_text(log_entry.data),
+            request_body=as_json_text(log_entry.data)[:MAX_REQUEST_LOG_LENGTH],
             request_error=log_entry.error,
             response_status=log_entry.response_status,
             response_headers=log_entry.response_headers,
-            response_body=as_text(log_entry.response_body)[:ONE_MB],
+            response_body=as_text(log_entry.response_body)[:MAX_REQUEST_LOG_LENGTH],
         )

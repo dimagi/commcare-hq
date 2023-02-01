@@ -1027,6 +1027,11 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 SENTRY_API_KEY = None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+# 10MB max upload size - applied to specific views
+# consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
@@ -1225,6 +1230,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
                 'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -2019,10 +2025,11 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False

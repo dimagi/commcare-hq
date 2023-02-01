@@ -45,6 +45,7 @@ STANDARD_HEADER_KEYS = [
     'REMOTE_ADDR',
     'HTTP_ACCEPT_LANGUAGE',
     'CONTENT_TYPE',
+    'CONTENT_LENGTH',
     'HTTP_ACCEPT_ENCODING',
     'HTTP_USER_AGENT',
     # settings.AUDIT_TRACE_ID_HEADER (django-ified) will be added here

@@ -4242,9 +4242,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
-    # not used yet, but nice for tagging/debugging
-    # currently only canonical value is 'incomplete-build',
-    # for when build resources aren't found where they should be
+    # for internal use only, not user-facing
     build_broken_reason = StringProperty()
 
     # watch out for a past bug:
