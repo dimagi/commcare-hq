@@ -13,7 +13,7 @@ def _grandfather_phone_apk_heartbeat_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         PHONE_APK_HEARTBEAT,
-        skip_edition='Community',
+        skip_edition='Paused,Community',
         noinput=True,
     )
 
