@@ -513,6 +513,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                 }
             });
         };
+
+        self.isVisibleGroup = function () {
+            const hasChildren = self.children().length !== 0;
+            const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
+            return hasChildren && hasLabel;
+        };
     }
     Group.prototype = Object.create(Container.prototype);
     Group.prototype.constructor = Container;
