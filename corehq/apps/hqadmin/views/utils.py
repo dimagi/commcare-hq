@@ -1,5 +1,5 @@
 from django.http import HttpResponseRedirect
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -19,7 +19,7 @@ def get_hqadmin_base_context(request):
 
 
 class BaseAdminSectionView(BaseSectionPageView):
-    section_name = ugettext_lazy("Admin")
+    section_name = gettext_lazy("Admin")
 
     @property
     def section_url(self):

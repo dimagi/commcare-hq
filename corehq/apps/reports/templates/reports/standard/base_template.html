@@ -51,7 +51,7 @@
   {% block reports-css %}{% endblock %}
 {% endblock %}
 
-{% block title %}{{ report.title|default:"Project Reports"|safe }}{% endblock %}
+{% block title %}{{ report.title|default:"Project Reports" }}{% endblock %}
 
 {% block page_breadcrumbs %}
   <a href="#" class="btn btn-link btn-invisible visible-xs btn-report-menu" data-toggle="offcanvas"><i class="fa fa-bars"></i> {% trans "Reports Menu" %}</a>
@@ -67,7 +67,7 @@
       {% endfor %}
     {% endif %}
     <li class="active">
-      {% trans report.title|default:"Untitled Report"|safe %}
+      {% trans report.title|default:"Untitled Report" %}
     </li>
   </ol>
 {% endblock %}
@@ -126,7 +126,7 @@
               {{ datespan.enddate|date:"Y-m-d" }}
             </h4>
           </div>
-          <form class="form form-horizontal">
+          <form class="form form-horizontal" method="post">
             <div class="modal-body">
               <div class="form-group">
                 <label class="control-label col-xs-2" for="email-report-subject">{% trans "Subject" %}</label>
@@ -157,7 +157,7 @@
                             name="recipient_emails"
                             data-bind="value: recipient_emails"
                             aria-describedby="email-report-recipient_emails-help-block"
-                            class="form-control"></textarea>
+                            class="form-control vertical-resize"></textarea>
                   <span id="email-report-recipient_emails-help-block"
                         class="help-block">
                     Separate email addresses with commas
@@ -171,7 +171,7 @@
                             id="email-report-notes"
                             name="notes"
                             data-bind="value: notes"
-                            class="form-control"></textarea>
+                            class="form-control vertical-resize"></textarea>
                 </div>
               </div>
             </div>

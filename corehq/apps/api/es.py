@@ -3,37 +3,23 @@ import datetime
 import json
 import logging
 
-from django.http import HttpResponse
 from django.utils.decorators import classonlymethod, method_decorator
 from django.views.generic import View
 
-from corehq.util.es.elasticsearch import ElasticsearchException, NotFoundError
+from no_exceptions.exceptions import Http400
 
-from casexml.apps.case.models import CommCareCase
-from corehq.util.es.interface import ElasticsearchInterface
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 
 from corehq.apps.api.models import ESCase, ESXFormInstance
-from corehq.apps.api.resources.v0_1 import TASTYPIE_RESERVED_GET_PARAMS
 from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import filters
-from corehq.apps.es.forms import FormES
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es.cases import CaseES, case_adapter
+from corehq.apps.es.exceptions import ESError
+from corehq.apps.es.forms import FormES, form_adapter
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.apps.reports.filters.forms import FormsByApplicationFilter
-from corehq.elastic import (
-    ESError,
-    get_es_new,
-    report_and_fail_on_shard_failures,
-)
-from corehq.pillows.base import VALUE_TAG, restore_property_dict
-from corehq.pillows.mappings.case_mapping import CASE_ES_ALIAS
-from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_ES_ALIAS
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_ALIAS
-from corehq.pillows.mappings.xform_mapping import XFORM_ALIAS
-from no_exceptions.exceptions import Http400
+from corehq.util.es.elasticsearch import NotFoundError
 
 logger = logging.getLogger('es')
 
@@ -67,13 +53,13 @@ class ESView(View):
     #csrfmiddlewaretoken=token
 
     #in curl, this is:
-    #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>" -H "Content-Type: application/json" -XPOST http://server/a/domain/api/v0.1/xform_es/
+    #curl -b "csrftoken=<csrftoken>;sessionid=<session_id>"
+    #     -H "Content-Type: application/json"
+    #     -XPOST http://server/a/domain/api/v0.1/xform_es/
     #     -d"query=@myquery.json&csrfmiddlewaretoken=<csrftoken>"
     #or, call this programmatically to avoid CSRF issues.
 
-    es_alias = ""
     domain = ""
-    es = None
     doc_type = None
     model = None
 
@@ -82,8 +68,6 @@ class ESView(View):
     def __init__(self, domain):
         super(ESView, self).__init__()
         self.domain = domain.lower()
-        self.es = get_es_new()
-        self.es_interface = ElasticsearchInterface(self.es)
 
     def head(self, *args, **kwargs):
         raise NotImplementedError("Not implemented")
@@ -108,7 +92,7 @@ class ESView(View):
         Django as_view cannot be used since the constructor requires information only present in the request.
         """
         raise Exception('as_view not supported for domain-specific ESView')
-        
+
     @classonlymethod
     def as_domain_specific_view(cls, **initkwargs):
         """
@@ -122,7 +106,7 @@ class ESView(View):
 
     def get_document(self, doc_id):
         try:
-            doc = self.es_interface.get_doc(self.es_alias, '_all', doc_id)
+            doc = self.adapter.get(doc_id)
         except NotFoundError:
             raise object_does_not_exist(self.doc_type, doc_id)
 
@@ -131,7 +115,7 @@ class ESView(View):
 
         return self.model(doc) if self.model else doc
 
-    def run_query(self, es_query, es_type=None):
+    def run_query(self, es_query):
         """
         Run a more advanced POST based ES query
 
@@ -147,9 +131,8 @@ class ESView(View):
             es_query['fields'] = fields
 
         try:
-            es_results = self.es_interface.search(self.es_alias, es_type, body=es_query)
-            report_and_fail_on_shard_failures(es_results)
-        except ElasticsearchException as e:
+            es_results = self.adapter.search(es_query)
+        except ESError:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
                 # re-run with no query string to check
@@ -162,9 +145,7 @@ class ESView(View):
                     # an error with a blank query will return None
                     raise ESUserError("Error with elasticsearch query: %s" %
                         querystring)
-
-            msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (self.es_alias, str(e), es_query)
-            raise ESError(msg)
+            raise
 
         hits = []
         for res in es_results['hits']['hits']:
@@ -184,27 +165,23 @@ class ESView(View):
         return es_results
 
     def count_query(self, es_query):
-        return self.es_interface.count(self.es_alias, None, es_query)
+        return self.adapter.count(es_query)
 
 
 class CaseESView(ESView):
     """
-    Expressive CaseES interface. Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
+    Expressive CaseES interface
+
+    Yes, this is redundant with pieces of the v0_1.py CaseAPI - todo to merge these applications
     Which this should be the final say on ES access for Casedocs
     """
-    es_alias = CASE_ES_ALIAS
-    doc_type = "CommCareCase"
-    model = ESCase
-
-
-class ReportCaseESView(ESView):
-    es_alias = REPORT_CASE_ES_ALIAS
+    adapter = case_adapter
     doc_type = "CommCareCase"
     model = ESCase
 
 
 class FormESView(ESView):
-    es_alias = XFORM_ALIAS
+    adapter = form_adapter
     doc_type = "XFormInstance"
     model = ESXFormInstance
 
@@ -225,7 +202,7 @@ class FormESView(ESView):
                                                                                        None),
                                                              none_if_not_found=True)
                 if not name:
-                    name = 'unknown' # try to fix it below but this will be the default
+                    name = 'unknown'  # try to fix it below but this will be the default
                     # fall back
                     try:
                         if res['_source']['form'].get('@name', None):
@@ -239,69 +216,6 @@ class FormESView(ESView):
 
                 res['_source']['es_readable_name'] = name
 
-        return es_results
-
-
-def report_term_filter(terms, mapping):
-    """convert terms to correct #value term queries based upon the mapping
-    does it match up with pre-defined stuff in the mapping?
-    """
-
-    ret_terms = []
-    for orig_term in terms:
-        curr_mapping = mapping.get('properties')
-        split_term = orig_term.split('.')
-        for ix, sub_term in enumerate(split_term, start=1):
-            is_property = sub_term in curr_mapping
-            if ix == len(split_term):
-                #it's the last one, and if it's still not in it, then append a value
-                if is_property:
-                    ret_term = orig_term
-                else:
-                    ret_term = '%s.%s' % (orig_term, VALUE_TAG)
-                ret_terms.append(ret_term)
-            if is_property and 'properties' in curr_mapping[sub_term]:
-                curr_mapping = curr_mapping[sub_term]['properties']
-    return ret_terms
-
-
-class ReportFormESView(FormESView):
-    es_alias = REPORT_XFORM_ALIAS
-    doc_type = "XFormInstance"
-    model = ESXFormInstance
-
-    def run_query(self, es_query):
-        es_results = super(FormESView, self).run_query(es_query)
-        #hack, walk the results again, and if we have xmlns, populate human readable names
-        # Note that `get_unknown_form_name` does not require the request, which is also
-        # not necessarily available here. So `None` is passed here.
-        form_filter = FormsByApplicationFilter(None, domain=self.domain)
-
-        for res in es_results.get('hits', {}).get('hits', []):
-            if '_source' in res:
-                res_source = restore_property_dict(res['_source'])
-                res['_source'] = res_source
-                xmlns = res['_source'].get('xmlns', None)
-                name = None
-                if xmlns:
-                    name = form_filter.get_unknown_form_name(xmlns,
-                                                             app_id=res['_source'].get('app_id',
-                                                                                       None),
-                                                             none_if_not_found=True)
-                if not name:
-                    name = 'unknown' # try to fix it below but this will be the default
-                    # fall back
-                    try:
-                        if res['_source']['form'].get('@name', None):
-                            name = res['_source']['form']['@name']
-                        else:
-                            backup = res['_source']['form'].get('#type', 'data')
-                            if backup != 'data':
-                                name = backup
-                    except (TypeError, KeyError):
-                        pass
-
-                res['_source']['es_readable_name'] = name
         return es_results
 
 
@@ -325,12 +239,12 @@ class ElasticAPIQuerySet(object):
     Serialization:
 
     - `__iter__()`
-    
+
     """
 
     # Also note https://github.com/llonchj/django-tastypie-elasticsearch/ which is
     # not very mature, plus this code below may involve Dimagic-specific assumptions
-    
+
     def __init__(self, es_client, payload=None, model=None):
         """
         Instantiate with an entire ElasticSearch payload,
@@ -347,7 +261,7 @@ class ElasticAPIQuerySet(object):
         return ElasticAPIQuerySet(es_client=es_client or self.es_client,
                           payload=payload or self.payload,
                           model=model or self.model)
-        
+
     @property
     def results(self):
         if self.__results is None:
@@ -358,7 +272,7 @@ class ElasticAPIQuerySet(object):
         return self.es_client.count_query(self.payload)
 
     def order_by(self, *fields):
-        
+
         new_payload = copy.deepcopy(self.payload)
 
         new_payload['sort'] = []
@@ -387,17 +301,9 @@ class ElasticAPIQuerySet(object):
         return len(self.results['hits']['hits'])
 
     def __iter__(self):
+        wrap = self.model or (lambda v: v)
         for jvalue in self.results['hits']['hits']:
-            if self.model:
-                # HACK: Sometimes the model is a class w/ a wrap method, sometimes just a function
-                if hasattr(self.model, 'wrap'):
-                    if self.model == CommCareCase:
-                        jvalue['_source'].pop('modified_by', None)
-                    yield self.model.wrap(jvalue['_source']) 
-                else:
-                    yield self.model(jvalue['_source'])
-            else:
-                yield jvalue['_source']
+            yield wrap(jvalue['_source'])
 
     def __getitem__(self, idx):
         if isinstance(idx, slice):
@@ -416,7 +322,7 @@ class ElasticAPIQuerySet(object):
         elif isinstance(idx, int):
             if idx >= 0:
                 # Leverage efficicent backend slicing
-                return list(self[idx:idx+1])[0]
+                return list(self[idx:idx + 1])[0]
             else:
                 # This actually could be supported with varying degrees of efficiency
                 raise NotImplementedError('Negative index not supported.')
@@ -443,7 +349,8 @@ def validate_date(date):
     raise DateTimeError("Unknown date format: {}".format(date))
 
 
-RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q', '_search'] + TASTYPIE_RESERVED_GET_PARAMS)
+TASTYPIE_RESERVED_GET_PARAMS = ['api_key', 'username', 'format']
+RESERVED_QUERY_PARAMS = set(['limit', 'offset', 'order_by', 'q'] + TASTYPIE_RESERVED_GET_PARAMS)
 
 
 class DateRangeParams(object):
@@ -466,6 +373,11 @@ class DateRangeParams(object):
 
 
 class TermParam(object):
+    """Allows for use of params that differ between the API and the ES mapping
+
+    It's also used without the `term` argument for non-analyzed values, to
+    prevent them from being coerced to lowercase
+    """
     def __init__(self, param, term=None, analyzed=False):
         self.param = param
         self.term = term or param
@@ -494,19 +406,24 @@ class XFormServerModifiedParams:
                 )
             )
 
-query_param_consumers = [
+
+xform_param_consumers = [
     TermParam('xmlns', 'xmlns.exact'),
     TermParam('xmlns.exact'),
+    TermParam('case_id', '__retrieved_case_ids'),
+    DateRangeParams('received_on'),
+    DateRangeParams('server_modified_on'),
+    DateRangeParams('server_date_modified', 'server_modified_on'),
+    DateRangeParams('indexed_on', 'inserted_at'),
+]
+
+case_param_consumers = [
     TermParam('case_name', 'name', analyzed=True),
     TermParam('case_type', 'type', analyzed=True),
-    # terms listed here to prevent conversion of their values to lower case since
-    # since they are indexed as `not_analyzed` in ES
     TermParam('type.exact'),
     TermParam('name.exact'),
     TermParam('external_id.exact'),
     TermParam('contact_phone_number'),
-
-    DateRangeParams('received_on'),
     DateRangeParams('server_modified_on'),
     DateRangeParams('date_modified', 'modified_on'),
     DateRangeParams('server_date_modified', 'server_modified_on'),
@@ -546,33 +463,35 @@ def _validate_and_get_es_filter(search_param):
         raise Http400
 
 
-def es_query_from_get_params(search_params, domain, reserved_query_params=None, doc_type='form'):
-    # doc_type can be form or case
-    assert doc_type in ['form', 'case']
-    es = FormES() if doc_type == 'form' else CaseES()
-
-    query = es.remove_default_filters().domain(domain)
-
-    if doc_type == 'form':
-        if 'include_archived' in search_params:
-            query = query.filter(
-                filters.OR(filters.term('doc_type', 'xforminstance'), filters.term('doc_type', 'xformarchived')))
-        else:
-            query = query.filter(filters.term('doc_type', 'xforminstance'))
-
-    if '_search' in search_params:
-        # This is undocumented usecase by Data export tool and one custom project
-        #   Validate that the passed in param is one of these two expected
-        _filter = _validate_and_get_es_filter(json.loads(search_params['_search']))
-        query = query.filter(_filter)
-
-    # filters are actually going to be a more common case
-    reserved_query_params = RESERVED_QUERY_PARAMS | set(reserved_query_params or [])
+def es_query_from_get_params(search_params, domain, doc_type='form'):
     query_params = {
         param: value
         for param, value in search_params.items()
-        if param not in reserved_query_params and not param.endswith('__full')
+        if param not in RESERVED_QUERY_PARAMS and not param.endswith('__full')
     }
+
+    if doc_type == 'form':
+        query = FormES().remove_default_filters().domain(domain)
+        if query_params.pop('include_archived', None) is not None:
+            query = query.filter(filters.OR(
+                filters.term('doc_type', 'xforminstance'),
+                filters.term('doc_type', 'xformarchived'),
+            ))
+        else:
+            query = query.filter(filters.term('doc_type', 'xforminstance'))
+        query_param_consumers = xform_param_consumers
+    elif doc_type == 'case':
+        query = CaseES().domain(domain)
+        query_param_consumers = case_param_consumers
+    else:
+        raise AssertionError("unknown doc type")
+
+    if '_search' in query_params:
+        # This is undocumented usecase by Data export tool and one custom project
+        #   Validate that the passed in param is one of these two expected
+        _filter = _validate_and_get_es_filter(json.loads(query_params.pop('_search')))
+        query = query.filter(_filter)
+
     for consumer in query_param_consumers:
         try:
             payload_filter = consumer.consume_params(query_params)

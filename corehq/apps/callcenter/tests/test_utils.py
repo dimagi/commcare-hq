@@ -1,15 +1,13 @@
 import uuid
 from datetime import datetime, timedelta
+from unittest import mock
 
 from django.test import SimpleTestCase, TestCase
-
-import mock
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases
 from casexml.apps.case.xform import get_case_updates
 from dimagi.utils.couch.undo import DELETED_SUFFIX
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.callcenter.const import CALLCENTER_USER
@@ -23,30 +21,26 @@ from corehq.apps.callcenter.utils import (
     get_call_center_domains,
     is_midnight_for_domain,
 )
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsDefinition,
+    CustomDataFieldsProfile,
+    Field,
+)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.signals import commcare_domain_post_save
+from corehq.apps.es.domains import domain_adapter
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.user_importer.importer import (
     create_or_update_commcare_users_and_groups,
 )
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.util import format_username
-from corehq.apps.custom_data_fields.models import (
-    CustomDataFieldsDefinition,
-    CustomDataFieldsProfile,
-    Field,
-    PROFILE_SLUG,
-)
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.elastic import ensure_index_deleted
 
 TEST_DOMAIN = 'cc-util-test'
 CASE_TYPE = 'cc-flw'
@@ -75,7 +69,7 @@ class CallCenterUtilsTests(TestCase):
         delete_all_cases()
 
     def test_sync(self):
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.name, self.user.username)
@@ -88,42 +82,42 @@ class CallCenterUtilsTests(TestCase):
         self.addCleanup(other_user.delete, TEST_DOMAIN, deleted_by=None)
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
-        sync_call_center_user_case(other_user)
+        sync_call_center_user_case(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
         self.assertEqual(case.name, name)
 
     def test_sync_inactive(self):
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.is_active = False
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_retired(self):
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
 
         self.user.base_doc += DELETED_SUFFIX
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertTrue(case.closed)
 
     def test_sync_update_update(self):
         other_user = CommCareUser.create(TEST_DOMAIN, 'user2', '***', None, None)
         self.addCleanup(other_user.delete, self.domain.name, deleted_by=None)
-        sync_call_center_user_case(other_user)
+        sync_call_center_user_case(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertIsNotNone(case)
         self.assertEqual(case.name, other_user.username)
 
         name = 'Ricky Bowwood'
         other_user.set_full_name(name)
-        sync_call_center_user_case(other_user)
+        sync_call_center_user_case(other_user, self.domain.name)
         case = self._get_user_case(other_user._id)
         self.assertEqual(case.name, name)
 
@@ -151,7 +145,7 @@ class CallCenterUtilsTests(TestCase):
             '._starts_with_punctuation': '0',
             PROFILE_SLUG: profile.id,
         })
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertIsNotNone(case)
         self.assertEqual(case.get_case_property('blank_val'), '')
@@ -208,17 +202,18 @@ class CallCenterUtilsTests(TestCase):
         cases = factory.create_or_update_cases([
             CaseStructure(attrs={'create': True})
         ])
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertEqual(case.owner_id, cases[0].owner_id)
 
     def test_opened_by_id_is_system(self):
-        sync_call_center_user_case(self.user)
+        sync_call_center_user_case(self.user, self.domain.name)
         case = self._get_user_case()
         self.assertEqual(case.opened_by, CALLCENTER_USER)
 
     def _get_user_case(self, user_id=None):
-        return CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(user_id or self.user._id, CASE_TYPE)
+        return CommCareCase.objects.get_case_by_external_id(
+            TEST_DOMAIN, user_id or self.user._id, CASE_TYPE)
 
 
 class CallCenterUtilsUsercaseTests(TestCase):
@@ -249,7 +244,7 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'completed_training': 'yes',
         })
         self.user.save()
-        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(case)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
 
@@ -264,8 +259,8 @@ class CallCenterUtilsUsercaseTests(TestCase):
         self.user.update_metadata({
             'completed_training': 'yes',
         })
-        sync_usercase(self.user)
-        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        sync_usercase(self.user, self.domain.name)
+        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(case.dynamic_case_properties()['completed_training'], 'yes')
         self._check_update_matches(case, {'completed_training': 'yes'})
 
@@ -278,30 +273,30 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'case_type': 'bob',
         })
         self.user.save()
-        case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(case.owner_id, self.user.get_id)
         self.assertEqual(case.type, USERCASE_TYPE)
         self.assertEqual(1, len(case.xform_ids))
 
     def _check_update_matches(self, case, expected_update):
-        last_form = FormAccessors(TEST_DOMAIN).get_form(case.xform_ids[-1])
+        last_form = XFormInstance.objects.get_form(case.xform_ids[-1], TEST_DOMAIN)
         case_update = get_case_updates(last_form)[0]
         self.assertDictEqual(case_update.update_block, expected_update)
 
     def test_reactivate_user(self):
         """Confirm that reactivating a user re-opens its user case."""
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.is_active = True
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
 
     def test_update_deactivated_user(self):
@@ -309,17 +304,17 @@ class CallCenterUtilsUsercaseTests(TestCase):
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.update_metadata({'foo': 'bar'})
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
@@ -331,18 +326,18 @@ class CallCenterUtilsUsercaseTests(TestCase):
         Confirm that updating a deactivated user also updates the user case.
         """
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
 
         self.user.is_active = False
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertTrue(user_case.closed)
 
         self.user.update_metadata({'foo': 'bar'})
         self.user.is_active = True
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertFalse(user_case.closed)
         self.assertEqual(user_case.dynamic_case_properties()['foo'], 'bar')
 
@@ -351,12 +346,12 @@ class CallCenterUtilsUsercaseTests(TestCase):
             'numeric': 123,
         })
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertIsNotNone(user_case)
         self.assertEqual(1, len(user_case.xform_ids))
 
         self.user.save()
-        user_case = CaseAccessors(TEST_DOMAIN).get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(1, len(user_case.xform_ids))
 
     def test_bulk_upload_usercases(self):
@@ -396,14 +391,13 @@ class CallCenterUtilsUsercaseTests(TestCase):
         )
         self.assertEqual(results['errors'], [])
 
-        accessor = CaseAccessors(TEST_DOMAIN)
-        old_user_case = accessor.get_case_by_domain_hq_user_id(self.user._id, USERCASE_TYPE)
+        old_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, self.user._id, USERCASE_TYPE)
         self.assertEqual(old_user_case.owner_id, self.user.get_id)
         self.assertEqual(2, len(old_user_case.xform_ids))
 
         new_user = CommCareUser.get_by_username(format_username('the_bunk', TEST_DOMAIN))
         self.addCleanup(new_user.delete, self.domain.name, deleted_by=None)
-        new_user_case = accessor.get_case_by_domain_hq_user_id(new_user._id, USERCASE_TYPE)
+        new_user_case = CommCareCase.objects.get_case_by_external_id(TEST_DOMAIN, new_user._id, USERCASE_TYPE)
         self.assertEqual(new_user_case.owner_id, new_user.get_id)
         self.assertEqual(1, len(new_user_case.xform_ids))
 
@@ -467,24 +461,14 @@ class DomainTimezoneTests(SimpleTestCase):
             self.assertEqual(is_midnight, expected)
 
 
+@es_test(requires=[domain_adapter])
 class CallCenterDomainTest(SimpleTestCase):
-    def setUp(self):
-        self.index_info = DOMAIN_INDEX_INFO
-        self.elasticsearch = get_es_new()
-        ensure_index_deleted(self.index_info.index)
-        initialize_index_and_mapping(self.elasticsearch, self.index_info)
-        import time
-        time.sleep(1)  # without this we get a 503 response about 30% of the time
-
-    def tearDown(self):
-        ensure_index_deleted(self.index_info.index)
 
     def test_get_call_center_domains(self):
         _create_domain('cc-dom1', True, True, 'flw', 'user1', False)
         _create_domain('cc-dom2', True, False, 'aww', None, True)
         _create_domain('cc-dom3', False, False, '', 'user2', False)  # case type missing
         _create_domain('cc-dom3', False, False, 'flw', None, False)  # owner missing
-        self.elasticsearch.indices.refresh(self.index_info.index)
 
         domains = get_call_center_domains()
         self.assertEqual(2, len(domains))
@@ -510,10 +494,7 @@ def _create_domain(name, cc_enabled, cc_use_fixtures, cc_case_type, cc_case_owne
         domain.call_center_config.case_owner_id = cc_case_owner_id
         domain.call_center_config.use_user_location_as_owner = use_location_as_owner
 
-        send_to_elasticsearch(
-            'domains',
-            doc=domain.to_json(),
-        )
+        domain_adapter.index(domain.to_json(), refresh=True)
 
 
 class CallCenterDomainMockTest(TestCase):

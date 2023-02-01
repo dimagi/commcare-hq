@@ -65,7 +65,7 @@
     "KafkaDomainPillow": {
         "advertised_name": "KafkaDomainPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2020-02-10",
+        "checkpoint_id": "KafkaDomainPillow-test_hqdomains_2021-03-08",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "KafkaDomainPillow"
     },
@@ -76,47 +76,12 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "LedgerToElasticsearchPillow"
     },
-    "M4ChangeFormFluffPillow": {
-        "advertised_name": "M4ChangeFormFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.M4ChangeFormFluffPillow.testhq",
-        "full_class_name": "custom.m4change.models.M4ChangeFormFluffPillow",
-        "name": "M4ChangeFormFluffPillow"
-    },
-    "RecouvrementFluffPillow": {
-        "advertised_name": "RecouvrementFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.RecouvrementFluffPillow.testhq",
-        "full_class_name": "custom.intrahealth.models.RecouvrementFluffPillow",
-        "name": "RecouvrementFluffPillow"
-    },
-    "ReportCaseToElasticsearchPillow": {
-        "advertised_name": "ReportCaseToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ReportCaseToElasticsearchPillow-test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "ReportCaseToElasticsearchPillow"
-    },
-    "ReportXFormToElasticsearchPillow": {
-        "advertised_name": "ReportXFormToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ReportXFormToElasticsearchPillow-test_report_xforms_20160824_1708",
-        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
-        "name": "ReportXFormToElasticsearchPillow"
-    },
     "SqlSMSPillow": {
         "advertised_name": "SqlSMSPillow",
         "change_feed_type": "KafkaChangeFeed",
         "checkpoint_id": "SqlSMSPillow-test_smslogs_2020-01-28",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "SqlSMSPillow"
-    },
-    "UCLAPatientFluffPillow": {
-        "advertised_name": "UCLAPatientFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.UCLAPatientFluffPillow.testhq",
-        "full_class_name": "custom.succeed.models.UCLAPatientFluffPillow",
-        "name": "UCLAPatientFluffPillow"
     },
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
@@ -190,7 +155,7 @@
     },
     "xform-pillow": {
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_report_xforms_20160824_1708-test_hqusers_2017-09-07",
+        "checkpoint_id": "xform-pillow-test_xforms_2016-07-07-test_hqusers_2017-09-07",
         "name": "xform-pillow",
         "advertised_name": "xform-pillow",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow"

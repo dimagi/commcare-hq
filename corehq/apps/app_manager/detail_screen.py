@@ -136,21 +136,21 @@ class FormattedDetailColumn(object):
         )
 
         if self.column.useXpathExpression:
-            xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+            xpath = sx.CalculatedPropertyXPath(function=self.xpath)
             if re.search(r'\$lang', self.xpath):
                 xpath.variables.node.append(
-                    sx.CalculatedPropertyXpathVariable(
+                    sx.CalculatedPropertyXPathVariable(
                         name='lang',
                         locale_id=self.id_strings.current_language()
                     ).node
                 )
-            xpath_variable = sx.XpathVariable(name='calculated_property', xpath=xpath)
+            xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
             template.text.xpath.variables.node.append(xpath_variable.node)
 
         if self.variables:
             for key, value in sorted(self.variables.items()):
                 template.text.xpath.variables.node.append(
-                    sx.XpathVariable(name=key, locale_id=value).node
+                    sx.XPathVariable(name=key, locale_id=value).node
                 )
 
         return template
@@ -176,15 +176,15 @@ class FormattedDetailColumn(object):
             )
 
             if self.column.useXpathExpression:
-                xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                xpath = sx.CalculatedPropertyXPath(function=self.xpath)
                 if re.search(r'\$lang', self.xpath):
                     xpath.variables.node.append(
-                        sx.CalculatedPropertyXpathVariable(
+                        sx.CalculatedPropertyXPathVariable(
                             name='lang',
                             locale_id=self.id_strings.current_language()
                         ).node
                     )
-                xpath_variable = sx.XpathVariable(name='calculated_property', xpath=xpath)
+                xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
                 sort.text.xpath.variables.node.append(xpath_variable.node)
 
         if self.sort_element:
@@ -206,14 +206,14 @@ class FormattedDetailColumn(object):
                     type=sort_type,
                 )
                 if not sort_calculation and self.column.useXpathExpression:
-                    xpath = sx.CalculatedPropertyXpath(function=self.xpath)
+                    xpath = sx.CalculatedPropertyXPath(function=self.xpath)
                     if re.search(r'\$lang', self.xpath):
                         xpath.variables.node.append(
-                            sx.CalculatedPropertyXpathVariable(
+                            sx.CalculatedPropertyXPathVariable(
                                 name='lang', locale_id=self.id_strings.current_language()
                             ).node
                         )
-                    xpath_variable = sx.XpathVariable(name='calculated_property', xpath=xpath)
+                    xpath_variable = sx.XPathVariable(name='calculated_property', xpath=xpath)
                     sort.text.xpath.variables.node.append(xpath_variable.node)
 
             if self.sort_element.type == 'distance':
@@ -365,8 +365,10 @@ class Phone(FormattedDetailColumn):
 @register_format_type('enum')
 class Enum(FormattedDetailColumn):
     def _make_xpath(self, type):
-        return sx.XpathEnum.build(
+        return sx.XPathEnum.build(
             enum=self.column.enum,
+            format=self.column.format,
+            type=type,
             template=self._xpath_template(type),
             get_template_context=self._xpath_template_context(type),
             get_value=lambda key: self.id_strings.detail_column_enum_variable(self.module, self.detail_type,
@@ -374,9 +376,9 @@ class Enum(FormattedDetailColumn):
 
     def _xpath_template(self, type):
         if type == 'sort':
-            return "if({xpath} = '{key}', {i}, "
+            return "if(selected({xpath}, '{key}'), {i}, "
         if type == 'display':
-            return "if({xpath} = '{key}', ${key_as_var}, "
+            return "if(selected({xpath}, '{key}'), ${key_as_var}, ''), "
         raise ValueError('type must be in sort, display')
 
     def _xpath_template_context(self, type):
@@ -409,7 +411,7 @@ class ConditionalEnum(Enum):
             variables = self.variables
             for key in variables:
                 node.text.xpath.node.append(
-                    sx.XpathVariable(name=key, locale_id=variables[key]).node
+                    sx.XPathVariable(name=key, locale_id=variables[key]).node
                 )
         return node
 
@@ -592,9 +594,10 @@ class PropertyXpathGenerator(BaseXpathGenerator):
 
         if indexes and indexes[0] == 'user':
             case = CaseXPath(UsercaseXPath().case())
-        else:
+        elif indexes:
+            instance_name = self.detail.get_instance_name(self.module)
             for index in indexes:
-                case = case.index_id(index).case(instance_name=self.detail.instance_name)
+                case = case.index_id(index).case(instance_name=instance_name)
 
         if property == '#owner_name':
             return self.owner_name(case.property('@owner_id'))

@@ -23,11 +23,11 @@ from corehq.apps.change_feed.topics import (
 class KafkaChangeFeedTest(SimpleTestCase):
 
     def test_multiple_topics(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], client_id='test-kafka-feed')
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed')
         self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
         offsets = feed.get_latest_offsets()
-        expected_metas = [publish_stub_change(topics.FORM), publish_stub_change(topics.CASE)]
-        unexpected_metas = [publish_stub_change(topics.FORM_SQL), publish_stub_change(topics.CASE_SQL)]
+        expected_metas = [publish_stub_change(topics.FORM_SQL), publish_stub_change(topics.CASE_SQL)]
+        unexpected_metas = [publish_stub_change(topics.COMMCARE_USER), publish_stub_change(topics.WEB_USER)]
         changes = list(feed.iter_changes(since=offsets, forever=False))
         self.assertEqual(2, len(changes))
         found_change_ids = set([change.id for change in changes])
@@ -36,8 +36,8 @@ class KafkaChangeFeedTest(SimpleTestCase):
             self.assertTrue(unexpected.document_id not in found_change_ids)
 
     def test_expired_checkpoint_iteration_strict(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], client_id='test-kafka-feed', strict=True)
-        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed', strict=True)
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM_SQL, topics.CASE_SQL])
         since = {
             topic_partition: offset - 1
             for topic_partition, offset in first_available_offsets.items()
@@ -46,15 +46,15 @@ class KafkaChangeFeedTest(SimpleTestCase):
             next(feed.iter_changes(since=since, forever=False))
 
     def test_non_expired_checkpoint_iteration_strict(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], client_id='test-kafka-feed', strict=True)
-        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed', strict=True)
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM_SQL, topics.CASE_SQL])
         next(feed.iter_changes(since=first_available_offsets, forever=False))
 
 
 class KafkaCheckpointTest(TestCase):
 
     def test_checkpoint_with_multiple_topics(self):
-        feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], client_id='test-kafka-feed')
+        feed = KafkaChangeFeed(topics=[topics.FORM_SQL, topics.CASE_SQL], client_id='test-kafka-feed')
         pillow_name = 'test-multi-topic-checkpoints'
         checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = CountingProcessor()
@@ -68,22 +68,22 @@ class KafkaCheckpointTest(TestCase):
             )
         )
         offsets = feed.get_latest_offsets()
-        self.assertEqual(set([(topics.FORM, 0), (topics.CASE, 0)]), set(offsets.keys()))
+        self.assertEqual(set([(topics.FORM_SQL, 0), (topics.CASE_SQL, 0)]), set(offsets.keys()))
 
         # send a few changes to kafka so they should be picked up by the pillow
-        publish_stub_change(topics.FORM)
-        publish_stub_change(topics.FORM)
-        publish_stub_change(topics.CASE)
-        publish_stub_change(topics.CASE)
+        publish_stub_change(topics.FORM_SQL)
+        publish_stub_change(topics.FORM_SQL)
         publish_stub_change(topics.CASE_SQL)
+        publish_stub_change(topics.CASE_SQL)
+        publish_stub_change(topics.COMMCARE_USER)
         pillow.process_changes(since=offsets, forever=False)
         self.assertEqual(4, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
-        publish_stub_change(topics.FORM)
-        publish_stub_change(topics.FORM)
-        publish_stub_change(topics.CASE)
-        publish_stub_change(topics.CASE)
+        publish_stub_change(topics.FORM_SQL)
+        publish_stub_change(topics.FORM_SQL)
         publish_stub_change(topics.CASE_SQL)
+        publish_stub_change(topics.CASE_SQL)
+        publish_stub_change(topics.COMMCARE_USER)
         pillow.process_changes(pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(8, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())

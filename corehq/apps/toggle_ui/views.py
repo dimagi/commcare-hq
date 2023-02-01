@@ -2,26 +2,22 @@ import decimal
 import json
 from collections import Counter
 
+from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
+from django.http import JsonResponse
 from django.http.response import Http404, HttpResponse
-from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.views.decorators.http import require_POST
-
-from couchdbkit.exceptions import ResourceNotFound
-
-from corehq.apps.toggle_ui.models import ToggleAudit
-from couchforms.analytics import get_last_form_submission_received
-from toggle.models import Toggle
-from toggle.shortcuts import parse_toggle, namespaced_item
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.domain.decorators import require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.toggle_ui.utils import find_static_toggle, get_toggles_attachment_file
+from corehq.apps.toggle_ui.models import ToggleAudit
+from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
+from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -36,10 +32,15 @@ from corehq.toggles import (
     all_toggles,
     NAMESPACE_EMAIL_DOMAIN,
     toggles_enabled_for_domain,
+    toggles_enabled_for_email_domain,
     toggles_enabled_for_user, FeatureRelease,
 )
+from corehq.toggles.models import Toggle
+from corehq.toggles.shortcuts import parse_toggle, namespaced_item
+from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
-from couchexport.models import Format
+from couchforms.analytics import get_last_form_submission_received
+from soil import DownloadBase
 
 NOT_FOUND = "Not Found"
 
@@ -203,7 +204,8 @@ class ToggleEditView(BasePageView):
             self.toggle_slug, self.request.user.username, currently_enabled, previously_enabled, randomness
         )
         _notify_on_change(self.static_toggle, currently_enabled - previously_enabled, self.request.user.username)
-        _call_save_fn_and_clear_cache(self.static_toggle, previously_enabled, currently_enabled)
+        _call_save_fn_and_clear_cache_and_enable_dependencies(
+            self.request.user.username, self.static_toggle, previously_enabled, currently_enabled)
 
         data = {
             'items': item_list
@@ -244,13 +246,35 @@ def _notify_on_change(static_toggle, added_entries, username):
         _assert(False, subject)
 
 
-def _call_save_fn_and_clear_cache(static_toggle, previously_enabled, currently_enabled):
+def _call_save_fn_and_clear_cache_and_enable_dependencies(request_username, static_toggle,
+                                                          previously_enabled, currently_enabled):
     changed_entries = previously_enabled ^ currently_enabled  # ^ means XOR
     for entry in changed_entries:
         enabled = entry in currently_enabled
         namespace, entry = parse_toggle(entry)
         _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled)
         _clear_cache_for_toggle(namespace, entry)
+        _enable_dependencies(request_username, static_toggle, entry, namespace, enabled)
+
+
+def _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled):
+    if is_enabled and static_toggle.parent_toggles:
+        for dependency in static_toggle.parent_toggles:
+            _set_toggle(request_username, dependency, item, namespace, is_enabled)
+
+
+def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):
+    if static_toggle.set(item=item, enabled=is_enabled, namespace=namespace):
+        action = ToggleAudit.ACTION_ADD if is_enabled else ToggleAudit.ACTION_REMOVE
+        ToggleAudit.objects.log_toggle_action(
+            static_toggle.slug, request_username, [namespaced_item(item, namespace)], action
+        )
+
+        if is_enabled:
+            _notify_on_change(static_toggle, [item], request_username)
+
+        _clear_cache_for_toggle(namespace, item)
+        _enable_dependencies(request_username, static_toggle, item, namespace, is_enabled)
 
 
 def _call_save_fn_for_toggle(static_toggle, namespace, entry, enabled):
@@ -264,7 +288,9 @@ def _clear_cache_for_toggle(namespace, entry):
     if namespace == NAMESPACE_DOMAIN:
         domain = entry
         toggles_enabled_for_domain.clear(domain)
-    elif namespace != NAMESPACE_EMAIL_DOMAIN:
+    elif namespace == NAMESPACE_EMAIL_DOMAIN:
+        toggles_enabled_for_email_domain.clear(entry)
+    else:
         # these are sent down with no namespace
         assert ':' not in entry, entry
         username = entry
@@ -357,27 +383,22 @@ def set_toggle(request, toggle_slug):
     item = request.POST['item']
     enabled = request.POST['enabled'] == 'true'
     namespace = request.POST['namespace']
-    if static_toggle.set(item=item, enabled=enabled, namespace=namespace):
-        action = ToggleAudit.ACTION_ADD if enabled else ToggleAudit.ACTION_REMOVE
-        ToggleAudit.objects.log_toggle_action(
-            toggle_slug, request.user.username, [namespaced_item(item, namespace)], action
-        )
-
-    if enabled:
-        _notify_on_change(static_toggle, [item], request.user.username)
-
-    _clear_cache_for_toggle(namespace, item)
+    _set_toggle(request.user.username, static_toggle, item, namespace, enabled)
 
     return HttpResponse(json.dumps({'success': True}), content_type="application/json")
 
 
 @require_superuser_or_contractor
+@require_POST
 def export_toggles(request):
-    tag = request.GET['tag'] or None
+    tag = request.POST['tag'] or None
 
-    response = HttpResponse(content_type=Format.from_format('xlsx').mimetype)
-    response['Content-Disposition'] = 'attachment; filename="flags.xlsx"'
-    outfile = get_toggles_attachment_file(tag)
-    response.write(outfile.getvalue())
+    download = DownloadBase()
+    download.set_task(generate_toggle_csv_download.delay(
+        tag, download.download_id, request.couch_user.username
+    ))
 
-    return response
+    return JsonResponse({
+        "download_url": reverse("ajax_job_poll", kwargs={"download_id": download.download_id}),
+        "download_id": download.download_id,
+    })

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from corehq.apps.mobile_auth.views import (
     admin_fetch_key_records,

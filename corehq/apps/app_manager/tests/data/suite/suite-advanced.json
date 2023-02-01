@@ -668,7 +668,10 @@
                   "doc_type": "FormActionCondition"
                 },
                 "case_properties": {
-                  "amount": "/data/amount"
+                  "amount": {
+                    "question_path": "/data/amount",
+                    "update_mode": "always"
+                  }
                 },
                 "case_type": "requisition",
                 "show_product_stock": true,

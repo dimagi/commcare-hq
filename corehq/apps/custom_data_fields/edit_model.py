@@ -5,12 +5,15 @@ from django import forms
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, validate_slug
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from django.utils.safestring import mark_safe
+from django.utils.html import format_html_join
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 from memoized import memoized
+from corehq.apps.callcenter.tasks import bulk_sync_usercases_if_applicable
 
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.app_manager.helpers.validators import load_case_reserved_words
@@ -150,7 +153,9 @@ class CustomDataFieldsForm(forms.Form):
         errors.update(self.verify_profiles_validate(data_fields, profiles))
 
         if errors:
-            raise ValidationError('<br/>'.join(sorted(errors)))
+            separator = mark_safe('<br/>')  # nosec: no user input
+            error_html = format_html_join(separator, '{}', ((error,) for error in sorted(errors)))
+            raise ValidationError(error_html)
 
         return cleaned_data
 
@@ -169,13 +174,13 @@ class CustomDataFieldForm(forms.Form):
     """
     label = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('A label is required for each field.')}
+        error_messages={'required': gettext_lazy('A label is required for each field.')}
     )
     slug = XmlSlugField(
         required=True,
         error_messages={
-            'required': ugettext_lazy('A property name is required for each field.'),
-            'invalid': ugettext_lazy('Properties must start with a letter and '
+            'required': gettext_lazy('A property name is required for each field.'),
+            'invalid': gettext_lazy('Properties must start with a letter and '
                          'consist only of letters, numbers, underscores or hyphens.'),
         }
     )
@@ -213,11 +218,11 @@ class CustomDataFieldsProfileForm(forms.Form):
     )
     name = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('A name is required for each profile.')}
+        error_messages={'required': gettext_lazy('A name is required for each profile.')}
     )
     fields = forms.CharField(
         required=True,
-        error_messages={'required': ugettext_lazy('At least one field is required for each profile.')}
+        error_messages={'required': gettext_lazy('At least one field is required for each profile.')}
     )
 
     def clean_fields(self):
@@ -291,6 +296,7 @@ class CustomDataModelMixin(object):
             )
             if not created and obj.has_users_assigned:
                 refresh_es_for_profile_users.delay(self.domain, obj.id)
+                bulk_sync_usercases_if_applicable(obj.definition.domain, obj.user_ids_assigned())
             seen.add(obj.id)
 
         errors = []

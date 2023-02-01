@@ -15,7 +15,6 @@
 
   {% initial_page_data 'context_case_id' case.case_id %}
   {% initial_page_data 'dynamic_properties' dynamic_properties %}
-  {% initial_page_data 'timezone_offset' timezone_offset %}
   {% initial_page_data 'xform_api_url' xform_api_url %}
   {% initial_page_data 'xform_ids' case.xform_ids %}
   {% registerurl "case_form_data" case.domain case.case_id '---' %}
@@ -32,7 +31,7 @@
       <div id="tabbed-content-container">
         <div class="row">
           <div class="col-sm-12">
-            {% include "hqwebapp/proptable/property_table.html" with tables=default_properties_as_table %}
+            {% include "reports/partials/case_property_table.html" with rows=default_properties_as_table %}
           </div>
         </div>
         <div class="row">
@@ -61,8 +60,17 @@
             <div class="tab-content">
               <div class="tab-pane" id="properties">
                 <div class="row-fluid">
-                  {% if dynamic_properties %}
-                    {% include "hqwebapp/proptable/property_table.html" with tables=dynamic_properties_as_table %}
+                  {% if dynamic_properties_table %}
+                    {% include "reports/partials/case_property_table.html" with rows=dynamic_properties_table %}
+                  {% elif dd_properties_tables %}
+                    {% for table in dd_properties_tables %}
+                      <div class="property-table-row">
+                        <div class="property-table-container">
+                          {% if table.name %}<div class="table-tab">{{ table.name }}</div>{% endif %}
+                          {% include "reports/partials/case_property_table.html" with rows=table.rows %}
+                        </div>
+                      </div>
+                    {% endfor %}
                   {% else %}
                     <div class="well clearfix col-lg-10 col-md-12 col-sm-12">
                       <a target="_blank" class="pull-right"

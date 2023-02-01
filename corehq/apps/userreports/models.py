@@ -4,23 +4,24 @@ import os
 import re
 from collections import namedtuple
 from copy import copy, deepcopy
+from corehq import toggles
 from datetime import datetime
 from uuid import UUID
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField, JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit.exceptions import BadValueError
 from django_bulk_update.helper import bulk_update as bulk_update_helper
+from jsonpath_ng.ext import parser
 from memoized import memoized
+from corehq.apps.domain.models import AllowedUCRExpressionSettings
 
-from corehq.apps.registry.helper import DataRegistryHelper
-from corehq.apps.userreports.extension_points import static_ucr_data_source_paths, static_ucr_report_paths
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -39,6 +40,7 @@ from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
+from dimagi.utils.couch.undo import is_deleted
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 
@@ -46,22 +48,29 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
+from corehq.apps.registry.helper import DataRegistryHelper
 from corehq.apps.userreports.app_manager.data_source_meta import (
     REPORT_BUILDER_DATA_SOURCE_TYPE_VALUES,
 )
+from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.const import (
+    ALL_EXPRESSION_TYPES,
     DATA_SOURCE_TYPE_AGGREGATE,
     DATA_SOURCE_TYPE_STANDARD,
     FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_NAMED_EXPRESSION,
+    UCR_NAMED_FILTER,
     UCR_SQL_BACKEND,
     VALID_REFERENCED_DOC_TYPES,
 )
 from corehq.apps.userreports.dbaccessors import (
-    get_datasources_for_domain,
-    get_number_of_report_configs_by_data_source,
-    get_report_configs_for_domain,
     get_all_registry_data_source_ids,
+    get_datasources_for_domain,
+    get_number_of_registry_report_configs_by_data_source,
+    get_number_of_report_configs_by_data_source,
     get_registry_data_sources_by_domain,
+    get_registry_report_configs_for_domain,
+    get_report_configs_for_domain,
 )
 from corehq.apps.userreports.exceptions import (
     BadSpecError,
@@ -73,6 +82,10 @@ from corehq.apps.userreports.exceptions import (
     ValidationError,
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.extension_points import (
+    static_ucr_data_source_paths,
+    static_ucr_report_paths,
+)
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators import CompoundIndicator
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -88,6 +101,7 @@ from corehq.apps.userreports.sql.util import decode_column_name
 from corehq.apps.userreports.util import (
     get_async_indicator_modify_lock_key,
     get_indicator_adapter,
+    wrap_report_config_by_type,
 )
 from corehq.pillows.utils import get_deleted_doc_types
 from corehq.sql_db.connections import UCR_ENGINE_ID, connection_manager
@@ -122,7 +136,7 @@ class DataSourceActionLog(models.Model):
         (REBUILD, _('Rebuild')),
         (DROP, _('Drop')),
     ), db_index=True, null=False)
-    migration_diffs = JSONField(null=True, blank=True)
+    migration_diffs = models.JSONField(null=True, blank=True)
 
     # True for actions that were skipped because the data source
     # was marked with ``disable_destructive_rebuild``
@@ -159,6 +173,8 @@ class DataSourceBuildInformation(DocumentSchema):
     app_id = StringProperty()
     # The version of the app at the time of the data source's configuration.
     app_version = IntegerProperty()
+    # The registry_slug associated with the registry of the report.
+    registry_slug = StringProperty()
     # True if the data source has been built, that is, if the corresponding SQL table has been populated.
     finished = BooleanProperty(default=False)
     # Start time of the most recent build SQL table celery task.
@@ -167,6 +183,27 @@ class DataSourceBuildInformation(DocumentSchema):
     finished_in_place = BooleanProperty(default=False)
     initiated_in_place = DateTimeProperty()
     rebuilt_asynchronously = BooleanProperty(default=False)
+
+    @property
+    def is_rebuilding(self):
+        return (
+            self.initiated
+            and (
+                not self.finished
+                and not self.rebuilt_asynchronously
+            )
+        )
+
+    @property
+    def is_rebuilding_in_place(self):
+        return (
+            self.initiated_in_place
+            and not self.finished_in_place
+        )
+
+    @property
+    def is_rebuild_in_progress(self):
+        return self.is_rebuilding or self.is_rebuilding_in_place
 
 
 class DataSourceMeta(DocumentSchema):
@@ -240,6 +277,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    is_available_in_analytics = BooleanProperty(default=False)
     sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
     disable_destructive_rebuild = BooleanProperty(default=False)
     sql_settings = SchemaProperty(SQLSettings)
@@ -252,6 +290,10 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
 
     def __str__(self):
         return '{} - {}'.format(self.domain, self.display_name)
+
+    @property
+    def is_deleted(self):
+        return is_deleted(self)
 
     def save(self, **params):
         self.last_modified = datetime.utcnow()
@@ -294,7 +336,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
             _Validation(
                 validation.name,
                 validation.error_message,
-                FilterFactory.from_spec(validation.expression, context=self.get_factory_context())
+                FilterFactory.from_spec(validation.expression, self.get_factory_context())
             )
             for validation in self.validations
         ]
@@ -338,7 +380,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
                 'type': 'and',
                 'filters': built_in_filters + extras,
             },
-            context=self.get_factory_context(),
+            self.get_factory_context(),
         )
 
     def _get_domain_filter_spec(self):
@@ -358,14 +400,13 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         named_expression_specs = deepcopy(self.named_expressions)
         named_expressions = {}
         spec_error = None
+        factory_context = FactoryContext(named_expressions=named_expressions, named_filters={}, domain=self.domain)
         while named_expression_specs:
             number_generated = 0
             for name, expression in list(named_expression_specs.items()):
                 try:
-                    named_expressions[name] = ExpressionFactory.from_spec(
-                        expression,
-                        FactoryContext(named_expressions=named_expressions, named_filters={})
-                    )
+                    factory_context.named_expressions = named_expressions
+                    named_expressions[name] = ExpressionFactory.from_spec(expression, factory_context)
                     number_generated += 1
                     del named_expression_specs[name]
                 except BadSpecError as bad_spec_error:
@@ -381,11 +422,14 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @property
     @memoized
     def named_filter_objects(self):
-        return {name: FilterFactory.from_spec(filter, FactoryContext(self.named_expression_objects, {}))
-                for name, filter in self.named_filters.items()}
+        factory_context = FactoryContext(self.named_expression_objects, {}, domain=self.domain)
+        return {
+            name: FilterFactory.from_spec(filter, factory_context)
+            for name, filter in self.named_filters.items()
+        }
 
     def get_factory_context(self):
-        return FactoryContext(self.named_expression_objects, self.named_filter_objects)
+        return FactoryContext(self.named_expression_objects, self.named_filter_objects, self.domain)
 
     @property
     @memoized
@@ -433,7 +477,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
     @memoized
     def parsed_expression(self):
         if self.base_item_expression:
-            return ExpressionFactory.from_spec(self.base_item_expression, context=self.get_factory_context())
+            return ExpressionFactory.from_spec(self.base_item_expression, self.get_factory_context())
         return None
 
     @memoized
@@ -514,6 +558,23 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if not connection_manager.resolves_to_unique_dbs(mirrored_engine_ids + [self.engine_id]):
             raise BadSpecError("No two engine_ids should point to the same database")
 
+    @property
+    def data_domains(self):
+        return [self.domain]
+
+    def _verify_contains_allowed_expressions(self):
+        """
+        Raise BadSpecError if any disallowed expression is present in datasource
+        """
+        disallowed_expressions = AllowedUCRExpressionSettings.disallowed_ucr_expressions(self.domain)
+        if 'base_item_expression' in disallowed_expressions and self.base_item_expression:
+            raise BadSpecError(_(f'base_item_expression is not allowed for domain {self.domain}'))
+        doubtful_keys = dict(indicators=self.configured_indicators, expressions=self.named_expressions)
+        for expr in disallowed_expressions:
+            results = parser.parse(f"$..[*][?type={expr}]").find(doubtful_keys)
+            if results:
+                raise BadSpecError(_(f'{expr} is not allowed for domain {self.domain}'))
+
     def validate(self, required=True):
         super(DataSourceConfiguration, self).validate(required)
         # these two properties implicitly call other validation
@@ -531,7 +592,7 @@ class DataSourceConfiguration(CachedCouchDocumentMixin, Document, AbstractUCRDat
         if self.referenced_doc_type not in VALID_REFERENCED_DOC_TYPES:
             raise BadSpecError(
                 _('Report contains invalid referenced_doc_type: {}').format(self.referenced_doc_type))
-
+        self._verify_contains_allowed_expressions()
         self.parsed_expression
         self.pk_columns
 
@@ -660,7 +721,7 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     def default_indicators(self):
         default_indicators = super().default_indicators
         default_indicators.append(IndicatorFactory.from_spec({
-            "column_id": "domain",
+            "column_id": "commcare_project",
             "type": "expression",
             "display_name": "Project Space",
             "datatype": "string",
@@ -676,9 +737,6 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
         }, self.get_factory_context()))
         return default_indicators
 
-    def get_report_count(self):
-        raise NotImplementedError("TODO")
-
     @classmethod
     def by_domain(cls, domain):
         return get_registry_data_sources_by_domain(domain)
@@ -686,6 +744,12 @@ class RegistryDataSourceConfiguration(DataSourceConfiguration):
     @classmethod
     def all_ids(cls):
         return get_all_registry_data_source_ids()
+
+    def get_report_count(self):
+        """
+        Return the number of ReportConfigurations that reference this data source.
+        """
+        return RegistryReportConfiguration.count_by_data_source(self.domain, self._id)
 
 
 class ReportMeta(DocumentSchema):
@@ -757,13 +821,62 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     @property
     @memoized
+    def report_columns_by_column_id(self):
+        return {c.column_id: c for c in self.report_columns}
+
+    @property
+    @memoized
     def ui_filters(self):
         return [ReportFilterFactory.from_spec(f, self) for f in self.filters]
 
     @property
     @memoized
     def charts(self):
-        return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+        if (
+            self.config_id and self.configured_charts
+            and toggles.SUPPORT_EXPANDED_COLUMN_IN_REPORTS.enabled(self.domain)
+        ):
+            configured_charts = deepcopy(self.configured_charts)
+            for chart in configured_charts:
+                if chart['type'] == 'multibar':
+                    chart['y_axis_columns'] = self._get_expanded_y_axis_cols_for_multibar(chart['y_axis_columns'])
+            return [ChartFactory.from_spec(g._obj) for g in configured_charts]
+        else:
+            return [ChartFactory.from_spec(g._obj) for g in self.configured_charts]
+
+    def _get_expanded_y_axis_cols_for_multibar(self, original_y_axis_columns):
+        y_axis_columns = []
+        try:
+            for y_axis_column in original_y_axis_columns:
+                column_id = y_axis_column['column_id']
+                column_config = self.report_columns_by_column_id[column_id]
+                if column_config.type == 'expanded':
+                    expanded_columns = self.get_expanded_columns(column_config)
+                    for column in expanded_columns:
+                        y_axis_columns.append({
+                            'column_id': column.slug,
+                            'display': column.header
+                        })
+                else:
+                    y_axis_columns.append(y_axis_column)
+        # catch edge cases where data source table is yet to be created
+        except DataSourceConfigurationNotFoundError:
+            return original_y_axis_columns
+        else:
+            return y_axis_columns
+
+    def get_expanded_columns(self, column_config):
+        return get_expanded_column_config(
+            self.cached_data_source.config,
+            column_config,
+            self.cached_data_source.lang
+        ).columns
+
+    @property
+    @memoized
+    def cached_data_source(self):
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        return ConfigurableReportDataSource.from_spec(self).data_source
 
     @property
     @memoized
@@ -820,6 +933,7 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
 
     def validate(self, required=True):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
         def _check_for_duplicates(supposedly_unique_list, error_msg):
             # http://stackoverflow.com/questions/9835762/find-and-list-duplicates-in-python-list
             duplicate_items = set(
@@ -867,11 +981,23 @@ class ReportConfiguration(QuickCachedDocumentMixin, Document):
     def is_static(self):
         return report_config_id_is_static(self._id)
 
+
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
 
 class RegistryReportConfiguration(ReportConfiguration):
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain'])
+    def by_domain(cls, domain):
+        return get_registry_report_configs_for_domain(domain)
+
+    @classmethod
+    @quickcache(['cls.__name__', 'domain', 'data_source_id'])
+    def count_by_data_source(cls, domain, data_source_id):
+        return get_number_of_registry_report_configs_by_data_source(domain, data_source_id)
+
     @property
     def registry_slug(self):
         return self.config.registry_slug
@@ -1246,6 +1372,72 @@ class InvalidUCRData(models.Model):
         unique_together = ('doc_id', 'indicator_config_id', 'validation_name')
 
 
+class UCRExpressionManager(models.Manager):
+    def get_expressions_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_EXPRESSION)
+
+    def get_filters_for_domain(self, domain):
+        return self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+
+    def get_wrapped_filters_for_domain(self, domain, factory_context):
+        return {
+            f.name: f.wrapped_definition(factory_context)
+            for f in self.filter(domain=domain, expression_type=UCR_NAMED_FILTER)
+        }
+
+    def get_wrapped_expressions_for_domain(self, domain, factory_context):
+        return {
+            f.name: f.wrapped_definition(factory_context)
+            for f in self.get_expressions_for_domain(domain)
+        }
+
+
+class UCRExpression(models.Model):
+    """
+    A single UCR named expression or named filter that can
+    be shared amongst features that use these
+    """
+    name = models.CharField(max_length=255, null=False)
+    domain = models.CharField(max_length=255, null=False, db_index=True)
+    description = models.TextField(blank=True, null=True)
+    expression_type = models.CharField(
+        max_length=20, default=UCR_NAMED_EXPRESSION, choices=ALL_EXPRESSION_TYPES, db_index=True
+    )
+    definition = models.JSONField(null=True)
+
+    # For use with linked domains - the upstream UCRExpression
+    upstream_id = models.CharField(max_length=126, null=True)
+    LINKED_DOMAIN_UPDATABLE_PROPERTIES = [
+        "name", "description", "expression_type", "definition"
+    ]
+
+    objects = UCRExpressionManager()
+
+    class Meta:
+        app_label = 'userreports'
+        unique_together = ('name', 'domain')
+
+    def wrapped_definition(self, factory_context):
+        if self.expression_type == UCR_NAMED_EXPRESSION:
+            return ExpressionFactory.from_spec(self.definition, factory_context)
+        elif self.expression_type == UCR_NAMED_FILTER:
+            return FilterFactory.from_spec(self.definition, factory_context)
+
+    def update_from_upstream(self, upstream_ucr_expression):
+        """
+        For use with linked domains. Updates this ucr expression with data from `upstream_ucr_expression`
+        """
+        for prop in self.LINKED_DOMAIN_UPDATABLE_PROPERTIES:
+            setattr(self, prop, getattr(upstream_ucr_expression, prop))
+        self.save()
+
+    def __str__(self):
+        description = self.description
+        if len(self.description) > 64:
+            description = f"{self.description[:64]}…"
+        description = f": {description}" if description else ""
+        return f"{self.name}{description}"
+
 def get_datasource_config_infer_type(config_id, domain):
     return get_datasource_config(config_id, domain, guess_data_source_type(config_id))
 
@@ -1290,7 +1482,10 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             try:
                 config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
             except DocumentNotFound:
-                _raise_not_found()
+                try:
+                    config = get_document_or_not_found(RegistryDataSourceConfiguration, domain, config_id)
+                except DocumentNotFound:
+                    _raise_not_found()
         return config, is_static
     elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
         from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -1301,7 +1496,6 @@ def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_S
             _raise_not_found()
     else:
         raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
-
 
 
 def id_is_static(data_source_id):
@@ -1321,6 +1515,14 @@ def report_config_id_is_static(config_id):
         config_id.startswith(prefix)
         for prefix in [STATIC_PREFIX, CUSTOM_REPORT_PREFIX]
     )
+
+
+def is_data_registry_report(report_config, datasource=None):
+    """
+    The optional datasource parameter is useful when checking a report config fetched from a remote server
+    """
+    datasource = datasource or report_config.config
+    return isinstance(report_config, RegistryReportConfiguration) or datasource.meta.build.registry_slug
 
 
 def get_report_configs(config_ids, domain):
@@ -1347,7 +1549,7 @@ def get_report_configs(config_ids, domain):
     dynamic_report_configs = []
     if dynamic_report_config_ids:
         dynamic_report_configs = [
-            ReportConfiguration.wrap(doc) for doc in
+            wrap_report_config_by_type(doc) for doc in
             get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
         ]
 
@@ -1405,7 +1607,7 @@ class ReportComparisonException(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     exception = models.TextField()
     notes = models.TextField(blank=True)
 
@@ -1415,10 +1617,10 @@ class ReportComparisonDiff(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
-    control = JSONField()
-    candidate = JSONField()
-    diff = JSONField()
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
+    control = models.JSONField()
+    candidate = models.JSONField()
+    diff = models.JSONField()
     notes = models.TextField(blank=True)
 
 
@@ -1427,6 +1629,6 @@ class ReportComparisonTiming(models.Model):
     domain = models.TextField()
     control_report_config_id = models.TextField()
     candidate_report_config_id = models.TextField()
-    filter_values = JSONField(encoder=FilterValueEncoder)
+    filter_values = models.JSONField(encoder=FilterValueEncoder)
     control_duration = models.DecimalField(max_digits=10, decimal_places=3)
     candidate_duration = models.DecimalField(max_digits=10, decimal_places=3)

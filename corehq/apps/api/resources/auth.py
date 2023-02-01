@@ -4,6 +4,7 @@ from functools import wraps
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse, HttpResponseForbidden
 
+from attrs import define, field
 from tastypie.authentication import Authentication
 
 from corehq.apps.api.odata.views import odata_permissions_check
@@ -36,6 +37,22 @@ def wrap_4xx_errors_for_apis(view_func):
     return _inner
 
 
+@define
+class ApiIdentifier:
+    username = field()
+    domain = field()
+
+
+def get_rate_limit_identifier(request):
+    couch_user = getattr(request, 'couch_user', None)
+    if couch_user is not None:
+        username = couch_user.username
+    else:
+        username = ''
+    domain = getattr(request, 'domain', '')
+    return ApiIdentifier(username=username, domain=domain)
+
+
 class HQAuthenticationMixin:
     decorator_map = {}  # should be set by subclasses
 
@@ -43,10 +60,11 @@ class HQAuthenticationMixin:
         return self.decorator_map[determine_authtype_from_header(request)]
 
     def get_identifier(self, request):
-        username = request.couch_user.username
-        if API_THROTTLE_WHITELIST.enabled(username):
-            return username
-        return f"{getattr(request, 'domain', '')}_{username}"
+        return get_rate_limit_identifier(request)
+
+
+class SSOAuthentication(HQAuthenticationMixin, Authentication):
+    pass
 
 
 class LoginAuthentication(HQAuthenticationMixin, Authentication):

@@ -14,17 +14,11 @@ from soil import DownloadBase
 
 from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-from corehq.apps.export.esaccessors import (
-    get_case_export_base_query,
-    get_form_export_base_query,
-    get_sms_export_base_query,
-)
 from corehq.apps.export.models.new import (
     CaseExportInstance,
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.metrics.load_counters import load_counter
 from corehq.util.files import TransientTempfile, safe_filename
@@ -322,7 +316,7 @@ def get_export_file(export_instances, es_filters, temp_path, progress_tracker=No
 def get_export_documents(export_instance, filters, are_filters_es_formatted=False):
     # Pull doc ids from elasticsearch and stream to disk
     query = get_export_query(export_instance, filters, are_filters_es_formatted)
-    return iter_es_docs_from_query(query)
+    return query.scroll_ids_to_disk_and_iter_docs()
 
 
 def get_export_query(export_instance, filters, are_filters_es_formatted=False):
@@ -424,19 +418,10 @@ def _get_base_query(export_instance):
     Return an ESQuery object for the given export instance.
     Includes filters for domain, doc_type, and xmlns/case_type.
     """
-    if isinstance(export_instance, FormExportInstance):
-        return get_form_export_base_query(
-            export_instance.domain,
-            export_instance.app_id,
-            export_instance.xmlns,
-            export_instance.include_errors
-        )
-    if isinstance(export_instance, CaseExportInstance):
-        return get_case_export_base_query(
-            export_instance.domain, export_instance.case_type
-        )
-    if isinstance(export_instance, SMSExportInstance):
-        return get_sms_export_base_query(export_instance.domain)
+    if (isinstance(export_instance, FormExportInstance)
+            or isinstance(export_instance, CaseExportInstance)
+            or isinstance(export_instance, SMSExportInstance)):
+        return export_instance.get_query(include_filters=False)
     else:
         raise Exception(
             "Unknown base query for export instance type {}".format(type(export_instance))

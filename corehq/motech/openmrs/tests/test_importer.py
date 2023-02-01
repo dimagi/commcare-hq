@@ -2,7 +2,7 @@ import datetime
 
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.motech.const import (
     IMPORT_FREQUENCY_DAILY,

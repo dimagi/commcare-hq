@@ -4,18 +4,21 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import gettext as _, gettext_lazy
 
 from corehq.apps.enterprise.views import BaseEnterpriseAdminView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
-from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler
+from corehq.apps.sso.async_handlers import SSOExemptUsersAdminAsyncHandler, SsoTestUserAdminAsyncHandler
 from corehq.apps.sso.certificates import get_certificate_response
-from corehq.apps.sso.forms import SSOEnterpriseSettingsForm
-from corehq.apps.sso.models import IdentityProvider
+from corehq.apps.sso.forms import (
+    SsoSamlEnterpriseSettingsForm,
+    SsoOidcEnterpriseSettingsForm,
+)
+from corehq.apps.sso.models import IdentityProvider, IdentityProviderProtocol
 
 
 class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
-    page_title = ugettext_lazy("Manage Single Sign-On")
+    page_title = gettext_lazy("Manage Single Sign-On")
     urlname = 'manage_sso'
     template_name = 'sso/enterprise_admin/manage_sso.html'
 
@@ -30,11 +33,12 @@ class ManageSSOEnterpriseView(BaseEnterpriseAdminView):
 
 
 class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMixin):
-    page_title = ugettext_lazy("Edit Identity Provider")
+    page_title = gettext_lazy("Edit Identity Provider")
     urlname = 'edit_idp_enterprise'
     template_name = 'sso/enterprise_admin/edit_identity_provider.html'
     async_handlers = [
         SSOExemptUsersAdminAsyncHandler,
+        SsoTestUserAdminAsyncHandler,
     ]
 
     @property
@@ -60,6 +64,10 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
         return {
             'edit_idp_form': self.edit_enterprise_idp_form,
             'idp_slug': self.idp_slug,
+            'toggle_client_secret': (
+                self.identity_provider.protocol == IdentityProviderProtocol.OIDC
+                and self.identity_provider.client_secret
+            ),
         }
 
     @property
@@ -93,11 +101,15 @@ class EditIdentityProviderEnterpriseView(BaseEnterpriseAdminView, AsyncHandlerMi
     @property
     @memoized
     def edit_enterprise_idp_form(self):
+        form_class = (
+            SsoSamlEnterpriseSettingsForm if self.identity_provider.protocol == IdentityProviderProtocol.SAML
+            else SsoOidcEnterpriseSettingsForm
+        )
         if self.request.method == 'POST':
-            return SSOEnterpriseSettingsForm(
+            return form_class(
                 self.identity_provider, self.request.POST, self.request.FILES
             )
-        return SSOEnterpriseSettingsForm(self.identity_provider)
+        return form_class(self.identity_provider)
 
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:

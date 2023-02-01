@@ -11,7 +11,8 @@ from corehq.apps.change_feed.consumer.feed import (
     change_meta_from_kafka_message,
 )
 from corehq.apps.change_feed.tests.utils import get_test_kafka_consumer
-from corehq.apps.change_feed.topics import get_multi_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.es.tests.utils import es_test
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -21,6 +22,7 @@ from corehq.pillows.xform import get_xform_pillow
 from corehq.util.elastic import ensure_index_deleted
 
 
+@es_test
 class FormPillowTest(TestCase):
     domain = 'test-form-pillow-domain'
 
@@ -48,7 +50,7 @@ class FormPillowTest(TestCase):
         super().tearDownClass()
 
     def test_form_pillow_sql(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
 
         form = self._make_form()
@@ -64,7 +66,7 @@ class FormPillowTest(TestCase):
         self.assertTrue(Application.get(self.app._id).has_submissions)
 
     def test_form_pillow_non_existant_build_id(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
 
         form = self._make_form(build_id='not-here')
@@ -80,7 +82,7 @@ class FormPillowTest(TestCase):
         self.assertFalse(Application.get(self.app._id).has_submissions)
 
     def test_form_pillow_mismatch_domains(self):
-        consumer = get_test_kafka_consumer(topics.FORM, topics.FORM_SQL)
+        consumer = get_test_kafka_consumer(topics.FORM_SQL)
         kafka_seq = self._get_kafka_seq()
         self.app.domain = 'not-this-domain'
         self.app.save()
@@ -129,6 +131,4 @@ class FormPillowTest(TestCase):
         return result.xform
 
     def _get_kafka_seq(self):
-        # KafkaChangeFeed listens for multiple topics (form, form-sql) in the form pillow,
-        # so we need to provide a dict of seqs to kafka
-        return get_multi_topic_offset([topics.FORM, topics.FORM_SQL])
+        return get_topic_offset(topics.FORM_SQL)

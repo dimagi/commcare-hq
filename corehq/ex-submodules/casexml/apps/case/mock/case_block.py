@@ -8,6 +8,7 @@ from dimagi.utils.parsing import json_format_datetime, string_to_datetime
 from collections import namedtuple
 from functools import partial
 import six
+from corehq.toggles import USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY
 
 # relationship = "child" for index to a parent case (default)
 # relationship = "extension" for index to a host case
@@ -25,7 +26,7 @@ class CaseBlock(object):
     def __init__(self, case_id, date_modified=None, user_id=undefined,
                  owner_id=undefined, external_id=undefined, case_type=undefined,
                  case_name=undefined, create=False, date_opened=undefined, update=None,
-                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False):
+                 close=False, index=None, strict=True, date_opened_deprecated_behavior=False, domain=None):
         """
         When `date_opened_deprecated_behavior`, a date_opened YYYY-MM-DD value is inserted on new cases.
         This is deprecated behavior, because it prevents the superior default behavior from kicking in.
@@ -44,9 +45,9 @@ class CaseBlock(object):
                                 else date_opened)
         else:
             self.date_opened = date_opened
-        self.case_type = "" if create and case_type is CaseBlock.undefined else case_type
-        self.case_name = "" if create and case_name is CaseBlock.undefined else case_name
-        self.owner_id = "" if create and owner_id is CaseBlock.undefined else owner_id
+        self.case_type = case_type
+        self.case_name = case_name
+        self.owner_id = owner_id
         self.close = close
         self.case_id = case_id
         self.user_id = user_id
@@ -56,9 +57,18 @@ class CaseBlock(object):
             self._check_for_duplicate_properties()
         self.index = {key: self._make_index_attrs(value)
                       for key, value in index.items()} if index else {}
+        self.domain = domain
 
     @classmethod
     def deprecated_init(cls, *args, **kwargs):
+        """
+        You almost certainly don't need this - it defaults date_opened to today
+        at midnight, instead of now(). This method exists so we don't have to
+        update a bunch of tests built on the old, bad behavior.
+
+        Replace any CaseBlock.deprecated_init(...) with CaseBlock(...) and just
+        make sure tests pass
+        """
         return cls(date_opened_deprecated_behavior=True, *args, **kwargs)
 
     def _updatable_built_ins(self):
@@ -90,14 +100,21 @@ class CaseBlock(object):
             'update': self.update,
         }
 
+        external_id = self.external_id
+        # This is probably not the best way, but is needed currently.
+        if self.domain and USE_CUSTOM_EXTERNAL_ID_CASE_PROPERTY.enabled(self.domain):
+            external_id = self.update.get('external_id', external_id)
+
         result['update'].update({
-            'external_id': self.external_id,
+            'external_id': external_id,
             'date_opened': self.date_opened,
         })
 
         create_or_update = {key: val for key, val in self._updatable_built_ins()
                             if val is not CaseBlock.undefined}
         if self.create:
+            for key in self._built_ins:
+                create_or_update.setdefault(key, "")
             result['create'] = create_or_update
         else:
             result['update'].update(create_or_update)
@@ -152,6 +169,7 @@ class CaseBlock(object):
         fields = {"update": updates}
         for node in case.find(NS + "create") or []:
             tag = tag_of(node)
+            fields["create"] = True
             if tag in cls._built_ins:
                 fields[tag] = node.text
             # can create node have date_opened child node?
@@ -164,6 +182,9 @@ class CaseBlock(object):
             else:
                 # can this be a hierarchical structure? if yes, how to decode?
                 updates[tag] = node.text
+
+        if case.find(NS + "close") is not None:
+            fields["close"] = True
 
         if case.get("date_modified"):
             fields['date_modified'] = string_to_datetime(case.get("date_modified")).replace(tzinfo=None)

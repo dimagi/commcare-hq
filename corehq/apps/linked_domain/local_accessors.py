@@ -3,7 +3,7 @@ from collections import defaultdict
 from corehq import feature_previews, toggles
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.data_dictionary.models import CaseType, CaseProperty
-from corehq.apps.fixtures.dbaccessors import get_fixture_data_type_by_tag, get_fixture_items_for_data_type
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.linked_domain.util import _clean_json
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
@@ -11,6 +11,7 @@ from corehq.apps.users.models import UserRole
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.apps.integration.models import DialerSettings, GaenOtpServerSettings, HmacCalloutSettings
 from corehq.apps.reports.models import TableauServer, TableauVisualization
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 
 
 def get_tableau_server_and_visualizations(domain):
@@ -20,6 +21,7 @@ def get_tableau_server_and_visualizations(domain):
     for vis in visualizations:
         vis_list.append({
             'domain': domain,
+            'title': vis.title,
             'server': server,
             'view_url': vis.view_url,
             'id': vis.id,
@@ -31,7 +33,6 @@ def get_tableau_server_and_visualizations(domain):
             'server_name': server.server_name,
             'validate_hostname': server.validate_hostname,
             'target_site': server.target_site,
-            'domain_username': server.domain_username,
         },
         'visualizations': vis_list,
     }
@@ -78,10 +79,13 @@ def get_custom_data_models(domain, limit_types=None):
 
 
 def get_fixture(domain, tag):
-    data_type = get_fixture_data_type_by_tag(domain, tag)
+    data_type = LookupTable.objects.by_domain_tag(domain, tag)
     return {
         "data_type": data_type,
-        "data_items": get_fixture_items_for_data_type(domain, data_type._id),
+        "data_items": list(LookupTableRow.objects.filter(
+            domain=domain,
+            table_id=data_type.id,
+        )),
     }
 
 
@@ -144,3 +148,55 @@ def get_hmac_callout_settings(domain):
         'api_key': settings.api_key,
         'api_secret': settings.api_secret,
     }
+
+
+def get_auto_update_rules(domain):
+    rules = AutomaticUpdateRule.by_domain(
+        domain,
+        # For now only grab those rules that update cases, not conditional alerts for messaging
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    data = []
+    for rule in rules:
+        criterias = rule.caserulecriteria_set.all()
+        actions = rule.caseruleaction_set.all()
+
+        rule_data = {
+            "rule": rule.to_json(),
+
+            "criteria": [
+                {
+                    "match_property_definition": {
+                        "property_name": case_rule_criter.match_property_definition.property_name,
+                        "property_value": case_rule_criter.match_property_definition.property_value,
+                        "match_type": case_rule_criter.match_property_definition.match_type
+                    } if case_rule_criter.match_property_definition is not None else None,
+                    "custom_match_definition": {
+                        "name": case_rule_criter.custom_match_definition.name,
+                    } if case_rule_criter.custom_match_definition is not None else None,
+                    "closed_parent_definition": case_rule_criter.closed_parent_definition is not None
+                } for case_rule_criter in criterias
+            ],
+
+            "actions": [
+                {
+                    "update_case_definition": {
+                        "properties_to_update": case_rule_action.update_case_definition.properties_to_update,
+                        "close_case": case_rule_action.update_case_definition.close_case
+                    } if case_rule_action.update_case_definition is not None else None,
+                    "custom_action_definition": {
+                        "name": case_rule_action.custom_action_definition.name
+                    } if case_rule_action.custom_action_definition is not None else None,
+                } for case_rule_action in actions
+            ]
+        }
+
+        # Delete unnecessary data for running rules
+        del rule_data['rule']['last_run']
+        del rule_data['rule']['locked_for_editing']
+
+        data.append(rule_data)
+
+    return data

@@ -1,9 +1,9 @@
 from contextlib import contextmanager
-from mock import patch
+from unittest.mock import patch
 
 from django.conf import settings
 
-_sync_user_to_es_patch = patch('corehq.apps.users.signals.send_to_elasticsearch')
+_sync_user_to_es_patch = patch('corehq.apps.users.signals._update_user_in_es')
 
 
 def patch_es_user_signals():

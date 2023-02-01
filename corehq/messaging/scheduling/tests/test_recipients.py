@@ -4,7 +4,7 @@ from datetime import time
 
 from django.test import TestCase, override_settings
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.tests.util import create_case
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -21,7 +21,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
 from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.users.util import normalize_username
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
@@ -35,10 +35,14 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseTimedScheduleInstance,
-    ScheduleInstance,
+    ScheduleInstance as AbstractScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
-from corehq.util.test_utils import create_test_case, set_parent_case
+from corehq.util.test_utils import (
+    create_test_case,
+    set_parent_case,
+    unregistered_django_model,
+)
 from testapps.test_pillowtop.utils import process_pillow_changes
 
 
@@ -335,7 +339,7 @@ class SchedulingRecipientTest(TestCase):
         with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
             with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
 
-                update_case(self.domain, host_case.case_id,
+                self.update_case_and_process_change(self.domain, host_case.case_id,
                     case_properties={'owner_id': self.city_location.location_id})
                 set_parent_case(self.domain, extension_case, host_case, relationship='extension')
 
@@ -350,7 +354,11 @@ class SchedulingRecipientTest(TestCase):
                 self.assertEqual(instance.recipient.location_id, self.city_location.location_id)
 
                 # Test location that does not exist
-                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                self.update_case_and_process_change(
+                    self.domain,
+                    host_case.case_id,
+                    case_properties={'owner_id': 'does-not-exist'}
+                )
                 instance = CaseTimedScheduleInstance(
                     domain=self.domain,
                     case_id=extension_case.case_id,
@@ -381,7 +389,7 @@ class SchedulingRecipientTest(TestCase):
         with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
             with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
 
-                update_case(self.domain, host_case.case_id,
+                self.update_case_and_process_change(self.domain, host_case.case_id,
                     case_properties={'owner_id': self.city_location.location_id})
                 set_parent_case(self.domain, extension_case, host_case, relationship='extension')
 
@@ -396,7 +404,7 @@ class SchedulingRecipientTest(TestCase):
                 self.assertEqual(instance.recipient.location_id, self.state_location.location_id)
 
                 # Test no parent location
-                update_case(self.domain, host_case.case_id,
+                self.update_case_and_process_change(self.domain, host_case.case_id,
                     case_properties={'owner_id': self.country_location.location_id})
                 instance = CaseTimedScheduleInstance(
                     domain=self.domain,
@@ -407,7 +415,11 @@ class SchedulingRecipientTest(TestCase):
                 self.assertIsNone(instance.recipient)
 
                 # Test location that does not exist
-                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                self.update_case_and_process_change(
+                    self.domain,
+                    host_case.case_id,
+                    case_properties={'owner_id': 'does-not-exist'}
+                )
                 instance = CaseTimedScheduleInstance(
                     domain=self.domain,
                     case_id=extension_case.case_id,
@@ -648,7 +660,7 @@ class SchedulingRecipientTest(TestCase):
                 self.domain,
                 'person',
                 owner_id=self.city_location.location_id,
-                update={'recipient': 'fake@mail.com'}
+                update={'recipient': 'fake@mail.com', 'language_code': 'en', 'time_zone': 'sast'}
         ) as case:
             instance = CaseTimedScheduleInstance(
                 domain=self.domain,
@@ -657,7 +669,10 @@ class SchedulingRecipientTest(TestCase):
                 recipient_id='recipient'
             )
             self.assertEqual(instance.recipient.get_email(), 'fake@mail.com')
+            self.assertEqual(instance.recipient.get_language_code(), 'en')
+            self.assertEqual(instance.recipient.get_time_zone(), 'sast')
 
+        # test that cases without the properties don't fail
         with create_case(
                 self.domain,
                 'person',
@@ -670,13 +685,20 @@ class SchedulingRecipientTest(TestCase):
                 recipient_id='recipient'
             )
             self.assertIsNone(instance.recipient.get_email())
+            self.assertIsNone(instance.recipient.get_language_code())
+            self.assertIsNone(instance.recipient.get_time_zone())
 
     def create_usercase(self, user):
-        create_case_kwargs = {
-            'external_id': user.get_id,
-            'update': {'hq_user_id': user.get_id},
-        }
-        return create_case(self.domain, 'commcare-user', **create_case_kwargs)
+        with self.process_pillow_changes:
+            create_case_kwargs = {
+                'external_id': user.get_id,
+                'update': {'hq_user_id': user.get_id},
+            }
+            return create_case(self.domain, 'commcare-user', **create_case_kwargs)
+
+    def update_case_and_process_change(self, *args, **kwargs):
+        with self.process_pillow_changes:
+            return update_case(*args, **kwargs)
 
     def assertPhoneEntryCount(self, count, only_count_two_way=False):
         qs = PhoneNumber.objects.filter(domain=self.domain)
@@ -707,8 +729,12 @@ class SchedulingRecipientTest(TestCase):
 
         with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
-            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.update_case_and_process_change(
+                self.domain,
+                case.case_id,
+                case_properties={'contact_phone_number': '12345678'}
+            )
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(0, only_count_two_way=True)
             self.assertIsNotNone(user3.memoized_usercase)
@@ -726,22 +752,26 @@ class SchedulingRecipientTest(TestCase):
 
     def test_ignoring_entries(self):
         with create_case(self.domain, 'person') as case:
-            update_case(self.domain, case.case_id,
+            self.update_case_and_process_change(self.domain, case.case_id,
                 case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
 
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
 
             with override_settings(USE_PHONE_ENTRIES=False):
-                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                self.update_case_and_process_change(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'contact_phone_number': '23456'}
+                )
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
 
                 self.assertPhoneEntryCount(1)
                 self.assertPhoneEntryCount(1, only_count_two_way=True)
                 self.assertTwoWayEntry(PhoneNumber.objects.get(owner_id=case.case_id), '12345')
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
 
-    def _test_two_way_numbers(self, change_context_manager):
+    def test_two_way_numbers(self):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
         user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc', None, None)
@@ -752,18 +782,17 @@ class SchedulingRecipientTest(TestCase):
         self.assertIsNone(user1.memoized_usercase)
         self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-        with change_context_manager:
-            with self.create_usercase(user2) as case:
-                self.assertIsNotNone(user2.memoized_usercase)
-                self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
-                self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+        with self.create_usercase(user2) as case:
+            self.assertIsNotNone(user2.memoized_usercase)
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
 
         with self.create_usercase(user3) as case:
             # If the user has no number, the user case's number is used
-            with change_context_manager:
-                update_case(self.domain, case.case_id,
-                    case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.update_case_and_process_change(self.domain, case.case_id,
+                                                case_properties={'contact_phone_number': '12345678',
+                                                                 'contact_phone_number_is_verified': '1'})
+            case = CommCareCase.objects.get_case(case.case_id, self.domain)
             self.assertPhoneEntryCount(1)
             self.assertPhoneEntryCount(1, only_count_two_way=True)
             self.assertIsNotNone(user3.memoized_usercase)
@@ -779,14 +808,6 @@ class SchedulingRecipientTest(TestCase):
 
             # Referencing the case directly uses the case's phone number
             self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
-
-    def test_two_way_numbers_with_signal_task(self):
-        nullcontext = contextlib.suppress()
-        self._test_two_way_numbers(nullcontext)
-
-    @patch('corehq.messaging.signals.sync_case_for_messaging')
-    def test_two_way_numbers_with_pillow(self, _):
-        self._test_two_way_numbers(self.process_pillow_changes)
 
     def test_not_using_phone_entries(self):
         with override_settings(USE_PHONE_ENTRIES=False):
@@ -807,8 +828,12 @@ class SchedulingRecipientTest(TestCase):
 
             with self.create_usercase(user3) as case:
                 # If the user has no number, the user case's number is used
-                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-                case = CaseAccessors(self.domain).get_case(case.case_id)
+                self.update_case_and_process_change(
+                    self.domain,
+                    case.case_id,
+                    case_properties={'contact_phone_number': '12345678'}
+                )
+                case = CommCareCase.objects.get_case(case.case_id, self.domain)
                 self.assertPhoneEntryCount(0)
                 self.assertIsNotNone(user3.memoized_usercase)
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '12345678')
@@ -839,3 +864,8 @@ class SchedulingRecipientTest(TestCase):
         self.assertPhoneEntryCount(3)
         self.assertPhoneEntryCount(1, only_count_two_way=True)
         self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user), '23456')
+
+
+@unregistered_django_model
+class ScheduleInstance(AbstractScheduleInstance):
+    pass

@@ -56,7 +56,7 @@
   </style>
 
   {% compress js %}
-    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
+    <script src="{% static 'cloudcare/js/formplayer/utils/utils.js' %}"></script>
   {% endcompress %}
 
   {% include "app_manager/partials/xpathValidator.html" %}
@@ -136,6 +136,7 @@
   {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
   {% initial_page_data 'form_name' form.name|trans:app.langs %}
   {% initial_page_data 'form_requires' form.requires %}
+  {% initial_page_data 'form_unique_id' form.unique_id %}
   {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
   {% initial_page_data 'is_case_list_form' is_case_list_form %}
   {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
@@ -152,20 +153,16 @@
   {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
     {% initial_page_data 'apps_modules' apps_modules %}
   {% endif %}
+  {% registerurl "enable_usercase" domain %}
+  {% registerurl "get_form_questions" domain app.id %}
   {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
   {# End of form navigation #}
-  {% initial_page_data 'form_links' form.form_links %}
+  {% initial_page_data 'form_links' form_links %}
   {% initial_page_data 'linkable_forms' linkable_forms %}
-  {% if not module.put_in_root %}
-    {% initial_page_data 'module_name' module.name|trans:langs %}
-  {% endif %}
-  {% if module.root_module_id and not module.root_module.put_in_root %}
-    {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
-  {% endif %}
   {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
   {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
-  {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+  {% initial_page_data 'form_workflows' form_workflows %}
   {% initial_page_data 'add_ons_privileges' add_ons_privileges %}
   {% registerurl "get_form_datums" domain app.id %}
 
@@ -323,14 +320,3 @@
   {% include "app_manager/partials/forms/form_view_modals.html" %}
   {% include "app_manager/partials/nav_menu_media_modals.html" %}
 {% endblock modals %}
-
-{% block breadcrumbs %}
-  {{ block.super }}
-  {% include 'app_manager/partials/modules/module_view_breadcrumbs.html' %}
-  <li>
-    <a class="track-usage-link" href="{% url "view_form" domain app.id form.unique_id %}"
-       data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
-      <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
-    </a>
-  </li>
-{% endblock %}

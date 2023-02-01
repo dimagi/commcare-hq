@@ -2,7 +2,7 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-<div class="appnav-item {% ifequal form selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endifequal %}">
+<div class="appnav-item {% if form == selected_form %} active{% if not formdesigner %} settings-view{% endif %}{% endif %}">
 
     <a href="#form_confirm_delete_{{ module.unique_id }}_{{ form.unique_id }}"
        class="appnav-delete"

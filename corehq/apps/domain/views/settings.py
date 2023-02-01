@@ -5,24 +5,22 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.contrib.auth.views import PasswordResetConfirmView
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.http import urlsafe_base64_decode
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
-from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import View
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import always_allow_project_access
-from dimagi.utils.couch.resource_conflict import retry_resource
+from corehq.apps.enterprise.mixins import ManageMobileWorkersMixin
 from dimagi.utils.web import json_response
-from toggle.models import Toggle
 
 from corehq import feature_previews, privileges, toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -30,6 +28,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
     IgnorePatterns,
+    case_search_synchronous_web_apps_for_domain,
     disable_case_search,
     enable_case_search,
 )
@@ -46,6 +45,7 @@ from corehq.apps.domain.forms import (
     DomainMetadataForm,
     PrivacySecurityForm,
     ProjectSettingsForm,
+    clean_password
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views.base import BaseDomainView
@@ -54,12 +54,11 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.ota.models import MobileRecoveryMeasure
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import NAMESPACE_DOMAIN
-from custom.openclinica.forms import OpenClinicaSettingsForm
-from custom.openclinica.models import OpenClinicaSettings
+from corehq.toggles.models import Toggle
 
 
 class BaseProjectSettingsView(BaseDomainView):
-    section_name = ugettext_lazy("Project Settings")
+    section_name = gettext_lazy("Project Settings")
     template_name = "settings/base_template.html"
 
     @property
@@ -121,7 +120,7 @@ class BaseEditProjectInfoView(BaseAdminProjectSettingsView):
 class EditBasicProjectInfoView(BaseEditProjectInfoView):
     template_name = 'domain/admin/info_basic.html'
     urlname = 'domain_basic_info'
-    page_title = ugettext_lazy("Basic")
+    page_title = gettext_lazy("Basic")
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -149,7 +148,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval
+            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval,
         }
         if self.can_user_see_meta:
             initial.update({
@@ -212,7 +211,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
 class EditMyProjectSettingsView(BaseProjectSettingsView):
     template_name = 'domain/admin/my_project_settings.html'
     urlname = 'my_project_settings'
-    page_title = ugettext_lazy("My Timezone")
+    page_title = gettext_lazy("My Timezone")
 
     @method_decorator(always_allow_project_access)
     @method_decorator(login_and_domain_required)
@@ -259,38 +258,6 @@ class EditMyProjectSettingsView(BaseProjectSettingsView):
         return self.get(request, *args, **kwargs)
 
 
-class EditOpenClinicaSettingsView(BaseProjectSettingsView):
-    template_name = 'domain/admin/openclinica_settings.html'
-    urlname = 'oc_settings'
-    page_title = ugettext_lazy('OpenClinica settings')
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseProjectSettingsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def openclinica_settings_form(self):
-        oc_settings = OpenClinicaSettings.for_domain(self.domain_object.name)
-        initial = dict(oc_settings.study) if oc_settings else {}
-        if self.request.method == 'POST':
-            return OpenClinicaSettingsForm(self.request.POST, initial=initial)
-        return OpenClinicaSettingsForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {'openclinica_settings_form': self.openclinica_settings_form}
-
-    @method_decorator(sensitive_post_parameters('username', 'password'))
-    def post(self, request, *args, **kwargs):
-        if self.openclinica_settings_form.is_valid():
-            if self.openclinica_settings_form.save(self.domain_object):
-                messages.success(request, _('OpenClinica settings successfully updated'))
-            else:
-                messages.error(request, _('An error occurred. Please try again.'))
-        return self.get(request, *args, **kwargs)
-
-
 @location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
@@ -303,7 +270,7 @@ def logo(request, domain):
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
-    page_title = ugettext_lazy("Privacy and Security")
+    page_title = gettext_lazy("Privacy and Security")
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -322,6 +289,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
+            "disable_mobile_login_lockout": self.domain_object.disable_mobile_login_lockout,
         }
         if self.request.method == 'POST':
             return PrivacySecurityForm(self.request.POST, initial=initial,
@@ -340,12 +308,13 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         if self.privacy_form.is_valid():
             self.privacy_form.save(self.domain_object)
             messages.success(request, _("Your project settings have been saved!"))
+            return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 
 class CaseSearchConfigView(BaseAdminProjectSettingsView):
     urlname = 'case_search_config'
-    page_title = ugettext_lazy('Case Search')
+    page_title = gettext_lazy('Case Search')
     template_name = 'domain/admin/case_search.html'
 
     @method_decorator(domain_admin_required)
@@ -397,7 +366,9 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
 
         config, _ = CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
+            'synchronous_web_apps': request_json.get('synchronous_web_apps'),
         })
+        case_search_synchronous_web_apps_for_domain.clear(self.domain)
         config.ignore_patterns.set(updated_ignore_patterns)
         config.fuzzy_properties.set(updated_fuzzies)
         return json_response(self.page_context)
@@ -406,27 +377,28 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
     def page_context(self):
         apps = get_apps_in_domain(self.domain, include_remote=False)
         case_types = {t for app in apps for t in app.get_case_types() if t}
-        current_values = CaseSearchConfig.objects.get_or_none(pk=self.domain)
+        config = CaseSearchConfig.objects.get_or_none(pk=self.domain) or CaseSearchConfig(domain=self.domain)
         return {
             'case_types': sorted(list(case_types)),
             'case_search_url': reverse("case_search", args=[self.domain]),
             'values': {
-                'enabled': current_values.enabled if current_values else False,
+                'enabled': config.enabled,
+                'synchronous_web_apps': config.synchronous_web_apps,
                 'fuzzy_properties': {
-                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
-                } if current_values else {},
+                    fp.case_type: fp.properties for fp in config.fuzzy_properties.all()
+                },
                 'ignore_patterns': [{
                     'case_type': rc.case_type,
                     'case_property': rc.case_property,
                     'regex': rc.regex
-                } for rc in current_values.ignore_patterns.all()] if current_values else {}
+                } for rc in config.ignore_patterns.all()]
             }
         }
 
 
 class FeaturePreviewsView(BaseAdminProjectSettingsView):
     urlname = 'feature_previews'
-    page_title = ugettext_lazy("Feature Previews")
+    page_title = gettext_lazy("Feature Previews")
     template_name = 'domain/admin/feature_previews.html'
 
     @method_decorator(domain_admin_required)
@@ -500,6 +472,12 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 
     def post(self, request, *args, **kwargs):
         self.extra_context['hide_password_feedback'] = has_custom_clean_password()
+        if request.POST['new_password1'] == request.POST['new_password2']:
+            try:
+                clean_password(request.POST['new_password1'])
+            except ValidationError as e:
+                messages.error(request, _(e.message))
+                return HttpResponseRedirect(request.path_info)
         response = super().post(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)
@@ -512,7 +490,7 @@ class CustomPasswordResetView(PasswordResetConfirmView):
 @method_decorator(domain_admin_required, name='dispatch')
 class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
     urlname = 'recovery_measures_history'
-    page_title = ugettext_lazy("Recovery Measures History")
+    page_title = gettext_lazy("Recovery Measures History")
     template_name = 'domain/admin/recovery_measures_history.html'
 
     @property
@@ -530,3 +508,9 @@ class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
                 for app in all_apps
             ), key=lambda x: (-1 * len(x[1]), x[0])),
         }
+
+
+class ManageDomainMobileWorkersView(ManageMobileWorkersMixin, BaseAdminProjectSettingsView):
+    page_title = gettext_lazy("Manage Mobile Workers")
+    template_name = 'enterprise/manage_mobile_workers.html'
+    urlname = 'domain_manage_mobile_workers'

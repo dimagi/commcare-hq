@@ -61,7 +61,6 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         self.database.mock_docs = {
-            'form_id': form,
             'user_id': user
         }
 
@@ -184,7 +183,6 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         self.database.mock_docs = {
-            'form_id': form,
             'user_id': user
         }
 
@@ -309,7 +307,6 @@ class TestEnhancedPeerMobilization(TestDataSourceExpressions):
         }
 
         self.database.mock_docs = {
-            'form_id': form,
             'user_id': user
         }
 

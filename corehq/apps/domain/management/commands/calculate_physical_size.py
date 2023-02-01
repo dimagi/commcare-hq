@@ -3,10 +3,11 @@ import math
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.es import FormES, CaseSearchES, CaseES
+from corehq.apps.es import FormES, CaseSearchES, CaseES, filters
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
+from corehq.const import MISSING_APP_ID
 from couchforms.analytics import (
     get_all_xmlns_app_id_pairs_submitted_to_in_domain,
 )
@@ -118,9 +119,14 @@ def _get_form_size_stats(domain, sample_size):
         query = (FormES()
                  .domain(domain)
                  .sort('received_on', desc=True)
-                 .app(app_id)
                  .xmlns(xmlns)
                  .size(sample_size))
+
+        if app_id == MISSING_APP_ID:
+            query = query.filter(filters.missing("app_id"))
+        else:
+            query = query.app(app_id)
+
         num_forms, avg_size = _get_totals_for_query(query)
         total_bytes += num_forms * avg_size
         total_forms += num_forms

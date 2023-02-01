@@ -1,6 +1,6 @@
 import os
 
-import mock
+from unittest import mock
 from deployment.gunicorn.gunicorn_conf import _child_exit, _on_starting
 from testil import eq
 
@@ -20,6 +20,8 @@ class Server:
 
 def setup():
     # ensure env var not set
+    os.environ.pop('PROMETHEUS_MULTIPROC_DIR', None)
+    # DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
     os.environ.pop('prometheus_multiproc_dir', None)
 
 

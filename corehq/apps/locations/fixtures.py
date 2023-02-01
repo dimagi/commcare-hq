@@ -22,6 +22,7 @@ from corehq.apps.locations.models import (
     LocationFixtureConfiguration,
     LocationType,
     SQLLocation,
+    get_domain_locations,
 )
 
 
@@ -246,7 +247,7 @@ int_array = ArrayField(int_field)
 
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
+        return get_domain_locations(user.domain).prefetch_related('location_type')
 
     user_locations = user.get_sql_locations(user.domain)
 

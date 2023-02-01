@@ -3,64 +3,64 @@ import json
 
 from django.test import TestCase
 
-from corehq.apps.es.sms import SMSES
-from corehq.apps.es.tests.utils import es_test
-from corehq.apps.sms.models import INCOMING, OUTGOING
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.es_utils import initialize_index_and_mapping
 
-from corehq.apps.domain.calculations import all_domain_stats, calced_props, sms
+from corehq.apps.domain.calculations import (
+    all_domain_stats,
+    calced_props,
+    get_sms_count,
+    sms,
+)
 from corehq.apps.domain.models import Domain
-from corehq.elastic import get_es_new, refresh_elasticsearch_index
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
-from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
-from corehq.util.elastic import ensure_index_deleted
-from corehq.elastic import send_to_elasticsearch
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.forms import form_adapter
+from corehq.apps.es.sms import SMSES, sms_adapter
+from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.users import user_adapter
+from corehq.apps.sms.models import INCOMING, OUTGOING
 
 
-@es_test
-class DomainCalculatedPropertiesTest(TestCase):
+@es_test(requires=[case_adapter, form_adapter, sms_adapter, user_adapter])
+class BaseCalculatedPropertiesTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DomainCalculatedPropertiesTest, cls).setUpClass()
-        cls.es = [{
-            'info': i,
-            'instance': get_es_new(),
-        } for i in [CASE_INDEX_INFO, SMS_INDEX_INFO, XFORM_INDEX_INFO, USER_INDEX_INFO]]
+        super(BaseCalculatedPropertiesTest, cls).setUpClass()
+        cls.domain = Domain(name='test-b9289e19d819')
+        cls.domain.save()
+        cls.addClassCleanup(cls.domain.delete)
 
     def setUp(self):
-        self.domain = Domain(name='test-b9289e19d819')
-        self.domain.save()
-        for es in self.es:
-            ensure_index_deleted(es['info'].index)
-            initialize_index_and_mapping(es['instance'], es['info'])
-        self._set_up_sms_es()
-
-    def _set_up_sms_es(self):
+        super().setUp()
         sms_doc = {
             '_id': 'some_sms_id',
             'domain': self.domain.name,
             'direction': INCOMING,
             'date': json_format_datetime(datetime.datetime.utcnow()),
-            'doc_type': SMS_INDEX_INFO.type,
         }
-        send_to_elasticsearch("sms", sms_doc)
-        refresh_elasticsearch_index('sms')
+        sms_adapter.index(sms_doc, refresh=True)
 
-    def tearDown(self):
-        self.domain.delete()
 
-    def test_sanity(self):
+class DomainCalculatedPropertiesTest(BaseCalculatedPropertiesTest):
+
+    def test_calculated_properties_are_serializable(self):
+        all_stats = all_domain_stats()
+        props = calced_props(self.domain, self.domain._id, all_stats)
+        json.dumps(props)
+
+    def test_domain_does_not_have_apps(self):
         all_stats = all_domain_stats()
         props = calced_props(self.domain, self.domain._id, all_stats)
         self.assertFalse(props['cp_has_app'])
-        # ensure serializable
-        json.dumps(props)
 
-    def test_sms(self):
+
+class GetSMSCountTest(BaseCalculatedPropertiesTest):
+
+    def test_sms_count(self):
         self.assertEqual(SMSES().count(), 1)
         self.assertEqual(sms(self.domain.name, INCOMING), 1)
         self.assertEqual(sms(self.domain.name, OUTGOING), 0)
+
+    def test_days_as_str_is_valid(self):
+        count = get_sms_count(self.domain.name, days='30')
+        self.assertEqual(count, 1)

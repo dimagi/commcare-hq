@@ -1,13 +1,13 @@
 Contacts
 ========
 
-A contact is a single person that we want to interact with through messaging. In CommCareHQ, at the time of
+A contact is a single person that we want to interact with through messaging. In CommCare HQ, at the time of
 writing, contacts can either be users (CommCareUser, WebUser) or cases (CommCareCase).
 
 In order for the messaging frameworks to interact with a contact, the contact must implement the
 `corehq.apps.sms.mixin.CommCareMobileContactMixin <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/mixin.py>`_.
 
-Contacts have phone numbers which allows CommCareHQ to interact with them. All phone numbers for contacts
+Contacts have phone numbers which allows CommCare HQ to interact with them. All phone numbers for contacts
 must be stored in International Format, and the frameworks always assume a phone number is given in
 International Format.
 
@@ -46,7 +46,7 @@ be granted two-way phone number status to the case who registers it first.
 
 If a two-way phone number can be granted for the case, a `corehq.apps.sms.models.PhoneNumber <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/models.py>`_
 entry with verified set to True is created for it. This happens automatically by running celery task
-`corehq.apps.sms.tasks.sync_case_phone_number <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/tasks.py>`_
+`run_case_update_rules_on_save <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/data_interfaces/tasks.py#L202>`_
 for a case each time a case is saved.
 
 Future State

@@ -2,14 +2,17 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-<form class="form form-horizontal" name="user_information" method="post">
+<form id="user_information"
+      name="user_information"
+      class="form form-horizontal"
+      method="post">
   <input type="hidden" name="form_type" value="update-user" />
   <fieldset>
     <legend>{{ edit_user_form_title }}</legend>
     <div class="form-group">
       <label class="control-label col-sm-3 col-md-2">{% trans 'Username' %}</label>
       <div class="col-sm-9 col-md-8 col-lg-6">
-        <p class="form-control-static">{{ couch_user.html_username|safe }}</p>
+        <p class="form-control-static">{{ couch_user.html_username }}</p>
       </div>
     </div>
     {% crispy form_user_update.user_form %}

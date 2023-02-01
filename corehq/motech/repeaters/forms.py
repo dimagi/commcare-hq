@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -12,8 +12,8 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain
 from corehq.apps.users.util import raw_username
+from corehq.motech.const import REQUEST_METHODS, REQUEST_POST
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.motech.views import ConnectionSettingsListView
 
@@ -21,10 +21,10 @@ from corehq.motech.views import ConnectionSettingsListView
 class GenericRepeaterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
-        if kwargs.get('data'):
-            repeater = Repeater.wrap(kwargs['data'])
-            if not repeater.connection_settings_id:
-                repeater.create_connection_settings()
+        self.repeater_name = ""
+        data = kwargs.get('data')
+        if data:
+            self.repeater_name = data.get("name")
 
         self.domain = kwargs.pop('domain')
         self.repeater_class = kwargs.pop('repeater_class')
@@ -50,6 +50,18 @@ class GenericRepeaterForm(forms.Form):
             choices=self.connection_settings_choices,
             required=True,
             help_text=_(f'<a href="{url}">Add/Edit Connections Settings</a>')
+        )
+        self.fields['name'] = forms.CharField(
+            label=_('Name'),
+            help_text='The name of this forwarder',
+            initial=self.repeater_name,
+            required=False
+        )
+        self.fields['request_method'] = forms.ChoiceField(
+            label=_("HTTP Request Method"),
+            choices=[(rm, rm) for rm in REQUEST_METHODS],
+            initial=REQUEST_POST,
+            required=True,
         )
         if self.formats and len(self.formats) > 1:
             self.fields['format'] = forms.ChoiceField(
@@ -83,7 +95,7 @@ class GenericRepeaterForm(forms.Form):
         """
         Override this to change the order of the crispy form fields and add extra crispy fields
         """
-        form_fields = ["connection_settings_id"]
+        form_fields = ["connection_settings_id", "name", "request_method"]
         if self.formats and len(self.formats) > 1:
             form_fields.append('format')
         return form_fields
@@ -102,11 +114,27 @@ class FormRepeaterForm(GenericRepeaterForm):
         label="Include 'app_id' URL query parameter.",
         initial=True
     )
+    user_blocklist = forms.MultipleChoiceField(
+        required=False,
+        label=_('Users to exclude'),
+        widget=forms.SelectMultiple(attrs={'class': 'hqwebapp-select2'}),
+        help_text=_('Forms submitted by these users will not be forwarded')
+    )
+
+    @property
+    @memoized
+    def user_choices(self):
+        users = UserES().domain(self.domain).fields(['_id', 'username']).run().hits
+        return [(user['_id'], raw_username(user['username'])) for user in users]
+
+    def set_extra_django_form_fields(self):
+        super(FormRepeaterForm, self).set_extra_django_form_fields()
+        self.fields['user_blocklist'].choices = self.user_choices
 
     def get_ordered_crispy_form_fields(self):
         fields = super(FormRepeaterForm, self).get_ordered_crispy_form_fields()
         fields.append(twbscrispy.PrependedText('include_app_id_param', ''))
-        return fields
+        return fields + ['user_blocklist']
 
 
 class CaseRepeaterForm(GenericRepeaterForm):

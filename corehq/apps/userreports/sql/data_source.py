@@ -1,7 +1,7 @@
 import numbers
 
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from memoized import memoized
 from sqlagg.sorting import OrderBy
 
@@ -109,5 +109,5 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
             for column_id, col in self.final_column_ids.items()
         ]
         if total_row and total_row[0] == '':
-            total_row[0] = ugettext('Total')
+            total_row[0] = gettext('Total')
         return total_row

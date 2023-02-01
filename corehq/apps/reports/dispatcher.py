@@ -1,14 +1,12 @@
-from django.conf import settings
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 from django.views.generic.base import View
 
 from django_prbac.exceptions import PermissionDenied
 from django_prbac.utils import has_privilege
 
-from corehq.apps.domain.utils import get_custom_domain_module
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
@@ -21,10 +19,8 @@ from corehq.apps.domain.decorators import (
     login_and_domain_required,
     track_domain_request,
 )
-from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.users.models import AnonymousCouchUser
 from corehq.util.quickcache import quickcache
 
 from .lookup import ReportLookup
@@ -35,7 +31,9 @@ datespan_default = datespan_in_request(
     default_days=7,
 )
 
-_ = lambda message: ugettext(message) if message is not None else None
+
+def _(message):
+    return gettext(message) if message is not None else None
 
 
 class ReportDispatcher(View):
@@ -49,10 +47,11 @@ class ReportDispatcher(View):
 
         It's also intended that you make the appropriate permissions checks in the permissions_check method
         and decorate the dispatch method with the appropriate permissions decorators.
+        You may also override GenericReportView.allow_access in individual report classes
 
         ReportDispatcher expects to serve a report that is a subclass of GenericReportView.
     """
-    prefix = None # string. ex: project, custom, billing, interface, admin
+    prefix = None  # string. ex: project, custom, billing, interface, admin
     map_name = None
 
     def __init__(self, **kwargs):
@@ -137,16 +136,17 @@ class ReportDispatcher(View):
         report_kwargs = kwargs.copy()
 
         class_name = self.get_report_class_name(domain, report_slug)
-        cls = to_function(class_name) if class_name else None
+        report_class = to_function(class_name) if class_name else None
 
         permissions_check = permissions_check or self.permissions_check
         if (
-            cls
+            report_class
             and permissions_check(class_name, request, domain=domain)
-            and self.toggles_enabled(cls, request)
+            and self.toggles_enabled(report_class, request)
+            and report_class.allow_access(request)
         ):
             try:
-                report = cls(request, domain=domain, **report_kwargs)
+                report = report_class(request, domain=domain, **report_kwargs)
                 report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
@@ -206,6 +206,7 @@ class ReportDispatcher(View):
                 if (
                     dispatcher.permissions_check(class_name, request, domain=domain, is_navigation_check=True)
                     and cls.toggles_enabled(report, request)
+                    and report.allow_access(request)
                     and (show_in_navigation or show_in_dropdown)
                 ):
                     report_contexts.append({
@@ -226,14 +227,15 @@ class ReportDispatcher(View):
 
     @classmethod
     def url_pattern(cls):
-        from django.conf.urls import url
+        from django.conf.urls import re_path as url
         return url(cls.pattern(), cls.as_view(), name=cls.name())
+
 
 cls_to_view_login_and_domain = cls_to_view(additional_decorator=login_and_domain_required)
 
 
 class ProjectReportDispatcher(ReportDispatcher):
-    prefix = 'project_report' # string. ex: project, custom, billing, interface, admin
+    prefix = 'project_report'  # string. ex: project, custom, billing, interface, admin
     map_name = 'REPORTS'
 
     @property
@@ -241,7 +243,6 @@ class ProjectReportDispatcher(ReportDispatcher):
         return {
             'daily_completions': 'daily_form_stats',
             'daily_submissions': 'daily_form_stats',
-            'submit_time_punchcard': 'worker_activity_times',
         }
 
     @cls_to_view_login_and_domain
@@ -276,13 +277,6 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
             return False
-        if isinstance(request.couch_user, AnonymousCouchUser) and self.prefix == 'custom_project_report':
-            reports = self.get_reports(domain)
-            for section in reports:
-                for report_class in section[1]:
-                    report_class_name = report_class.__module__ + '.' + report_class.__name__
-                    if report_class_name == report and report_class.is_public:
-                        return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 
@@ -320,15 +314,6 @@ class AdminReportDispatcher(ReportDispatcher):
         )
 
 
-class QuestionTemplateDispatcher(ProjectReportDispatcher):
-    prefix = 'question_templates'
-    map_name = 'QUESTION_TEMPLATES'
-
-    def get_question_templates(self, domain, report_slug):
-        question_templates = dict(self.get_reports(domain))
-        return question_templates.get(report_slug, None)
-
-
 class UserManagementReportDispatcher(ReportDispatcher):
     prefix = 'user_management_report'
     map_name = 'USER_MANAGEMENT_REPORTS'
@@ -347,7 +332,5 @@ class ReleaseManagementReportDispatcher(ReportDispatcher):
     map_name = 'RELEASE_MANAGEMENT_REPORTS'
 
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
-        from corehq.apps.linked_domain.util import can_access_linked_domains
-        # will eventually only be accessible via the release_management privilege, but shared with linked domains
-        # feature flag for now
-        return can_access_linked_domains(request.couch_user, domain)
+        from corehq.apps.linked_domain.util import can_user_access_linked_domains
+        return can_user_access_linked_domains(request.couch_user, domain)

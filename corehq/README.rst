@@ -18,8 +18,6 @@ ex-submodules
     Assorted functionality that used to live in separate repositories. See README in this directory for details.
 extensions
     Framework for extending HQ functionality in a fork-like way. Used to handle code specific to ICDS-CAS.
-fluff
-    HQ-specific calculations that work with the ``fluff`` code in ``ex-submodules``.
 form_processor
     Code to handle receiving, processing, and storing form submissions from CommCare mobile and Web Apps.
 messaging

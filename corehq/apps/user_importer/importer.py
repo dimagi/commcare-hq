@@ -1,10 +1,15 @@
 import logging
+import string
+import random
 from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.db import DEFAULT_DB_ALIAS
+
+from corehq.apps.enterprise.models import EnterpriseMobileWorkerSettings
+from corehq.apps.users.util import generate_mobile_username
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit.exceptions import (
     BulkSaveError,
@@ -34,6 +39,7 @@ from corehq.apps.user_importer.validation import (
 from corehq.apps.users.audit.change_messages import UserChangeMessage
 from corehq.apps.users.account_confirmation import (
     send_account_confirmation_if_necessary,
+    send_account_confirmation_sms_if_necessary,
 )
 from corehq.apps.users.models import (
     CommCareUser,
@@ -42,11 +48,9 @@ from corehq.apps.users.models import (
     UserRole,
     InvitationStatus
 )
-from corehq.apps.users.util import normalize_username
 from corehq.const import USER_CHANGE_VIA_BULK_IMPORTER
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
 from corehq.apps.sms.util import validate_phone_number
-
 
 required_headers = set(['username'])
 web_required_headers = set(['username', 'role'])
@@ -57,6 +61,7 @@ allowed_headers = set([
     'User IMEIs (read only)', 'registered_on (read only)', 'last_submission (read only)',
     'last_sync (read only)', 'web_user', 'remove_web_user', 'remove', 'last_access_date (read only)',
     'last_login (read only)', 'last_name', 'status', 'first_name',
+    'send_confirmation_sms',
 ]) | required_headers
 old_headers = {
     # 'old_header_name': 'new_header_name'
@@ -79,6 +84,9 @@ def check_headers(user_specs, domain, is_web_upload=False):
 
     if DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         allowed_headers.add('domain')
+
+    if not is_web_upload and EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(domain):
+        allowed_headers.add('deactivate_after')
 
     illegal_headers = headers - allowed_headers
 
@@ -106,6 +114,7 @@ class GroupMemoizer(object):
         self.groups_by_name = {}
         self.groups_by_id = {}
         self.groups = set()
+        self.updated_groups = set()
         self.domain = domain
         self.groups_by_user_id = defaultdict(set)
         self.loaded = False
@@ -168,6 +177,14 @@ class GroupMemoizer(object):
             del self.groups_by_name[group.name]
         group.name = name
         self.add_group(group)
+
+    def group_updated(self, group_id):
+        self.updated_groups.add(group_id)
+
+    def save_updated(self):
+        updated = [self.groups_by_id[_id] for _id in self.updated_groups]
+        Group.bulk_save(updated)
+        self.updated_groups.clear()
 
     def save_all(self):
         Group.bulk_save(self.groups)
@@ -239,7 +256,9 @@ def create_or_update_groups(domain, group_specs):
 
         # check that group_names are unique
         if group_name in group_names:
-            log['errors'].append('Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name)
+            log['errors'].append(
+                'Your spreadsheet has multiple groups called "%s" and only the first was processed' % group_name
+            )
             continue
         else:
             group_names.add(group_name)
@@ -328,7 +347,15 @@ def check_modified_user_loc(location_ids, loc_id, assigned_loc_ids):
     return locations_updated, primary_location_removed
 
 
-def get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain, upload_user=None, group_memoizer=None, is_web_upload=False):
+def get_domain_info(
+    domain,
+    upload_domain,
+    user_specs,
+    domain_info_by_domain,
+    upload_user=None,
+    group_memoizer=None,
+    is_web_upload=False
+):
     from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
     from corehq.apps.users.views.utils import get_editable_role_choices
 
@@ -432,183 +459,234 @@ def create_or_update_commcare_users_and_groups(upload_domain, user_specs, upload
            sets Invitation with the CommCare user's role and primary location
     All changes to users only, are tracked using UserChangeLogger, as an audit trail.
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     from corehq.apps.user_importer.helpers import CommCareUserImporter, WebUserImporter
 
     domain_info_by_domain = {}
 
     ret = {"errors": [], "rows": []}
-
     current = 0
-    try:
-        for row in user_specs:
-            if update_progress:
-                update_progress(current)
-                current += 1
+    update_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+        upload_domain
+    )
 
-            username = row.get('username')
-            domain = row.get('domain') or upload_domain
-            username = normalize_username(str(username), domain) if username else None
+    for row in user_specs:
+        if update_progress:
+            update_progress(current)
+            current += 1
+
+        status_row = {}
+        username = row.get('username')
+        domain = row.get('domain') or upload_domain
+        try:
+            username = generate_mobile_username(str(username), domain, False) if username else None
+        except ValidationError:
             status_row = {
                 'username': username,
                 'row': row,
+                'flag': _("Username must not contain blank spaces or special characters."),
             }
-
-            try:
-                domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
-                                              group_memoizer)
-
-                for validator in domain_info.validators:
-                    validator(row)
-            except UserUploadError as e:
-                status_row['flag'] = str(e)
-                ret['rows'].append(status_row)
-                continue
-
-            data = row.get('data', {})
-            email = row.get('email')
-            group_names = list(map(str, row.get('group') or []))
-            language = row.get('language')
-            name = row.get('name')
-            password = row.get('password')
-            uncategorized_data = row.get('uncategorized_data', {})
-            user_id = row.get('user_id')
-            location_codes = row.get('location_code', []) if 'location_code' in row else None
-            location_codes = format_location_codes(location_codes)
-            role = row.get('role', None)
-            profile = row.get('user_profile', None)
-            web_user_username = row.get('web_user')
-            phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
-
-            try:
-                password = str(password) if password else None
-
-                is_active = spec_value_to_boolean_or_none(row, 'is_active')
-                is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
-                send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
-                remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
-
-                user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
-                                                    web_user_username, password, upload_user)
-                commcare_user_importer = CommCareUserImporter(upload_domain, domain, user, upload_user,
-                                                              is_new_user=not bool(user_id),
-                                                              via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                              upload_record_id=upload_record_id)
-                if user_id:
-                    if is_password(password):
-                        commcare_user_importer.update_password(password)
-                        # overwrite password in results so we do not save it to the db
-                        status_row['row']['password'] = 'REDACTED'
-                    status_row['flag'] = 'updated'
-                else:
-                    status_row['flag'] = 'created'
-
-                if phone_numbers is not None:
-                    phone_numbers = clean_phone_numbers(phone_numbers)
-                    commcare_user_importer.update_phone_numbers(phone_numbers)
-
-                if name:
-                    commcare_user_importer.update_name(name)
-
-                commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
-
-                if language:
-                    commcare_user_importer.update_language(language)
-                if email:
-                    commcare_user_importer.update_email(email)
-                if is_active is not None:
-                    commcare_user_importer.update_status(is_active)
-
-                # Do this here so that we validate the location code before we
-                # save any other information to the user, this way either all of
-                # the user's information is updated, or none of it
-                # Do not update location info if the column is not included at all
-                if domain_info.can_assign_locations and location_codes is not None:
-                    commcare_user_importer.update_locations(location_codes, domain_info)
-
-                if role:
-                    role_qualified_id = domain_info.roles_by_name[role]
-                    commcare_user_importer.update_role(role_qualified_id)
-                if web_user_username:
-                    user.update_metadata({'login_as_user': web_user_username})
-
-                user.save()
-                commcare_user_importer.save_log()
-
-                if web_user_username:
-                    check_can_upload_web_users(upload_user)
-                    web_user = CouchUser.get_by_username(web_user_username)
-                    if web_user:
-                        web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
-                                                            is_new_user=False,
-                                                            via=USER_CHANGE_VIA_BULK_IMPORTER,
-                                                            upload_record_id=upload_record_id)
-                        user_change_logger = web_user_importer.logger
-                    else:
-                        web_user_importer = None
-                        user_change_logger = None
-                    if remove_web_user:
-                        remove_web_user_from_domain(domain, web_user, username, upload_user,
-                                                    user_change_logger)
-                    else:
-                        check_user_role(username, role)
-                        if not web_user and is_account_confirmed:
-                            raise UserUploadError(_(
-                                "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
-                                f"{web_user_username} is a new username."
-                            ).format(web_user_username=web_user_username))
-                        if web_user and not web_user.is_member_of(domain) and is_account_confirmed:
-                            # add confirmed account to domain
-                            # role_qualified_id would be be present here as confirmed in check_user_role
-                            web_user_importer.add_to_domain(role_qualified_id, user.location_id)
-                        elif not web_user or not web_user.is_member_of(domain):
-                            create_or_update_web_user_invite(web_user_username, domain, role_qualified_id,
-                                                             upload_user, user.location_id, user_change_logger,
-                                                             send_email=send_account_confirmation_email)
-                        elif web_user.is_member_of(domain):
-                            # edit existing user in the domain
-                            web_user_importer.update_role(role_qualified_id)
-                            if location_codes is not None:
-                                web_user_importer.update_primary_location(user.location_id)
-                            web_user.save()
-                    if web_user_importer:
-                        web_user_importer.save_log()
-                if send_account_confirmation_email and not web_user_username:
-                    send_account_confirmation_if_necessary(user)
-
-                if is_password(password):
-                    # Without this line, digest auth doesn't work.
-                    # With this line, digest auth works.
-                    # Other than that, I'm not sure what's going on
-                    # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
-                    user.get_django_user(use_primary_db=True).check_password(password)
-
-                for group in domain_info.group_memoizer.by_user_id(user.user_id):
-                    if group.name not in group_names:
-                        group.remove_user(user)
-
-                for group_name in group_names:
-                    domain_info.group_memoizer.by_name(group_name).add_user(user, save=False)
-            except ValidationError as e:
-                status_row['flag'] = e.message
-            except (UserUploadError, CouchUser.Inconsistent) as e:
-                status_row['flag'] = str(e)
-
             ret["rows"].append(status_row)
-    finally:
+            continue
+        status_row = {
+            'username': username,
+            'row': row,
+        }
+
+        # Set a dummy password to pass the validation, similar to GUI user creation
+        send_account_confirmation_sms = spec_value_to_boolean_or_none(row, 'send_confirmation_sms')
+        if send_account_confirmation_sms and not row.get('password'):
+            string_set = string.ascii_uppercase + string.digits + string.ascii_lowercase
+            password = ''.join(random.choices(string_set, k=10))
+            row['password'] = password
+
+        if(row.get('password')):
+            row['password'] = str(row.get('password'))
         try:
-            for domain_info in domain_info_by_domain.values():
-                domain_info.group_memoizer.save_all()
-        except BulkSaveError as e:
-            _error_message = (
-                "Oops! We were not able to save some of your group changes. "
-                "Please make sure no one else is editing your groups "
-                "and try again."
-            )
-            logging.exception((
-                'BulkSaveError saving groups. '
-                'User saw error message "%s". Errors: %s'
-            ) % (_error_message, e.errors))
-            ret['errors'].append(_error_message)
+            domain_info = get_domain_info(domain, upload_domain, user_specs, domain_info_by_domain,
+            group_memoizer)
+            for validator in domain_info.validators:
+                validator(row)
+        except UserUploadError as e:
+            status_row['flag'] = str(e)
+            ret['rows'].append(status_row)
+            continue
+
+        data = row.get('data', {})
+        email = row.get('email')
+        group_names = list(map(str, row.get('group') or []))
+        language = row.get('language')
+        name = row.get('name')
+        password = row.get('password')
+        uncategorized_data = row.get('uncategorized_data', {})
+        user_id = row.get('user_id')
+        location_codes = row.get('location_code', []) if 'location_code' in row else None
+        location_codes = format_location_codes(location_codes)
+        role = row.get('role', None)
+        profile = row.get('user_profile', None)
+        web_user_username = row.get('web_user')
+        phone_numbers = row.get('phone-number', []) if 'phone-number' in row else None
+
+        deactivate_after = row.get('deactivate_after', None) if update_deactivate_after_date else None
+        if isinstance(deactivate_after, datetime):
+            deactivate_after = deactivate_after.strftime("%m-%Y")
+            row['deactivate_after'] = deactivate_after
+
+        try:
+            password = str(password) if password else None
+            is_active = spec_value_to_boolean_or_none(row, 'is_active')
+            is_account_confirmed = spec_value_to_boolean_or_none(row, 'is_account_confirmed')
+            send_account_confirmation_email = spec_value_to_boolean_or_none(row, 'send_confirmation_email')
+
+            remove_web_user = spec_value_to_boolean_or_none(row, 'remove_web_user')
+
+            if send_account_confirmation_sms:
+                is_active = False
+                if not user_id:
+                    is_account_confirmed = False
+
+            user = _get_or_create_commcare_user(domain, user_id, username, is_account_confirmed,
+                                                web_user_username, password, upload_user)
+            commcare_user_importer = CommCareUserImporter(upload_domain, domain, user, upload_user,
+                                                        is_new_user=not bool(user_id),
+                                                        via=USER_CHANGE_VIA_BULK_IMPORTER,
+                                                        upload_record_id=upload_record_id)
+            if user_id:
+                if is_password(password):
+                    commcare_user_importer.update_password(password)
+                    # overwrite password in results so we do not save it to the db
+                    status_row['row']['password'] = 'REDACTED'
+                status_row['flag'] = 'updated'
+            else:
+                status_row['flag'] = 'created'
+
+            if phone_numbers is not None:
+                phone_numbers = clean_phone_numbers(phone_numbers)
+                commcare_user_importer.update_phone_numbers(phone_numbers)
+
+            if name:
+                commcare_user_importer.update_name(name)
+
+            commcare_user_importer.update_user_data(data, uncategorized_data, profile, domain_info)
+
+            if update_deactivate_after_date:
+                commcare_user_importer.update_deactivate_after(deactivate_after)
+
+            if language:
+                commcare_user_importer.update_language(language)
+            if email:
+                commcare_user_importer.update_email(email)
+            if is_active is not None:
+                commcare_user_importer.update_status(is_active)
+
+            # Do this here so that we validate the location code before we
+            # save any other information to the user, this way either all of
+            # the user's information is updated, or none of it
+            # Do not update location info if the column is not included at all
+            if domain_info.can_assign_locations and location_codes is not None:
+                commcare_user_importer.update_locations(location_codes, domain_info)
+
+            if role:
+                role_qualified_id = domain_info.roles_by_name[role]
+                commcare_user_importer.update_role(role_qualified_id)
+            elif not commcare_user_importer.logger.is_new_user and 'role' in row:
+                commcare_user_importer.update_role('none')
+
+            if web_user_username:
+                user.update_metadata({'login_as_user': web_user_username})
+
+            user.save()
+            log = commcare_user_importer.save_log()
+
+            if web_user_username:
+                check_can_upload_web_users(domain, upload_user)
+                web_user = CouchUser.get_by_username(web_user_username)
+                if web_user:
+                    web_user_importer = WebUserImporter(upload_domain, domain, web_user, upload_user,
+                                                        is_new_user=False,
+                                                        via=USER_CHANGE_VIA_BULK_IMPORTER,
+                                                        upload_record_id=upload_record_id)
+                    user_change_logger = web_user_importer.logger
+                else:
+                    web_user_importer = None
+                    user_change_logger = None
+                if remove_web_user:
+                    remove_web_user_from_domain(domain, web_user, username, upload_user,
+                                                user_change_logger)
+                else:
+                    check_user_role(username, role)
+                    if not web_user and is_account_confirmed:
+                        raise UserUploadError(_(
+                            "You can only set 'Is Account Confirmed' to 'True' on an existing Web User. "
+                            f"{web_user_username} is a new username."
+                        ).format(web_user_username=web_user_username))
+                    if web_user and not web_user.is_member_of(domain) and is_account_confirmed:
+                        # add confirmed account to domain
+                        # role_qualified_id would be be present here as confirmed in check_user_role
+                        web_user_importer.add_to_domain(role_qualified_id, user.location_id)
+                    elif not web_user or not web_user.is_member_of(domain):
+                        create_or_update_web_user_invite(web_user_username, domain, role_qualified_id,
+                                                        upload_user, user.location_id, user_change_logger,
+                                                        send_email=send_account_confirmation_email)
+                    elif web_user.is_member_of(domain):
+                        # edit existing user in the domain
+                        web_user_importer.update_role(role_qualified_id)
+                        if location_codes is not None:
+                            web_user_importer.update_primary_location(user.location_id)
+                        web_user.save()
+                if web_user_importer:
+                    web_user_importer.save_log()
+            if not web_user_username:
+                if send_account_confirmation_email:
+                    send_account_confirmation_if_necessary(user)
+                if send_account_confirmation_sms:
+                    send_account_confirmation_sms_if_necessary(user)
+
+            if is_password(password):
+                # Without this line, digest auth doesn't work.
+                # With this line, digest auth works.
+                # Other than that, I'm not sure what's going on
+                # Passing use_primary_db=True because of https://dimagi-dev.atlassian.net/browse/ICDS-465
+                user.get_django_user(use_primary_db=True).check_password(password)
+
+            group_change_message = commcare_user_importer.update_user_groups(domain_info, group_names)
+
+            try:
+                domain_info.group_memoizer.save_updated()
+            except BulkSaveError as e:
+                _error_message = (
+                    "Oops! We were not able to save some of your group changes. "
+                    "Please make sure no one else is editing your groups "
+                    "and try again."
+                )
+                logging.exception((
+                    'BulkSaveError saving groups. '
+                    'User saw error message "%s". Errors: %s'
+                ) % (_error_message, e.errors))
+                ret['errors'].append(_error_message)
+
+            if log and group_change_message:
+                log.change_messages.update(group_change_message)
+                log.save()
+            elif group_change_message:
+                log = commcare_user_importer.logger.save_only_group_changes(group_change_message)
+
+        except ValidationError as e:
+            status_row['flag'] = e.message
+        except (UserUploadError, CouchUser.Inconsistent) as e:
+            status_row['flag'] = str(e)
+
+        ret["rows"].append(status_row)
 
     return ret
 
@@ -677,7 +755,7 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
             remove = spec_value_to_boolean_or_none(row, 'remove')
             check_user_role(username, role)
             role_qualified_id = domain_info.roles_by_name[role]
-            check_can_upload_web_users(upload_user)
+            check_can_upload_web_users(domain, upload_user)
 
             user = CouchUser.get_by_username(username, strict=True)
             if user:
@@ -721,7 +799,9 @@ def create_or_update_web_users(upload_domain, user_specs, upload_user, upload_re
                     if domain_info.can_assign_locations and location_codes is not None:
                         # set invite location to first item in location_codes
                         if len(location_codes) > 0:
-                            user_invite_loc = get_location_from_site_code(location_codes[0], domain_info.location_cache)
+                            user_invite_loc = get_location_from_site_code(
+                                location_codes[0], domain_info.location_cache
+                            )
                             user_invite_loc_id = user_invite_loc.location_id
                     create_or_update_web_user_invite(username, domain, role_qualified_id, upload_user,
                                                      user_invite_loc_id)
@@ -762,8 +842,8 @@ def check_user_role(username, role):
             "a role").format(username=username))
 
 
-def check_can_upload_web_users(upload_user):
-    if not upload_user.can_edit_web_users():
+def check_can_upload_web_users(domain, upload_user):
+    if not upload_user.can_edit_web_users(domain):
         raise UserUploadError(_(
             "Only users with the edit web users permission can upload web users"
         ))

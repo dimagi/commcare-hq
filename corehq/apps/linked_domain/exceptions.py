@@ -2,7 +2,26 @@ class DomainLinkError(Exception):
     pass
 
 
+class DomainLinkAlreadyExists(Exception):
+    pass
+
+
+class DomainLinkNotAllowed(Exception):
+    pass
+
+
+class InvalidPushException(Exception):
+    """Raised if attempted push is deemed invalid by validate_push"""
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+
 class MultipleDownstreamAppsError(Exception):
+    pass
+
+
+class MultipleDownstreamKeywordsError(Exception):
     pass
 
 
@@ -20,4 +39,12 @@ class ActionNotPermitted(RemoteRequestError):
 
 
 class UnsupportedActionError(Exception):
+    pass
+
+
+class UserDoesNotHavePermission(Exception):
+    pass
+
+
+class RegistryNotAccessible(Exception):
     pass

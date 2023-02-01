@@ -8,7 +8,7 @@ from io import BytesIO
 
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import magic
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -385,7 +385,7 @@ class CommCareImage(CommCareMultimedia):
             image = image.convert("RGB")
         o = BytesIO()
         try:
-            image.thumbnail(size, Image.ANTIALIAS)
+            image.thumbnail(size, Image.Resampling.LANCZOS)
         except IndexError:
             raise ImageThumbnailError()
         image.save(o, format="PNG")
@@ -539,7 +539,7 @@ class MediaMixin(object):
         An object that has multimedia associated with it.
         Used by apps, modules, forms.
     """
-    def get_media_ref_kwargs():
+    def get_media_ref_kwargs(self):
         raise NotImplementedError
 
     def all_media(self, lang=None):
@@ -932,7 +932,7 @@ class ApplicationMediaMixin(Document, MediaMixin):
             except ResourceConflict:
                 # Attempt to fetch the document again.
                 updated_doc = self.get(self._id)
-                updated_doc.create_mapping(multimedia, form_path)
+                updated_doc.create_mapping(multimedia, path)
 
     def get_media_objects(self, build_profile_id=None, remove_unused=False, multimedia_map=None):
         """

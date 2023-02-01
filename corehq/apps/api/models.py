@@ -1,4 +1,5 @@
 import os
+import re
 from collections import defaultdict
 from functools import wraps
 
@@ -8,17 +9,11 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.http import HttpResponse
 
-from couchdbkit.exceptions import ResourceNotFound
-
 from couchforms import const
-from dimagi.ext.couchdbkit import *
 
 from corehq.apps.api.resources import DictObject
-from corehq.form_processor.abstract_models import CaseToXMLMixin
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex, XFormInstance
+from corehq.form_processor.models.cases import CaseToXMLMixin, get_index_map
 
 PERMISSION_POST_SMS = "POST_SMS"
 PERMISSION_POST_WISEPILL = "POST_WISEPILL"
@@ -198,11 +193,9 @@ class ESCase(DictObject, CaseToXMLMixin):
 
     @property
     def indices(self):
-        from casexml.apps.case.sharedmodels import CommCareCaseIndex
-        return [CommCareCaseIndex.wrap(index) for index in self._data['indices'] if index["referenced_id"]]
+        return [CommCareCaseIndex(**index) for index in self._data['indices'] if index["referenced_id"]]
 
     def get_index_map(self):
-        from corehq.form_processor.abstract_models import get_index_map
         return get_index_map(self.indices)
 
     def get_properties_in_api_format(self):
@@ -219,38 +212,38 @@ class ESCase(DictObject, CaseToXMLMixin):
         }.items()))
 
     def dynamic_case_properties(self):
-        from casexml.apps.case.models import CommCareCase
         if self.case_json is not None:
-            dynamic_props = self.case_json
-        else:
-            dynamic_props = CommCareCase.wrap(self._data).dynamic_case_properties()
-        return dynamic_props
+            return self.case_json
+
+        def is_dynamic(name, letterfirst=re.compile(r'^[a-zA-Z]')):
+            return name not in CASE_PROPERTIES and letterfirst.search(name)
+        return {k: v for k, v in sorted(self._data.items()) if is_dynamic(k)}
 
     @property
     def _reverse_indices(self):
-        return CaseAccessors(self.domain).get_all_reverse_indices_info([self._id])
+        return CommCareCaseIndex.objects.get_all_reverse_indices_info(self.domain, [self._id])
 
     def get_forms(self):
         from corehq.apps.api.util import form_to_es_form
-        forms = FormAccessors(self.domain).get_forms(self.xform_ids)
+        forms = XFormInstance.objects.get_forms(self.xform_ids, self.domain)
         return list(filter(None, [form_to_es_form(form) for form in forms]))
 
     @property
     def child_cases(self):
         from corehq.apps.api.util import case_to_es_case
-        accessor = CaseAccessors(self.domain)
         return {
-            index.case_id: case_to_es_case(accessor.get_case(index.case_id))
+            index.case_id: case_to_es_case(
+                CommCareCase.objects.get_case(index.case_id, self.domain))
             for index in self._reverse_indices
         }
 
     @property
     def parent_cases(self):
         from corehq.apps.api.util import case_to_es_case
-        accessor = CaseAccessors(self.domain)
         return {
-            index['identifier']: case_to_es_case(accessor.get_case(index['referenced_id']))
-            for index in self.indices if index['referenced_id']
+            index.identifier: case_to_es_case(
+                CommCareCase.objects.get_case(index.referenced_id, self.domain))
+            for index in self.indices if index.referenced_id
         }
 
     @property
@@ -275,3 +268,65 @@ def _group_by_dict(objs, fn):
         key = fn(obj)
         result[key].append(obj)
     return result
+
+
+CASE_PROPERTIES = {
+    # CommCareCase.properties()
+    '_attachments',
+    '_id',
+    '_rev',
+    'actions',
+    'case_attachments',
+    'closed_by',
+    'closed_on',
+    'closed',
+    'computed_',
+    'computed_modified_on_',
+    'doc_type',
+    'domain',
+    'export_tag',
+    'external_blobs',
+    'external_id',
+    'indices',
+    'initial_processing_complete'
+    'modified_on',
+    'name',
+    'opened_by',
+    'opened_on',
+    'owner_id',
+    'server_modified_on',
+    'type',
+    'user_id',
+    'version',
+    'xform_ids',
+
+    # CommCareCase data descriptors
+    # Derived from JsonObjectBase.__is_dynamic_property
+    #
+    # def is_data(name):
+    #     return inspect.isdatadescriptor(getattr(CommCareCase, name))
+    # {n for n in dir(CommCareCase) if is_data(n)} - CommCareCase.properties().keys()
+    '_JsonObjectBase__dynamic_properties',
+    '__weakref__',
+    '_doc',
+    '_dynamic_properties',
+    'blobs',
+    'case_id',
+    'case_name',
+    'deletion_date',
+    'deletion_id',
+    'get_id',
+    'get_rev',
+    'has_indices',
+    'host',
+    'is_deleted',
+    'live_indices',
+    'modified_by',
+    'new_document',
+    'parent',
+    'persistent_blobs',
+    'phone_sync_key',
+    'raw_username',
+    'reverse_indices',
+    'server_opened_on',
+}

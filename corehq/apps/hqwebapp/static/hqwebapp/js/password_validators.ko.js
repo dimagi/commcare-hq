@@ -18,6 +18,13 @@ hqDefine('hqwebapp/js/password_validators.ko', [
         message: gettext("Your password is too weak! Try adding numbers or symbols."),
     };
 
+    ko.validation.rules['minimumPasswordLength'] = {
+        validator: function (val, minLength) {
+            if (val === undefined || val.length === 0) {return true;}  // do separate validation for required
+            return val.length >= minLength;
+        },
+    };
+
     ko.validation.registerExtenders();
 
 });

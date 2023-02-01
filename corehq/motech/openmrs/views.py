@@ -4,8 +4,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from memoized import memoized
@@ -16,7 +16,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views.settings import BaseProjectSettingsView
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.motech.const import PASSWORD_PLACEHOLDER
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.forms import (
@@ -50,19 +50,21 @@ def config_openmrs_repeater(request, domain, repeater_id):
         form = OpenmrsConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            repeater.openmrs_config.openmrs_provider = data['openmrs_provider']
-            repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['patient_config'])
-            repeater.openmrs_config.form_configs = list(map(OpenmrsFormConfig.wrap, data['encounters_config']))
+            repeater.openmrs_config['openmrs_provider'] = data['openmrs_provider']
+            # wrapping for schema validation
+            repeater.openmrs_config['case_config'] = OpenmrsCaseConfig.wrap(data['patient_config']).to_json()
+            repeater.openmrs_config['form_configs'] = [
+                OpenmrsFormConfig.wrap(enc).to_json()
+                for enc in data['encounters_config']
+            ]
             repeater.save()
 
     else:
         form = OpenmrsConfigForm(
             data={
-                'openmrs_provider': repeater.openmrs_config.openmrs_provider,
-                'encounters_config': json.dumps([
-                    form_config.to_json()
-                    for form_config in repeater.openmrs_config.form_configs]),
-                'patient_config': json.dumps(repeater.openmrs_config.case_config.to_json()),
+                'openmrs_provider': repeater.openmrs_config['openmrs_provider'],
+                'encounters_config': json.dumps(repeater.openmrs_config['form_configs']),
+                'patient_config': json.dumps(repeater.openmrs_config['case_config']),
             }
         )
     return render(request, 'openmrs/edit_config.html', {
@@ -80,7 +82,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def repeater(self):
-        repeater = OpenmrsRepeater.get(self.repeater_id)
+        repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater_id)
         assert repeater.domain == self.domain
         return repeater
 
@@ -112,7 +114,7 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     get_params = dict(request.GET)
     no_links = get_params.pop('links', None) is None
-    repeater = OpenmrsRepeater.get(repeater_id)
+    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
     assert repeater.domain == domain
     raw_json = repeater.requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
@@ -122,11 +124,11 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
 
 @login_and_domain_required
 def openmrs_test_fire(request, domain, repeater_id, record_id):
-    repeater = OpenmrsRepeater.get(repeater_id)
+    repeater = OpenmrsRepeater.objects.get(repeater_id=repeater_id)
     record = RepeatRecord.get(record_id)
     assert repeater.domain == domain
     assert record.domain == domain
-    assert record.repeater_id == repeater.get_id
+    assert record.repeater_id == repeater.repeater_id
 
     attempt = repeater.fire_for_record(record)
     return JsonResponse(attempt.to_json())
@@ -139,11 +141,11 @@ def openmrs_import_now(request, domain):
     return JsonResponse({'status': 'Accepted'}, status=202)
 
 
-@method_decorator(require_permission(Permissions.edit_motech), name='dispatch')
+@method_decorator(require_permission(HqPermissions.edit_motech), name='dispatch')
 @method_decorator(toggles.OPENMRS_INTEGRATION.required_decorator(), name='dispatch')
 class OpenmrsImporterView(BaseProjectSettingsView):
     urlname = 'openmrs_importer_view'
-    page_title = ugettext_lazy("OpenMRS Importers")
+    page_title = gettext_lazy("OpenMRS Importers")
     template_name = 'openmrs/importers.html'
 
     def _update_importer(self, importer, data):
@@ -210,8 +212,8 @@ class OpenmrsImporterView(BaseProjectSettingsView):
 class AddOpenmrsRepeaterView(AddCaseRepeaterView):
     urlname = 'new_openmrs_repeater$'
     repeater_form_class = OpenmrsRepeaterForm
-    page_title = ugettext_lazy("Forward to OpenMRS")
-    page_name = ugettext_lazy("Forward to OpenMRS")
+    page_title = gettext_lazy("Forward to OpenMRS")
+    page_name = gettext_lazy("Forward to OpenMRS")
 
     def set_repeater_attr(self, repeater, cleaned_data):
         repeater = super().set_repeater_attr(repeater, cleaned_data)
@@ -224,4 +226,4 @@ class AddOpenmrsRepeaterView(AddCaseRepeaterView):
 
 class EditOpenmrsRepeaterView(EditRepeaterView, AddOpenmrsRepeaterView):
     urlname = 'edit_openmrs_repeater'
-    page_title = ugettext_lazy("Edit OpenMRS Repeater")
+    page_title = gettext_lazy("Edit OpenMRS Repeater")

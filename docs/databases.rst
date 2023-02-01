@@ -209,11 +209,11 @@ In order to maintain the SQL function naming the new plproxy cluster must be in 
 .. code-block:: python
 
     # this will connect to the shard standby node directly
-    case = CommCareCaseSQL.objects.partitioned_get(case_id)
+    case = CommCareCase.objects.partitioned_get(case_id)
 
     # this will call the `get_cases_by_id` function on the 'standby' proxy which in turn
     # will query the shard standby nodes
-    cases = CaseAccessor(domain).get_cases(case_ids)
+    cases = CommCareCase.objects.get_cases(case_ids, domain)
 
 These examples assume the standby routing is active as described in the `Routing queries to standbys`_
 section below.
@@ -259,9 +259,9 @@ pillowtop that does is asynchronous.
 
     # context manager
     with read_from_plproxy_standbys():
-        case = CommCareCaseSQL.objects.partitioned_get(case_id)
+        case = CommCareCase.objects.partitioned_get(case_id)
 
     # decorator
     @read_from_plproxy_standbys()
     def get_case_from_standby(case_id)
-        return CommCareCaseSQL.objects.partitioned_get(case_id)
+        return CommCareCase.objects.partitioned_get(case_id)

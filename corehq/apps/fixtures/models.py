@@ -1,507 +1,307 @@
 from datetime import datetime
-from xml.etree import cElementTree as ElementTree
+from functools import reduce
+from itertools import chain
+from uuid import uuid4
 
+from attrs import define, field
 from django.db import models
+from django.db.models.expressions import RawSQL
 
-from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
-from memoized import memoized
-
-from dimagi.ext.couchdbkit import (
-    BooleanProperty,
-    DictProperty,
-    Document,
-    DocumentSchema,
-    IntegerProperty,
-    SchemaListProperty,
-    StringListProperty,
-    StringProperty,
-)
-from dimagi.utils.chunked import chunked
-from dimagi.utils.couch.bulk import CouchTransaction
-
-from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
-from corehq.apps.fixtures.dbaccessors import (
-    get_fixture_data_types,
-    get_fixture_items_for_data_type,
-    get_owner_ids_by_type,
-)
-from corehq.apps.fixtures.exceptions import (
-    FixtureException,
-    FixtureTypeCheckError,
-    FixtureVersionError,
-)
-from corehq.apps.fixtures.utils import (
-    clean_fixture_field_name,
-    get_fields_without_attributes,
-    remove_deleted_ownerships,
-)
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.users.models import CommCareUser
-from corehq.util.xml_utils import serialize
+from corehq.sql_db.fields import CharIdField
+from corehq.util.jsonattrs import AttrsDict, AttrsList, list_of
+
+from .exceptions import FixtureVersionError
 
 FIXTURE_BUCKET = 'domain-fixtures'
 
 
-class FixtureTypeField(DocumentSchema):
-    field_name = StringProperty()
-    properties = StringListProperty()
-    is_indexed = BooleanProperty(default=False)
+class LookupTableManager(models.Manager):
+
+    def by_domain(self, domain_name):
+        return self.filter(domain=domain_name)
+
+    def by_domain_tag(self, domain_name, tag):
+        """Get lookup table by domain and tag"""
+        return self.get(domain=domain_name, tag=tag)
+
+    def domain_tag_exists(self, domain_name, tag):
+        return self.filter(domain=domain_name, tag=tag).exists()
 
 
-class FixtureDataType(QuickCachedDocumentMixin, Document):
-    domain = StringProperty()
-    is_global = BooleanProperty(default=False)
-    tag = StringProperty()
-    fields = SchemaListProperty(FixtureTypeField)
-    item_attributes = StringListProperty()
-    description = StringProperty()
-    copy_from = StringProperty()
+@define
+class Alias:
+    name = field()
 
-    @classmethod
-    def wrap(cls, obj):
-        if not obj["doc_type"] == "FixtureDataType":
-            raise ResourceNotFound
-        # Migrate fixtures without attributes on item-fields to fields with attributes
-        if obj["fields"] and isinstance(obj['fields'][0], str):
-            obj['fields'] = [{'field_name': f, 'properties': []} for f in obj['fields']]
+    def __get__(self, obj, owner=None):
+        return self if obj is None else getattr(obj, self.name)
 
-        # Migrate fixtures without attributes on items to items with attributes
-        if 'item_attributes' not in obj:
-            obj['item_attributes'] = []
+    def __set__(self, obj, value):
+        setattr(obj, self.name, value)
 
-        return super(FixtureDataType, cls).wrap(obj)
 
-    # support for old fields
-    @property
-    def fields_without_attributes(self):
-        return get_fields_without_attributes(self.fields)
+@define
+class TypeField:
+    name = field()
+    properties = field(factory=list)
+    is_indexed = field(default=False)
+    field_name = Alias("name")
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((self.name, tuple(self.properties), self.is_indexed))
+
+
+class LookupTable(models.Model):
+    """Lookup Table
+
+    `fields` structure:
+    ```py
+    [
+        {
+            "name": "country",
+            "properties": [],
+            "is_indexed": True,
+        },
+        {
+            "name": "state_name",
+            "properties": ["lang"],
+            "is_indexed": False,
+        },
+        ...
+    ]
+    ```
+    """
+    objects = LookupTableManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    domain = CharIdField(max_length=126, db_index=True, default=None)
+    is_global = models.BooleanField(default=False)
+    tag = CharIdField(max_length=32, default=None)
+    fields = AttrsList(TypeField, default=list)
+    item_attributes = models.JSONField(default=list)
+    description = models.CharField(max_length=255, default="")
+
+    class Meta:
+        app_label = 'fixtures'
+        unique_together = [('domain', 'tag')]
 
     @property
     def is_indexed(self):
         return any(f.is_indexed for f in self.fields)
 
-    @classmethod
-    def total_by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import count_fixture_data_types
-        return count_fixture_data_types(domain)
 
-    @classmethod
-    def by_domain(cls, domain):
-        from corehq.apps.fixtures.dbaccessors import get_fixture_data_types
-        return get_fixture_data_types(domain)
+class LookupTableRowManager(models.Manager):
 
-    @classmethod
-    def by_domain_tag(cls, domain, tag):
-        return cls.view('fixtures/data_types_by_domain_tag', key=[domain, tag], reduce=False, include_docs=True, descending=True)
+    def iter_rows(self, domain, *, table_id=None, tag=None, **kw):
+        """Get rows for lookup table
 
-    @classmethod
-    def fixture_tag_exists(cls, domain, tag):
-        fdts = FixtureDataType.by_domain(domain)
-        for fdt in fdts:
-            if tag == fdt.tag:
-                return fdt
-        return False
+        Returned rows are sorted by sort_key.
+        """
+        if table_id is not None and tag is not None:
+            raise TypeError("Too many arguments: 'table_id' and 'tag' are mutually exclusive.")
+        if table_id is None:
+            if tag is None:
+                raise TypeError("Not enough arguments. Either 'table_id' or 'tag' is required.")
+            try:
+                table_id = LookupTable.objects.filter(
+                    domain=domain, tag=tag).values("id").get()["id"]
+            except LookupTable.DoesNotExist:
+                return []
+        where = models.Q(table_id=table_id)
+        return self._iter_sorted(domain, where, **kw)
 
-    def recursive_delete(self, transaction):
-        item_ids = []
-        for item in FixtureDataItem.by_data_type(self.domain, self.get_id):
-            transaction.delete(item)
-            item_ids.append(item.get_id)
-        for item_id_chunk in chunked(item_ids, 1000):
-            transaction.delete_all(FixtureOwnership.for_all_item_ids(item_id_chunk, self.domain))
-        transaction.delete(self)
+    def iter_by_user(self, user, **kw):
+        """Get rows owned by the user, their location, or their group
 
-    @classmethod
-    def delete_fixtures_by_domain(cls, domain, transaction):
-        for type in FixtureDataType.by_domain(domain):
-            type.recursive_delete(transaction)
+        Returned rows are sorted by table_id and sort_key.
+        """
+        def make_conditions(owner_type, ids):
+            return [models.Q(owner_type=owner_type, owner_id=x) for x in ids]
 
-    def clear_caches(self):
-        super(FixtureDataType, self).clear_caches()
-        get_fixture_data_types.clear(self.domain)
+        group_ids = Group.by_user_id(user.user_id, wrap=False)
+        locaction_ids = user.sql_location.path if user.sql_location else []
+        where = models.Q(
+            id__in=models.Subquery(
+                LookupTableRowOwner.objects.filter(
+                    reduce(models.Q.__or__, chain(
+                        make_conditions(OwnerType.User, [user.user_id]),
+                        make_conditions(OwnerType.Group, group_ids),
+                        make_conditions(OwnerType.Location, locaction_ids),
+                    )),
+                    domain=user.domain,
+                ).values("row_id")
+            ),
+        )
+        return self._iter_sorted(user.domain, where, **kw)
 
-
-class FixtureItemField(DocumentSchema):
-    """
-        "field_value": "Delhi_IN_HIN",
-        "properties": {"lang": "hin"}
-    """
-    field_value = StringProperty()
-    properties = DictProperty()
-
-
-class FieldList(DocumentSchema):
-    """
-        List of fields for different combinations of properties
-    """
-    field_list = SchemaListProperty(FixtureItemField)
-
-    def to_api_json(self):
-        value = self.to_json()
-        del value['doc_type']
-        for field in value['field_list']:
-            del field['doc_type']
-        return value
-
-
-class FixtureDataItem(Document):
-    """
-    Example old Item:
-        domain = "hq-domain"
-        data_type_id = <id of state FixtureDataType>
-        fields = {
-            "country": "India",
-            "state_name": "Delhi",
-            "state_id": "DEL"
-        }
-
-    Example new Item with attributes:
-        domain = "hq-domain"
-        data_type_id = <id of state FixtureDataType>
-        fields = {
-            "country": {"field_list": [
-                {"field_value": "India", "properties": {}},
-            ]},
-            "state_name": {"field_list": [
-                {"field_value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
-                {"field_value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
-            ]},
-            "state_id": {"field_list": [
-                {"field_value": "DEL", "properties": {}}
-            ]}
-        }
-    If one of field's 'properties' is an empty 'dict', the field has no attributes
-    """
-    domain = StringProperty()
-    data_type_id = StringProperty()
-    fields = DictProperty(FieldList)
-    item_attributes = DictProperty()
-    sort_key = IntegerProperty()
-
-    @classmethod
-    def wrap(cls, obj):
-        if not obj["doc_type"] == "FixtureDataItem":
-            raise ResourceNotFound
-        if not obj["fields"]:
-            return super(FixtureDataItem, cls).wrap(obj)
-
-        # Migrate old basic fields to fields with attributes
-
-        is_of_new_type = False
-        fields_dict = {}
-
-        def _is_new_type(field_val):
-            old_types = (str, int, float)
-            return field_val is not None and not isinstance(field_val, old_types)
-
-        for field in obj['fields']:
-            field_val = obj['fields'][field]
-            if _is_new_type(field_val):
-                # assumes all-or-nothing conversion of old types to new
-                is_of_new_type = True
+    def _iter_sorted(self, domain, where, batch_size=1000):
+        # Depends on ["domain", "table_id", "sort_key", "id"] index for
+        # efficient pagination and sorting.
+        query = self.filter(where, domain=domain).order_by("table_id", "sort_key", "id")
+        next_page = models.Q()
+        while True:
+            results = query.filter(next_page)[:batch_size]
+            yield from results
+            if len(results) < batch_size:
                 break
-            fields_dict[field] = {
-                "field_list": [{
-                    'field_value': str(field_val) if not isinstance(field_val, str) else field_val,
-                    'properties': {}
-                }]
-            }
-        if not is_of_new_type:
-            obj['fields'] = fields_dict
+            row = results._result_cache[-1]
+            next_page = models.Q(
+                table_id=row.table_id,
+                sort_key=row.sort_key,
+                id__gt=row.id,
+            ) | models.Q(
+                table_id=row.table_id,
+                sort_key__gt=row.sort_key
+            ) | models.Q(
+                table_id__gt=row.table_id,
+            )
 
-        # Migrate fixture-items to have attributes
-        if 'item_attributes' not in obj:
-            obj['item_attributes'] = {}
+    def with_value(self, domain, table_id, field_name, value):
+        """Get all rows having a field matching the given name/value pair
 
-        return super(FixtureDataItem, cls).wrap(obj)
+        WARNING may be inefficient for large lookup tables because field
+        values are not indexed so the query will scan every row in the
+        table (that is, all rows matching domain and table_id).
+        """
+        # Postgres 12 can replace the subquery with a WHERE predicate like:
+        # fields @@ '$.field_name[*] ? (@.value == "value")'
+        row_ids = RawSQL(f"""
+            SELECT row.id FROM {self.model._meta.db_table} AS row,
+                jsonb_to_recordset(row.fields->%s) AS val(value text)
+            WHERE row.domain = %s AND row.table_id = %s AND val.value = %s
+        """, [field_name, domain, table_id, value])
+        return self.filter(id__in=row_ids)
+
+
+@define
+class Field:
+    value = field()
+    properties = field(factory=dict)
+
+    def __eq__(self, other):
+        values = (self.value, self.properties)
+        try:
+            other_values = (other.value, other.properties)
+        except AttributeError:
+            return NotImplemented
+        return values == other_values
+
+    def __hash__(self):
+        # NOTE mutable fields are used in this calculation, and changing
+        # their values will break the hash contract. Hashing only works
+        # on instances that will not be mutated.
+        return hash((self.value, tuple(sorted(self.properties.items()))))
+
+
+# on_delete=DB_CASCADE denotes ON DELETE CASCADE in the database. The
+# constraints are configured in a migration. Note that Django signals
+# will not fire on records deleted via cascade.
+DB_CASCADE = models.DO_NOTHING
+
+
+class LookupTableRow(models.Model):
+    """Lookup Table Row data model
+
+    `fields` structure:
+    ```py
+    {
+        "country": [
+            {"value": "India", "properties": {}},
+        ],
+        "state_name": [
+            {"value": "Delhi_IN_ENG", "properties": {"lang": "eng"}},
+            {"value": "Delhi_IN_HIN", "properties": {"lang": "hin"}},
+        ],
+        "state_id": [
+            {"value": "DEL", "properties": {}}
+        ],
+    }
+    ```
+
+    `item_attributes` structure:
+    ```py
+    {
+        "attr1": "value1",
+        "attr2": "value2",
+    }
+    ```
+    """
+    objects = LookupTableRowManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    domain = CharIdField(max_length=126, db_index=True, default=None)
+    table = models.ForeignKey(LookupTable, on_delete=DB_CASCADE, db_constraint=False)
+    fields = AttrsDict(list_of(Field), default=dict)
+    item_attributes = models.JSONField(default=dict)
+    sort_key = models.IntegerField()
+
+    class Meta:
+        app_label = 'fixtures'
+        indexes = [
+            models.Index(fields=["domain", "table_id", "sort_key", "id"]),
+        ]
 
     @property
     def fields_without_attributes(self):
+        """Get a dict of field names mapped to respective field values
+
+        :raises: ``FixtureVersionError`` if any field has more than one value.
+        :raises: ``IndexError`` if any field does not have at least one value.
+        """
         fields = {}
-        for field in self.fields:
+        for name, values in self.fields.items():
             # if the field has properties, a unique field_val can't be generated for FixtureItem
-            if len(self.fields[field].field_list) > 1:
-                raise FixtureVersionError("This method is not supported for fields with properties."
-                                          " field '%s' has properties" % field)
-            fields[field] = self.fields[field].field_list[0].field_value
+            if len(values) > 1:
+                raise FixtureVersionError(
+                    "This method is not supported for fields with properties."
+                    f" field '{name}' has properties")
+            fields[name] = values[0].value
         return fields
 
-    @property
-    def try_fields_without_attributes(self):
-        """This is really just for the API"""
-        try:
-            return self.fields_without_attributes
-        except FixtureVersionError:
-            return {key: value.to_api_json()
-                    for key, value in self.fields.items()}
 
-    @property
-    def data_type(self):
-        if not hasattr(self, '_data_type'):
-            self._data_type = FixtureDataType.get(self.data_type_id)
-        return self._data_type
-
-    def add_owner(self, owner, owner_type, transaction=None):
-        assert(owner.domain == self.domain)
-        with transaction or CouchTransaction() as transaction:
-            o = FixtureOwnership(domain=self.domain, owner_type=owner_type, owner_id=owner.get_id, data_item_id=self.get_id)
-            transaction.save(o)
-        return o
-
-    def remove_owner(self, owner, owner_type):
-        for ownership in FixtureOwnership.view('fixtures/ownership',
-            key=[self.domain, 'by data_item and ' + owner_type, self.get_id, owner.get_id],
-            reduce=False,
-            include_docs=True
-        ):
-            try:
-                ownership.delete()
-            except ResourceNotFound:
-                # looks like it was already deleted
-                pass
-            except ResourceConflict:
-                raise FixtureException((
-                    "couldn't remove ownership {owner_id} for item {fixture_id} of type "
-                    "{data_type_id} in domain {domain}. It was updated elsewhere"
-                ).format(
-                    owner_id=ownership._id,
-                    fixture_id=self._id,
-                    data_type_id=self.data_type_id,
-                    domain=self.domain
-                ))
-
-    def add_user(self, user, transaction=None):
-        return self.add_owner(user, 'user', transaction=transaction)
-
-    def remove_user(self, user):
-        return self.remove_owner(user, 'user')
-
-    def add_group(self, group, transaction=None):
-        return self.add_owner(group, 'group', transaction=transaction)
-
-    def remove_group(self, group):
-        return self.remove_owner(group, 'group')
-
-    def add_location(self, location, transaction=None):
-        return self.add_owner(location, 'location', transaction=transaction)
-
-    def remove_location(self, location):
-        return self.remove_owner(location, 'location')
-
-    def type_check(self):
-        fields = set(self.fields.keys())
-        for field in self.data_type.fields:
-            if field.field_name in fields:
-                fields.remove(field)
-            else:
-                raise FixtureTypeCheckError("field %s not in fixture data %s" % (field.field_name, self.get_id))
-        if fields:
-            raise FixtureTypeCheckError("fields %s from fixture data %s not in fixture data type" % (', '.join(fields), self.get_id))
-
-    def get_groups(self, wrap=True):
-        group_ids = get_owner_ids_by_type(self.domain, 'group', self.get_id)
-        if wrap:
-            return set(Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True,
-            ))
-        else:
-            return set(group_ids)
-
-    @property
-    @memoized
-    def groups(self):
-        return self.get_groups()
-
-    def get_users(self, wrap=True, include_groups=False):
-        user_ids = set(get_owner_ids_by_type(self.domain, 'user', self.get_id))
-        if include_groups:
-            group_ids = self.get_groups(wrap=False)
-        else:
-            group_ids = set()
-        users_in_groups = [
-            group.get_users(only_commcare=True)
-            for group in Group.view(
-                '_all_docs',
-                keys=list(group_ids),
-                include_docs=True)]
-        if wrap:
-            return set(CommCareUser.view('_all_docs', keys=list(user_ids), include_docs=True)).union(*users_in_groups)
-        else:
-            return user_ids | set([user.get_id for user in users_in_groups])
-
-    def get_all_users(self, wrap=True):
-        return self.get_users(wrap=wrap, include_groups=True)
-
-    @property
-    @memoized
-    def users(self):
-        return self.get_users()
-
-    @property
-    @memoized
-    def locations(self):
-        loc_ids = get_owner_ids_by_type(self.domain, 'location', self.get_id)
-        return SQLLocation.objects.filter(location_id__in=loc_ids)
+class OwnerType(models.IntegerChoices):
+    User = 0
+    Group = 1
+    Location = 2
 
     @classmethod
-    def by_user(cls, user, include_docs=True):
-        """
-        This method returns all fixture data items owned by the user, their location, or their group.
-
-        :param include_docs: whether to return the fixture data item dicts or just a set of ids
-        """
-        group_ids = Group.by_user_id(user.user_id, wrap=False)
-        loc_ids = user.sql_location.path if user.sql_location else []
-
-        def make_keys(owner_type, ids):
-            return [[user.domain, 'data_item by {}'.format(owner_type), id_]
-                    for id_ in ids]
-
-        fixture_ids = set(
-            FixtureOwnership.get_db().view('fixtures/ownership',
-                keys=(make_keys('user', [user.user_id]) +
-                      make_keys('group', group_ids) +
-                      make_keys('location', loc_ids)),
-                reduce=False,
-                wrapper=lambda r: r['value'],
-            )
-        )
-        if include_docs:
-            results = cls.get_db().view('_all_docs', keys=list(fixture_ids), include_docs=True)
-
-            # sort the results into those corresponding to real documents
-            # and those corresponding to deleted or non-existent documents
-            docs = []
-            deleted_fixture_ids = set()
-
-            for result in results:
-                if result.get('doc'):
-                    docs.append(result['doc'])
-                elif result.get('error'):
-                    assert result['error'] == 'not_found'
-                    deleted_fixture_ids.add(result['key'])
-                else:
-                    assert result['value']['deleted'] is True
-                    deleted_fixture_ids.add(result['id'])
-            if deleted_fixture_ids:
-                # delete ownership documents pointing deleted/non-existent fixture documents
-                # this cleanup is necessary since we used to not do this
-                remove_deleted_ownerships.delay(list(deleted_fixture_ids), user.domain)
-            return docs
-        else:
-            return fixture_ids
-
-    @classmethod
-    def by_group(cls, group, wrap=True):
-        fixture_ids = cls.get_db().view('fixtures/ownership',
-            key=[group.domain, 'data_item by group', group.get_id],
-            reduce=False,
-            wrapper=lambda r: r['value'],
-            descending=True
-        ).all()
-
-        return cls.view('_all_docs', keys=list(fixture_ids), include_docs=True) if wrap else fixture_ids
-
-    @classmethod
-    def by_data_type(cls, domain, data_type, bypass_cache=False):
-        return get_fixture_items_for_data_type(domain, _id_from_doc(data_type), bypass_cache)
-
-    @classmethod
-    def by_domain(cls, domain):
-        return cls.view('fixtures/data_items_by_domain_type',
-            startkey=[domain, {}],
-            endkey=[domain],
-            reduce=False,
-            include_docs=True,
-            descending=True
-        )
-
-    @classmethod
-    def by_field_value(cls, domain, data_type, field_name, field_value):
-        data_type_id = _id_from_doc(data_type)
-        return cls.view('fixtures/data_items_by_field_value', key=[domain, data_type_id, field_name, field_value],
-                        reduce=False, include_docs=True)
-
-    @classmethod
-    def get_item_list(cls, domain, tag):
-        data_type = FixtureDataType.by_domain_tag(domain, tag).one()
-        return cls.by_data_type(domain, data_type)
-
-    @classmethod
-    def get_indexed_items(cls, domain, tag, index_field):
-        """
-        Looks up an item list and converts to mapping from `index_field`
-        to a dict of all fields for that item.
-
-            fixtures = FixtureDataItem.get_indexed_items('my_domain',
-                'item_list_tag', 'index_field')
-            result = fixtures['index_val']['result_field']
-        """
-        fixtures = cls.get_item_list(domain, tag)
-        return dict((f.fields_without_attributes[index_field], f.fields_without_attributes) for f in fixtures)
-
-    def delete_ownerships(self, transaction):
-        ownerships = FixtureOwnership.by_item_id(self.get_id, self.domain)
-        transaction.delete_all(ownerships)
-
-    def recursive_delete(self, transaction):
-        self.delete_ownerships(transaction)
-        transaction.delete(self)
+    def from_string(cls, value):
+        return getattr(cls, value.title())
 
 
-def _id_from_doc(doc_or_doc_id):
-    if isinstance(doc_or_doc_id, str):
-        doc_id = doc_or_doc_id
-    else:
-        doc_id = doc_or_doc_id.get_id if doc_or_doc_id else None
-    return doc_id
+class LookupTableRowOwner(models.Model):
+    domain = CharIdField(max_length=126, default=None)
+    owner_type = models.PositiveSmallIntegerField(choices=OwnerType.choices)
+    owner_id = CharIdField(max_length=126, default=None)
+    row = models.ForeignKey(LookupTableRow, on_delete=DB_CASCADE, db_constraint=False)
+
+    class Meta:
+        app_label = 'fixtures'
+        indexes = [
+            models.Index(fields=["domain", "owner_type", "owner_id"])
+        ]
 
 
-class FixtureOwnership(Document):
-    domain = StringProperty()
-    data_item_id = StringProperty()
-    owner_id = StringProperty()
-    owner_type = StringProperty(choices=['user', 'group', 'location'])
-
-    @classmethod
-    def by_item_id(cls, item_id, domain):
-        ownerships = cls.view('fixtures/ownership',
-            key=[domain, 'by data_item', item_id],
-            include_docs=True,
-            reduce=False,
-        ).all()
-
-        return ownerships
-
-    @classmethod
-    def for_all_item_ids(cls, item_ids, domain):
-        ownerships = FixtureOwnership.view('fixtures/ownership',
-            keys=[[domain, 'by data_item', item_id] for item_id in item_ids],
-            include_docs=True,
-            reduce=False
-        ).all()
-
-        return ownerships
-
-
-class UserFixtureType(object):
+class UserLookupTableType:
     LOCATION = 1
     CHOICES = (
         (LOCATION, "Location"),
     )
 
 
-class UserFixtureStatus(models.Model):
+class UserLookupTableStatus(models.Model):
     """Keeps track of when a user needs to re-sync a fixture"""
+    id = models.AutoField(primary_key=True, verbose_name="ID", auto_created=True)
     user_id = models.CharField(max_length=100, db_index=True)
-    fixture_type = models.PositiveSmallIntegerField(choices=UserFixtureType.CHOICES)
+    fixture_type = models.PositiveSmallIntegerField(choices=UserLookupTableType.CHOICES)
     last_modified = models.DateTimeField()
 
     DEFAULT_LAST_MODIFIED = datetime.min
 
-    class Meta(object):
+    class Meta:
         app_label = 'fixtures'
+        db_table = 'fixtures_userfixturestatus'
         unique_together = ("user_id", "fixture_type")

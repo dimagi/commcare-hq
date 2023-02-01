@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# flake8: noqa: F405
 
 import inspect
 from collections import defaultdict
@@ -167,6 +168,9 @@ MIDDLEWARE = [
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
     'corehq.apps.cloudcare.middleware.CloudcareMiddleware',
+    # middleware that adds cookies must come before SecureCookiesMiddleware
+    'corehq.middleware.SecureCookiesMiddleware',
+    'field_audit.middleware.FieldAuditMiddleware',
 ]
 
 X_FRAME_OPTIONS = 'DENY'
@@ -177,7 +181,8 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 INACTIVITY_TIMEOUT = 60 * 24 * 14
 SECURE_TIMEOUT = 30
 DISABLE_AUTOCOMPLETE_ON_SENSITIVE_FORMS = False
-ENABLE_DRACONIAN_SECURITY_FEATURES = False
+MINIMUM_ZXCVBN_SCORE = 2
+MINIMUM_PASSWORD_LENGTH = 8
 CUSTOM_PASSWORD_STRENGTH_MESSAGE = ''
 ADD_CAPTCHA_FIELD_TO_FORMS = False
 
@@ -199,8 +204,10 @@ PASSWORD_HASHERS = (
 )
 
 ROOT_URLCONF = "urls"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 DEFAULT_APPS = (
+    'corehq.apps.celery.Config',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -211,10 +218,10 @@ DEFAULT_APPS = (
     'django.contrib.staticfiles',
     'django_celery_results',
     'django_prbac',
-    'djng',
     'captcha',
     'couchdbkit.ext.django',
     'crispy_forms',
+    'field_audit',
     'gunicorn',
     'compressor',
     'tastypie',
@@ -229,19 +236,26 @@ DEFAULT_APPS = (
     'oauth2_provider',
 )
 
-CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
+SILENCED_SYSTEM_CHECKS = ['captcha.recaptcha_test_key_error']
+RECAPTCHA_PRIVATE_KEY = ''
+RECAPTCHA_PUBLIC_KEY = ''
+
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
 CRISPY_ALLOWED_TEMPLATE_PACKS = (
     'bootstrap',
     'bootstrap3',
 )
 
+FIELD_AUDIT_AUDITORS = [
+    "corehq.apps.users.auditors.HQAuditor",
+    "field_audit.auditors.SystemUserAuditor",
+]
+
 HQ_APPS = (
     'django_digest',
     'corehq.apps.auditcare.AuditcareConfig',
     'casexml.apps.case',
     'corehq.apps.casegroups',
-    'corehq.apps.case_migrations',
     'casexml.apps.phone',
     'casexml.apps.stock',
     'corehq.apps.cleanup',
@@ -286,8 +300,8 @@ HQ_APPS = (
     'corehq.apps.change_feed',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.app_manager',
-    'corehq.apps.es',
+    'corehq.apps.app_manager.AppManagerAppConfig',
+    'corehq.apps.es.app_config.ElasticAppConfig',
     'corehq.apps.fixtures',
     'corehq.apps.case_importer',
     'corehq.apps.reminders',
@@ -302,7 +316,8 @@ HQ_APPS = (
     'corehq.apps.smsforms',
     'corehq.apps.sso',
     'corehq.apps.ivr',
-    'corehq.messaging',
+    'corehq.apps.oauth_integrations',
+    'corehq.messaging.MessagingAppConfig',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -335,7 +350,7 @@ HQ_APPS = (
     'corehq.apps.saved_reports',
     'corehq.apps.userreports.app_config.UserReports',
     'corehq.apps.aggregate_ucrs',
-    'corehq.apps.data_interfaces',
+    'corehq.apps.data_interfaces.app_config.DataInterfacesAppConfig',
     'corehq.apps.export',
     'corehq.apps.builds',
     'corehq.apps.api',
@@ -345,11 +360,7 @@ HQ_APPS = (
     'corehq.couchapps',
     'corehq.preindex',
     'corehq.tabs',
-    'custom.openclinica',
-    'fluff',
-    'fluff.fluff_filter',
     'soil',
-    'toggle',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -361,6 +372,8 @@ HQ_APPS = (
     'corehq.motech.fhir',
     'corehq.motech.openmrs',
     'corehq.motech.repeaters',
+    'corehq.motech.generic_inbound',
+    'corehq.toggles',
     'corehq.util',
     'dimagi.ext',
     'corehq.blobs',
@@ -369,26 +382,21 @@ HQ_APPS = (
     'corehq.apps.translations',
 
     # custom reports
-    'pact',
-
     'custom.reports.mc',
-    'custom.apps.crs_reports',
-    'custom.succeed',
     'custom.ucla',
 
-    'custom.intrahealth',
     'custom.up_nrhm',
 
     'custom.common',
 
-    'custom.nic_compliance',
     'custom.hki',
     'custom.champ',
     'custom.covid',
     'custom.inddex',
     'custom.onse',
     'custom.nutrition_project',
-    'custom.cowin',
+    'custom.cowin.COWINAppConfig',
+    'custom.hmhb',
 
     'custom.ccqa',
 
@@ -518,11 +526,6 @@ USER_REPORTING_METADATA_BATCH_SCHEDULE = {'timedelta': {'minutes': 5}}
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
-# Set this if touchforms can't access HQ via the public URL e.g. if using a self signed cert
-# Should include the protocol.
-# If this is None, get_url_base() will be used
-CLOUDCARE_BASE_URL = None
-
 PAGINATOR_OBJECTS_PER_PAGE = 15
 PAGINATOR_MAX_PAGE_LINKS = 5
 
@@ -585,7 +588,9 @@ CELERY_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 # Keep messages in the events queue only for 2 hours
 CELERY_EVENT_QUEUE_TTL = 2 * 60 * 60
 
-CELERY_TASK_SERIALIZER = 'json'  # Default value in celery 4.x
+# Default serializer should be changed back to 'json' after
+# https://github.com/celery/celery/issues/6759 is fixed
+CELERY_TASK_SERIALIZER = 'pickle'  # this value is ignored in commcare hq code, which will continue to default to json. it is used only for the celery inspect module". See corehq.apps.celery.shared_task
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']  # Defaults to ['json'] in celery 4.x.  Remove once pickle is not used.
 
 # in seconds
@@ -603,6 +608,7 @@ CELERY_HEARTBEAT_THRESHOLDS = {
     "icds_dashboard_reports_queue": None,
     "logistics_background_queue": None,
     "logistics_reminder_queue": None,
+    "malt_generation_queue": 6 * 60 * 60,
     "reminder_case_update_queue": 15 * 60,
     "reminder_queue": 15 * 60,
     "reminder_rule_queue": 15 * 60,
@@ -692,8 +698,6 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-SYNC_CASE_FOR_MESSAGING_ON_SAVE = True
-
 # Used by the new reminders framework
 LOCAL_AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {}
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
@@ -756,7 +760,11 @@ AVAILABLE_CUSTOM_RULE_CRITERIA = {
 
 LOCAL_AVAILABLE_CUSTOM_RULE_ACTIONS = {}
 AVAILABLE_CUSTOM_RULE_ACTIONS = {
-    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin'
+    'COVID_US_CLOSE_CASES_ASSIGNED_CHECKIN': 'custom.covid.rules.custom_actions.close_cases_assigned_to_checkin',
+    'COVID_US_SET_ACTIVITY_COMPLETE_TODAY':
+        'custom.covid.rules.custom_actions.set_all_activity_complete_date_to_today',
+    'GCC_SANGATH_SANITIZE_SESSIONS_PEER_RATING':
+        'custom.gcc_sangath.rules.custom_actions.sanitize_session_peer_rating',
 }
 
 ####### auditcare parameters #######
@@ -797,11 +805,7 @@ LOCAL_PILLOWTOPS = {}
 RUN_FORM_META_PILLOW = True
 RUN_CASE_SEARCH_PILLOW = True
 RUN_UNKNOWN_USER_PILLOW = True
-
-# Set to True to remove the `actions` and `xform_id` fields from the
-# ES Case index. These fields contribute high load to the shard
-# databases.
-CASE_ES_DROP_FORM_FIELDS = False
+RUN_DEDUPLICATION_PILLOW = True
 
 # Repeaters in the order in which they should appear in "Data Forwarding"
 REPEATER_CLASSES = [
@@ -821,6 +825,7 @@ REPEATER_CLASSES = [
     'corehq.motech.dhis2.repeaters.Dhis2EntityRepeater',
     'custom.cowin.repeaters.BeneficiaryRegistrationRepeater',
     'custom.cowin.repeaters.BeneficiaryVaccinationRepeater',
+    'corehq.motech.repeaters.expression.repeaters.CaseExpressionRepeater',
 ]
 
 # Override this in localsettings to add new repeater types
@@ -830,6 +835,9 @@ LOCAL_REPEATER_CLASSES = []
 # Set to None to enable all or empty tuple to disable all.
 # This will not prevent users from creating
 REPEATERS_WHITELIST = None
+
+# how many tasks to split the check_repeaters process into
+CHECK_REPEATERS_PARTITION_COUNT = 1
 
 # If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
@@ -866,6 +874,7 @@ OAUTH2_PROVIDER = {
     'PKCE_REQUIRED': _pkce_required,
     'SCOPES': {
         'access_apis': 'Access API data on all your CommCare projects',
+        'reports:view': 'Allow users to view and download all report data',
     },
     'REFRESH_TOKEN_EXPIRE_SECONDS': 60 * 60 * 24 * 15,  # 15 days
 }
@@ -891,6 +900,7 @@ DIGEST_LOGIN_FACTORY = 'django_digest.NoEmailLoginFactory'
 # Django Compressor
 COMPRESS_PRECOMPILERS = AVAILABLE_COMPRESS_PRECOMPILERS = (
     ('text/less', 'corehq.apps.hqwebapp.precompilers.LessFilter'),
+    ('text/scss', 'corehq.apps.hqwebapp.precompilers.SassFilter'),
 )
 # if not overwritten in localsettings, these will be replaced by the value they return
 # using the local DEBUG value (which we don't have access to here yet)
@@ -900,7 +910,10 @@ COMPRESS_FILTERS = {
     'css': [
         'compressor.filters.css_default.CssAbsoluteFilter',
         'compressor.filters.cssmin.rCSSMinFilter',
-    ]
+    ],
+    'js': [
+        'compressor.filters.jsmin.rJSMinFilter',
+    ],
 }
 
 LESS_B3_PATHS = {
@@ -1013,9 +1026,12 @@ SENTRY_PROJECT_SLUG = 'commcarehq'
 # used for creating releases and deploys
 SENTRY_API_KEY = None
 
-OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
-RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+# 10MB max upload size - applied to specific views
+# consider migrating to `DATA_UPLOAD_MAX_MEMORY_SIZE` which is universally applied
+MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
 # Exports use a lot of fields to define columns. See: https://dimagi-dev.atlassian.net/browse/HI-365
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
@@ -1042,10 +1058,9 @@ CUSTOM_LANDING_TEMPLATE = {
     # "default": 'login_and_password/login.html',
 }
 
+# used to override low-level index settings (number_of_replicas, number_of_shards, etc)
 ES_SETTINGS = None
-ES_XFORM_INDEX_NAME = "xforms_2016-07-07"
-ES_CASE_SEARCH_INDEX_NAME = "case_search_2018-05-29"
-ES_XFORM_DISABLE_ALL = False
+
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
@@ -1079,9 +1094,6 @@ RATE_LIMIT_SUBMISSIONS = False
 STALE_EXPORT_THRESHOLD = None
 
 REQUIRE_TWO_FACTOR_FOR_SUPERUSERS = False
-# Use an experimental partitioning algorithm
-# that adds messages to the partition with the fewest unprocessed messages
-USE_KAFKA_SHORTEST_BACKLOG_PARTITIONER = False
 
 LOCAL_CUSTOM_DB_ROUTING = {}
 
@@ -1089,8 +1101,8 @@ DEFAULT_COMMCARE_EXTENSIONS = [
     "custom.abt.commcare_extensions",
     "custom.eqa.commcare_extensions",
     "mvp.commcare_extensions",
-    "custom.succeed.commcare_extensions",
-    "custom.nutrition_project.commcare_extensions"
+    "custom.nutrition_project.commcare_extensions",
+    "custom.samveg.commcare_extensions",
 ]
 COMMCARE_EXTENSIONS = []
 
@@ -1099,6 +1111,7 @@ IGNORE_ALL_DEMO_USER_SUBMISSIONS = False
 # to help in performance, avoid use of phone entries in an environment that does not need them
 # so HQ does not try to keep them up to date
 USE_PHONE_ENTRIES = True
+COMMCARE_ANALYTICS_HOST = ""
 
 try:
     # try to see if there's an environmental variable set for local_settings
@@ -1210,12 +1223,14 @@ TEMPLATES = [
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.get_demo',
-                'corehq.util.context_processors.banners',
+                'corehq.util.context_processors.subscription_banners',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.js_toggles',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
                 'corehq.util.context_processors.emails',
+                'corehq.util.context_processors.status_page',
+                'corehq.util.context_processors.sentry',
             ],
             'debug': DEBUG,
             'loaders': [
@@ -1228,13 +1243,13 @@ TEMPLATES = [
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(levelname)s %(message)s'
+            'format': '%(asctime)s %(levelname)s [%(name)s] %(message)s'
         },
         'pillowtop': {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
@@ -1336,10 +1351,6 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'corehq.util.log.HqAdminEmailHandler',
         },
-        'notify_exception': {
-            'level': 'ERROR',
-            'class': 'corehq.util.log.NotifyExceptionEmailer',
-        },
         'null': {
             'class': 'logging.NullHandler',
         },
@@ -1391,9 +1402,9 @@ LOGGING = {
             'propagate': True,
         },
         'celery.task': {
-            'handlers': ['console', 'file'],
+            'handlers': ['file'],
             'level': 'INFO',
-            'propagate': True
+            'propagate': False
         },
         'pillowtop': {
             'handlers': ['pillowtop'],
@@ -1452,7 +1463,7 @@ LOGGING = {
         },
         'commcare_auth': {
             'handlers': ['file'],
-            'level': 'ERROR',
+            'level': 'INFO',
             'propagate': False,
         }
     }
@@ -1470,9 +1481,6 @@ helper.fix_logger_obfuscation(fix_logger_obfuscation_, LOGGING)
 
 if DEBUG:
     INSTALLED_APPS = INSTALLED_APPS + ('corehq.apps.mocha',)
-    import warnings
-    warnings.simplefilter('default')
-    os.environ['PYTHONWARNINGS'] = 'd'  # Show DeprecationWarning
 else:
     TEMPLATES[0]['OPTIONS']['loaders'] = [[
         'django.template.loaders.cached.Loader',
@@ -1498,7 +1506,6 @@ COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 # Couch database name suffixes
 USERS_GROUPS_DB = 'users'
-FIXTURES_DB = 'fixtures'
 DOMAINS_DB = 'domains'
 APPS_DB = 'apps'
 META_DB = 'meta'
@@ -1524,7 +1531,6 @@ COUCHDB_APPS = [
     'dhis2',
     'ext',
     'facilities',
-    'fluff_filter',
     'hqcase',
     'hqmedia',
     'case_importer',
@@ -1548,31 +1554,19 @@ COUCHDB_APPS = [
     'formplayer',
     'phonelog',
     'registration',
-    'crs_reports',
     'grapevine',
-    'openclinica',
 
     # custom reports
-    'pact',
     'accounting',
-    'succeed',
-    ('auditcare', 'auditcare'),
     ('repeaters', 'receiverwrapper'),
     ('userreports', META_DB),
     ('custom_data_fields', META_DB),
-    # needed to make couchdbkit happy
-    ('fluff', 'fluff-bihar'),
-    ('mc', 'fluff-mc'),
-    ('m4change', 'm4change'),  # todo: remove once code that uses is removed
     ('export', META_DB),
     ('callcenter', META_DB),
 
     # users and groups
     ('groups', USERS_GROUPS_DB),
     ('users', USERS_GROUPS_DB),
-
-    # fixtures
-    ('fixtures', FIXTURES_DB),
 
     # domains
     ('domain', DOMAINS_DB),
@@ -1584,7 +1578,7 @@ COUCHDB_APPS = [
 COUCH_SETTINGS_HELPER = helper.CouchSettingsHelper(
     COUCH_DATABASES,
     COUCHDB_APPS,
-    [USERS_GROUPS_DB, FIXTURES_DB, DOMAINS_DB, APPS_DB],
+    [USERS_GROUPS_DB, DOMAINS_DB, APPS_DB],
     UNIT_TESTING
 )
 COUCH_DATABASE = COUCH_SETTINGS_HELPER.main_db_url
@@ -1798,16 +1792,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'ReportCaseToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
-        },
-        {
-            'name': 'ReportXFormToElasticsearchPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.reportxform.get_report_xform_to_elasticsearch_pillow',
-        },
-        {
             'name': 'UnknownUsersPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.user.get_unknown_users_pillow',
@@ -1852,11 +1836,6 @@ PILLOWTOPS = {
             'instance': 'corehq.pillows.cacheinvalidate.get_user_groups_cache_invalidation_pillow',
         },
     ],
-    'fluff': [
-        'custom.m4change.models.M4ChangeFormFluffPillow',
-        'custom.intrahealth.models.RecouvrementFluffPillow',
-        'custom.succeed.models.UCLAPatientFluffPillow',
-    ],
     'experimental': [
         {
             'name': 'CaseSearchToElasticsearchPillow',
@@ -1890,8 +1869,6 @@ STATIC_UCR_REPORTS = [
 STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'location_hierarchy.json'),
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
-    os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
@@ -1903,18 +1880,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined2.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_product_consumption.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'indicateurs_de_base.json'),
     os.path.join('custom', 'inddex', 'ucr', 'data_sources', '*.json'),
 
     os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
@@ -1937,25 +1902,6 @@ COUCH_CACHE_BACKENDS = [
     'dimagi.utils.couch.cache.cache_core.gen.GlobalCache',
 ]
 
-# Custom fully indexed domains for ReportCase index/pillowtop
-# Adding a domain will not automatically index that domain's existing cases
-ES_CASE_FULL_INDEX_DOMAINS = [
-    'pact',
-    'commtrack-public-demo',
-    'crs-remind',
-    'succeed',
-]
-
-# Custom fully indexed domains for ReportXForm index/pillowtop --
-# only those domains that don't require custom pre-processing before indexing,
-# otherwise list in XFORM_PILLOW_HANDLERS
-# Adding a domain will not automatically index that domain's existing forms
-ES_XFORM_FULL_INDEX_DOMAINS = [
-    'commtrack-public-demo',
-    'pact',
-    'succeed'
-]
-
 CUSTOM_UCR_EXPRESSIONS = [
     ('indexed_case', 'corehq.apps.userreports.expressions.extension_expressions.indexed_case_expression'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
@@ -1963,30 +1909,17 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
 ]
 
-CUSTOM_MODULES = [
-    'custom.apps.crs_reports',
-]
-
 DOMAIN_MODULE_MAP = {
     'mc-inscale': 'custom.reports.mc',
-    'pact': 'pact',
 
-    'ipm-senegal': 'custom.intrahealth',
-    'testing-ipm-senegal': 'custom.intrahealth',
     'up-nrhm': 'custom.up_nrhm',
     'nhm-af-up': 'custom.up_nrhm',
     'india-nutrition-project': 'custom.nutrition_project',
 
-    'crs-remind': 'custom.apps.crs_reports',
-
-    'succeed': 'custom.succeed',
     'champ-cameroon': 'custom.champ',
     'onse-iss': 'custom.onse',
 
-    # From DOMAIN_MODULE_CONFIG on production
-    'test-pna': 'custom.intrahealth',
-
-    #vectorlink domains
+    # vectorlink domains
     'abtmali': 'custom.abt',
     'airs': 'custom.abt',
     'airs-testing': 'custom.abt',
@@ -1999,6 +1932,7 @@ DOMAIN_MODULE_MAP = {
     'airstanzania': 'custom.abt',
     'airszambia': 'custom.abt',
     'airszimbabwe': 'custom.abt',
+    'kenya-vca': 'custom.abt',
     'vectorlink-benin': 'custom.abt',
     'vectorlink-burkina-faso': 'custom.abt',
     'vectorlink-ethiopia': 'custom.abt',
@@ -2051,6 +1985,15 @@ if 'locmem' not in CACHES:
 if 'dummy' not in CACHES:
     CACHES['dummy'] = {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}
 
+# Make django_redis use pickle.DEFAULT_PROTOCOL by default.
+# Remove after upgrading django_redis to a version that does that.
+# See also corehq.tests.test_pickle.test_django_redis_protocol
+from pickle import DEFAULT_PROTOCOL as _protocol
+for _value in CACHES.values():
+    if _value.get("BACKEND", "").startswith("django_redis"):
+        _value.setdefault("OPTIONS", {}).setdefault("PICKLE_VERSION", _protocol)
+del _value, _protocol
+
 
 REST_FRAMEWORK = {
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S.%fZ',
@@ -2082,23 +2025,30 @@ if not SENTRY_DSN:
             SENTRY_QUERY_URL is not longer needed.
             """), DeprecationWarning)
 
+COMMCARE_RELEASE = helper.get_release_name(BASE_DIR, SERVER_ENVIRONMENT)
 if SENTRY_DSN:
     if 'SENTRY_QUERY_URL' not in globals():
         SENTRY_QUERY_URL = f'https://sentry.io/{SENTRY_ORGANIZATION_SLUG}/{SENTRY_PROJECT_SLUG}/?query='
-    helper.configure_sentry(BASE_DIR, SERVER_ENVIRONMENT, SENTRY_DSN)
+    helper.configure_sentry(SERVER_ENVIRONMENT, SENTRY_DSN, COMMCARE_RELEASE)
     SENTRY_CONFIGURED = True
 else:
     SENTRY_CONFIGURED = False
-
-if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
-        }
-    ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
 # Disable Datadog trace startup logs by default
 # https://docs.datadoghq.com/tracing/troubleshooting/tracer_startup_logs/
 os.environ['DD_TRACE_STARTUP_LOGS'] = os.environ.get('DD_TRACE_STARTUP_LOGS', 'False')
+
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+# Config settings for the google oauth handshake to get a user token
+# Google Cloud Platform secret settings config file
+GOOGLE_OATH_CONFIG = {}
+# Scopes to give read/write access to the code that generates the spreadsheets
+GOOGLE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+
+GOOGLE_SHEETS_API_NAME = "sheets"
+GOOGLE_SHEETS_API_VERSION = "v4"
+
+DAYS_KEEP_GSHEET_STATUS = 14

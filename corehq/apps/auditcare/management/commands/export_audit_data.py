@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from corehq.util.argparse_types import date_type
+import dateutil.parser
 
 from ...utils.export import write_export_from_all_log_events
 
@@ -14,14 +14,14 @@ class Command(BaseCommand):
             '-s',
             '--startdate',
             dest='start',
-            type=date_type,
+            type=dateutil.parser.parse,
             help="The start date - format YYYY-MM-DD",
         )
         parser.add_argument(
             '-e',
             '--enddate',
             dest='end',
-            type=date_type,
+            type=dateutil.parser.parse,
             help="The end date - format YYYY-MM-DD",
         )
 

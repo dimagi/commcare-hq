@@ -1,3 +1,4 @@
+from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 
@@ -14,6 +15,9 @@ def serialize_case(case):
         "date_opened": _isoformat(case.opened_on),
         "last_modified": _isoformat(case.modified_on),
         "server_last_modified": _isoformat(case.server_modified_on),
+        # This is used for cases that were just created, which haven't yet been indexed
+        # Providing this maintains compatibility with the es response
+        "indexed_on": _isoformat(datetime.utcnow()),
         "closed": case.closed,
         "date_closed": _isoformat(case.closed_on),
         "properties": dict(case.dynamic_case_properties()),
@@ -44,6 +48,7 @@ def serialize_es_case(case_doc):
         "date_opened": case_doc['opened_on'],
         "last_modified": case_doc['modified_on'],
         "server_last_modified": case_doc['server_modified_on'],
+        "indexed_on": case_doc['@indexed_on'],
         "closed": case_doc['closed'],
         "date_closed": case_doc['closed_on'],
         "properties": {

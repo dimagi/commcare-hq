@@ -3,12 +3,20 @@ hqDefine("scheduling/js/conditional_alert_main", [
     'underscore',
     'knockout',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets',
     'data_interfaces/js/case_rule_criteria',
+    'data_interfaces/js/case_property_input',
+    'hqwebapp/js/widgets',
     'scheduling/js/create_schedule.ko',
     'data_interfaces/js/make_read_only',
-], function ($, _, ko, initialPageData) {
-    function basicInformationTab(name) {
+], function (
+    $,
+    _,
+    ko,
+    initialPageData,
+    CaseRuleCriteria,
+    casePropertyInput
+) {
+    function BasicInformationTab(name) {
         var self = {};
         self.name = ko.observable(name);
         self.basicTabValid = ko.computed(function () {
@@ -26,14 +34,20 @@ hqDefine("scheduling/js/conditional_alert_main", [
             $("#rule-nav").removeClass("hidden");
             $('#rule-nav').find('a').trigger('click');
         };
+        self.setRuleTabVisibility();
         return self;
     }
 
     $(function () {
-        var name = initialPageData.get('rule_name');
-        var basicInformation = basicInformationTab(name);
-        // setup tab
-        basicInformation.setRuleTabVisibility();
-        $("#conditional-alert-basic-info-panel").koApplyBindings(basicInformation);
+        casePropertyInput.register();
+
+        $("#conditional-alert-basic-info-panel").koApplyBindings(BasicInformationTab(
+            initialPageData.get('rule_name')
+        ));
+
+        $('#rule-criteria-panel').koApplyBindings(CaseRuleCriteria(
+            initialPageData.get('criteria_initial'),
+            initialPageData.get('criteria_constants')
+        ));
     });
 });

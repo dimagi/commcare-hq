@@ -16,50 +16,96 @@
 {% endblock %}
 
 {% block page_navigation %}
+  {% initial_page_data 'useUpdatedUcrNaming' use_updated_ucr_naming %}
   <h2 class="text-hq-nav-header">{% trans "Tools" %}</h2>
   <ul class="nav nav-hq-sidebar">
-    <li>
-      <a href="{% url 'configurable_reports_home' domain %}">
-        <i class="fa fa-wrench"></i>
-        {% trans "Configurable Reports" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'create_configurable_report' domain %}">
-        <i class="fa fa-plus"></i>
-        {% trans "Add report" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'import_configurable_report' domain %}">
-        <i class="fa fa-cloud-upload"></i>
-        {% trans "Import report" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'create_configurable_data_source' domain %}">
-        <i class="fa fa-plus"></i>
-        {% trans "Add data source" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'create_configurable_data_source_from_app' domain %}">
-        <i class="fa fa-copy"></i>
-        {% trans "Data source from application" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'expression_debugger' domain %}">
-        <i class="fa fa-search"></i>
-        {% trans "Expression Debugger" %}
-      </a>
-    </li>
-    <li>
-      <a href="{% url 'data_source_debugger' domain %}">
-        <i class="fa fa-search"></i>
-        {% trans "Data Source Debugger" %}
-      </a>
-    </li>
+    {% if use_updated_ucr_naming %}
+      <li>
+        <a href="{% url 'configurable_reports_home' domain %}">
+          <i class="fa fa-wrench"></i>
+          {% trans "Custom Web Reports" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_report' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Custom Web Report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'import_configurable_report' domain %}">
+          <i class="fa fa-cloud-upload"></i>
+          {% trans "Import Custom Web Report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add Custom Web Report Source" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+          <i class="fa fa-copy"></i>
+          {% trans "Custom Web Report Source from Application" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'expression_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Expression Debugger" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'data_source_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Custom Web Report Source Debugger" %}
+        </a>
+      </li>
+    {% else %}
+      <li>
+        <a href="{% url 'configurable_reports_home' domain %}">
+          <i class="fa fa-wrench"></i>
+          {% trans "Configurable Reports" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_report' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'import_configurable_report' domain %}">
+          <i class="fa fa-cloud-upload"></i>
+          {% trans "Import report" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source' domain %}">
+          <i class="fa fa-plus"></i>
+          {% trans "Add data source" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'create_configurable_data_source_from_app' domain %}">
+          <i class="fa fa-copy"></i>
+          {% trans "Data source from application" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'expression_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Expression Debugger" %}
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'data_source_debugger' domain %}">
+          <i class="fa fa-search"></i>
+          {% trans "Data Source Debugger" %}
+        </a>
+      </li>
+    {% endif %}
   </ul>
 
   <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
@@ -78,7 +124,14 @@
     {% endwith %}
   </ul>
 
-  <h2 class="text-hq-nav-header">{% trans "Edit Data Sources" %}</h2>
+  <h2 class="text-hq-nav-header">
+    {% if use_updated_ucr_naming %}
+      {% trans "Edit Custom Data Sources" %}
+    {% else %}
+      {% trans "Edit Data Sources" %}
+    {% endif %}
+
+  </h2>
   <ul class="nav nav-hq-sidebar">
     {% with data_source as selected_data_source %}
       {% for data_source in data_sources %}

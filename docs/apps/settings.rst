@@ -1,8 +1,8 @@
 Adding a new CommCare Setting
 =============================
 
-A new setting can be defined in commcare-app-settings.yaml or
-commcare-profile-settings.yaml depending on whether the setting is HQ
+A new setting can be defined in commcare-app-settings.yml or
+commcare-profile-settings.yml depending on whether the setting is HQ
 only or should also go to mobile xml files. The spec for setting is
 given in below section.
 
@@ -11,14 +11,14 @@ CommCare Settings Config Spec
 
 This page documents the YAML configuration found in these locations:
 
--  `commcare-app-settings.yaml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-app-settings.yaml>`__:
+-  `commcare-app-settings.yml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-app-settings.yml>`__:
    Settings that are specific to CommCare HQ's configurations
--  `commcare-profile-settings.yaml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yaml>`__:
+-  `commcare-profile-settings.yml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-profile-settings.yml>`__:
    Settings that are 1-to-1 with CommCare mobile profile features/properties
--  `commcare-settings-layout.yaml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-settings-layout.yaml>`__:
+-  `commcare-settings-layout.yml <https://github.com/dimagi/core-hq/blob/master/corehq/apps/app_manager/static/app_manager/json/commcare-settings-layout.yml>`__:
    Determines how these settings are grouped and laid out on the app settings page
 
-Each of ``commcare-app-settings.yaml`` and ``commcare-profile-settings.yaml`` contain a yaml list with each element containing the following properties:
+Each of ``commcare-app-settings.yml`` and ``commcare-profile-settings.yml`` contain a yaml list with each element containing the following properties:
 
 Required properties
 -------------------

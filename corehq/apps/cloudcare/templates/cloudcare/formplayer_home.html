@@ -11,8 +11,6 @@
 
 {% block head %}
   {{ block.super }}
-  <script src="{% static 'datatables.net/js/jquery.dataTables.min.js' %}"></script>
-  <script src="{% static 'datatables-bootstrap3/BS3/assets/js/datatables.js' %}"></script>
   <style id="persistent-cell-layout-style"></style>
   <style id="persistent-cell-grid-style"></style>
   <style id="list-cell-layout-style"></style>
@@ -35,11 +33,6 @@
   {% compress css %}
     <link rel="stylesheet" href="{% static 'nprogress/nprogress.css' %}">
     <link rel="stylesheet" href="{% static 'At.js/dist/css/jquery.atwho.min.css' %}">
-    <link rel="stylesheet" href="{% static 'datetimepicker/build/jquery.datetimepicker.min.css' %}">
-    <link type="text/css"
-          rel="stylesheet"
-          media="all"
-          href="{% static 'datatables.net-dt/css/jquery.dataTables.min.css' %}"/>
     <link rel="stylesheet" href="{% static 'cloudcare/css/webforms.css' %}">
     <link rel="stylesheet" href="{% static 'bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css' %}"/>
   {% endcompress %}
@@ -84,11 +77,13 @@
   {% initial_page_data 'hmac_root_url' integrations.hmac_root_url %}
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
+  {% initial_page_data 'sentry' sentry %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'report_sentry_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}
@@ -102,12 +97,12 @@
     <div id="menu-container">
       <section id="formplayer-progress-container"></section>
       <div id="restore-as-region"></div>
-      <div id="breadcrumb-region"></div>
+      <div id="breadcrumb-region" class="print-container"></div>
       <section id="cloudcare-notifications" class="container notifications-container"></section>
       <div class="container case-tile-container">
-        <div id="persistent-case-tile"></div>
+        <div id="persistent-case-tile" class="print-container"></div>
       </div>
-      <div id="menu-region" class="container"></div>
+      <div id="menu-region" class="container print-container"></div>
       <section id="webforms" data-bind="
                 template: {
                     name: 'form-fullform-ko-template',
@@ -125,7 +120,9 @@
         "></section>
     {% endif %}
   </div>
-
+  {% if not request.session.secure_session %}
+    {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
+  {% endif %}
   {% include 'form_entry/templates.html' %}
   {% include 'formplayer/debugger.html' %}
   {% include 'formplayer/grid_view.html' %}
@@ -138,5 +135,6 @@
   {% include 'formplayer/query_view.html' %}
   {% include 'formplayer/confirmation_modal.html' %}
   {% include 'formplayer/progress.html' %}
+  {% include 'cloudcare/new_app_version_modal.html' %}
 
 {% endblock %}

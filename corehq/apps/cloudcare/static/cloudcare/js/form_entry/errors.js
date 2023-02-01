@@ -3,6 +3,10 @@ hqDefine("cloudcare/js/form_entry/errors", function () {
         GENERIC_ERROR: gettext("Something unexpected went wrong on that request. " +
             "If you have problems filling in the rest of your form please submit an issue. " +
             "Technical Details: "),
+        INACTIVITY_ERROR: gettext("You have been logged out because of inactivity."),
+        JS_ERROR: gettext("An unknown error occurred. " +
+            "If you have problems filling in the rest of your form please submit an issue. " +
+            "Technical Details: "),
         TIMEOUT_ERROR: gettext("CommCareHQ has detected a possible network connectivity problem. " +
             "Please make sure you are connected to the " +
             "Internet in order to submit your form."),

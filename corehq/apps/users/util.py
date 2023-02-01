@@ -1,3 +1,4 @@
+import datetime
 import numbers
 import re
 
@@ -19,13 +20,15 @@ from casexml.apps.case.const import (
 
 from corehq import privileges
 from corehq.apps.callcenter.const import CALLCENTER_USER
-from corehq.apps.users.audit.change_messages import UserChangeMessage
+from corehq.const import USER_CHANGE_VIA_AUTO_DEACTIVATE
 from corehq.util.quickcache import quickcache
 
 # SYSTEM_USER_ID is used when submitting xml to make system-generated case updates
+from dimagi.utils.couch.bulk import get_docs
+from dimagi.utils.parsing import json_format_datetime
+
 SYSTEM_USER_ID = 'system'
 DEMO_USER_ID = 'demo_user'
-JAVA_ADMIN_USERNAME = 'admin'
 WEIRD_USER_IDS = [
     'commtrack-system',    # internal HQ/commtrack system forms
     DEMO_USER_ID,           # demo mode
@@ -41,17 +44,50 @@ USER_FIELDS_TO_IGNORE_FOR_HISTORY = [
 ]
 
 
+def generate_mobile_username(username, domain, is_unique=True):
+    """
+    Returns the email formatted mobile username if successfully generated
+    Handles exceptions raised by .validation.validate_mobile_username with user facing messages
+    Any additional validation should live in .validation.validate_mobile_username
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: required str, domain name
+    :param is_unique: if true then username should not already exist
+    :return: str, email formatted mobile username
+    Example use: generate_mobile_username('username', 'domain') -> 'username@domain.commcarehq.org'
+    """
+    from .validation import validate_mobile_username
+    username = get_complete_mobile_username(username, domain)
+    validate_mobile_username(username, domain, is_unique)
+    return username
+
+
+def get_complete_mobile_username(username, domain):
+    """
+    :param username: accepts both incomplete ('example-user') or complete ('example-user@domain.commcarehq.org')
+    :param domain: domain associated with the mobile user
+    :return: the complete username ('example-user@domain.commcarehq.org')
+    """
+    # this method is not responsible for validation, and therefore does the most basic email format check
+    if '@' not in username:
+        username = format_username(username, domain)
+
+    return username
+
+
 def cc_user_domain(domain):
     sitewide_domain = settings.HQ_ACCOUNT_ROOT
     return ("%s.%s" % (domain, sitewide_domain)).lower()
 
 
 def format_username(username, domain):
-    return "%s@%s" % (str(username or '').lower(), cc_user_domain(domain))
+    username = re.sub(r'\s+', '.', str(username or '')).lower()
+    return "%s@%s" % (username, cc_user_domain(domain))
 
 
 def normalize_username(username, domain=None):
     """
+    DEPRECATED: use generate_mobile_username instead
+
     Returns a lower-case username. Checks that it is a valid e-mail
     address, or a valid "local part" of an e-mail address.
 
@@ -355,12 +391,20 @@ def log_user_change(by_domain, for_domain, couch_user, changed_by_user, changed_
     if action == UserModelAction.UPDATE and not fields_changed and not change_messages:
         raise ValueError("missing both 'fields_changed' and 'change_messages' argument for update.")
 
+    if changed_by_user == SYSTEM_USER_ID:
+        changed_by_id = SYSTEM_USER_ID
+        changed_by_repr = SYSTEM_USER_ID
+    else:
+        changed_by_id = changed_by_user.get_id
+        changed_by_repr = changed_by_user.raw_username
     return UserHistory.objects.create(
         by_domain=by_domain,
         for_domain=for_domain,
         user_type=couch_user.doc_type,
+        user_repr=couch_user.raw_username,
+        changed_by_repr=changed_by_repr,
         user_id=couch_user.get_id,
-        changed_by=SYSTEM_USER_ID if changed_by_user == SYSTEM_USER_ID else changed_by_user.get_id,
+        changed_by=changed_by_id,
         changes=_get_changed_details(couch_user, action, fields_changed),
         changed_via=changed_via,
         change_messages=change_messages,
@@ -380,3 +424,86 @@ def _get_changed_details(couch_user, action, fields_changed):
     for prop in USER_FIELDS_TO_IGNORE_FOR_HISTORY:
         changed_details.pop(prop, None)
     return changed_details
+
+
+def bulk_auto_deactivate_commcare_users(user_ids, domain):
+    """
+    Deactivates CommCareUsers in bulk.
+
+    Please pre-chunk ids to a reasonable size. Also please reference the
+    save() method in CommCareUser when making changes.
+
+    :param user_ids: list of user IDs
+    :param domain: name of domain user IDs belong to
+    """
+    from corehq.apps.users.models import UserHistory, CommCareUser
+    from corehq.apps.users.model_log import UserModelAction
+
+    last_modified = json_format_datetime(datetime.datetime.utcnow())
+    user_docs_to_bulk_save = []
+    for user_doc in get_docs(CommCareUser.get_db(), keys=user_ids):
+        if user_doc['is_active']:
+            user_doc['is_active'] = False
+            user_doc['last_modified'] = last_modified
+            user_docs_to_bulk_save.append(user_doc)
+
+    # bulk save django Users
+    user_query = User.objects.filter(
+        username__in=[u["username"] for u in user_docs_to_bulk_save]
+    )
+    user_query.update(is_active=False)
+
+    # bulk save in couch
+    CommCareUser.get_db().bulk_save(user_docs_to_bulk_save)
+
+    # bulk create all the UserHistory logs
+    UserHistory.objects.bulk_create([
+        UserHistory(
+            by_domain=domain,
+            for_domain=domain,
+            user_type=CommCareUser.doc_type,
+            user_repr=u['username'].split('@')[0],
+            changed_by_repr=SYSTEM_USER_ID,
+            user_id=u['_id'],
+            changed_by=SYSTEM_USER_ID,
+            changes={'is_active': False},
+            changed_via=USER_CHANGE_VIA_AUTO_DEACTIVATE,
+            change_messages={},
+            action=UserModelAction.UPDATE.value,
+            user_upload_record_id=None
+        )
+        for u in user_docs_to_bulk_save
+    ])
+
+    # clear caches and fire signals
+    for user_doc in user_docs_to_bulk_save:
+        commcare_user = CommCareUser.wrap(user_doc)
+        commcare_user.clear_quickcache_for_user()
+        commcare_user.fire_signals()
+        # FYI we don't call the save() method individually because
+        # it is ridiculously inefficient! Unfortunately, it's harder to get
+        # around caches and signals in a bulk way.
+
+
+def is_dimagi_email(email):
+    return email.endswith('@dimagi.com')
+
+
+def is_username_available(username):
+    """
+    Checks if the username is available to use
+    :param username: expects complete/email formatted username (e.g., user@example.commcarehq.org)
+    :return: boolean
+    """
+    from corehq.apps.users.dbaccessors import user_exists
+
+    local_username = username
+    if '@' in local_username:
+        # assume email format since '@' is an invalid character for usernames
+        local_username = username.split('@')[0]
+    reserved_usernames = ['admin', 'demo_user']
+    if local_username in reserved_usernames:
+        return False
+
+    exists = user_exists(username)
+    return not exists.exists

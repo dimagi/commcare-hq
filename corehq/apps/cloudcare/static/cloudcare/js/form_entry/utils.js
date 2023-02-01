@@ -1,28 +1,18 @@
 /*global MapboxGeocoder*/
 hqDefine("cloudcare/js/form_entry/utils", function () {
+    var errors = hqImport("cloudcare/js/form_entry/errors"),
+        formEntryConst = hqImport("cloudcare/js/form_entry/const");
+
     var module = {
         resourceMap: undefined,
     };
 
     module.touchformsError = function (message) {
-        return hqImport("cloudcare/js/form_entry/errors").GENERIC_ERROR + message;
+        return errors.GENERIC_ERROR + message;
     };
 
-    module.isWebApps = function () {
-        var FormplayerFrontend = hqImport("cloudcare/js/formplayer/app"),
-            environment = FormplayerFrontend.getChannel().request('currentUser').environment;
-        return environment === hqImport("cloudcare/js/formplayer/constants").WEB_APPS_ENVIRONMENT;
-    };
-
-    module.reloginErrorHtml = function () {
-        if (module.isWebApps()) {
-            var url = hqImport("hqwebapp/js/initial_page_data").reverse('login_new_window');
-            return _.template(gettext("Looks like you got logged out because of inactivity, but your work is safe. " +
-                                      "<a href='<%- url %>' target='_blank'>Click here to log back in.</a>"))({url: url});
-        } else {
-            // target=_blank doesn't work properly within an iframe
-            return gettext("You have been logged out because of inactivity.");
-        }
+    module.jsError = function (message) {
+        return errors.JS_ERROR + message;
     };
 
     /**
@@ -46,27 +36,34 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
      * @param {Object} $div - The jquery element that the form will be rendered in.
      */
     module.initialRender = function (formJSON, resourceMap, $div) {
-        var form = hqImport("cloudcare/js/form_entry/form_ui").Form(formJSON),  // circular dependency
-            $debug = $('#cloudcare-debugger'),
-            CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger').CloudCareDebuggerFormEntry,
-            cloudCareDebugger;
-        module.resourceMap = resourceMap;
-        ko.cleanNode($div[0]);
-        $div.koApplyBindings(form);
+        var defer = $.Deferred();
+        hqRequire([
+            "cloudcare/js/debugger/debugger",
+            "cloudcare/js/form_entry/form_ui",
+        ], function (Debugger, FormUI) {
+            var form = FormUI.Form(formJSON),
+                $debug = $('#cloudcare-debugger'),
+                CloudCareDebugger = Debugger.CloudCareDebuggerFormEntry,
+                cloudCareDebugger;
+            module.resourceMap = resourceMap;
+            ko.cleanNode($div[0]);
+            $div.koApplyBindings(form);
 
-        if ($debug.length) {
-            cloudCareDebugger = new CloudCareDebugger({
-                baseUrl: formJSON.xform_url,
-                formSessionId: formJSON.session_id,
-                username: formJSON.username,
-                restoreAs: formJSON.restoreAs,
-                domain: formJSON.domain,
-            });
-            ko.cleanNode($debug[0]);
-            $debug.koApplyBindings(cloudCareDebugger);
-        }
+            if ($debug.length) {
+                cloudCareDebugger = new CloudCareDebugger({
+                    baseUrl: formJSON.xform_url,
+                    formSessionId: formJSON.session_id,
+                    username: formJSON.username,
+                    restoreAs: formJSON.restoreAs,
+                    domain: formJSON.domain,
+                });
+                ko.cleanNode($debug[0]);
+                $debug.koApplyBindings(cloudCareDebugger);
+            }
 
-        return form;
+            defer.resolve(form);
+        });
+        return defer.promise();
     };
 
     /**
@@ -96,17 +93,22 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
     };
 
     /**
-     * Composes a boardcast object from mapbox result to be used by receivers
+     * Composes a broadcast object from mapbox result to be used by receivers
      * @param {Object} mapboxResult - Mapbox query result object
      */
     module.getBroadcastObject = function (mapboxResult) {
         var broadcastObj = {
             full: mapboxResult.place_name,
+            geopoint: mapboxResult.geometry.coordinates[1] + ' ' + mapboxResult.geometry.coordinates[0],
         };
         mapboxResult.context.forEach(function (contextValue) {
             try {
-                if (contextValue.id.startsWith('postcode')) {
+                if (contextValue.id.startsWith('district')) {
+                    broadcastObj.county = contextValue.text;
+                    broadcastObj.district = contextValue.text;
+                } else if (contextValue.id.startsWith('postcode')) {
                     broadcastObj.zipcode = contextValue.text;
+                    broadcastObj.postcode = contextValue.text;
                 } else if (contextValue.id.startsWith('place')) {
                     broadcastObj.city = contextValue.text;
                 } else if (contextValue.id.startsWith('country')) {
@@ -138,6 +140,42 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             broadcastObj.street = mapboxResult.address || mapboxResult.text;
         }
         return broadcastObj;
+    };
+
+    var getRoot = (question, stopCallback) => {
+        if (question.parent === undefined) {
+            return undefined;
+        }
+
+        // logic in case the question is in a group or repeat or nested group, etc.
+        let curr = question.parent;
+        while (curr.parent && !stopCallback(curr)) {
+            curr = curr.parent;
+        }
+        return curr;
+    };
+
+    /**
+     * Gets a question's form, which will be the root of the question's tree.
+    **/
+    module.getRootForm = (question) => {
+        return getRoot(question, function () {
+            // Don't stop for any reason, just return topmost container
+            return false;
+        });
+    };
+
+    /**
+     * Get the appropriate Container to which a question can broadcast messages.
+     * This is typically the root form, but for questions inside of repeats, it's
+     * the current group (a child of the repeat juncture).
+    **/
+    module.getBroadcastContainer = (question) => {
+        return getRoot(question, function (container) {
+            // Return first containing repeat group, or form if there are no ancestor repeats
+            var parent = container.parent;
+            return parent && parent.type && parent.type() === formEntryConst.REPEAT_TYPE;
+        });
     };
 
     return module;

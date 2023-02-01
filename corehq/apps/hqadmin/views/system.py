@@ -2,17 +2,18 @@ import json
 import socket
 from collections import defaultdict, namedtuple
 
+from couchdbkit import Server
+
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 
 import requests
 from requests.exceptions import HTTPError
 
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import is_bigcouch
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import (
@@ -42,7 +43,7 @@ from corehq.toggles import SUPPORT
 
 
 class SystemInfoView(BaseAdminSectionView):
-    page_title = ugettext_lazy("System Info")
+    page_title = gettext_lazy("System Info")
     urlname = 'system_info'
     template_name = "hqadmin/system_info.html"
 
@@ -87,15 +88,15 @@ def system_ajax(request):
     type = request.GET.get('api', None)
     task_limit = getattr(settings, 'CELERYMON_TASK_LIMIT', 12)
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
-    db = XFormInstance.get_db()
     if type == "_active_tasks":
+        server = Server(settings.COUCH_DATABASE)
         try:
-            tasks = [x for x in db.server.active_tasks() if x['type'] == "indexer"]
+            tasks = [x for x in server.active_tasks() if x['type'] == "indexer"]
         except HTTPError as e:
             if e.response.status_code == 403:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks (unauthorized)."}, status=500)
             else:
-                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status_code=500)
+                return JsonResponse({'error': "Unable to access CouchDB Tasks."}, status=500)
 
         if not is_bigcouch():
             return JsonResponse(tasks, safe=False)
@@ -135,7 +136,7 @@ def system_ajax(request):
                     timeout=3,
                 ).json()
             except Exception as ex:
-                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
+                return JsonResponse({'error': "Error with getting from celery_flower: %s" % ex}, status=500)
 
             for task_id, traw in all_tasks.items():
                 # it's an array of arrays - looping through [<id>, {task_info_dict}]
@@ -264,7 +265,7 @@ def _get_submodules():
 @method_decorator(require_superuser, name='dispatch')
 class GlobalThresholds(BaseAdminSectionView):
     urlname = 'global_thresholds'
-    page_title = ugettext_lazy("Global Usage Thresholds")
+    page_title = gettext_lazy("Global Usage Thresholds")
     template_name = 'hqadmin/global_thresholds.html'
 
     @property

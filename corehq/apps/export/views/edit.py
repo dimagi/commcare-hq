@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.http import Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from couchdbkit import ResourceNotFound
 from memoized import memoized
@@ -76,7 +76,7 @@ class BaseEditNewCustomExportView(BaseExportView):
 @location_safe
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_form'
-    page_title = ugettext_lazy("Edit Form Data Export")
+    page_title = gettext_lazy("Edit Form Data Export")
     export_type = FORM_EXPORT
 
     @property
@@ -89,7 +89,7 @@ class EditNewCustomFormExportView(BaseEditNewCustomExportView):
 @location_safe
 class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
     urlname = 'edit_new_custom_export_case'
-    page_title = ugettext_lazy("Edit Case Data Export")
+    page_title = gettext_lazy("Edit Case Data Export")
     export_type = CASE_EXPORT
 
     @property
@@ -102,13 +102,13 @@ class EditNewCustomCaseExportView(BaseEditNewCustomExportView):
 @location_safe
 class EditCaseFeedView(DashboardFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_case_feed_export'
-    page_title = ugettext_lazy("Edit Case Feed")
+    page_title = gettext_lazy("Edit Case Feed")
 
 
 @location_safe
 class EditFormFeedView(DashboardFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_form_feed_export'
-    page_title = ugettext_lazy("Edit Form Feed")
+    page_title = gettext_lazy("Edit Form Feed")
 
 
 class EditCaseDailySavedExportView(DailySavedExportMixin, EditNewCustomCaseExportView):
@@ -121,13 +121,13 @@ class EditFormDailySavedExportView(DailySavedExportMixin, EditNewCustomFormExpor
 
 class EditODataCaseFeedView(ODataFeedMixin, EditNewCustomCaseExportView):
     urlname = 'edit_odata_case_feed'
-    page_title = ugettext_lazy("Copy OData Feed")
+    page_title = gettext_lazy("Copy OData Feed")
     is_copy = True
 
 
 class EditODataFormFeedView(ODataFeedMixin, EditNewCustomFormExportView):
     urlname = 'edit_odata_form_feed'
-    page_title = ugettext_lazy("Copy OData Feed")
+    page_title = gettext_lazy("Copy OData Feed")
     is_copy = True
 
 

@@ -1,24 +1,31 @@
 from django.test import SimpleTestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from corehq.apps.app_manager.const import AUTO_SELECT_USERCASE
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedOpenCaseAction,
     Application,
+    Assertion,
     AutoSelectCase,
     CaseIndex,
     CaseSearch,
     CaseSearchLabel,
     CaseSearchProperty,
+    ConditionalCaseUpdate,
     DefaultCaseSearchProperty,
     LoadUpdateAction,
     Module,
     ReportAppConfig,
     ReportModule,
 )
+from corehq.apps.app_manager.views.modules import (
+    _get_fixture_columns_by_type,
+    _update_search_properties,
+)
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
+from corehq.apps.fixtures.models import LookupTable, TypeField
 from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 
@@ -30,6 +37,84 @@ class ModuleTests(SimpleTestCase):
         self.module = self.app.add_module(Module.new_module('Untitled Module', None))
         self.module.case_type = 'another_case_type'
         self.form = self.module.new_form("Untitled Form", None)
+
+    def test_update_search_properties(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+            CaseSearchProperty(name='age', label={'fr': 'Âge'}),
+        ]
+
+        # Update name, add dob, and remove age
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name'},
+            {'name': 'dob', 'label': 'Date of birth'}
+        ], "en"))
+
+        self.assertEqual(props[0]['label'], {'en': 'Name', 'fr': 'Nom'})
+        self.assertEqual(props[1]['label'], {'en': 'Date of birth'})
+
+    def test_update_search_properties_blank_same_lang(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+
+        # Blanking out a translation removes it from dict
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "fr"))
+        self.assertEqual(props[0]['label'], {})
+
+    def test_update_search_properties_blank_other_lang(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'fr': 'Nom'}),
+        ]
+
+        # Blank translations don't get added to dict
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': ''},
+        ], "en"))
+        self.assertEqual(props[0]['label'], {'fr': 'Nom'})
+
+    def test_update_search_properties_required(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               required=Assertion(test="true()", text={"en": "answer me"})),
+        ]
+        props = list(_update_search_properties(module, [
+            {'name': 'name', 'label': 'Name', 'required_test': 'true()', 'required_text': 'answer me please'},
+        ], "en"))
+        self.assertEqual(props[0]['required'], {
+            "test": "true()",
+            "text": {"en": "answer me please"},
+        })
+
+    def test_update_search_properties_validation(self):
+        module = Module()
+        module.search_config.properties = [
+            CaseSearchProperty(name='name', label={'en': 'Name'},
+                               validations=[Assertion(test="true()", text={"en": "go ahead"})]),
+        ]
+        props = list(_update_search_properties(module, [{
+            'name': 'name', 'label': 'Name', 'validation_test': 'false()', 'validation_text': 'you shall not pass',
+        }], "en"))
+        self.assertEqual(props[0]['validations'], [{
+            "test": "false()",
+            "text": {"en": "you shall not pass"},
+        }])
+
+    def test_get_fixture_columns_by_type(self):
+        table = LookupTable(
+            domain="module-domain",
+            tag="duck",
+            fields=[TypeField(name="wing")]
+        )
+        with patch.object(LookupTable.objects, "by_domain", lambda domain: [table]):
+            result = _get_fixture_columns_by_type("module-domain")
+            self.assertEqual(result, {"duck": ["wing"]})
 
 
 class AdvancedModuleTests(SimpleTestCase):
@@ -44,7 +129,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="phone",
                 case_type="phone",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -59,7 +144,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -77,7 +162,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
             )
         ]
 
@@ -98,7 +183,7 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             )
         ]
@@ -114,13 +199,13 @@ class AdvancedModuleTests(SimpleTestCase):
             AdvancedOpenCaseAction(
                 case_tag="child",
                 case_type="child",
-                name_path="/data/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/question1"),
                 case_indices=[CaseIndex(tag="parent")]
             ),
             AdvancedOpenCaseAction(
                 case_tag="grandchild",
                 case_type="grandchild",
-                name_path="/data/children/question1",
+                name_update=ConditionalCaseUpdate(question_path="/data/children/question1"),
                 case_indices=[CaseIndex(tag="child")]
             )
         ]
@@ -138,7 +223,8 @@ class ReportModuleTests(SimpleTestCase):
 
     @flag_enabled('MOBILE_UCR')
     @patch('dimagi.ext.couchdbkit.Document.get_db')
-    def test_purge_report_from_mobile_ucr(self, get_db):
+    @patch('corehq.motech.repeaters.models.AppStructureRepeater.objects.by_domain')
+    def test_purge_report_from_mobile_ucr(self, repeater_patch, get_db):
         report_config = ReportConfiguration(domain='domain', config_id='foo1')
         report_config._id = "my_report_config"
 
@@ -162,7 +248,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
 
     def setUp(self):
         self.all_attrs = ['columns', 'filter', 'sort_elements', 'custom_variables', 'custom_xml',
-                          'case_tile_configuration', 'print_template']
+                          'case_tile_configuration', 'multi_select', 'print_template']
         self.cols_and_filter = ['columns', 'filter']
         self.case_tile = ['case_tile_configuration']
 
@@ -174,6 +260,7 @@ class OverwriteModuleDetailTests(SimpleTestCase):
         self.filter_ = setattr(self.src_detail, 'filter', 'a > b')
         self.custom_variables = setattr(self.src_detail, 'custom_variables', 'def')
         self.custom_xml = setattr(self.src_detail, 'custom_xml', 'ghi')
+        self.multi_select = getattr(self.src_detail, 'multi_select')
         self.print_template = getattr(self.src_detail, 'print_template')
         self.print_template['name'] = 'test'
         self.case_tile_configuration = setattr(self.src_detail, 'persist_tile_on_forms', True)
@@ -228,7 +315,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
             ],
             auto_launch=True,
             default_search=True,
-            default_relevant=False,
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
             search_button_display_condition="false()",
@@ -259,9 +345,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("properties")
+        dest_json.pop("properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("properties")
+        blank_json.pop("properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_default_properties(self):
@@ -273,9 +359,9 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         )
         # ensure that the rest is the same as the default config
         dest_json = self.dest_module.search_config.to_json()
-        dest_json.pop("default_properties")
+        dest_json.pop("default_properties", [])
         blank_json = CaseSearch().to_json()
-        blank_json.pop("default_properties")
+        blank_json.pop("default_properties", [])
         self.assertEqual(dest_json, blank_json)
 
     def test_overwrite_options(self):
@@ -296,6 +382,6 @@ class OverwriteCaseSearchConfigTests(SimpleTestCase):
         # everything else should match the source config
         src_json = self.src_module.search_config.to_json()
         for config_dict in (final_json, src_json):
-            config_dict.pop("properties")
-            config_dict.pop("default_properties")
+            config_dict.pop("properties", [])
+            config_dict.pop("default_properties", [])
         self.assertEqual(final_json, src_json)

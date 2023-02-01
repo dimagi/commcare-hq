@@ -55,11 +55,14 @@
         <span data-bind="text: caseFieldSpec().description"></span>
       </p>
     </div>
+    <div class="has-warning" data-bind="visible: isDeprecated()">
+        <p class="help-block">{% trans "This is a deprecated property" %}</p>
+    </div>
     <!--ko if: caseFieldSuggestions().length-->
     <div class="has-warning">
       <p class="help-block">
         {% blocktrans with '<!--ko foreach: caseFieldSuggestions--><!--ko if: $index() !== 0-->, <!--/ko--><strong data-bind="text: $data"></strong><!--/ko-->' as suggestion %}
-          Did you mean {{ suggestion }}?
+          Did you mean "{{ suggestion }}" instead?
         {% endblocktrans %}
       </p>
     </div>
@@ -69,11 +72,19 @@
   <td>
     <div class="checkbox">
       <label>
-        <input type="checkbox" class="new_property" data-bind="checked: isCustom"/>
-        {% trans "Create a new property instead" %}
+        <input type="checkbox" class="new_property" style="margin-left: auto;" data-bind="checked: createNewChecked"/>
       </label>
     </div>
   </td>
+
+  {% if request|toggle_enabled:"CASE_IMPORT_DATA_DICTIONARY_VALIDATION" %}
+  <td>
+      <ul class="list-unstyled" data-bind="visible: valuesHints().length, foreach: valuesHints">
+        <!--ko if: $data--><li data-bind="text: $data"></li><!--/ko-->
+        <!--ko if: !$data--><li data-bind="html: '<i>{% trans "blank" %}</i>'"></li><!--/ko-->
+      </ul>
+  </td>
+  {% endif %}
 
 </tr>
 <!--/ko-->

@@ -2,7 +2,6 @@
 
 import uuid
 from architect.commands import partition
-import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 
 
@@ -26,7 +25,7 @@ class Migration(migrations.Migration):
                 ('user_id', models.CharField(db_index=True, default=None, max_length=255)),
                 ('date', models.DateTimeField(db_index=True, null=True, blank=True)),
                 ('previous_synclog_id', models.UUIDField(blank=True, default=None, max_length=255, null=True)),
-                ('doc', django.contrib.postgres.fields.jsonb.JSONField()),
+                ('doc', models.JSONField()),
                 ('log_format', models.CharField(
                     choices=[('legacy', 'legacy'), ('simplified', 'simplified'), ('livequery', 'livequery')],
                     default='legacy', max_length=10)),

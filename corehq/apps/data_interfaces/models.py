@@ -3,13 +3,16 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
 from django.db.models import Q
+from django.utils.translation import gettext_lazy
 
 import jsonfield
 import pytz
 from dateutil.parser import parse
+from field_audit import audit_fields
+from field_audit.models import AuditingManager
 from jsonobject.api import JsonObject
 from jsonobject.properties import (
     BooleanProperty,
@@ -19,6 +22,7 @@ from jsonobject.properties import (
 from memoized import memoized
 
 from casexml.apps.case.xform import get_case_updates
+from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.logging import notify_exception
@@ -27,26 +31,25 @@ from dimagi.utils.modules import to_function
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
+from corehq.apps.data_interfaces.deduplication import (
+    find_duplicate_case_ids,
+    get_dedupe_xmlns,
+    reset_and_backfill_deduplicate_rule,
+    reset_deduplicate_rule,
+)
 from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqcase.utils import bulk_update_cases, update_case, AUTO_UPDATE_XMLNS
 from corehq.apps.users.util import SYSTEM_USER_ID
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
+from corehq.form_processor.models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.form_processor.models import CommCareCaseIndexSQL, CommCareCaseSQL
+from corehq.form_processor.models import CommCareCaseIndex, CommCareCase, XFormInstance
 from corehq.messaging.scheduling.const import (
     VISIT_WINDOW_DUE_DATE,
     VISIT_WINDOW_END,
     VISIT_WINDOW_START,
 )
-from corehq.messaging.scheduling.models import (
-    AlertSchedule,
-    TimedSchedule,
-)
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule_id,
     get_case_timed_schedule_instances_for_schedule_id,
@@ -65,9 +68,11 @@ from corehq.sql_db.util import (
 from corehq.util.log import with_progress_bar
 from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
+
 
 ALLOWED_DATE_REGEX = re.compile(r'^\d{4}-\d{2}-\d{2}')
-AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 def _try_date_conversion(date_or_string):
@@ -81,12 +86,20 @@ def _try_date_conversion(date_or_string):
     return date_or_string
 
 
+@audit_fields("active", "case_type", "deleted", "domain", "name", "workflow",
+              audit_special_queryset_writes=True)
 class AutomaticUpdateRule(models.Model):
     # Used when the rule performs case update actions
     WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
-
     # Used when the rule spawns schedule instances in the scheduling framework
     WORKFLOW_SCHEDULING = 'SCHEDULING'
+    # Used when the rule runs a deduplication workflow to find duplicate cases
+    WORKFLOW_DEDUPLICATE = 'DEDUPLICATE'
+    WORKFLOW_CHOICES = (
+        (WORKFLOW_CASE_UPDATE, gettext_lazy('Case Update')),
+        (WORKFLOW_DEDUPLICATE, gettext_lazy('Deduplicate')),
+        (WORKFLOW_SCHEDULING, gettext_lazy('Scheduling')),
+    )
 
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
@@ -95,6 +108,19 @@ class AutomaticUpdateRule(models.Model):
     deleted = models.BooleanField(default=False)
     last_run = models.DateTimeField(null=True)
     filter_on_server_modified = models.BooleanField(default=True)
+    workflow = models.CharField(max_length=126, choices=WORKFLOW_CHOICES)
+
+    objects = AuditingManager()
+
+    class CriteriaOperator(models.TextChoices):
+        ALL = 'ALL', gettext_lazy('ALL of the criteria are met')
+        ANY = 'ANY', gettext_lazy('ANY of the criteria are met')
+
+    criteria_operator = models.CharField(
+        max_length=3,
+        choices=CriteriaOperator.choices,
+        default='ALL',
+    )
 
     # For performance reasons, the server_modified_boundary is a
     # required part of the criteria and should be set to the minimum
@@ -102,10 +128,7 @@ class AutomaticUpdateRule(models.Model):
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
 
-    # One of the WORKFLOW_* constants on this class describing the workflow
-    # that this rule belongs to.
-    workflow = models.CharField(max_length=126)
-
+    upstream_id = models.CharField(max_length=32, null=True)
     locked_for_editing = models.BooleanField(default=False)
 
     class Meta(object):
@@ -127,8 +150,8 @@ class AutomaticUpdateRule(models.Model):
             if isinstance(definition, ClosedParentDefinition):
                 return True
             elif (
-                isinstance(definition, MatchPropertyDefinition) and
-                property_references_parent(definition.property_name)
+                isinstance(definition, MatchPropertyDefinition)
+                and property_references_parent(definition.property_name)
             ):
                 return True
 
@@ -139,14 +162,14 @@ class AutomaticUpdateRule(models.Model):
                     if property_references_parent(property_definition.name):
                         return True
                     if (
-                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
-                        property_references_parent(property_definition.value)
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY
+                        and property_references_parent(property_definition.value)
                     ):
                         return True
             elif isinstance(definition, CreateScheduleInstanceActionDefinition):
                 if (
-                    property_references_parent(definition.reset_case_property_name) or
-                    property_references_parent(definition.start_date_case_property)
+                    property_references_parent(definition.reset_case_property_name)
+                    or property_references_parent(definition.start_date_case_property)
                 ):
                     return True
 
@@ -207,32 +230,35 @@ class AutomaticUpdateRule(models.Model):
         return date
 
     @classmethod
-    def iter_cases(cls, domain, case_type, boundary_date=None, db=None):
-        return cls._iter_cases_from_postgres(domain, case_type, boundary_date=boundary_date, db=db)
+    def iter_cases(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
+        return cls._iter_cases_from_postgres(
+            domain, case_type, boundary_date=boundary_date, db=db, include_closed=include_closed
+        )
 
     @classmethod
-    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None):
+    def _iter_cases_from_postgres(cls, domain, case_type, boundary_date=None, db=None, include_closed=False):
         q_expression = Q(
             domain=domain,
             type=case_type,
-            closed=False,
             deleted=False,
         )
+        if not include_closed:
+            q_expression = q_expression & Q(closed=False)
 
         if boundary_date:
             q_expression = q_expression & Q(server_modified_on__lte=boundary_date)
 
         if db:
-            return paginate_query(db, CommCareCaseSQL, q_expression, load_source='auto_update_rule')
+            return paginate_query(db, CommCareCase, q_expression, load_source='auto_update_rule')
         else:
             return paginate_query_across_partitioned_databases(
-                CommCareCaseSQL, q_expression, load_source='auto_update_rule'
+                CommCareCase, q_expression, load_source='auto_update_rule'
             )
 
     @classmethod
     def _iter_cases_from_es(cls, domain, case_type, boundary_date=None):
         case_ids = list(cls._get_case_ids_from_es(domain, case_type, boundary_date))
-        return CaseAccessors(domain).iter_cases(case_ids)
+        return CommCareCase.objects.iter_cases(case_ids, domain)
 
     @classmethod
     def _get_case_ids_from_es(cls, domain, case_type, boundary_date=None):
@@ -253,8 +279,13 @@ class AutomaticUpdateRule(models.Model):
             yield case_id
 
     def activate(self, active=True):
+        previous_active = self.active
         self.active = active
         self.save()
+
+        if self.workflow == self.WORKFLOW_DEDUPLICATE:
+            if not previous_active and active:  # This is an activation, rerun the rules
+                reset_and_backfill_deduplicate_rule(self)
 
     def soft_delete(self):
         with transaction.atomic():
@@ -265,11 +296,14 @@ class AutomaticUpdateRule(models.Model):
                 schedule.deleted = True
                 schedule.save()
                 if isinstance(schedule, AlertSchedule):
-                    delete_case_alert_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_alert_schedule_instances.delay(schedule.schedule_id.hex)
                 elif isinstance(schedule, TimedSchedule):
-                    delete_case_timed_schedule_instances.delay(schedule.schedule_id)
+                    delete_case_timed_schedule_instances.delay(schedule.schedule_id.hex)
                 else:
                     raise TypeError("Unexpected schedule type")
+
+            elif self.workflow == self.WORKFLOW_DEDUPLICATE:
+                reset_deduplicate_rule(self)
 
     @unit_testing_only
     def hard_delete(self):
@@ -285,6 +319,8 @@ class AutomaticUpdateRule(models.Model):
             'match_property_definition',
             'custom_match_definition',
             'closed_parent_definition',
+            'location_filter_definition',
+            'ucr_filter_definition',
         ))
 
     @property
@@ -294,6 +330,7 @@ class AutomaticUpdateRule(models.Model):
             'update_case_definition',
             'custom_action_definition',
             'create_schedule_instance_definition',
+            'case_deduplication_action_definition',
         ))
 
     def run_rule(self, case, now):
@@ -306,7 +343,7 @@ class AutomaticUpdateRule(models.Model):
         if not self.active:
             raise self.RuleError("Attempted to call run_rule on an inactive rule")
 
-        if not isinstance(case, CommCareCaseSQL) or case.domain != self.domain:
+        if not isinstance(case, CommCareCase) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):
@@ -321,22 +358,23 @@ class AutomaticUpdateRule(models.Model):
         if case.type != self.case_type:
             return False
 
-        if self.filter_on_server_modified and \
-                (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))):
-            return False
+        case_not_modified_since = not(self.filter_on_server_modified
+            and (case.server_modified_on > (now - timedelta(days=self.server_modified_boundary))))
 
-        for criteria in self.memoized_criteria:
+        def _evaluate_criteria(criteria):
             try:
-                result = criteria.definition.matches(case, now)
+                return criteria.definition.matches(case, now)
             except CaseNotFound:
                 # This might happen if the criteria references a parent case and the
                 # parent case is not found
-                result = False
-
-            if not result:
                 return False
 
-        return True
+        results = [_evaluate_criteria(criteria) for criteria in self.memoized_criteria]
+        results.append(case_not_modified_since)
+        if self.criteria_operator == 'ANY':
+            return any(results)
+        else:
+            return all(results)
 
     def _run_method_on_action_definitions(self, case, method):
         aggregated_result = CaseRuleActionResult()
@@ -425,12 +463,34 @@ class AutomaticUpdateRule(models.Model):
     def get_schedule(self):
         return self.get_action_definition().schedule
 
+    def to_json(self):
+        simple_fields = [
+            "domain",
+            "name",
+            "case_type",
+            "active",
+            "deleted",
+            "last_run",
+            "filter_on_server_modified",
+            "server_modified_boundary",
+            "workflow",
+            "locked_for_editing",
+            "upstream_id"
+        ]
+        data = {}
+        for field in simple_fields:
+            data[field] = getattr(self, field)
+        data['id'] = self.id
+        return data
+
 
 class CaseRuleCriteria(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     match_property_definition = models.ForeignKey('MatchPropertyDefinition', on_delete=models.CASCADE, null=True)
     custom_match_definition = models.ForeignKey('CustomMatchDefinition', on_delete=models.CASCADE, null=True)
     closed_parent_definition = models.ForeignKey('ClosedParentDefinition', on_delete=models.CASCADE, null=True)
+    location_filter_definition = models.ForeignKey('LocationFilterDefinition', on_delete=models.CASCADE, null=True)
+    ucr_filter_definition = models.ForeignKey('UCRFilterDefinition', on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -440,6 +500,10 @@ class CaseRuleCriteria(models.Model):
             return self.custom_match_definition
         elif self.closed_parent_definition_id:
             return self.closed_parent_definition
+        elif self.location_filter_definition:
+            return self.location_filter_definition
+        elif self.ucr_filter_definition_id:
+            return self.ucr_filter_definition
         else:
             raise ValueError("No available definition found")
 
@@ -448,6 +512,7 @@ class CaseRuleCriteria(models.Model):
         self.match_property_definition = None
         self.custom_match_definition = None
         self.closed_parent_definition = None
+        self.location_filter_definition = None
 
         if isinstance(value, MatchPropertyDefinition):
             self.match_property_definition = value
@@ -455,6 +520,10 @@ class CaseRuleCriteria(models.Model):
             self.custom_match_definition = value
         elif isinstance(value, ClosedParentDefinition):
             self.closed_parent_definition = value
+        elif isinstance(value, LocationFilterDefinition):
+            self.location_filter_definition = value
+        elif isinstance(value, UCRFilterDefinition):
+            self.ucr_filter_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -603,31 +672,76 @@ class CustomMatchDefinition(CaseRuleCriteriaDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_CRITERIA[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, now)
 
 
 class ClosedParentDefinition(CaseRuleCriteriaDefinition):
-    # This matches up to the identifier attribute in a CommCareCaseIndex
-    # (couch backend) or CommCareCaseIndexSQL (postgres backend) record.
+    # This matches up to the identifier attribute of CommCareCaseIndex.
     identifier = models.CharField(max_length=126, default=DEFAULT_PARENT_IDENTIFIER)
 
-    # This matches up to the CommCareCaseIndexSQL.relationship_id field.
-    # The framework will automatically convert it to the string used in
-    # the CommCareCaseIndex (couch backend) model for domains that use
-    # the couch backend.
-    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndexSQL.CHILD)
+    # This matches up to the CommCareCaseIndex.relationship_id field.
+    relationship_id = models.PositiveSmallIntegerField(default=CommCareCaseIndex.CHILD)
 
     def matches(self, case, now):
-        relationship = self.relationship_id
+        relationship = CommCareCaseIndex.relationship_id_to_name(self.relationship_id)
 
-        for parent in case.get_parent(identifier=self.identifier, relationship=relationship):
+        for parent in case.get_parents(identifier=self.identifier, relationship=relationship):
             if parent.closed:
                 return True
 
         return False
+
+
+class LocationFilterDefinition(CaseRuleCriteriaDefinition):
+
+    location_id = models.CharField(max_length=255)
+    include_child_locations = models.BooleanField(default=True)
+
+    def matches(self, case, now):
+        if case.owner_id:
+            if not self.include_child_locations:
+                # Check if case belongs to location
+                if case.owner_id == self.location_id:
+                    return True
+
+                # Check if case belongs to user at location
+                user = CommCareUser.get_by_user_id(case.owner_id)
+                if user and user.location_id == self.location_id:
+                    return True
+
+            else:
+                criteria_location = SQLLocation.by_location_id(self.location_id)
+
+                if not criteria_location:
+                    return False
+
+                # Check if case belongs to descendant location of criteria_location
+                if criteria_location.descendants_include_location(case.owner_id):
+                    return True
+
+                # Check if case belongs to user at descendant location of criteria_location
+                user = CommCareUser.get_by_user_id(case.owner_id)
+                if user and criteria_location.descendants_include_location(user.location_id):
+                    return True
+
+        return False
+
+
+class UCRFilterDefinition(CaseRuleCriteriaDefinition):
+    configured_filter = models.JSONField()
+
+    @memoized
+    def _parsed_filter(self, domain):
+        from corehq.apps.userreports.filters.factory import FilterFactory
+        return FilterFactory.from_spec(self.configured_filter, FactoryContext.empty(domain=domain))
+
+    def matches(self, case, now):
+        case_json = case.to_json()
+        parsed_filter = self._parsed_filter(domain=case.domain)
+        return parsed_filter(case_json, EvaluationContext(case_json))
 
 
 class CaseRuleAction(models.Model):
@@ -636,6 +750,8 @@ class CaseRuleAction(models.Model):
     custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE, null=True)
     create_schedule_instance_definition = models.ForeignKey('CreateScheduleInstanceActionDefinition',
         on_delete=models.CASCADE, null=True)
+    case_deduplication_action_definition = models.ForeignKey('CaseDeduplicationActionDefinition',
+                                                             on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -645,6 +761,8 @@ class CaseRuleAction(models.Model):
             return self.custom_action_definition
         elif self.create_schedule_instance_definition_id:
             return self.create_schedule_instance_definition
+        elif self.case_deduplication_action_definition_id:
+            return self.case_deduplication_action_definition
         else:
             raise ValueError("No available definition found")
 
@@ -660,6 +778,8 @@ class CaseRuleAction(models.Model):
             self.custom_action_definition = value
         elif isinstance(value, CreateScheduleInstanceActionDefinition):
             self.create_schedule_instance_definition = value
+        elif isinstance(value, CaseDeduplicationActionDefinition):
+            self.case_deduplication_action_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -675,18 +795,21 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0,
+                 num_related_closes=0, num_creates=0, num_errors=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
         self._validate_int(num_creates)
+        self._validate_int(num_errors)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
         self.num_creates = num_creates
+        self.num_errors = num_errors
 
     def add_result(self, result):
         self.num_updates += result.num_updates
@@ -694,15 +817,16 @@ class CaseRuleActionResult(object):
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
         self.num_creates += result.num_creates
+        self.num_errors += result.num_errors
 
     @property
     def total_updates(self):
         return (
-            self.num_updates +
-            self.num_closes +
-            self.num_related_updates +
-            self.num_related_closes +
-            self.num_creates
+            self.num_updates
+            + self.num_closes
+            + self.num_related_updates
+            + self.num_related_closes
+            + self.num_creates
         )
 
 
@@ -727,13 +851,13 @@ class CaseRuleActionDefinition(models.Model):
         return CaseRuleActionResult()
 
 
-class UpdateCaseDefinition(CaseRuleActionDefinition):
+class BaseUpdateCaseDefinition(CaseRuleActionDefinition):
+    class Meta(object):
+        abstract = True
+
     # Expected to be a list of PropertyDefinition objects representing the
     # case properties to update
     properties_to_update = jsonfield.JSONField(default=list)
-
-    # True to close the case, otherwise False
-    close_case = models.BooleanField()
 
     VALUE_TYPE_EXACT = "EXACT"
     VALUE_TYPE_CASE_PROPERTY = "CASE_PROPERTY"
@@ -766,13 +890,13 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
         result = []
         for p in properties:
             if not isinstance(p, self.PropertyDefinition):
-                raise ValueError("Expected UpdateCaseDefinition.PropertyDefinition")
+                raise ValueError(f"Expected {self.__class__.__name__}.PropertyDefinition")
 
             result.append(p.to_json())
 
         self.properties_to_update = result
 
-    def when_case_matches(self, case, rule):
+    def get_case_and_ancestor_updates(self, case):
         cases_to_update = defaultdict(dict)
 
         def _get_case_property_value(current_case, name):
@@ -787,7 +911,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
                 if name.lower().startswith('parent/'):
                     name = name[7:]
                     # uses first parent if there are multiple
-                    parent_cases = current_case.get_parent(identifier=DEFAULT_PARENT_IDENTIFIER)
+                    parent_cases = current_case.get_parents(identifier=DEFAULT_PARENT_IDENTIFIER)
                     if parent_cases:
                         current_case = parent_cases[0]
                     else:
@@ -815,6 +939,19 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             if value != _get_case_property_value(case, prop.name):
                 _add_update_property(prop.name, value, case)
 
+        return cases_to_update
+
+    def get_cases_to_update(self):
+        raise NotImplementedError()
+
+
+class UpdateCaseDefinition(BaseUpdateCaseDefinition):
+    # True to close the case, otherwise False
+    close_case = models.BooleanField()
+
+    def when_case_matches(self, case, rule):
+        cases_to_update = self.get_case_and_ancestor_updates(case)
+
         num_updates = 0
         num_closes = 0
         num_related_updates = 0
@@ -824,23 +961,27 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
             if case_id == case.case_id:
                 continue
             result = update_case(case.domain, case_id, case_properties=properties, close=False,
-                xmlns=AUTO_UPDATE_XMLNS)
-
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15, device_id=rule.id, form_name=rule.name)
             rule.log_submission(result[0].form_id)
             num_related_updates += 1
 
         # Update / close the case
         properties = cases_to_update[case.case_id]
-        if self.close_case or properties:
-            result = update_case(case.domain, case.case_id, case_properties=properties, close=self.close_case,
-                xmlns=AUTO_UPDATE_XMLNS)
+        try:
+            close_case = self.close_case
+        except AttributeError:
+            close_case = False
+
+        if close_case or properties:
+            result = update_case(case.domain, case.case_id, case_properties=properties, close=close_case,
+                                 xmlns=AUTO_UPDATE_XMLNS, max_wait=15, device_id=rule.id, form_name=rule.name)
 
             rule.log_submission(result[0].form_id)
 
             if properties:
                 num_updates += 1
 
-            if self.close_case:
+            if close_case:
                 num_closes += 1
 
         return CaseRuleActionResult(
@@ -860,10 +1001,246 @@ class CustomActionDefinition(CaseRuleActionDefinition):
         custom_function_path = settings.AVAILABLE_CUSTOM_RULE_ACTIONS[self.name]
         try:
             custom_function = to_function(custom_function_path)
-        except:
+        except:  # noqa: E722
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
+
+
+class CaseDeduplicationMatchTypeChoices:
+    ANY = "ANY"
+    ALL = "ALL"
+    CHOICES = (
+        (ANY, ANY),
+        (ALL, ALL),
+    )
+
+
+class CaseDeduplicationActionDefinition(BaseUpdateCaseDefinition):
+    match_type = models.CharField(choices=CaseDeduplicationMatchTypeChoices.CHOICES, max_length=5)
+    case_properties = ArrayField(models.TextField())
+    include_closed = models.BooleanField(default=False)
+
+    @classmethod
+    def from_rule(cls, rule):
+        """There can only ever be one CaseDeduplicationActionDefinition for any AutomaticUpdateRule
+        Given the rule, return that action
+        """
+        if not rule.workflow == AutomaticUpdateRule.WORKFLOW_DEDUPLICATE:
+            raise ValueError(
+                f"Rule must have workflow {AutomaticUpdateRule.WORKFLOW_DEDUPLICATE}, but we got {rule.workflow}"
+            )
+        try:
+            deduplicate_action_definition = rule.memoized_actions[0].definition
+        except IndexError:
+            raise ValueError("Rule has no actions")
+
+        if not isinstance(deduplicate_action_definition, cls):
+            raise ValueError(f"The action from rule {rule.pk} is not a {cls.__name__}")
+
+        return deduplicate_action_definition
+
+    def properties_fit_definition(self, case_properties):
+        """Given a list of case properties, returns whether these will be pertinent in
+        finding duplicate cases.
+
+        Used when deciding whether to run the action from the pillow.
+
+        """
+
+        definition_properties = set(self.case_properties)
+        case_properties = set(case_properties)
+
+        all_match = (
+            self.match_type == CaseDeduplicationMatchTypeChoices.ALL
+            and case_properties.issuperset(definition_properties)
+        )
+
+        any_match = (
+            self.match_type == CaseDeduplicationMatchTypeChoices.ANY
+            and case_properties.intersection(definition_properties)
+        )
+
+        return all_match or any_match
+
+    def when_case_matches(self, case, rule):
+        domain = case.domain
+        new_duplicate_case_ids = set(find_duplicate_case_ids(
+            domain,
+            case,
+            self.case_properties,
+            self.include_closed,
+            self.match_type,
+            case_filter_criteria=rule.memoized_criteria,
+        ))
+        # If the case being searched isn't in the case search index
+        # (e.g. if this is a case create, and the pillows are racing each other.)
+        # Add it to the list
+        new_duplicate_case_ids.add(case.case_id)
+
+        with transaction.atomic():
+            if self._handle_existing_duplicates(case.case_id, new_duplicate_case_ids):
+                return CaseRuleActionResult(num_updates=0)
+            CaseDuplicate.bulk_create_duplicate_relationships(self, case, new_duplicate_case_ids)
+        if self.properties_to_update:
+            num_updates = self._update_cases(domain, rule, new_duplicate_case_ids)
+        else:
+            num_updates = 0
+        return CaseRuleActionResult(num_updates=num_updates)
+
+    def _handle_existing_duplicates(self, case_id, new_duplicate_case_ids):
+        """Handles existing duplicate objects.
+
+        Returns True if there is nothing else to be done
+        """
+        try:
+            existing_duplicate_case_ids = set(
+                CaseDuplicate.objects
+                .prefetch_related('potential_duplicates')
+                .get(action=self, case_id=case_id)
+                .potential_duplicates
+                .all()
+                .values_list('case_id', flat=True)
+            ) | set([case_id])  # The duplicates we currently have for this case tracked in the system
+        except CaseDuplicate.DoesNotExist:
+            # There are no duplicate cases currently in the system.
+            # We continue on to create duplicates only if there are duplicates to create.
+            return new_duplicate_case_ids == {case_id}
+
+        if new_duplicate_case_ids == {case_id}:
+            # This is no longer a duplicate, so check that there aren't any
+            # other cases that are no longer duplicates
+            CaseDuplicate.remove_unique_cases(action=self, case_id=case_id)
+            CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
+            return True
+
+        if new_duplicate_case_ids == existing_duplicate_case_ids:
+            # If the list of duplicates hasn't changed, we don't need to do anything more
+            return True
+
+        # Delete all CaseDuplicates with this case_id, we'll recreate them later
+        CaseDuplicate.remove_duplicates_for_action(action=self, case_id=case_id)
+        return False
+
+    def _update_cases(self, domain, rule, duplicate_case_ids):
+        """Updates all the duplicate cases according to the rule
+        """
+        duplicate_cases = CommCareCase.objects.get_cases(list(duplicate_case_ids), domain)
+        case_updates = self._get_case_updates(duplicate_cases)
+        for case_update_batch in chunked(case_updates, 100):
+            result = bulk_update_cases(
+                domain,
+                case_update_batch,
+                device_id="CaseDeduplicationActionDefinition-update-cases",
+                xmlns=get_dedupe_xmlns(rule),
+            )
+            rule.log_submission(result[0].form_id)
+        return len(case_updates)
+
+    def _get_case_updates(self, duplicate_cases):
+        cases_to_update = defaultdict(dict)
+        for duplicate_case in duplicate_cases:
+            cases_to_update.update(self.get_case_and_ancestor_updates(duplicate_case))
+        return [
+            (case_id, case_properties, False) for case_id, case_properties in cases_to_update.items()
+        ]
+
+
+class CaseDuplicate(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    case_id = models.CharField(max_length=126, null=True, db_index=True)
+    action = models.ForeignKey("CaseDeduplicationActionDefinition", on_delete=models.CASCADE)
+    potential_duplicates = models.ManyToManyField('self', symmetrical=True)
+
+    class Meta:
+        unique_together = ('case_id', 'action')
+
+    def __str__(self):
+        return f"CaseDuplicate(id={self.id}, case_id={self.case_id}, action_id={self.action_id})"
+
+    @classmethod
+    def get_case_ids(cls, rule_id):
+        """Given a AutomaticUpdateRule id, return all case_ids that match
+        """
+        try:
+            rule = AutomaticUpdateRule.objects.get(
+                id=rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_DEDUPLICATE,
+                deleted=False
+            )
+        except AutomaticUpdateRule.DoesNotExist:
+            return []
+        action_id = CaseDeduplicationActionDefinition.from_rule(rule).id
+        return list(cls.objects.filter(action_id=action_id).values_list('case_id', flat=True))
+
+    @classmethod
+    def bulk_remove_unique_cases(cls, case_ids):
+        """Given a list of case_ids that are deleted, make sure there are no
+        other CaseDuplicates pointing to them
+
+        """
+        return (
+            cls.objects
+            .filter(Q(potential_duplicates__case_id__in=case_ids))
+            .annotate(potential_duplicates_count=models.Count("potential_duplicates"))
+            .filter(potential_duplicates_count=1)
+            .delete()
+        )
+
+    @classmethod
+    def remove_unique_cases(cls, action, case_id):
+        # Given a case_id that is no longer a duplicate, ensure there are no
+        # other CaseDuplicates that were only pointing to this case
+        return (
+            cls.objects
+            .filter(action=action)
+            .filter(Q(potential_duplicates__case_id=case_id))
+            .annotate(potential_duplicates_count=models.Count("potential_duplicates"))
+            .filter(potential_duplicates_count=1)
+            .delete()
+        )
+
+    @classmethod
+    def remove_duplicates_for_action(cls, action, case_id):
+        return cls.objects.filter(action=action, case_id=case_id).delete()
+
+    @classmethod
+    def remove_duplicates_for_case_ids(cls, case_ids):
+        return cls.objects.filter(
+            case_id__in=case_ids
+        ).delete()
+
+    @classmethod
+    def bulk_create_duplicate_relationships(cls, action, initial_case, duplicate_case_ids):
+        existing_case_duplicates = CaseDuplicate.objects.filter(case_id__in=duplicate_case_ids, action=action)
+        existing_case_duplicate_case_ids = [case.case_id for case in existing_case_duplicates]
+        case_duplicates = cls.objects.bulk_create([
+            cls(case_id=duplicate_case_id, action=action)
+            for duplicate_case_id in duplicate_case_ids
+            if duplicate_case_id not in existing_case_duplicate_case_ids
+        ])
+        case_duplicates += existing_case_duplicates
+        initial_case_duplicate = next(
+            duplicate for duplicate in case_duplicates if duplicate.case_id == initial_case.case_id
+        )
+        # Create symmetrical many-to-many relationship between each duplicate in bulk
+        through_models = [
+            through_model
+            for case_duplicate in case_duplicates
+            if case_duplicate.case_id != initial_case.case_id
+
+            for through_model in (
+                cls.potential_duplicates.through(
+                    from_caseduplicate=initial_case_duplicate,
+                    to_caseduplicate=case_duplicate,
+                ),
+                cls.potential_duplicates.through(
+                    from_caseduplicate=case_duplicate,
+                    to_caseduplicate=initial_case_duplicate,
+                )
+            )
+        ]
+        cls.potential_duplicates.through.objects.bulk_create(through_models)
 
 
 class VisitSchedulerIntegrationHelper(object):
@@ -912,7 +1289,8 @@ class VisitSchedulerIntegrationHelper(object):
             return visit_due_date + timedelta(days=visit.starts)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_END:
             if not isinstance(visit.expires, int):
-                raise self.VisitSchedulerIntegrationException("Cannot schedule end date of visit that does not expire")
+                raise self.VisitSchedulerIntegrationException(
+                    "Cannot schedule end date of visit that does not expire")
 
             return visit_due_date + timedelta(days=visit.expires)
         elif self.scheduler_module_info.window_position == VISIT_WINDOW_DUE_DATE:
@@ -924,7 +1302,7 @@ class VisitSchedulerIntegrationHelper(object):
         phase_num = self.case.get_case_property('current_schedule_phase')
         try:
             return int(phase_num)
-        except:
+        except:  # noqa: E722
             return None
 
     def get_visit(self, form):
@@ -1028,7 +1406,10 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
 
     @schedule.setter
     def schedule(self, value):
-        from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+        from corehq.messaging.scheduling.models import (
+            AlertSchedule,
+            TimedSchedule,
+        )
 
         self.alert_schedule = None
         self.timed_schedule = None
@@ -1145,7 +1526,7 @@ class CaseRuleSubmission(models.Model):
     # The timestamp that this record was created on
     created_on = models.DateTimeField(db_index=True)
 
-    # Reference to XFormInstanceSQL.form_id
+    # Reference to XFormInstance.form_id
     form_id = models.CharField(max_length=255, unique=True, db_index=True)
 
     # A shortcut to keep track of which forms get archived
@@ -1197,7 +1578,7 @@ class CaseRuleUndoer(object):
 
         for form_id_chunk in form_id_chunks:
             archived_form_ids = []
-            for form in FormAccessors(self.domain).iter_forms(form_id_chunk):
+            for form in XFormInstance.objects.iter_forms(form_id_chunk, self.domain):
                 result['processed'] += 1
 
                 if not form.is_normal or any([u.creates_case() for u in get_case_updates(form)]):
@@ -1218,12 +1599,20 @@ class DomainCaseRuleRun(models.Model):
     STATUS_RUNNING = 'R'
     STATUS_FINISHED = 'F'
     STATUS_HALTED = 'H'
+    STATUS_HAD_ERRORS = 'E'
+    STATUS_CHOICES = (
+        (STATUS_RUNNING, gettext_lazy("Running")),
+        (STATUS_FINISHED, gettext_lazy("Finished")),
+        (STATUS_HALTED, gettext_lazy("Stopped")),
+        (STATUS_HAD_ERRORS, gettext_lazy("Error")),
+    )
 
     domain = models.CharField(max_length=126)
     case_type = models.CharField(max_length=255, null=True)
     started_on = models.DateTimeField(db_index=True)
     finished_on = models.DateTimeField(null=True)
-    status = models.CharField(max_length=1)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
+    workflow = models.CharField(max_length=126, choices=AutomaticUpdateRule.WORKFLOW_CHOICES, null=True)
 
     cases_checked = models.IntegerField(default=0)
     num_updates = models.IntegerField(default=0)
@@ -1231,8 +1620,9 @@ class DomainCaseRuleRun(models.Model):
     num_related_updates = models.IntegerField(default=0)
     num_related_closes = models.IntegerField(default=0)
     num_creates = models.IntegerField(default=0)
+    num_errors = models.IntegerField(default=0)
 
-    dbs_completed = JSONField(default=list)
+    dbs_completed = models.JSONField(default=list)
 
     class Meta(object):
         index_together = (
@@ -1240,12 +1630,9 @@ class DomainCaseRuleRun(models.Model):
         )
 
     @classmethod
-    def done(cls, run_id, status, cases_checked, result, db=None):
+    def done(cls, run_id, cases_checked, result, db=None, halted=False):
         if not isinstance(result, CaseRuleActionResult):
             raise TypeError("Expected an instance of CaseRuleActionResult")
-
-        if status not in (cls.STATUS_HALTED, cls.STATUS_FINISHED):
-            raise ValueError("Expected STATUS_HALTED or STATUS_FINISHED")
 
         with CriticalSection(['update-domain-case-rule-run-%s' % run_id]):
             run = cls.objects.get(pk=run_id)
@@ -1256,6 +1643,7 @@ class DomainCaseRuleRun(models.Model):
             run.num_related_updates += result.num_related_updates
             run.num_related_closes += result.num_related_closes
             run.num_creates += result.num_creates
+            run.num_errors += result.num_errors
 
             if db:
                 run.dbs_completed.append(db)
@@ -1266,10 +1654,11 @@ class DomainCaseRuleRun(models.Model):
             else:
                 run.finished_on = datetime.utcnow()
 
-            if status == cls.STATUS_HALTED:
-                run.status = status
-            elif status == cls.STATUS_FINISHED and run.status != cls.STATUS_HALTED and run.finished_on:
-                run.status = status
-
+            if halted or run.status == cls.STATUS_HALTED:
+                run.status = cls.STATUS_HALTED
+            elif run.num_errors > 0:
+                run.status = cls.STATUS_HAD_ERRORS
+            elif run.finished_on:
+                run.status = cls.STATUS_FINISHED
             run.save()
             return run

@@ -1,16 +1,146 @@
 import json
+import uuid
+from contextlib import contextmanager
+from unittest.mock import patch
+
+from django.test import SimpleTestCase
+from django.utils.http import urlencode
+
+from tastypie.bundle import Bundle
 
 from corehq.apps.api.tests.utils import APIResourceTest
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureTypeField,
+    Field,
+    LookupTable,
+    LookupTableRow,
+    TypeField,
 )
 from corehq.apps.fixtures.resources.v0_1 import (
+    FixtureResource,
     LookupTableItemResource,
     LookupTableResource,
+    convert_fdt,
 )
+
+
+class TestFixtureResource(APIResourceTest):
+    resource = FixtureResource
+    api_name = 'v0.5'
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.state = LookupTable(
+            domain=cls.domain.name,
+            tag="state",
+            fields=[TypeField("state")],
+            item_attributes=[]
+        )
+        cls.state.save()
+        cls.city = LookupTable(
+            domain=cls.domain.name,
+            tag="city",
+            fields=[TypeField("state"), TypeField("city")],
+            item_attributes=[]
+        )
+        cls.city.save()
+        cls.ohio = cls._create_data_item(cls.state, {"state": "Ohio"}, 0)
+        cls.akron = cls._create_data_item(cls.city, {"city": "Akron", "state": "Ohio"}, 0)
+        cls.toledo = cls._create_data_item(cls.city, {"city": "Toledo", "state": "Ohio"}, 1)
+
+    def test_get_list(self):
+        response = self._assert_auth_get_resource(self.list_endpoint)
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        expect = [self.ohio, self.akron, self.toledo]
+        # Result order is non-deterministic because the table id (UUID)
+        # is part of the sort key. Additionally, backwards table row
+        # ordering (originating in FixtureDataItem.by_domain()) seems
+        # like a bug (inconsistent with other results from this same API).
+        self.assertCountEqual(result, [self._data_item_json(r) for r in expect])
+
+    def test_get_list_for_value(self):
+        response = self._assert_auth_get_resource(self.api_url(
+            parent_id=self.ohio.id.hex,
+            child_type=self.city.id.hex,
+            parent_ref_name='state',
+            references='state',
+        ))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        # Result order is non-deterministic
+        self.assertCountEqual(result, [self._data_item_json(r) for r in [self.akron, self.toledo]])
+
+    def test_get_list_for_type_id(self):
+        response = self._assert_auth_get_resource(self.api_url(fixture_type_id=self.city.id.hex))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        self.assertEqual(result, [self._data_item_json(r) for r in [self.akron, self.toledo]])
+
+    def test_get_list_for_type_tag(self):
+        response = self._assert_auth_get_resource(self.api_url(fixture_type="state"))
+        self.assertEqual(response.status_code, 200)
+
+        result = json.loads(response.content)['objects']
+        self.assertEqual(result, [self._data_item_json(self.ohio)])
+
+    def test_get_single(self):
+        response = self._assert_auth_get_resource(self.single_endpoint(self.ohio.id.hex))
+        self.assertEqual(response.status_code, 200)
+
+        fixture_data_type = json.loads(response.content)
+        self.assertEqual(fixture_data_type, self._data_item_json(self.ohio))
+
+    def test_dehydrate_fields(self):
+        obj = LookupTableRow(table_id=uuid.uuid4(), fields={
+            "1": [Field("one", {"lang": "en"})],
+            "2": [Field("two", {"lang": "en"})],
+        })
+        bundle = Bundle(obj=obj, data={})
+        result = FixtureResource().full_dehydrate(bundle).data["fields"]
+        self.assertEqual(result, {'1': "one", '2': "two"})
+
+    def test_dehydrate_fields_with_version_error(self):
+        obj = LookupTableRow(table_id=uuid.uuid4(), fields={
+            "1": [Field("one", {"lang": "en"}), Field("uno", {"lang": "es"})],
+            "2": [Field("two", {"lang": "en"})],
+        })
+        bundle = Bundle(obj=obj, data={})
+        result = FixtureResource().full_dehydrate(bundle).data["fields"]
+        self.assertEqual(result, {
+            '1': {'field_list': [
+                {'field_value': 'one', 'properties': {"lang": "en"}},
+                {'field_value': 'uno', 'properties': {"lang": "es"}},
+            ]},
+            '2': {'field_list': [
+                {'field_value': 'two', 'properties': {"lang": "en"}},
+            ]},
+        })
+
+    @classmethod
+    def _create_data_item(cls, table, field_map, sort_key):
+        data_item = LookupTableRow(
+            domain=cls.domain.name,
+            table_id=table.id,
+            fields={k: [Field(value=v)] for k, v in field_map.items()},
+            sort_key=sort_key
+        )
+        data_item.save()
+        return data_item
+
+    def api_url(self, **params):
+        return f'{self.list_endpoint}?{urlencode(params, doseq=True)}'
+
+    def _data_item_json(self, row):
+        return {
+            "id": row.id.hex,
+            "fixture_type": row.table.tag,
+            "fields": {n: v[0].value for n, v in row.fields.items()},
+            "resource_uri": "",
+        }
 
 
 class TestLookupTableResource(APIResourceTest):
@@ -19,22 +149,13 @@ class TestLookupTableResource(APIResourceTest):
 
     def setUp(self):
         super(TestLookupTableResource, self).setUp()
-        self.data_type = FixtureDataType(
+        self.data_type = LookupTable(
             domain=self.domain.name,
             tag="lookup_table",
-            fields=[
-                FixtureTypeField(
-                    field_name="fixture_property",
-                    properties=["lang", "name"]
-                )
-            ],
+            fields=[TypeField("fixture_property", ["lang", "name"])],
             item_attributes=[]
         )
         self.data_type.save()
-
-    def tearDown(self):
-        self.data_type.delete()
-        super(TestLookupTableResource, self).tearDown()
 
     def _data_type_json(self):
         return {
@@ -45,7 +166,7 @@ class TestLookupTableResource(APIResourceTest):
                 },
             ],
             "item_attributes": [],
-            "id": self.data_type._id,
+            "id": self.data_type.id.hex,
             "is_global": False,
             "resource_uri": "",
             "tag": "lookup_table"
@@ -60,31 +181,26 @@ class TestLookupTableResource(APIResourceTest):
         self.assertEqual(fixture_data_types, [self._data_type_json()])
 
     def test_get_single(self):
-        response = self._assert_auth_get_resource(self.single_endpoint(self.data_type._id))
+        response = self._assert_auth_get_resource(self.single_endpoint(self.data_type.id))
         self.assertEqual(response.status_code, 200)
 
         fixture_data_type = json.loads(response.content)
         self.assertEqual(fixture_data_type, self._data_type_json())
 
     def test_delete(self):
-        data_type = FixtureDataType(
+        data_type = LookupTable(
             domain=self.domain.name,
             tag="lookup_table2",
-            fields=[
-                FixtureTypeField(
-                    field_name="fixture_property",
-                    properties=["lang", "name"]
-                )
-            ],
+            fields=[TypeField("fixture_property", ["lang", "name"])],
             item_attributes=[]
         )
         data_type.save()
-        self.addCleanup(data_type.delete)
+        TestLookupTableItemResource._create_data_item(self, data_type=data_type)
 
-        self.assertEqual(2, len(FixtureDataType.by_domain(self.domain.name)))
-        response = self._assert_auth_post_resource(self.single_endpoint(data_type._id), '', method='DELETE')
+        self.assertEqual(2, LookupTable.objects.by_domain(self.domain.name).count())
+        response = self._assert_auth_post_resource(self.single_endpoint(data_type.id), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
-        self.assertEqual(1, len(FixtureDataType.by_domain(self.domain.name)))
+        self.assertEqual(1, LookupTable.objects.by_domain(self.domain.name).count())
 
     def test_create(self):
         lookup_table = {
@@ -98,8 +214,8 @@ class TestLookupTableResource(APIResourceTest):
         response = self._assert_auth_post_resource(
             self.list_endpoint, json.dumps(lookup_table), content_type='application/json')
         self.assertEqual(response.status_code, 201)
-        data_type = FixtureDataType.by_domain_tag(self.domain.name, "table_name").first()
-        self.addCleanup(data_type.delete)
+        data_type = LookupTable.objects.by_domain_tag(self.domain.name, "table_name")
+
         self.assertEqual(data_type.tag, "table_name")
         self.assertEqual(len(data_type.fields), 1)
         self.assertEqual(data_type.fields[0].field_name, 'fieldA')
@@ -112,8 +228,8 @@ class TestLookupTableResource(APIResourceTest):
         }
 
         response = self._assert_auth_post_resource(
-            self.single_endpoint(self.data_type._id), json.dumps(lookup_table), method="PUT")
-        data_type = FixtureDataType.get(self.data_type._id)
+            self.single_endpoint(self.data_type.id), json.dumps(lookup_table), method="PUT")
+        data_type = LookupTable.objects.get(id=self.data_type.id)
         self.assertEqual(response.status_code, 204)
         self.assertEqual(data_type.tag, "lookup_table")
         self.assertEqual(len(data_type.fields), 1)
@@ -129,47 +245,34 @@ class TestLookupTableItemResource(APIResourceTest):
     @classmethod
     def setUpClass(cls):
         super(TestLookupTableItemResource, cls).setUpClass()
-        cls.data_type = FixtureDataType(
+        cls.data_type = LookupTable(
             domain=cls.domain.name,
             tag="lookup_table",
-            fields=[
-                FixtureTypeField(
-                    field_name="fixture_property",
-                    properties=["lang", "name"]
-                )
-            ],
+            fields=[TypeField("fixture_property", ["lang", "name"])],
             item_attributes=[]
         )
         cls.data_type.save()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.data_type.delete()
-        super(TestLookupTableItemResource, cls).tearDownClass()
-
-    def _create_data_item(self, cleanup=True):
-        data_item = FixtureDataItem(
+    def _create_data_item(self, data_type=None):
+        data_item = LookupTableRow(
             domain=self.domain.name,
-            data_type_id=self.data_type._id,
+            table_id=(data_type or self.data_type).id,
             fields={
-                "state_name": FieldList.wrap({
-                    "field_list": [
-                        {"field_value": "Tennessee", "properties": {"lang": "en"}},
-                        {"field_value": "田納西", "properties": {"lang": "zh"}},
-                    ]})
+                "state_name": [
+                    Field(value="Tennessee", properties={"lang": "en"}),
+                    Field(value="田納西", properties={"lang": "zh"}),
+                ]
             },
             item_attributes={},
             sort_key=1
         )
         data_item.save()
-        if cleanup:
-            self.addCleanup(data_item.delete)
         return data_item
 
     def _data_item_json(self, id_, sort_key):
         return {
             "id": id_,
-            "data_type_id": self.data_type._id,
+            "data_type_id": self.data_type.id.hex,
             "fields": {
                 "state_name": {
                     "field_list": [
@@ -190,26 +293,26 @@ class TestLookupTableItemResource(APIResourceTest):
 
         fixture_data_types = json.loads(response.content)['objects']
         self.assertEqual(len(fixture_data_types), 1)
-        self.assertEqual(fixture_data_types, [self._data_item_json(data_item._id, data_item.sort_key)])
+        self.assertEqual(fixture_data_types, [self._data_item_json(data_item.id.hex, data_item.sort_key)])
 
     def test_get_single(self):
         data_item = self._create_data_item()
-        response = self._assert_auth_get_resource(self.single_endpoint(data_item._id))
+        response = self._assert_auth_get_resource(self.single_endpoint(data_item.id.hex))
         self.assertEqual(response.status_code, 200)
 
         fixture_data_type = json.loads(response.content)
-        self.assertEqual(fixture_data_type, self._data_item_json(data_item._id, data_item.sort_key))
+        self.assertEqual(fixture_data_type, self._data_item_json(data_item.id.hex, data_item.sort_key))
 
     def test_delete(self):
-        data_item = self._create_data_item(cleanup=False)
-        self.assertEqual(1, len(FixtureDataItem.by_domain(self.domain.name)))
-        response = self._assert_auth_post_resource(self.single_endpoint(data_item._id), '', method='DELETE')
+        data_item = self._create_data_item()
+        self.assertEqual(1, LookupTableRow.objects.filter(domain=self.domain.name).count())
+        response = self._assert_auth_post_resource(self.single_endpoint(data_item.id.hex), '', method='DELETE')
         self.assertEqual(response.status_code, 204, response.content)
-        self.assertEqual(0, len(FixtureDataItem.by_domain(self.domain.name)))
+        self.assertEqual(0, LookupTableRow.objects.filter(domain=self.domain.name).count())
 
     def test_create(self):
         data_item_json = {
-            "data_type_id": self.data_type._id,
+            "data_type_id": self.data_type.id.hex,
             "fields": {
                 "state_name": {
                     "field_list": [
@@ -223,18 +326,18 @@ class TestLookupTableItemResource(APIResourceTest):
         response = self._assert_auth_post_resource(
             self.list_endpoint, json.dumps(data_item_json), content_type='application/json')
         self.assertEqual(response.status_code, 201)
-        data_item = FixtureDataItem.by_domain(self.domain.name).first()
+        data_item = LookupTableRow.objects.filter(domain=self.domain.name).first()
         self.addCleanup(data_item.delete)
-        self.assertEqual(data_item.data_type_id, self.data_type._id)
+        self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
-        self.assertEqual(data_item.fields['state_name'].field_list[0].field_value, 'Massachusetts')
-        self.assertEqual(data_item.fields['state_name'].field_list[0].properties, {"lang": "en"})
+        self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')
+        self.assertEqual(data_item.fields['state_name'][0].properties, {"lang": "en"})
 
     def test_update(self):
         data_item = self._create_data_item()
 
         data_item_update = {
-            "data_type_id": self.data_type._id,
+            "data_type_id": self.data_type.id.hex,
             "fields": {
                 "state_name": {
                     "field_list": [
@@ -249,11 +352,76 @@ class TestLookupTableItemResource(APIResourceTest):
         }
 
         response = self._assert_auth_post_resource(
-            self.single_endpoint(data_item._id), json.dumps(data_item_update), method="PUT")
-        data_item = FixtureDataItem.get(data_item._id)
+            self.single_endpoint(data_item.id.hex), json.dumps(data_item_update), method="PUT")
+        data_item = LookupTableRow.objects.get(id=data_item.id)
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(data_item.data_type_id, self.data_type._id)
+        self.assertEqual(data_item.table_id, self.data_type.id)
         self.assertEqual(len(data_item.fields), 1)
-        self.assertEqual(data_item.fields['state_name'].field_list[0].field_value, 'Massachusetts')
-        self.assertEqual(data_item.fields['state_name'].field_list[0].properties, {"lang": "en"})
+        self.assertEqual(data_item.fields['state_name'][0].value, 'Massachusetts')
+        self.assertEqual(data_item.fields['state_name'][0].properties, {"lang": "en"})
         self.assertEqual(data_item.item_attributes, {"attribute1": "cool_attr_value"})
+
+
+FAKE_TABLE = {"tag": "faketable"}
+
+
+class FakeRow:
+    def __init__(self):
+        self.table_id = uuid.uuid4()
+        self.data_type_id = self.table_id.hex
+
+
+class TestConvertFDT(SimpleTestCase):
+
+    def test_without_cache(self):
+        with self.patch_query():
+            row = convert_fdt(FakeRow())
+        self.assertEqual(row.fixture_type, FAKE_TABLE["tag"])
+
+    def test_missing_table_without_cache(self):
+        with self.patch_query(LookupTable.DoesNotExist):
+            row = convert_fdt(FakeRow())
+        self.assertFalse(hasattr(row, "fixture_type"))
+
+    def test_cache_miss(self):
+        cache = {}
+        with self.patch_query():
+            row = convert_fdt(FakeRow(), cache)
+        self.assertEqual(row.fixture_type, FAKE_TABLE["tag"])
+        self.assertIn(row.table_id, cache)
+
+    def test_cache_hit(self):
+        row = FakeRow()
+        cache = {row.table_id: "atag"}
+        with self.patch_query(Exception("should not happen")):
+            row = convert_fdt(row, cache)
+        self.assertEqual(row.fixture_type, "atag")
+
+    def test_missing_table_cache_miss(self):
+        cache = {}
+        with self.patch_query(LookupTable.DoesNotExist):
+            row = convert_fdt(FakeRow(), cache)
+        self.assertFalse(hasattr(row, "fixture_type"))
+        self.assertIn(row.table_id, cache)
+
+    def test_missing_table_cache_hit(self):
+        row = FakeRow()
+        cache = {row.table_id: None}
+        with self.patch_query(Exception("should not happen")):
+            row = convert_fdt(row, cache)
+        self.assertIn(row.table_id, cache)
+
+    @staticmethod
+    def patch_query(result=FAKE_TABLE):
+        def fake_get(self, id):
+            if isinstance(result, (type, Exception)):
+                raise result
+            return result
+
+        @contextmanager
+        def context():
+            from django.db.models.query import QuerySet
+            with patch.object(QuerySet, "get", fake_get):
+                yield
+
+        return context()

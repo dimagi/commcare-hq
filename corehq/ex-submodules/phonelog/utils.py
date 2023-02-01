@@ -207,11 +207,8 @@ class SumoLogicLog(object):
         if settings.SERVER_ENVIRONMENT == 'production':
             environment = 'prod'
 
-        return {b"X-Sumo-Category": "{env}/{domain}/{fmt}".format(
-            env=environment,
-            domain=self.domain,
-            fmt=fmt,
-        ).encode('utf-8')}
+        header = "{env}/{domain}/{fmt}".format(env=environment, domain=self.domain, fmt=fmt)
+        return {"X-Sumo-Category": header}
 
     def _fill_base_template(self, log):
         from corehq.apps.receiverwrapper.util import (
@@ -257,22 +254,22 @@ class SumoLogicLog(object):
 
     def log_subreport(self):
         logs = _get_logs(self.xform.form_data, 'log_subreport', 'log')
-        return ("\n"
-                .join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
-                .encode('utf-8'))
+        return "\n".join([self._fill_base_template(log) for log in logs if log.get('type') != 'forceclose'])
 
     def user_error_subreport(self):
         logs = _get_logs(self.xform.form_data, 'user_error_subreport', 'user_error')
         log_additions_template = " [app_id={app_id}] [user_id={user_id}] [session={session}] [expr={expr}]"
 
-        return ("\n".join(
+        data = ("\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session'),
                 expr=log.get('expr'),
             ) for log in logs
-        ).encode('utf-8'))
+        ))
+
+        return data
 
     def force_close_subreport(self):
         logs = _get_logs(self.xform.form_data, 'force_close_subreport', 'force_close')
@@ -280,15 +277,16 @@ class SumoLogicLog(object):
             " [app_id={app_id}] [user_id={user_id}] [session={session}] "
             "[device_model={device_model}]"
         )
-        return ("\n".join(
+        data = ("\n".join(
             self._fill_base_template(log) + log_additions_template.format(
                 app_id=log.get('app_id'),
                 user_id=log.get('user_id'),
                 session=log.get('session_readable'),
                 device_model=log.get('device_model'),
             ) for log in logs
-        ).encode('utf-8'))
+        ))
 
+        return data
 
 def clear_device_log_request(domain, xform):
     from corehq.apps.ota.models import DeviceLogRequest

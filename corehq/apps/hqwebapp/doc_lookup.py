@@ -1,16 +1,20 @@
 from collections import OrderedDict, defaultdict, namedtuple
+from uuid import UUID
 
 import attr
 from couchdbkit import ResourceNotFound
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.python import Serializer
 from memoized import memoized
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
+from corehq.apps.sms.models import SMS, SQLMobileBackend
 from corehq.form_processor.exceptions import CaseNotFound, XFormNotFound
-from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.serializers import (
-    CommCareCaseSQLRawDocSerializer,
-    XFormInstanceSQLRawDocSerializer,
+    CommCareCaseRawDocSerializer,
+    XFormInstanceRawDocSerializer,
 )
 from corehq.util.couchdb_management import couch_config
 
@@ -84,22 +88,44 @@ def get_databases():
     should be assumed to be the authoritative one."""
     sql_dbs = [
         _SQLDb(
-            XFormInstanceSQL._meta.db_table,
-            lambda id_: XFormInstanceSQL.get_obj_by_id(id_),
+            XFormInstance._meta.db_table,
+            lambda id_: XFormInstance.get_obj_by_id(id_),
             "XFormInstance",
-            lambda doc: XFormInstanceSQLRawDocSerializer(doc).data,
+            lambda doc: XFormInstanceRawDocSerializer(doc).data,
         ),
         _SQLDb(
-            CommCareCaseSQL._meta.db_table,
-            lambda id_: CommCareCaseSQL.get_obj_by_id(id_),
+            CommCareCase._meta.db_table,
+            lambda id_: CommCareCase.get_obj_by_id(id_),
             "CommCareCase",
-            lambda doc: CommCareCaseSQLRawDocSerializer(doc).data,
+            lambda doc: CommCareCaseRawDocSerializer(doc).data,
         ),
         _SQLDb(
             SQLLocation._meta.db_table,
             lambda id_: SQLLocation.objects.get(location_id=id_),
             'Location',
             lambda doc: doc.to_json()
+        ),
+        _SQLDb(
+            SMS._meta.db_table,
+            lambda id_: SMS.objects.get(couch_id=id_),
+            'SMS',
+            lambda doc: doc.to_json()
+        ),
+        _SQLDb(
+            SQLMobileBackend._meta.db_table,
+            lambda id_: SQLMobileBackend.objects.get(couch_id=id_),
+            'SQLMobileBackend',
+            lambda doc: doc.to_json()
+        ),
+        _SQLDb(
+            LookupTable._meta.db_table,
+            make_uuid_getter(LookupTable),
+            'LookupTable',
+        ),
+        _SQLDb(
+            LookupTableRow._meta.db_table,
+            make_uuid_getter(LookupTableRow),
+            'LookupTableRow',
         ),
     ]
 
@@ -166,8 +192,12 @@ class _CouchDb(_DbWrapper):
         return self.db.get(record_id)
 
 
+def model_to_json(obj):
+    return Serializer().serialize([obj])[0]
+
+
 class _SQLDb(_DbWrapper):
-    def __init__(self, dbname, getter, doc_type, serializer):
+    def __init__(self, dbname, getter, doc_type, serializer=model_to_json):
         self._getter = getter
         super(_SQLDb, self).__init__(dbname, doc_type, serializer)
 
@@ -176,3 +206,13 @@ class _SQLDb(_DbWrapper):
             return self._getter(record_id)
         except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
+
+
+def make_uuid_getter(model, id_field="id"):
+    def getter(id_):
+        try:
+            id_value = UUID(id_)
+        except ValueError:
+            raise model.DoesNotExist
+        return model.objects.get(**{id_field: id_value})
+    return getter

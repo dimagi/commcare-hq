@@ -2,7 +2,7 @@ import logging
 from collections import namedtuple
 from itertools import groupby
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.stock import const as stockconst

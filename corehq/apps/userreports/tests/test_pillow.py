@@ -4,15 +4,15 @@ from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
 
-import mock
-from mock import patch
+from unittest import mock
+from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.pillow_utils import rebuild_table
+from corehq.form_processor.signals import sql_case_post_save
 from pillow_retry.models import PillowError
 
 from corehq.apps.userreports.data_source_providers import (
@@ -42,10 +42,10 @@ from corehq.apps.userreports.tests.utils import (
     skip_domain_filter_patch,
 )
 from corehq.apps.userreports.util import get_indicator_adapter
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import get_case_pillow
 from corehq.util.context_managers import drop_connected_signals
-from corehq.util.test_utils import softer_assert
+from corehq.util.test_utils import softer_assert, flaky_slow
 
 
 def setup_module():
@@ -121,7 +121,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         # test in same domain
         data_source_2 = self._copy_data_source(data_source_1)
         data_source_2.save()
-        table_manager._add_data_sources_to_table_adapters([data_source_2])
+        table_manager._add_data_sources_to_table_adapters([data_source_2], set())
         self.assertEqual(1, len(table_manager.table_adapters_by_domain))
         self.assertEqual(2, len(table_manager.table_adapters_by_domain[ds_1_domain]))
         self.assertEqual(
@@ -133,7 +133,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         ds3_domain = 'new_domain'
         data_source_3.domain = ds3_domain
         data_source_3.save()
-        table_manager._add_data_sources_to_table_adapters([data_source_3])
+        table_manager._add_data_sources_to_table_adapters([data_source_3], set())
         # should now be 2 domains in the map
         self.assertEqual(2, len(table_manager.table_adapters_by_domain))
         # ensure domain 1 unchanged
@@ -145,7 +145,7 @@ class ConfigurableReportTableManagerDbTest(TestCase):
         self.assertEqual(data_source_3, table_manager.table_adapters_by_domain[ds3_domain][0].config)
 
         # finally pass in existing data sources and ensure they modify in place
-        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3])
+        table_manager._add_data_sources_to_table_adapters([data_source_1, data_source_3], set())
         self.assertEqual(2, len(table_manager.table_adapters_by_domain))
         self.assertEqual(
             {data_source_1, data_source_2},
@@ -391,6 +391,7 @@ class IndicatorPillowTest(TestCase):
     def tearDown(self):
         self.adapter.clear_table()
 
+    @flaky_slow
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def _check_sample_doc_state(self, expected_indicators, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
@@ -482,7 +483,7 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self._check_sample_doc_state(expected_indicators)
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
@@ -509,11 +510,11 @@ class IndicatorPillowTest(TestCase):
 
         # delete the case and verify it's removed
         since = self.pillow.get_change_feed().get_latest_offsets()
-        CaseAccessorSQL.soft_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.soft_delete_cases(case.domain, [case.case_id])
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(0, self.adapter.get_query_object().count())
 
-        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(case.domain, [case.case_id])
 
     @mock.patch('corehq.apps.userreports.specs.datetime')
     def test_process_filter_no_longer_pass(self, datetime_mock):
@@ -560,23 +561,23 @@ class ProcessRelatedDocTypePillowTest(TestCase):
         delete_all_xforms()
 
     def _post_case_blocks(self, iteration=0):
-        return post_case_blocks(
+        return submit_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
-                ).as_xml(),
-                CaseBlock.deprecated_init(
+                ).as_text(),
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
                     case_type='bug-child',
                     index={'parent': ('bug', 'parent-id')},
                     update={'update-prop-child': iteration}
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
 
@@ -603,19 +604,22 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
         http://manage.dimagi.com/default.asp?245341
         '''
-
-        pillow = pillow or self.pillow
-        for i in range(3):
-            since = pillow.get_change_feed().get_latest_offsets()
-            form, cases = self._post_case_blocks(i)
-            with self.assertNumQueries(num_queries):
-                pillow.process_changes(since=since, forever=False)
-            rows = self.adapter.get_query_object()
-            self.assertEqual(rows.count(), 1)
-            row = rows[0]
-            self.assertEqual(int(row.parent_property), i)
-            errors = PillowError.objects.filter(doc_id='child-id', pillow=pillow.pillow_id)
-            self.assertEqual(errors.count(), 0)
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint',
+                return_value=False
+        ):
+            pillow = pillow or self.pillow
+            for i in range(3):
+                since = pillow.get_change_feed().get_latest_offsets()
+                form, cases = self._post_case_blocks(i)
+                with self.assertNumQueries(num_queries):
+                    pillow.process_changes(since=since, forever=False)
+                rows = self.adapter.get_query_object()
+                self.assertEqual(rows.count(), 1)
+                row = rows[0]
+                self.assertEqual(int(row.parent_property), i)
+                errors = PillowError.objects.filter(doc_id='child-id', pillow=pillow.pillow_id)
+                self.assertEqual(errors.count(), 0)
 
 
 class ReuseEvaluationContextTest(TestCase):
@@ -645,29 +649,33 @@ class ReuseEvaluationContextTest(TestCase):
         delete_all_xforms()
 
     def _post_case_blocks(self, iteration=0):
-        return post_case_blocks(
+        return submit_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=iteration == 0,
                     case_id='parent-id',
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': iteration},
-                ).as_xml(),
-                CaseBlock.deprecated_init(
+                ).as_text(),
+                CaseBlock(
                     create=iteration == 0,
                     case_id='child-id',
                     case_name='child-name',
                     case_type='bug-child',
                     index={'parent': ('bug', 'parent-id')},
                     update={'update-prop-child': iteration}
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
 
     def _test_pillow(self, pillow, since, num_queries=12):
-        with self.assertNumQueries(num_queries):
-            pillow.process_changes(since=since, forever=False)
+        with mock.patch(
+                'corehq.pillows.case.KafkaCheckpointEventHandler.should_update_checkpoint',
+                return_value=False
+        ):
+            with self.assertNumQueries(num_queries):
+                pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
         self._test_reuse_cache()
@@ -724,27 +732,28 @@ class AsyncIndicatorTest(TestCase):
         self.config.validations = []
         self.config.save()
 
+    @flaky_slow
     def test_async_save_success(self):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         for i in range(3):
             since = self.pillow.get_change_feed().get_latest_offsets()
-            form, cases = post_case_blocks(
+            submit_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
-                    ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    ).as_text(),
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
                         case_type='bug-child',
                         index={'parent': ('bug', parent_id)},
                         update={'update-prop-child': i}
-                    ).as_xml()
+                    ).as_text()
                 ], domain=self.domain
             )
             # ensure indicator is added
@@ -767,29 +776,29 @@ class AsyncIndicatorTest(TestCase):
             self.assertEqual(errors.count(), 0)
             self.assertEqual(indicators.count(), 0)
 
-    @mock.patch('corehq.apps.userreports.tasks._get_config_by_id')
+    @mock.patch('corehq.apps.userreports.tasks.get_ucr_datasource_config_by_id')
     def test_async_save_fails(self, config):
         # process_changes will generate an exception when trying to use this config
         config.return_value = None
         since = self.pillow.get_change_feed().get_latest_offsets()
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
-        form, cases = post_case_blocks(
+        submit_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=parent_id,
                     case_name='parent-name',
                     case_type='bug',
                     update={'update-prop-parent': 0},
-                ).as_xml(),
-                CaseBlock.deprecated_init(
+                ).as_text(),
+                CaseBlock(
                     create=True,
                     case_id=child_id,
                     case_name='child-name',
                     case_type='bug-child',
                     index={'parent': ('bug', parent_id)},
                     update={'update-prop-child': 0}
-                ).as_xml()
+                ).as_text()
             ], domain=self.domain
         )
 
@@ -809,6 +818,7 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
 
+    @flaky_slow
     def test_async_invalid_data(self):
         # re-fetch from DB to bust object caches
         self.config = DataSourceConfiguration.get(self.config.data_source_id)
@@ -833,23 +843,23 @@ class AsyncIndicatorTest(TestCase):
         parent_id, child_id = uuid.uuid4().hex, uuid.uuid4().hex
         since = self.pillow.get_change_feed().get_latest_offsets()
         for i in range(3):
-            form, cases = post_case_blocks(
+            submit_case_blocks(
                 [
-                    CaseBlock.deprecated_init(
+                    CaseBlock(
                         create=i == 0,
                         case_id=parent_id,
                         case_name='parent-name',
                         case_type='bug',
                         update={'update-prop-parent': i},
-                    ).as_xml(),
-                    CaseBlock.deprecated_init(
+                    ).as_text(),
+                    CaseBlock(
                         create=i == 0,
                         case_id=child_id,
                         case_name='child-name',
                         case_type='bug-child',
                         index={'parent': ('bug', parent_id)},
                         update={'update-prop-child': i}
-                    ).as_xml()
+                    ).as_text()
                 ], domain=self.domain
             )
         self.pillow.process_changes(since=since, forever=False)
@@ -904,10 +914,10 @@ class IndicatorConfigFilterTest(SimpleTestCase):
 
 def _save_sql_case(doc):
     system_props = ['_id', '_rev', 'opened_on', 'owner_id', 'doc_type', 'domain', 'type']
-    with drop_connected_signals(case_post_save):
-        form, cases = post_case_blocks(
+    with drop_connected_signals(sql_case_post_save):
+        form, cases = submit_case_blocks(
             [
-                CaseBlock.deprecated_init(
+                CaseBlock(
                     create=True,
                     case_id=doc['_id'],
                     case_name=doc['name'],
@@ -915,7 +925,7 @@ def _save_sql_case(doc):
                     owner_id=doc['owner_id'],
                     date_opened=doc['opened_on'],
                     update={k: str(v) for k, v in doc.items() if k not in system_props}
-                ).as_xml()
+                ).as_text()
             ], domain=doc['domain']
         )
     return cases[0]

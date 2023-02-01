@@ -2,7 +2,7 @@ import os
 import re
 from collections import defaultdict
 
-from django.utils.translation import ugettext, ugettext_noop
+from django.utils.translation import gettext, gettext_noop
 
 import yaml
 from memoized import memoized
@@ -25,29 +25,32 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 def _translate_setting(setting, prop):
     value = setting[prop]
     if not isinstance(value, str):
-        return [ugettext(v) for v in value]
+        return [gettext(v) for v in value]
     else:
-        return ugettext(value)
+        return gettext(value)
 
 
 def _load_custom_commcare_settings():
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
-    with open(os.path.join(path, 'commcare-profile-settings.yaml'), encoding='utf-8') as f:
+    with open(os.path.join(path, 'commcare-profile-settings.yml'), encoding='utf-8') as f:
         for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
-
-    with open(os.path.join(path, 'commcare-app-settings.yaml'), encoding='utf-8') as f:
+    with open(os.path.join(path, 'commcare-app-settings.yml'), encoding='utf-8') as f:
         for setting in yaml.safe_load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
             settings.append(setting)
+
     for setting in settings:
         if not setting.get('widget'):
             setting['widget'] = 'select'
-
+        if 'values' in setting:
+            values = setting.pop('values')
+            setting['values'] = [v[0] for v in values]
+            setting['value_names'] = [v[1] for v in values]
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
                 setting[prop] = _translate_setting(setting, prop)
@@ -60,14 +63,14 @@ def _load_commcare_settings_layout(app):
         for setting in _load_custom_commcare_settings()
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
+    with open(os.path.join(path, 'commcare-settings-layout.yml'), encoding='utf-8') as f:
         layout = yaml.safe_load(f)
 
     doc_type = app.get_doc_type()
     j2me_section_ids = ['app-settings-j2me-properties', 'app-settings-j2me-ui']
     for section in layout:
         # i18n; not statically analyzable
-        section['title'] = ugettext_noop(section['title'])
+        section['title'] = gettext_noop(section['title'])
         for i, key in enumerate(section['settings']):
             include = False
             setting = settings.pop(key)

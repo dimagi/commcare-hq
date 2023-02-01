@@ -19,8 +19,8 @@ from django.http import (
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
@@ -84,7 +84,6 @@ from corehq.apps.accounting.utils import (
     fmt_dollar_amount,
     get_change_status,
     get_customer_cards,
-    get_privileges,
     is_downgrade,
     log_accounting_error,
     quantize_accounting_decimal,
@@ -116,20 +115,20 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView, CRUDPaginatedViewMixin
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.const import USER_DATE_FORMAT
 
 PAYMENT_ERROR_MESSAGES = {
-    400: ugettext_lazy('Your request was not formatted properly.'),
-    403: ugettext_lazy('Forbidden.'),
-    404: ugettext_lazy('Page not found.'),
-    500: ugettext_lazy("There was an error processing your request."
+    400: gettext_lazy('Your request was not formatted properly.'),
+    403: gettext_lazy('Forbidden.'),
+    404: gettext_lazy('Page not found.'),
+    500: gettext_lazy("There was an error processing your request."
            " We're working quickly to fix the issue. Please try again shortly."),
 }
 
 
 class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
-    page_title = ugettext_lazy("Upgrade Required")
+    page_title = gettext_lazy("Upgrade Required")
     template_name = "domain/insufficient_privilege_notification.html"
 
     @property
@@ -184,7 +183,7 @@ class SubscriptionUpgradeRequiredView(LoginAndDomainMixin, BasePageView, DomainV
 class DomainAccountingSettings(BaseProjectSettingsView):
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(DomainAccountingSettings, self).dispatch(request, *args, **kwargs)
 
@@ -207,7 +206,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 class DomainSubscriptionView(DomainAccountingSettings):
     urlname = 'domain_subscription_view'
     template_name = 'domain/current_subscription.html'
-    page_title = ugettext_lazy("Current Subscription")
+    page_title = gettext_lazy("Current Subscription")
 
     @property
     def can_purchase_credits(self):
@@ -388,7 +387,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
 class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin):
     template_name = 'domain/update_billing_contact_info.html'
     urlname = 'domain_update_billing_info'
-    page_title = ugettext_lazy("Billing Information")
+    page_title = gettext_lazy("Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -450,11 +449,11 @@ class EditExistingBillingAccountView(DomainAccountingSettings, AsyncHandlerMixin
 class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMixin):
     template_name = 'domain/billing_statements.html'
     urlname = 'domain_billing_statements'
-    page_title = ugettext_lazy("Billing Statements")
+    page_title = gettext_lazy("Billing Statements")
 
-    limit_text = ugettext_lazy("statements per page")
-    empty_notification = ugettext_lazy("No Billing Statements match the current criteria.")
-    loading_message = ugettext_lazy("Loading statements...")
+    limit_text = gettext_lazy("statements per page")
+    empty_notification = gettext_lazy("No Billing Statements match the current criteria.")
+    loading_message = gettext_lazy("Loading statements...")
 
     @property
     def stripe_cards(self):
@@ -557,8 +556,7 @@ class DomainBillingStatementsView(DomainAccountingSettings, CRUDPaginatedViewMix
                     invoice=invoice
                 ).latest('date_created')
                 if invoice.is_paid:
-                    payment_status = (_("Paid on %s.")
-                                      % invoice.date_paid.strftime(USER_DATE_FORMAT))
+                    payment_status = _("Paid on %s.") % invoice.date_paid.strftime(USER_DATE_FORMAT)
                     payment_class = "label label-default"
                 else:
                     payment_status = _("Not Paid")
@@ -706,27 +704,21 @@ class CreditsWireInvoiceView(DomainAccountingSettings):
             except ValidationError:
                 invalid_emails.append(email)
         if invalid_emails:
-            message = (_('The following e-mail addresses contain invalid characters, or are missing required '
-                         'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails]))
+            message = _('The following e-mail addresses contain invalid characters, or are missing required '
+                        'characters: ') + ', '.join(['"{}"'.format(email) for email in invalid_emails])
             return json_response({'error': {'message': message}})
         amount = Decimal(request.POST.get('amount', 0))
+        if amount < 0:
+            message = _('There was an error processing your request. Please try again.')
+            return json_response({'error': {'message': message}})
+        general_credit = Decimal(request.POST.get('general_credit', 0))
         wire_invoice_factory = DomainWireInvoiceFactory(request.domain, contact_emails=emails)
         try:
-            wire_invoice_factory.create_wire_credits_invoice(self._get_items(request), amount)
+            wire_invoice_factory.create_wire_credits_invoice(amount, general_credit)
         except Exception as e:
             return json_response({'error': {'message': str(e)}})
 
         return json_response({'success': True})
-
-    @staticmethod
-    def _get_items(request):
-        if Decimal(request.POST.get('general_credit', 0)) > 0:
-            return [{
-                'type': 'General Credits',
-                'amount': Decimal(request.POST.get('general_credit', 0))
-            }]
-
-        return []
 
 
 class InvoiceStripePaymentView(BaseStripePaymentView):
@@ -778,7 +770,7 @@ class WireInvoiceView(View):
     urlname = 'domain_wire_invoice'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(WireInvoiceView, self).dispatch(request, *args, **kwargs)
 
@@ -808,7 +800,7 @@ class BillingStatementPdfView(View):
     urlname = 'domain_billing_statement_download'
 
     @method_decorator(always_allow_project_access)
-    @method_decorator(require_permission(Permissions.edit_billing))
+    @method_decorator(require_permission(HqPermissions.edit_billing))
     def dispatch(self, request, *args, **kwargs):
         return super(BillingStatementPdfView, self).dispatch(request, *args, **kwargs)
 
@@ -879,7 +871,7 @@ class BillingStatementPdfView(View):
 class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     template_name = 'domain/internal_subscription_management.html'
     urlname = 'internal_subscription_mgmt'
-    page_title = ugettext_lazy("Dimagi Internal Subscription Management")
+    page_title = gettext_lazy("Dimagi Internal Subscription Management")
     form_classes = INTERNAL_SUBSCRIPTION_MANAGEMENT_FORMS
 
     @method_decorator(always_allow_project_access)
@@ -974,10 +966,10 @@ PlanOption = namedtuple(
 class SelectPlanView(DomainAccountingSettings):
     template_name = 'domain/select_plan.html'
     urlname = 'domain_select_plan'
-    page_title = ugettext_lazy("Change Plan")
-    step_title = ugettext_lazy("Select Plan")
+    page_title = gettext_lazy("Change Plan")
+    step_title = gettext_lazy("Select Plan")
     edition = None
-    lead_text = ugettext_lazy("Please select a plan below that fits your organization's needs.")
+    lead_text = gettext_lazy("Please select a plan below that fits your organization's needs.")
 
     @property
     @memoized
@@ -1115,7 +1107,7 @@ class SelectPlanView(DomainAccountingSettings):
 class SelectedEnterprisePlanView(SelectPlanView):
     template_name = 'domain/selected_enterprise_plan.html'
     urlname = 'enterprise_request_quote'
-    step_title = ugettext_lazy("Contact Dimagi")
+    step_title = gettext_lazy("Contact Dimagi")
     edition = SoftwarePlanEdition.ENTERPRISE
 
     @property
@@ -1157,7 +1149,7 @@ class SelectedEnterprisePlanView(SelectPlanView):
 class SelectedAnnualPlanView(SelectPlanView):
     template_name = 'domain/selected_annual_plan.html'
     urlname = 'annual_plan_request_quote'
-    step_title = ugettext_lazy("Contact Dimagi")
+    step_title = gettext_lazy("Contact Dimagi")
     edition = None
 
     @property
@@ -1345,7 +1337,7 @@ class ConfirmSelectedPlanView(SelectPlanView):
 class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
     template_name = 'domain/confirm_billing_info.html'
     urlname = 'confirm_billing_account_info'
-    step_title = ugettext_lazy("Confirm Billing Information")
+    step_title = gettext_lazy("Confirm Billing Information")
     is_new = False
     async_handlers = [
         Select2BillingInfoHandler,
@@ -1430,6 +1422,8 @@ class ConfirmBillingAccountInfoView(ConfirmSelectedPlanView, AsyncHandlerMixin):
                         "Please reach out to the %s enterprise admin for help."
                     ) % self.account.name
                 )
+                return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
+            if self.selected_plan_version.plan.edition not in SoftwarePlanEdition.SELF_SERVICE_ORDER:
                 return HttpResponseRedirect(reverse(DomainSubscriptionView.urlname, args=[self.domain]))
             is_saved = self.billing_account_info_form.save()
             software_plan_name = DESC_BY_EDITION[self.selected_plan_version.plan.edition]['name']
@@ -1539,14 +1533,16 @@ class SubscriptionMixin(object):
 
 class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
     urlname = "domain_subscription_renewal"
-    page_title = ugettext_lazy("Renew Plan")
-    step_title = ugettext_lazy("Renew Plan")
+    page_title = gettext_lazy("Renew Plan")
+    step_title = gettext_lazy("Renew Plan")
     template_name = "domain/renew_plan.html"
 
     @property
     def lead_text(self):
-        return ugettext_lazy("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"
-                             .format(plan=self.current_subscription.plan_version.plan.edition))
+        return format_html(
+            _("Based on your current usage we recommend you use the <strong>{plan}</strong> plan"),
+            plan=_(self.current_subscription.plan_version.plan.edition)
+        )
 
     @property
     def page_context(self):
@@ -1569,11 +1565,12 @@ class SubscriptionRenewalView(SelectPlanView, SubscriptionMixin):
         return context
 
 
-class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings, AsyncHandlerMixin, SubscriptionMixin):
+class ConfirmSubscriptionRenewalView(SelectPlanView, DomainAccountingSettings,
+                                     AsyncHandlerMixin, SubscriptionMixin):
     template_name = 'domain/confirm_subscription_renewal.html'
     urlname = 'domain_subscription_renewal_confirmation'
-    page_title = ugettext_lazy("Confirm Billing Information")
-    step_title = ugettext_lazy("Confirm Billing Information")
+    page_title = gettext_lazy("Confirm Billing Information")
+    step_title = gettext_lazy("Confirm Billing Information")
     async_handlers = [
         Select2BillingInfoHandler,
     ]
@@ -1730,7 +1727,7 @@ class CardView(BaseCardView):
                 self.payment_method.unset_autopay(card, self.account)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
-        except Exception as e:
+        except Exception:
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
@@ -1758,7 +1755,7 @@ class CardsView(BaseCardView):
             self.payment_method.create_card(stripe_token, self.account, domain, autopay)
         except self.payment_method.STRIPE_GENERIC_ERROR as e:
             return self._stripe_error(e)
-        except Exception as e:
+        except Exception:
             return self._generic_error()
 
         return json_response({'cards': self.payment_method.all_cards_serialized(self.account)})
@@ -1790,7 +1787,7 @@ def _get_downgrade_or_pause_note(request, is_pause=False):
 
 @require_POST
 @login_and_domain_required
-@require_permission(Permissions.edit_billing)
+@require_permission(HqPermissions.edit_billing)
 def pause_subscription(request, domain):
     current_subscription = Subscription.get_active_subscription_by_domain(domain)
     if not current_subscription.user_can_change_subscription(request.user):

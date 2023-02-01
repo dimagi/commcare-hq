@@ -10,8 +10,8 @@ from django.core.validators import EmailValidator, validate_email
 from django.forms.widgets import PasswordInput
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms import layout as crispy
@@ -21,15 +21,23 @@ from crispy_forms.layout import Fieldset, Layout, Submit
 from django_countries.data import COUNTRIES
 from memoized import memoized
 
-from corehq import toggles
+from casexml.apps.phone.models import loadtest_users_enabled
+from dimagi.utils.dates import get_date_from_month_and_year_string
+
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
-from corehq.apps.custom_data_fields.models import PROFILE_SLUG, CustomDataFieldsProfile
+from corehq.apps.custom_data_fields.models import (
+    PROFILE_SLUG,
+    CustomDataFieldsProfile,
+)
 from corehq.apps.domain.extension_points import has_custom_clean_password
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
-from corehq.apps.enterprise.models import EnterprisePermissions
+from corehq.apps.enterprise.models import (
+    EnterpriseMobileWorkerSettings,
+    EnterprisePermissions,
+)
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.crispy import HQModalFormHelper
 from corehq.apps.hqwebapp.utils.translation import format_html_lazy
@@ -38,20 +46,24 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
 from corehq.apps.programs.models import Program
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.util import (
+    get_all_tableau_groups,
+    get_tableau_groups_for_user,
+    update_tableau_user,
+)
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
 from corehq.apps.user_importer.helpers import UserChangeLogger
-from corehq.apps.users.audit.change_messages import UserChangeMessage
-from corehq.apps.users.dbaccessors import user_exists
-from corehq.apps.users.models import UserRole
-from corehq.apps.users.util import (
-    cc_user_domain,
-    format_username,
-    log_user_change,
-)
-from corehq.const import USER_CHANGE_VIA_WEB
+from corehq.const import LOADTEST_HARD_LIMIT, USER_CHANGE_VIA_WEB
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
-from corehq.toggles import TWO_STAGE_USER_PROVISIONING
+from corehq.toggles import TWO_STAGE_USER_PROVISIONING, TWO_STAGE_USER_PROVISIONING_BY_SMS
+
+from .audit.change_messages import UserChangeMessage
+from .dbaccessors import user_exists
+from .models import DeactivateMobileWorkerTrigger, UserRole, CouchUser
+from .util import cc_user_domain, format_username, log_user_change
+from ..hqwebapp.signals import clear_login_attempts
 
 UNALLOWED_MOBILE_WORKER_NAMES = ('admin', 'demo_user')
 
@@ -72,13 +84,13 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     max_username_length = get_mobile_worker_max_username_length(domain)
 
     if len(username) > max_username_length:
-        raise forms.ValidationError(name_too_long_message or
-            _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
+        raise forms.ValidationError(name_too_long_message
+            or _('Username %(username)s is too long.  Must be under %(max_length)s characters.')
             % {'username': username, 'max_length': max_username_length})
 
     if username in UNALLOWED_MOBILE_WORKER_NAMES:
-        raise forms.ValidationError(name_reserved_message or
-            _('The username "%(username)s" is reserved for CommCare.')
+        raise forms.ValidationError(name_reserved_message
+            or _('The username "%(username)s" is reserved for CommCare.')
             % {'username': username})
 
     username = format_username(username, domain)
@@ -88,10 +100,21 @@ def clean_mobile_worker_username(domain, username, name_too_long_message=None,
     if exists.exists:
         if exists.is_deleted:
             raise forms.ValidationError(_('This username was used previously.'))
-        raise forms.ValidationError(name_exists_message or
-            _('This Mobile Worker already exists.'))
+        raise forms.ValidationError(name_exists_message
+            or _('This Mobile Worker already exists.'))
 
     return username
+
+
+def clean_deactivate_after_date(deactivate_after_date):
+    if not deactivate_after_date:
+        return None
+    try:
+        return get_date_from_month_and_year_string(deactivate_after_date)
+    except ValueError:
+        raise forms.ValidationError(
+            _("Invalid Deactivation Date format (expects MM-YYYY).")
+        )
 
 
 def wrapped_language_validation(value):
@@ -127,7 +150,7 @@ class LanguageField(forms.CharField):
         self.max_length = 3
 
     default_error_messages = {
-        'invalid': ugettext_lazy('Please enter a valid two or three digit language code.'),
+        'invalid': gettext_lazy('Please enter a valid two or three digit language code.'),
     }
     default_validators = [wrapped_language_validation]
 
@@ -188,6 +211,12 @@ class BaseUpdateUserForm(forms.Form):
 
 class UpdateUserRoleForm(BaseUpdateUserForm):
     role = forms.ChoiceField(choices=(), required=False)
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role == 'none' and self.existing_user.is_web_user():
+            raise forms.ValidationError(_('Role is required for web users.'))
+        return role
 
     def update_user(self, metadata_updated=False, profile_updated=False):
         is_update_successful, props_updated = super(UpdateUserRoleForm, self).update_user(save=False)
@@ -254,18 +283,18 @@ class UpdateUserRoleForm(BaseUpdateUserForm):
 
 
 class BaseUserInfoForm(forms.Form):
-    first_name = forms.CharField(label=ugettext_lazy('First Name'), max_length=30, required=False)
-    last_name = forms.CharField(label=ugettext_lazy('Last Name'), max_length=30, required=False)
-    email = forms.EmailField(label=ugettext_lazy("E-Mail"), max_length=75, required=False)
+    first_name = forms.CharField(label=gettext_lazy('First Name'), max_length=30, required=False)
+    last_name = forms.CharField(label=gettext_lazy('Last Name'), max_length=30, required=False)
+    email = forms.EmailField(label=gettext_lazy("E-Mail"), max_length=75, required=False)
     language = forms.ChoiceField(
         choices=(),
         initial=None,
         required=False,
-        help_text=ugettext_lazy(
+        help_text=gettext_lazy(
             "<i class=\"fa fa-info-circle\"></i> "
             "Becomes default language seen in Web Apps and reports (if applicable), "
             "but does not affect mobile applications. "
-            "Supported languages for reports are en, fr (partial), and hin (partial)."
+            "Supported languages for reports are en, fra (partial), and hin (partial)."
         )
     )
 
@@ -278,8 +307,8 @@ class BaseUserInfoForm(forms.Form):
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
     analytics_enabled = forms.BooleanField(
         required=False,
-        label=ugettext_lazy("Enable Tracking"),
-        help_text=ugettext_lazy(
+        label=gettext_lazy("Enable Tracking"),
+        help_text=gettext_lazy(
             "Allow Dimagi to collect usage information to improve CommCare. "
             "You can learn more about the information we collect and the ways "
             "we use it in our "
@@ -297,10 +326,10 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         username_controls = []
         if self.username:
             username_controls.append(hqcrispy.StaticField(
-                ugettext_lazy('Username'), self.username)
+                gettext_lazy('Username'), self.username)
             )
 
-        self.fields['language'].label = ugettext_lazy("My Language")
+        self.fields['language'].label = gettext_lazy("My Language")
 
         self.new_helper = FormHelper()
         self.new_helper.form_method = 'POST'
@@ -337,22 +366,22 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
         self.new_helper.layout = crispy.Layout(
             crispy.Fieldset(
-                ugettext_lazy("Basic"),
+                gettext_lazy("Basic"),
                 *basic_fields
             ),
             (hqcrispy.FieldsetAccordionGroup if self.collapse_other_options else crispy.Fieldset)(
-                ugettext_lazy("Other Options"),
+                gettext_lazy("Other Options"),
                 hqcrispy.Field('language'),
                 crispy.Div(hqcrispy.StaticField(
-                    ugettext_lazy('API Key'),
+                    gettext_lazy('API Key'),
                     format_html_lazy(
-                        ugettext_lazy('API key management has moved <a href="{}">here</a>.'),
+                        gettext_lazy('API key management has moved <a href="{}">here</a>.'),
                         reverse(ApiKeyView.urlname)),
                 )),
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Update My Information"),
+                    gettext_lazy("Update My Information"),
                     type='submit',
                     css_class='btn-primary',
                 )
@@ -385,29 +414,100 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 
 
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
+
+    # The value for this field is managed by CommCareUserActionForm. Defining
+    # the field here allows us to use CommCareUserFormSet.update_user() to set
+    # this property on the user.
     loadtest_factor = forms.IntegerField(
-        required=False, min_value=1, max_value=50000,
-        help_text=ugettext_lazy(
-            "Multiply this user's case load by a number for load testing on phones. "
-            "Leave blank for normal users."
-        ),
-        widget=forms.HiddenInput())
+        required=False,
+        widget=forms.HiddenInput(),
+    )
+
+    deactivate_after_date = forms.CharField(
+        label=gettext_lazy("Deactivate After"),
+        required=False,
+        help_text=gettext_lazy(
+            "When specified, the mobile worker is automatically deactivated "
+            "on the first day of the month and year selected."
+        )
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
-        self.fields['role'].help_text = _(
-            '<i class="fa fa-info-circle"></i> '
-            'Only applies to mobile workers who will be entering data using '
-            '<a href="https://wiki.commcarehq.org/display/commcarepublic/Web+Apps">'
-            'Web Apps</a>'
+        self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domain
         )
-        if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
-            self.fields['loadtest_factor'].widget = forms.TextInput()
+
+        if self.show_deactivate_after_date:
+            initial_deactivate_after_date = DeactivateMobileWorkerTrigger.get_deactivate_after_date(
+                self.domain, self.existing_user.user_id
+            )
+            if initial_deactivate_after_date is not None:
+                self.initial['deactivate_after_date'] = initial_deactivate_after_date.strftime('%m-%Y')
+        else:
+            del self.fields['deactivate_after_date']
+
+    def clean_deactivate_after_date(self):
+        return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
 
     @property
     def direct_properties(self):
-        indirect_props = ['role']
+        indirect_props = ['role', 'deactivate_after_date']
         return [k for k in self.fields if k not in indirect_props]
+
+    def update_user(self, **kwargs):
+        if self.show_deactivate_after_date:
+            DeactivateMobileWorkerTrigger.update_trigger(
+                self.domain,
+                self.existing_user.user_id,
+                self.cleaned_data['deactivate_after_date']
+            )
+        return super().update_user(**kwargs)
+
+
+class CommCareUserActionForm(BaseUpdateUserForm):
+
+    loadtest_factor = forms.IntegerField(
+        required=False,
+        min_value=1,
+        max_value=LOADTEST_HARD_LIMIT,
+        help_text=gettext_lazy(
+            "Multiply this user's case load by this number for load testing "
+            "on phones."
+        ),
+        widget=forms.TextInput()
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initial['loadtest_factor'] = self.existing_user.loadtest_factor or 1
+
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                _("Load testing"),
+                crispy.Field(
+                    'loadtest_factor',
+                    # This field is being added to the "user_information" form.
+                    # This allows us to reuse CommCareUserFormSet.update_user()
+                    # to set this property on the user. The "user_information"
+                    # form is defined in
+                    # corehq/apps/users/templates/users/partials/basic_info_form.html
+                    form='user_information',
+                ),
+                hqcrispy.FormActions(
+                    crispy.ButtonHolder(
+                        StrictButton(
+                            _('Update user'),
+                            type='submit',
+                            css_class='btn-primary',
+                            # This button submits the "user_information" form.
+                            form='user_information',
+                        )
+                    )
+                )
+            )
+        )
 
 
 class RoleForm(forms.Form):
@@ -424,7 +524,7 @@ class RoleForm(forms.Form):
 class SetUserPasswordForm(SetPasswordForm):
 
     new_password1 = forms.CharField(
-        label=ugettext_noop("New password"),
+        label=gettext_noop("New password"),
         widget=forms.PasswordInput(),
     )
 
@@ -436,11 +536,7 @@ class SetUserPasswordForm(SetPasswordForm):
         if self.project.strong_mobile_passwords:
             self.fields['new_password1'].widget = forms.TextInput()
             self.fields['new_password1'].help_text = format_html_lazy(
-                ('<i class="fa fa-warning"></i>{}<br />'
-                    '<span data-bind="text: passwordHelp, css: color">'),
-                ugettext_lazy(
-                    "This password is automatically generated. "
-                    "Please copy it or create your own. It will not be shown again."))
+                '<span id="help_text" data-bind="html: passwordHelp, css: color, click: firstSuggestion">')
             initial_password = generate_strong_password()
 
         self.helper = FormHelper()
@@ -451,6 +547,19 @@ class SetUserPasswordForm(SetPasswordForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper.form_action = reverse("change_password", args=[project.name, user_id])
+        if self.project.strong_mobile_passwords:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'),
+                           data_bind="enable: passwordSufficient(), click: submitCheck")
+                )
+            )
+        else:
+            submitButton = hqcrispy.FormActions(
+                crispy.ButtonHolder(
+                    Submit('submit', _('Reset Password'))
+                )
+            )
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Reset Password for Mobile Worker"),
@@ -463,11 +572,7 @@ class SetUserPasswordForm(SetPasswordForm):
                     'new_password2',
                     value=initial_password,
                 ),
-                hqcrispy.FormActions(
-                    crispy.ButtonHolder(
-                        Submit('submit', _('Reset Password'))
-                    )
-                ),
+                submitButton,
                 css_class="check-password",
             ),
         )
@@ -478,21 +583,27 @@ class SetUserPasswordForm(SetPasswordForm):
             return clean_password(password1)
         return password1
 
+    def save(self, commit=True):
+        user = super().save(commit=commit)
+        couch_user = CouchUser.from_django_user(self.user)
+        clear_login_attempts(couch_user)
+        return user
+
 
 class CommCareAccountForm(forms.Form):
     """
     Form for CommCareAccounts
     """
     username = forms.CharField(required=True)
-    password_1 = forms.CharField(label=ugettext_lazy('Password'), widget=PasswordInput(),
+    password_1 = forms.CharField(label=gettext_lazy('Password'), widget=PasswordInput(),
                                  required=True, min_length=1)
-    password_2 = forms.CharField(label=ugettext_lazy('Password (reenter)'), widget=PasswordInput(),
+    password_2 = forms.CharField(label=gettext_lazy('Password (reenter)'), widget=PasswordInput(),
                                  required=True, min_length=1)
     phone_number = forms.CharField(
         max_length=80,
         required=False,
-        help_text=ugettext_lazy("Please enter number, including "
-                                "international code, in digits only.")
+        help_text=gettext_lazy("Please enter number, including "
+                               "international code, in digits only.")
     )
 
     def __init__(self, *args, **kwargs):
@@ -541,7 +652,8 @@ class CommCareAccountForm(forms.Form):
 
         return self.cleaned_data
 
-validate_username = EmailValidator(message=ugettext_lazy('Username contains invalid characters.'))
+
+validate_username = EmailValidator(message=gettext_lazy('Username contains invalid characters.'))
 
 
 class NewMobileWorkerForm(forms.Form):
@@ -560,32 +672,32 @@ class NewMobileWorkerForm(forms.Form):
                 <!-- ko text: $root.usernameStatusMessage --><!-- /ko -->
             </span>
         """,
-        label=ugettext_noop("Username"),
+        label=gettext_noop("Username"),
     )
     first_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("First Name"),
+        label=gettext_noop("First Name"),
     )
     last_name = forms.CharField(
         max_length=30,
         required=False,
-        label=ugettext_noop("Last Name")
+        label=gettext_noop("Last Name")
     )
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
     )
     force_account_confirmation = forms.BooleanField(
-        label=ugettext_noop("Require Account Confirmation?"),
-        help_text=ugettext_noop(
+        label=gettext_noop("Require Account Confirmation?"),
+        help_text=gettext_noop(
             "The user's account will not be active until "
             "they have confirmed their email and set a password."
         ),
         required=False,
     )
     email = forms.EmailField(
-        label=ugettext_noop("Email"),
+        label=gettext_noop("Email"),
         required=False,
         help_text="""
             <span data-bind="visible: $root.emailStatus() !== $root.STATUS.NONE">
@@ -596,8 +708,8 @@ class NewMobileWorkerForm(forms.Form):
         """
     )
     send_account_confirmation_email = forms.BooleanField(
-        label=ugettext_noop("Send Account Confirmation Email Now?"),
-        help_text=ugettext_noop(
+        label=gettext_noop("Send Account Confirmation Email Now?"),
+        help_text=gettext_noop(
             "The user will be sent their account confirmation email now. "
             "Otherwise it must be sent manually from the Mobile Worker 'Deactivated Users' list."
         ),
@@ -607,7 +719,39 @@ class NewMobileWorkerForm(forms.Form):
         widget=forms.PasswordInput(),
         required=True,
         min_length=1,
-        label=ugettext_noop("Password"),
+        label=gettext_noop("Password"),
+    )
+    deactivate_after_date = forms.CharField(
+        label=gettext_lazy("Deactivate After"),
+        required=False,
+        help_text=gettext_lazy(
+            "When specified, the mobile worker is automatically deactivated "
+            "on the first day of the month and year selected."
+        ),
+    )
+    force_account_confirmation_by_sms = forms.BooleanField(
+        label=gettext_noop("Require Account Confirmation by SMS?"),
+        help_text=gettext_noop(
+            "If checked, the user will be sent a confirmation SMS and asked to set their password."
+        ),
+        required=False,
+    )
+    phone_number = forms.CharField(
+        required=False,
+        label=gettext_noop("Phone Number"),
+        help_text=gettext_noop(
+            """
+            <div data-bind="visible: $root.phoneStatusMessage().length === 0">
+                    Please enter number including country code, without (+) and in digits only.
+            </div>
+            <div id="phone-error">
+                <span data-bind="visible: $root.phoneStatus() !== $root.STATUS.NONE">
+                    <i class="fa fa-exclamation-triangle"
+                    data-bind="visible: $root.phoneStatus() === $root.STATUS.ERROR"></i>
+                    <!-- ko text: $root.phoneStatusMessage --><!-- /ko -->
+                </span>
+            </div>
+        """)
     )
 
     def __init__(self, project, request_user, *args, **kwargs):
@@ -618,6 +762,14 @@ class NewMobileWorkerForm(forms.Form):
         self.domain = self.project.name
         self.request_user = request_user
         self.can_access_all_locations = request_user.has_permission(self.domain, 'access_all_locations')
+
+        self.show_deactivate_after_date = EnterpriseMobileWorkerSettings.is_domain_using_custom_deactivation(
+            self.domain
+        )
+
+        if not self.show_deactivate_after_date:
+            del self.fields['deactivate_after_date']
+
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -626,7 +778,7 @@ class NewMobileWorkerForm(forms.Form):
             self.fields['new_password'].widget = forms.TextInput()
             self.fields['new_password'].help_text = format_html_lazy(
                 '<i class="fa fa-warning"></i>{}<br />',
-                ugettext_lazy(
+                gettext_lazy(
                     'This password is automatically generated. '
                     'Please copy it or create your own. It will not be shown again.'))
 
@@ -682,6 +834,33 @@ class NewMobileWorkerForm(forms.Form):
                 data_bind='value: send_account_confirmation_email',
             )
 
+        if TWO_STAGE_USER_PROVISIONING_BY_SMS.enabled(self.domain):
+            confirm_account_by_sms_field = crispy.Field(
+                'force_account_confirmation_by_sms',
+                data_bind='checked: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Div(
+                crispy.Field(
+                    'phone_number',
+                    data_bind="value: phone_number, valueUpdate: 'keyup'",
+                ),
+                data_bind='''
+                    css: {
+                        'has-error': $root.phoneStatus() === $root.STATUS.ERROR,
+                    },
+                '''
+            )
+        else:
+            confirm_account_by_sms_field = crispy.Hidden(
+                'force_account_confirmation_by_sms',
+                '',
+                data_bind='value: force_account_confirmation_by_sms',
+            )
+            phone_number_field = crispy.Hidden(
+                'phone_number',
+                '',
+                data_bind='value: phone_number',
+            )
 
         self.helper = HQModalFormHelper()
         self.helper.form_tag = False
@@ -715,6 +894,8 @@ class NewMobileWorkerForm(forms.Form):
                 confirm_account_field,
                 email_field,
                 send_email_field,
+                confirm_account_by_sms_field,
+                phone_number_field,
                 crispy.Div(
                     hqcrispy.B3MultiField(
                         _("Password"),
@@ -735,7 +916,12 @@ class NewMobileWorkerForm(forms.Form):
                                         {almost}
                                     <!-- /ko -->
                                     <!-- ko if: $root.passwordStatus() === $root.STATUS.ERROR -->
-                                        <i class="fa fa-warning"></i> {weak}
+                                        <!-- ko ifnot: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {short}
+                                        <!-- /ko -->
+                                        <!-- ko if: $root.passwordSatisfyLength() -->
+                                            <i class="fa fa-warning"></i> {weak}
+                                        <!-- /ko -->
                                     <!-- /ko -->
                                 <!-- /ko -->
 
@@ -743,7 +929,13 @@ class NewMobileWorkerForm(forms.Form):
                                     <i class="fa fa-info-circle"></i> {custom_warning}
                                 <!-- /ko -->
                                 <!-- ko if: $root.passwordStatus() === $root.STATUS.DISABLED -->
-                                    <i class="fa fa-warning"></i> {disabled}
+                                    <!-- ko if: $root.stagedUser().force_account_confirmation() -->
+                                        <i class="fa fa-warning"></i> {disabled_email}
+                                    <!-- /ko -->
+                                    <!-- ko if: !($root.stagedUser().force_account_confirmation())
+                                    && $root.stagedUser().force_account_confirmation_by_sms() -->
+                                        <i class="fa fa-warning"></i> {disabled_phone}
+                                    <!-- /ko -->
                                 <!-- /ko -->
                             </p>
                         '''.format(
@@ -753,8 +945,14 @@ class NewMobileWorkerForm(forms.Form):
                             almost=_("Your password is almost strong enough! Try adding numbers or symbols!"),
                             weak=_("Your password is too weak! Try adding numbers or symbols!"),
                             custom_warning=_(settings.CUSTOM_PASSWORD_STRENGTH_MESSAGE),
-                            disabled=_("Setting a password is disabled. "
-                                       "The user will set their own password on confirming their account email."),
+                            disabled_email=_("Setting a password is disabled. "
+                                            "The user will set their own password on "
+                                            "confirming their account email."),
+                            disabled_phone=_("Setting a password is disabled. "
+                                            "The user will set their own password on confirming "
+                                            "their account phone number."),
+                            short=_("Password must have at least {password_length} characters."
+                                    ).format(password_length=settings.MINIMUM_PASSWORD_LENGTH)
                         )),
                         required=True,
                     ),
@@ -768,6 +966,17 @@ class NewMobileWorkerForm(forms.Form):
                 ),
             )
         )
+
+        if self.show_deactivate_after_date:
+            self.helper.layout.append(
+                Fieldset(
+                    _("Auto-Deactivation Settings"),
+                    crispy.Field(
+                        'deactivate_after_date',
+                        data_bind="value: deactivate_after_date",
+                    ),
+                )
+            )
 
     def clean_email(self):
         clean_email = self.cleaned_data['email'].strip().lower()
@@ -793,10 +1002,13 @@ class NewMobileWorkerForm(forms.Form):
             return clean_password(cleaned_password)
         return cleaned_password
 
+    def clean_deactivate_after_date(self):
+        return clean_deactivate_after_date(self.cleaned_data['deactivate_after_date'])
+
 
 class GroupMembershipForm(forms.Form):
     selected_ids = forms.Field(
-        label=ugettext_lazy("Group Membership"),
+        label=gettext_lazy("Group Membership"),
         required=False,
         widget=Select2Ajax(multiple=True),
     )
@@ -804,7 +1016,7 @@ class GroupMembershipForm(forms.Form):
     def __init__(self, group_api_url, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
         fieldset_title = kwargs.pop(
-            'fieldset_title', ugettext_lazy("Edit Group Membership"))
+            'fieldset_title', gettext_lazy("Edit Group Membership"))
 
         super(GroupMembershipForm, self).__init__(*args, **kwargs)
         self.fields['selected_ids'].widget.set_url(group_api_url)
@@ -857,23 +1069,22 @@ class MultipleSelectionForm(forms.Form):
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-                multiselect_utils.createFullMultiselectWidget(
-                    'id_of_multiselect_field',
-                    django.gettext("Available Things"),
-                    django.gettext("Things Selected"),
-                    django.gettext("Search Things...")
-                );
+                multiselect_utils.createFullMultiselectWidget('id_of_multiselect_field', {
+                    selectableHeaderTitle: gettext("Available Things"),
+                    selectedHeaderTitle: gettext("Things Selected"),
+                    searchItemTitle: gettext("Search Things..."),
+                });
             });
         });
     """
     selected_ids = forms.MultipleChoiceField(
-        label=ugettext_lazy("Group Membership"),
+        label=gettext_lazy("Group Membership"),
         required=False,
     )
 
     def __init__(self, *args, **kwargs):
         submit_label = kwargs.pop('submit_label', "Update")
-        fieldset_title = kwargs.pop('fieldset_title', ugettext_lazy("Edit Group Membership"))
+        fieldset_title = kwargs.pop('fieldset_title', gettext_lazy("Edit Group Membership"))
 
         super(MultipleSelectionForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -900,6 +1111,7 @@ class PrimaryLocationWidget(forms.Widget):
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with LocationSelectWidget.
     """
+
     def __init__(self, css_id, source_css_id, attrs=None):
         """
         args:
@@ -935,17 +1147,17 @@ class PrimaryLocationWidget(forms.Widget):
 
 class CommtrackUserForm(forms.Form):
     assigned_locations = forms.CharField(
-        label=ugettext_noop("Locations"),
+        label=gettext_noop("Locations"),
         required=False,
         widget=forms.SelectMultiple(choices=[]),
     )
     primary_location = forms.CharField(
-        label=ugettext_noop("Primary Location"),
+        label=gettext_noop("Primary Location"),
         required=False,
-        help_text=ugettext_lazy('Primary Location must always be set to one of above locations')
+        help_text=gettext_lazy('Primary Location must always be set to one of above locations')
     )
     program_id = forms.ChoiceField(
-        label=ugettext_noop("Program"),
+        label=gettext_noop("Program"),
         choices=(),
         required=False
     )
@@ -1149,12 +1361,12 @@ class CommtrackUserForm(forms.Form):
 
 
 class DomainRequestForm(forms.Form):
-    full_name = forms.CharField(label=ugettext_lazy('Full Name'), required=True,
+    full_name = forms.CharField(label=gettext_lazy('Full Name'), required=True,
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.CharField(
-        label=ugettext_lazy('Email Address'),
+        label=gettext_lazy('Email Address'),
         required=True,
-        help_text=ugettext_lazy('You will use this email to log in.'),
+        help_text=gettext_lazy('You will use this email to log in.'),
         widget=forms.TextInput(attrs={'class': 'form-control'}),
     )
     domain = forms.CharField(widget=forms.HiddenInput(), required=True)
@@ -1163,7 +1375,7 @@ class DomainRequestForm(forms.Form):
     def form_actions(self):
         return hqcrispy.FormActions(
             twbscrispy.StrictButton(
-                ugettext_lazy('Request Access'),
+                gettext_lazy('Request Access'),
                 type='submit',
                 css_class='btn-primary',
             )
@@ -1192,7 +1404,8 @@ class DomainRequestForm(forms.Form):
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
-        super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
+        super(ConfirmExtraUserChargesForm, self).__init__(
+            account, domain, creating_user, data=data, *args, **kwargs)
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1208,7 +1421,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 'phone_number',
             ),
             crispy.Fieldset(
-                 _("Mailing Address"),
+                _("Mailing Address"),
                 'first_line',
                 'second_line',
                 'city',
@@ -1244,7 +1457,7 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
 
 class AddPhoneNumberForm(forms.Form):
     phone_number = forms.CharField(
-        max_length=50, help_text=ugettext_lazy('Please enter number, including country code, in digits only.')
+        max_length=50, help_text=gettext_lazy('Please enter number, including country code, in digits only.')
     )
 
     form_type = forms.CharField(initial='add-phonenumber', widget=forms.HiddenInput)
@@ -1269,7 +1482,7 @@ class AddPhoneNumberForm(forms.Form):
                 )
             )
         )
-        self.fields['phone_number'].label = ugettext_lazy('Phone number')
+        self.fields['phone_number'].label = gettext_lazy('Phone number')
 
 
 class CommCareUserFormSet(object):
@@ -1281,12 +1494,23 @@ class CommCareUserFormSet(object):
         self.request_user = request_user
         self.request = request
         self.data = data
+        self.loadtest_users_enabled = loadtest_users_enabled(domain)
 
     @property
     @memoized
     def user_form(self):
         return UpdateCommCareUserInfoForm(
             data=self.data, domain=self.domain, existing_user=self.editable_user, request=self.request)
+
+    @property
+    @memoized
+    def action_form(self):
+        return CommCareUserActionForm(
+            data=self.data,
+            domain=self.domain,
+            existing_user=self.editable_user,
+            request=self.request,
+        )
 
     @property
     @memoized
@@ -1315,22 +1539,41 @@ class CommCareUserFormSet(object):
 class UserFilterForm(forms.Form):
     USERNAMES_COLUMN_OPTION = 'usernames'
     COLUMNS_CHOICES = (
-        ('all', ugettext_noop('All')),
-        (USERNAMES_COLUMN_OPTION, ugettext_noop('Only Usernames'))
+        ('all', gettext_noop('All')),
+        (USERNAMES_COLUMN_OPTION, gettext_noop('Only Usernames'))
     )
-    role_id = forms.ChoiceField(label=ugettext_lazy('Role'), choices=(), required=False)
+    ACTIVE = 'active'
+    INACTIVE = 'inactive'
+
+    USER_ACTIVE_STATUS = [
+        ('show_all', gettext_lazy('Show All')),
+        (ACTIVE, gettext_lazy('Only Active')),
+        (INACTIVE, gettext_lazy('Only Deactivated'))
+    ]
+
+    role_id = forms.ChoiceField(label=gettext_lazy('Role'), choices=(), required=False)
     search_string = forms.CharField(
-        label=ugettext_lazy('Name or Username'),
+        label=gettext_lazy('Name or Username'),
         max_length=30,
         required=False
     )
     location_id = forms.CharField(
-        label=ugettext_noop("Location"),
+        label=gettext_noop("Location"),
         required=False,
+    )
+    selected_location_only = forms.BooleanField(
+        required=False,
+        label=_('Only include mobile workers at the selected location'),
+    )
+    user_active_status = forms.ChoiceField(
+        label=_('Active / Deactivated'),
+        choices=USER_ACTIVE_STATUS,
+        required=False,
+        widget=SelectToggle(choices=USER_ACTIVE_STATUS, attrs={'ko_value': 'user_active_status'}),
     )
     columns = forms.ChoiceField(
         required=False,
-        label=ugettext_noop("Columns"),
+        label=gettext_noop("Columns"),
         choices=COLUMNS_CHOICES,
         widget=SelectToggle(choices=COLUMNS_CHOICES, apply_bindings=False),
     )
@@ -1348,18 +1591,30 @@ class UserFilterForm(forms.Form):
         if self.user_type not in [MOBILE_USER_TYPE, WEB_USER_TYPE]:
             raise AssertionError(f"Invalid user type for UserFilterForm: {self.user_type}")
         super().__init__(*args, **kwargs)
-        self.fields['location_id'].widget = LocationSelectWidget(self.domain)
+
+        self.fields['location_id'].widget = LocationSelectWidget(
+            self.domain,
+            id='id_location_id',
+            placeholder=_("All Locations"),
+            attrs={'data-bind': 'value: location_id'},
+        )
+        self.fields['location_id'].widget.query_url = "{url}?show_all=true".format(
+            url=self.fields['location_id'].widget.query_url
+        )
+
         self.fields['location_id'].help_text = ExpandedMobileWorkerFilter.location_search_help
 
         roles = UserRole.objects.get_by_domain(self.domain)
         self.fields['role_id'].choices = [('', _('All Roles'))] + [
             (role.get_id, role.name or _('(No Name)')) for role in roles
+            if not role.is_commcare_user_default
         ]
 
         subdomains = EnterprisePermissions.get_domains(self.domain)
         self.fields['domains'].choices = [('all_project_spaces', _('All Project Spaces'))] + \
                                          [(self.domain, self.domain)] + \
                                          [(domain, domain) for domain in subdomains]
+
         self.helper = FormHelper()
         self.helper.form_method = 'GET'
         self.helper.form_id = 'user-filters'
@@ -1385,18 +1640,29 @@ class UserFilterForm(forms.Form):
             ),
             crispy.Field("search_string", data_bind="value: search_string"),
         ]
+
+        fieldset_label = _('Filter and Download Users')
         if self.user_type == MOBILE_USER_TYPE:
+            fieldset_label = _('Filter and Download Mobile Workers')
             fields += [
                 crispy.Div(
-                    crispy.Field("location_id", data_bind="value: location_id"),
+                    crispy.Field("location_id",),
                     data_bind="slideVisible: !isCrossDomain()",
                 ),
+                crispy.Div(
+                    crispy.Field(
+                        "selected_location_only",
+                        data_bind="checked: selected_location_only"
+                    ),
+                    data_bind="slideVisible: !isCrossDomain() && location_id",
+                ),
+                crispy.Field("user_active_status",),
                 crispy.Field("columns", data_bind="value: columns"),
             ]
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                _("Filter and Download Users"),
+                fieldset_label,
                 *fields,
             ),
             hqcrispy.FormActions(
@@ -1436,3 +1702,68 @@ class UserFilterForm(forms.Form):
             domains = EnterprisePermissions.get_domains(self.domain)
             domains += [self.domain]
         return sorted(domains)
+
+    def clean_user_active_status(self):
+        user_active_status = self.cleaned_data['user_active_status']
+
+        if user_active_status == self.ACTIVE:
+            return True
+        if user_active_status == self.INACTIVE:
+            return False
+        return None
+
+    def clean(self):
+        data = self.cleaned_data
+        user = self.couch_user
+
+        if not user.has_permission(self.domain, 'access_all_locations') and not data.get('location_id'):
+            # Add (web) user assigned_location_ids so as to
+            # 1) reflect all locations user is assigned to ('All' option)
+            # 2) restrict user access
+            domain_membership = user.get_domain_membership(self.domain)
+            if domain_membership and domain_membership.assigned_location_ids:
+                data['web_user_assigned_location_ids'] = list(domain_membership.assigned_location_ids)
+
+        return data
+
+
+class TableauUserForm(forms.Form):
+    role = forms.ChoiceField(
+        label=gettext_noop("Role"),
+        choices=TableauUser.Roles.choices,
+        required=True,
+    )
+    groups = forms.MultipleChoiceField(
+        label=gettext_noop("Groups"),
+        choices=[],
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        self.domain = kwargs.pop('domain', None)
+        self.username = kwargs.pop('username', None)
+        super(TableauUserForm, self).__init__(*args, **kwargs)
+        self.all_tableau_groups = get_all_tableau_groups(self.domain)
+        user_group_names = [group.name for group in get_tableau_groups_for_user(self.domain, self.username)]
+        self.fields['groups'].initial = []
+        for i, group in enumerate(self.all_tableau_groups):
+            # Add a choice for each tableau group on the server
+            self.fields['groups'].choices.append((i, group.name))
+            if group.name in user_group_names:
+                # Pre-choose groups that the user already belongs to
+                self.fields['groups'].initial.append(i)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
+    def save(self, username, commit=True):
+        groups = [self.all_tableau_groups[int(i)] for i in self.cleaned_data['groups']]
+        update_tableau_user(self.domain, username, self.cleaned_data['role'], groups)

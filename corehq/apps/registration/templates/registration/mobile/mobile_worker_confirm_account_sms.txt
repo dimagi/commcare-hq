@@ -1,0 +1,16 @@
+{% load i18n %}
+{% blocktrans %}Hello {{ name }},{% endblocktrans %}
+
+{% blocktrans %}
+You have been added to the "{{ domain }}" project on {{ hq_name }}.
+{% endblocktrans %}
+{% blocktrans %}
+To confirm your account, please open the following link in your browser: {{ url}}
+{% endblocktrans %}
+{% blocktrans %}
+Once you confirm your account you will be able to access and submit data in the "{{ domain }}" project on {{ hq_name }}.
+Your username to login is {{ username }}
+{% endblocktrans %}
+{% blocktrans %}Thanks,{% endblocktrans %}
+
+{% blocktrans %}-The {{ hq_name }} team{% endblocktrans %}

@@ -5,6 +5,7 @@ hqDefine("sms/js/settings", [
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/components.ko',    // select toggle widget
     'bootstrap-timepicker/js/bootstrap-timepicker',
+    'hqwebapp/js/widgets', //multi-emails
 ], function(
     $,
     ko,
@@ -48,6 +49,7 @@ hqDefine("sms/js/settings", [
             self.sms_conversation_times = ko.observableArray();
             self.use_custom_chat_template = ko.observable();
             self.sms_case_registration_enabled = ko.observable();
+            self.sms_mobile_worker_registration_enabled = ko.observable();
             self.sms_case_registration_owner_id = settingsSelect2Handler(
                 initial.sms_case_registration_owner_id,
                 'sms_case_registration_owner_id'
@@ -78,6 +80,10 @@ hqDefine("sms/js/settings", [
 
             self.showRegistrationOptions = ko.computed(function() {
                 return self.sms_case_registration_enabled() === "ENABLED";
+            });
+
+            self.showAdminAlertEmails = ko.computed(function () {
+                return self.sms_mobile_worker_registration_enabled() === "ENABLED";
             });
 
             self.addRestrictedSMSTime = function() {
@@ -132,6 +138,7 @@ hqDefine("sms/js/settings", [
                 self.use_sms_conversation_times(initial.use_sms_conversation_times);
                 self.use_custom_chat_template(initial.use_custom_chat_template);
                 self.sms_case_registration_enabled(initial.sms_case_registration_enabled);
+                self.sms_mobile_worker_registration_enabled(initial.sms_mobile_worker_registration_enabled);
                 self.override_daily_outbound_sms_limit(initial.override_daily_outbound_sms_limit);
 
                 var i, window;

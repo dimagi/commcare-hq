@@ -2,7 +2,7 @@
 {% if email %}
   <p>
     {% blocktrans %}
-      This is a {{ report_type }} from <a href="{{ DNS_name }}">CommCareHQ</a> for the project '{{ domain }}'.
+      This is a {{ report_type }} from <a href="{{ DNS_name }}">CommCare HQ</a> for the project '{{ domain }}'.
     {% endblocktrans %}
   </p>
 {% endif %}
@@ -36,14 +36,14 @@
         {% endif %}
       </p>
     {% endif %}
-    {{ report.content|safe }}
+    {{ report.content }}
   </div>
 {% endfor %}
 
 {% if email %}
   <p>
     {% blocktrans %}
-      You are receiving this automated email from <a href="{{ DNS_name }}">CommCareHQ</a>
+      You are receiving this automated email from <a href="{{ DNS_name }}">CommCare HQ</a>
       because the user {{ owner_name }} added you as a recipient of their report.
     {% endblocktrans %}
   </p>

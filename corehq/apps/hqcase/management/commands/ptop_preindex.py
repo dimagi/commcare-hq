@@ -1,4 +1,3 @@
-# http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
 from datetime import datetime
 
 from django.conf import settings
@@ -6,10 +5,17 @@ from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand
 
 import gevent
-from gevent import monkey
 
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import (
-    FACTORIES_BY_SLUG,
+    DomainReindexerFactory,
+    UserReindexerFactory,
+    GroupReindexerFactory,
+    GroupToUserReindexerFactory,
+    SqlCaseReindexerFactory,
+    SqlFormReindexerFactory,
+    CaseSearchReindexerFactory,
+    SmsReindexerFactory,
+    AppReindexerFactory,
 )
 from corehq.elastic import get_es_new
 from corehq.pillows.user import add_demo_user_to_user_index
@@ -23,35 +29,30 @@ from pillowtop.es_utils import (
     APP_HQ_INDEX_NAME,
     GROUP_HQ_INDEX_NAME,
     SMS_HQ_INDEX_NAME,
-    REPORT_CASE_HQ_INDEX_NAME,
-    REPORT_XFORM_HQ_INDEX_NAME,
-    CASE_SEARCH_HQ_INDEX_NAME
+    CASE_SEARCH_HQ_INDEX_NAME,
 )
-
-
-monkey.patch_all()
+from pillowtop.reindexer.reindexer import ReindexerFactory
 
 
 def get_reindex_commands(hq_index_name):
-    # pillow_command_map is a mapping from es pillows
-    # to lists of management commands or functions
-    # that should be used to rebuild the index from scratch
+    """Return a list of ``ReindexerFactory`` classes or functions that are used
+    to rebuild the index from scratch.
+
+    :param hq_index_name: ``str`` name of the Elastic index alias"""
     pillow_command_map = {
-        DOMAIN_HQ_INDEX_NAME: ['domain'],
-        CASE_HQ_INDEX_NAME: ['case', 'sql-case'],
-        XFORM_HQ_INDEX_NAME: ['form', 'sql-form'],
+        DOMAIN_HQ_INDEX_NAME: [DomainReindexerFactory],
+        CASE_HQ_INDEX_NAME: [SqlCaseReindexerFactory],
+        XFORM_HQ_INDEX_NAME: [SqlFormReindexerFactory],
         # groupstousers indexing must happen after all users are indexed
         USER_HQ_INDEX_NAME: [
-            'user',
+            UserReindexerFactory,
             add_demo_user_to_user_index,
-            'groups-to-user',
+            GroupToUserReindexerFactory,
         ],
-        APP_HQ_INDEX_NAME: ['app'],
-        GROUP_HQ_INDEX_NAME: ['group'],
-        REPORT_XFORM_HQ_INDEX_NAME: ['report-xform'],
-        REPORT_CASE_HQ_INDEX_NAME: ['report-case'],
-        CASE_SEARCH_HQ_INDEX_NAME: ['case-search'],
-        SMS_HQ_INDEX_NAME: ['sms'],
+        APP_HQ_INDEX_NAME: [AppReindexerFactory],
+        GROUP_HQ_INDEX_NAME: [GroupReindexerFactory],
+        CASE_SEARCH_HQ_INDEX_NAME: [CaseSearchReindexerFactory],
+        SMS_HQ_INDEX_NAME: [SmsReindexerFactory],
     }
     return pillow_command_map.get(hq_index_name, [])
 
@@ -59,12 +60,19 @@ def get_reindex_commands(hq_index_name):
 def do_reindex(hq_index_name, reset):
     print("Starting pillow preindex %s" % hq_index_name)
     reindex_commands = get_reindex_commands(hq_index_name)
-    for reindex_command in reindex_commands:
-        if isinstance(reindex_command, str):
-            kwargs = {"reset": True} if reset else {}
-            FACTORIES_BY_SLUG[reindex_command](**kwargs).build().reindex()
+    for factory_or_func in reindex_commands:
+        if isinstance(factory_or_func, type):
+            if not issubclass(factory_or_func, ReindexerFactory):
+                raise ValueError(f"expected ReindexerFactory, got: {factory_or_func!r}")
+            kwargs = {}
+            reindex_args = ReindexerFactory.resumable_reindexer_args
+            if reset \
+                    and factory_or_func.arg_contributors \
+                    and reindex_args in factory_or_func.arg_contributors:
+                kwargs["reset"] = True
+            factory_or_func(**kwargs).build().reindex()
         else:
-            reindex_command()
+            factory_or_func()
     print("Pillow preindex finished %s" % hq_index_name)
 
 
@@ -85,13 +93,16 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         runs = []
-        all_es_indices = get_all_expected_es_indices()
+        all_es_indices = list(get_all_expected_es_indices())
         es = get_es_new()
-        indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
 
-        if not indices_needing_reindex:
-            print('Nothing needs to be reindexed')
-            return
+        if options['reset']:
+            indices_needing_reindex = all_es_indices
+        else:
+            indices_needing_reindex = [info for info in all_es_indices if not es.indices.exists(info.index)]
+            if not indices_needing_reindex:
+                print('Nothing needs to be reindexed')
+                return
 
         print("Reindexing:\n\t", end=' ')
         print('\n\t'.join(map(str, indices_needing_reindex)))
@@ -113,8 +124,8 @@ class Command(BaseCommand):
         for index_info in indices_needing_reindex:
             # loop through pillows once before running greenlets
             # to fail hard on misconfigured pillows
-            reindex_command = get_reindex_commands(index_info.hq_index_name)
-            if not reindex_command:
+            reindex_commands = get_reindex_commands(index_info.hq_index_name)
+            if not reindex_commands:
                 raise Exception(
                     "Error, pillow [%s] is not configured "
                     "with its own management command reindex command "

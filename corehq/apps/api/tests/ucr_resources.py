@@ -1,24 +1,26 @@
 import base64
 import json
 import uuid
+from urllib.parse import parse_qs, urlparse
 
 from django.http import QueryDict
 from django.urls import reverse
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.api.resources import v0_5
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     ReportConfiguration,
 )
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.users.models import WebUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 
+from ...userreports.util import get_indicator_adapter
 from .utils import APIResourceTest
 
 
@@ -28,7 +30,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        super(TestSimpleReportConfigurationResource, cls).setUpClass()
+        super().setUpClass()
 
         cls.report_columns = [
             {
@@ -75,6 +77,7 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             table_id=uuid.uuid4().hex,
         )
         cls.data_source.save()
+        cls.addClassCleanup(cls.data_source.delete)
 
         cls.report_configuration = ReportConfiguration(
             title=cls.report_title,
@@ -84,11 +87,13 @@ class TestSimpleReportConfigurationResource(APIResourceTest):
             filters=cls.report_filters
         )
         cls.report_configuration.save()
+        cls.addClassCleanup(cls.report_configuration.delete)
 
         another_report_configuration = ReportConfiguration(
             domain=cls.domain.name, config_id=cls.data_source._id, columns=[], filters=[]
         )
         another_report_configuration.save()
+        cls.addClassCleanup(another_report_configuration.delete)
 
     def test_get_detail(self):
         response = self._assert_auth_get_resource(
@@ -175,7 +180,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        super(TestConfigurableReportDataResource, cls).setUpClass()
+        super().setUpClass()
 
         case_type = "my_case_type"
         cls.field_name = "my_field"
@@ -184,14 +189,14 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.cases = []
         for val in cls.case_property_values:
             id = uuid.uuid4().hex
-            case_block = CaseBlock.deprecated_init(
+            case_block = CaseBlock(
                 create=True,
                 case_id=id,
                 case_type=case_type,
                 update={cls.field_name: val},
-            ).as_xml()
-            post_case_blocks([case_block], {'domain': cls.domain.name})
-            cls.cases.append(CaseAccessors(cls.domain.name).get_case(id))
+            ).as_text()
+            submit_case_blocks(case_block, domain=cls.domain.name)
+            cls.cases.append(CommCareCase.objects.get_case(id, cls.domain.name))
 
         cls.report_columns = [
             {
@@ -213,7 +218,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.data_source = DataSourceConfiguration(
             domain=cls.domain.name,
             referenced_doc_type="CommCareCase",
-            table_id=uuid.uuid4().hex,
+            table_id='ucr-resources-table',
             configured_filter={
                 "type": "boolean_expression",
                 "operator": "eq",
@@ -249,6 +254,9 @@ class TestConfigurableReportDataResource(APIResourceTest):
         cls.data_source.validate()
         cls.data_source.save()
         rebuild_indicators(cls.data_source._id)
+        cls.addClassCleanup(cls.data_source.delete)
+        adapter = get_indicator_adapter(cls.data_source)
+        cls.addClassCleanup(adapter.drop_table)
 
         cls.report_configuration = ReportConfiguration(
             domain=cls.domain.name,
@@ -258,6 +266,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
             filters=cls.report_filters,
         )
         cls.report_configuration.save()
+        cls.addClassCleanup(cls.report_configuration.delete)
 
     def test_fetching_data(self):
         response = self.client.get(
@@ -286,6 +295,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
             filters=[],
         )
         aggregated_report.save()
+        self.addCleanup(aggregated_report.delete)
 
         response = self.client.get(
             self.single_endpoint(aggregated_report._id))
@@ -338,7 +348,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         single_endpoint = self.single_endpoint("123", {"offset": 150, "limit": 50, "some_filter": "bar"})
 
         def _get_query_params(url):
-            from six.moves.urllib.parse import parse_qs, urlparse
             return parse_qs(urlparse(url).query)
 
         self.assertEqual(next.split('?')[0], single_endpoint.split('?')[0])
@@ -372,7 +381,7 @@ class TestConfigurableReportDataResource(APIResourceTest):
 
         wrong_domain = Domain.get_or_create_with_name(wrong_domain_name, is_active=True)
         self.addCleanup(wrong_domain.delete)
-        user_in_wrong_domain = WebUser.create(
+        WebUser.create(
             wrong_domain_name, user_in_wrong_domain_name, user_in_wrong_domain_password, None, None
         )
 

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 
 from django.test import SimpleTestCase, TestCase
-from unittest.mock import patch
 
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -9,17 +8,17 @@ from corehq.apps.custom_data_fields.models import (
     Field,
     PROFILE_SLUG,
 )
+from corehq.apps.users.models_role import UserRole
+from corehq.apps.users.role_utils import UserRolePresets
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser
+from corehq.apps.users.models import CommCareUser, DeviceAppMeta, WebUser, CouchUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import (
     TestFormMetadata,
     get_simple_wrapped_form,
 )
 from corehq.util.test_utils import softer_assert
-
-from corehq.apps.users.models import MAX_LOGIN_ATTEMPTS
 
 
 class UserModelTest(TestCase):
@@ -48,8 +47,9 @@ class UserModelTest(TestCase):
         self.domain_obj.delete()
         super(UserModelTest, self).tearDown()
 
-    def create_commcare_user(self, username):
-        return CommCareUser.create(
+    def create_user(self, username, is_web_user=True):
+        UserClass = WebUser if is_web_user else CommCareUser
+        return UserClass.create(
             domain=self.domain,
             username=username,
             password='***',
@@ -174,25 +174,36 @@ class UserModelTest(TestCase):
         definition.delete()
         web_user.delete(self.domain, deleted_by=None)
 
-    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
-    def test_commcare_user_is_locked_only_with_toggle(self, mock_lockout_enabled_for_domain):
-        # Web Users should always be locked out when they go beyond
-        # the the max login attempts,
-        # but Commcare Users need an additional domain toggle
-        commcare_user = self.create_commcare_user('test_user')
-        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
-        mock_lockout_enabled_for_domain.return_value = False
+    def test_commcare_user_lockout_limits(self):
+        commcare_user = self.create_user('test_user', is_web_user=False)
 
+        with self.subTest('User is locked out'):
+            commcare_user.login_attempts = 500
+            self.assertTrue(commcare_user.is_locked_out())
+
+        with self.subTest('User is not locked out'):
+            commcare_user.login_attempts = 499
+            self.assertFalse(commcare_user.is_locked_out())
+
+    def test_web_user_lockout_limits(self):
+        web_user = self.create_user('test_user', is_web_user=True)
+
+        with self.subTest('User is locked out'):
+            web_user.login_attempts = 5
+            self.assertTrue(web_user.is_locked_out())
+
+        with self.subTest('User is not locked out'):
+            web_user.login_attempts = 4
+            self.assertFalse(web_user.is_locked_out())
+
+    def test_commcare_user_with_no_lockouts_is_not_locked_out(self):
+        commcare_user = self.create_user('test_user', is_web_user=False)
+
+        self.domain_obj.disable_mobile_login_lockout = True
+        self.domain_obj.save()
+
+        commcare_user.login_attempts = 100
         self.assertFalse(commcare_user.is_locked_out())
-
-    @patch('corehq.apps.users.models.toggles.MOBILE_LOGIN_LOCKOUT.enabled')
-    def test_commcare_user_should_be_locked_out(self, mock_lockout_enabled_for_domain):
-        # Make sure the we know the user should be locked, if not for the toggle
-        commcare_user = self.create_commcare_user('test_user')
-        commcare_user.login_attempts = MAX_LOGIN_ATTEMPTS
-        mock_lockout_enabled_for_domain.return_value = False
-
-        self.assertTrue(commcare_user.should_be_locked_out())
 
 
 class UserDeviceTest(SimpleTestCase):
@@ -263,38 +274,105 @@ class UserDeviceTest(SimpleTestCase):
         app_meta = device.get_meta_for_app('123')
         self.assertIsNotNone(app_meta)
 
-    def test_merge_device_app_meta(self):
-        m1 = DeviceAppMeta(
-            build_id='build1',
-            build_version=1,
-            last_submission=datetime.utcnow(),
-            num_unsent_forms=1
-        )
-        m2 = DeviceAppMeta(
-            build_id='build2',
-            build_version=2,
-            last_submission=datetime.utcnow(),
-        )
 
-        m2.merge(m1)
-        self.assertNotEqual(m2.build_id, m1.build_id)
-        self.assertNotEqual(m2.build_version, m1.build_version)
-        self.assertNotEqual(m2.last_submission, m1.last_submission)
-        self.assertIsNone(m2.num_unsent_forms)
+class TestCommCareUserRoles(TestCase):
+    user_class = CommCareUser
 
-        m1.merge(m2)
-        self.assertEqual(m1.build_id, m2.build_id)
-        self.assertEqual(m1.build_version, m2.build_version)
-        self.assertEqual(m1.last_submission, m2.last_submission)
-        self.assertEqual(m1.num_unsent_forms, 1)
+    @classmethod
+    def setUpClass(cls):
+        super(TestCommCareUserRoles, cls).setUpClass()
+        cls.domain = 'test-user-role'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.get_db().delete_doc, cls.domain_obj)
 
-    def test_merge_device_app_meta_last_is_none(self):
-        m1 = DeviceAppMeta(
-            last_submission=datetime.utcnow(),
+        cls.role1 = UserRole.create(domain=cls.domain, name="role1")
+        cls.role2 = UserRole.create(domain=cls.domain, name="role2")
+        cls.mobile_worker_default_role = UserRole.commcare_user_default(cls.domain)
+
+    def test_create_user_without_role(self):
+        user = self._create_user('scotch game')
+
+        # expect that a CommCareUser without a role will get the default role
+        self.check_role(user, self.mobile_worker_default_role)
+
+    def test_create_user_with_role(self):
+        user = self._create_user('vienna game', role_id=self.role1.get_id)
+        self.check_role(user, self.role1)
+
+    def test_set_role(self):
+        user = self._create_user("bird's opening")
+
+        user.set_role(self.domain, self.role1.get_qualified_id())
+        user.save()
+
+        # check that the role is applied to the current user object
+        self.check_role(user, self.role1)
+
+        # check that a fresh object from the DB is correct
+        user = CouchUser.get_by_username(user.username)
+        self.check_role(user, self.role1)
+
+    def test_update_role(self):
+        user = self._create_user("alekhine's defense", role_id=self.role1.get_id)
+
+        user.set_role(self.domain, self.role2.get_qualified_id())
+        user.save()
+
+        # check that the role is applied to the current user object
+        self.check_role(user, self.role2)
+
+        # check that a fresh object from the DB is correct
+        user = CouchUser.get_by_username(user.username)
+        self.check_role(user, self.role2)
+
+    def test_role_deleted(self):
+        role = UserRole.create(self.domain, 'new')
+        user = self._create_user("king's gambit", role_id=role.get_id)
+        self.check_role(user, role)
+
+        role.delete()
+
+        user = CouchUser.get_by_username(user.username)
+        self.assertIsNone(user.get_role(self.domain))
+
+    def check_role(self, user, expected, domain=None):
+        role = user.get_role(domain or self.domain)
+        self.assertIsNotNone(role)
+        self.assertEqual(role.get_qualified_id(), expected.get_qualified_id())
+
+    def _create_user(self, username, role_id=None):
+        user = self.user_class.create(
+            domain=self.domain,
+            username=username,
+            password='***',
+            created_by=None,
+            created_via=None,
+            role_id=role_id
         )
-        m2 = DeviceAppMeta(
-            last_sync=datetime.utcnow(),
-        )
+        self.addCleanup(user.delete, None, None)
+        return user
 
-        m1.merge(m2)
-        self.assertEqual(m1.last_sync, m2.last_sync)
+
+class TestWebUserRoles(TestCommCareUserRoles):
+    user_class = WebUser
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain2 = 'test-user-role2'
+        cls.domain_obj2 = create_domain(cls.domain2)
+        cls.addClassCleanup(cls.domain_obj2.get_db().delete_doc, cls.domain_obj2)
+
+    def test_create_user_without_role(self):
+        user = self._create_user('scotch game')
+
+        # web users don't have default roles
+        self.assertIsNone(user.get_role(self.domain))
+
+    def test_roles_multiple_domains(self):
+        user = self._create_user("alekhine's defense")
+        user.add_as_web_user(self.domain, self.role1.get_qualified_id())
+        user.add_as_web_user(self.domain2, self.role2.get_qualified_id())
+
+        self.check_role(user, self.role1, self.domain)
+        self.check_role(user, self.role2, self.domain2)

@@ -36,10 +36,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider('ExportDataSchema'),
     DocTypeIDProvider('CaseExportInstance'),
     DocTypeIDProvider('CaseExportDataSchema'),
-    DocTypeIDProvider('FixtureOwnership'),
-    DocTypeIDProvider('FixtureDataType'),
-    DocTypeIDProvider('FixtureDataItem'),
-    ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
 }
 
@@ -100,8 +96,8 @@ class ToggleDumper(DataDumper):
 
 def _get_toggles_to_migrate(domain):
     from corehq.toggles import all_toggles, NAMESPACE_DOMAIN
-    from toggle.models import Toggle
-    from toggle.shortcuts import namespaced_item
+    from corehq.toggles.models import Toggle
+    from corehq.toggles.shortcuts import namespaced_item
 
     domain_item = namespaced_item(domain, NAMESPACE_DOMAIN)
     usernames = set(get_all_usernames_by_domain(domain))

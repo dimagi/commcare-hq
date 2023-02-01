@@ -8,14 +8,17 @@ from collections import OrderedDict, namedtuple
 
 from django.conf import settings
 from django.contrib import messages
+from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.http.response import Http404, JsonResponse
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import View
+from django.utils.html import format_html
 
 import six.moves.urllib.error
 import six.moves.urllib.parse
@@ -37,6 +40,7 @@ from dimagi.utils.couch.undo import (
 )
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
+from no_exceptions.exceptions import HttpException
 from pillowtop.dao.exceptions import DocumentNotFoundError
 
 from corehq import toggles
@@ -47,13 +51,17 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     update_hubspot_properties,
 )
+from corehq.apps.api.decorators import api_throttle
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import purge_report_from_mobile_ucr
 from corehq.apps.change_feed.data_sources import (
     get_document_store_for_doc_type,
 )
-from corehq.apps.domain.decorators import api_auth, login_and_domain_required, domain_admin_required
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.decorators import (
+    api_auth_with_scope,
+    login_and_domain_required,
+)
+from corehq.apps.domain.models import AllowedUCRExpressionSettings, Domain
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.hqwebapp.decorators import (
     use_datatables,
@@ -64,14 +72,18 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.linked_domain.models import DomainLink, ReportLinkDetail
-from corehq.apps.linked_domain.ucr import create_linked_ucr, linked_downstream_reports_by_domain
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
+from corehq.apps.hqwebapp.utils.html import safe_replace
 from corehq.apps.linked_domain.util import is_linked_report
 from corehq.apps.locations.permissions import conditionally_location_safe
+from corehq.apps.registry.helper import DataRegistryHelper
+from corehq.apps.registry.utils import RegistryPermissionCheck
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.reports.dispatcher import cls_to_view_login_and_domain
 from corehq.apps.saved_reports.models import ReportConfig
+from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.userreports.app_manager.data_source_meta import (
+    DATA_SOURCE_TYPE_CASE,
     DATA_SOURCE_TYPE_RAW,
 )
 from corehq.apps.userreports.app_manager.helpers import (
@@ -86,7 +98,10 @@ from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     TEMP_REPORT_PREFIX,
 )
-from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
+from corehq.apps.userreports.dbaccessors import (
+    get_datasources_for_domain,
+    get_report_and_registry_report_configs_for_domain
+)
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -98,15 +113,19 @@ from corehq.apps.userreports.exceptions import (
 )
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
+from corehq.apps.userreports.forms import UCRExpressionForm
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
 from corehq.apps.userreports.models import (
     DataSourceConfiguration,
+    RegistryDataSourceConfiguration,
+    RegistryReportConfiguration,
     ReportConfiguration,
-    StaticDataSourceConfiguration,
     StaticReportConfiguration,
+    UCRExpression,
     get_datasource_config,
     get_report_config,
     id_is_static,
+    is_data_registry_report,
     report_config_id_is_static,
 )
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
@@ -124,7 +143,10 @@ from corehq.apps.userreports.reports.filters.choice_providers import (
     ChoiceQueryContext,
 )
 from corehq.apps.userreports.reports.util import report_has_location_filter
-from corehq.apps.userreports.reports.view import ConfigurableReportView, delete_report_config
+from corehq.apps.userreports.reports.view import (
+    ConfigurableReportView,
+    delete_report_config,
+)
 from corehq.apps.userreports.specs import EvaluationContext, FactoryContext
 from corehq.apps.userreports.tasks import (
     rebuild_indicators,
@@ -139,14 +161,18 @@ from corehq.apps.userreports.ui.forms import (
 from corehq.apps.userreports.util import (
     add_event,
     allowed_report_builder_reports,
-    get_referring_apps,
     get_indicator_adapter,
+    get_referring_apps,
     has_report_builder_access,
     has_report_builder_add_on_privilege,
     number_of_report_builder_reports,
+    wrap_report_config_by_type,
 )
-from corehq.apps.users.decorators import get_permission_name, require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.decorators import (
+    get_permission_name,
+    require_permission,
+)
+from corehq.apps.users.models import HqPermissions
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util import reverse
 from corehq.util.couch import get_document_or_404
@@ -189,15 +215,20 @@ def swallow_programming_errors(fn):
 
 @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
-    section_name = ugettext_lazy("Configurable Reports")
+    section_name = gettext_lazy("Configurable Reports")
 
     @property
     def main_context(self):
         static_reports = list(StaticReportConfiguration.by_domain(self.domain))
         context = super(BaseUserConfigReportsView, self).main_context
         context.update({
-            'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
-            'data_sources': get_datasources_for_domain(self.domain, include_static=True)
+            'reports': (
+                ReportConfiguration.by_domain(self.domain)
+                + RegistryReportConfiguration.by_domain(self.domain)
+                + static_reports
+            ),
+            'data_sources': get_datasources_for_domain(self.domain, include_static=True),
+            'use_updated_ucr_naming': toggle_enabled(self.request, toggles.UCR_UPDATED_NAMING)
         })
         if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
             from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
@@ -214,11 +245,14 @@ class BaseUserConfigReportsView(BaseDomainView):
 
     def dispatch(self, *args, **kwargs):
         allow_access_to_ucrs = (
-            self.request.couch_user.has_permission(
+            hasattr(self.request, 'couch_user') and self.request.couch_user.has_permission(
                 self.domain,
-                get_permission_name(Permissions.edit_ucrs)
+                get_permission_name(HqPermissions.edit_ucrs)
             )
         )
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.section_name = gettext_lazy("Custom Web Reports")
+
         if allow_access_to_ucrs:
             return super().dispatch(*args, **kwargs)
         raise Http404()
@@ -227,7 +261,7 @@ class BaseUserConfigReportsView(BaseDomainView):
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
     urlname = 'configurable_reports_home'
     template_name = 'userreports/configurable_reports_home.html'
-    page_title = ugettext_lazy("Reports Home")
+    page_title = gettext_lazy("Reports Home")
 
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
@@ -253,9 +287,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'report': self.config,
             'referring_apps': get_referring_apps(self.domain, self.report_id),
-            'linked_report_domain_list': linked_downstream_reports_by_domain(
-                self.domain, self.report_id
-            ),
         }
 
     @property
@@ -269,7 +300,11 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def read_only(self):
         if self.report_id is not None:
             return (report_config_id_is_static(self.report_id)
-                    or is_linked_report(self.config))
+                    or is_linked_report(self.config)
+                    or (
+                        is_data_registry_report(self.config)
+                        and not toggles.DATA_REGISTRY_UCR.enabled(self.domain)
+            ))
         return False
 
     @property
@@ -293,17 +328,17 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
 
 class EditConfigReportView(BaseEditConfigReportView):
     urlname = 'edit_configurable_report'
-    page_title = ugettext_lazy("Edit Report")
+    page_title = gettext_lazy("Edit Report")
 
 
 class CreateConfigReportView(BaseEditConfigReportView):
     urlname = 'create_configurable_report'
-    page_title = ugettext_lazy("Create Report")
+    page_title = gettext_lazy("Create Report")
 
 
 class ReportBuilderView(BaseDomainView):
 
-    @method_decorator(require_permission(Permissions.edit_reports))
+    @method_decorator(require_permission(HqPermissions.edit_reports))
     @cls_to_view_login_and_domain
     @use_daterangepicker
     @use_datatables
@@ -346,7 +381,7 @@ def paywall_home(domain):
 
 
 class ReportBuilderPaywallBase(BaseDomainView):
-    page_title = ugettext_lazy('Subscribe')
+    page_title = gettext_lazy('Subscribe')
 
     @property
     def section_name(self):
@@ -365,7 +400,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
     template_name = "userreports/paywall/pricing.html"
     urlname = 'report_builder_paywall_pricing'
-    page_title = ugettext_lazy('Pricing')
+    page_title = gettext_lazy('Pricing')
 
     @property
     def page_context(self):
@@ -399,13 +434,13 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
             settings.DEFAULT_FROM_EMAIL,
             [settings.SALES_EMAIL],
         )
-        update_hubspot_properties.delay(request.couch_user, {'report_builder_subscription_request': 'yes'})
+        update_hubspot_properties.delay(request.couch_user.get_id, {'report_builder_subscription_request': 'yes'})
         return self.get(request, domain, *args, **kwargs)
 
 
 class ReportBuilderDataSourceSelect(ReportBuilderView):
     template_name = 'userreports/reportbuilder/data_source_select.html'
-    page_title = ugettext_lazy('Create Report')
+    page_title = gettext_lazy('Create Report')
     urlname = 'report_builder_select_source'
 
     @property
@@ -415,6 +450,7 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
             "domain": self.domain,
             'report': {"title": _("Create New Report")},
             'form': self.form,
+            "dropdown_map": self.form.dropdown_map,
         }
         return context
 
@@ -423,8 +459,8 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
     def form(self):
         max_allowed_reports = allowed_report_builder_reports(self.request)
         if self.request.method == 'POST':
-            return DataSourceForm(self.domain, max_allowed_reports, self.request.POST)
-        return DataSourceForm(self.domain, max_allowed_reports)
+            return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user, self.request.POST)
+        return DataSourceForm(self.domain, max_allowed_reports, self.request.couch_user)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
@@ -448,6 +484,10 @@ class ReportBuilderDataSourceSelect(ReportBuilderView):
                 'source_type': app_source.source_type,
                 'source': app_source.source,
             }
+            registry_permission_checker = RegistryPermissionCheck(self.domain, self.request.couch_user)
+            if app_source.registry_slug != '' and \
+                    registry_permission_checker.can_view_some_data_registry_contents():
+                get_params['registry_slug'] = app_source.registry_slug
             return HttpResponseRedirect(
                 reverse(ConfigureReport.urlname, args=[self.domain], params=get_params)
             )
@@ -459,7 +499,8 @@ class EditReportInBuilder(View):
 
     def dispatch(self, request, *args, **kwargs):
         report_id = kwargs['report_id']
-        report = get_document_or_404(ReportConfiguration, request.domain, report_id)
+        report = get_document_or_404(ReportConfiguration, request.domain, report_id,
+                                     additional_doc_types=["RegistryReportConfiguration"])
         if report.report_meta.created_by_builder:
             try:
                 return ConfigureReport.as_view(existing_report=report)(request, *args, **kwargs)
@@ -471,7 +512,7 @@ class EditReportInBuilder(View):
 
 class ConfigureReport(ReportBuilderView):
     urlname = 'configure_report'
-    page_title = ugettext_lazy("Configure Report")
+    page_title = gettext_lazy("Configure Report")
     template_name = "userreports/reportbuilder/configure_report.html"
     report_title = '{}'
     existing_report = None
@@ -487,34 +528,53 @@ class ConfigureReport(ReportBuilderView):
                 self.source_id = self.existing_report.config.meta.build.source_id
                 self.app_id = self.existing_report.config.meta.build.app_id
                 self.app = Application.get(self.app_id) if self.app_id else None
+                self.registry_slug = self.existing_report.config.meta.build.registry_slug
             else:
                 self.source_id = self.existing_report.config_id
-                self.app_id = self.app = None
+                self.app_id = self.app = self.registry_slug = None
         else:
-            self.app_id = self.request.GET['application']
-            self.app = Application.get(self.app_id)
-            self.source_type = self.request.GET['source_type']
+            self.registry_slug = self.request.GET.get('registry_slug', None)
+            self.app_id = self.request.GET.get('application', None)
             self.source_id = self.request.GET['source']
+            if self.registry_slug:
+                helper = DataRegistryHelper(self.domain, registry_slug=self.registry_slug)
+                helper.check_data_access(request.couch_user, [self.source_id], case_domain=self.domain)
+                self.source_type = DATA_SOURCE_TYPE_CASE
+                self.app = None
+            else:
+                self.app = Application.get(self.app_id)
+                self.source_type = self.request.GET['source_type']
 
-        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW:
+        if self.registry_slug and not toggles.DATA_REGISTRY_UCR.enabled(self.domain):
+            return self.render_error_response(
+                _("Creating or Editing Data Registry Reports are not enabled for this project."),
+                allow_delete=False
+            )
+
+        if not self.app_id and self.source_type != DATA_SOURCE_TYPE_RAW and not self.registry_slug:
             raise BadBuilderConfigError(DATA_SOURCE_MISSING_APP_ERROR_MESSAGE)
         try:
             data_source_interface = get_data_source_interface(
-                self.domain, self.app, self.source_type, self.source_id
+                self.domain, self.app, self.source_type, self.source_id, self.registry_slug
             )
         except ResourceNotFound:
-            self.template_name = 'userreports/report_error.html'
-            if self.existing_report:
-                context = {'report_id': self.existing_report.get_id,
-                           'is_static': self.existing_report.is_static}
-            else:
-                context = {}
-            context['error_message'] = DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
-            context.update(self.main_context)
-            return self.render_to_response(context)
+            return self.render_error_response(DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE)
 
         self._populate_data_source_properties_from_interface(data_source_interface)
         return super(ConfigureReport, self).dispatch(request, *args, **kwargs)
+
+    def render_error_response(self, message, allow_delete=None):
+        if self.existing_report:
+            context = {
+                'allow_delete': self.existing_report.get_id and not self.existing_report.is_static
+            }
+        else:
+            context = {}
+        if allow_delete is not None:
+            context['allow_delete'] = allow_delete
+        context['error_message'] = message
+        context.update(self.main_context)
+        return render(self.request, 'userreports/report_error.html', context)
 
     @property
     def page_name(self):
@@ -593,7 +653,7 @@ class ConfigureReport(ReportBuilderView):
     def page_context(self):
         form_type = _get_form_type(self._get_existing_report_type())
         report_form = form_type(
-            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report
+            self.domain, self.page_name, self.app_id, self.source_type, self.source_id, self.existing_report, self.registry_slug,
         )
         temp_ds_id = report_form.create_temp_data_source_if_necessary(self.request.user.username)
         return {
@@ -613,15 +673,13 @@ class ConfigureReport(ReportBuilderView):
             'source_type': self.source_type,
             'source_id': self.source_id,
             'application': self.app_id,
+            'registry_slug': self.registry_slug,
             'report_preview_url': reverse(ReportPreview.urlname,
                                           args=[self.domain, temp_ds_id]),
             'preview_datasource_id': temp_ds_id,
             'report_builder_events': self.request.session.pop(REPORT_BUILDER_EVENTS_KEY, []),
             'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
             'date_range_options': [r._asdict() for r in get_simple_dateranges()],
-            'linked_report_domain_list': linked_downstream_reports_by_domain(
-                self.domain, self.existing_report.get_id
-            ) if self.existing_report else {}
         }
 
     def _get_bound_form(self, report_data):
@@ -629,10 +687,11 @@ class ConfigureReport(ReportBuilderView):
         return form_class(
             self.domain,
             self._get_report_name(),
-            self.app._id,
+            self.app._id if self.app else None,
             self.source_type,
             self.source_id,
             self.existing_report,
+            self.registry_slug,
             report_data
         )
 
@@ -696,7 +755,8 @@ class ConfigureReport(ReportBuilderView):
 
 def update_report_description(request, domain, report_id):
     new_description = request.POST['value']
-    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
     report.description = new_description
     report.save()
     return json_response({})
@@ -741,6 +801,7 @@ class ReportPreview(BaseDomainView):
             report_data['source_type'],
             report_data['source_id'],
             None,
+            report_data['registry_slug'],
             report_data
         )
         if bound_form.is_valid():
@@ -770,10 +831,11 @@ def _assert_report_delete_privileges(request):
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def delete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
-    config = get_document_or_404(ReportConfiguration, domain, report_id)
+    config = get_document_or_404(ReportConfiguration, domain, report_id,
+                                 additional_doc_types=["RegistryReportConfiguration"])
 
     # Delete the data source too if it's not being used by any other reports.
     try:
@@ -813,16 +875,18 @@ def delete_report(request, domain, report_id):
     ProjectReportsTab.clear_dropdown_cache(domain, request.couch_user)
     redirect = request.GET.get("redirect", None)
     if not redirect:
-        redirect = reverse('configurable_reports_home', args=[domain])
+        redirect = reverse('saved_reports', args=[domain])
     return HttpResponseRedirect(redirect)
 
 
 @login_and_domain_required
-@require_permission(Permissions.edit_reports)
+@require_permission(HqPermissions.edit_reports)
 def undelete_report(request, domain, report_id):
     _assert_report_delete_privileges(request)
     config = get_document_or_404(ReportConfiguration, domain, report_id, additional_doc_types=[
-        get_deleted_doc_type(ReportConfiguration)
+        get_deleted_doc_type(ReportConfiguration),
+        RegistryReportConfiguration.doc_type,
+        get_deleted_doc_type(RegistryReportConfiguration)
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -836,7 +900,7 @@ def undelete_report(request, domain, report_id):
 
 
 class ImportConfigReportView(BaseUserConfigReportsView):
-    page_title = ugettext_lazy("Import Report")
+    page_title = gettext_lazy("Import Report")
     template_name = "userreports/import_report.html"
     urlname = 'import_configurable_report'
 
@@ -852,7 +916,7 @@ class ImportConfigReportView(BaseUserConfigReportsView):
             if '_id' in json_spec:
                 del json_spec['_id']
             json_spec['domain'] = self.domain
-            report = ReportConfiguration.wrap(json_spec)
+            report = wrap_report_config_by_type(json_spec)
             report.validate()
             report.save()
             messages.success(request, _('Report created!'))
@@ -881,68 +945,94 @@ def report_source_json(request, domain, report_id):
 class ExpressionDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/expression_debugger.html'
-    page_title = ugettext_lazy("Expression Debugger")
+    page_title = gettext_lazy("Expression Debugger")
+
+    @property
+    def main_context(self):
+        context = super().main_context
+        if toggle_enabled(self.request, toggles.UCR_EXPRESSION_REGISTRY):
+            context['ucr_expressions'] = UCRExpression.objects.filter(domain=self.domain)
+        return context
 
 
 class DataSourceDebuggerView(BaseUserConfigReportsView):
     urlname = 'expression_debugger'
     template_name = 'userreports/data_source_debugger.html'
-    page_title = ugettext_lazy("Data Source Debugger")
+    page_title = gettext_lazy("Data Source Debugger")
+
+    def dispatch(self, *args, **kwargs):
+        if toggles.UCR_UPDATED_NAMING.enabled(self.domain):
+            self.page_title = gettext_lazy("Custom Web Report Source Debugger")
+        return super().dispatch(*args, **kwargs)
 
 
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
-    doc_type = request.POST['doc_type']
-    doc_id = request.POST['doc_id']
+    input_type = request.POST['input_type']
     data_source_id = request.POST['data_source']
+    expression_text = request.POST.get('expression')
+    ucr_expression_id = request.POST.get('ucr_expression_id')
+
     try:
-        if data_source_id:
-            data_source = get_datasource_config(data_source_id, domain)[0]
-            factory_context = data_source.get_factory_context()
+        factory_context = _get_factory_context(domain, data_source_id)
+        parsed_expression = _get_parsed_expression(domain, factory_context, expression_text, ucr_expression_id)
+        if input_type == 'doc':
+            doc_type = request.POST['doc_type']
+            doc_id = request.POST['doc_id']
+            doc = _get_document(domain, doc_type, doc_id)
         else:
-            factory_context = FactoryContext.empty()
+            doc = json.loads(request.POST['raw_doc'])
+        result = parsed_expression(doc, EvaluationContext(doc))
+        return JsonResponse({"result": result})
+    except HttpException as e:
+        return JsonResponse({'message': e.message}, status=e.status)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def _get_factory_context(domain, data_source_id):
+    if data_source_id:
+        try:
+            data_source = get_datasource_config(data_source_id, domain)[0]
+            return data_source.get_factory_context()
+        except DataSourceConfigurationNotFoundError:
+            raise HttpException(
+                404, _("Data source with id {} not found in domain {}.").format(data_source_id, domain)
+            )
+    return FactoryContext.empty(domain=domain)
+
+
+def _get_parsed_expression(domain, factory_context, expression_text, expression_id):
+    if expression_id:
+        try:
+            expression_model = UCRExpression.objects.get(domain=domain, id=expression_id)
+            return expression_model.wrapped_definition(factory_context)
+        except UCRExpression.DoesNotExist:
+            raise HttpException(404, _("Expression not found"))
+        except BadSpecError as e:
+            raise HttpException(400, _("Problem with expression: {}").format(e))
+
+    try:
+        expression_json = json.loads(expression_text)
+        return ExpressionFactory.from_spec(
+            expression_json, factory_context
+        )
+    except BadSpecError as e:
+        raise HttpException(400, _("Problem with expression: {}").format(e))
+
+
+def _get_document(domain, doc_type, doc_id):
+    try:
         usable_type = {
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
         document_store = get_document_store_for_doc_type(
             domain, usable_type, load_source="eval_expression")
-        doc = document_store.get_document(doc_id)
-        expression_text = request.POST['expression']
-        expression_json = json.loads(expression_text)
-        parsed_expression = ExpressionFactory.from_spec(
-            expression_json,
-            context=factory_context
-        )
-        result = parsed_expression(doc, EvaluationContext(doc))
-        return json_response({
-            "result": result,
-        })
-    except DataSourceConfigurationNotFoundError:
-        return json_response(
-            {"error": _("Data source with id {} not found in domain {}.").format(
-                data_source_id, domain
-            )},
-            status_code=404,
-        )
+        return document_store.get_document(doc_id)
     except DocumentNotFoundError:
-        return json_response(
-            {"error": _("{} with id {} not found in domain {}.").format(
-                doc_type, doc_id, domain
-            )},
-            status_code=404,
-        )
-    except BadSpecError as e:
-        return json_response(
-            {"error": _("Problem with expression: {}").format(e)},
-            status_code=400,
-        )
-    except Exception as e:
-        return json_response(
-            {"error": str(e)},
-            status_code=500,
-        )
+        raise HttpException(404, _("{} with id {} not found in domain {}.").format(doc_type, doc_id, domain))
 
 
 @login_and_domain_required
@@ -1003,7 +1093,7 @@ def evaluate_data_source(request, domain):
 class CreateDataSourceFromAppView(BaseUserConfigReportsView):
     urlname = 'create_configurable_data_source_from_app'
     template_name = "userreports/data_source_from_app.html"
-    page_title = ugettext_lazy("Create Data Source from Application")
+    page_title = gettext_lazy("Create Data Source from Application")
 
     @property
     @memoized
@@ -1045,11 +1135,13 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
     @property
     def page_context(self):
+        allowed_ucr_expression = AllowedUCRExpressionSettings.get_allowed_ucr_expressions(self.request.domain)
         return {
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
             'used_by_reports': self.get_reports(),
+            'allowed_ucr_expressions': allowed_ucr_expression,
         }
 
     @property
@@ -1088,20 +1180,23 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         )
 
     def post(self, request, *args, **kwargs):
-        if self.edit_form.is_valid():
-            config = self.edit_form.save(commit=True)
-            messages.success(request, _('Data source "{}" saved!').format(
-                config.display_name
-            ))
-            if self.config_id is None:
-                return HttpResponseRedirect(reverse(
-                    EditDataSourceView.urlname, args=[self.domain, config._id])
-                )
+        try:
+            if self.edit_form.is_valid():
+                config = self.edit_form.save(commit=True)
+                messages.success(request, _('Data source "{}" saved!').format(
+                    config.display_name
+                ))
+                if self.config_id is None:
+                    return HttpResponseRedirect(reverse(
+                        EditDataSourceView.urlname, args=[self.domain, config._id])
+                    )
+        except BadSpecError as e:
+            messages.error(request, str(e))
         return self.get(request, *args, **kwargs)
 
     def get_reports(self):
         reports = StaticReportConfiguration.by_domain(self.domain)
-        reports += ReportConfiguration.by_domain(self.domain)
+        reports += get_report_and_registry_report_configs_for_domain(self.domain)
         ret = []
         for report in reports:
             try:
@@ -1130,12 +1225,12 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 
 class CreateDataSourceView(BaseEditDataSourceView):
     urlname = 'create_configurable_data_source'
-    page_title = ugettext_lazy("Create Data Source")
+    page_title = gettext_lazy("Create Data Source")
 
 
 class EditDataSourceView(BaseEditDataSourceView):
     urlname = 'edit_configurable_data_source'
-    page_title = ugettext_lazy("Edit Data Source")
+    page_title = gettext_lazy("Edit Data Source")
 
     @property
     def page_name(self):
@@ -1145,12 +1240,20 @@ class EditDataSourceView(BaseEditDataSourceView):
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 @require_POST
 def delete_data_source(request, domain, config_id):
-    delete_data_source_shared(domain, config_id, request)
+    try:
+        delete_data_source_shared(domain, config_id, request)
+    except BadSpecError as err:
+        err_text = f"Unable to delete this Web Report Source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
     return HttpResponseRedirect(reverse('configurable_reports_home', args=[domain]))
 
 
 def delete_data_source_shared(domain, config_id, request=None):
-    config = get_document_or_404(DataSourceConfiguration, domain, config_id)
+    config = get_document_or_404(DataSourceConfiguration, domain, config_id,
+                                 additional_doc_types=["RegistryDataSourceConfiguration"])
     adapter = get_indicator_adapter(config)
     username = request.user.username if request else None
     skip = not request  # skip logging when we remove temporary tables
@@ -1171,7 +1274,9 @@ def delete_data_source_shared(domain, config_id, request=None):
 @require_POST
 def undelete_data_source(request, domain, config_id):
     config = get_document_or_404(DataSourceConfiguration, domain, config_id, additional_doc_types=[
-        get_deleted_doc_type(DataSourceConfiguration)
+        get_deleted_doc_type(DataSourceConfiguration),
+        RegistryDataSourceConfiguration.doc_type,
+        get_deleted_doc_type(RegistryDataSourceConfiguration),
     ])
     if config and is_deleted(config):
         undo_delete(config)
@@ -1201,7 +1306,7 @@ def rebuild_data_source(request, domain, config_id):
         )
     )
 
-    rebuild_indicators.delay(config_id, request.user.username)
+    rebuild_indicators.delay(config_id, request.user.username, domain=domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1251,8 +1356,9 @@ def build_data_source_in_place(request, domain, config_id):
             config.display_name
         )
     )
-
-    rebuild_indicators_in_place.delay(config_id, request.user.username, source='edit_data_source_build_in_place')
+    rebuild_indicators_in_place.delay(config_id, request.user.username,
+                                      source='edit_data_source_build_in_place',
+                                      domain=config.domain)
     return HttpResponseRedirect(reverse(
         EditDataSourceView.urlname, args=[domain, config._id]
     ))
@@ -1261,15 +1367,22 @@ def build_data_source_in_place(request, domain, config_id):
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def data_source_json(request, domain, config_id):
-    config, _ = get_datasource_config_or_404(config_id, domain)
-    config._doc.pop('_rev', None)
-    return json_response(config)
+    try:
+        config, _ = get_datasource_config_or_404(config_id, domain)
+        config._doc.pop('_rev', None)
+        return json_response(config)
+    except BadSpecError as err:
+        err_text = f"Unable to generate JSON for this Web Report Source because {str(err)}"
+        messages.error(request, err_text)
+        return HttpResponseRedirect(reverse(
+            EditDataSourceView.urlname, args=[domain, config_id]
+        ))
 
 
 class PreviewDataSourceView(BaseUserConfigReportsView):
     urlname = 'preview_configurable_data_source'
     template_name = "userreports/preview_data.html"
-    page_title = ugettext_lazy("Preview Data Source")
+    page_title = gettext_lazy("Preview Data Source")
 
     @method_decorator(swallow_programming_errors)
     def dispatch(self, request, *args, **kwargs):
@@ -1356,10 +1469,12 @@ def process_url_params(params, columns):
     return ExportParameters(format_, keyword_filters, sql_filters)
 
 
-@api_auth
-@require_permission(Permissions.view_reports)
+@api_auth_with_scope(['reports:view'])
+@require_permission(HqPermissions.view_reports)
 @swallow_programming_errors
+@api_throttle
 def export_data_source(request, domain, config_id):
+    """See README.rst for docs"""
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = get_indicator_adapter(config, load_source='export_data_source')
     url = reverse('export_configurable_data_source', args=[domain, config._id])
@@ -1379,7 +1494,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             Format.XLS_2007,
         ]
         if params.format not in allowed_formats:
-            msg = ugettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
+            msg = gettext_lazy('format must be one of the following: {}').format(', '.join(allowed_formats))
             return HttpResponse(msg, status=400)
     except UserQueryError as e:
         return HttpResponse(str(e), status=400)
@@ -1415,7 +1530,7 @@ def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
             tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
-            msg = ugettext_lazy(
+            msg = gettext_lazy(
                 "There was a problem executing your query, "
                 "please make sure your parameters are valid."
             )
@@ -1458,7 +1573,7 @@ def choice_list_api(request, domain, report_id, filter_id):
 class DataSourceSummaryView(BaseUserConfigReportsView):
     urlname = 'summary_configurable_data_source'
     template_name = "userreports/summary_data_source.html"
-    page_title = ugettext_lazy("Data Source Summary")
+    page_title = gettext_lazy("Data Source Summary")
 
     @property
     def config_id(self):
@@ -1482,24 +1597,25 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
         return {
             'datasource_display_name': self.config.display_name,
             'filter_summary': self.configured_filter_summary(),
-            'indicator_summary': self._add_links_to_output(self.indicator_summary()),
-            'named_expression_summary': self._add_links_to_output(self.named_expression_summary()),
-            'named_filter_summary': self._add_links_to_output(self.named_filter_summary()),
+            'indicator_summary': self.indicator_summary(),
+            'named_expression_summary': self.named_expression_summary(),
+            'named_filter_summary': self.named_filter_summary(),
             'named_filter_prefix': NAMED_FILTER_PREFIX,
             'named_expression_prefix': NAMED_EXPRESSION_PREFIX,
         }
 
     def indicator_summary(self):
-        context = self.config.get_factory_context()
+        factory_context = self.config.get_factory_context()
         wrapped_specs = [
-            IndicatorFactory.from_spec(spec, context).wrapped_spec
+            IndicatorFactory.from_spec(spec, factory_context).wrapped_spec
             for spec in self.config.configured_indicators
         ]
         return [
             {
                 "column_id": wrapped.column_id,
                 "comment": wrapped.comment,
-                "readable_output": wrapped.readable_output(context)
+                "readable_output": NamedExpressionHighlighter.highlight_links(
+                    wrapped.readable_output(factory_context))
             }
             for wrapped in wrapped_specs if wrapped
         ]
@@ -1509,7 +1625,7 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             {
                 "name": name,
                 "comment": self.config.named_expressions[name].get('comment'),
-                "readable_output": str(exp)
+                "readable_output": NamedExpressionHighlighter.highlight_links(str(exp))
             }
             for name, exp in self.config.named_expression_objects.items()
         ]
@@ -1519,60 +1635,161 @@ class DataSourceSummaryView(BaseUserConfigReportsView):
             {
                 "name": name,
                 "comment": self.config.named_filters[name].get('comment'),
-                "readable_output": str(filter)
+                "readable_output": NamedExpressionHighlighter.highlight_links(str(filter))
             }
             for name, filter in self.config.named_filter_objects.items()
         ]
 
     def configured_filter_summary(self):
-        return str(FilterFactory.from_spec(self.config.configured_filter,
-                                           context=self.config.get_factory_context()))
-
-    def _add_links_to_output(self, items):
-        def make_link(match):
-            value = match.group()
-            return '<a href="#{value}">{value}</a>'.format(value=value)
-
-        def add_links(content):
-            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_FILTER_PREFIX), make_link, content)
-            content = re.sub(r"{}:[A-Za-z0-9_-]+".format(NAMED_EXPRESSION_PREFIX), make_link, content)
-            return content
-
-        list = []
-        for i in items:
-            i['readable_output'] = add_links(i.get('readable_output'))
-            list.append(i)
-        return list
+        if self.config.configured_filter:
+            return str(FilterFactory.from_spec(
+                self.config.configured_filter, self.config.get_factory_context()))
+        return _("No filter defined")
 
 
-@domain_admin_required
-def copy_report(request, domain):
-    from_domain = domain
-    to_domains = request.POST.getlist("to_domains")
-    report_id = request.POST.get("report_id")
-    successes = []
-    failures = []
-    for to_domain in to_domains:
-        domain_link = DomainLink.objects.get(master_domain=from_domain, linked_domain=to_domain)
+class NamedExpressionHighlighter:
+    # NOTE: This might be worth looking into the intent on the name after the prefix
+    # this looks like it could be simplified as [\w-], but that allows other word characters for non-ASCII
+    # inputs that might change existing behavior
+    NAMED_FILTER_PATTERN = f'{NAMED_FILTER_PREFIX}:[A-Za-z0-9_-]+'
+    NAMED_EXPRESSION_PATTERN = f'{NAMED_EXPRESSION_PREFIX}:[A-Za-z0-9_-]+'
+
+    @classmethod
+    def highlight_links(cls, content):
+        pattern = f'{cls.NAMED_FILTER_PATTERN}|{cls.NAMED_EXPRESSION_PATTERN}'
+        return safe_replace(pattern, cls._make_link, content)
+
+    @classmethod
+    def _make_link(cls, match):
+        value = match.group()
+        return format_html('<a href="#{value}">{value}</a>', value=value)
+
+
+class UCRExpressionListView(BaseProjectDataView, CRUDPaginatedViewMixin):
+    page_title = _("UCR Expressions")
+    urlname = "ucr_expressions"
+    template_name = "userreports/ucr_expressions.html"
+
+    @property
+    def base_query(self):
+        return UCRExpression.objects.filter(domain=self.domain)
+
+    @property
+    def total(self):
+        return self.base_query.count()
+
+    def post(self, *args, **kwargs):
+        return self.paginate_crud_response
+
+    @property
+    def column_names(self):
+        return [
+            _("Name"),
+            _("Type"),
+            _("Description"),
+            _("Definition"),
+            _("Actions"),
+        ]
+
+    @property
+    def page_context(self):
+        return self.pagination_context
+
+    @property
+    def paginated_list(self):
+        for expression in self.base_query.all():
+            yield {
+                "itemData": self._item_data(expression),
+                "template": "base-ucr-statement-template",
+            }
+
+    def _item_data(self, expression):
+        return {
+            'id': expression.id,
+            'name': expression.name,
+            'type': expression.expression_type,
+            'description': expression.description,
+            'definition': json.dumps(expression.definition, indent=2),
+            'definition_preview': self._truncate_value(json.dumps(expression.definition)),
+            'upstream_id': expression.upstream_id,
+            'edit_url': reverse(UCRExpressionEditView.urlname, args=[self.domain, expression.id]),
+        }
+
+    def _truncate_value(self, value):
+        MAX_VALUE_LENGTH = 24
+        if len(value) > MAX_VALUE_LENGTH:
+            value = f"{value[:MAX_VALUE_LENGTH]}…"
+        return value
+
+    create_item_form_class = "form form-horizontal"
+
+    def get_create_form(self, is_blank=False):
+        if self.request.method == 'POST' and not is_blank:
+            return UCRExpressionForm(self.request, self.request.POST)
+        return UCRExpressionForm(self.request)
+
+    def get_create_item_data(self, create_form):
         try:
-            link_info = create_linked_ucr(domain_link, report_id)
-            domain_link.update_last_pull(
-                'report',
-                request.couch_user._id,
-                model_detail=ReportLinkDetail(report_id=link_info.report.get_id).to_json(),
-            )
-            successes.append(to_domain)
-        except Exception as err:
-            failures.append(to_domain)
-            notify_exception(request, message=str(err))
+            new_expression = create_form.save()
+        except IntegrityError:
+            return {'error': _(f"UCR Expression with name \"{create_form.cleaned_data['name']}\" already exists.")}
+        return {
+            "itemData": self._item_data(new_expression),
+            "template": "base-ucr-statement-template",
+        }
 
-    if successes:
-        messages.success(
-            request,
-            _(f"Successfully linked and copied {link_info.report.title} to {', '.join(successes)}. "))
-    if failures:
-        messages.error(request, _(f"Due to errors, the report was not copied to {', '.join(failures)}"))
 
-    return HttpResponseRedirect(
-        reverse(ConfigurableReportView.slug, args=[from_domain, report_id])
-    )
+@method_decorator(toggles.UCR_EXPRESSION_REGISTRY.required_decorator(), name='dispatch')
+class UCRExpressionEditView(BaseProjectDataView):
+    page_title = _("Edit UCR Expression")
+    urlname = "edit_ucr_expression"
+    template_name = "userreports/ucr_expression.html"
+
+    @property
+    def expression_id(self):
+        try:
+            return int(self.kwargs['expression_id'])
+        except ValueError:
+            raise Http404
+
+    @property
+    @memoized
+    def expression(self):
+        try:
+            return UCRExpression.objects.get(id=self.expression_id)
+        except UCRExpression.DoesNotExist:
+            raise Http404
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=(self.domain, self.expression_id,))
+
+    @property
+    def main_context(self):
+        main_context = super(UCRExpressionEditView, self).main_context
+
+        main_context.update({
+            "expression": {
+                "id": self.expression.id,
+                "domain": self.expression.domain,
+                "name": self.expression.name,
+                "description": self.expression.description,
+                "expression_type": self.expression.expression_type,
+                "definition_raw": self.expression.definition,
+            },
+        })
+        return main_context
+
+    def post(self, request, domain, **kwargs):
+        form = UCRExpressionForm(self.request, self.request.POST, instance=self.expression)
+        if form.is_valid():
+            form.save()
+            try:
+                self.expression.wrapped_definition(EvaluationContext({}))
+            except BadSpecError as e:
+                return JsonResponse({"warning": _("Problem with expression: {}").format(e)})
+            return JsonResponse({})
+
+        return JsonResponse({"errors": [
+            f"{field} {error}" for field, error in form.errors.items()
+        ]}, status=400)

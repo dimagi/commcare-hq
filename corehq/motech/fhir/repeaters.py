@@ -1,21 +1,17 @@
 from typing import Dict, List, Tuple
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.const import TAG_FORM, TAG_META
-from dimagi.ext.couchdbkit import BooleanProperty, StringProperty
 
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.motech.repeater_helpers import RepeaterResponse
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import OptionValue, CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormDictPayloadGenerator,
 )
@@ -38,25 +34,26 @@ from .repeater_helpers import (
 
 class FHIRRepeater(CaseRepeater):
     class Meta:
+        proxy = True
         app_label = 'repeaters'
+
+    include_app_id_param = False
+    fhir_version = OptionValue(default=FHIR_VERSION_4_0_1)
+    patient_registration_enabled = OptionValue(default=True)
+    patient_search_enabled = OptionValue(default=False)
 
     friendly_name = _('Forward Cases to a FHIR API')
     payload_generator_classes = (FormDictPayloadGenerator,)
-    include_app_id_param = False
     _has_config = False
-
-    fhir_version = StringProperty(default=FHIR_VERSION_4_0_1)
-    patient_registration_enabled = BooleanProperty(default=True)
-    patient_search_enabled = BooleanProperty(default=False)
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
         # The class name used to determine which edit form to use
-        return self.__class__.__name__
+        return "FHIRRepeater"
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -90,13 +87,13 @@ class FHIRRepeater(CaseRepeater):
                 resources,
                 self.patient_registration_enabled,
                 self.patient_search_enabled,
-                self._id,
+                self.repeater_id,
             )
             response = send_resources(
                 requests,
                 resources,
                 self.fhir_version,
-                self._id,
+                self.repeater_id,
             )
         except Exception as err:
             requests.notify_exception(str(err))
@@ -146,7 +143,7 @@ class FHIRRepeater(CaseRepeater):
 
 def _get_cases_by_id(domain, case_blocks):
     case_ids = [case_block['@case_id'] for case_block in case_blocks]
-    cases = CaseAccessors(domain).get_cases(case_ids, ordered=True)
+    cases = CommCareCase.objects.get_cases(case_ids, domain, ordered=True)
     return {c.case_id: c for c in cases}
 
 

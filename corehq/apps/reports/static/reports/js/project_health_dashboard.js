@@ -1,4 +1,4 @@
-/* globals d3, django, moment, nv */
+/* globals d3, moment, nv */
 hqDefine("reports/js/project_health_dashboard", function () {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
@@ -137,9 +137,9 @@ hqDefine("reports/js/project_health_dashboard", function () {
             "searching": false,
             "lengthChange": false,
             "oLanguage": {
-                'sEmptyTable': django.gettext('No data available in table'),
-                'sInfo': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
-                'sInfoEmpty': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
+                'sEmptyTable': gettext('No data available in table'),
+                'sInfo': gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
+                'sInfoEmpty': gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
             },
         });
     }

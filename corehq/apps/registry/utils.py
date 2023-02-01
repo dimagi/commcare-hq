@@ -19,7 +19,7 @@ from corehq.apps.registry.signals import (
     data_registry_deleted,
 )
 from corehq.apps.users.decorators import require_permission_raw
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 
 
 def _get_registry_or_404(domain, registry_slug):
@@ -34,7 +34,7 @@ class RegistryPermissionCheck:
         self.domain = domain
         self.couch_user = couch_user
         role = couch_user.get_role(domain, allow_enterprise=True)
-        self._permissions = role.permissions if role else Permissions()
+        self._permissions = role.permissions if role else HqPermissions()
         self.manageable_slugs = set(self._permissions.manage_data_registry_list)
 
         self.can_manage_all = self._permissions.manage_data_registry
@@ -56,6 +56,10 @@ class RegistryPermissionCheck:
     @staticmethod
     def user_can_manage_all(couch_user, domain):
         return RegistryPermissionCheck(domain, couch_user).can_manage_all
+
+    def can_view_some_data_registry_contents(self):
+        return self._permissions.view_data_registry_contents or bool(self._permissions.
+                                                                     view_data_registry_contents_list)
 
 
 manage_some_registries_required = require_permission_raw(RegistryPermissionCheck.user_can_manage_some)
@@ -237,9 +241,14 @@ class DataRegistryAuditViewHelper:
         ]
 
 
-def get_data_registry_dropdown_options(domain, required_case_types=None):
+def get_data_registry_dropdown_options(domain, required_case_types=None, permission_checker=None):
+    registries = DataRegistry.objects.visible_to_domain(domain)
+    if permission_checker:
+        registries = [registry for registry in registries
+                      if permission_checker.can_view_registry_data(registry.slug)]
+
     return [
         {"slug": registry.slug, "name": registry.name}
-        for registry in DataRegistry.objects.visible_to_domain(domain)
+        for registry in registries
         if not required_case_types or set(registry.wrapped_schema.case_types) & required_case_types
     ]

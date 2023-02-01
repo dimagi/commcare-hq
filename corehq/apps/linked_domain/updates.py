@@ -1,11 +1,18 @@
-from copy import copy
+from corehq.apps.linked_domain.ucr_expressions import update_linked_ucr_expression
 from corehq.apps.reports.models import TableauVisualization, TableauServer
 from functools import partial
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
+from django.db import transaction
 
-from toggle.shortcuts import set_toggle
+from dimagi.utils.chunked import chunked
 
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule, CaseRuleAction, CaseRuleCriteria,
+    ClosedParentDefinition, CustomActionDefinition,
+    CustomMatchDefinition, MatchPropertyDefinition, UpdateCaseDefinition,
+    LocationFilterDefinition,
+)
 from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.custom_data_fields.models import (
     CustomDataFieldsDefinition,
@@ -21,14 +28,10 @@ from corehq.apps.integration.models import (
     GaenOtpServerSettings,
     HmacCalloutSettings,
 )
-from corehq.apps.fixtures.dbaccessors import (
-    delete_fixture_items_for_data_type,
-    get_fixture_data_type_by_tag,
-)
-from corehq.apps.fixtures.models import FixtureDataType, FixtureDataItem
-from corehq.apps.fixtures.upload.run_upload import clear_fixture_quickcache
+from corehq.apps.fixtures.models import LookupTable, LookupTableRow
 from corehq.apps.fixtures.utils import clear_fixture_cache
 from corehq.apps.linked_domain.const import (
+    MODEL_AUTO_UPDATE_RULES,
     MODEL_CASE_SEARCH,
     MODEL_FIXTURE,
     MODEL_FLAGS,
@@ -36,6 +39,7 @@ from corehq.apps.linked_domain.const import (
     MODEL_LOCATION_DATA,
     MODEL_PREVIEWS,
     MODEL_PRODUCT_DATA,
+    MODEL_UCR_EXPRESSION,
     MODEL_USER_DATA,
     MODEL_REPORT,
     MODEL_ROLES,
@@ -66,6 +70,8 @@ from corehq.apps.linked_domain.local_accessors import \
     get_otp_settings as local_get_otp_settings
 from corehq.apps.linked_domain.local_accessors import \
     get_hmac_callout_settings as local_get_hmac_callout_settings
+from corehq.apps.linked_domain.local_accessors import \
+    get_auto_update_rules as local_get_auto_update_rules
 from corehq.apps.linked_domain.remote_accessors import \
     get_case_search_config as remote_get_case_search_config
 from corehq.apps.linked_domain.remote_accessors import \
@@ -86,22 +92,26 @@ from corehq.apps.linked_domain.remote_accessors import \
     get_otp_settings as remote_get_otp_settings
 from corehq.apps.linked_domain.remote_accessors import \
     get_hmac_callout_settings as remote_get_hmac_callout_settings
+from corehq.apps.linked_domain.remote_accessors import \
+    get_auto_update_rules as remote_get_auto_update_rules
 from corehq.apps.linked_domain.ucr import update_linked_ucr
 from corehq.apps.linked_domain.keywords import update_keyword
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.products.views import ProductFieldsView
-from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain
+from corehq.apps.userreports.dbaccessors import get_report_and_registry_report_configs_for_domain
 from corehq.apps.userreports.util import (
     get_static_report_mapping,
     get_ucr_class_name,
 )
-from corehq.apps.users.models import UserRole, Permissions
+from corehq.apps.users.models import UserRole, HqPermissions
 from corehq.apps.users.views.mobile import UserFieldsView
 from corehq.toggles import NAMESPACE_DOMAIN
+from corehq.toggles.shortcuts import set_toggle
 
 
 def update_model_type(domain_link, model_type, model_detail=None):
     update_fn = {
+        MODEL_AUTO_UPDATE_RULES: update_auto_update_rules,
         MODEL_FIXTURE: update_fixture,
         MODEL_FLAGS: update_toggles,
         MODEL_PREVIEWS: update_previews,
@@ -117,6 +127,7 @@ def update_model_type(domain_link, model_type, model_detail=None):
         MODEL_HMAC_CALLOUT_SETTINGS: update_hmac_callout_settings,
         MODEL_KEYWORD: update_keyword,
         MODEL_TABLEAU_SERVER_AND_VISUALIZATIONS: update_tableau_server_and_visualizations,
+        MODEL_UCR_EXPRESSION: update_linked_ucr_expression,
     }.get(model_type)
 
     kwargs = model_detail or {}
@@ -194,6 +205,8 @@ def update_custom_data_models(domain_link, limit_types=None):
 
 def update_fixture(domain_link, tag):
     if domain_link.is_remote:
+        # FIXME Gets a requests.request(...) response object, which does
+        # not support the operations below. It has never worked.
         master_results = remote_fixture(domain_link, tag)
     else:
         master_results = local_fixture(domain_link.master_domain, tag)
@@ -203,30 +216,36 @@ def update_fixture(domain_link, tag):
         raise UnsupportedActionError(_("Found non-global lookup table '{}'.").format(master_data_type.tag))
 
     # Update data type
-    master_data_type = master_data_type.to_json()
-    del master_data_type["_id"]
-    del master_data_type["_rev"]
-
-    linked_data_type = get_fixture_data_type_by_tag(domain_link.linked_domain, master_data_type["tag"])
-    if linked_data_type:
-        linked_data_type = linked_data_type.to_json()
-    else:
-        linked_data_type = {}
-    linked_data_type.update(master_data_type)
-    linked_data_type["domain"] = domain_link.linked_domain
-    linked_data_type = FixtureDataType.wrap(linked_data_type)
+    try:
+        linked_data_type = LookupTable.objects.by_domain_tag(
+            domain_link.linked_domain, master_data_type.tag)
+        is_existing_table = True
+    except LookupTable.DoesNotExist:
+        linked_data_type = LookupTable(domain=domain_link.linked_domain)
+        is_existing_table = False
+    for field in LookupTable._meta.fields:
+        if field.attname not in ["id", "domain"]:
+            value = getattr(master_data_type, field.attname)
+            setattr(linked_data_type, field.attname, value)
     linked_data_type.save()
-    clear_fixture_quickcache(domain_link.linked_domain, [linked_data_type])
 
     # Re-create relevant data items
-    delete_fixture_items_for_data_type(domain_link.linked_domain, linked_data_type._id)
-    for master_item in master_results["data_items"]:
-        doc = master_item.to_json()
-        del doc["_id"]
-        del doc["_rev"]
-        doc["domain"] = domain_link.linked_domain
-        doc["data_type_id"] = linked_data_type._id
-        FixtureDataItem.wrap(doc).save()
+    if is_existing_table:
+        LookupTableRow.objects.filter(
+            domain=domain_link.linked_domain,
+            table_id=linked_data_type.id
+        ).delete()
+    ignore_fields = {"id", "domain", "table", "table_id"}
+    row_fields = [field.attname
+        for field in LookupTableRow._meta.fields
+        if field.attname not in ignore_fields]
+    rows = (LookupTableRow(
+        domain=domain_link.linked_domain,
+        table_id=linked_data_type.id,
+        **{f: getattr(master_item, f) for f in row_fields}
+    ) for master_item in master_results["data_items"])
+    for chunk in chunked(rows, 1000, list):
+        LookupTableRow.objects.bulk_create(chunk)
 
     clear_fixture_cache(domain_link.linked_domain)
 
@@ -260,7 +279,7 @@ def update_user_roles(domain_link):
         role.is_non_admin_editable = role_def["is_non_admin_editable"]
         role.save()
 
-        permissions = Permissions.wrap(role_def["permissions"])
+        permissions = HqPermissions.wrap(role_def["permissions"])
         role.set_permissions(permissions.to_list())
 
     # Update assignable_by ids - must be done after main update to guarantee all local roles have ids
@@ -330,7 +349,6 @@ def update_tableau_server_and_visualizations(domain_link):
     server_model.server_name = master_results["server"]['server_name']
     server_model.validate_hostname = master_results["server"]['validate_hostname']
     server_model.target_site = master_results["server"]['target_site']
-    server_model.domain_username = master_results["server"]['domain_username']
     server_model.save()
 
     master_results_visualizations = master_results['visualizations']
@@ -352,7 +370,9 @@ def update_tableau_server_and_visualizations(domain_link):
         vis.domain = domain_link.linked_domain
         vis.server = server_model
         vis.view_url = master_vis['view_url']
+        vis.title = master_vis['title']
         vis.save()
+
 
 def update_dialer_settings(domain_link):
     if domain_link.is_remote:
@@ -401,13 +421,114 @@ def update_hmac_callout_settings(domain_link):
     model.save()
 
 
+def update_auto_update_rules(domain_link):
+    if domain_link.is_remote:
+        upstream_rules = remote_get_auto_update_rules(domain_link)
+    else:
+        upstream_rules = local_get_auto_update_rules(domain_link.master_domain)
+
+    downstream_rules = AutomaticUpdateRule.by_domain(
+        domain_link.linked_domain,
+        AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+        active_only=False
+    )
+
+    for upstream_rule_def in upstream_rules:
+        # Grab local rule by upstream ID (preferred) or by name
+        try:
+            downstream_rule = downstream_rules.get(upstream_id=upstream_rule_def['rule']['id'])
+        except AutomaticUpdateRule.DoesNotExist:
+            try:
+                downstream_rule = downstream_rules.get(name=upstream_rule_def['rule']['name'])
+            except AutomaticUpdateRule.MultipleObjectsReturned:
+                # If there are multiple rules with the same name, overwrite the first.
+                downstream_rule = downstream_rules.filter(name=upstream_rule_def['rule']['name']).first()
+            except AutomaticUpdateRule.DoesNotExist:
+                downstream_rule = None
+
+        # If no corresponding local rule, make a new rule
+        if not downstream_rule:
+            downstream_rule = AutomaticUpdateRule(
+                domain=domain_link.linked_domain,
+                active=upstream_rule_def['rule']['active'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                upstream_id=upstream_rule_def['rule']['id']
+            )
+
+        # Copy all the contents from old rule to new rule
+        with transaction.atomic():
+
+            downstream_rule.name = upstream_rule_def['rule']['name']
+            downstream_rule.case_type = upstream_rule_def['rule']['case_type']
+            downstream_rule.filter_on_server_modified = upstream_rule_def['rule']['filter_on_server_modified']
+            downstream_rule.server_modified_boundary = upstream_rule_def['rule']['server_modified_boundary']
+            downstream_rule.active = upstream_rule_def['rule']['active']
+            downstream_rule.save()
+
+            downstream_rule.delete_criteria()
+            downstream_rule.delete_actions()
+
+            # Largely from data_interfaces/forms.py - save_criteria()
+            for criteria in upstream_rule_def['criteria']:
+                definition = None
+
+                if criteria['match_property_definition']:
+                    definition = MatchPropertyDefinition.objects.create(
+                        property_name=criteria['match_property_definition']['property_name'],
+                        property_value=criteria['match_property_definition']['property_value'],
+                        match_type=criteria['match_property_definition']['match_type'],
+                    )
+                elif criteria['custom_match_definition']:
+                    definition = CustomMatchDefinition.objects.create(
+                        name=criteria['custom_match_definition']['name'],
+                    )
+                elif criteria['closed_parent_definition']:
+                    definition = ClosedParentDefinition.objects.create()
+                elif criteria['location_filter_definition']:
+                    definition = LocationFilterDefinition.objects.create(
+                        location_id=criteria['location_filter_definition']['location_id'],
+                        include_child_locations=criteria['location_filter_definition']['include_child_locations'],
+                    )
+
+                new_criteria = CaseRuleCriteria(rule=downstream_rule)
+                new_criteria.definition = definition
+                new_criteria.save()
+
+            # Largely from data_interfacees/forms.py - save_actions()
+            for action in upstream_rule_def['actions']:
+                definition = None
+
+                if action['update_case_definition']:
+                    definition = UpdateCaseDefinition(close_case=action['update_case_definition']['close_case'])
+                    properties = []
+                    for propertyItem in action['update_case_definition']['properties_to_update']:
+                        properties.append(
+                            UpdateCaseDefinition.PropertyDefinition(
+                                name=propertyItem['name'],
+                                value_type=propertyItem['value_type'],
+                                value=propertyItem['value'],
+                            )
+                        )
+                    definition.set_properties_to_update(properties)
+                    definition.save()
+                elif action['custom_action_definition']:
+                    definition = CustomActionDefinition.objects.create(
+                        name=action['custom_action_definition']['name'],
+                    )
+
+                action = CaseRuleAction(rule=downstream_rule)
+                action.definition = definition
+                action.save()
+
+
 def _convert_reports_permissions(domain_link, master_results):
     """Mutates the master result docs to convert dynamic report permissions.
     """
     report_map = get_static_report_mapping(domain_link.master_domain, domain_link.linked_domain)
+    report_configs = get_report_and_registry_report_configs_for_domain(domain_link.linked_domain)
     report_map.update({
         c.report_meta.master_id: c._id
-        for c in get_report_configs_for_domain(domain_link.linked_domain)
+        for c in report_configs
     })
 
     for role_def in master_results:

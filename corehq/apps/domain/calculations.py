@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dateutil.relativedelta import relativedelta
 
@@ -26,7 +26,7 @@ from corehq.apps.export.dbaccessors import (
     get_export_count_by_domain,
     get_form_exports_by_domain,
 )
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.analytics import get_number_of_cases_in_domain
 from corehq.apps.hqmedia.models import ApplicationMediaMixin
@@ -149,7 +149,13 @@ def j2me_forms_in_last_bool(domain, days):
     return j2me_forms_in_last(domain, days) > 0
 
 
-def _sms_helper(domain, direction=None, days=None):
+def get_sms_count(domain, direction=None, days=None):
+    """
+    :param domain: domain name
+    :param direction: can specify INCOMING or OUTGOING, or None to retrieve both
+    :param days: only return count of sms docs from the past N days
+    :return: number of sms docs fetched based on query parameters specified
+    """
     assert direction in (INCOMING, OUTGOING, None), repr(direction)
     query = SMSES().domain(domain).size(0)
 
@@ -159,17 +165,18 @@ def _sms_helper(domain, direction=None, days=None):
         query = query.outgoing_messages()
 
     if days:
+        days = int(days) if isinstance(days, str) else days
         query = query.received(date.today() - relativedelta(days=days))
 
     return query.run().total
 
 
 def sms(domain, direction):
-    return _sms_helper(domain, direction=direction)
+    return get_sms_count(domain, direction=direction)
 
 
 def sms_in_last(domain, days=None):
-    return _sms_helper(domain, days=days)
+    return get_sms_count(domain, days=days)
 
 
 def sms_in_last_bool(domain, days=None):
@@ -177,11 +184,11 @@ def sms_in_last_bool(domain, days=None):
 
 
 def sms_in_in_last(domain, days=None):
-    return _sms_helper(domain, direction=INCOMING, days=days)
+    return get_sms_count(domain, direction=INCOMING, days=days)
 
 
 def sms_out_in_last(domain, days=None):
-    return _sms_helper(domain, direction=OUTGOING, days=days)
+    return get_sms_count(domain, direction=OUTGOING, days=days)
 
 
 def active(domain, *args):
@@ -329,7 +336,7 @@ def dom_calc(calc_tag, dom, extra_arg=''):
     return ans
 
 
-@quickcache([], timeout=60 * 60)
+@quickcache([], timeout=23 * 60 * 60)
 def all_domain_stats():
     webuser_counts = defaultdict(int)
     commcare_counts = defaultdict(int)
@@ -462,7 +469,7 @@ def num_case_sharing_groups(domain):
 
 
 def num_repeaters(domain):
-    return len(Repeater.by_domain(domain))
+    return Repeater.objects.filter(domain=domain).count()
 
 
 def _get_domain_exports(domain):
@@ -483,7 +490,7 @@ def num_saved_exports(domain):
 
 
 def num_lookup_tables(domain):
-    return len(FixtureDataType.by_domain(domain))
+    return LookupTable.objects.by_domain(domain).count()
 
 
 def has_domain_icon(domain_obj):

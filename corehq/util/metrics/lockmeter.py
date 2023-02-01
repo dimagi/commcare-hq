@@ -20,16 +20,15 @@ class MeteredLock(object):
         self.name = name
         self.key = lock.name
         self.lock_timer = metrics_histogram_timer(
-            "commcare.lock.locked_time", self.timing_buckets, self.tags
+            "commcare.lock.locked_time", self.timing_buckets
         )
         self.track_unreleased = track_unreleased
         self.end_time = None
         self.lock_trace = None
 
     def acquire(self, *args, **kw):
-        tags = self.tags
         buckets = self.timing_buckets
-        with metrics_histogram_timer("commcare.lock.acquire_time", buckets, tags), \
+        with metrics_histogram_timer("commcare.lock.acquire_time", buckets), \
                 tracer.trace("commcare.lock.acquire", resource=self.key) as span:
             acquired = self.lock.acquire(*args, **kw)
             span.set_tags({

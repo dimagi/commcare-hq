@@ -295,19 +295,19 @@ hqDefine('hqwebapp/js/main', [
     };
 
     var SaveButton = makeSaveButton({
-        SAVE: django.gettext("Save"),
-        SAVING: django.gettext("Saving..."),
-        SAVED: django.gettext("Saved"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error saving"),
+        SAVE: gettext("Save"),
+        SAVING: gettext("Saving..."),
+        SAVED: gettext("Saved"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error saving"),
     }, 'btn btn-primary');
 
     var DeleteButton = makeSaveButton({
-        SAVE: django.gettext("Delete"),
-        SAVING: django.gettext("Deleting..."),
-        SAVED: django.gettext("Deleted"),
-        RETRY: django.gettext("Try Again"),
-        ERROR_SAVING: django.gettext("There was an error deleting"),
+        SAVE: gettext("Delete"),
+        SAVING: gettext("Deleting..."),
+        SAVED: gettext("Deleted"),
+        RETRY: gettext("Try Again"),
+        ERROR_SAVING: gettext("There was an error deleting"),
     }, 'btn btn-danger', 'savebtn-bar-danger');
 
     ko.bindingHandlers.saveButton = {
@@ -404,16 +404,23 @@ hqDefine('hqwebapp/js/main', [
         });
 
         // Maintenance alerts
-        var $maintenance = $(".alert-maintenance");
+        var $maintenance = $('.alert-maintenance');
         if ($maintenance.length) {
-            var id = $maintenance.data("id"),
-                alertCookie = "alert_maintenance";
-            if ($.cookie(alertCookie) != id) {  // eslint-disable-line eqeqeq
-                $maintenance.removeClass('hide');
-                $maintenance.on('click', '.close', function () {
-                    $.cookie(alertCookie, id, { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
-                });
-            }
+            var alertCookie = 'alerts_maintenance';
+            var closedAlerts = $.cookie(alertCookie) ? JSON.parse($.cookie(alertCookie)) : [];
+
+            _.each($maintenance,
+                function (alert) {
+                    var id = $(alert).data('id');
+                    if (!closedAlerts.includes(id)) {
+                        $(alert).removeClass('hide');
+                        $(alert).on('click', '.close', function () {
+                            closedAlerts.push(id);
+                            $.cookie(alertCookie, JSON.stringify(closedAlerts), { expires: 7, path: '/', secure: initialPageData.get('secure_cookies') });
+                        });
+                    }
+                }
+            );
         }
 
         function unsupportedBrowser() {

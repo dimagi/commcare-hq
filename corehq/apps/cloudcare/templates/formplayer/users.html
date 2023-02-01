@@ -4,7 +4,7 @@
 <script type="text/template" id="restore-as-view-template">
   <div class="module-menu-container">
     <div class="page-header menu-header">
-      <h1 class="page-title">Login as user</h1>
+      <h1 class="page-title">Log in as user</h1>
     </div>
     <form class="module-search-container js-user-search">
       <div class="input-group input-group-lg">
@@ -48,7 +48,7 @@
 </script>
 
 <script type="text/template" id="user-data-template">
-  <table class="table module-table module-table-casedetail">
+  <table class="table module-table module-table-case-detail">
     <tbody>
     <tr>
       <th>{% trans "Name" %}</th>
@@ -84,12 +84,7 @@
   {% if request|can_use_restore_as %}
     <% if (restoreAs) { %>
     <div class="restore-as-banner module-banner">
-      {% blocktrans %}
-        <span>
-                Working as <b><%- restoreAs %></b>.
-                <a class="js-clear-user">Use <%- username %>.</a>
-            </span>
-      {% endblocktrans %}
+      <%= message %>
     </div>
     <% } %>
   {% endif %}

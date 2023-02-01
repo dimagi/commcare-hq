@@ -2,10 +2,10 @@ import uuid
 from django.test import TestCase, SimpleTestCase
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.util import post_case_blocks
+from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.casedb import CaseDbCacheSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -21,13 +21,12 @@ class CaseDbCacheTest(TestCase):
 
     def testDomainCheck(self):
         id = uuid.uuid4().hex
-        post_case_blocks([
-                CaseBlock.deprecated_init(
-                    create=True, case_id=id,
-                    user_id='some-user'
-                ).as_xml()
-            ], {'domain': 'good-domain'}
-        )
+        submit_case_blocks([
+            CaseBlock(
+                create=True, case_id=id,
+                user_id='some-user'
+            ).as_text()
+        ], 'good-domain')
         bad_cache = self.interface.casedb_cache(domain='bad-domain')
         try:
             bad_cache.get(id)
@@ -36,7 +35,7 @@ class CaseDbCacheTest(TestCase):
             pass
         good_cache = self.interface.casedb_cache(domain='good-domain')
         case = good_cache.get(id)
-        self.assertEqual('some-user', case.user_id) # just sanity check it's the right thing
+        self.assertEqual('some-user', case.user_id)  # just sanity check it's the right thing
 
     def testGetPopulatesCache(self):
         case_ids = _make_some_cases(3)
@@ -58,7 +57,7 @@ class CaseDbCacheTest(TestCase):
             self.assertFalse(cache.in_cache(id))
 
         for id in case_ids:
-            cache.set(id, CaseAccessors().get_case(id))
+            cache.set(id, CommCareCase.objects.get_case(id, 'dbcache-test'))
 
         for i, id in enumerate(case_ids):
             self.assertTrue(cache.in_cache(id))
@@ -92,14 +91,14 @@ class CaseDbCacheNoDbTest(SimpleTestCase):
 
 def _make_some_cases(howmany, domain='dbcache-test'):
     ids = [uuid.uuid4().hex for i in range(howmany)]
-    post_case_blocks([
-        CaseBlock.deprecated_init(
+    submit_case_blocks([
+        CaseBlock(
             create=True,
             case_id=ids[i],
             user_id='some-user',
             update={
                 'my_index': i,
             }
-        ).as_xml() for i in range(howmany)
-    ], {'domain': domain})
+        ).as_text() for i in range(howmany)
+    ], domain)
     return ids

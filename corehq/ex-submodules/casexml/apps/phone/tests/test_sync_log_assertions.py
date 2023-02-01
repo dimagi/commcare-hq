@@ -2,14 +2,13 @@ import uuid
 
 from django.test import TestCase
 
-from mock import patch
+from unittest.mock import patch
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE
-from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.phone.models import CaseState, IndexTree, SimplifiedSyncLog
-from couchforms.models import XFormInstance
+from casexml.apps.phone.models import IndexTree, SimplifiedSyncLog
 
-from corehq.form_processor.tests.utils import sharded
+from corehq.form_processor.models.cases import CaseAction, CommCareCase
+from corehq.form_processor.tests.utils import create_form_for_test, sharded
 
 
 @sharded
@@ -25,10 +24,14 @@ class SyncLogAssertionTest(TestCase):
             user_id="someuser"
         )
         xform_id = uuid.uuid4().hex
-        xform = XFormInstance(_id=xform_id)
-        form_actions = [CommCareCaseAction(action_type=CASE_ACTION_UPDATE,)]
+        xform = create_form_for_test("domain", form_id=xform_id, save=False)
+        form_actions = [CaseAction(
+            action_type=CASE_ACTION_UPDATE,
+            updated_known_properties={},
+            indices=[],
+        )]
         with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
-            parent_case = CommCareCase(_id='hodor')
+            parent_case = CommCareCase(case_id='hodor')
             # before this test was added, the following call raised a SyncLogAssertionError on legacy logs.
             # this test just ensures it doesn't still do that.
             sync_log.update_phone_lists(xform, [parent_case])
@@ -45,15 +48,15 @@ class SyncLogAssertionTest(TestCase):
             owner_ids_on_phone={'user1'}
         )
 
-        dependent_case_state = CaseState(case_id="d1", indices=[])
         xform_id = uuid.uuid4().hex
-        xform = XFormInstance(_id=xform_id)
-        form_actions = [CommCareCaseAction(
+        xform = create_form_for_test("domain", form_id=xform_id, save=False)
+        form_actions = [CaseAction(
             action_type=CASE_ACTION_UPDATE,
             updated_known_properties={'owner_id': 'user2'},
+            indices=[],
         )]
         with patch.object(CommCareCase, 'get_actions_for_form', return_value=form_actions):
-            parent_case = CommCareCase(_id='d1')
+            parent_case = CommCareCase(case_id='d1')
             # before this test was added, the following call raised a ValueError on legacy logs.
             sync_log.update_phone_lists(xform, [parent_case])
-            self.assertIn(dependent_case_state, sync_log.test_only_get_dependent_cases_on_phone())
+            self.assertIn("d1", sync_log.dependent_case_ids_on_phone)

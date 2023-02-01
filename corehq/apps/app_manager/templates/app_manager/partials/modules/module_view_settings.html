@@ -53,18 +53,18 @@
               {% if request|toggle_enabled:'USH_CASE_CLAIM_UPDATES' %}
               <div class="form-group">
                 <label class="{% css_label_class %} control-label">
-                  {% trans "Case List and Case Search Types" %}
+                  {% trans "Additional Case List and Case Search Types" %}
                   <span class="hq-help-template"
-                        data-title="{% trans "Case List and Case Search Types" %}"
+                        data-title="{% trans "Additional Case List and Case Search Types" %}"
                         data-content="{% blocktrans %}
-                             Cases of these types will be displayed in Case List  and Case Search screens.
+                             Cases of these types will be displayed in Case List and Case Search screens, in addition to the Case Type inputted above.
                              <a target='_blank'
                              href='https://confluence.dimagi.com/display/ccinternal/Case+Search+and+Claim'>(More   Information)</a>
                               {% endblocktrans %}">
                   </span>
                 </label>
                 <div class="{% css_field_class %}">
-                <select name='additional_case_types' class='form-control  multiselect-caselist' multiple="multiple" >
+                <select name='additional_case_types' class='form-control case-type-dropdown' multiple="multiple" >
                     {% for case_type in case_types %}
                     <option value="{{ case_type }}" {% if case_type in  module.search_config.additional_case_types %}selected{% endif   %}>{{ case_type }}</option>
                     {% endfor %}
@@ -255,6 +255,19 @@
               {% include "app_manager/partials/session_endpoints.html" with module_or_form=module %}
             {% endif %}
 
+            {% if request|toggle_enabled:'USH_EMPTY_CASE_LIST_TEXT' %}
+            <div class="form-group">
+              <label for="no_items_text" class="{% css_label_class %} control-label">
+                {% trans "Empty Case List Text" %}
+                <span class="hq-help-template" data-title="{% trans "Empty Case List Text" %}"
+                      data-content="{% trans_html_attr "Define text displayed when case list has no results." %}"
+                ></span>
+              </label>
+              <div class="{% css_field_class %} commcare-feature" data-since-version="2.54">
+                {% input_trans module.case_details.short.no_items_text langs input_name='no_items_text' input_id='no_items_text' data_bind="value: no_items_text" element_type="textarea" %}
+              </div>
+            </div>
+            {% endif %}
           </div><!-- end .panel-body -->
         </div><!-- end .panel -->
       {% endif %}

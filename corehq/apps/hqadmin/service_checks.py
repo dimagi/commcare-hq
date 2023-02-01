@@ -24,7 +24,7 @@ from corehq.apps.change_feed.connection import (
     get_kafka_client,
     get_kafka_consumer,
 )
-from corehq.apps.es import GroupES
+from corehq.apps.es.groups import group_adapter
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.blobs import CODES, get_blob_db
@@ -32,7 +32,6 @@ from corehq.celery_monitoring.heartbeat import (
     Heartbeat,
     HeartbeatNeverRecorded,
 )
-from corehq.elastic import refresh_elasticsearch_index, send_to_elasticsearch
 from corehq.util.decorators import change_log_level, ignore_warning
 from corehq.util.timer import TimingContext
 
@@ -53,7 +52,11 @@ def check_redis():
     if 'redis' in settings.CACHES:
         import redis
         rc = cache.caches['redis']
-        redis_api = redis.StrictRedis.from_url('%s' % rc._server)
+        if isinstance(rc._server, list):
+            redis_server = rc._server[0]
+        else:
+            redis_server = rc._server
+        redis_api = redis.StrictRedis.from_url(redis_server)
         memory = redis_api.info()['used_memory_human']
         result = rc.set('serverup_check_key', 'test', timeout=5)
         return ServiceStatus(result, "Redis is up and using {} memory".format(memory))
@@ -124,18 +127,15 @@ def check_elasticsearch():
     if cluster_health == 'red':
         return ServiceStatus(False, "Cluster health at %s" % cluster_health)
 
-    doc = {'_id': 'elasticsearch-service-check-{}'.format(uuid.uuid4().hex[:7]),
-           'date': datetime.datetime.now().isoformat()}
+    doc_id = f'elasticsearch-service-check-{uuid.uuid4().hex[:7]}'
+    doc = {'_id': doc_id, 'date': datetime.datetime.now().isoformat()}
     try:
-        send_to_elasticsearch('groups', doc)
-        refresh_elasticsearch_index('groups')
-        hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
-        if doc in hits:
-            return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
-        else:
-            return ServiceStatus(False, "Something went wrong sending a doc to ES")
-    finally:
-        send_to_elasticsearch('groups', doc, delete=True)  # clean up
+        group_adapter.index(doc, refresh=True)
+        assert group_adapter.exists(doc_id), f"Indexed doc not found: {doc_id}"
+        group_adapter.delete(doc_id)
+    except Exception as exc:
+        return ServiceStatus(False, "Something went wrong sending a doc to ES", exc)
+    return ServiceStatus(True, "Successfully sent a doc to ES and read it back")
 
 
 def check_blobdb():
@@ -157,27 +157,33 @@ def check_blobdb():
 
 
 def check_celery():
-    blocked_queues = []
+    bad_queues = []
 
     for queue, threshold in settings.CELERY_HEARTBEAT_THRESHOLDS.items():
         if threshold:
             threshold = datetime.timedelta(seconds=threshold)
+            heartbeat = Heartbeat(queue)
             try:
-                blockage_duration = Heartbeat(queue).get_and_report_blockage_duration()
+                blockage_duration = heartbeat.get_and_report_blockage_duration()
+                heartbeat_time_to_start = heartbeat.get_and_report_time_to_start()
             except HeartbeatNeverRecorded:
-                blocked_queues.append((queue, 'as long as we can see', threshold))
+                bad_queues.append(f"{queue} has been blocked as long as we can see (max allowed is {threshold})")
             else:
                 # We get a lot of self-resolving celery "downtime" under 5 minutes
                 # so to make actionable, we never alert on blockage under 5 minutes
                 # It is still counted as out of SLA for the celery uptime metric in datadog
                 if blockage_duration > max(threshold, datetime.timedelta(minutes=5)):
-                    blocked_queues.append((queue, blockage_duration, threshold))
+                    bad_queues.append(
+                        f"{queue} has been blocked for {blockage_duration} (max allowed is {threshold})"
+                    )
+                elif (heartbeat_time_to_start is not None and
+                      heartbeat_time_to_start > max(threshold, datetime.timedelta(minutes=5))):
+                    bad_queues.append(
+                        f"{queue} is delayed for {heartbeat_time_to_start} (max allowed is {threshold})"
+                    )
 
-    if blocked_queues:
-        return ServiceStatus(False, '\n'.join(
-            "{} has been blocked for {} (max allowed is {})".format(
-                queue, blockage_duration, threshold
-            ) for queue, blockage_duration, threshold in blocked_queues))
+    if bad_queues:
+        return ServiceStatus(False, '\n'.join(bad_queues))
     else:
         return ServiceStatus(True, "OK")
 

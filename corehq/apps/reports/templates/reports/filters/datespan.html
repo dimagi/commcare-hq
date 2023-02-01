@@ -16,12 +16,12 @@
       <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
       <input type="hidden"
              id="{{ css_id }}_startdate"
-             name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}startdate"
+             name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}startdate"
              class="date-picker input-small"
              value="{{ datespan.startdate|date:"Y-m-d" }}">
       <input type="hidden"
              id="{{ css_id }}_enddate"
-             name="{% ifnotequal slug 'datespan' %}{{ slug }}_{% endifnotequal %}enddate"
+             name="{% if slug != 'datespan' %}{{ slug }}_{% endif %}enddate"
              class="date-picker input-small"
              value="{{ datespan.enddate|date:"Y-m-d" }}">
     </div>

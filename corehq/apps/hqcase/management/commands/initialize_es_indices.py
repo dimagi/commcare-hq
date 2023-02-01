@@ -1,7 +1,10 @@
 from django.core.management import BaseCommand
 
-
-from corehq.elastic import ES_META, get_es_new
+from corehq.apps.es.transient_util import (
+    index_info_from_cname,
+    iter_index_infos,
+)
+from corehq.elastic import get_es_new
 from pillowtop.reindexer.reindexer import (
     prepare_index_for_reindex,
     prepare_index_for_usage,
@@ -50,9 +53,9 @@ class Command(BaseCommand):
                 return
 
         if index:
-            indices = [ES_META[index]]
+            indices = [index_info_from_cname(index)]
         else:
-            indices = ES_META.values()
+            indices = iter_index_infos()
         for index in indices:
             if set_for_usage:
                 prepare_index_for_usage(es, index)

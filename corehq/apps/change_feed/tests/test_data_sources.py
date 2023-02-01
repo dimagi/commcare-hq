@@ -15,16 +15,14 @@ from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.locations.document_store import LocationDocumentStore
 from corehq.apps.sms.document_stores import SMSDocumentStore
-from corehq.form_processor.backends.sql.dbaccessors import (
-    CaseAccessorSQL,
-    FormAccessorSQL,
-    LedgerAccessorSQL)
+from corehq.form_processor.backends.sql.dbaccessors import LedgerAccessorSQL
 from corehq.form_processor.document_stores import (
     CaseDocumentStore,
     DocStoreLoadTracker,
     FormDocumentStore,
     LedgerV2DocumentStore,
 )
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 from corehq.util.exceptions import DatabaseNotFound
 from corehq.util.test_utils import generate_cases
@@ -91,7 +89,7 @@ def case_form_data():
     for i in range(3):
         case_id = uuid.uuid4().hex
         case_block = factory.get_case_block(case_id, case_type='case_type')
-        form, [case] = factory.post_case_blocks([case_block])
+        form, [case] = factory.post_case_blocks([case_block.as_text()])
         cases.append(case)
         forms.append(form)
 
@@ -101,8 +99,8 @@ def case_form_data():
     try:
         yield form_ids, case_ids
     finally:
-        FormAccessorSQL.hard_delete_forms('domain', form_ids)
-        CaseAccessorSQL.hard_delete_cases('domain', case_ids)
+        XFormInstance.objects.hard_delete_forms('domain', form_ids)
+        CommCareCase.objects.hard_delete_cases('domain', case_ids)
 
 
 @contextmanager
@@ -152,7 +150,7 @@ def ledger_data():
                 date=datetime.utcnow(),
                 section_id='test',
                 entry=Entry(id='chocolate', quantity=4),
-            ).as_xml()
+            ).as_text()
             for case_id in case_ids
         ]
         form, _ = factory.post_case_blocks(balance_blocks)

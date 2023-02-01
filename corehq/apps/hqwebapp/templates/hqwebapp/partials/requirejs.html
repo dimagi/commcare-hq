@@ -1,0 +1,42 @@
+{% load hq_shared_tags %}
+
+{# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+<script>
+  // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
+  // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
+  window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
+</script>
+
+{% if requirejs_main %}
+  <script src="{% static 'requirejs/require.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
+  {# Do not compress these, which are re-written during depeloy #}
+  <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
+  <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
+  <script>
+    requirejs.config({
+      deps: ['knockout', 'ko.mapping'],
+      callback: function (ko, mapping) {
+        ko.mapping = mapping;
+      }
+    });
+    requirejs([
+      'hqwebapp/js/common',
+    ], function() {
+      {% if BASE_MAIN %}
+        {# This code is relevant for running HQ, but not for tests #}
+        requirejs(['hqwebapp/js/django'], function () {
+          requirejs([
+            'hqwebapp/js/base_main',
+          ], function () {
+      {% endif %}
+            requirejs(['{{ requirejs_main }}'], function () {
+              console.log("Loaded requirejs main module: {{ requirejs_main }}");
+            });
+      {% if BASE_MAIN %}
+          });
+        });
+      {% endif %}
+    });
+  </script>
+{% endif %}

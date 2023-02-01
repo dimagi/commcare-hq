@@ -5,32 +5,24 @@ from datetime import datetime
 from django.utils.http import urlencode
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.api.resources import v0_3, v0_4
 from corehq.apps.domain.models import Domain
-from corehq.apps.es.tests.utils import es_test
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.tests.utils import ElasticTestMixin, es_test
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.users.models import WebUser
-from corehq.elastic import get_es_new, send_to_elasticsearch
-from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.form_processor.models import CommCareCase
 from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
-from corehq.util.elastic import reset_es_index
-from pillowtop.es_utils import initialize_index_and_mapping
 
 from .utils import APIResourceTest, FakeFormESView
 
 
-@es_test
+@es_test(requires=[case_adapter])
 class TestCommCareCaseResource(APIResourceTest):
     resource = v0_4.CommCareCaseResource
-
-    def setUp(self):
-        self.es = get_es_new()
-        reset_es_index(CASE_INDEX_INFO)
-        initialize_index_and_mapping(self.es, CASE_INDEX_INFO)
+    case_ids = []
 
     def _setup_case(self, cases=None):
 
@@ -41,16 +33,17 @@ class TestCommCareCaseResource(APIResourceTest):
             kwargs = {}
             if owner_id:
                 kwargs['owner_id'] = owner_id
-            if case_id:
-                kwargs['_id'] = case_id
-            backend_case = CommCareCase(server_modified_on=modify_date, domain=self.domain.name, **kwargs)
+            backend_case = CommCareCase(
+                case_id=case_id if case_id else uuid.uuid4().hex,
+                domain=self.domain.name,
+                modified_on=modify_date,
+                server_modified_on=modify_date,
+                **kwargs
+            )
             backend_case.save()
-            self.addCleanup(backend_case.delete)
 
             translated_doc = transform_case_for_elasticsearch(backend_case.to_json())
-
-            send_to_elasticsearch('cases', translated_doc)
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+            case_adapter.index(translated_doc, refresh=True)
         return backend_case
 
     def test_get_list(self):
@@ -133,9 +126,14 @@ class TestCommCareCaseResource(APIResourceTest):
 
         self.addCleanup(child_case.delete)
         self.addCleanup(parent_case.delete)
-        send_to_elasticsearch('cases', transform_case_for_elasticsearch(parent_case.to_json()))
-        send_to_elasticsearch('cases', transform_case_for_elasticsearch(child_case.to_json()))
-        self.es.indices.refresh(CASE_INDEX_INFO.index)
+        case_adapter.index(
+            transform_case_for_elasticsearch(parent_case.to_json()),
+            refresh=True
+        )
+        case_adapter.index(
+            transform_case_for_elasticsearch(child_case.to_json()),
+            refresh=True
+        )
 
         # Fetch the child case through the API
 

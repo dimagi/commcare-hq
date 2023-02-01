@@ -20,9 +20,6 @@ from corehq.apps.export import models as exports
 from corehq.apps.ota.models import DemoUserRestore
 from corehq.apps.users.models import CommCareUser
 
-import casexml.apps.case.models as cases
-import couchforms.models as xform
-
 
 class MultiDbMigrator(object):
 
@@ -307,18 +304,6 @@ migrate_metadata = lambda: MultiDbMigrator("migrate_metadata",
         hqmedia.CommCareImage,
         hqmedia.CommCareVideo,
         hqmedia.CommCareMultimedia,
-        xform.XFormInstance,
-        ("XFormInstance-Deleted", xform.XFormInstance),
-        xform.XFormArchived,
-        xform.XFormDeprecated,
-        xform.XFormDuplicate,
-        xform.XFormError,
-        xform.SubmissionErrorLog,
-        ("HQSubmission", xform.XFormInstance),
-        cases.CommCareCase,
-        ('CommCareCase-deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted', cases.CommCareCase),
-        ('CommCareCase-Deleted-Deleted', cases.CommCareCase),
         exports.CaseExportInstance,
         exports.FormExportInstance,
         exports.SMSExportInstance,

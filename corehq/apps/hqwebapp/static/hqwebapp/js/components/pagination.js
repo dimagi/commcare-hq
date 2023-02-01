@@ -1,7 +1,7 @@
 /**
  *  Knockout Pagination Component
  *
- *  Include the <pagination> element on on your knockout page with the following parameters:
+ *  Include the <pagination> element on your knockout page with the following parameters:
  *      goToPage(page): A function that updates your view with new items for the given page.
  *          Note that calling this function from within your code will not correctly jump to
  *          the given page because it will not update the component's internal state. If you need
@@ -96,7 +96,7 @@ hqDefine('hqwebapp/js/components/pagination', [
                 return _.template(
                     params.itemsTextTemplate || gettext('Showing <%- firstItem %> to <%- lastItem %> of <%- maxItems %> entries')
                 )({
-                    firstItem: ((self.currentPage() - 1) * self.perPage()) + 1,
+                    firstItem: self.totalItems() > 0 ? ((self.currentPage() - 1) * self.perPage()) + 1 : 0,
                     lastItem: isNaN(lastItem) ? 1 : lastItem,
                     maxItems: self.totalItems(),
                 });

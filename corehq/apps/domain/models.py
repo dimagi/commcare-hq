@@ -7,10 +7,11 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.db import models
 from django.db.models import F
+from django.contrib.postgres.fields import ArrayField
 from django.db.transaction import atomic
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from memoized import memoized
 
@@ -65,6 +66,8 @@ from .exceptions import (
 )
 from .project_access.models import SuperuserProjectEntryRecord  # noqa
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 lang_lookup = defaultdict(str)
 
 DATA_DICT = settings.INTERNAL_DATA
@@ -78,6 +81,18 @@ BUSINESS_UNITS = [
     "DWA",
     "INC",
 ]
+
+# These are the UCR Expressions (Data Transformation Engine expressions) that are not currently
+# supported by SaaS. If any domain wants to use them them it can be
+# enabled from  Project Settings > Project Information Internal
+RESTRICTED_UCR_EXPRESSIONS = [
+    ('base_item_expression', 'Base Item Expressions'),
+    ('related_doc', 'Related Document Expressions')
+]
+
+
+def all_restricted_ucr_expressions():
+    return [exp[0] for exp in RESTRICTED_UCR_EXPRESSIONS]
 
 
 for lang in all_langs:
@@ -178,7 +193,6 @@ class CallCenterProperties(DocumentSchema):
         return pre != post
 
 
-
 class LicenseAgreement(DocumentSchema):
     signed = BooleanProperty(default=False)
     type = StringProperty()
@@ -248,22 +262,6 @@ class CaseDisplaySettings(DocumentSchema):
         verbose_name="Mapping of form xmlns to definitions of properties "
                      "to display for individual forms")
 
-    # todo: case list
-
-
-class DynamicReportConfig(DocumentSchema):
-    """configurations of generic/template reports to be set up for this domain"""
-    report = StringProperty()  # fully-qualified path to template report class
-    name = StringProperty()  # report display name in sidebar
-    kwargs = DictProperty()  # arbitrary settings to configure report
-    previewers_only = BooleanProperty()
-
-
-class DynamicReportSet(DocumentSchema):
-    """a set of dynamic reports grouped under a section header in the sidebar"""
-    section_title = StringProperty()
-    reports = SchemaListProperty(DynamicReportConfig)
-
 
 LOGO_ATTACHMENT = 'logo.png'
 
@@ -317,7 +315,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     # domain metadata
     project_type = StringProperty()  # e.g. MCH, HIV
-    customer_type = StringProperty()  # plus, full, etc.
     is_test = StringProperty(choices=["true", "false", "none"], default="none")
     description = StringProperty()
     short_description = StringProperty()
@@ -329,7 +326,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     location_restriction_for_users = BooleanProperty(default=False)
     usercase_enabled = BooleanProperty(default=False)
     hipaa_compliant = BooleanProperty(default=False)
-    use_livequery = BooleanProperty(default=False)
     first_domain_for_user = BooleanProperty(default=False)
 
     # CommConnect settings
@@ -378,6 +374,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
+    sms_worker_registration_alert_emails = StringListProperty()
     sms_survey_date_format = StringProperty()
 
     granted_messaging_access = BooleanProperty(default=False)
@@ -398,7 +395,8 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     auto_case_update_hour = IntegerProperty()
 
     # Allowed number of max OData feeds that this domain can create.
-    # If this value is None, the value in settings.DEFAULT_ODATA_FEED_LIMIT is used
+    # NOTE: This value is generally None. If you want the value the system will use,
+    # please use the `get_odata_feed_limit` method instead
     odata_feed_limit = IntegerProperty()
 
     # exchange/domain copying stuff
@@ -425,13 +423,10 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     internal = SchemaProperty(InternalProperties)
 
-    dynamic_reports = SchemaListProperty(DynamicReportSet)
-
     # extra user specified properties
     tags = StringListProperty()
     area = StringProperty(choices=AREA_CHOICES)
     sub_area = StringProperty(choices=SUB_AREA_CHOICES)
-    launch_date = DateTimeProperty
 
     last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
@@ -441,10 +436,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     two_factor_auth = BooleanProperty(default=False)
     strong_mobile_passwords = BooleanProperty(default=False)
+    disable_mobile_login_lockout = BooleanProperty(default=False)
 
     requested_report_builder_subscription = StringListProperty()
-
-    report_whitelist = StringListProperty()
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
@@ -522,7 +516,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return None
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    @quickcache(['couch_user._id', 'is_active'], timeout=5 * 60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
@@ -604,7 +598,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return domain_has_submission_in_last_30_days(self.name)
 
     @classmethod
-    @quickcache(['name'], skip_arg='strict', timeout=30*60,
+    @quickcache(['name'], skip_arg='strict', timeout=30 * 60,
         session_function=icds_conditional_session_key())
     def get_by_name(cls, name, strict=False):
         if not name:
@@ -648,7 +642,6 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 is_active=is_active,
                 date_created=datetime.utcnow(),
                 secure_submissions=secure_submissions,
-                use_livequery=True,
             )
             new_domain.save(**get_safe_write_kwargs())
             return new_domain
@@ -694,6 +687,11 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return sorted({d['key'] for d in cls.get_all(include_docs=False)})
 
     @classmethod
+    def get_deleted_domain_names(cls):
+        domains = Domain.view("domain/deleted_domains", include_docs=False, reduce=False).all()
+        return {d['key'] for d in domains}
+
+    @classmethod
     def get_all_ids(cls):
         return [d['id'] for d in cls.get_all(include_docs=False)]
 
@@ -714,7 +712,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         ).all()]
 
     def case_sharing_included(self):
-        return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
+        return self.case_sharing or reduce(
+            lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False
+        )
 
     def save(self, **params):
         from corehq.apps.domain.dbaccessors import domain_or_deleted_domain_exists
@@ -764,7 +764,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
 
     def copies_of_parent(self):
-        return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
+        return Domain.view(
+            'domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True
+        )
 
     def delete(self, leave_tombstone=False):
         if not leave_tombstone and not settings.UNIT_TESTING:
@@ -819,6 +821,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
             self.fetch_attachment(LOGO_ATTACHMENT),
             self.blobs[LOGO_ATTACHMENT].content_type
         )
+
+    def get_odata_feed_limit(self):
+        return self.odata_feed_limit or settings.DEFAULT_ODATA_FEED_LIMIT
 
     def put_attachment(self, *args, **kw):
         return super(Domain, self).put_attachment(domain=self.name, *args, **kw)
@@ -957,7 +962,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.to_user.email,
+            self.to_user.get_email(),
             html_content,
             text_content=text_content)
 
@@ -974,7 +979,7 @@ class TransferDomainRequest(models.Model):
 
         send_html_email_async.delay(
             _('Transfer of ownership for CommCare project space.'),
-            self.from_user.email,
+            self.from_user.get_email(),
             html_content,
             text_content=text_content)
 
@@ -1042,3 +1047,100 @@ class DomainAuditRecordEntry(models.Model):
         # update_fields prevents the possibility of a race condition
         # https://stackoverflow.com/a/1599090
         obj.save(update_fields=[property_to_update])
+
+
+class AllowedUCRExpressionSettings(models.Model):
+    """
+    Model contains UCR(aka Data Transformation Engine) expressions settings for a domain.
+    The expressions defined in RESTRICTED_UCR_EXPRESSIONS are not generally available yet.
+    But these expressions are enabled by default on every domain so that current flow does not change.
+    If any expression's usage is to be restricted on any domain
+    then the  Expressions should be explicitly removed from
+    Domain settings page on HQ.
+    """
+
+    domain = models.CharField(unique=True, max_length=256)
+    allowed_ucr_expressions = ArrayField(
+        models.CharField(max_length=32, choices=RESTRICTED_UCR_EXPRESSIONS),
+        default=all_restricted_ucr_expressions
+    )
+
+    @classmethod
+    @quickcache(['domain_name'])
+    def get_allowed_ucr_expressions(cls, domain_name):
+        try:
+            ucr_expressions_obj = AllowedUCRExpressionSettings.objects.get(domain=domain_name)
+            allowed_ucr_expressions = ucr_expressions_obj.allowed_ucr_expressions
+        except AllowedUCRExpressionSettings.DoesNotExist:
+            allowed_ucr_expressions = all_restricted_ucr_expressions()
+        return allowed_ucr_expressions
+
+    @classmethod
+    def save_allowed_ucr_expressions(cls, domain_name, expressions):
+        AllowedUCRExpressionSettings.objects.update_or_create(
+            domain=domain_name,
+            defaults={
+                'allowed_ucr_expressions': expressions
+            }
+        )
+
+    @classmethod
+    def disallowed_ucr_expressions(cls, domain_name):
+        allowed_expressions_for_domain = set(cls.get_allowed_ucr_expressions(domain_name))
+        restricted_expressions = set(all_restricted_ucr_expressions())
+        return restricted_expressions - allowed_expressions_for_domain
+
+
+class ProjectLimitType():
+    LIVE_GOOGLE_SHEETS = 'lgs'
+
+    CHOICES = (
+        (LIVE_GOOGLE_SHEETS, "Live Google Sheets"),
+    )
+
+
+class ProjectLimit(models.Model):
+    domain = models.CharField(max_length=256, db_index=True)
+    limit_type = models.CharField(max_length=5, choices=ProjectLimitType.CHOICES)
+    limit_value = models.IntegerField(default=20)
+
+
+class OperatorCallLimitSettings(models.Model):
+    CALL_LIMIT_MINIMUM = 1
+    CALL_LIMIT_MAXIMUM = 1000
+    CALL_LIMIT_DEFAULT = 120
+
+    domain = models.CharField(max_length=256, db_index=True)
+    call_limit = models.IntegerField(
+        default=CALL_LIMIT_DEFAULT,
+        validators=[
+            MinValueValidator(CALL_LIMIT_MINIMUM),
+            MaxValueValidator(CALL_LIMIT_MAXIMUM)
+        ]
+    )
+
+
+class SMSAccountConfirmationSettings(models.Model):
+    PROJECT_NAME_DEFAULT = "CommCare HQ"
+    PROJECT_NAME_MAX_LENGTH = 30
+    CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT = 14
+    CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM = 1
+    CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM = 30
+
+    domain = models.CharField(max_length=256, db_index=True)
+    project_name = models.CharField(
+        default=PROJECT_NAME_DEFAULT,
+        max_length=PROJECT_NAME_MAX_LENGTH,
+    )
+    confirmation_link_expiry_time = models.IntegerField(
+        default=CONFIRMATION_LINK_EXPIRY_DAYS_DEFAULT,
+        validators=[
+            MinValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MINIMUM),
+            MaxValueValidator(CONFIRMATION_LINK_EXPIRY_DAYS_MAXIMUM),
+        ]
+    )
+
+    @staticmethod
+    def get_settings(domain):
+        domain_obj, _ = SMSAccountConfirmationSettings.objects.get_or_create(domain=domain)
+        return domain_obj

@@ -8,8 +8,7 @@ from corehq.apps.hqcase.utils import (
     bulk_update_cases,
     get_last_non_blank_value,
 )
-from corehq.elastic import ES_EXPORT_INSTANCE
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.util.log import with_progress_bar
 
 CASE_UPDATE_BATCH = 100
@@ -26,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, domain, case_type, *args, **options):
         perform_update = True
         query = (
-            CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
+            CaseES(for_export=True)
             .domain(domain)
             .case_type(case_type)
             .is_closed(False)
@@ -40,14 +39,13 @@ class Command(BaseCommand):
                 exit(0)
         case_ids = query.get_ids()
         print("Begin iterating %s cases" % len(case_ids))
-        case_accessor = CaseAccessors(domain)
         case_updates = []
         filename = "case_updates_%s_%s_%s.csv" % (domain, case_type, datetime.utcnow())
         with open(filename, 'w') as f:
             writer = csv.DictWriter(f, ['case_id', 'new_value'])
             writer.writeheader()
             for case_id in with_progress_bar(case_ids):
-                case = case_accessor.get_case(case_id)
+                case = CommCareCase.objects.get_case(case_id, domain)
                 if case.name:
                     continue
                 update_to_name = get_last_non_blank_value(case, 'name')

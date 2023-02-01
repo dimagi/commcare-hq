@@ -43,7 +43,7 @@ class TestValidateInteger(SimpleTestCase):
             with wrap_system_exit() as stderr:
                 self.parser.parse_args(argv)
         err_msg = stderr.getvalue().strip().split("\n")[-1]
-        self.assertRegexpMatches(err_msg, f": {re.escape(err_suffix)}$")
+        self.assertRegex(err_msg, f": {re.escape(err_suffix)}$")
 
     def test_validate_range_int_gt5(self):
         self.add_validated_arg(int, gt=5)

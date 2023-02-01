@@ -1,6 +1,6 @@
 from six.moves.urllib.parse import parse_qs, urlparse
 
-from mock import patch
+from unittest.mock import patch
 
 from django.test import SimpleTestCase
 

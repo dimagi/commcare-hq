@@ -8,9 +8,8 @@ from decimal import Decimal
 import six
 import sqlalchemy
 from django.db import DEFAULT_DB_ALIAS
-from mock import patch
+from unittest.mock import patch
 
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
@@ -24,7 +23,9 @@ from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_report_config():
-    return _get_sample_doc('sample_report_config.json', ReportConfiguration)
+    config = _get_sample_doc('sample_report_config.json', ReportConfiguration)
+    config.validate()
+    return config
 
 
 def get_sample_data_source():
@@ -94,7 +95,7 @@ def doc_to_change(doc):
         metadata=ChangeMeta(
             document_id=doc['_id'],
             data_source_type=data_sources.SOURCE_COUCH,
-            data_source_name=CommCareCase.get_db().dbname,
+            data_source_name=data_sources.CASE_SQL,
             document_type=doc['doc_type'],
             document_subtype=doc.get('type'),
             domain=doc['domain'],

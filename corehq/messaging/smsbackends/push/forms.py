@@ -1,18 +1,18 @@
 from corehq.apps.sms.forms import BackendForm
 from dimagi.utils.django.fields import TrimmedCharField
 from crispy_forms import layout as crispy
-from django.utils.translation import ugettext_lazy, ugettext as _
+from django.utils.translation import gettext_lazy, gettext as _
 
 
 class PushBackendForm(BackendForm):
     channel = TrimmedCharField(
-        label=ugettext_lazy("Channel"),
+        label=gettext_lazy("Channel"),
     )
     service = TrimmedCharField(
-        label=ugettext_lazy("Service"),
+        label=gettext_lazy("Service"),
     )
     password = TrimmedCharField(
-        label=ugettext_lazy("Password"),
+        label=gettext_lazy("Password"),
     )
 
     @property

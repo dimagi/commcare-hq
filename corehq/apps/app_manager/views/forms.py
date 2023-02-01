@@ -1,5 +1,4 @@
 import hashlib
-import itertools
 import json
 import logging
 import re
@@ -15,7 +14,7 @@ from django.http import (
     JsonResponse,
 )
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -38,6 +37,11 @@ from corehq.apps.app_manager.app_schemas.case_properties import (
 from corehq.apps.app_manager.const import (
     USERCASE_PREFIX,
     USERCASE_TYPE,
+    WORKFLOW_DEFAULT,
+    WORKFLOW_ROOT,
+    WORKFLOW_PARENT_MODULE,
+    WORKFLOW_MODULE,
+    WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 )
 from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
@@ -55,6 +59,7 @@ from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
     AppEditingError,
+    ArbitraryDatum,
     CaseReferences,
     CustomAssertion,
     CustomIcon,
@@ -81,7 +86,9 @@ from corehq.apps.app_manager.util import (
     advanced_actions_use_usercase,
     enable_usercase,
     is_usercase_in_use,
-    save_xform, module_offers_registry_search,
+    save_xform,
+    module_loads_registry_case,
+    module_uses_inline_search,
 )
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
@@ -113,7 +120,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.apps.programs.models import Program
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
+from corehq.apps.users.models import HqPermissions
 from corehq.util.view_utils import set_file_download
 
 
@@ -193,6 +200,7 @@ def undo_delete_form(request, domain, record_id):
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
+    # Handle edit for actions and arbitrary_datums
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
@@ -205,6 +213,11 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
         add_properties_to_data_dictionary(domain, action.case_type, list(action.case_properties.keys()))
     if advanced_actions_use_usercase(actions) and not is_usercase_in_use(domain):
         enable_usercase(domain)
+
+    datums_json = json.loads(request.POST.get('arbitrary_datums'))
+    datums = [ArbitraryDatum.wrap(item) for item in datums_json]
+    form.arbitrary_datums = datums
+
     response_json = {}
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
@@ -253,12 +266,22 @@ def edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 
 @no_conflict_require_POST
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
     """
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
 
     ajax = json.loads(request.POST.get('ajax', 'true'))
     resp = {}
@@ -307,6 +330,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                     xform = str(xform, encoding="utf-8")
                 except Exception:
                     raise Exception("Error uploading form: Please make sure your form is encoded in UTF-8")
+
             if request.POST.get('cleanup', False):
                 try:
                     # First, we strip all newlines and reformat the DOM.
@@ -355,8 +379,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
+        form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
@@ -365,15 +389,27 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ],
         )
         module_unique_ids = [m.unique_id for m in app.get_modules()]
-        form.form_links = [FormLink(
-            xpath=link[0],
-            form_id=link[1] if link[1] not in module_unique_ids else None,
-            module_unique_id=link[1] if link[1] in module_unique_ids else None,
-            datums=[
-                FormDatum(name=datum['name'], xpath=datum['xpath'])
-                for datum in link[2]
-            ]
-        ) for link in form_links]
+        form_links = []
+        for link in form_link_data:
+            xpath, unique_id, datums = link
+            if '.' in unique_id:
+                form_module_id, form_id = unique_id.split('.')
+                module_unique_id = None
+            else:
+                form_id = unique_id if unique_id not in module_unique_ids else None
+                module_unique_id = unique_id if unique_id in module_unique_ids else None
+                form_module_id = None
+            form_links.append(FormLink(
+                xpath=xpath,
+                form_id=form_id,
+                form_module_id=form_module_id,
+                module_unique_id=module_unique_id,
+                datums=[
+                    FormDatum(name=datum['name'], xpath=datum['xpath'])
+                    for datum in datums
+                ]
+            ))
+        form.form_links = form_links
 
     if should_edit('post_form_workflow_fallback'):
         form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
@@ -449,6 +485,12 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         except InvalidSessionEndpoint as e:
             return json_response({'message': str(e)}, status_code=400)
 
+    if should_edit('function_datum_endpoints'):
+        if request.POST['function_datum_endpoints']:
+            form.function_datum_endpoints = request.POST['function_datum_endpoints'].replace(" ", "").split(",")
+        else:
+            form.function_datum_endpoints = []
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -516,7 +558,7 @@ def new_form(request, domain, app_id, module_unique_id):
 @waf_allow('XSS_BODY')
 @no_conflict_require_POST
 @login_or_digest
-@require_permission(Permissions.edit_apps, login_decorator=None)
+@require_permission(HqPermissions.edit_apps, login_decorator=None)
 @track_domain_request(calculated_prop='cp_n_saved_app_changes')
 def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
@@ -531,7 +573,12 @@ def patch_xform(request, domain, app_id, form_unique_id):
         return conflict
 
     xml = apply_patch(patch, form.source)
-    xml = save_xform(app, form, xml.encode('utf-8'))
+
+    try:
+        xml = save_xform(app, form, xml.encode('utf-8'))
+    except XFormException:
+        return JsonResponse({'status': 'error'}, status=HttpResponseBadRequest.status_code)
+
     if "case_references" in request.POST or "references" in request.POST:
         form.case_references = case_references
 
@@ -541,7 +588,7 @@ def patch_xform(request, domain, app_id, form_unique_id):
     }
     app.save(response_json)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
-    return json_response(response_json)
+    return JsonResponse(response_json)
 
 
 def apply_patch(patch, text):
@@ -619,7 +666,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
                 'module_id': module.id,
                 'name': clean_trans(module.name, app.langs),
                 'is_current': module.unique_id == current_module_id,
-            } for module in app.modules]
+            } for module in app.get_modules()]
         }
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not
@@ -629,6 +676,17 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_do
 
 
 def get_form_view_context_and_template(request, domain, form, langs, current_lang, messages=messages):
+    # HELPME
+    #
+    # This method has been flagged for refactoring due to its complexity and
+    # frequency of touches in changesets
+    #
+    # If you are writing code that touches this method, your changeset
+    # should leave the method better than you found it.
+    #
+    # Please remove this flag when this method no longer triggers an 'E' or 'F'
+    # classification from the radon code static analysis
+
     xform_questions = []
     xform = None
     form_errors = []
@@ -738,6 +796,22 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         if not has_case_error:
             messages.error(request, "Error in Case Management: %s" % e)
 
+    form_workflows = {
+        WORKFLOW_DEFAULT: _("Home Screen"),
+        WORKFLOW_ROOT: _("First Menu"),
+    }
+    if not module.root_module_id or not module.root_module.is_multi_select():
+        if not module.put_in_root:
+            form_workflows[WORKFLOW_MODULE] = _("Menu: ") + trans(module.name, langs)
+        if not (module.is_multi_select() or module_uses_inline_search(module)):
+            form_workflows[WORKFLOW_PREVIOUS] = _("Previous Screen")
+    if module.root_module_id and not module.root_module.put_in_root:
+        if not module.root_module.is_multi_select():
+            form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
+    if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
+        form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
+
     case_config_options = {
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
@@ -751,11 +825,11 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         'nav_form': form,
         'xform_languages': languages,
         'form_errors': form_errors,
+        'form_workflows': form_workflows,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
         'allow_form_copy': isinstance(form, (Form, AdvancedForm)),
         'allow_form_filtering': not form_has_schedule,
-        'uses_form_workflow': form.post_form_workflow == WORKFLOW_FORM,
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
@@ -778,7 +852,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
         ],
         'form_icon': None,
         'session_endpoints_enabled': toggles.SESSION_ENDPOINTS.enabled(domain),
-        'module_offers_registry_search': module_offers_registry_search(module),
+        'module_is_multi_select': module.is_multi_select(),
+        'module_loads_registry_case': module_loads_registry_case(module),
     }
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
@@ -787,8 +862,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        context.update(_get_form_link_context(module, langs))
+    if allow_form_workflow:
+        context.update(_get_form_link_context(app, module, form, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -804,6 +879,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
             'commtrack_programs': all_programs + commtrack_programs(),
             'module_id': module.unique_id,
             'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
+            'arbitrary_datums': form.arbitrary_datums,
         })
         if form.form_type == "shadow_form":
             case_config_options.update({
@@ -841,21 +917,48 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     return "app_manager/form_view.html", context
 
 
-def _get_form_link_context(module, langs):
+def _get_form_link_context(app, module, form, langs):
+    return {
+        'linkable_forms': _get_linkable_forms_context(module, langs),
+        'form_links': _get_form_links(app, form)
+    }
+
+
+def _get_form_links(app, form):
+    """Augments the form link JSON with the 'unique_id' field
+    which is dynamically generated.
+    """
+    links = []
+    for link in form.form_links:
+        link_context = link.to_json()
+        try:
+            link_context['uniqueId'] = link.get_unique_id(app)
+        except FormNotFoundException:
+            continue
+        else:
+            links.append(link_context)
+    return links
+
+
+def _get_linkable_forms_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
-    def _form_name(form):
-        module_name = _module_name(form.get_module())
+    def _form_name(module, form):
+        module_name = _module_name(module)
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
     linkable_items = []
+    is_multi_select = module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. All other menus can be linked manually.
+        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
+        # All other menus can be linked manually.
+        if candidate_module.is_multi_select():
+            continue
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
@@ -870,21 +973,20 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-        for candidate_form in candidate_module.get_forms():
+        for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
             case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
-                'unique_id': candidate_form.unique_id,
-                'name': _form_name(candidate_form),
-                'auto_link': case_type_match or is_parent,
+                # this is necessary to disambiguate forms in shadow modules
+                'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
+                'name': _form_name(candidate_module, candidate_form),
+                'auto_link': not is_multi_select and (case_type_match or is_parent),
                 'allow_manual_linking': True,
             })
 
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 
 @require_can_edit_apps
@@ -895,21 +997,14 @@ def get_form_datums(request, domain, app_id):
     form = app.get_form(form_id)
 
     def make_datum(datum):
-        return {'name': datum.datum.id, 'case_type': datum.case_type}
+        return {'name': datum.id, 'case_type': datum.case_type}
 
     helper = EntriesHelper(app)
-    datums = []
-    root_module = form.get_module().root_module
-    if root_module:
-        datums.extend([
-            make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(root_module.get_form(0))
-            if datum.requires_selection
-        ])
-    datums.extend([
+    datums = [
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
-    ])
-    return json_response(datums)
+    ]
+    return JsonResponse(datums, safe=False)
 
 
 @require_GET

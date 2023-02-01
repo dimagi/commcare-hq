@@ -12,6 +12,7 @@ from corehq.apps.api.odata.views import (
 )
 from corehq.apps.export.models import CaseExportInstance, FormExportInstance
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.api.odata.utils import format_odata_error
 
 
 class ODataBaseSerializer(Serializer):
@@ -24,9 +25,13 @@ class ODataBaseSerializer(Serializer):
         raise NotImplementedError("implement get_config")
 
     def to_json(self, data, options=None):
-
         # get current object offset for use in row number
         self.offset = data.get('meta', {}).get('offset', 0)
+
+        if 'objects' not in data.keys():
+            return json.dumps(format_odata_error("404",
+            "This OData feed does not exist"),
+            cls=DjangoJSONEncoder)
 
         # Convert bundled objects to JSON
         data['objects'] = [

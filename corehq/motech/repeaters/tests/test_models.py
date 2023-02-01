@@ -1,5 +1,7 @@
+import uuid
 from contextlib import contextmanager
 from datetime import timedelta
+from unittest.mock import patch
 from uuid import uuid4
 
 from django.conf import settings
@@ -7,11 +9,11 @@ from django.db.models.deletion import ProtectedError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
-from nose.tools import assert_in
+from nose.tools import assert_in, assert_raises
 
-from corehq.motech.const import ALGO_AES, BASIC_AUTH
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.utils import b64_aes_encrypt
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.util.test_utils import _create_case
 
 from ..const import (
     MAX_ATTEMPTS,
@@ -23,15 +25,34 @@ from ..const import (
     RECORD_SUCCESS_STATE,
 )
 from ..models import (
+    RepeatRecord,
     FormRepeater,
-    SQLRepeater,
+    Repeater,
     are_repeat_records_migrated,
     format_response,
     get_all_repeater_types,
     is_response,
 )
 
-DOMAIN = 'test-domain-ap'
+DOMAIN = 'test-domain'
+
+ALL_REPEATERS = [
+    'FormRepeater',
+    'CaseRepeater',
+    'CreateCaseRepeater',
+    'UpdateCaseRepeater',
+    'ReferCaseRepeater',
+    'DataRegistryCaseUpdateRepeater',
+    'ShortFormRepeater',
+    'AppStructureRepeater',
+    'UserRepeater',
+    'LocationRepeater',
+    'FHIRRepeater',
+    'OpenmrsRepeater',
+    'Dhis2Repeater',
+    'Dhis2EntityRepeater',
+    'CaseExpressionRepeater'
+]
 
 
 def test_get_all_repeater_types():
@@ -46,91 +67,55 @@ class RepeaterTestCase(TestCase):
     def setUp(self):
         super().setUp()
         url = 'https://www.example.com/api/'
-        conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
-        self.repeater = FormRepeater(
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.sql_repeater = FormRepeater(
             domain=DOMAIN,
-            url=url,
-            connections_settings_id=conn.id
+            repeater_id=uuid.uuid4().hex,
+            connection_settings=self.conn,
         )
-        self.repeater.save()
-        self.sql_repeater = SQLRepeater.objects.create(
-            domain=DOMAIN,
-            repeater_id=self.repeater.get_id,
-            connection_settings=conn,
+        self.sql_repeater.save()
+
+
+class TestSoftDeleteRepeaters(RepeaterTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.all_sql_repeaters = [self.sql_repeater]
+        for i in range(5):
+            r = FormRepeater(
+                domain=DOMAIN,
+                connection_settings=self.conn,
+                repeater_id=uuid4().hex
+            )
+            r.save()
+            self.all_sql_repeaters.append(r)
+
+    def test_soft_deletion(self):
+        self.assertEqual(FormRepeater.objects.all().count(), 6)
+        self.all_sql_repeaters[1].is_deleted = True
+        self.all_sql_repeaters[1].save()
+        self.all_sql_repeaters[0].is_deleted = True
+        self.all_sql_repeaters[0].save()
+        self.assertEqual(FormRepeater.objects.all().count(), 4)
+        self.assertEqual(
+            set(FormRepeater.objects.all().values_list('repeater_id', flat=True)),
+            set([r.repeater_id for r in self.all_sql_repeaters if not r.is_deleted])
         )
+
+    def test_repeatrs_retired_from_sql(self):
+        self.all_sql_repeaters[0].retire()
+        self.all_sql_repeaters[4].retire()
+        sql_repeater_count = Repeater.objects.all().count()
+        self.assertEqual(sql_repeater_count, 4)
 
     def tearDown(self):
-        if self.repeater.connection_settings_id:
-            ConnectionSettings.objects.filter(
-                pk=self.repeater.connection_settings_id
-            ).delete()
-        self.sql_repeater.delete()
-        self.repeater.delete()
-        super().tearDown()
-
-
-class RepeaterConnectionSettingsTests(RepeaterTestCase):
-
-    def test_create_connection_settings(self):
-        self.assertIsNone(self.repeater.connection_settings_id)
-        conn = self.repeater.connection_settings
-
-        self.assertIsNotNone(self.repeater.connection_settings_id)
-        self.assertEqual(conn.name, self.repeater.url)
-
-    def test_notify_addresses(self):
-        self.repeater.notify_addresses_str = "admin@example.com"
-        conn = self.repeater.connection_settings
-        self.assertEqual(conn.notify_addresses, ["admin@example.com"])
-
-    def test_notify_addresses_none(self):
-        self.repeater.notify_addresses_str = None
-        conn = self.repeater.connection_settings
-        self.assertEqual(conn.notify_addresses, [])
-
-    def test_password_encrypted(self):
-        self.repeater.auth_type = BASIC_AUTH
-        self.repeater.username = "terry"
-        self.repeater.password = "Don't save me decrypted!"
-        conn = self.repeater.connection_settings
-
-        self.assertEqual(self.repeater.plaintext_password, conn.plaintext_password)
-        # repeater.password was saved decrypted; conn.password is not:
-        self.assertNotEqual(self.repeater.password, conn.password)
-
-    def test_password_bug(self):
-        self.repeater.auth_type = BASIC_AUTH
-        self.repeater.username = "terry"
-        plaintext = "Don't save me decrypted!"
-        ciphertext = b64_aes_encrypt(plaintext)
-        bytestring_repr = f"b'{ciphertext}'"  # bug fixed by commit 3a900068
-        self.repeater.password = f'${ALGO_AES}${bytestring_repr}'
-        conn = self.repeater.connection_settings
-
-        self.assertEqual(conn.plaintext_password, self.repeater.plaintext_password)
+        Repeater.all_objects.all().delete()
+        return super().tearDown()
 
 
 class TestRepeaterName(RepeaterTestCase):
 
-    def test_migrated_name(self):
-        """
-        When ConnectionSettings are migrated from an old Repeater,
-        ConnectionSettings.name is set to Repeater.url
-        """
-        connection_settings = self.repeater.connection_settings
-        self.assertEqual(connection_settings.name, self.repeater.url)
-        self.assertEqual(self.repeater.name, connection_settings.name)
-
     def test_repeater_name(self):
-        connection_settings = ConnectionSettings.objects.create(
-            domain=DOMAIN,
-            name='Example Server',
-            url='https://example.com/api/',
-        )
-        self.repeater.connection_settings_id = connection_settings.id
-        self.repeater.save()
-
-        self.assertEqual(self.repeater.name, connection_settings.name)
+        self.assertEqual(self.sql_repeater.name, self.conn.name)
 
 
 class TestSQLRepeatRecordOrdering(RepeaterTestCase):
@@ -168,52 +153,65 @@ class TestSQLRepeatRecordOrdering(RepeaterTestCase):
         self.assertEqual(repeat_records[1].payload_id, 'cain')
 
 
+class TestConnectionSettingsSoftDelete(TestCase):
+
+    def setUp(self):
+        self.conn_1 = ConnectionSettings.objects.create(domain=DOMAIN, url='http://dummy1.com')
+        self.conn_2 = ConnectionSettings.objects.create(domain=DOMAIN, url='http://dummy2.com')
+        return super().setUp()
+
+    def test_soft_delete(self):
+        self.conn_1.soft_delete()
+        self.assertEqual(ConnectionSettings.objects.all().count(), 1)
+        self.assertEqual(ConnectionSettings.objects.all()[0].id, self.conn_2.id)
+
+
 class RepeaterManagerTests(RepeaterTestCase):
 
     def test_all_ready_no_repeat_records(self):
-        sql_repeaters = SQLRepeater.objects.all_ready()
+        sql_repeaters = Repeater.objects.all_ready()
         self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_pending_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 
     def test_all_ready_failed_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_FAILURE_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 
     def test_all_ready_succeeded_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_SUCCESS_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_cancelled_repeat_record(self):
         with make_repeat_record(self.sql_repeater, RECORD_CANCELLED_STATE):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_paused(self):
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 pause(self.sql_repeater):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_next_future(self):
         in_five_mins = timezone.now() + timedelta(minutes=5)
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.sql_repeater, in_five_mins):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 0)
 
     def test_all_ready_next_past(self):
         five_mins_ago = timezone.now() - timedelta(minutes=5)
         with make_repeat_record(self.sql_repeater, RECORD_PENDING_STATE), \
                 set_next_attempt_at(self.sql_repeater, five_mins_ago):
-            sql_repeaters = SQLRepeater.objects.all_ready()
+            sql_repeaters = Repeater.objects.all_ready()
             self.assertEqual(len(sql_repeaters), 1)
             self.assertEqual(sql_repeaters[0].id, self.sql_repeater.id)
 
@@ -440,7 +438,34 @@ class TestAreRepeatRecordsMigrated(RepeaterTestCase):
         self.assertTrue(is_migrated)
 
 
-class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
+class TestConnectionSettingsUsedBy(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        url = 'https://www.example.com/api/'
+        self.conn = ConnectionSettings.objects.create(domain=DOMAIN, name=url, url=url)
+        self.repeater = FormRepeater(
+            domain=DOMAIN,
+            connection_settings_id=self.conn.id
+        )
+        self.repeater.save()
+
+    def test_connection_settings_used_by(self):
+        self.assertEqual(self.conn.used_by, {'Data Forwarding'})
+
+    def test_conn_with_no_used_by(self):
+        new_conn = ConnectionSettings.objects.create(
+            url='http://blah-url.com',
+            domain='nice-domain'
+        )
+        self.assertEqual(new_conn.used_by, set())
+
+    def tearDown(self):
+        self.repeater.delete()
+        super().tearDown()
+
+
+class TestRepeaterConnectionSettings(RepeaterTestCase):
 
     def test_connection_settings_are_accessible(self):
         self.assertEqual(self.sql_repeater.connection_settings.url, 'https://www.example.com/api/')
@@ -448,3 +473,40 @@ class TestSQLRepeaterConnectionSettings(RepeaterTestCase):
     def test_used_connection_setting_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.sql_repeater.connection_settings.delete()
+
+
+def test_attempt_forward_now_kwargs():
+    rr = RepeatRecord()
+    with assert_raises(TypeError):
+        rr.attempt_forward_now(True)
+
+
+class TestRepeaterModelMethods(RepeaterTestCase):
+
+    def test_register(self):
+        case_id = uuid.uuid4().hex
+        payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
+        )
+        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        self.addCleanup(repeat_record.delete)
+        self.assertEqual(repeat_record.payload_id, payload.get_id)
+        all_records = list(iter_repeat_records_by_domain(DOMAIN))
+        self.assertEqual(len(all_records), 1)
+        self.assertEqual(all_records[0]._id, repeat_record.get_id)
+
+    def test_send_request(self):
+        case_id = uuid.uuid4().hex
+        payload, cases = _create_case(
+            domain=DOMAIN, case_id=case_id, case_type='some_case', owner_id='abcd'
+        )
+        repeat_record = self.sql_repeater.register(payload, fire_synchronously=True)
+        self.addCleanup(repeat_record.delete)
+        from corehq.motech.repeaters.tests.test_models_slow import ResponseMock
+        resp = ResponseMock(status_code=200, reason='OK')
+        # Basic test checks if send_request is called
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
+            self.sql_repeater.send_request(repeat_record, payload)
+
+        self.assertTrue(simple_request.called)

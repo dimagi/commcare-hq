@@ -1,7 +1,5 @@
 from django.test import TestCase
 
-from casexml.apps.case.models import CommCareCase
-
 from corehq.apps.casegroups.dbaccessors import (
     get_case_group_meta_in_domain,
     get_case_groups_in_domain,

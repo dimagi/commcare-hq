@@ -1,24 +1,24 @@
 [submodule "corehq/apps/hqmedia/static/hqmedia/MediaUploader"]
 	path = corehq/apps/hqmedia/static/hqmedia/MediaUploader
-	url = git://github.com/dimagi/MediaUploader.git
+	url = https://github.com/dimagi/MediaUploader.git
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
-	url = git://github.com/dimagi/commcare-translations.git
+	url = https://github.com/dimagi/commcare-translations.git
 [submodule "submodules/couchdbkit-aggregate"]
 	path = submodules/couchdbkit-aggregate
-	url = git://github.com/dimagi/couchdbkit-aggregate.git
+	url = https://github.com/dimagi/couchdbkit-aggregate.git
 [submodule "submodules/django-digest-src"]
 	path = submodules/django-digest-src
-	url = git://github.com/dimagi/django-digest.git
+	url = https://github.com/dimagi/django-digest.git
 [submodule "submodules/django-no-exceptions"]
 	path = submodules/django-no-exceptions
-	url = git://github.com/dimagi/django-no-exceptions.git
+	url = https://github.com/dimagi/django-no-exceptions.git
 [submodule "submodules/langcodes"]
 	path = submodules/langcodes
-	url = git://github.com/dimagi/langcodes.git
+	url = https://github.com/dimagi/langcodes.git
 [submodule "submodules/python-digest"]
 	path = submodules/python-digest
-	url = git://github.com/dimagi/python-digest.git
+	url = https://github.com/dimagi/python-digest.git
 [submodule "submodules/xml2json"]
 	path = submodules/xml2json
-	url = git://github.com/dimagi/xml2json.git
+	url = https://github.com/dimagi/xml2json.git

@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from dimagi.utils.couch.undo import is_deleted, soft_delete
 

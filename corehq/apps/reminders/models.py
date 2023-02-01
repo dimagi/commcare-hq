@@ -1,39 +1,9 @@
-import re
-from collections import namedtuple
-from datetime import date, datetime, time, timedelta
-from random import randint
-from string import Formatter
+from datetime import datetime
 
 from django.conf import settings
-from django.db import models, transaction
+from django.db import models
 
-import pytz
-from couchdbkit import ResourceNotFound
-from couchdbkit.exceptions import ResourceConflict
-from dateutil.parser import parse
-
-from dimagi.ext.couchdbkit import *
-from dimagi.utils.couch import CriticalSection, LockableMixIn
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.logging import notify_exception
-from dimagi.utils.modules import to_function
-from dimagi.utils.parsing import json_format_datetime, string_to_datetime
-
-from corehq.apps.casegroups.models import CommCareCaseGroup
-from corehq.apps.groups.models import Group
-from corehq.apps.locations.dbaccessors import get_all_users_by_location
-from corehq.apps.locations.models import SQLLocation
-from corehq.apps.sms.models import MessagingEvent
-from corehq.apps.smsforms.models import SQLXFormsSession
-from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
-from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.utils import is_commcarecase
-from corehq.util.quickcache import quickcache
-from corehq.util.timezones.conversions import ServerTime, UserTime
+from dimagi.utils.couch import CriticalSection
 
 
 class IllegalModelStateException(Exception):
@@ -137,8 +107,9 @@ UI_FREQUENCY_CHOICES = [UI_FREQUENCY_ADVANCED]
 
 QUESTION_RETRY_CHOICES = [1, 2, 3, 4, 5]
 
-FORM_TYPE_ONE_BY_ONE = "ONE_BY_ONE" # Answer each question one at a time
-FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE" # Complete the entire form with just one sms using the delimiter to separate answers
+FORM_TYPE_ONE_BY_ONE = "ONE_BY_ONE"  # Answer each question one at a time
+# Complete the entire form with just one sms using the delimiter to separate answers
+FORM_TYPE_ALL_AT_ONCE = "ALL_AT_ONCE"
 FORM_TYPE_CHOICES = [FORM_TYPE_ONE_BY_ONE, FORM_TYPE_ALL_AT_ONCE]
 
 REMINDER_TYPE_ONE_TIME = "ONE_TIME"

@@ -1,7 +1,7 @@
 .. This is the main index for HQ's docs.
 
-Welcome to CommCareHQ's documentation!
-======================================
+Welcome to CommCare HQ's documentation!
+=======================================
 
 CommCare is a multi-tier mobile, server, and messaging platform. The platform enables users to build and
 configure content and a user interface, deploy that application to Android devices or to an end-user-facing web
@@ -42,6 +42,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     apps/multimedia
     apps/settings
     apps/advanced_app_features
+    apps/suite_generation
     apps/builds
     web_apps
     formplayer
@@ -65,10 +66,17 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     reporting
     maps
     exports
-    ucr
     change_feeds
     pillows
     email_monitoring_SES
+
+.. toctree::
+    :caption: User-Configurable Reporting
+    :maxdepth: 1
+
+    ucr
+    ucr/examples
+    ucr/faq
 
 .. toctree::
     :caption: Messaging
@@ -84,6 +92,15 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     fhir/index
     openmrs
     value_source
+
+.. toctree::
+    :caption: Single Sign On (SSO)
+    :maxdepth: 1
+
+    sso/overview
+    sso/architecture
+    sso/local_setup
+    sso/adding_idp
 
 .. toctree::
     :caption: UI and Front End
@@ -116,13 +133,9 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     :maxdepth: 1
 
     toggles
-    migrations
-    couch_to_sql_models
     commtrack
     elasticsearch
-    es_query
     middleware
-    migration_command_pattern
     nfs
     forms_and_cases
     couchdb
@@ -131,6 +144,15 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     metrics
     extensions
     custom
+
+.. toctree::
+    :caption: Migrations
+    :maxdepth: 1
+
+    migrations_in_practice
+    migration_command_pattern
+    migrations
+    couch_to_sql_models
 
 .. toctree::
     :caption: Architecture Decisions

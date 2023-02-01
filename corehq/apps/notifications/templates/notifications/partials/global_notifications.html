@@ -1,6 +1,9 @@
 {% load i18n %}
+{% load hq_shared_tags %}
+
 <li id="js-settingsmenu-notifications" class="dropdown">
-  <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown" id="notification-icon">
+  <a href="#" data-bind="click: bellClickHandler" class="dropdown-toggle dropdown-toggle-with-icon"
+     data-toggle="dropdown" id="notification-icon" aria-label='{% trans_html_attr "Notifications" %}'>
     <i class="icon-bell-alt fa fa-bell nav-main-icon"
        data-bind="css: {'notifications-active-icon': !seen()}"></i>
     <span class="responsive-label">{% trans "Notifications" %}</span>
@@ -13,7 +16,7 @@
     <!-- ko foreach: notifications -->
     <li data-bind="css: {
                 'notifications-alert': isAlert(),
-                'notifications-info': isInfo(),
+                'notifications-info': isInfo() || isFeature(),
                 'notifications-unread': !isRead()
             }">
       <a data-bind="attr: {href: url}, click: markAsRead" class="clearfix notification-link" target="_blank">
@@ -21,7 +24,7 @@
           <i class="notifications-type fa"
              data-bind="css: {
                   'fa-exclamation-triangle icon-warning-sign': isAlert(),
-                  'fa-info-circle icon-info-sign': isInfo()
+                  'fa-info-circle icon-info-sign': isInfo() || isFeature(),
               }"></i>
         </span>
         <span class="notifications-text" data-bind="text: content"></span>

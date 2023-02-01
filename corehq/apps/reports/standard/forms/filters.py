@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
@@ -13,18 +13,18 @@ class SubmitToggle(HQToggle):
 
 class SubmissionTypeFilter(BaseReportFilter):
     slug = "submitfilter"
-    label = ugettext_lazy("Submission Type")
+    label = gettext_lazy("Submission Type")
     template = "reports/filters/submit_error_types.html"
 
     doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog",
                  "XFormArchived"]
 
-    human_readable = [ugettext_lazy("Normal Form"),
-                      ugettext_lazy("Form with Errors"),
-                      ugettext_lazy("Duplicate Form"),
-                      ugettext_lazy("Overwritten Form"),
-                      ugettext_lazy("Generic Error"),
-                      ugettext_lazy("Archived Form")]
+    human_readable = [gettext_lazy("Normal Form"),
+                      gettext_lazy("Form with Errors"),
+                      gettext_lazy("Duplicate Form"),
+                      gettext_lazy("Overwritten Form"),
+                      gettext_lazy("Generic Error"),
+                      gettext_lazy("Archived Form")]
 
     @property
     def filter_context(self):

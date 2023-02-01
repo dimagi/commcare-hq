@@ -1,5 +1,6 @@
 import datetime
 
+from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.parsing import json_format_datetime
 
 from corehq.sql_db.util import estimate_row_count
@@ -12,15 +13,6 @@ from .const import (
     RECORD_PENDING_STATE,
     RECORD_SUCCESS_STATE,
 )
-
-
-def force_update_repeaters_views():
-    from .models import Repeater
-    Repeater.get_db().view(
-        'repeaters/repeaters',
-        reduce=False,
-        limit=1,
-    ).all()
 
 
 def get_pending_repeat_record_count(domain, repeater_id):
@@ -226,50 +218,31 @@ def get_sql_repeat_records_by_payload_id(domain, payload_id):
             .all())
 
 
-def get_repeaters_by_domain(domain):
-    from .models import Repeater
-
-    results = Repeater.get_db().view('repeaters/repeaters',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=True,
-        reduce=False,
-    ).all()
-
-    return [Repeater.wrap(result['doc']) for result in results
-            if Repeater.get_class_from_doc_type(result['doc']['doc_type'])
-            ]
-
-
-def _get_repeater_ids_by_domain(domain):
-    from .models import Repeater
-
-    results = Repeater.get_db().view('repeaters/repeaters',
-        startkey=[domain],
-        endkey=[domain, {}],
-        include_docs=False,
-        reduce=False,
-    ).all()
-
-    return [result['id'] for result in results]
-
-
-def iterate_repeat_records(due_before, chunk_size=10000, database=None):
+def iterate_repeat_records_for_ids(doc_ids):
     from .models import RepeatRecord
-    json_now = json_format_datetime(due_before)
+    return (RepeatRecord.wrap(doc) for doc in iter_docs(RepeatRecord.get_db(), doc_ids))
+
+
+def iterate_repeat_record_ids(due_before, chunk_size=10000):
+    """
+    Yields repeat record ids only.
+    Use chunk_size to optimize db query. Has no effect on # of items returned.
+    """
+    from .models import RepeatRecord
+    json_due_before = json_format_datetime(due_before)
 
     view_kwargs = {
         'reduce': False,
         'startkey': [None],
-        'endkey': [None, json_now, {}],
-        'include_docs': True
+        'endkey': [None, json_due_before, {}],
+        'include_docs': False
     }
     for doc in paginate_view(
             RepeatRecord.get_db(),
             'repeaters/repeat_records_by_next_check',
             chunk_size,
             **view_kwargs):
-        yield RepeatRecord.wrap(doc['doc'])
+        yield doc['id']
 
 
 def get_domains_that_have_repeat_records():
@@ -296,5 +269,4 @@ def delete_all_repeat_records():
 @unit_testing_only
 def delete_all_repeaters():
     from .models import Repeater
-    for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
-        Repeater.wrap(repeater['doc']).delete()
+    Repeater.objects.all().delete()

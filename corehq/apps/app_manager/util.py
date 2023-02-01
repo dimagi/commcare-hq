@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.db.models import Max
 from django.http import Http404
 from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 import yaml
 from couchdbkit import ResourceNotFound
@@ -21,6 +21,8 @@ from dimagi.utils.couch import CriticalSection
 from corehq import toggles
 from corehq.apps.app_manager.const import (
     AUTO_SELECT_USERCASE,
+    REGISTRY_WORKFLOW_LOAD_CASE,
+    REGISTRY_WORKFLOW_SMART_LINK,
     USERCASE_ID,
     USERCASE_PREFIX,
     USERCASE_TYPE,
@@ -155,7 +157,7 @@ def save_xform(app, form, xml):
         return xform.render()
 
     try:
-        xform = XForm(xml)
+        xform = XForm(xml, domain=app.domain)
     except XFormException:
         pass
     else:
@@ -183,13 +185,13 @@ def save_xform(app, form, xml):
         # case name unless something else has been specified
         questions = form.get_questions([app.default_language])
         if hasattr(form.actions, 'open_case'):
-            path = form.actions.open_case.name_path
+            path = form.actions.open_case.name_update.question_path
             if path:
                 name_questions = [q for q in questions if q['value'] == path]
                 if not len(name_questions):
                     path = None
             if not path and len(questions):
-                form.actions.open_case.name_path = questions[0]['value']
+                form.actions.open_case.name_update.question_path = questions[0]['value']
 
     return xml
 
@@ -377,7 +379,25 @@ def prefix_usercase_properties(properties):
 
 
 def module_offers_registry_search(module):
-    return module_offers_search(module) and module.search_config.data_registry
+    return (
+        module_offers_search(module)
+        and module.get_app().supports_data_registry
+        and module.search_config.data_registry
+    )
+
+
+def module_loads_registry_case(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_LOAD_CASE
+    )
+
+
+def module_uses_smart_links(module):
+    return (
+        module_offers_registry_search(module)
+        and module.search_config.data_registry_workflow == REGISTRY_WORKFLOW_SMART_LINK
+    )
 
 
 def module_offers_search(module):
@@ -391,12 +411,22 @@ def module_offers_search(module):
     )
 
 
+def module_uses_inline_search(module):
+    """In 'inline search' mode the query and post are added to the form entry directly instead
+    of creating a separate RemoteRequest entry."""
+    return (
+        module_offers_search(module)
+        and module.search_config.inline_search
+        and module.search_config.auto_launch
+    )
+
+
 def get_cloudcare_session_data(domain_name, form, couch_user):
     from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 
     datums = EntriesHelper.get_new_case_id_datums_meta(form)
-    session_data = {datum.datum.id: uuid.uuid4().hex for datum in datums}
-    if couch_user.doc_type == 'CommCareUser':  # smsforms.app.start_session could pass a CommCareCase
+    session_data = {datum.id: uuid.uuid4().hex for datum in datums}
+    if couch_user.doc_type in ('CommCareUser', 'WebUser'):  # smsforms.app.start_session could pass a CommCareCase
         try:
             extra_datums = EntriesHelper.get_extra_case_id_datums(form)
         except SuiteError as err:
@@ -404,7 +434,8 @@ def get_cloudcare_session_data(domain_name, form, couch_user):
             _assert(False, 'Domain "%s": %s' % (domain_name, err))
         else:
             if EntriesHelper.any_usercase_datums(extra_datums):
-                usercase_id = couch_user.get_usercase_id()
+                restore_user = couch_user.to_ota_restore_user(domain_name)
+                usercase_id = restore_user.get_usercase_id()
                 if usercase_id:
                     session_data[USERCASE_ID] = usercase_id
     return session_data
@@ -472,7 +503,7 @@ def _app_callout_templates():
     """
     path = os.path.join(
         os.path.dirname(__file__),
-        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
+        'static', 'app_manager', 'json', 'vellum-app-callout-templates.yml'
     )
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
@@ -679,3 +710,23 @@ def extract_instance_id_from_nodeset_ref(nodeset):
     if nodeset:
         matches = re.findall(r"instance\('(.*?)'\)", nodeset)
         return matches[0] if matches else None
+
+
+def wrap_transition_from_old_update_case_action(properties_dict):
+    """
+    This function assists wrap functions for changes to the FormActions and AdvancedFormActions models.
+    A modification of UpdateCaseAction to use a ConditionalCaseUpdate instead of a simple question path
+    was part of these changes. It also used as part of a follow-up migration.
+    """
+    if(properties_dict):
+        first_prop_value = list(properties_dict.values())[0]
+        # If the dict just holds question paths (strings) as values we want to translate the old
+        # type of UpdateCaseAction model to the new.
+        if isinstance(first_prop_value, str):
+            new_dict_values = {}
+            for case_property, question_path in properties_dict.items():
+                new_dict_values[case_property] = {
+                    'question_path': question_path
+                }
+            return new_dict_values
+    return properties_dict

@@ -117,8 +117,8 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, root_location_id=None,
-                 headers_only=False, async_task=None):
+    def __init__(self, domain, include_consumption=False, root_location_ids=None,
+                 headers_only=False, async_task=None, **kwargs):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
@@ -129,17 +129,31 @@ class LocationExporter(object):
         self._location_count = None
         self._locations_exported = 0
 
+        additional_filters = self._extract_additional_filters(**kwargs)
+        selected_location_only = kwargs.get('selected_location_only', False)
+
         if headers_only:
             self.base_query = SQLLocation.objects.none()
-        elif root_location_id:
-            root_location = SQLLocation.objects.get(location_id=root_location_id)
-            self.base_query = SQLLocation.active_objects.get_descendants(
-                Q(domain=self.domain, id=root_location.id)
-            )
+        elif root_location_ids:
+            if selected_location_only:
+                # Use filter so base_query is a LocationQuerySet
+                self.base_query = SQLLocation.objects.filter(location_id__in=root_location_ids)
+            else:
+                root_location_ids = SQLLocation.objects.filter(location_id__in=root_location_ids).values('id')
+                self.base_query = SQLLocation.objects.get_descendants(
+                    Q(domain=self.domain, id__in=[root_location_ids])
+                ).filter(**additional_filters)
         else:
-            self.base_query = SQLLocation.active_objects.filter(
+            self.base_query = SQLLocation.objects.filter(
                 domain=self.domain,
+                **additional_filters,
             )
+
+    def _extract_additional_filters(self, **kwargs):
+        additional_filters = {}
+        if 'is_archived' in kwargs:
+            additional_filters['is_archived'] = kwargs.get('is_archived')
+        return additional_filters
 
     @property
     @memoized
@@ -278,9 +292,9 @@ class LocationExporter(object):
 
 
 def dump_locations(domain, download_id, include_consumption, headers_only,
-                   owner_id, root_location_id=None, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_id=root_location_id,
-                                headers_only=headers_only, async_task=task)
+                   owner_id, root_location_ids=None, task=None, **kwargs):
+    exporter = LocationExporter(domain, include_consumption=include_consumption, root_location_ids=root_location_ids,
+                                headers_only=headers_only, async_task=task, **kwargs)
 
     fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()
@@ -302,8 +316,8 @@ def dump_locations(domain, download_id, include_consumption, headers_only,
 
         file_format = Format.from_format(Excel2007ExportWriter.format)
         filename = '{}_locations'.format(domain)
-        if root_location_id:
-            root_location = SQLLocation.objects.get(location_id=root_location_id)
+        if len(root_location_ids) == 1:
+            root_location = SQLLocation.objects.get(location_id=root_location_ids[0])
             filename += '_{}'.format(root_location.name)
         expose_blob_download(
             download_id,

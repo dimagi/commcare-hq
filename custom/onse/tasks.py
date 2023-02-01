@@ -1,25 +1,22 @@
 import sys
-
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from time import sleep
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple
 from urllib.error import HTTPError
 
 import attr
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from requests import RequestException
 
 from casexml.apps.case.mock import CaseBlock
-from casexml.apps.case.models import CommCareCase
 from dimagi.utils.chunked import chunked
 
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.dbaccessors import domain_exists
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import CommCareCaseSQL
+from corehq.form_processor.models import CommCareCase
 from corehq.motech.models import ConnectionSettings
 from corehq.util.soft_assert import soft_assert
 from custom.onse.const import (
@@ -28,7 +25,7 @@ from custom.onse.const import (
     DOMAIN,
     LAST_IMPORTED_PROPERTY,
     MAX_RETRY_ATTEMPTS,
-    TASK_RETRY_FACTOR
+    TASK_RETRY_FACTOR,
 )
 from custom.onse.models import iter_mappings
 
@@ -51,7 +48,7 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
 
     Allows us to read current case property values and build a CaseBlock
     """
-    case: Union[CommCareCase, CommCareCaseSQL]
+    case: CommCareCase
     updates: dict = attr.Factory(dict)
 
     @property
@@ -71,32 +68,23 @@ class CassiusMarcellus:  # TODO: Come up with a better name. Please!
                       hour=22, minute=30),
     queue='background_queue',
 )
-def update_facility_cases_from_dhis2_data_elements(
-    period: Optional[str] = None,
-    print_notifications: bool = False,
-):
-    """
-    Update facility_supervision cases with indicators collected in DHIS2
-    over the last quarter.
-
-    :param period: The period of data to import. e.g. "2020Q1". Defaults
-        to last quarter.
-    :param print_notifications: If True, notifications are printed,
-        otherwise they are emailed.
-
-    """
-    _update_facility_cases_from_dhis2_data_elements.delay(period, print_notifications)
+def update_facility_cases_from_dhis2_data_elements():
+    _update_facility_cases_from_dhis2_data_elements.delay()
 
 
 @task(bind=True, max_retries=MAX_RETRY_ATTEMPTS)
-def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifications):
+def _update_facility_cases_from_dhis2_data_elements(
+    self,
+    period=None,
+    print_notifications=False,
+):
     if not domain_exists(DOMAIN):
         return
     dhis2_server = get_dhis2_server(print_notifications)
-    server_status = _check_server_status(dhis2_server)
+    server_status = check_server_status(dhis2_server)
 
     if server_status['ready']:
-        _execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
+        execute_update_facility_cases_from_dhis2_data_elements(dhis2_server, period, print_notifications)
     else:
         exception = server_status['error']
         retry_days = 2 ** self.request.retries
@@ -108,14 +96,14 @@ def _update_facility_cases_from_dhis2_data_elements(self, period, print_notifica
         self.retry(countdown=(retry_days * TASK_RETRY_FACTOR))
 
 
-def _check_server_status(dhis2_server: ConnectionSettings):
+def check_server_status(dhis2_server: ConnectionSettings):
     server_status = {
         'ready': True,
         'error': None
     }
     requests = dhis2_server.get_requests()
     try:
-        requests.send_request_unlogged("HEAD", dhis2_server.url, raise_for_status=True)
+        requests.send_request("HEAD", dhis2_server.url, raise_for_status=True)
     except HTTPError as e:
         if e.response.status_code != 405:  # ignore method not allowed
             server_status['ready'] = False
@@ -127,11 +115,23 @@ def _check_server_status(dhis2_server: ConnectionSettings):
     return server_status
 
 
-def _execute_update_facility_cases_from_dhis2_data_elements(
+def execute_update_facility_cases_from_dhis2_data_elements(
     dhis2_server: ConnectionSettings,
     period: Optional[str] = None,
     print_notifications: bool = False,
 ):
+    """
+    Update facility_supervision cases with indicators collected in DHIS2
+    over the last quarter.
+
+    :param dhis2_server: The ConnectionSettings instance to connect to
+        the remote API.
+    :param period: The period of data to import. e.g. "2020Q1". Defaults
+        to last quarter.
+    :param print_notifications: If True, notifications are printed,
+        otherwise they are emailed.
+
+    """
     try:
         clays = get_clays()
         with ThreadPoolExecutor(max_workers=MAX_THREAD_WORKERS) as executor:
@@ -165,9 +165,8 @@ def get_dhis2_server(
 
 
 def get_clays() -> Iterable[CassiusMarcellus]:
-    case_accessors = CaseAccessors(DOMAIN)
-    for case_id in case_accessors.get_case_ids_in_domain(type=CASE_TYPE):
-        case = case_accessors.get_case(case_id)
+    for case_id in CommCareCase.objects.get_case_ids_in_domain(DOMAIN, CASE_TYPE):
+        case = CommCareCase.objects.get_case(case_id, DOMAIN)
         if not case.external_id:
             # This case is not mapped to a facility in DHIS2.
             continue

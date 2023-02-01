@@ -1,6 +1,6 @@
 from functools import wraps
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchdbkit import ResourceConflict
 
@@ -61,7 +61,7 @@ def reset_demo_user_restore(commcare_user, domain):
     # get latest restore
     restore = RestoreConfig(
         project=Domain.get_by_name(domain),
-        restore_user=commcare_user.to_ota_restore_user(),
+        restore_user=commcare_user.to_ota_restore_user(domain),
         params=RestoreParams(version=V2),
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore, domain)
@@ -141,6 +141,27 @@ def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
     if not as_user_obj.is_member_of(domain):
         raise RestorePermissionDenied(_("{} was not in the domain {}").format(as_user_obj.username, domain))
 
+    if _limit_login_as(domain, couch_user):
+        # Functionality should match the ES query.
+        # See corehq.apps.cloudcare.esaccessors.login_as_user_query
+        login_as_username = as_user_obj.metadata.get('login_as_user') or ''
+        candidates = login_as_username.lower().split()
+        if couch_user.username.lower() not in candidates:
+            is_default = 'default' in candidates
+            if not _can_access_default_login_as_user(domain, couch_user) or not is_default:
+                raise RestorePermissionDenied(_("{} not available as login-as user").format(as_user_obj.username))
+
+
+def _limit_login_as(domain, couch_user):
+    return (
+        couch_user.has_permission(domain, 'limited_login_as')
+        and not couch_user.has_permission(domain, 'login_as_all_users')
+    )
+
+
+def _can_access_default_login_as_user(domain, couch_user):
+    return couch_user.has_permission(domain, 'access_default_login_as_user')
+
 
 def _ensure_accessible_location(domain, couch_user, as_user_obj):
     if not user_can_access_other_user(domain, couch_user, as_user_obj):
@@ -168,9 +189,7 @@ def get_restore_user(domain, couch_user, as_user_obj):
     """
     couch_restore_user = as_user_obj or couch_user
 
-    if couch_restore_user.is_commcare_user():
-        return couch_restore_user.to_ota_restore_user(couch_user)
-    elif couch_restore_user.is_web_user():
+    if couch_restore_user.is_commcare_user() or couch_restore_user.is_web_user():
         return couch_restore_user.to_ota_restore_user(domain, couch_user)
     else:
         return None

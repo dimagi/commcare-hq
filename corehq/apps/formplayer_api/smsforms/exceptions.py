@@ -1,6 +1,3 @@
-
-
-
 class TouchFormsError(Exception):
     pass
 

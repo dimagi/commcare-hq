@@ -1,6 +1,6 @@
 from django.db.models.aggregates import Count
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from dateutil.rrule import DAILY, FR, MO, SA, TH, TU, WE, rrule
 from sqlagg.columns import SimpleColumn
@@ -170,7 +170,7 @@ class LatePmtReport(GenericTabularReport, CustomProjectReport, DatespanMixin):
     @cached_property
     def valid_smss_received(self):
         data = MessagingSubEvent.objects.filter(
-            parent__domain=self.domain,
+            domain=self.domain,
             parent__recipient_type=MessagingEvent.RECIPIENT_MOBILE_WORKER,
             parent__source=MessagingEvent.SOURCE_KEYWORD,
             xforms_session__isnull=False,

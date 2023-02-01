@@ -16,6 +16,8 @@
 <!--
 Describe how you became confident in this change, such as
 local testing, why the change is inherently safe, and/or plans to limit the blast radius of a defect.
+
+In particular consider how existing data may be impacted by this change.
 -->
 
 ### Automated test coverage
@@ -32,6 +34,7 @@ local testing, why the change is inherently safe, and/or plans to limit the blas
 
 ### Migrations
 <!-- Delete this section if the PR does not contain any migrations -->
+<!-- https://commcare-hq.readthedocs.io/migrations_in_practice.html -->
 - [ ] The migrations in this code can be safely applied first independently of the code
 
 <!-- Please link to any past code changes that are coordinated with this migration -->
@@ -48,6 +51,3 @@ Otherwise replace it with detailed instructions or reasons a rollback is impossi
 ### Labels & Review
 - [ ] Risk label is set correctly
 - [ ] The set of people pinged as reviewers is appropriate for the level of risk of the change
-
-## Final self-reflection
-- [ ] My safety story above is convincing and gives me confidence that this PR will not introduce a regression

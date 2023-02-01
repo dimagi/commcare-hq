@@ -1,0 +1,42 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% if request|toggle_enabled:"USH_CASE_LIST_MULTI_SELECT" %}
+
+  <div class="panel panel-appmanager" data-bind="with: shortScreen">
+    <div class="panel-heading">
+      <h4 class="panel-title panel-title-nolink">
+        {% trans "Multi-Select Case List Options" %}
+      </h4>
+    </div>
+    <div class="panel-body">
+      <div class="row">
+        <div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: multiSelectEnabled"/>
+              {% trans "Enable multi-select case list" %}
+            </label>
+          </div>
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" data-bind="checked: autoSelectEnabled, enable: multiSelectEnabled()"/>
+              {% trans "Enable auto select" %}
+            </label>
+          </div>
+          <div data-bind="visible: multiSelectEnabled()">
+            <label class="control-label {% css_label_class %}">
+                {% trans "Maximum selected value" %}
+                <span class="hq-help-template" data-title="{% trans 'Maximum Selected Value' %}"
+                      data-content="{% trans_html_attr 'Sets a maximum selected value for multi select case lists. If no value is inputted, the default value is used.' %}">
+            </label>
+            <div class="{% css_field_class %}">
+              <input type="text" name="max-select-value-input" data-bind="value: maxSelectValue" class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endif %}

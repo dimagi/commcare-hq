@@ -72,13 +72,13 @@ def schedule_load_counter(*args, **kw):
 
 
 def load_counter_for_model(model):
-    from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
+    from corehq.form_processor.models import CommCareCase, XFormInstance
     from corehq.messaging.scheduling.scheduling_partitioned.models import (
         AlertScheduleInstance, TimedScheduleInstance, CaseTimedScheduleInstance, CaseAlertScheduleInstance
     )
     return {
-        CommCareCaseSQL: case_load_counter,
-        XFormInstanceSQL: form_load_counter,
+        CommCareCase: case_load_counter,
+        XFormInstance: form_load_counter,
         AlertScheduleInstance: schedule_load_counter,
         TimedScheduleInstance: schedule_load_counter,
         CaseTimedScheduleInstance: schedule_load_counter,

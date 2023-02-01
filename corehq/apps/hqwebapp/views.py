@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import pytz
 import re
 import sys
 import traceback
@@ -38,9 +39,8 @@ from django.template.response import TemplateResponse
 from django.urls import resolve
 from django.utils import html
 from django.utils.decorators import method_decorator
-from django.utils.translation import LANGUAGE_SESSION_KEY
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop, activate
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
@@ -56,6 +56,7 @@ from corehq.apps.accounting.decorators import (
 )
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics import ab_tests
+from corehq.apps.app_manager.dbaccessors import get_app_cached, get_latest_released_build_id
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     require_superuser,
@@ -87,21 +88,21 @@ from corehq.apps.hqwebapp.forms import (
 )
 from corehq.apps.hqwebapp.models import HQOauthApplication
 from corehq.apps.hqwebapp.login_utils import get_custom_login_page
-from corehq.apps.hqwebapp.utils import (
-    get_environment_friendly_name,
-    update_session_language,
-)
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.event_handlers import handle_email_messaging_subevent
 from corehq.apps.users.event_handlers import handle_email_invite_message
 from corehq.apps.users.landing_pages import get_redirect_url
 from corehq.apps.users.models import CouchUser, Invitation
-from corehq.apps.users.util import format_username
+from corehq.apps.users.util import format_username, is_dimagi_email
+from corehq.toggles import CLOUDCARE_LATEST_BUILD
 from corehq.util.context_processors import commcare_hq_names
 from corehq.util.email_event_utils import handle_email_sns_event
 from corehq.util.metrics import create_metrics_event, metrics_counter, metrics_gauge
 from corehq.util.metrics.const import TAG_UNKNOWN, MPM_MAX
 from corehq.util.metrics.utils import sanitize_url
+from corehq.util.public_only_requests.public_only_requests import get_public_only_session
+from corehq.util.timezones.conversions import ServerTime, UserTime
 from corehq.util.view_utils import reverse
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.request_helpers import is_request_using_sso
@@ -375,13 +376,6 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
         with mutable_querydict(req.POST):
             req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
 
-    if 'auth-username' in req.POST:
-        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
-        if couch_user:
-            new_lang = couch_user.language
-            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
-            update_session_language(req, old_lang, new_lang)
-
     req.base_template = settings.BASE_TEMPLATE
 
     context = {}
@@ -416,6 +410,12 @@ def _login(req, domain_name, custom_login_page, extra_context=None):
 
     if settings.IS_SAAS_ENVIRONMENT:
         demo_workflow_ab_v2.update_response(response)
+
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
+        if couch_user:
+            response.set_cookie(settings.LANGUAGE_COOKIE_NAME, couch_user.language)
+            activate(couch_user.language)
 
     return response
 
@@ -533,12 +533,27 @@ def logout(req, default_domain_redirect='domain_login'):
 @location_safe
 @two_factor_exempt
 def ping_response(request):
+    current_build_id = request.GET.get('selected_app_id', '')
+    domain = request.GET.get('domain', '')
+    new_app_version_available = False
+    # Do not show popup to users who have use_latest_build_cloudcare ff enabled
+    latest_build_ff_enabled = (CLOUDCARE_LATEST_BUILD.enabled(domain)
+                or CLOUDCARE_LATEST_BUILD.enabled(request.user.username))
+    if current_build_id and domain and not latest_build_ff_enabled:
+        app = get_app_cached(domain, current_build_id)
+        app_id = app['copy_of'] if app['copy_of'] else app['_id']
+        latest_build_id = get_latest_released_build_id(domain, app_id)
+
+        if latest_build_id:
+            new_app_version_available = current_build_id != latest_build_id
+
     return JsonResponse({
         'success': request.user.is_authenticated,
         'session_expiry': request.session.get('session_expiry'),
         'secure_session': request.session.get('secure_session'),
         'secure_session_timeout': request.session.get('secure_session_timeout'),
         'username': request.user.username,
+        'new_app_version_available': new_app_version_available,
     })
 
 
@@ -813,7 +828,7 @@ class BugReportView(View):
 
         # only fake the from email if it's an @dimagi.com account
         is_icds_env = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-        if re.search(r'@dimagi\.com$', report['username']) and not is_icds_env:
+        if is_dimagi_email(report['username']) and not is_icds_env:
             email.from_email = report['username']
         else:
             email.from_email = settings.SUPPORT_EMAIL
@@ -930,11 +945,11 @@ class CRUDPaginatedViewMixin(object):
     """
     DEFAULT_LIMIT = 10
 
-    limit_text = ugettext_noop("items per page")
-    empty_notification = ugettext_noop("You have no items.")
-    loading_message = ugettext_noop("Loading...")
-    deleted_items_header = ugettext_noop("Deleted Items:")
-    new_items_header = ugettext_noop("New Items:")
+    limit_text = gettext_noop("items per page")
+    empty_notification = gettext_noop("You have no items.")
+    loading_message = gettext_noop("Loading...")
+    deleted_items_header = gettext_noop("Deleted Items:")
+    new_items_header = gettext_noop("New Items:")
 
     def _safe_escape(self, expression, default):
         try:
@@ -1220,21 +1235,40 @@ def osdd(request, template='osdd.xml'):
 
 class MaintenanceAlertsView(BasePageView):
     urlname = 'alerts'
-    page_title = ugettext_noop("Maintenance Alerts")
+    page_title = gettext_noop("Maintenance Alerts")
     template_name = 'hqwebapp/maintenance_alerts.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
         return super(MaintenanceAlertsView, self).dispatch(request, *args, **kwargs)
 
+    @method_decorator(require_superuser)
+    def post(self, request):
+        from corehq.apps.hqwebapp.models import MaintenanceAlert
+        ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
+        command = request.POST.get('command')
+        if command == 'activate':
+            ma.active = True
+        elif command == 'deactivate':
+            ma.active = False
+        ma.save()
+        return HttpResponseRedirect(reverse('alerts'))
+
     @property
     def page_context(self):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
+        now = datetime.utcnow()
         return {
+            'timezones': pytz.common_timezones,
             'alerts': [{
                 'created': str(alert.created),
                 'active': alert.active,
                 'html': alert.html,
+                'start_time': ServerTime(alert.start_time).user_time(pytz.timezone(alert.timezone))
+                                                          .ui_string() if alert.start_time else None,
+                'end_time': ServerTime(alert.end_time).user_time(pytz.timezone(alert.timezone))
+                                                      .ui_string() if alert.end_time else None,
+                'expired': alert.end_time and alert.end_time < now,
                 'id': alert.id,
                 'domains': ", ".join(alert.domains) if alert.domains else "All domains",
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:20]]
@@ -1250,28 +1284,24 @@ class MaintenanceAlertsView(BasePageView):
 def create_alert(request):
     from corehq.apps.hqwebapp.models import MaintenanceAlert
     alert_text = request.POST.get('alert_text')
-    domains = request.POST.get('domains').split() or None
-    MaintenanceAlert(active=False, text=alert_text, domains=domains).save()
-    return HttpResponseRedirect(reverse('alerts'))
+    domains = request.POST.get('domains')
+    domains = domains.split() if domains else None
 
+    start_time = request.POST.get('start_time')
+    end_time = request.POST.get('end_time')
+    timezone = request.POST.get('timezone') or 'UTC'
 
-@require_POST
-@require_superuser
-def activate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = True
-    ma.save()
-    return HttpResponseRedirect(reverse('alerts'))
+    start_time = UserTime(
+        datetime.fromisoformat(start_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().done() if start_time else None
+    end_time = UserTime(
+        datetime.fromisoformat(end_time),
+        tzinfo=pytz.timezone(timezone)
+    ).server_time().done() if end_time else None
 
-
-@require_POST
-@require_superuser
-def deactivate_alert(request):
-    from corehq.apps.hqwebapp.models import MaintenanceAlert
-    ma = MaintenanceAlert.objects.get(id=request.POST.get('alert_id'))
-    ma.active = False
-    ma.save()
+    MaintenanceAlert(active=False, text=alert_text, domains=domains,
+                     start_time=start_time, end_time=end_time, timezone=timezone).save()
     return HttpResponseRedirect(reverse('alerts'))
 
 
@@ -1317,7 +1347,8 @@ def log_email_event(request, secret):
         # confirmation, where we need to access the subscribe URL to confirm we
         # are able to receive messages at this endpoint
         subscribe_url = request_json['SubscribeURL']
-        requests.get(subscribe_url)
+        session = get_public_only_session(domain_name='n/a', src="log_email_event")
+        session.get(subscribe_url)
         return HttpResponse()
 
     message = json.loads(request_json['Message'])

@@ -14,7 +14,6 @@ from s3transfer import S3Transfer
 
 from corehq.apps.es import CaseES, FormES
 from corehq.blobs.s3db import is_not_found
-from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.log import with_progress_bar
 
 
@@ -42,13 +41,12 @@ class Command(BaseCommand):
             s3_key = settings.S3_ACCESS_KEY
             s3_secret = settings.S3_SECRET_KEY
 
-        if not (s3_key and s3_secret):
-            raise CommandError("S3 credentials not provided.")
-
         self.bucket = options['bucket'] or 'raw-data-{}'.format(domain)
         self.client = boto3.client(
-            's3', region_name=options['region'],
-            aws_access_key_id=s3_key, aws_secret_access_key=s3_secret
+            's3',
+            region_name=options['region'],
+            aws_access_key_id=s3_key,
+            aws_secret_access_key=s3_secret
         )
         self._create_bucket()
 
@@ -110,10 +108,10 @@ def _get_file(doc_type):
 
 
 def _get_form_query(domain):
-    return (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
+    return (FormES(for_export=True)
             .domain(domain)
             .remove_default_filter('has_user'))
 
 
 def _get_query(ES, domain):
-    return ES(es_instance_alias=ES_EXPORT_INSTANCE).domain(domain)
+    return ES(for_export=True).domain(domain)

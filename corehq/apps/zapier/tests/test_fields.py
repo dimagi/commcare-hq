@@ -124,7 +124,10 @@ class TestZapierCustomFields(TestCase):
         app_factory = AppFactory(self.domain)
         m, f = app_factory.new_basic_module('m', self.case_type)
         app_factory.form_requires_case(f, case_type=self.case_type, update={
-            'prop1': '/data/prop1', 'move_type': '/data/move_type', 'mood': '/data/mood', 'level': '/data/level'
+            'prop1': '/data/prop1',
+            'move_type': '/data/move_type',
+            'mood': '/data/mood',
+            'level': '/data/level'
         })
         app_factory.app.save()
 

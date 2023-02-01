@@ -3,7 +3,7 @@ from itertools import chain
 from typing import Iterable
 
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from jsonobject.containers import JsonDict
 from memoized import memoized
@@ -13,20 +13,14 @@ from urllib3.exceptions import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from couchforms.signals import successful_form_received
 from dimagi.ext.couchdbkit import (
-    BooleanProperty,
     DateTimeProperty,
     DocumentSchema,
-    SchemaDictProperty,
-    SchemaProperty,
     StringProperty,
 )
 
 from corehq.apps.locations.dbaccessors import get_one_commcare_user_at_location
-from corehq.form_processor.interfaces.dbaccessors import (
-    CaseAccessors,
-    FormAccessors,
-)
-from corehq.motech.openmrs.const import ATOM_FEED_NAME_PATIENT, XMLNS_OPENMRS
+from corehq.form_processor.models import CommCareCase, XFormInstance
+from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.repeater_helpers import (
     get_case_location_ancestor_repeaters,
@@ -46,7 +40,7 @@ from corehq.motech.repeater_helpers import (
     RepeaterResponse,
     get_relevant_case_updates_from_form_json,
 )
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import OptionValue, CaseRepeater
 from corehq.motech.repeaters.repeater_generators import (
     FormRepeaterJsonPayloadGenerator,
 )
@@ -61,7 +55,10 @@ from corehq.toggles import OPENMRS_INTEGRATION
 
 class AtomFeedStatus(DocumentSchema):
     last_polled_at = DateTimeProperty(default=None)
-    last_page = StringProperty(default=None)
+
+    # The first time the feed is polled, don't replay all the changes
+    # since OpenMRS was installed. Start from the most recent changes.
+    last_page = StringProperty(default='recent')
 
 
 class OpenmrsRepeater(CaseRepeater):
@@ -85,14 +82,14 @@ class OpenmrsRepeater(CaseRepeater):
 
     """
     class Meta(object):
+        proxy = True
         app_label = 'repeaters'
 
-    include_app_id_param = False
     friendly_name = _("Forward to OpenMRS")
     payload_generator_classes = (FormRepeaterJsonPayloadGenerator,)
 
-    location_id = StringProperty(default='')
-    openmrs_config = SchemaProperty(OpenmrsConfig)
+    include_app_id_param = OptionValue(default=False)
+    location_id = OptionValue(default='')
 
     _has_config = True
 
@@ -101,28 +98,9 @@ class OpenmrsRepeater(CaseRepeater):
     # self.location_id must be set to determine their case owner. The
     # owner is set to the first CommCareUser instance found at that
     # location.
-    atom_feed_enabled = BooleanProperty(default=False)
-    atom_feed_status = SchemaDictProperty(AtomFeedStatus)
-
-    def __init__(self, *args, **kwargs):
-        super(OpenmrsRepeater, self).__init__(*args, **kwargs)
-
-    def __eq__(self, other):
-        return (
-            isinstance(other, self.__class__) and
-            self.get_id == other.get_id
-        )
-
-    @classmethod
-    def wrap(cls, data):
-        if 'atom_feed_last_polled_at' in data:
-            data['atom_feed_status'] = {
-                ATOM_FEED_NAME_PATIENT: {
-                    'last_polled_at': data.pop('atom_feed_last_polled_at'),
-                    'last_page': data.pop('atom_feed_last_page', None),
-                }
-            }
-        return super(OpenmrsRepeater, cls).wrap(data)
+    atom_feed_enabled = OptionValue(default=False)
+    atom_feed_status = OptionValue(default=dict)
+    openmrs_config = OptionValue(default=dict)
 
     @cached_property
     def requests(self):
@@ -137,14 +115,14 @@ class OpenmrsRepeater(CaseRepeater):
 
     @memoized
     def payload_doc(self, repeat_record):
-        return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
+        return XFormInstance.objects.get_form(repeat_record.payload_id, repeat_record.domain)
 
     @property
     def form_class_name(self):
         """
         The class name used to determine which edit form to use
         """
-        return self.__class__.__name__
+        return "OpenmrsRepeater"
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -169,7 +147,7 @@ class OpenmrsRepeater(CaseRepeater):
 
         case_blocks = extract_case_blocks(payload)
         case_ids = [case_block['@case_id'] for case_block in case_blocks]
-        cases = CaseAccessors(payload.domain).get_cases(case_ids, ordered=True)
+        cases = CommCareCase.objects.get_cases(case_ids, payload.domain, ordered=True)
         if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
             # If none of the case updates in the payload are allowed to
             # be forwarded, drop it.
@@ -186,16 +164,16 @@ class OpenmrsRepeater(CaseRepeater):
         return self in repeaters
 
     def get_payload(self, repeat_record):
-        payload = super(OpenmrsRepeater, self).get_payload(repeat_record)
+        payload = super().get_payload(repeat_record)
         return json.loads(payload)
 
     def send_request(self, repeat_record, payload):
         value_source_configs: Iterable[JsonDict] = chain(
-            self.openmrs_config.case_config.patient_identifiers.values(),
-            self.openmrs_config.case_config.person_properties.values(),
-            self.openmrs_config.case_config.person_preferred_name.values(),
-            self.openmrs_config.case_config.person_preferred_address.values(),
-            self.openmrs_config.case_config.person_attributes.values(),
+            self.openmrs_config['case_config']['patient_identifiers'].values(),
+            self.openmrs_config['case_config']['person_properties'].values(),
+            self.openmrs_config['case_config']['person_preferred_name'].values(),
+            self.openmrs_config['case_config']['person_preferred_address'].values(),
+            self.openmrs_config['case_config']['person_attributes'].values(),
         )
         case_trigger_infos = get_relevant_case_updates_from_form_json(
             self.domain, payload, case_types=self.white_listed_case_types,
@@ -215,6 +193,15 @@ class OpenmrsRepeater(CaseRepeater):
             requests.notify_exception(str(err))
             return RepeaterResponse(400, 'Bad Request', pformat_json(str(err)))
         return response
+
+    def _validate_openmrs_config(self):
+        OpenmrsConfig.wrap(self.openmrs_config).validate()
+        for feed in self.atom_feed_status.keys():
+            AtomFeedStatus.wrap(self.atom_feed_status[feed]).validate()
+
+    def save(self, *args, **kwargs):
+        self._validate_openmrs_config()
+        super().save(*args, **kwargs)
 
 
 def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_infos):

@@ -148,13 +148,6 @@
 
     {% block head %}
     {% endblock %}
-
-    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
-    <script>
-      // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
-      // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
-      window.USE_REQUIREJS = {{ requirejs_main|BOOL }};
-    </script>
   </head>
   <body>
     {% if ANALYTICS_IDS.GTM_ID %}
@@ -212,15 +205,10 @@
     {% endif %}
 
     {% if request.user.is_authenticated and request.project and request.session.secure_session %}
-      {% initial_page_data 'session_expiry' request.session.session_expiry %}
-      {% initial_page_data 'secure_timeout_username' request.couch_user.username %}
-      {% registerurl 'iframe_domain_login' request.project.name %}
-      {% registerurl 'domain_login_new_window' %}
-      {% registerurl 'ping_login' %}
-      {% registerurl 'ping_session' %}
-      {% include 'hqwebapp/includes/inactivity_modal.html' %}
+      {% include 'hqwebapp/includes/inactivity_modal_data.html' %}
     {% endif %}
     {% registerurl 'login_new_window' %}
+    {% registerurl 'submit_hubspot_cta_form' %}
 
     {# 30 Day Trial #}
     {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
@@ -236,6 +224,12 @@
     {% initial_page_data 'toggles_dict' toggles_dict %}
     {% initial_page_data 'previews_dict' previews_dict %}
     {% initial_page_data 'secure_cookies' secure_cookies %}
+    {% initial_page_data 'minimumZxcvbnScore' MINIMUM_ZXCVBN_SCORE %}
+    {% initial_page_data 'minimumPasswordLength' MINIMUM_PASSWORD_LENGTH %}
+
+
+    {# for get demo and get trial forms #}
+    {% initial_page_data 'number_utils_script' 'intl-tel-input/build/js/utils.js'|static %}
 
     {% if demo_workflow_ab_v2 %}
       {% analytics_ab_test 'kissmetrics.demo_workflow_ab_v2' demo_workflow_ab_v2 %}
@@ -277,38 +271,12 @@
 
     {# javascript below this line #}
 
-    {% if requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-      <script src="{% static 'requirejs/require.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
-      {# Do not compress these, which are re-written during depeloy #}
-      <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
-      <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-      <script>
-        requirejs.config({
-          deps: ['knockout', 'ko.mapping'],
-          callback: function (ko, mapping) {
-            ko.mapping = mapping;
-          }
-        });
-        requirejs([
-          'hqwebapp/js/common',
-        ], function() {
-          requirejs([
-            'hqwebapp/js/base_main',
-          ], function () {
-            requirejs(['{{ requirejs_main }}'], function () {
-              console.log("Loaded requirejs main module: {{ requirejs_main }}");
-            });
-          });
-        });
-      </script>
-    {% endif %}
+    {% include "hqwebapp/partials/requirejs.html" with BASE_MAIN=True %}
+
+    <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
 
     {# HQ Specific Libraries #}
     {% if not requirejs_main %}
-      <script src="{% statici18n LANGUAGE_CODE %}"></script> {# DO NOT COMPRESS #}
-
       {% compress js %}
         <script src="{% static 'hqwebapp/js/hq_extensions.jquery.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq-bug-report.js' %}"></script>
@@ -420,6 +388,10 @@
 
     {% if show_prepaid_modal and not requirejs_main %}
       <script src="{% static 'hqwebapp/js/prepaid_modal.js' %}"></script>
+    {% endif %}
+
+    {% if show_status_page %}
+      <script src="https://p3s9fvl6gvhr.statuspage.io/embed/script.js"></script>
     {% endif %}
 
     {% block js %}{% endblock js %}

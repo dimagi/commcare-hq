@@ -1,0 +1,32 @@
+{# This table is used for case metadata and for case properties #}
+
+<table class="table table-bordered case-property-table">
+  <tbody>
+  {% for row in rows %}
+    <tr>
+      {% for cell in row %}
+        {% if not cell.colspan %}
+          <th title="{{ cell.expr }}">
+            {% if cell.has_history %}
+              <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
+                <i class="fa fa-history"></i> {{ cell.name }}
+              </a>
+            {% else %}
+              {{ cell.name }}
+            {% endif %}
+            {% if cell.description %}
+              <i class="fa fa-info-circle" title="{{ cell.description }}"></i>
+            {% endif %}
+          </th>
+          <td>
+            {{ cell.value }}
+          </td>
+        {% else %}
+          <th colspan="{{ cell.colspan }}">
+          </th>
+        {% endif %}
+      {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>

@@ -1,15 +1,11 @@
-from django.core.management import BaseCommand, CommandError
+from django.core.management import BaseCommand
 
 from corehq.pillows.app_submission_tracker import (
-    CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UserAppFormSubmissionReindexerFactory,
 )
 from corehq.pillows.application import AppReindexerFactory
-from corehq.pillows.case import (
-    CouchCaseReindexerFactory,
-    SqlCaseReindexerFactory,
-)
+from corehq.pillows.case import SqlCaseReindexerFactory
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
@@ -17,15 +13,10 @@ from corehq.pillows.case_search import (
 from corehq.pillows.domain import DomainReindexerFactory
 from corehq.pillows.group import GroupReindexerFactory
 from corehq.pillows.groups_to_user import GroupToUserReindexerFactory
-from corehq.pillows.reportcase import ReportCaseReindexerFactory
-from corehq.pillows.reportxform import ReportFormReindexerFactory
 from corehq.pillows.sms import SmsReindexerFactory
 from corehq.pillows.synclog import UpdateUserSyncHistoryReindexerFactory
 from corehq.pillows.user import UserReindexerFactory
-from corehq.pillows.xform import (
-    CouchFormReindexerFactory,
-    SqlFormReindexerFactory,
-)
+from corehq.pillows.xform import SqlFormReindexerFactory
 from corehq.util.test_utils import unit_testing_only
 
 USAGE = """Reindex a pillowtop index.
@@ -41,17 +32,12 @@ FACTORIES = [
     UserReindexerFactory,
     GroupReindexerFactory,
     GroupToUserReindexerFactory,
-    CouchCaseReindexerFactory,
-    CouchFormReindexerFactory,
     SqlCaseReindexerFactory,
     SqlFormReindexerFactory,
     CaseSearchReindexerFactory,
     ResumableCaseSearchReindexerFactory,
     SmsReindexerFactory,
-    ReportCaseReindexerFactory,
-    ReportFormReindexerFactory,
     AppReindexerFactory,
-    CouchAppFormSubmissionTrackerReindexerFactory,
     SqlAppFormSubmissionTrackerReindexerFactory,
     UpdateUserSyncHistoryReindexerFactory,
     UserAppFormSubmissionReindexerFactory,
@@ -138,6 +124,7 @@ class Command(SubCommand):
             'traceback',
             'no_color',
             'force_color',
+            'skip_checks'
         ]:
             options.pop(option, None)
 

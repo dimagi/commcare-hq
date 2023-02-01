@@ -22,5 +22,5 @@ class Migration(migrations.Migration):
             'CREATE EXTENSION IF NOT EXISTS hashlib',
             'DROP EXTENSION hashlib'
         )
-        if settings.UNIT_TESTING else noop_migration()
+        if settings.UNIT_TESTING and settings.USE_PARTITIONED_DATABASE else noop_migration()
     ]

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
 from dimagi.utils.logging import notify_exception
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.util.metrics import metrics_gauge, metrics_counter
 from corehq.util.metrics.const import MPM_LIVESUM

@@ -87,7 +87,7 @@ class ToggleLoader(DataLoader):
     slug = 'toggles'
 
     def load_objects(self, object_strings, force=False, dry_run=False):
-        from toggle.models import Toggle
+        from corehq.toggles.models import Toggle
         count = 0
         for toggle_json in object_strings:
             if dry_run:

@@ -1,6 +1,8 @@
+from itertools import islice
+
 from django.core.management.base import BaseCommand
 
-import xlrd
+import openpyxl
 
 from corehq.apps.accounting.models import Currency
 from corehq.apps.sms.models import OUTGOING
@@ -15,28 +17,24 @@ from corehq.messaging.smsbackends.mach.models import SQLMachBackend
 def bootstrap_mach_gateway(apps):
     currency_class = apps.get_model('accounting', 'Currency') if apps else Currency
     sms_gateway_fee_class = apps.get_model('smsbillables', 'SmsGatewayFee') if apps else SmsGatewayFee
-    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') if apps else SmsGatewayFeeCriteria
+    sms_gateway_fee_criteria_class = apps.get_model('smsbillables', 'SmsGatewayFeeCriteria') \
+        if apps else SmsGatewayFeeCriteria
 
-    workbook = xlrd.open_workbook('corehq/apps/smsbillables/management/pricing_data/Syniverse_coverage_list_PREMIUM_Sept2019.xlsx')
-    table = workbook.sheet_by_index(0)
+    filename = 'corehq/apps/smsbillables/management/pricing_data/Syniverse_coverage_list_PREMIUM_Sept2019.xlsx'
+    workbook = openpyxl.load_workbook(filename, read_only=True, data_only=True)
+    table = workbook.worksheets[0]
 
     data = {}
-    try:
-        row = 7
-        while True:
-            if table.cell_value(row, 6) == 'yes':
-                country_code = int(table.cell_value(row, 0))
-                if not(country_code in data):
-                    data[country_code] = []
-                subscribers = table.cell_value(row, 10).replace('.', '')
-                try:
-                    data[country_code].append(
-                        (table.cell_value(row, 9), int(subscribers)))
-                except ValueError:
-                    log_smsbillables_info('Incomplete data for country code %d' % country_code)
-            row += 1
-    except IndexError:
-        pass
+    for row in islice(table.rows, 7, None):
+        if row[6].value == 'yes':
+            country_code = int(row[0].value)
+            if not(country_code in data):
+                data[country_code] = []
+            subscribers = row[10].value.replace('.', '')
+            try:
+                data[country_code].append((row[9].value, int(subscribers)))
+            except ValueError:
+                log_smsbillables_info('Incomplete data for country code %d' % country_code)
 
     for country_code in data:
         total_subscribers = 0

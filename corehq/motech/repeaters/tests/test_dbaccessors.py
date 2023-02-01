@@ -3,10 +3,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from corehq.motech.repeaters.const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_PENDING_STATE,
-)
+from corehq.motech.repeaters.const import RECORD_PENDING_STATE
 from corehq.motech.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
     get_failure_repeat_record_count,
@@ -15,12 +12,11 @@ from corehq.motech.repeaters.dbaccessors import (
     get_pending_repeat_record_count,
     get_repeat_record_count,
     get_repeat_records_by_payload_id,
-    get_repeaters_by_domain,
     get_success_repeat_record_count,
     iter_repeat_records_by_domain,
-    iterate_repeat_records,
+    iterate_repeat_record_ids,
 )
-from corehq.motech.repeaters.models import CaseRepeater, RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -141,7 +137,7 @@ class TestRepeatRecordDBAccessors(TestCase):
         self.assertEqual(len(records), len(self.records))  # get all the records that were created
 
     def test_iterate_repeat_records(self):
-        records = list(iterate_repeat_records(datetime.utcnow(), chunk_size=2))
+        records = list(iterate_repeat_record_ids(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
 
     def test_get_overdue_repeat_record_count(self):
@@ -168,34 +164,6 @@ class TestRepeatRecordDBAccessors(TestCase):
         id_2_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_2))
         self.assertEqual(len(id_2_records), 4)
         self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:6]])
-
-
-class TestRepeatersDBAccessors(TestCase):
-    domain = 'test-domain-3'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestRepeatersDBAccessors, cls).setUpClass()
-        repeater = CaseRepeater(
-            domain=cls.domain,
-        )
-        cls.repeaters = [
-            repeater
-        ]
-
-        for repeater in cls.repeaters:
-            repeater.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        for repeater in cls.repeaters:
-            repeater.delete()
-        super(TestRepeatersDBAccessors, cls).tearDownClass()
-
-    def test_get_repeaters_by_domain(self):
-        repeaters = get_repeaters_by_domain(self.domain)
-        self.assertEqual(len(repeaters), 1)
-        self.assertEqual(repeaters[0].__class__, CaseRepeater)
 
 
 class TestOtherDBAccessors(TestCase):

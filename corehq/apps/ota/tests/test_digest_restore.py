@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-import mock
+from unittest import mock
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
@@ -14,6 +14,11 @@ from corehq.util.test_utils import flag_enabled
 from python_digest import build_authorization_request, calculate_nonce
 
 
+def mock_require_permission(*args, **kwargs):
+    return lambda fn: fn
+
+
+@mock.patch('corehq.apps.ota.decorators.require_permission', new=mock_require_permission)
 class DigestOtaRestoreTest(TestCase):
     """
     Integration test for django_digest based ota restore is tested

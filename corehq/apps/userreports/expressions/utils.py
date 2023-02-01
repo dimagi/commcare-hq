@@ -25,6 +25,8 @@ def safe_range(start, *args):
     return None
 
 
+SAFE_TYPES = {float, Decimal, date, datetime, type(None), bool, int, str}
+
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
 SAFE_OPERATORS[ast.Not] = operator.not_
@@ -58,7 +60,7 @@ def eval_statements(statement, variable_context):
     """
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
-    if not var_types.issubset({float, Decimal, date, datetime, type(None), bool}.union(set(six.integer_types))):
+    if not var_types.issubset(SAFE_TYPES):
         raise InvalidExpression('Context contains disallowed types')
 
     evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)

@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from uuid import uuid4
 import json
 
@@ -17,8 +17,8 @@ class DialerSettings(models.Model):
 
 
 class GaenOtpServerSettings(models.Model):
-    SERVER_OPTIONS = (('NEARFORM', ugettext_lazy('NearForm OTP Server')),
-                      ('APHL', ugettext_lazy('APHL Exposure Notifications')),)
+    SERVER_OPTIONS = (('NEARFORM', gettext_lazy('NearForm OTP Server')),
+                      ('APHL', gettext_lazy('APHL Exposure Notifications')),)
     domain = models.CharField(max_length=128, unique=True)
     is_enabled = models.BooleanField(default=False)
     server_type = models.CharField(max_length=255, default='NEARFORM', choices=SERVER_OPTIONS)

@@ -2,7 +2,7 @@ import calendar
 import datetime
 
 from django.urls import reverse
-from django.utils.translation import ugettext_noop as _
+from django.utils.translation import gettext_noop as _
 
 from dateutil.relativedelta import relativedelta
 

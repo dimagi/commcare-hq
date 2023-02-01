@@ -2,15 +2,12 @@ import datetime
 import os
 import tempfile
 from wsgiref.util import FileWrapper
-from zipfile import ZipFile
 
 from django.conf import settings
-from django.urls import reverse
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from couchexport.models import Format
 from dimagi.utils.django.email import send_HTML_email
-from dimagi.utils.web import get_url_base
 from soil import (
     BlobDownload,
     CachedDownload,
@@ -21,12 +18,10 @@ from soil import (
 from soil.exceptions import TaskFailedError
 from soil.progress import get_task_status
 
-from corehq.blobs import CODES, get_blob_db
 from corehq.celery_monitoring.heartbeat import (
     Heartbeat,
     HeartbeatNeverRecorded,
 )
-from corehq.util.files import safe_filename_header
 from corehq.util.view_utils import absolute_reverse
 
 
@@ -93,7 +88,7 @@ def get_download_context(download_id, message=None, require_result=False):
         # so I think our best choice is to match off the name, even though that's hacky
         exception_name = (task.result.__class__.__name__
                           if isinstance(task.result, Exception) else None)
-        raise TaskFailedError(task_status.error, exception_name=exception_name)
+        raise TaskFailedError([task_status.error], exception_name=exception_name)
     if require_result:
         is_ready = task_status.success() and task_status.result is not None
     else:
@@ -140,8 +135,8 @@ def process_email_request(domain, download_id, email_address):
 
 
 def get_task(task_id):
-    from celery.task.base import Task
-    return Task.AsyncResult(task_id)
+    from celery import Task
+    return Task().AsyncResult(task_id)
 
 
 def get_download_file_path(use_transfer, filename):

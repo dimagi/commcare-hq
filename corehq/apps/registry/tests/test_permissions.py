@@ -4,7 +4,7 @@ from django.test import SimpleTestCase
 from testil import eq
 
 from corehq.apps.registry.utils import RegistryPermissionCheck
-from corehq.apps.users.models import WebUser, DomainMembership, Permissions, PermissionInfo
+from corehq.apps.users.models import WebUser, DomainMembership, HqPermissions, PermissionInfo
 from corehq.util.test_utils import generate_cases
 
 
@@ -48,7 +48,7 @@ def _mock_user(domain, permission_name, permission_allow):
     permissions = []
     if permission_allow is not None:
         permissions = [PermissionInfo(permission_name, permission_allow)]
-    mock_role = Mock(permissions=Permissions.from_permission_list(permissions))
+    mock_role = Mock(permissions=HqPermissions.from_permission_list(permissions))
     # prime membership.role memoize cache (avoids DB lookup)
     setattr(membership, '_role_cache', {(): mock_role})
 

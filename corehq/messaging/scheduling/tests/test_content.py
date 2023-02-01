@@ -1,3 +1,7 @@
+from unittest.mock import Mock
+
+from django.test import TestCase, override_settings
+
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_NONE,
@@ -5,16 +9,22 @@ from corehq.apps.sms.forms import (
     LANGUAGE_FALLBACK_DOMAIN,
     LANGUAGE_FALLBACK_UNTRANSLATED,
 )
+from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.models import CommCareUser
-from corehq.messaging.scheduling.models import Schedule, Content, CustomContent
+from corehq.messaging.scheduling.exceptions import EmailValidationException
+from corehq.messaging.scheduling.models import (
+    Content as AbstractContent,
+    CustomContent,
+    Schedule as AbstractSchedule,
+    EmailContent,
+)
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
-from django.test import TestCase, override_settings
-from mock import Mock
+from corehq.util.test_utils import unregistered_django_model
 
 
 AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
@@ -204,3 +214,43 @@ class TestContent(TestCase):
             content.get_translation_from_message_dict(self.domain_obj, message_dict, user_lang),
             message_dict['*']
         )
+
+    def test_email_validation_valid(self):
+        recipient = MockRecipient("test@example.com")
+        EmailContent().get_recipient_email(recipient)
+
+    def test_email_validation_empty_email(self):
+        recipient = MockRecipient("")
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+    def test_email_validation_no_email(self):
+        recipient = MockRecipient(None)
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_NO_EMAIL_ADDRESS)
+
+    def test_email_validation_invalid_email(self):
+        recipient = MockRecipient("bob")
+        with self.assertRaises(EmailValidationException) as e:
+            EmailContent().get_recipient_email(recipient)
+        self.assertEqual(e.exception.error_type, MessagingEvent.ERROR_INVALID_EMAIL_ADDRESS)
+
+
+@unregistered_django_model
+class Content(AbstractContent):
+    pass
+
+
+@unregistered_django_model
+class Schedule(AbstractSchedule):
+    pass
+
+
+class MockRecipient:
+    def __init__(self, email_address):
+        self.email_address = email_address
+
+    def get_email(self):
+        return self.email_address

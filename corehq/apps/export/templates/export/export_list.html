@@ -6,6 +6,10 @@
 
 {% requirejs_main 'export/js/export_list_main' %}
 
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
 {% block page_content %}
   {% initial_page_data 'bulk_download_url' bulk_download_url %}
   {% initial_page_data 'exports' exports %}
@@ -18,6 +22,7 @@
   {% initial_page_data 'my_export_type' my_export_type %}
   {% initial_page_data 'shared_export_type' shared_export_type %}
   {% initial_page_data 'static_model_type' static_model_type %}
+  {% initial_page_data 'domain' domain %}
   {% registerurl 'commit_filters' domain %}
   {% registerurl 'get_app_data_drilldown_values' domain %}
   {% registerurl 'get_exports_page' domain %}

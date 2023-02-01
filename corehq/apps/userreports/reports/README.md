@@ -25,7 +25,7 @@ Report configurations offer two kinds of filters:
 
 **User filters** offer the user the ability to filter report results themselves. This is usually for limiting results to a specific location, or date range, or mobile worker.
 
-**Default filters** are applied first, and are transparent to end users; i.e. users who use the report will not be made aware that default filters have been applied before results are filtered by their user filters.
+**Default filters** are applied first, and are invisible to end users; i.e. users who use the report will not be made aware that default filters have been applied before results are filtered by their user filters.
 
 More than one report configuration can use the same data source configuration, but the Report Builder creates a new data source for each new report. (In the case of UCRs, default filters are a useful way to reuse data sources.)
 

@@ -5,11 +5,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from corehq.apps.hqwebapp.decorators import waf_allow
+from dimagi.utils.logging import notify_error
 from dimagi.utils.web import json_response
 
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -18,24 +18,37 @@ from corehq.apps.case_importer import base
 from corehq.apps.case_importer import util as importer_util
 from corehq.apps.case_importer.base import location_safe_case_imports_enabled
 from corehq.apps.case_importer.const import MAX_CASE_IMPORTER_COLUMNS
-from corehq.apps.case_importer.exceptions import ImporterError, ImporterRawError
+from corehq.apps.case_importer.exceptions import (
+    CustomImporterError,
+    ImporterError,
+    ImporterFileNotFound,
+    ImporterRawError,
+)
+from corehq.apps.case_importer.extension_points import (
+    custom_case_upload_file_operations,
+)
 from corehq.apps.case_importer.suggested_fields import (
     get_suggested_case_fields,
 )
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.domain.decorators import api_auth
+from corehq.apps.hqwebapp.decorators import waf_allow
 from corehq.apps.locations.permissions import conditionally_location_safe
 from corehq.apps.reports.analytics.esaccessors import (
     get_case_types_for_domain_es,
 )
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import Permissions
-from corehq.util.view_utils import absolute_reverse
-from corehq.util.workbook_reading import valid_extensions, SpreadsheetFileExtError, SpreadsheetFileInvalidError
+from corehq.apps.users.models import HqPermissions
 from corehq.toggles import DOMAIN_PERMISSIONS_MIRROR
+from corehq.util.view_utils import absolute_reverse
+from corehq.util.workbook_reading import (
+    SpreadsheetFileExtError,
+    SpreadsheetFileInvalidError,
+    valid_extensions,
+)
 
-require_can_edit_data = require_permission(Permissions.edit_data)
+require_can_edit_data = require_permission(HqPermissions.edit_data)
 
 EXCEL_SESSION_ID = "excel_id"
 
@@ -50,8 +63,8 @@ def validate_column_names(column_names, invalid_column_names):
     for column_name in column_names:
         try:
             validate_property(column_name, allow_parents=False)
-        except ValueError:
-            invalid_column_names.add(column_name)
+        except (ValueError, TypeError):
+            invalid_column_names.add(str(column_name))
 
 
 # Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
@@ -88,6 +101,9 @@ def excel_config(request, domain):
         case_upload, context = _process_file_and_get_upload(
             uploaded_file_handle, request, domain, max_columns=MAX_CASE_IMPORTER_COLUMNS
         )
+    except ImporterFileNotFound as e:
+        notify_error(f"Import file not found after initial upload: {str(e)}")
+        return render_error(request, domain, get_importer_error_message(e))
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
     except SpreadsheetFileExtError:
@@ -151,6 +167,10 @@ def _process_file_and_get_upload(uploaded_file_handle, request, domain, max_colu
             'Your project does not use cases yet. To import cases from Excel, '
             'you must first create an application with a case list.'
         ))
+
+    error_messages = custom_case_upload_file_operations(domain=domain, case_upload=case_upload)
+    if error_messages:
+        raise CustomImporterError("; ".join(error_messages))
 
     context = {
         'columns': columns,
@@ -226,6 +246,9 @@ def excel_fields(request, domain):
     # see: https://dimagi-dev.atlassian.net/browse/USH-81
     if 'domain' in excel_fields and DOMAIN_PERMISSIONS_MIRROR.enabled(domain):
         excel_fields.remove('domain')
+        mirroring_enabled = True
+    else:
+        mirroring_enabled = False
 
     field_specs = get_suggested_case_fields(
         domain, case_type, exclude=[search_field])
@@ -241,6 +264,7 @@ def excel_fields(request, domain):
         'excel_fields': excel_fields,
         'case_field_specs': case_field_specs,
         'domain': domain,
+        'mirroring_enabled': mirroring_enabled,
     }
     context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
     return render(request, "case_importer/excel_fields.html", context)

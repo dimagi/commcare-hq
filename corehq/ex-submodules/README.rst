@@ -20,9 +20,6 @@ couchforms
     postgres.
 dimagi
     Miscellaneous utilities.
-fluff
-    Related to ``pillow_top``, ``fluff`` allows you to define a set of computations to perform on all couch
-    documents of a particular type for the purposes of reporting. Deprecated and only used by a small number of custom reports. Can be removed once no longer referenced.
 phonelog
     This manages device logs, which are reports of mobile device activity that can be sent to HQ for analysis.
 pillow_retry

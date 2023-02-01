@@ -106,9 +106,9 @@ class CommCareSettingsTest(SimpleTestCase):
         )
 
         files_and_keys_to_translate = [
-            ('commcare-profile-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
-            ('commcare-app-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
-            ('commcare-settings-layout.yaml', LAYOUT_SETTINGS_TO_TRANSLATE),
+            ('commcare-profile-settings.yml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('commcare-app-settings.yml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('commcare-settings-layout.yml', LAYOUT_SETTINGS_TO_TRANSLATE),
         ]
 
         static_strings = set(STATICALLY_ANALYZABLE_TRANSLATIONS)

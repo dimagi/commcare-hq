@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from django.test import SimpleTestCase, TestCase
 
-from mock import Mock, patch
+from unittest.mock import Mock, patch
 
 from corehq.apps.app_manager.models import (
     AncestorLocationTypeFilter,

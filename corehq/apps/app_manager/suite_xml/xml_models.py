@@ -9,8 +9,6 @@ from eulxml.xmlmap import (
 )
 from lxml import etree
 
-from corehq.apps.app_manager.exceptions import UnknownInstanceError
-
 
 class XPathField(StringField):
     """
@@ -43,34 +41,34 @@ class IdNode(XmlObject):
     id = StringField('@id')
 
 
-class CalculatedPropertyXpathVariable(XmlObject):
+class CalculatedPropertyXPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
     locale_id = StringField('locale/@id')
 
 
-class CalculatedPropertyXpath(XmlObject):
+class CalculatedPropertyXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', CalculatedPropertyXpathVariable)
+    variables = NodeListField('variable', CalculatedPropertyXPathVariable)
 
 
-class XpathVariable(XmlObject):
+class XPathVariable(XmlObject):
     ROOT_NAME = 'variable'
     name = StringField('@name')
 
     locale_id = StringField('locale/@id')
-    xpath = NodeField('xpath', CalculatedPropertyXpath)
+    xpath = NodeField('xpath', CalculatedPropertyXPath)
 
     @property
     def value(self):
         return self.locale_id or self.xpath
 
 
-class Xpath(XmlObject):
+class TextXPath(XmlObject):
     ROOT_NAME = 'xpath'
     function = XPathField('@function')
-    variables = NodeListField('variable', XpathVariable)
+    variables = NodeListField('variable', XPathVariable)
 
 
 class LocaleArgument(XmlObject):
@@ -81,26 +79,30 @@ class LocaleArgument(XmlObject):
 
 class Id(XmlObject):
     ROOT_NAME = 'id'
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
 
 
-class XpathEnum(Xpath):
+class XPathEnum(TextXPath):
     @classmethod
-    def build(cls, enum, template, get_template_context, get_value):
+    def build(cls, enum, format, type, template, get_template_context, get_value):
         variables = []
         for item in enum:
             v_key = item.key_as_variable
             v_val = get_value(v_key)
-            variables.append(XpathVariable(name=v_key, locale_id=v_val))
-
+            variables.append(XPathVariable(name=v_key, locale_id=v_val))
         parts = []
         for i, item in enumerate(enum):
             template_context = get_template_context(item, i)
             parts.append(template.format(**template_context))
-        parts.append("''")
-        parts.append(")" * len(enum))
-        function = ''.join(parts)
+        if type == "display" and format == "enum":
+            parts.insert(0, "replace(join(' ', ")
+            parts[-1] = parts[-1][:-2]  # removes extra comma from last string
+            parts.append("), '\\s+', ' ')")
+        else:
+            parts.append("''")
+            parts.append(")" * len(enum))
 
+        function = ''.join(parts)
         return cls(
             function=function,
             variables=variables,
@@ -125,11 +127,11 @@ class Text(XmlObject):
             <argument key=""/> <!------------ 0 or More. Arguments for the localized string. Key is optional. Arguments can support any child elements that <body> can. -->
         </locale>
     </text>
-    """
+    """  # noqa: E501
 
     ROOT_NAME = 'text'
 
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
     locale = NodeField('locale', Locale)
@@ -279,7 +281,7 @@ class MediaText(XmlObject):
     ROOT_NAME = 'text'
     form_name = StringField('@form', choices=['image', 'audio'])  # Nothing XForm-y about this 'form'
     locale = NodeField('locale', LocaleId)
-    xpath = NodeField('xpath', Xpath)
+    xpath = NodeField('xpath', TextXPath)
     xpath_function = XPathField('xpath/@function')
 
 
@@ -381,10 +383,30 @@ class SessionDatum(IdNode, OrderedXmlObject):
     autoselect = BooleanField('@autoselect')
 
 
+class InstanceDatum(SessionDatum):
+    ROOT_NAME = 'instance-datum'
+    max_select_value = IntegerField('@max-select-value')
+
+
 class StackDatum(IdNode):
     ROOT_NAME = 'datum'
 
     value = XPathField('@value')
+
+
+class QueryData(XmlObject):
+    ROOT_NAME = 'data'
+
+    key = StringField('@key')
+    ref = XPathField('@ref')
+    nodeset = StringField('@nodeset')
+    exclude = StringField('@exclude')
+
+
+class StackQuery(StackDatum):
+    ROOT_NAME = 'query'
+
+    data = NodeListField('data', QueryData)
 
 
 class StackCommand(XmlObject):
@@ -396,6 +418,12 @@ class StackCommand(XmlObject):
 
 class BaseFrame(XmlObject):
     if_clause = XPathField('@if')
+
+    def get_xpaths(self):
+        xpaths = [child.attrib['value'] for child in self.node.xpath("*") if 'value' in child.attrib]
+        if self.if_clause:
+            xpaths.append(self.if_clause)
+        return xpaths
 
 
 class CreatePushBase(IdNode, BaseFrame):
@@ -450,6 +478,12 @@ class Stack(XmlObject):
         self.node.append(frame.node)
 
 
+class StackJump(XmlObject):
+    ROOT_NAME = 'jump'
+
+    url = NodeField('url/text', Text)
+
+
 class Argument(IdNode):
     ROOT_NAME = 'argument'
 
@@ -468,11 +502,12 @@ class Assertion(XmlObject):
     text = NodeListField('text', Text)
 
 
-class QueryData(XmlObject):
-    ROOT_NAME = 'data'
+class Required(Assertion):
+    ROOT_NAME = 'required'
 
-    key = StringField('@key')
-    ref = XPathField('@ref')
+
+class Validation(Assertion):
+    ROOT_NAME = 'validation'
 
 
 class QueryPrompt(DisplayNode):
@@ -485,71 +520,29 @@ class QueryPrompt(DisplayNode):
     input_ = StringField('@input', required=False)
     default_value = StringField('@default', required=False)
     allow_blank_value = BooleanField('@allow_blank_value', required=False)
+    exclude = StringField('@exclude', required=False)
+    required = NodeField('required', Required, required=False)
+    validations = NodeListField('validation', Validation)
 
     itemset = NodeField('itemset', Itemset)
 
 
 class RemoteRequestQuery(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'query'
-    ORDER = ('data', 'prompts')
+    ORDER = ('title', 'description', 'data', 'prompts')
 
     url = StringField('@url')
     storage_instance = StringField('@storage-instance')
     template = StringField('@template')
+    title = NodeField('title', DisplayNode)
+    description = NodeField('description', DisplayNode)
     data = NodeListField('data', QueryData)
     prompts = NodeListField('prompt', QueryPrompt)
     default_search = BooleanField("@default_search")
 
-
-class Entry(OrderedXmlObject, XmlObject):
-    ROOT_NAME = 'entry'
-    ORDER = ('form', 'command', 'instance', 'datums')
-
-    form = StringField('form')
-    command = NodeField('command', Command)
-    instances = NodeListField('instance', Instance)
-
-    datums = NodeListField('session/datum', SessionDatum)
-    queries = NodeListField('session/query', RemoteRequestQuery)
-
-    stack = NodeField('stack', Stack)
-
-    assertions = NodeListField('assertions/assert', Assertion)
-
-    def require_instances(self, instances=(), instance_ids=()):
-        used = {(instance.id, instance.src) for instance in self.instances}
-        for instance in instances:
-            if 'remote' in instance.src:
-                continue
-            if (instance.id, instance.src) not in used:
-                self.instances.append(
-                    # it's important to make a copy,
-                    # since these can't be reused
-                    Instance(id=instance.id, src=instance.src)
-                )
-                # make sure the first instance gets inserted
-                # right after the command
-                # once you "suggest" a placement to eulxml,
-                # it'll follow your lead and place the rest of them there too
-                if len(self.instances) == 1:
-                    instance_node = self.node.find('instance')
-                    command_node = self.node.find('command')
-                    self.node.remove(instance_node)
-                    self.node.insert(self.node.index(command_node) + 1,
-                                     instance_node)
-        covered_ids = {instance_id for instance_id, _ in used}
-        for instance_id in instance_ids:
-            if instance_id not in covered_ids:
-                raise UnknownInstanceError(
-                    "Instance reference not recognized: {} in xpath \"{}\""
-                    # to get xpath context to show in this error message
-                    # make instance_id a unicode subclass with an xpath property
-                    .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))
-
-        sorted_instances = sorted(self.instances,
-                                  key=lambda instance: instance.id)
-        if sorted_instances != self.instances:
-            self.instances = sorted_instances
+    @property
+    def id(self):
+        return self.storage_instance
 
 
 class RemoteRequestPost(XmlObject):
@@ -560,12 +553,40 @@ class RemoteRequestPost(XmlObject):
     data = NodeListField('data', QueryData)
 
 
+def _wrap_session_datums(datum):
+    return {
+        'datum': SessionDatum,
+        'instance-datum': InstanceDatum,
+        'query': RemoteRequestQuery
+    }[datum.tag](datum)
+
+
+class Entry(OrderedXmlObject, XmlObject):
+    ROOT_NAME = 'entry'
+    ORDER = ('form', 'post', 'command', 'instance', 'datums')
+
+    form = StringField('form')
+    post = NodeField('post', RemoteRequestPost)
+    command = NodeField('command', Command)
+    instances = NodeListField('instance', Instance)
+
+    datums = NodeListField('session/datum', SessionDatum)
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    session_children = NodeListField('session/*', _wrap_session_datums)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
+
+    stack = NodeField('stack', Stack)
+
+    assertions = NodeListField('assertions/assert', Assertion)
+
+
 class RemoteRequestSession(OrderedXmlObject, XmlObject):
     ROOT_NAME = 'session'
     ORDER = ('queries', 'data')
 
     queries = NodeListField('query', RemoteRequestQuery)
     data = NodeListField('datum', SessionDatum)
+    instance_data = NodeListField('instance-datum', InstanceDatum)
 
 
 class RemoteRequest(OrderedXmlObject, XmlObject):
@@ -586,6 +607,9 @@ class RemoteRequest(OrderedXmlObject, XmlObject):
     command = NodeField('command', Command)
     session = NodeField('session', RemoteRequestSession)
     stack = NodeField('stack', Stack)
+
+    queries = NodeListField('session/query', RemoteRequestQuery)
+    all_datums = NodeListField('session/*[self::datum or self::instance-datum]', _wrap_session_datums)
 
 
 class MenuMixin(XmlObject):
@@ -795,6 +819,7 @@ class Detail(OrderedXmlObject, IdNode):
             <extra key="" value = "" />
             <response key ="" />
         </lookup>
+        <no_items_text><text></no_items_text>
         <variables>
             <__ function=""/>
         </variables>
@@ -806,13 +831,14 @@ class Detail(OrderedXmlObject, IdNode):
     """
 
     ROOT_NAME = 'detail'
-    ORDER = ('title', 'lookup', 'details', 'fields')
+    ORDER = ('title', 'lookup', 'no_items_text', 'details', 'fields')
 
     nodeset = StringField('@nodeset')
     print_template = StringField('@print-template')
 
     title = NodeField('title/text', Text)
     lookup = NodeField('lookup', Lookup)
+    no_items_text = NodeField('no_items_text/text', Text)
     fields = NodeListField('field', Field)
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
@@ -837,13 +863,13 @@ class Detail(OrderedXmlObject, IdNode):
         # can't check len(self.variables) directly since NodeList uses an
         # xpath to find its children which doesn't work here since
         # each node has a custom name
-        return self._variables is not None and len(self.variables.node.getchildren()) > 0
+        return self._variables is not None and len(self.variables.node) > 0
 
     def get_variables(self):
         """
         :returns: List of DetailVariable objects
         """
-        return [self.variables.mapper.to_python(node) for node in self.variables.node.getchildren()]
+        return [self.variables.mapper.to_python(node) for node in self.variables.node]
 
     def get_all_xpaths(self):
         result = set()

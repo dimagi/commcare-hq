@@ -17,7 +17,6 @@ from corehq.apps.data_interfaces.utils import (
 from corehq.motech.models import ConnectionSettings
 from corehq.motech.repeaters.models import (
     FormRepeater,
-    SQLRepeater,
     RepeatRecord,
     SQLRepeatRecord,
 )
@@ -517,20 +516,15 @@ class TestGetRepeatRecordIDs(TestCase):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
+            repeater_id=uuid4().hex
         )
         cls.repeater.save()
-        cls.sql_repeater = SQLRepeater.objects.create(
-            domain=DOMAIN,
-            repeater_id=cls.repeater.get_id,
-            connection_settings=conn,
-        )
         cls.create_repeat_records()
 
     @classmethod
     def tearDownClass(cls):
         for record in cls.couch_records + cls.sql_records:
             record.delete()
-        cls.sql_repeater.delete()
         cls.repeater.delete()
         super().tearDownClass()
 
@@ -542,7 +536,7 @@ class TestGetRepeatRecordIDs(TestCase):
         for __ in range(3):
             couch_record = RepeatRecord(
                 domain=DOMAIN,
-                repeater_id=cls.repeater._id,
+                repeater_id=cls.repeater.repeater_id,
                 repeater_type='FormRepeater',
                 payload_id=cls.instance_id,
                 registered_on=now,
@@ -554,7 +548,7 @@ class TestGetRepeatRecordIDs(TestCase):
                 domain=DOMAIN,
                 couch_id=couch_record._id,
                 payload_id=cls.instance_id,
-                repeater=cls.sql_repeater,
+                repeater=cls.repeater,
                 registered_at=now,
             ))
 
@@ -582,12 +576,12 @@ class TestGetRepeatRecordIDs(TestCase):
 
     def test_repeater_id_sql(self):
         result = _get_repeat_record_ids(payload_id=None,
-                                        repeater_id=self.repeater._id,
+                                        repeater_id=self.repeater.repeater_id,
                                         domain=DOMAIN, use_sql=True)
         self.assertEqual(set(result), {r.pk for r in self.sql_records})
 
     def test_repeater_id_couch(self):
         result = _get_repeat_record_ids(payload_id=None,
-                                        repeater_id=self.repeater._id,
+                                        repeater_id=self.repeater.repeater_id,
                                         domain=DOMAIN, use_sql=False)
         self.assertEqual(set(result), {r._id for r in self.couch_records})

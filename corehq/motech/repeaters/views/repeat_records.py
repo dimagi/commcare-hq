@@ -5,15 +5,13 @@ from django.http import (
     JsonResponse,
     QueryDict,
 )
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 
-import pytz
 from couchdbkit import ResourceNotFound
 from memoized import memoized
 
@@ -35,12 +33,7 @@ from corehq.form_processor.exceptions import XFormNotFound
 from corehq.motech.utils import pformat_json
 from corehq.util.xml_utils import indent_xml
 
-from ..const import (
-    RECORD_CANCELLED_STATE,
-    RECORD_FAILURE_STATE,
-    RECORD_PENDING_STATE,
-    RECORD_SUCCESS_STATE,
-)
+from ..const import RECORD_CANCELLED_STATE
 from ..dbaccessors import (
     get_cancelled_repeat_record_count,
     get_paged_repeat_records,
@@ -49,6 +42,7 @@ from ..dbaccessors import (
     get_repeat_records_by_payload_id,
 )
 from ..models import RepeatRecord, are_repeat_records_migrated, is_queued
+from .repeat_record_display import RepeatRecordDisplay
 
 
 class BaseRepeatRecordReport(GenericTabularReport):
@@ -108,28 +102,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
         </button>
         ''', record_id)
 
-    def _get_state(self, record):
-        if record.state == RECORD_SUCCESS_STATE:
-            label_cls = 'success'
-            label_text = _('Success')
-        elif record.state == RECORD_PENDING_STATE:
-            label_cls = 'warning'
-            label_text = _('Pending')
-        elif record.state == RECORD_CANCELLED_STATE:
-            label_cls = 'danger'
-            label_text = _('Cancelled')
-        elif record.state == RECORD_FAILURE_STATE:
-            label_cls = 'danger'
-            label_text = _('Failed')
-        else:
-            label_cls = ''
-            label_text = ''
-
-        return (label_cls, label_text)
-
-    def _make_state_label(self, record):
-        return format_html('<span class="label label-{}">{}</span>', *self._get_state(record))
-
     @property
     def total_records(self):
         if self.payload_id:
@@ -144,10 +116,6 @@ class BaseRepeatRecordReport(GenericTabularReport):
             {'name': 'record_state', 'value': self.request.GET.get('record_state')},
             {'name': 'payload_id', 'value': self.request.GET.get('payload_id')},
         ]
-
-    def _format_date(self, date):
-        tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @memoized
     def _get_all_records_by_payload(self):
@@ -197,7 +165,31 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
 
     def _make_row(self, record):
-        raise NotImplementedError
+        display = RepeatRecordDisplay(record, self.timezone, date_format='%b %d, %Y %H:%M:%S %Z')
+        checkbox = format_html(
+            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
+            record.record_id)
+        row = [
+            checkbox,
+            display.state,
+            display.url,
+            display.last_checked,
+            display.next_attempt_at,
+            display.attempts,
+            self._make_view_payload_button(record.record_id),
+            self._make_resend_payload_button(record.record_id),
+        ]
+
+        if self._is_cancelled(record):
+            row.append(self._make_requeue_payload_button(record.record_id))
+        elif self._is_queued(record):
+            row.append(self._make_cancel_payload_button(record.record_id))
+        else:
+            row.append(None)
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(2, self._payload_id_and_search_link(record.payload_id))
+        return row
 
     @property
     def headers(self):
@@ -250,76 +242,31 @@ class BaseRepeatRecordReport(GenericTabularReport):
         )
         return context
 
+    def _is_cancelled(self, record):
+        raise NotImplementedError
+
+    def _is_queued(self, record):
+        raise NotImplementedError
+
 
 class DomainForwardingRepeatRecords(BaseRepeatRecordReport):
     slug = 'couch_repeat_record_report'
 
-    def _make_row(self, record):
-        checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.get_id)
-        row = [
-            checkbox,
-            self._make_state_label(record),
-            record.repeater.get_url(record) if record.repeater else _('Unable to generate url for record'),
-            self._format_date(record.last_checked) if record.last_checked else '---',
-            self._format_date(record.next_check) if record.next_check else '---',
-            render_to_string('repeaters/partials/attempt_history.html', {'record': record}),
-            self._make_view_payload_button(record.get_id),
-            self._make_resend_payload_button(record.get_id),
-        ]
+    def _is_cancelled(self, record):
+        return record.cancelled and not record.succeeded
 
-        if record.cancelled and not record.succeeded:
-            row.append(self._make_requeue_payload_button(record.get_id))
-        elif not record.cancelled and not record.succeeded:
-            row.append(self._make_cancel_payload_button(record.get_id))
-        else:
-            row.append(None)
-
-        if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(2, self._payload_id_and_search_link(record.payload_id))
-        return row
+    def _is_queued(self, record):
+        return not record.cancelled and not record.succeeded
 
 
 class SQLRepeatRecordReport(BaseRepeatRecordReport):
     slug = 'repeat_record_report'
 
-    def _make_row(self, record):
-        checkbox = format_html(
-            '<input type="checkbox" class="xform-checkbox" data-id="{}" name="xform_ids"/>',
-            record.pk)
-        if record.attempts:
-            # Use prefetched `record.attempts` instead of requesting a
-            # different queryset
-            created_at = self._format_date(list(record.attempts)[-1].created_at)
-        else:
-            created_at = '---'
-        if record.repeater.next_attempt_at:
-            next_attempt_at = self._format_date(record.repeater.next_attempt_at)
-        else:
-            next_attempt_at = '---'
-        row = [
-            checkbox,
-            self._make_state_label(record),
-            record.repeater.repeater.get_url(record),
-            created_at,
-            next_attempt_at,
-            render_to_string('repeaters/partials/attempt_history.html',
-                             {'record': record}),
-            self._make_view_payload_button(record.pk),
-            self._make_resend_payload_button(record.pk),
-        ]
+    def _is_cancelled(self, record):
+        return record.state == RECORD_CANCELLED_STATE
 
-        if record.state == RECORD_CANCELLED_STATE:
-            row.append(self._make_requeue_payload_button(record.pk))
-        elif is_queued(record):
-            row.append(self._make_cancel_payload_button(record.pk))
-        else:
-            row.append(None)
-
-        if toggles.SUPPORT.enabled_for_request(self.request):
-            row.insert(2, self._payload_id_and_search_link(record.payload_id))
-        return row
+    def _is_queued(self, record):
+        return is_queued(record)
 
 
 @method_decorator(domain_admin_required, name='dispatch')

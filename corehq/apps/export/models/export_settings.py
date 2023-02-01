@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from couchexport.models import Format
 
@@ -9,9 +9,9 @@ class ExportFileType(object):
     EXCEL_2007_PLUS = Format.XLS_2007
     EXCEL_PRE_2007 = Format.XLS
     CHOICES = (
-        (CSV, ugettext_lazy("CSV (zip file)")),
-        (EXCEL_2007_PLUS, ugettext_lazy("Excel 2007+")),
-        (EXCEL_PRE_2007, ugettext_lazy("Excel (older versions)")),
+        (CSV, gettext_lazy("CSV (zip file)")),
+        (EXCEL_2007_PLUS, gettext_lazy("Excel 2007+")),
+        (EXCEL_PRE_2007, gettext_lazy("Excel (older versions)")),
     )
 
 

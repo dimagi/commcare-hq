@@ -20,9 +20,11 @@ from corehq.apps.export.models import (
 from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.util.elastic import reset_es_index
+from corehq.util.test_utils import flag_enabled
 
 
 @es_test
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
     @classmethod
@@ -110,6 +112,7 @@ class TestODataCaseFeed(TestCase, CaseOdataTestMixin):
 
 
 @es_test
+@flag_enabled('API_THROTTLE_WHITELIST')
 class TestODataFormFeed(TestCase, FormOdataTestMixin):
 
     @classmethod

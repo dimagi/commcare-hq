@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.utils.translation import ugettext
+from django.utils.translation import gettext
 
 from lxml.builder import E
 
@@ -518,5 +518,5 @@ class IterativeTotalRowCalculator(MockTotalRowCalculator):
             for col_id in self.data_source.final_column_ids
         ]
         if total_row and total_row[0] == '':
-            total_row[0] = ugettext('Total')
+            total_row[0] = gettext('Total')
         return total_row

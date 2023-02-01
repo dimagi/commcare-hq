@@ -6,11 +6,11 @@ the JSON configuration "by hand."
 
 ## Populating the front end
 
-### `ApplicationDataSourceHelper.data_source_properties`
+### `ManagedReportBuilderDataSourceHelper.data_source_properties`
 This dictionary represents the set of all possible form questions or metadata or case
 properties that could appear in a report data source.
 
-### `ApplicationDataSourceHelper.report_column_options`
+### `ManagedReportBuilderDataSourceHelper.report_column_options`
 This dictionary represents the set of all possible indicators that could appear in a
 report. `report_column_options` are mostly derived from `data_source_properties`, but
 there are some indicators that can be displayed in a report that don't map directly to

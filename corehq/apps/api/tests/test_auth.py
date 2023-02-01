@@ -7,7 +7,7 @@ from django.test import TestCase, RequestFactory
 from corehq.apps.api.resources.auth import LoginAuthentication, LoginAndDomainAuthentication, \
     RequirePermissionAuthentication
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.models import WebUser, HQApiKey, Permissions, UserRole
+from corehq.apps.users.models import WebUser, HQApiKey, HqPermissions, UserRole
 from corehq.util.test_utils import softer_assert
 
 
@@ -20,7 +20,11 @@ class AuthenticationTestBase(TestCase):
         cls.project = Domain.get_or_create_with_name(cls.domain, is_active=True)
         cls.username = 'alice@example.com'
         cls.password = '***'
-        cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None)
+        cls.api_user_role = UserRole.create(
+            cls.domain, 'api-user', permissions=HqPermissions(access_api=True)
+        )
+        cls.user = WebUser.create(cls.domain, cls.username, cls.password, None, None,
+                                  role_id=cls.api_user_role.get_id)
         cls.api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
         cls.domain_api_key, _ = HQApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user),
                                                                name='domain-scoped',
@@ -79,11 +83,21 @@ class LoginAuthenticationTest(AuthenticationTestBase):
     def test_login_no_auth(self):
         self.assertAuthenticationFail(LoginAuthentication(), self._get_request())
 
-    def test_login_with_auth(self):
+    def test_login_with_api_key_auth(self):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_api_key())
 
     def test_auth_type_basic(self):
         self.assertAuthenticationSuccess(LoginAuthentication(), self._get_request_with_basic_auth())
+
+    def test_login_with_inactive_api_key(self):
+        def reactivate_key():
+            self.api_key.is_active = True
+            self.api_key.save()
+
+        self.api_key.is_active = False
+        self.api_key.save()
+        self.addCleanup(reactivate_key)
+        self.assertAuthenticationFail(LoginAuthentication(), self._get_request_with_api_key())
 
 
 class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
@@ -154,19 +168,19 @@ class LoginAndDomainAuthenticationTest(AuthenticationTestBase):
 
 
 class RequirePermissionAuthenticationTest(AuthenticationTestBase):
-    require_edit_data = RequirePermissionAuthentication(Permissions.edit_data)
+    require_edit_data = RequirePermissionAuthentication(HqPermissions.edit_data)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.role_with_permission = UserRole.create(
-            cls.domain, 'edit-data', permissions=Permissions(edit_data=True)
+            cls.domain, 'edit-data', permissions=HqPermissions(edit_data=True, access_api=True)
         )
         cls.role_without_permission = UserRole.create(
-            cls.domain, 'no-edit-data', permissions=Permissions(edit_data=False)
+            cls.domain, 'no-edit-data', permissions=HqPermissions(edit_data=False, access_api=True)
         )
         cls.role_with_permission_but_no_api_access = UserRole.create(
-            cls.domain, 'no-api-access', permissions=Permissions(edit_data=True, access_api=False)
+            cls.domain, 'no-api-access', permissions=HqPermissions(edit_data=True, access_api=False)
         )
         cls.domain_admin = WebUser.create(cls.domain, 'domain_admin', cls.password, None, None, is_admin=True)
         cls.user_with_permission = WebUser.create(cls.domain, 'permission', cls.password, None, None,

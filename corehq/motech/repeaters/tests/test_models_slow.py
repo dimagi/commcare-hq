@@ -19,11 +19,8 @@ from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
 )
-from corehq.motech.repeaters.models import (
-    FormRepeater,
-    SQLRepeater,
-    send_request,
-)
+from corehq.motech.repeaters.models import FormRepeater, send_request
+from corehq.util.test_utils import timelimit
 
 DOMAIN = ''.join([random.choice(string.ascii_lowercase) for __ in range(20)])
 
@@ -45,19 +42,14 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             domain=DOMAIN,
             connection_settings_id=conn.id,
             include_app_id_param=False,
+            repeater_id=uuid4().hex
         )
         cls.repeater.save()
-        cls.sql_repeater = SQLRepeater.objects.create(
-            domain=DOMAIN,
-            repeater_id=cls.repeater.get_id,
-            connection_settings=conn,
-        )
         cls.instance_id = str(uuid4())
         post_xform(cls.instance_id)
 
     @classmethod
     def tearDownClass(cls):
-        cls.sql_repeater.delete()
         cls.repeater.delete()
         cls.teardown_subscriptions()
         cls.domain_obj.delete()
@@ -66,7 +58,7 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def setUp(self):
         super().setUp()
-        self.repeat_record = self.sql_repeater.repeat_records.create(
+        self.repeat_record = self.repeater.repeat_records.create(
             domain=DOMAIN,
             payload_id=self.instance_id,
             registered_at=timezone.now(),
@@ -77,12 +69,12 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
         super().tearDown()
 
     def reget_sql_repeater(self):
-        return SQLRepeater.objects.get(pk=self.sql_repeater.pk)
+        return FormRepeater.objects.get(pk=self.repeater.pk)
 
     def test_success_on_200(self):
         resp = ResponseMock(status_code=200, reason='OK')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -94,8 +86,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_no_backoff_on_409(self):
         resp = ResponseMock(status_code=409, reason='Conflict')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -108,8 +100,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
 
     def test_no_backoff_on_500(self):
         resp = ResponseMock(status_code=500, reason='Internal Server Error')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -119,10 +111,33 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             sql_repeater = self.reget_sql_repeater()
             self.assertIsNone(sql_repeater.next_attempt_at)
 
+    @timelimit(65)
     def test_backoff_on_503(self):
+        """Configured with a custom timelimit to prevent intermittent test
+        failures in GitHub actions. Example:
+
+        ```
+        setup,corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503,60.48151421546936,1673364559.7436702
+        ERROR
+
+        ======================================================================
+        ERROR: corehq.motech.repeaters.tests.test_models_slow:ServerErrorTests.test_backoff_on_503
+        ----------------------------------------------------------------------
+        Traceback (most recent call last):
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 134, in run
+            self.runTest(result)
+        File "/vendor/lib/python3.9/site-packages/nose/case.py", line 152, in runTest
+            test(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 245, in __call__
+            self._setup_and_call(result)
+        File "/vendor/lib/python3.9/site-packages/django/test/testcases.py", line 281, in _setup_and_call
+            super().__call__(result)
+        AssertionError: setup time limit (29.0) exceeded: 60.48151421546936
+        ```
+        """
         resp = ResponseMock(status_code=503, reason='Service Unavailable')
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.return_value = resp
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.return_value = resp
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)
@@ -133,8 +148,8 @@ class ServerErrorTests(TestCase, DomainSubscriptionMixin):
             self.assertIsNotNone(sql_repeater.next_attempt_at)
 
     def test_backoff_on_connection_error(self):
-        with patch('corehq.motech.repeaters.models.simple_post') as simple_post:
-            simple_post.side_effect = ConnectionError()
+        with patch('corehq.motech.repeaters.models.simple_request') as simple_request:
+            simple_request.side_effect = ConnectionError()
 
             payload = self.repeater.get_payload(self.repeat_record)
             send_request(self.repeater, self.repeat_record, payload)

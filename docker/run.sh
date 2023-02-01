@@ -31,6 +31,11 @@ function setup {
 
     rm *.log || true
 
+    if [ -n "$GITHUB_ACTIONS" ]; then
+        # create the artifacts dir with container-write ownership
+        install -dm0755 -o cchq -g cchq ./artifacts
+    fi
+
     pip-sync requirements/test-requirements.txt
     pip check  # make sure there are no incompatibilities in test-requirements.txt
     python_preheat  # preheat the python libs
@@ -53,8 +58,6 @@ function setup {
     if [ "$TEST" = "javascript" -o "$JS_SETUP" = "yes" ]; then
         yarn install --progress=false --frozen-lockfile
     fi
-
-    /mnt/wait.sh
 }
 
 function python_preheat {
@@ -77,6 +80,8 @@ function python_preheat {
 }
 
 function run_tests {
+    # Disabled due to: https://github.com/github/feedback/discussions/8848
+    # [ -n "$GITHUB_ACTIONS" ] && echo "::endgroup::"  # "Docker setup" begins in scripts/docker
     TEST="$1"
     shift
     suite_pat=$(printf '%s|' "${VALID_TEST_SUITES[@]}" | sed -E 's/\|$//')
@@ -94,7 +99,7 @@ function run_tests {
             logdo sh -c "mount | grep 'on /mnt/'"
             logdo id
             logdo pwd
-            logdo ls -ld . .. corehq manage.py node_modules staticfiles docker/wait.sh
+            logdo ls -ld . .. corehq manage.py node_modules staticfiles
             if logdo df -hP .; then
                 upone=..
             else
@@ -105,6 +110,10 @@ function run_tests {
             for dirpath in $(find /mnt -mindepth 1 -maxdepth 1 -type d -not -name 'commcare-hq*'); do
                 logdo ls -la "$dirpath"
             done
+            logdo python -m site
+            logdo pip freeze
+            logdo npm config list
+            logdo yarn --version
             logdo cat -n ../run_tests
         }
         echo -e "$(func_text overlay_debug)\\noverlay_debug" | su cchq -c "/bin/bash -" || true
@@ -115,17 +124,24 @@ function run_tests {
             exit 1
         fi
 
+        log_group_begin "Django test suite setup"
         now=$(date +%s)
         setup "$TEST"
         delta=$(($(date +%s) - $now))
+        log_group_end
 
         send_timing_metric_to_datadog "setup" $delta
 
+        log_group_begin "Django test suite: $TEST"
         now=$(date +%s)
         argv_str=$(printf ' %q' "$TEST" "$@")
-        su cchq -c "/bin/bash ../run_tests $argv_str"
+        su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
+        log_group_end  # only log group end on success (notice: `set -e`)
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-prod-entrypoints.sh
         [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
         [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
+        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
@@ -168,21 +184,35 @@ function _run_tests {
 
     function _test_python {
         ./manage.py create_kafka_topics
-        if [ -n "$TRAVIS_EVENT_TYPE" ]; then
-            logmsg INFO "coverage run --parallel-mode manage.py test ${py_test_args[*]}"
+        if [ -n "$CI" ]; then
+            logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
             # `coverage` generates a file that's then sent to codecov
-            coverage run --parallel-mode manage.py test "${py_test_args[@]}"
-            bash <(curl -s https://codecov.io/bash)
+            coverage run manage.py test "${py_test_args[@]}"
+            coverage xml
+            if [ -n "$TRAVIS" ]; then
+                bash <(curl -s https://codecov.io/bash)
+            fi
         else
             logmsg INFO "./manage.py test ${py_test_args[*]}"
             ./manage.py test "${py_test_args[@]}"
         fi
     }
 
+    function _wait_for_runserver {
+        began=$(date +%s)
+        while ! { exec 6<>/dev/tcp/127.0.0.1/8000; } 2>/dev/null; do
+            if [ $(($(date +%s) - $began)) -gt 90 ]; then
+                logmsg ERROR "timed out (90 sec) waiting for 127.0.0.1:8000"
+                exit 1
+            fi
+            sleep 1
+        done
+    }
+
     function _test_javascript {
         ./manage.py migrate --noinput
         ./manage.py runserver 0.0.0.0:8000 &> commcare-hq.log &
-        /mnt/wait.sh 127.0.0.1:8000
+        _wait_for_runserver
         logmsg INFO "grunt test ${js_test_args[*]}"
         grunt test "${js_test_args[@]}"
     }
@@ -223,7 +253,7 @@ function runserver {
 }
 
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
-source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, func_text and truthy
+source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
 # build the run_tests script to be executed as cchq later
 func_text logmsg _run_tests  > /mnt/run_tests
@@ -272,7 +302,7 @@ else
             # add world-read (and world-x for dirs and existing-x files)
             chmod -R o+rX commcare-hq
             delta=$(($(date +%s) - $now))
-            echo "(delta=${delta}sec)" >&2  # append the previous log line
+            echo "(delta=${delta}sec)"  # append the previous log line
         fi
     else
         # This (aufs) was the default (perhaps only?) Docker overlay engine when
@@ -285,9 +315,6 @@ else
     fi
     # Own the new dirs after the overlay is mounted.
     chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    # Replace the existing symlink (links to RO mount, cchq may not have read/x)
-    # with one that points at the overlay mount.
-    ln -sf commcare-hq/docker/wait.sh wait.sh
 fi
 # New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
 #

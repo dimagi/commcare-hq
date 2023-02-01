@@ -11,7 +11,7 @@ from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.utils import clear_plan_version_cache
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import CommCareCase, CommCareCaseIndex
 from corehq.motech.const import (
     COMMCARE_DATA_TYPE_DECIMAL,
     COMMCARE_DATA_TYPE_TEXT,
@@ -62,7 +62,7 @@ class TestGetInfoResourcesListOneCase(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.case_id = str(uuid4())
-        self.case = CommCareCaseSQL(
+        self.case = CommCareCase(
             case_id=self.case_id,
             domain=DOMAIN,
             type='person',
@@ -146,7 +146,7 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
     def setUp(self):
         now = datetime.utcnow()
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCaseSQL(
+        self.parent_case = CommCareCase(
             case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
@@ -157,7 +157,7 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
         )
         self.parent_case.save()
 
-        self.child_case_1 = CommCareCaseSQL(
+        self.child_case_1 = CommCareCase(
             case_id='111111111',
             domain=DOMAIN,
             type='person_name',
@@ -177,7 +177,7 @@ class TestGetInfoResourcesListSubCases(TestCase, DomainSubscriptionMixin):
             referenced_type='person',
             referenced_id=self.parent_case_id,
         )
-        self.child_case_2 = CommCareCaseSQL(
+        self.child_case_2 = CommCareCase(
             case_id='222222222',
             domain=DOMAIN,
             type='person_name',
@@ -326,7 +326,7 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         now = datetime.utcnow()
         owner_id = str(uuid4())
         self.parent_case_id = str(uuid4())
-        self.parent_case = CommCareCaseSQL(
+        self.parent_case = CommCareCase(
             case_id=self.parent_case_id,
             domain=DOMAIN,
             type='person',
@@ -338,7 +338,7 @@ class TestGetInfoResourcesListResources(TestCase, DomainSubscriptionMixin):
         self.parent_case.save()
 
         self.child_case_id = str(uuid4())
-        self.child_case = CommCareCaseSQL(
+        self.child_case = CommCareCase(
             case_id=self.child_case_id,
             domain=DOMAIN,
             type='vitals',
@@ -477,9 +477,9 @@ class TestWhenToBundle(TestCase):
 
 
 def add_case_index(child_case, **props):
-    child_case.index_set.add(CommCareCaseIndexSQL(
+    child_case.index_set.add(CommCareCaseIndex(
         case=child_case,
         domain=DOMAIN,
-        relationship_id=CommCareCaseIndexSQL.CHILD,
+        relationship_id=CommCareCaseIndex.CHILD,
         **props
     ), bulk=False)

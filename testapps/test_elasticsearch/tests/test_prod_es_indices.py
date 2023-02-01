@@ -1,10 +1,14 @@
 from django.conf import settings
 from django.test import SimpleTestCase
-from django.test.utils import override_settings
+from corehq.apps.es.tests.utils import es_test
 from corehq.pillows.utils import get_all_expected_es_indices
 
 
+@es_test
 class ProdIndexManagementTest(SimpleTestCase):
+
+    maxDiff = None  # show the entire diff for test failures
+
     @classmethod
     def setUpClass(cls):
         super(ProdIndexManagementTest, cls).setUpClass()
@@ -18,28 +22,23 @@ class ProdIndexManagementTest(SimpleTestCase):
         settings.PILLOWTOPS = cls._PILLOWTOPS
         super(ProdIndexManagementTest, cls).tearDownClass()
 
-    @override_settings(SERVER_ENVIRONMENT='production', ES_SETTINGS={
-        "default": {"number_of_replicas": 1},
-        "case_search": {},
-        "hqapps": {},
-        "hqcases": {},
-        "hqdomains": {},
-        "hqgroups": {},
-        "hqusers": {},
-        "report_cases": {},
-        "report_xforms": {},
-        "smslogs": {},
-        "xforms": {},
-    })
     def test_prod_config(self):
-        found_prod_indices = [info.to_json() for info in get_all_expected_es_indices()]
-        for info in found_prod_indices:
-            # for now don't test this property, just ensure it exist
-            self.assertTrue(info['mapping'])
-            del info['mapping']
+        # TODO: implement index verification in a way that is reindex-friendly
+        found_prod_indices = []
+        for index_info in get_all_expected_es_indices():
+            if index_info.alias == "pillowtop_tests":
+                continue  # skip this one
+            info = index_info.to_json()
+            found_prod_indices.append(info)
+            # for now don"t test this property, just ensure it exist
+            self.assertTrue(info["mapping"])
+            del info["mapping"]
+            # TODO: test mappings.  Seems related, but different from
+            # `corehq/pillows/mappings/tests`. The tests here in this module
+            # should probably move over there some day.
 
         def alias(info):
-            return info['alias']
+            return info["alias"]
 
         found_prod_indices = sorted(found_prod_indices, key=alias)
         expected_prod_indices = sorted(EXPECTED_PROD_INDICES, key=alias)
@@ -55,25 +54,40 @@ class ProdIndexManagementTest(SimpleTestCase):
 
 EXPECTED_PROD_INDICES = [
     {
-        "alias": "test_case_search",
-        "hq_index_name": "case_search",
         "index": "test_case_search_2018-05-29",
+        "alias": "test_case_search",
         "type": "case",
+        "hq_index_name": "case_search",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
                             "filter": [
                                 "lowercase"
+                            ]
+                        },
+                        "phonetic": {
+                            "filter": [
+                                "standard",
+                                "lowercase",
+                                "soundex"
                             ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
+                            "tokenizer": "standard"
+                        }
+                    },
+                    "filter": {
+                        "soundex": {
+                            "replace": "true",
+                            "type": "phonetic",
+                            "encoder": "soundex"
                         }
                     }
-                }
+                },
+                "number_of_replicas": 1,
+                "number_of_shards": 5,
             }
         }
     },
@@ -84,7 +98,8 @@ EXPECTED_PROD_INDICES = [
         "type": "app",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -104,7 +119,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -123,11 +138,12 @@ EXPECTED_PROD_INDICES = [
     {
         "alias": "test_hqdomains",
         "hq_index_name": "hqdomains",
-        "index": "test_hqdomains_2020-02-10",
+        "index": "test_hqdomains_2021-03-08",
         "type": "hqdomain",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
+                "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -151,7 +167,7 @@ EXPECTED_PROD_INDICES = [
         "type": "group",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -175,7 +191,7 @@ EXPECTED_PROD_INDICES = [
         "meta": {
             "settings": {
                 "number_of_shards": 2,
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -189,59 +205,13 @@ EXPECTED_PROD_INDICES = [
         }
     },
     {
-        "alias": "test_report_cases",
-        "hq_index_name": "report_cases",
-        "index": "test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
-        "type": "report_case",
-        "meta": {
-            "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
-                "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    {
-        "alias": "test_report_xforms",
-        "hq_index_name": "report_xforms",
-        "index": "test_report_xforms_20160824_1708",
-        "type": "report_xform",
-        "meta": {
-            "settings": {
-                "number_of_replicas": 1,
-                "number_of_shards": 5,
-                "analysis": {
-                    "analyzer": {
-                        "default": {
-                            "filter": [
-                                "lowercase"
-                            ],
-                            "type": "custom",
-                            "tokenizer": "whitespace"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    {
         "alias": "test_smslogs",
         "hq_index_name": "smslogs",
         "index": "test_smslogs_2020-01-28",
         "type": "sms",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {
@@ -264,7 +234,7 @@ EXPECTED_PROD_INDICES = [
         "type": "xform",
         "meta": {
             "settings": {
-                "number_of_replicas": 1,
+                "number_of_replicas": 0,
                 "number_of_shards": 5,
                 "analysis": {
                     "analyzer": {

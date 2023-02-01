@@ -3,7 +3,7 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.models import CommCareCase, XFormInstance
 from corehq.form_processor.tests.utils import sharded
 
 
@@ -105,7 +105,7 @@ class CaseFactoryTest(TestCase):
     def test_simple_create(self):
         factory = CaseFactory()
         case = factory.create_case()
-        self.assertIsNotNone(CaseAccessors().get_case(case.case_id))
+        self.assertIsNotNone(CommCareCase.objects.get_case(case.case_id, case.domain))
 
     def test_create_overrides(self):
         factory = CaseFactory()
@@ -175,8 +175,8 @@ class CaseFactoryTest(TestCase):
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(
-            attrs={'create': True}), form_extras={'last_sync_token': token_id})
-        form = FormAccessors(domain).get_form(case.xform_ids[0])
+            attrs={'create': True}), submission_extras={'last_sync_token': token_id})
+        form = XFormInstance.objects.get_form(case.xform_ids[0], domain)
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_default(self):
@@ -184,16 +184,16 @@ class CaseFactoryTest(TestCase):
         # have to enable loose sync token validation for the domain or create actual SyncLog documents.
         # this is the easier path.
         token_id = uuid.uuid4().hex
-        factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
+        factory = CaseFactory(domain=domain, submission_extras={'last_sync_token': token_id})
         case = factory.create_case()
-        form = FormAccessors(domain).get_form(case.xform_ids[0])
+        form = XFormInstance.objects.get_form(case.xform_ids[0], domain)
         self.assertEqual(token_id, form.last_sync_token)
 
     def test_form_extras_override_defaults(self):
         domain = uuid.uuid4().hex
         token_id = uuid.uuid4().hex
-        factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
+        factory = CaseFactory(domain=domain, submission_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(
-            attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})
-        form = FormAccessors(domain).get_form(case.xform_ids[0])
+            attrs={'create': True}), submission_extras={'last_sync_token': 'differenttoken'})
+        form = XFormInstance.objects.get_form(case.xform_ids[0], domain)
         self.assertEqual('differenttoken', form.last_sync_token)

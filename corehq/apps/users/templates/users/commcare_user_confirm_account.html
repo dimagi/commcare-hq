@@ -41,6 +41,13 @@
                   Contact your administrator if you think this is a mistake.
                 {% endblocktrans %}
               </h3>
+            {% elif invite_expired %}
+              <h3>
+                {% blocktrans %}
+                  Invitation link has expired.
+                  Contact your project administrator to send new invite.
+                {% endblocktrans %}
+              </h3>
             {% else %}
               <h2>
                 {% blocktrans %}Confirm Your Account{% endblocktrans %}
@@ -59,14 +66,6 @@
                   {% endwith %}
                 </h4>
                 {% include 'users/partials/register_user_form_fields.html' %}
-                  <div class="form-bubble-actions">
-                    <button type="submit"
-                            class="btn btn-lg btn-primary"
-                            data-bind="enable: passwordSufficient">
-                      {% trans "Confirm Account" %}
-                    </button>
-                  </div>
-                </fieldset>
               </form>
           {% endif %}
           </div>

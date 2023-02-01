@@ -24,6 +24,7 @@ from ..exceptions import (
     NotPowerOf2Error,
     NotZeroStartError,
 )
+from .utils import ignore_databases_override_warning
 
 db_dict = {'NAME': 'commcarehq', 'USER': 'commcarehq', 'HOST': 'hqdb0', 'PORT': 5432}
 TEST_DATABASES = {
@@ -101,6 +102,7 @@ PARTITION_CONFIG_WITH_STANDBYS.update({
 })
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=TEST_DATABASES, USE_PARTITIONED_DATABASE=True)
 class TestPartitionConfig(SimpleTestCase):
 
@@ -185,6 +187,7 @@ class TestPartitionConfig(SimpleTestCase):
             _get_standby_plproxy_config(config)
 
 
+@ignore_databases_override_warning
 def test_partition_config_validation():
     def _run_test(config, exception, message):
         settings = {
@@ -202,6 +205,7 @@ def test_partition_config_validation():
         yield _run_test, config, exception, message
 
 
+@ignore_databases_override_warning
 @override_settings(DATABASES=TEST_DATABASES)
 class PlProxyTests(SimpleTestCase):
 

@@ -1,7 +1,7 @@
 """
 Simple WSGI server that exposes Prometheus metrics.
 
-Environment variable `prometheus_multiproc_dir` must be set and match
+Environment variable `PROMETHEUS_MULTIPROC_DIR` must be set and match
 the value used by Django.
 """
 import os
@@ -10,9 +10,10 @@ from wsgiref.simple_server import make_server
 from prometheus_client import CollectorRegistry, make_wsgi_app, multiprocess
 from prometheus_client.exposition import _SilentHandler
 
-multiproc_dir = os.environ.get("prometheus_multiproc_dir")
+# DEPRECATED: prometheus_multiproc_dir has been replaced by PROMETHEUS_MULTIPROC_DIR
+multiproc_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR") or os.environ.get("prometheus_multiproc_dir")
 if not multiproc_dir:
-    raise Exception("Environment variable 'prometheus_multiproc_dir' is not set")
+    raise Exception("Environment variable 'PROMETHEUS_MULTIPROC_DIR' is not set")
 
 print(f"Exposing metrics from '{multiproc_dir}'")
 

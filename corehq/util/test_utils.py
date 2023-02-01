@@ -1,3 +1,10 @@
+"""DO NOT ADD NEW THINGS TO THIS MODULE
+
+New test utilities should be added to a module in the
+`corehq.tests.util` package. Things in this module may be moved there as
+it makes sense to do so. See the docstring on that package for important
+guidelines.
+"""
 import functools
 import json
 import logging
@@ -5,21 +12,23 @@ import os
 import traceback
 import uuid
 from collections import namedtuple
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, closing, contextmanager
 from datetime import datetime, timedelta
 from functools import wraps
 from io import StringIO, open
 from textwrap import indent, wrap
-from time import time
+from time import sleep, time
 from unittest import SkipTest, TestCase
 
+from django.apps import apps
 from django.conf import settings
 from django.db import connections
 from django.db.backends import utils
+from django.db.utils import DEFAULT_DB_ALIAS, load_backend
 from django.test import TransactionTestCase
 from django.test.utils import CaptureQueriesContext
 
-import mock
+from unittest import mock
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
@@ -340,12 +349,36 @@ class capture_log_output(ContextDecorator):
         return self.output.getvalue()
 
 
-def generate_cases(argsets, cls=None):
-    """Make a decorator to generate a set of parameterized test cases
+def unregistered_django_model(model_class):
+    """Model class decorator that unregisters the model from Django
 
-    Until we have nose generator tests...
+    Apply to model classes in test modules to prevent the models from
+    being seen by other tests that check registered models. Examples
+    of tests that check registered models include
+    - corehq.apps.domain.tests.test_deletion_models:test_deletion_sql_models
+    - corehq.sql_db.tests.test_model_partitioning
+      :TestPartitionedModelsWithMultipleDBs
+      .test_models_are_located_in_correct_dbs('scheduling', False)
+    """
+    app_config = apps.get_app_config(model_class._meta.app_label)
+    del app_config.models[model_class.__name__.lower()]
+    return model_class
 
-    Usage:
+
+class generate_cases:
+    """A decorator to generate parameterized test cases
+
+    Usage as test method decorator:
+
+        class TestThing(TestCase):
+            @generate_cases([
+                ("foo", "bar"),
+                ("bar", "foo"),
+            ])
+            def test_foo(self, foo, bar)
+                self.assertEqual(self.thing[foo], bar)
+
+    Deprecated: two-argument decorator on module level test function:
 
         @generate_cases([
             ("foo", "bar"),
@@ -358,39 +391,63 @@ def generate_cases(argsets, cls=None):
     their parameterized names are not valid function names. This was a
     tradeoff with making parameterized tests identifiable on failure.
 
+    Another alternative is nose test generators.
+    https://nose.readthedocs.io/en/latest/writing_tests.html#test-generators
+
     :param argsets: A sequence of argument tuples or dicts, one for each
     test case to be generated.
     :param cls: Optional test case class to which tests should be added.
     """
-    def add_cases(test_func):
-        if cls is None:
-            class Test(TestCase):
+
+    def __init__(self, argsets, cls=None):
+        self.argsets = argsets
+        self.test_class = cls
+
+    def __call__(self, test_func):
+        def assign(owner, test):
+            assert not hasattr(owner, test.__name__), \
+                "duplicate test case: {}.{}".format(owner, test.__name__)
+            setattr(owner, test.__name__, test)
+
+        tests = []
+
+        if self.test_class is None:
+            class DecoratedMethodMeta(type):
+                def __set_name__(self, owner, name):
+                    # Delete Test class, which has replaced decorated method
+                    delattr(owner, name)
+                    # Assign parameterized tests to class of decorated method
+                    for test in tests:
+                        assign(owner, test)
+
+            class Test(TestCase, metaclass=DecoratedMethodMeta):
+                # Test case for top-level module @generate_cases([...])
                 pass
             Test.__name__ = test_func.__name__
         else:
-            Test = cls
+            Test = self.test_class
 
-        for args in argsets:
+        for args in self.argsets:
             def test(self, args=args):
                 if isinstance(args, dict):
                     return test_func(self, **args)
                 return test_func(self, *args)
 
             test.__name__ = test_func.__name__ + repr(args)
-            assert not hasattr(Test, test.__name__), \
-                "duplicate test case: {} {}".format(Test, test.__name__)
+            assign(Test, test)
+            tests.append(test)
 
-            setattr(Test, test.__name__, test)
-
-        if cls is None:
+        if self.test_class is None:
             # Only return newly created test class; otherwise the test
             # runner will run tests on cls twice. Explanation: the
             # returned value will be bound to the name of the decorated
             # test_func; if cls is provided then there will be two names
-            # bound to the same test class
+            # bound to the same test class. This is happens when the
+            # decorated test is a module-level function.
+            #
+            # In the case of a decorated test method, DecoratedMethodMeta
+            # will delete this and assign tests to the owning test class.
             return Test
-
-    return add_cases
 
 
 def timelimit(limit):
@@ -426,6 +483,7 @@ def timelimit(limit):
         limit = timedelta(seconds=limit)
         return lambda func: timelimit((func, limit))
     func, limit = limit
+
     @wraps(func)
     def time_limit(*args, **kw):
         from corehq.tests.noseplugins.timing import add_time_limit
@@ -518,7 +576,7 @@ def patch_foreign_value_caches():
     TransactionTestCase._post_teardown = post_teardown
 
 
-def get_form_ready_to_save(metadata, is_db_test=False):
+def get_form_ready_to_save(metadata, is_db_test=False, form_id=None):
     from corehq.form_processor.parsers.form import process_xform_xml
     from corehq.form_processor.utils import get_simple_form_xml, convert_xform_to_json
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -526,7 +584,7 @@ def get_form_ready_to_save(metadata, is_db_test=False):
 
     assert metadata is not None
     metadata.domain = metadata.domain or uuid.uuid4().hex
-    form_id = uuid.uuid4().hex
+    form_id = form_id or uuid.uuid4().hex
     form_xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
 
     if is_db_test:
@@ -566,6 +624,11 @@ def create_and_save_a_form(domain):
 
 
 def _create_case(domain, **kwargs):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from casexml.apps.case.mock import CaseBlock
     from corehq.apps.hqcase.utils import submit_case_blocks
     return submit_case_blocks(
@@ -575,7 +638,11 @@ def _create_case(domain, **kwargs):
 
 def create_and_save_a_case(domain, case_id, case_name, case_properties=None, case_type=None,
         drop_signals=True, owner_id=None, user_id=None, index=None):
-    from casexml.apps.case.signals import case_post_save
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.form_processor.signals import sql_case_post_save
 
     kwargs = {
@@ -597,7 +664,7 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 
     if drop_signals:
         # this avoids having to deal with all the reminders code bootstrap
-        with drop_connected_signals(case_post_save), drop_connected_signals(sql_case_post_save):
+        with drop_connected_signals(sql_case_post_save):
             form, cases = _create_case(domain, **kwargs)
     else:
         form, cases = _create_case(domain, **kwargs)
@@ -608,8 +675,13 @@ def create_and_save_a_case(domain, case_id, case_name, case_properties=None, cas
 @contextmanager
 def create_test_case(domain, case_type, case_name, case_properties=None, drop_signals=True,
         case_id=None, owner_id=None, user_id=None):
+    """Use corehq.form_processor.tests.utils.create_case() instead if possible
+
+    This submits a form to create the case. The form_procssor version
+    creates and saves the case directly, which is faster.
+    """
     from corehq.apps.sms.tasks import delete_phone_numbers_for_owners
-    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+    from corehq.form_processor.models import CommCareCase
     from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import delete_schedule_instances_by_case_id
 
     case = create_and_save_a_case(domain, case_id or uuid.uuid4().hex, case_name,
@@ -620,7 +692,7 @@ def create_test_case(domain, case_type, case_name, case_properties=None, drop_si
     finally:
         delete_phone_numbers_for_owners([case.case_id])
         delete_schedule_instances_by_case_id(domain, case.case_id)
-        CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
+        CommCareCase.objects.hard_delete_cases(domain, [case.case_id])
 
 
 create_test_case.__test__ = False
@@ -659,23 +731,6 @@ def set_parent_case(domain, child_case, parent_case, relationship='child', ident
                 relationship=relationship
             )],
         )
-    )
-
-
-def update_case(domain, case_id, case_properties, user_id=None):
-    from casexml.apps.case.mock import CaseBlock
-    from casexml.apps.case.util import post_case_blocks
-
-    kwargs = {
-        'case_id': case_id,
-        'update': case_properties,
-    }
-
-    if user_id:
-        kwargs['user_id'] = user_id
-
-    post_case_blocks(
-        [CaseBlock.deprecated_init(**kwargs).as_xml()], domain=domain
     )
 
 
@@ -804,6 +859,22 @@ class capture_sql(ContextDecorator):
                 print('\n{}'.format(indent(''.join(query['traceback']), '\t\t')))
 
 
+@contextmanager
+def new_db_connection(alias=DEFAULT_DB_ALIAS):
+    """Context manager to setup a new database connection
+
+    Use to test transaction isolation when a transaction is in progress
+    on the current/existing connection.
+    """
+    connections.ensure_defaults(alias)
+    connections.prepare_test_settings(alias)
+    db = connections.databases[alias]
+    backend = load_backend(db['ENGINE'])
+    with closing(backend.DatabaseWrapper(db, alias)) as cn, \
+            mock.patch("django.db.connections._connections.default", cn):
+        yield cn
+
+
 def require_db_context(fn):
     """
     Only run 'fn' in DB tests
@@ -830,3 +901,18 @@ def disable_quickcache(test_case=None):
         return self.fn(*args, **kw)
     patch = mock.patch("quickcache.quickcache_helper.QuickCacheHelper.__call__", call)
     return patch if test_case is None else patch(test_case)
+
+
+def flaky_slow(test=None, max_runs=5, min_passes=1, rerun_filter=lambda *a: True):
+    """A flaky test decorator that waits between reruns
+
+    Use for tests that depend on eventual database consistency.
+    """
+    from flaky import flaky
+
+    def rerun(*args):
+        sleep(0.5)
+        return rerun_filter(*args)
+
+    deco = flaky(max_runs=max_runs, min_passes=min_passes, rerun_filter=rerun)
+    return deco if test is None else deco(test)

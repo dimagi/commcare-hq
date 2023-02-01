@@ -1,7 +1,5 @@
-import mock
-from mock.mock import MagicMock
+from unittest.mock import MagicMock
 
-from corehq.util.test_utils import softer_assert
 from custom.up_nrhm.reports.asha_facilitators_report import (
     ASHAFacilitatorsReport,
 )
@@ -18,25 +16,10 @@ from custom.up_nrhm.reports.district_functionality_report import (
 from custom.up_nrhm.sql_data import DOMAIN
 from custom.up_nrhm.tests.utils import UpNrhmTestCase
 
-RUN_QUERY_VALUE = {
-    'hits': {
-        'total': 0,
-        'hits': []
-    },
-    'facets': {
-        'vaccination_names': {
-            'terms': [
-                {'term': 'foo', 'count': 10}
-            ]
-        }
-    }
-}
-
 
 class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
-    def test_asha_functionality_checklist_report(self, mock_run_query):
+    def test_asha_functionality_checklist_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
@@ -76,8 +59,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             ]
         )
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
-    def test_asha_facilitators_report(self, mock_run_query):
+    def test_asha_facilitators_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
@@ -145,8 +127,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
-    def test_block_level_month_report(self, mock_run_query):
+    def test_block_level_month_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
@@ -223,8 +204,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
-    def test_block_level_af_report(self, mock_run_query):
+    def test_block_level_af_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
@@ -362,8 +342,7 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             for record in expected[0][i]:
                 self.assertIn(record, rows[0][i])
 
-    @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
-    def test_district_functionality_report(self, mock_run_query):
+    def test_district_functionality_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {

@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext_lazy, gettext_noop
 
 from corehq.apps.es.groups import GroupES
 from corehq.apps.reports.filters.base import (
@@ -18,8 +18,8 @@ from corehq.apps.sms.models import (
 
 
 class MessageTypeFilter(BaseMultipleOptionFilter):
-    label = ugettext_noop("Message Type")
-    default_text = ugettext_noop("Select Message Type...")
+    label = gettext_noop("Message Type")
+    default_text = gettext_noop("Select Message Type...")
     slug = 'log_type'
     OPTION_SURVEY = 'survey'
     OPTION_OTHER = 'other'
@@ -27,20 +27,20 @@ class MessageTypeFilter(BaseMultipleOptionFilter):
     @property
     def options(self):
         options_var = [
-            (WORKFLOW_REMINDER, ugettext_noop('Reminder')),
-            (WORKFLOW_KEYWORD, ugettext_noop('Keyword')),
-            (WORKFLOW_BROADCAST, ugettext_noop('Broadcast')),
-            (WORKFLOW_CALLBACK, ugettext_noop('Callback')),
-            (self.OPTION_SURVEY, ugettext_noop('Survey')),
-            (WORKFLOW_DEFAULT, ugettext_noop('Default')),
-            (self.OPTION_OTHER, ugettext_noop('Other')),
+            (WORKFLOW_REMINDER, gettext_noop('Reminder')),
+            (WORKFLOW_KEYWORD, gettext_noop('Keyword')),
+            (WORKFLOW_BROADCAST, gettext_noop('Broadcast')),
+            (WORKFLOW_CALLBACK, gettext_noop('Callback')),
+            (self.OPTION_SURVEY, gettext_noop('Survey')),
+            (WORKFLOW_DEFAULT, gettext_noop('Default')),
+            (self.OPTION_OTHER, gettext_noop('Other')),
         ]
         return options_var
 
 
 class ErrorCodeFilter(BaseMultipleOptionFilter):
-    label = ugettext_noop('Error')
-    default_text = ugettext_noop('Select Error...')
+    label = gettext_noop('Error')
+    default_text = gettext_noop('Select Error...')
     slug = 'error_code'
 
     options = [
@@ -51,15 +51,15 @@ class ErrorCodeFilter(BaseMultipleOptionFilter):
 
 
 class EventTypeFilter(BaseMultipleOptionFilter):
-    label = ugettext_noop('Communication Type')
-    default_text = ugettext_noop('Select Communication Type...')
+    label = gettext_noop('Communication Type')
+    default_text = gettext_noop('Select Communication Type...')
     slug = 'event_type'
     options = [
-        (MessagingEvent.SOURCE_BROADCAST, ugettext_noop('Broadcast')),
-        (MessagingEvent.SOURCE_KEYWORD, ugettext_noop('Keyword')),
-        (MessagingEvent.SOURCE_REMINDER, ugettext_noop('Conditional Alert')),
-        (MessagingEvent.SOURCE_UNRECOGNIZED, ugettext_noop('Unrecognized')),
-        (MessagingEvent.SOURCE_OTHER, ugettext_noop('Other')),
+        (MessagingEvent.SOURCE_BROADCAST, gettext_noop('Broadcast')),
+        (MessagingEvent.SOURCE_KEYWORD, gettext_noop('Keyword')),
+        (MessagingEvent.SOURCE_REMINDER, gettext_noop('Conditional Alert')),
+        (MessagingEvent.SOURCE_UNRECOGNIZED, gettext_noop('Unrecognized')),
+        (MessagingEvent.SOURCE_OTHER, gettext_noop('Other')),
     ]
     default_options = [
         MessagingEvent.SOURCE_BROADCAST,
@@ -69,38 +69,38 @@ class EventTypeFilter(BaseMultipleOptionFilter):
 
 
 class EventContentFilter(BaseMultipleOptionFilter):
-    label = ugettext_noop('Content Type')
-    default_text = ugettext_noop('All')
+    label = gettext_noop('Content Type')
+    default_text = gettext_noop('All')
     slug = 'content_type'
 
     @property
     def options(self):
         return [
-            (MessagingEvent.CONTENT_SMS_SURVEY, ugettext_noop('SMS Survey')),
-            (MessagingEvent.CONTENT_SMS_CALLBACK, ugettext_noop('SMS Callback')),
-            (MessagingEvent.CONTENT_SMS, ugettext_noop('Other SMS')),
-            (MessagingEvent.CONTENT_EMAIL, ugettext_noop('Email')),
+            (MessagingEvent.CONTENT_SMS_SURVEY, gettext_noop('SMS Survey')),
+            (MessagingEvent.CONTENT_SMS_CALLBACK, gettext_noop('SMS Callback')),
+            (MessagingEvent.CONTENT_SMS, gettext_noop('Other SMS')),
+            (MessagingEvent.CONTENT_EMAIL, gettext_noop('Email')),
         ]
 
 
 class EventStatusFilter(BaseSingleOptionFilter):
     STATUS_CHOICES = (
-        (MessagingEvent.STATUS_IN_PROGRESS, ugettext_noop('In Progress')),
-        (MessagingEvent.STATUS_NOT_COMPLETED, ugettext_noop('Not Completed')),
-        (MessagingEvent.STATUS_ERROR, ugettext_noop('Error')),
-        (MessagingEvent.STATUS_EMAIL_DELIVERED, ugettext_noop('Delivered (Email Only)')),
+        (MessagingEvent.STATUS_IN_PROGRESS, gettext_noop('In Progress')),
+        (MessagingEvent.STATUS_NOT_COMPLETED, gettext_noop('Not Completed')),
+        (MessagingEvent.STATUS_ERROR, gettext_noop('Error')),
+        (MessagingEvent.STATUS_EMAIL_DELIVERED, gettext_noop('Delivered (Email Only)')),
     )
 
     slug = 'event_status'
-    label = ugettext_noop("Status")
-    default_text = ugettext_noop("Any")
+    label = gettext_noop("Status")
+    default_text = gettext_noop("Any")
     options = STATUS_CHOICES
 
 
 class PhoneNumberFilter(BaseSimpleFilter):
     slug = "phone_number"
-    label = ugettext_lazy("Phone Number")
-    help_inline = ugettext_lazy("Enter a full or partial phone number to filter results")
+    label = gettext_lazy("Phone Number")
+    help_inline = gettext_lazy("Enter a full or partial phone number to filter results")
 
 
 class RequiredPhoneNumberFilter(PhoneNumberFilter):
@@ -113,13 +113,13 @@ class RequiredPhoneNumberFilter(PhoneNumberFilter):
 
 class PhoneNumberOrEmailFilter(BaseSimpleFilter):
     slug = "phone_number_or_email_address"
-    label = ugettext_lazy("Phone Number or Email Address")
-    help_inline = ugettext_lazy("Enter a full or partial phone number or a full or partial email "
-                                "address to filter results")
+    label = gettext_lazy("Phone Number or Email Address")
+    help_inline = gettext_lazy("Enter a full or partial phone number or a full or partial email "
+                               "address to filter results")
 
 
 class PhoneNumberReportFilter(BaseReportFilter):
-    label = ugettext_noop("Phone Number")
+    label = gettext_noop("Phone Number")
     slug = "phone_number_filter"
     template = "sms/phone_number_filter.html"
 

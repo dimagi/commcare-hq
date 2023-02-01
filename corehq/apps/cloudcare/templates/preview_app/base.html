@@ -1,7 +1,6 @@
 {% extends "formplayer-common/base.html" %}
 {% load hq_shared_tags %}
 {% load compress %}
-{% load statici18n %}
 
 {% block css %}
   {% compress css %}
@@ -39,12 +38,14 @@
   {% initial_page_data 'hmac_api_key' integrations.hmac_api_key %}
   {% initial_page_data 'hmac_hashed_secret' integrations.hmac_hashed_secret %}
   {% initial_page_data 'secure_cookies' secure_cookies %}
+  {% initial_page_data 'sentry' sentry %}
   {% registerurl 'list_case_exports' request.domain %}
   {% registerurl 'list_form_exports' request.domain %}
   {% registerurl 'login_new_window' %}
   {% registerurl 'case_data' request.domain '---' %}
   {% registerurl 'render_form_data' request.domain '---' %}
   {% registerurl 'report_formplayer_error' request.domain %}
+  {% registerurl 'report_sentry_error' request.domain %}
   {% registerurl 'dialer_view' request.domain %}
   {% if integrations.gaen_otp_enabled %}
     {% registerurl 'gaen_otp_view' request.domain %}

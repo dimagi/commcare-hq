@@ -15,7 +15,7 @@ def create_app_structure_repeat_records(sender, application, **kwargs):
     from corehq.motech.repeaters.models import AppStructureRepeater
     domain = application.domain
     if domain:
-        repeaters = AppStructureRepeater.by_domain(domain)
+        repeaters = AppStructureRepeater.objects.by_domain(domain)
         for repeater in repeaters:
             repeater.register(application)
 
@@ -45,10 +45,10 @@ def expire_latest_enabled_build_profiles(sender, application, **kwargs):
         get_latest_enabled_versions_per_profile.clear(application.copy_of)
 
 
-app_post_save = Signal(providing_args=['application'])
+app_post_save = Signal()  # providing args: application
 
 app_post_save.connect(create_app_structure_repeat_records)
 app_post_save.connect(update_callcenter_config)
 app_post_save.connect(expire_latest_enabled_build_profiles)
 
-app_post_release = Signal(providing_args=['application'])
+app_post_release = Signal()  # providing args: application

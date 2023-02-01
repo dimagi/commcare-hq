@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 import openpyxl
 from openpyxl.utils.exceptions import InvalidFileException
 from django.core.files.uploadedfile import UploadedFile
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 
 class InvalidExcelFileException(Exception):

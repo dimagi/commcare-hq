@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 
@@ -24,6 +25,8 @@ from pillowtop.utils import (
 )
 
 from .interface import BulkPillowProcessor, PillowProcessor
+
+logger = logging.getLogger(__name__)
 
 
 def identity(x):
@@ -69,6 +72,7 @@ class ElasticProcessor(PillowProcessor):
             return
 
         if change.deleted and change.id:
+            logger.info(f'Attempting to delete document for change {change.id}')
             doc = change.get_document()
             if doc and doc.get('doc_type'):
                 current_meta = get_doc_meta_object_from_document(doc)
@@ -76,6 +80,7 @@ class ElasticProcessor(PillowProcessor):
                     self._delete_doc_if_exists(change.id)
             else:
                 self._delete_doc_if_exists(change.id)
+            logger.info(f'Deleted document for change {change.id}')
             return
 
         with self._datadog_timing('extract'):
@@ -140,6 +145,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        logger.info('Processing chunk of changes in BulkElasticProcessor')
         if self.change_filter_fn:
             changes_chunk = [
                 change for change in changes_chunk
@@ -158,16 +164,23 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
 
             error_collector = ErrorCollector()
             es_actions = build_bulk_payload(
-                self.index_info, list(changes_to_process.values()), self.doc_transform_fn, error_collector
+                list(changes_to_process.values()),
+                self.doc_transform_fn,
+                error_collector,
             )
             error_changes = error_collector.errors
 
         try:
             with self._datadog_timing('bulk_load'):
                 _, errors = self.es_interface.bulk_ops(
-                    es_actions, raise_on_error=False, raise_on_exception=False)
+                    self.index_info.alias,
+                    self.index_info.type,
+                    es_actions,
+                    raise_on_error=False,
+                    raise_on_exception=False,
+                )
         except Exception as e:
-            pillow_logging.exception("[%s] ES bulk load error")
+            pillow_logging.exception("Elastic bulk error: %s", e)
             error_changes.extend([
                 (change, e) for change in changes_to_process.values()
             ])

@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqadmin.views import BaseAdminSectionView
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from corehq.util import reverse
 
@@ -73,7 +73,7 @@ def create_tombstone(request):
 class TombstoneManagementForm(forms.Form):
     csv_domain_list = forms.CharField(
         label="Comma separated domains",
-        widget=forms.Textarea()
+        widget=forms.Textarea(attrs={"class": "vertical-resize"})
     )
 
     @staticmethod

@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import re_path as url
 
 from corehq.apps.hqmedia.views import (
     BulkUploadMultimediaView,
@@ -41,8 +41,10 @@ application_urls = [
         name=ProcessImageFileUploadView.urlname),
     url(r'^uploaded/app_logo/(?P<logo_name>[\w\-]+)/$', waf_allow('XSS_BODY')(ProcessLogoFileUploadView.as_view()),
         name=ProcessLogoFileUploadView.urlname),
-    url(r'^uploaded/audio/$', ProcessAudioFileUploadView.as_view(), name=ProcessAudioFileUploadView.urlname),
-    url(r'^uploaded/video/$', ProcessVideoFileUploadView.as_view(), name=ProcessVideoFileUploadView.urlname),
+    url(r'^uploaded/audio/$', waf_allow('XSS_BODY')(ProcessAudioFileUploadView.as_view()),
+        name=ProcessAudioFileUploadView.urlname),
+    url(r'^uploaded/video/$', waf_allow('XSS_BODY')(ProcessVideoFileUploadView.as_view()),
+        name=ProcessVideoFileUploadView.urlname),
     url(r'^uploaded/text/$', ProcessTextFileUploadView.as_view(),
         name=ProcessTextFileUploadView.urlname),
     url(r'^uploaded/detail_print/(?P<module_unique_id>[\w-]+)/$', ProcessDetailPrintTemplateUploadView.as_view(),

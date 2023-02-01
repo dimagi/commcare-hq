@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-import base64
 import io
 import json
 import re
+import uuid
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
@@ -19,14 +19,15 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_lazy, ugettext_noop
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy, gettext_noop
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
 
 from couchdbkit import ResourceNotFound
 from django_prbac.utils import has_privilege
 from memoized import memoized
+from corehq.apps.smsbillables.dispatcher import SMSAdminInterfaceDispatcher
 
 from couchexport.export import export_raw
 from couchexport.models import Format
@@ -72,6 +73,7 @@ from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import (
     MessageMetadata,
+    get_inbound_phone_entry,
     incoming,
     send_sms,
     send_sms_to_verified_number,
@@ -93,6 +95,7 @@ from corehq.apps.sms.forms import (
     BackendMapForm,
     ComposeMessageForm,
     InitiateAddSMSBackendForm,
+    SentTestSmsForm,
     SettingsForm,
     SubscribeSMSForm,
 )
@@ -109,6 +112,7 @@ from corehq.apps.sms.models import (
     SQLMobileBackend,
     SQLMobileBackendMapping,
 )
+from corehq.apps.sms.phonenumbers_helper import country_name_for_country_code
 from corehq.apps.sms.util import (
     ContactNotFoundException,
     get_contact,
@@ -116,18 +120,18 @@ from corehq.apps.sms.util import (
     get_sms_backend_classes,
     is_superuser_or_contractor,
 )
-from corehq.apps.smsbillables.utils import \
-    country_name_from_isd_code_or_empty as country_name_from_code
+from corehq.apps.smsforms.models import (
+    SQLXFormsSession,
+    XFormsSessionSynchronization,
+)
 from corehq.apps.users import models as user_models
 from corehq.apps.users.decorators import require_permission
-from corehq.apps.users.models import CommCareUser, CouchUser, Permissions
+from corehq.apps.users.models import CommCareUser, CouchUser, HqPermissions
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.const import SERVER_DATE_FORMAT, SERVER_DATETIME_FORMAT
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import CommCareCase
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
-from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.quickcache import quickcache
 from corehq.util.timezones.conversions import ServerTime, UserTime
@@ -136,9 +140,9 @@ from corehq.util.workbook_json.excel import get_single_worksheet
 
 # Tuple of (description, days in the past)
 SMS_CHAT_HISTORY_CHOICES = (
-    (ugettext_noop("Yesterday"), 1),
-    (ugettext_noop("1 Week"), 7),
-    (ugettext_noop("30 Days"), 30),
+    (gettext_noop("Yesterday"), 1),
+    (gettext_noop("1 Week"), 7),
+    (gettext_noop("30 Days"), 30),
 )
 
 
@@ -149,7 +153,7 @@ def default(request, domain):
 
 
 class BaseMessagingSectionView(BaseDomainView):
-    section_name = ugettext_noop("Messaging")
+    section_name = gettext_noop("Messaging")
 
     @cached_property
     def can_use_inbound_sms(self):
@@ -171,7 +175,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return False
 
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     def dispatch(self, request, *args, **kwargs):
         if not self.is_granted_messaging_access:
             return render(request, "sms/wall.html", self.main_context)
@@ -262,11 +266,11 @@ def send_to_recipients(request, domain):
             elif (not send_to_all_checked) and recipient.endswith(GROUP):
                 name = recipient[:-len(GROUP)].strip()
                 group_names.append(name)
-            elif re.match(r'^\+\d+$', recipient): # here we expect it to have a plus sign
+            elif re.match(r'^\+\d+$', recipient):  # here we expect it to have a plus sign
                 def wrap_user_by_type(u):
                     return getattr(user_models, u['doc']['doc_type']).wrap(u['doc'])
 
-                phone_users = CouchUser.view("users/by_default_phone", # search both with and w/o the plus
+                phone_users = CouchUser.view("users/by_default_phone",  # search both with and w/o the plus
                     keys=[recipient, recipient[1:]], include_docs=True,
                     wrapper=wrap_user_by_type).all()
 
@@ -342,11 +346,14 @@ def send_to_recipients(request, domain):
                 messages.error(request, _("The following groups don't exist: ") + (', '.join(empty_groups)))
                 comma_reminder()
             if no_numbers:
-                messages.error(request, _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
+                messages.error(request,
+                    _("The following users don't have phone numbers: ") + (', '.join(no_numbers)))
             if failed_numbers:
-                messages.error(request, _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
+                messages.error(request,
+                    _("Couldn't send to the following number(s): ") + (', '.join(failed_numbers)))
             if unknown_usernames:
-                messages.error(request, _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
+                messages.error(request,
+                    _("Couldn't find the following user(s): ") + (', '.join(unknown_usernames)))
                 comma_reminder()
             if sent:
                 messages.success(request, _("Successfully sent: ") + (', '.join(sent)))
@@ -356,24 +363,20 @@ def send_to_recipients(request, domain):
             messages.success(request, _("Message sent"))
 
     return HttpResponseRedirect(
-        request.META.get('HTTP_REFERER') or
-        reverse(ComposeMessageView.urlname, args=[domain])
+        request.META.get('HTTP_REFERER')
+        or reverse(ComposeMessageView.urlname, args=[domain])
     )
 
 
 class TestSMSMessageView(BaseDomainView):
     urlname = 'message_test'
     template_name = 'sms/message_tester.html'
-    section_name = ugettext_lazy("Messaging")
-    page_title = ugettext_lazy("Test SMS Message")
+    section_name = gettext_lazy("Messaging")
+    page_title = gettext_lazy("Test SMS Message")
 
     @property
     def section_url(self):
         return reverse('sms_default', args=(self.domain,))
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname, args=(self.domain, self.phone_number,))
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
@@ -381,26 +384,56 @@ class TestSMSMessageView(BaseDomainView):
         return super(TestSMSMessageView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def phone_number(self):
-        return self.kwargs['phone_number']
-
-    @property
     def page_context(self):
         return {
-            'phone_number': self.phone_number,
+            'form': self.get_form()
         }
 
-    def post(self, request, *args, **kwargs):
-        message = request.POST.get("message", "")
-        phone_entry = PhoneNumber.get_two_way_number(self.phone_number)
-        if phone_entry and phone_entry.domain != self.domain:
-            messages.error(
-                request,
-                _("Invalid phone number being simulated. Please choose a "
-                  "two-way phone number belonging to a contact in your project.")
+    @memoized
+    def get_form(self):
+        backends = SQLMobileBackend.get_domain_backends(
+            SQLMobileBackend.SMS,
+            self.domain,
+        )
+        if self.request.method == 'POST':
+            return SentTestSmsForm(
+                self.request.POST,
+                domain=self.domain,
+                backends=backends,
             )
-        else:
-            incoming(self.phone_number, message, SQLTestSMSBackend.get_api_id(), domain_scope=self.domain)
+
+        default_backend = SQLMobileBackend.get_domain_default_backend(
+            SQLMobileBackend.SMS,
+            self.domain
+        )
+        initial = None
+        if default_backend:
+            initial = {'backend_id': default_backend.couch_id}
+        return SentTestSmsForm(
+            initial=initial,
+            domain=self.domain,
+            backends=backends,
+        )
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            phone_number = form.cleaned_data.get("phone_number", "")
+            message = form.cleaned_data.get("message", "")
+            backend_id = form.cleaned_data.get("backend_id", "")
+            claim_channel = form.cleaned_data.get("claim_channel", False)
+
+            error_message = self._check_phone_number(phone_number, backend_id, claim_channel)
+            if error_message:
+                messages.error(request, error_message)
+                return self.get(request, *args, **kwargs)
+
+            backend = SQLMobileBackend.load(backend_id, is_couch_id=True)
+            incoming(
+                phone_number, message, backend.get_api_id(),
+                domain_scope=self.domain, backend_id=backend.couch_id,
+                backend_message_id="message_test"
+            )
             messages.success(
                 request,
                 _("Test message received.")
@@ -408,9 +441,35 @@ class TestSMSMessageView(BaseDomainView):
 
         return self.get(request, *args, **kwargs)
 
+    def _check_phone_number(self, phone_number, backend_id, claim_channel):
+        phone_entry, has_domain_two_way_scope = get_inbound_phone_entry(phone_number, backend_id)
+        if not phone_entry or phone_entry.domain != self.domain:
+            msg = _("Invalid phone number. Please choose a "
+                    "two-way phone number belonging to a contact in your project.")
+            if not toggles.ONE_PHONE_NUMBER_MULTIPLE_CONTACTS.enabled(self.domain):
+                return msg
+
+            phone_entry_this_domain = PhoneNumber.get_two_way_number_with_domain_scope(
+                phone_number, [self.domain])
+            if claim_channel and phone_entry_this_domain:
+                # attempt to claim the channel
+                fake_session = SQLXFormsSession(
+                    session_id=uuid.uuid4().hex,
+                    connection_id=phone_entry_this_domain.owner_id,
+                    phone_number=phone_entry_this_domain.phone_number
+                )
+                if XFormsSessionSynchronization.set_channel_for_affinity(fake_session):
+                    # re-check but don't attempt a claim this time
+                    return self._check_phone_number(phone_number, backend_id, claim_channel=False)
+
+            return _("Invalid phone number. Either this number is not assigned to a contact in your "
+                     "project or there is an active session for this number in another project space. "
+                     "To 'claim' this channel use the 'claim this channel' checkbox or start a new SMS "
+                     "survey with this number and wait for the first message to be sent.")
+
 
 @csrf_exempt
-@require_permission(Permissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
+@require_permission(HqPermissions.edit_messaging, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -501,7 +560,7 @@ def api_send_sms(request, domain):
 class GlobalBackendMap(BaseAdminSectionView):
     urlname = 'global_backend_map'
     template_name = 'sms/backend_map.html'
-    page_title = ugettext_lazy("Default Gateways")
+    page_title = gettext_lazy("Default Gateways")
 
     @property
     def page_url(self):
@@ -587,7 +646,7 @@ class ChatOverSMSView(BaseMessagingSectionView):
 
 def get_case_contact_info(domain_obj, case_ids):
     data = {}
-    for case in CaseAccessors(domain_obj.name).iter_cases(case_ids):
+    for case in CommCareCase.objects.iter_cases(case_ids, domain_obj.name):
         if domain_obj.custom_case_username:
             name = case.get_case_property(domain_obj.custom_case_username)
         else:
@@ -659,7 +718,7 @@ def get_contact_info(domain):
         try:
             client.set(cache_key, json.dumps(data))
             client.expire(cache_key, cache_expiration)
-        except:
+        except Exception:
             pass
 
     return data
@@ -680,7 +739,7 @@ def format_contact_data(domain, data):
         row.append(reverse('sms_chat', args=[domain, contact_id, vn_id]))
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.INBOUND_SMS)
 def chat_contact_list(request, domain):
     sEcho = request.GET.get('sEcho')
@@ -723,7 +782,7 @@ def get_contact_name_for_chat(contact, domain_obj):
     return contact_name
 
 
-@require_permission(Permissions.edit_messaging)
+@require_permission(HqPermissions.edit_messaging)
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def chat(request, domain, contact_id, vn_id=None):
     domain_obj = Domain.get_by_name(domain, strict=True)
@@ -767,7 +826,7 @@ def chat(request, domain, contact_id, vn_id=None):
 class ChatMessageHistory(View, DomainViewMixin):
     urlname = 'api_history'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatMessageHistory, self).dispatch(request, *args, **kwargs)
@@ -801,7 +860,7 @@ class ChatMessageHistory(View, DomainViewMixin):
         try:
             user = CouchUser.get_by_user_id(user_id)
             return user.first_name or user.raw_username
-        except:
+        except Exception:
             return _("Unknown")
 
     @property
@@ -840,8 +899,8 @@ class ChatMessageHistory(View, DomainViewMixin):
 
         if self.domain_object.show_invalid_survey_responses_in_chat:
             return queryset.exclude(
-                Q(xforms_session_couch_id__isnull=False) &
-                ~Q(direction=INCOMING, invalid_survey_response=True)
+                Q(xforms_session_couch_id__isnull=False)
+                & ~Q(direction=INCOMING, invalid_survey_response=True)
             )
         else:
             return queryset.exclude(
@@ -901,7 +960,7 @@ class ChatMessageHistory(View, DomainViewMixin):
         if last_sms:
             try:
                 self.update_last_read_message(request.couch_user.get_id, last_sms)
-            except:
+            except Exception:
                 notify_exception(request, "Error updating last read message for %s" % last_sms.pk)
 
         return HttpResponse(json.dumps(data))
@@ -910,7 +969,7 @@ class ChatMessageHistory(View, DomainViewMixin):
 class ChatLastReadMessage(View, DomainViewMixin):
     urlname = 'api_last_read_message'
 
-    @method_decorator(require_permission(Permissions.edit_messaging))
+    @method_decorator(require_permission(HqPermissions.edit_messaging))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     def dispatch(self, request, *args, **kwargs):
         return super(ChatLastReadMessage, self).dispatch(request, *args, **kwargs)
@@ -938,7 +997,7 @@ class ChatLastReadMessage(View, DomainViewMixin):
 class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView):
     template_name = "sms/gateway_list.html"
     urlname = 'list_domain_backends'
-    page_title = ugettext_noop("SMS Connectivity")
+    page_title = gettext_noop("SMS Connectivity")
     strict_domain_fetching = True
 
     @method_decorator(domain_admin_required)
@@ -1031,7 +1090,7 @@ class DomainSmsGatewayListView(CRUDPaginatedViewMixin, BaseMessagingSectionView)
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {
@@ -1199,7 +1258,7 @@ class AddGatewayViewMixin(object):
 class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
     urlname = 'add_domain_gateway'
     template_name = 'sms/add_gateway.html'
-    page_title = ugettext_lazy("Add SMS Gateway")
+    page_title = gettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1250,7 +1309,7 @@ class AddDomainGatewayView(AddGatewayViewMixin, BaseMessagingSectionView):
 
 class EditDomainGatewayView(AddDomainGatewayView):
     urlname = 'edit_domain_gateway'
-    page_title = ugettext_lazy("Edit SMS Gateway")
+    page_title = gettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):
@@ -1264,10 +1323,10 @@ class EditDomainGatewayView(AddDomainGatewayView):
         except ResourceNotFound:
             raise Http404()
         if (
-            backend.is_global or
-            backend.domain != self.domain or
-            backend.hq_api_id != self.backend_class.get_api_id() or
-            backend.deleted
+            backend.is_global
+            or backend.domain != self.domain
+            or backend.hq_api_id != self.backend_class.get_api_id()
+            or backend.deleted
         ):
             raise Http404()
         return backend
@@ -1325,10 +1384,17 @@ class EditDomainGatewayView(AddDomainGatewayView):
 class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
     template_name = "sms/global_gateway_list.html"
     urlname = 'list_global_backends'
-    page_title = ugettext_noop("SMS Connectivity")
+    page_title = gettext_noop("SMS Connectivity")
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(
+                reverse(
+                    SMSAdminInterfaceDispatcher.name(),
+                    kwargs={'report_slug': 'sms_billables'}
+                )
+            )
         return super(GlobalSmsGatewayListView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1379,7 +1445,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
                 supported_country_names = _('Multiple%s') % '*'
             else:
                 supported_country_names = ', '.join(
-                    [_(country_name_from_code(int(c))) for c in backend.supported_countries])
+                    [_(country_name_for_country_code(int(c))) for c in backend.supported_countries])
         else:
             supported_country_names = ''
         return {
@@ -1432,7 +1498,7 @@ class GlobalSmsGatewayListView(CRUDPaginatedViewMixin, BaseAdminSectionView):
 class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
     urlname = 'add_global_gateway'
     template_name = 'sms/add_gateway.html'
-    page_title = ugettext_lazy("Add SMS Gateway")
+    page_title = gettext_lazy("Add SMS Gateway")
 
     @property
     @memoized
@@ -1476,12 +1542,14 @@ class AddGlobalGatewayView(AddGatewayViewMixin, BaseAdminSectionView):
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
+        if not has_privilege(request, privileges.GLOBAL_SMS_GATEWAY):
+            return HttpResponseRedirect(reverse("no_permissions"))
         return super(AddGlobalGatewayView, self).dispatch(request, *args, **kwargs)
 
 
 class EditGlobalGatewayView(AddGlobalGatewayView):
     urlname = 'edit_global_gateway'
-    page_title = ugettext_lazy("Edit SMS Gateway")
+    page_title = gettext_lazy("Edit SMS Gateway")
 
     @property
     def backend_id(self):
@@ -1495,9 +1563,9 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
         except ResourceNotFound:
             raise Http404()
         if (
-            not backend.is_global or
-            backend.deleted or
-            backend.hq_api_id != self.backend_class.get_api_id()
+            not backend.is_global
+            or backend.deleted
+            or backend.hq_api_id != self.backend_class.get_api_id()
         ):
             raise Http404()
         return backend
@@ -1550,7 +1618,7 @@ class EditGlobalGatewayView(AddGlobalGatewayView):
 class SubscribeSMSView(BaseMessagingSectionView):
     template_name = "sms/subscribe_sms.html"
     urlname = 'subscribe_sms'
-    page_title = ugettext_noop("Subscribe SMS")
+    page_title = gettext_noop("Subscribe SMS")
 
     @property
     def commtrack_settings(self):
@@ -1594,7 +1662,7 @@ class SubscribeSMSView(BaseMessagingSectionView):
 class SMSLanguagesView(BaseMessagingSectionView):
     urlname = 'sms_languages'
     template_name = "sms/languages.html"
-    page_title = ugettext_noop("Languages")
+    page_title = gettext_noop("Languages")
 
     @use_jquery_ui
     @method_decorator(domain_admin_required)
@@ -1711,7 +1779,7 @@ def upload_sms_translations(request, domain):
 class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = "sms_settings"
     template_name = "sms/settings.html"
-    page_title = ugettext_noop("SMS Settings")
+    page_title = gettext_noop("SMS Settings")
     async_handlers = [SMSSettingsAsyncHandler]
 
     @property
@@ -1729,8 +1797,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     def get_welcome_message_recipient(self, domain_obj):
         if (
-            domain_obj.enable_registration_welcome_sms_for_case and
-            domain_obj.enable_registration_welcome_sms_for_mobile_worker
+            domain_obj.enable_registration_welcome_sms_for_case
+            and domain_obj.enable_registration_welcome_sms_for_mobile_worker
         ):
             return WELCOME_RECIPIENT_ALL
         elif domain_obj.enable_registration_welcome_sms_for_case:
@@ -1751,8 +1819,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
             )
         else:
             domain_obj = Domain.get_by_name(self.domain, strict=True)
-            enabled_disabled = lambda b: (ENABLED if b else DISABLED)
-            default_custom = lambda b: (CUSTOM if b else DEFAULT)
+            enabled_disabled = lambda b: (ENABLED if b else DISABLED)  # noqa: E731
+            default_custom = lambda b: (CUSTOM if b else DEFAULT)  # noqa: E731
             initial = {
                 "use_default_sms_response":
                     enabled_disabled(domain_obj.use_default_sms_response),
@@ -1801,6 +1869,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     domain_obj.sms_case_registration_user_id,
                 "sms_mobile_worker_registration_enabled":
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
+                "sms_worker_registration_alert_emails": domain_obj.sms_worker_registration_alert_emails,
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
                 "language_fallback":
@@ -1855,6 +1924,7 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "sms_conversation_times_json"),
                 ("sms_mobile_worker_registration_enabled",
                  "sms_mobile_worker_registration_enabled"),
+                ("sms_worker_registration_alert_emails", "sms_worker_registration_alert_emails"),
             ]
             if self.previewer:
                 field_map.extend([

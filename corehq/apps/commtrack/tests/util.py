@@ -133,7 +133,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
 
 
 def get_ota_balance_xml(project, user):
-    device = MockDevice(project, user.to_ota_restore_user())
+    device = MockDevice(project, user.to_ota_restore_user(project.name))
     return extract_balance_xml(device.sync().payload)
 
 

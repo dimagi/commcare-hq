@@ -9,6 +9,8 @@ from Crypto.Util.Padding import pad as crypto_pad
 from Crypto.Util.Padding import unpad as crypto_unpad
 from Crypto.Util.py3compat import bord
 
+from corehq.motech.const import AUTH_PRESETS, OAUTH2_PWD
+
 AES_BLOCK_SIZE = 16
 AES_KEY_MAX_LEN = 32  # AES key must be either 16, 24, or 32 bytes long
 PAD_CHAR = b' '
@@ -187,3 +189,39 @@ def simplify_list(seq: Sequence):
     if not seq:
         return None
     return seq
+
+
+def copy_api_auth_settings(connection):
+    if connection.auth_type != OAUTH2_PWD:
+        return
+
+    api_settings = AUTH_PRESETS[connection.api_auth_settings]
+
+    connection.token_url = get_endpoint_url(connection.url, api_settings.token_endpoint)
+    connection.refresh_url = get_endpoint_url(connection.url, api_settings.refresh_endpoint)
+    connection.pass_credentials_in_header = api_settings.pass_credentials_in_header
+
+    connection.save()
+
+
+def api_setting_matches_preset(connection):
+    def split_url(url):
+        if not url:
+            return None
+        try:
+            return url.split(connection.url.rstrip('/'))[1]
+        except IndexError:
+            return None
+
+    for preset_slug, preset in AUTH_PRESETS.items():
+        if (
+            split_url(connection.token_url) == preset.token_endpoint
+            and split_url(connection.refresh_url) == preset.refresh_endpoint
+            and connection.pass_credentials_in_header == preset.pass_credentials_in_header
+        ):
+            return preset_slug
+
+    if connection.token_url is not None or connection.refresh_url is not None:
+        return 'CUSTOM'
+
+    return None

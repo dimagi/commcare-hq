@@ -1,5 +1,5 @@
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from corehq.apps.app_manager.dbaccessors import get_version_build_id
 from corehq.apps.translations.const import MODULES_AND_FORMS_SHEET_NAME

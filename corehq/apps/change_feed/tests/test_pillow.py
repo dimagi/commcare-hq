@@ -6,7 +6,7 @@ from django.test import SimpleTestCase, TestCase
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
-from mock import patch
+from unittest.mock import patch
 
 from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.feed.interface import Change, ChangeMeta
@@ -34,7 +34,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         # Specifically KafkaChangeFeedTest.test_multiple_topics_with_partial_checkpoint
         self._fake_couch.dbname = 'test_commcarehq'
         self.consumer = KafkaConsumer(
-            topics.CASE,
+            topics.CASE_SQL,
             bootstrap_servers=settings.KAFKA_BROKERS,
             consumer_timeout_ms=100,
             enable_auto_commit=False,

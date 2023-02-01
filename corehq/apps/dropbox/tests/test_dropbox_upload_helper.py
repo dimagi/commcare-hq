@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser

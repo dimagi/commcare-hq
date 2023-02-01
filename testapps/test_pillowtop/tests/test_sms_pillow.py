@@ -13,7 +13,7 @@ from corehq.util.elastic import ensure_index_deleted, reset_es_index
 from datetime import datetime
 from dimagi.utils.parsing import json_format_datetime
 from django.test import TestCase
-from mock import patch
+from unittest.mock import patch
 
 
 @patch('corehq.apps.sms.change_publishers.do_publish')
@@ -30,7 +30,7 @@ class SqlSMSPillowTest(TestCase):
     def tearDown(self):
         ensure_index_deleted(SMS_INDEX_INFO.index)
         SMS.objects.filter(domain=self.domain).delete()
-        MessagingSubEvent.objects.filter(parent__domain=self.domain).delete()
+        MessagingSubEvent.objects.filter(domain=self.domain).delete()
         MessagingEvent.objects.filter(domain=self.domain).delete()
         super(SqlSMSPillowTest, self).tearDown()
 
