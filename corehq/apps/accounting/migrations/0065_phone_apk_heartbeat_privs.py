@@ -21,7 +21,7 @@ def _grandfather_phone_apk_heartbeat_privs(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0063_replace_linked_projects_ff_with_erm'),
+        ('accounting', '0064_add_form_link_workflow_priv'),
     ]
 
     operations = [
