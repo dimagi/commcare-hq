@@ -43,9 +43,5 @@ class DeletedDomains:
     def _deleted_domains(self):
         return Domain.get_deleted_domain_names()
 
-    @cached_property
-    def _active_domains(self):
-        return set(Domain.get_all_names())
-
     def is_domain_deleted(self, domain):
-        return domain in self._deleted_domains and domain not in self._active_domains
+        return domain in self._deleted_domains
