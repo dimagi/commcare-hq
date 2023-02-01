@@ -222,7 +222,7 @@ class ConnectionSettingsListView(BaseProjectSettingsView, CRUDPaginatedViewMixin
         if connection_settings.used_by:
             raise Http409
 
-        connection_settings.delete()
+        connection_settings.soft_delete()
         return {
             'itemData': self._get_item_data(connection_settings),
             'template': 'connection-settings-deleted-template',

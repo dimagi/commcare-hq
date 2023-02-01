@@ -2465,3 +2465,12 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
+
+ALLOW_SUBMISSION_WITHOUT_METADATA = StaticToggle(
+    'allow_submission_without_metadata',
+    'Allows submission API calls without metadata',  # reword this
+    TAG_PRODUCT,  # idk if this is the right tag. might be solutions.
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature allows for form and case submissions via the Submission API '
+                'without the metadata node.'
+)
