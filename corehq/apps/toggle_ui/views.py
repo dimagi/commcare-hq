@@ -332,8 +332,9 @@ def _get_service_type(toggle):
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            service_type, plan = get_subscription_info(name)
-    return f"{service_type} : {plan}"
+            plan_type, plan = get_subscription_info(name)
+            service_type[name] = f"{plan_type} : {plan}"
+    return service_type
 
 
 def _namespace_domain(enabled_item):
