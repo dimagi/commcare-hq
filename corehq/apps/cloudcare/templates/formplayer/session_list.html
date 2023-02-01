@@ -28,12 +28,12 @@
       <tbody>
       </tbody>
     </table>
+    <% if (endPage) { %>
+      {% block pagination_templates %}
+        {% include 'formplayer/pagination.html' %}
+      {% endblock %}
+    <% } %>
   </div>
-  <% if (endPage) { %>
-    {% block pagination_templates %}
-      {% include 'formplayer/pagination.html' %}
-    {% endblock %}
-  <% } %>
 </script>
 
 <script type="text/template" id="session-view-item-template">
