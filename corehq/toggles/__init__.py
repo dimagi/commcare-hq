@@ -2458,6 +2458,7 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
 
+
 PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     privileges.PHONE_APK_HEARTBEAT,
     'phone_apk_heartbeat',
@@ -2465,6 +2466,7 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
+
 
 ALLOW_SUBMISSION_WITHOUT_METADATA = StaticToggle(
     'allow_submission_without_metadata',

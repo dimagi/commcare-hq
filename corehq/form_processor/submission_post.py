@@ -508,7 +508,7 @@ class SubmissionPost(object):
         create_nodes = ['case_name', 'owner_id', 'case_type']  # double check but a const shouldn't be here
 
         # reverse enabled for staging testing
-        if not ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(domain):
+        if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(domain):
             # add conditional device=Formplayer or NOT mobile submissions, so I don't mess w those
             # this all feels very rough - ways to simplify?
             form_data = instance.form_data
