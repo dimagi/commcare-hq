@@ -1096,3 +1096,5 @@ sniffer -x --js-app_manager -x corehq.apps.app_manager:AppManagerViewTest
 <https://github.com/jeffh/sniffer/> (recommended to install `pywatchman` or
 `macfsevents` for this to actually be worthwhile otherwise it takes a long time
 to see the change).
+
+test
