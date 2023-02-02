@@ -83,7 +83,6 @@ branches:
     - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
     - cs/SC-2473-GA-phone_apk_heartbeat-ff+ml/ff-enforce-metadata # Charl/Minha Feb 1
-    - cs/SC-2473-GA-phone_apk_heartbeat-ff # Charl Feb 1
     - ml/ff-enforce-metadata # Minha Feb 1
 #    - ce/enable-case-rate-limits # Cal Feb 1
 submodules: { }
