@@ -1581,13 +1581,6 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-PHONE_HEARTBEAT = StaticToggle(
-    'phone_apk_heartbeat',
-    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN]
-)
-
 SKIP_REMOVE_INDICES = StaticToggle(
     'skip_remove_indices',
     'Make _remove_indices_from_deleted_cases_task into a no-op.',
@@ -2470,4 +2463,12 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
+)
+
+PHONE_HEARTBEAT = FrozenPrivilegeToggle(
+    privileges.PHONE_APK_HEARTBEAT,
+    'phone_apk_heartbeat',
+    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN]
 )

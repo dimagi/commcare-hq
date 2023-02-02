@@ -5170,7 +5170,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and domain_has_privilege(self.domain, privileges.PHONE_APK_HEARTBEAT)
         )
 
     @memoized
