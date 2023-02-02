@@ -31,8 +31,7 @@ from eulxml.xmlmap.core import load_xmlobject_from_string
 from lxml import etree
 from memoized import memoized
 
-from corehq import toggles, privileges
-from corehq.apps.accounting.utils import domain_has_privilege
+from corehq import toggles
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.const import RETURN_TO
 from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
