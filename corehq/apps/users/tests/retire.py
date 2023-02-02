@@ -328,6 +328,7 @@ class RetireUserTestCase(TestCase):
         for form_id in usercase.xform_ids:
             self.assertTrue(XFormInstance.objects.get_form(form_id, self.domain).is_deleted)
 
+        self.assertFalse(CommCareCase.objects.get_case(usercase_id, self.domain).closed)
         self.assertTrue(CommCareCase.objects.get_case(usercase_id, self.domain).is_deleted)
         self.assertIsNone(CommCareCase.objects.get_case_by_external_id(
             self.domain, self.commcare_user._id, USERCASE_TYPE))
