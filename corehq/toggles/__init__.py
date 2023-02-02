@@ -2465,10 +2465,21 @@ FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
     help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
 
+
 PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     privileges.PHONE_APK_HEARTBEAT,
     'phone_apk_heartbeat',
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+
+ALLOW_SUBMISSION_WITHOUT_METADATA = StaticToggle(
+    'allow_submission_without_metadata',
+    'Allows submission API calls without metadata',  # reword this
+    TAG_PRODUCT,  # idk if this is the right tag. might be solutions.
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature allows for form and case submissions via the Submission API '
+                'without the metadata node.'
 )
