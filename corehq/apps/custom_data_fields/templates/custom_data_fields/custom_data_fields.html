@@ -21,6 +21,31 @@
   {% initial_page_data 'custom_fields' custom_fields %}
   {% initial_page_data 'custom_fields_profiles' custom_fields_profiles %}
   {% initial_page_data 'can_view_regex_field_validation' can_view_regex_field_validation %}
+    <p class="pull-right ko-template" id="lock-container" data-bind="if: hasLinkedData">
+      <span data-bind="ifnot: unlockLinkedData">
+        <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+          <i class="fa fa-link"></i>
+          {% trans 'Unlock Linked Fields For Me' %}
+        </button>
+      </span>
+      <span data-bind="if: unlockLinkedData">
+        <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+          <i class="fa fa-link"></i>
+          {% trans 'Lock Linked Fields For Me' %}
+        </button>
+      </span>
+
+      <span class="hq-help-template"
+          data-placement="left"
+          data-title="{% trans 'Linked Configurations' %}"
+          data-content="
+            {% blocktrans %}
+              Linked configurations are controlled from a separate, linked project space.
+                <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+            {% endblocktrans %}">
+      </span>
+    </p>
+
   <form id="custom-fields-form"
         action="."
         method="POST"
