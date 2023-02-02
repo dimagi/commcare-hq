@@ -708,11 +708,3 @@ def breadcrumbs(page, section, parents=None):
         'section': section,
         'parents': parents or [],
     })
-
-
-@register.filter
-def request_has_privilege(request, privilege_name):
-    from corehq.apps.accounting.utils import domain_has_privilege
-    from corehq import privileges
-    privilege = _get_obj_from_name_or_instance(privileges, privilege_name)
-    return domain_has_privilege(request.domain, privilege)

@@ -70,7 +70,6 @@ standard_v1 = community_v2 + [
     privileges.PRACTICE_MOBILE_WORKERS,
     privileges.FORM_LINK_WORKFLOW,
     privileges.PHONE_APK_HEARTBEAT,
-    privileges.DISPLAY_CONDITION_ON_TABS,
 ]
 
 

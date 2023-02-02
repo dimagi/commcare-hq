@@ -2458,11 +2458,3 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
 )
-
-DISPLAY_CONDITION_ON_TABS = FrozenPrivilegeToggle(
-    privileges.DISPLAY_CONDITION_ON_TABS,
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)

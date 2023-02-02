@@ -164,9 +164,7 @@ class DetailContributor(SectionContributor):
             for tab in tabs:
                 # relevant should be set to None even in case its ''
                 tab_relevant = None
-                if tab.relevant and domain_has_privilege(
-                    module.get_app().domain, privileges.DISPLAY_CONDITION_ON_TABS
-                ):
+                if tab.relevant:
                     tab_relevant = tab.relevant
 
                 sub_detail = self.build_detail(
