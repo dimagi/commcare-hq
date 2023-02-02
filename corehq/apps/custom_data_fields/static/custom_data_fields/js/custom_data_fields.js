@@ -22,7 +22,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         return self;
     }
 
-    function Field(options) {
+    function Field(options, parent) {
         assertProperties.assertRequired(options, [
             'slug',
             'label',
@@ -33,6 +33,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             'is_synced',
         ]);
         var self = {};
+        self.parent = parent;
         self.slug = ko.observable(options.slug);
         self.label = ko.observable(options.label);
         self.is_required = ko.observable(options.is_required);
@@ -43,8 +44,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
         self.isSynced = ko.observable(options.is_synced);
-        self.isEditable = ko.observable(!options.is_synced);
         self.editIcon = ko.observable("fa-edit");
+
+        self.isEditable = ko.pureComputed(function () {
+            return !options.is_synced || parent.unlockLinkedData();
+        });
 
         self.hasModalDetail = true;
         self.modalName = ko.computed(function () {
@@ -68,25 +72,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             self.isEditable(true);
         };
 
-        self.editMessage = ko.computed(function () {
-            return self.isEditable() ? gettext('Lock') : gettext('Edit');
-        });
-
-        self.editIcon = ko.computed(function () {
-            return self.isEditable() ? 'fa-lock' : 'fa-edit';
-        });
-
-        self.handleEdit = function (vm, e) {
-            if (self.isEditable()) {
-                self.isEditable(false);
-            } else {
-                let context = ko.contextFor(e.target);
-                context.$parent.setModalModel(vm);
-                $('#edit-warning-modal').modal('show');
-            }
-        };
-
-        self.deleteLink = ko.computed(function () {
+        self.deleteLink = ko.pureComputed(function () {
             return self.isEditable() ? '#delete-confirm-modal' : null;
         }, self);
 
@@ -125,12 +111,14 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         return self;
     }
 
-    function Profile(options) {
-        assertProperties.assertRequired(options, ['id', 'name', 'fields']);
+    function Profile(options, parent) {
+        assertProperties.assertRequired(options, ['id', 'name', 'fields', 'is_synced']);
         var self = {};
+        self.parent = parent;
 
         self.id = ko.observable(options.id);
         self.name = ko.observable(options.name);
+        self.isSynced = ko.observable(options.is_synced);
         self.serializedFields = ko.observable();
 
         self.hasModalDetail = false;
@@ -138,21 +126,37 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             return self.name();
         });
 
+        self.isEditable = ko.pureComputed(function () {
+            return !self.isSynced() || self.parent.unlockLinkedData();
+        });
+
         self.fields = uiElementKeyValueList.new(
             String(Math.random()).slice(2),
             gettext("Edit Profile")
         );
+        self.fields.setEdit(self.isEditable());
+
         self.fields.on("change", function () {
             $(":submit").prop("disabled", false);
         });
         self.fields.val(options.fields);
         self.$fields = self.fields.ui;
 
+        self.isEditable.subscribe(function (newValue) {
+            // need to manually subscribe to changes here, because 'fields' is a jquery element
+            self.fields.setEdit(newValue);
+        });
+
+        self.deleteLink = ko.pureComputed(function () {
+            return self.isEditable() ? '#delete-confirm-modal' : null;
+        }, self);
+
         self.serialize = function () {
             return {
                 id: self.id(),
                 name: self.name(),
                 fields: self.fields.val(),
+                is_synced: self.isSynced(),
             };
         };
 
@@ -169,6 +173,16 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         // The field  or profile that the removal modal currently refers to.
         self.modalModel = ko.observable();
 
+        self.unlockLinkedData = ko.observable(false);
+
+        self.toggleLinkedLock = function () {
+            self.unlockLinkedData(!self.unlockLinkedData());
+        };
+
+        self.hasLinkedData = ko.pureComputed(function () {
+            return self.data_fields().some(field => field.isSynced());
+        });
+
         self.addField = function () {
             self.data_fields.push(Field({
                 slug: '',
@@ -178,7 +192,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 regex: '',
                 regex_msg: '',
                 is_synced: false,
-            }));
+            }, self));
         };
 
         self.removeModel = function (model) {
@@ -199,7 +213,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 id: '',
                 name: '',
                 fields: {},
-            }));
+                is_synced: false,
+            }, self));
         };
 
         self.serializeFields = function () {
@@ -251,14 +266,14 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
 
         // Initialize
         _.each(options.custom_fields, function (field) {
-            var customField = Field(field);
+            var customField = Field(field, self);
             self.data_fields.push(customField);
             customField.choices.subscribe(function () {
                 $("#save-custom-fields").prop("disabled", false);
             });
         });
         _.each(options.custom_fields_profiles, function (profile) {
-            self.profiles.push(Profile(profile));
+            self.profiles.push(Profile(profile, self));
         });
 
         return self;
@@ -277,6 +292,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         });
 
         $('#custom-fields-form').koApplyBindings(customDataFieldsModel);
+        $('#lock-container').koApplyBindings(customDataFieldsModel);
 
         $('form[id="custom-fields-form"]').on("change", null, null, function () {
             $("#save-custom-fields").prop("disabled", false);

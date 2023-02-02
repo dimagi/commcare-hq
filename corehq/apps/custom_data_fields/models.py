@@ -188,4 +188,5 @@ class CustomDataFieldsProfile(models.Model):
             'id': self.id,
             'name': self.name,
             'fields': self.fields,
+            'is_synced': self.is_synced,
         }
