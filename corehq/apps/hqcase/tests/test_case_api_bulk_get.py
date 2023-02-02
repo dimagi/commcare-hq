@@ -8,9 +8,9 @@ from casexml.apps.case.mock import CaseBlock
 
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
     populate_case_search_index,
 )
@@ -24,7 +24,7 @@ from corehq.util.test_utils import (
 )
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @disable_quickcache
 @privilege_enabled(privileges.API_ACCESS)
 @flag_enabled('CASE_API_V0_6')
@@ -64,7 +64,6 @@ class TestCaseAPIBulkGet(TestCase):
         cls.domain_obj.delete()
         FormProcessorTestUtils.delete_all_cases(cls.domain)
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
-        case_search_es_teardown()
         super().tearDownClass()
 
     @classmethod
