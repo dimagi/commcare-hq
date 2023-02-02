@@ -32,7 +32,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                     })) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            gettext('Permission Denied')
+                            gettext('The application could not be found')
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
