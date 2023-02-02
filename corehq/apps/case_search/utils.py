@@ -343,20 +343,20 @@ def get_child_case_types(app, case_type):
 
     Returns a set of case types
     """
-    case_types = set()
+    child_case_types = set()
     for module in app.get_modules():
         if module.case_type == case_type and module_offers_search(module):
             for tab in module.search_detail("long").tabs:
                 if tab.has_nodeset and tab.nodeset_case_type:
-                    case_types.add(tab.nodeset_case_type)
+                    child_case_types.add(tab.nodeset_case_type)
 
-    return case_types
+    return child_case_types
 
 
-def get_child_case_results(helper, parent_cases, case_types):
+def get_child_case_results(helper, parent_cases, child_case_types):
     parent_case_ids = {c.case_id for c in parent_cases}
     results = (helper.get_base_queryset()
-               .case_type(case_types)
+               .case_type(child_case_types)
                .get_child_cases(parent_case_ids, "parent")
                .run().hits)
     return [helper.wrap_case(result, is_related_case=True) for result in results]
