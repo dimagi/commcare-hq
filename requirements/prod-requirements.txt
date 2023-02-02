@@ -397,6 +397,8 @@ pyparsing==3.0.7
     # via httplib2
 pyphonetics==0.5.3
     # via -r base-requirements.in
+pypng==0.20220715.0
+    # via qrcode
 pyrsistent==0.17.3
     # via jsonschema
 python-dateutil==2.8.2
@@ -423,7 +425,7 @@ pyyaml==6.0
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.4
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -504,7 +506,6 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   stone
     #   tenacity
@@ -551,6 +552,7 @@ typing-extensions==4.1.1
     # via
     #   django-countries
     #   oic
+    #   qrcode
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
