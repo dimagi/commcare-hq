@@ -143,9 +143,22 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
     Processors:
       - :py:class:`pillowtop.processors.elastic.ElasticProcessor`
     """
+    index_info = XFORM_INDEX_INFO
     # todo; To remove after full rollout of https://github.com/dimagi/commcare-hq/pull/21329/
-    assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, FORM_TOPICS)
+    if 'index_name' in kwargs:
+        raw_info = XFORM_INDEX_INFO.to_json()
+        raw_info.pop("meta")
+        index_info = ElasticsearchIndexInfo.wrap(raw_info)
+        index_info.index = kwargs['index_name']
+        index_info.alias = kwargs['index_alias']
+        from corehq.apps.es.registry import register
+        from corehq.apps.es.transient_util import add_dynamic_es_adapter
+        register(index_info, index_info.alias)
+        add_dynamic_es_adapter(
+            "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
+        )
+
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
