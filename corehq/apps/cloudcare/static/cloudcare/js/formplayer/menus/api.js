@@ -36,6 +36,7 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
+                        return;
                     }
                 }
 
