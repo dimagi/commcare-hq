@@ -72,7 +72,7 @@
       </th>
       <th class="col-sm-1">{% trans "Delete" %}</th>
       {% if is_managed_by_upstream_domain %}
-      <th class="col-sm-1">{% trans "Is Local" %}</th>
+      <th class="col-sm-1"></th> {# Linked #}
       {% endif %}
     </tr>
     </thead>
@@ -154,16 +154,11 @@
           <i class="fa fa-times"></i> {% trans "Delete" %}
         </a>
       </td>
-      {% if is_managed_by_upstream_domain %}
+      <!-- ko if: $root.hasLinkedData -->
       <td>
-        <span data-bind="ifnot: isSynced"><i class="fa fa-check"></i></span>
-        <span data-bind="if: isSynced">
-          <button data-bind="click: handleEdit" class="btn btn-default">
-            <i class="fa" data-bind="css: editIcon"></i>
-            <span data-bind="text: editMessage"></span>
-        </span>
+        <span data-bind="if: isSynced"><i class="fa fa-link"></i></span>
       </td>
-      {% endif %}
+      <!-- /ko -->
     </tr>
     </tbody>
   </table>
