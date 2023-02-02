@@ -276,11 +276,12 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
 
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
+    top_level_case_ids = {case.case_id for case in top_level_cases}
     if paths:
         results.extend(get_related_case_results(helper, top_level_cases, paths))
 
     if child_case_types:
-        results.extend(get_child_case_results(helper, top_level_cases, child_case_types))
+        results.extend(get_child_case_results(helper, top_level_case_ids, child_case_types))
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -353,8 +354,7 @@ def get_child_case_types(app, case_type):
     return child_case_types
 
 
-def get_child_case_results(helper, parent_cases, child_case_types):
-    parent_case_ids = {c.case_id for c in parent_cases}
+def get_child_case_results(helper, parent_case_ids, child_case_types):
     results = (helper.get_base_queryset()
                .case_type(child_case_types)
                .get_child_cases(parent_case_ids, "parent")
