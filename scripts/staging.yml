@@ -75,7 +75,6 @@ branches:
     - smh/allow-eof-form-lining-multi-select # Steph Jan 4
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - akj/ush-2613-commcare-user-case # Akash Jan 19
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - ad/remove-entered-wrap-functions # Addison Jan 26
     - pkv/accessibility-tree-change-1932 # Pawan Jan 27
