@@ -17,7 +17,7 @@ from casexml.apps.case.xform import close_extension_cases
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
-    CaseValueError, NoMetadataError, MissingNodesError
+    CaseValueError, MetadataError
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
@@ -36,7 +36,6 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
-from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
 from corehq.util.quickcache import quickcache
@@ -321,12 +320,14 @@ class SubmissionPost(object):
                     try:
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db,
                                                                           self.domain, self.timing_context)
-                    except (NoMetadataError, MissingNodesError) as e:
-                        # self._handle_known_error(e, instance, xforms)
-                        # this will ideally not touch mobile submissions so the above shouldn't be necessary
+                    except MetadataError as e:
+                        instance.problem = e
+                        instance.state = XFormInstance.ERROR
                         submission_type = 'error'
+                        # delete later: the instance attr mods make sure the error message get returned
+                        # the submission_type is for logging purposes or whatever
+                        # I only need this openrosa_kwargs stuff if is_openrosa_version3 was true
                         openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
-                        openrosa_kwargs['error_message'] = e
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
@@ -499,35 +500,29 @@ class SubmissionPost(object):
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
     def process_xforms_for_cases(xforms, case_db, domain=None, timing_context=None):
-        # should NOT be domain=None but I'll come back to this later
-
         from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
         instance = xforms[0]
         create_nodes = ['case_name', 'owner_id', 'case_type']  # double check but a const shouldn't be here
 
-        # reverse enabled for staging testing
+        # INSERT "NOT" HERE when done w testing
         if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(domain):
-            # add conditional device=Formplayer or NOT mobile submissions, so I don't mess w those
-            # this all feels very rough - ways to simplify?
+            # and instance.metadata.deviceID == FORMPLAYER_DEVICE_ID:
             form_data = instance.form_data
             if 'case' in form_data:
                 if 'create' in form_data['case']:
                     for node in create_nodes:
                         if node not in form_data['case']['create']:
-                            # maybe I should collect what nodes aren't there as part of the exception
-                            raise MissingNodesError('You are missing the following nodes in the create node:')
+                            raise MetadataError('One or more required tags missing in the create node')
                 elif 'update' in form_data['case'] and not isinstance(form_data['case']['update'], dict):
-                    raise MissingNodesError('You are missing arguments in the update node.')
+                    raise MetadataError('Missing nodes in the update node.')
             if instance.metadata:
                 if not instance.metadata.userID or not instance.metadata.instanceID\
                         or not instance.metadata.timeEnd:
-                    # is there a reason to separate out these things into individual exceptions?
-                    raise MissingNodesError('You are missing required nodes in the metadata: '
-                                            'userID, instanceID or timeEnd')
+                    raise MetadataError('One or more required tags missing in the metadata node')
             else:
-                raise NoMetadataError('You are missing the metadata node.')
+                raise MetadataError('Missing metadata node.')
 
         timing_context = timing_context or TimingContext()
         with timing_context("process_cases"):
@@ -577,7 +572,6 @@ class SubmissionPost(object):
                 response = self.get_v3_error_response(error_message, error_nature)
         else:
             if instance.is_normal:
-                print("normal?")
                 response = openrosa_response.get_openarosa_success_response()
             else:
                 response = self.get_v2_submit_error_response(instance)

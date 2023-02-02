@@ -64,9 +64,5 @@ class PhoneDateValueError(CommCareCaseError):
     pass
 
 
-class NoMetadataError(CommCareCaseError):
-    pass
-
-
-class MissingNodesError(CommCareCaseError):
+class MetadataError(CommCareCaseError):
     pass
