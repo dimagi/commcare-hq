@@ -300,6 +300,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.sessionId = null;
         };
 
         this.spliceSelections = function (index) {
