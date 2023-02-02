@@ -1,4 +1,5 @@
 import re
+import importlib
 from collections import defaultdict
 
 from django.utils.functional import cached_property
@@ -283,6 +284,8 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     if child_case_types:
         results.extend(get_child_case_results(helper, top_level_case_ids, child_case_types))
 
+    results.extend(get_parent_child_ext_cases(helper, app, case_types, top_level_case_ids))
+
     initial_case_ids = {case.case_id for case in cases}
     return list({
         case.case_id: case for case in results if case.case_id not in initial_case_ids
@@ -337,6 +340,26 @@ def get_related_case_results(helper, cases, paths):
     return results
 
 
+def get_defined_cases(helper, app, case_types, source_case_ids):
+    """
+    Gets parent, child, and extension cases through sync algorithm if configured.
+    Otherwise, gets child case types used by search detail tab nodesets.
+    """
+    parent_child_ext_cases = None
+    if toggles.USH_CASE_CLAIM_UPDATES.enabled(helper.domain):
+        parent_child_ext_cases = get_parent_child_ext_cases(helper, app, case_types, source_case_ids)
+
+    if parent_child_ext_cases is not None:
+        return parent_child_ext_cases
+    else:
+        child_case_types = [
+            _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
+            for _type in types
+        ]
+        if child_case_types:
+            return get_child_case_results(helper, source_case_ids, child_case_types)
+
+
 def get_child_case_types(app, case_type):
     """
     Get child case types used by search detail tab nodesets in any modules
@@ -354,11 +377,26 @@ def get_child_case_types(app, case_type):
     return child_case_types
 
 
-def get_child_case_results(helper, parent_case_ids, child_case_types):
-    results = (helper.get_base_queryset()
-               .case_type(child_case_types)
-               .get_child_cases(parent_case_ids, "parent")
-               .run().hits)
+def get_parent_child_ext_cases(helper, app, case_types, source_case_ids):
+    get_parent_and_ext_cases = importlib.import_module(
+        "corehq.ex-submodules.casexml.apps.phone.data_providers.case.livequery").get_parent_and_ext_cases
+
+    results = []
+    for module in app.get_modules():
+        if module.case_type in case_types and module.search_config.pull_parent_child_ext_cases:
+            pull_parent_child_ext_cases = True
+            results.extend(get_parent_and_ext_cases(helper.domain, source_case_ids))
+            results.extend(get_child_case_results(helper, source_case_ids))
+    return results if pull_parent_child_ext_cases else None
+
+
+def get_child_case_results(helper, parent_case_ids, child_case_types=None):
+    filter = (helper.get_base_queryset()
+            .get_child_cases(parent_case_ids, "parent"))
+    if child_case_types:
+        filter = filter.case_type(child_case_types)
+
+    results = filter.run().hits
     return [helper.wrap_case(result, is_related_case=True) for result in results]
 
 
