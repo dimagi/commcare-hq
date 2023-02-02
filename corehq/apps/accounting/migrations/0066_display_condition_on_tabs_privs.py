@@ -13,7 +13,7 @@ def _grandfather_display_condition_on_tabs_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         DISPLAY_CONDITION_ON_TABS,
-        skip_edition='Community',
+        skip_edition='Paused,Community',
         noinput=True,
     )
 
