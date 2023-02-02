@@ -85,4 +85,5 @@ branches:
     - cs/SC-2473-GA-phone_apk_heartbeat-ff+ml/ff-enforce-metadata # Charl/Minha Feb 1
     - ml/ff-enforce-metadata # Minha Feb 1
 #    - ce/enable-case-rate-limits # Cal Feb 1
+    - cs/SC-2474-GA-display_condition_on_nodeset # Charl Feb 2
 submodules: { }
