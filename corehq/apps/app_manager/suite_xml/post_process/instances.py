@@ -257,7 +257,6 @@ class EntryInstances(PostProcessor):
     def _should_ignore_instance(instance):
         for prefix in {
             'jr://instance/remote/',
-            'jr://instance/search-input/',
         }:
             if instance.src.startswith(prefix):
                 return True
