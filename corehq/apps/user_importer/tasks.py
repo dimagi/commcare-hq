@@ -10,8 +10,10 @@ from soil.progress import get_task_progress
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.celery import task
+from corehq.apps.reports.util import import_tableau_users
 from corehq.apps.user_importer.models import UserUploadRecord
 from corehq.apps.users.models import WebUser, check_and_send_limit_email
+from corehq.toggles import TABLEAU_USER_SYNCING
 
 USER_UPLOAD_CHUNK_SIZE = 1000
 
@@ -113,6 +115,8 @@ def import_users(domain, user_specs, group_specs, upload_user_id, upload_record_
             upload_record_id=upload_record_id,
             update_progress=functools.partial(_update_progress, start=len(group_specs))
         )
+        if TABLEAU_USER_SYNCING.enabled(domain):
+            import_tableau_users(domain, user_specs)
     else:
         user_results = create_or_update_commcare_users_and_groups(
             domain,

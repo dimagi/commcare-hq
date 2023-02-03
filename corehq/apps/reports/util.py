@@ -23,9 +23,10 @@ from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.apps.users.util import user_id_to_username
+from corehq.apps.user_importer.helpers import spec_value_to_boolean_or_none
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import XFormInstance
 from corehq.toggles import TABLEAU_USER_SYNCING
@@ -619,9 +620,13 @@ def add_on_tableau_details(domain, web_user_dicts):
     return web_user_dicts
 
 
-# Attaches to the create_or_update_web_users method
-def import_tableau_user(domain, user, remove, role):
-    if remove:
-        delete_tableau_user(domain, user.username)
-    elif user.get_domain_membership(domain):
-        update_tableau_user(domain, user.username, role=role)
+# Attaches to the import_users method
+def import_tableau_users(domain, web_user_specs):
+    for row in web_user_specs:
+        username = row.get('username')
+        remove = spec_value_to_boolean_or_none(row, 'remove')
+        if not remove:
+            user = CouchUser.get_by_username(username, strict=True)
+            tableau_role = row.get('tableau_role')
+            if user and user.get_domain_membership(domain) and tableau_role:
+                update_tableau_user(domain, username, role=tableau_role)
