@@ -140,7 +140,6 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
             "appId": "5319fe096062b0e282bf37e6faa81566",
             "appVersion": "CommCare Version: 2.27, App Version: 93",
             "locales": ["default", "en", "hin"],
-            "menuSessionId": "e9fad761-5239-4096-bb71-0aba1ebd7377",
         });
     };
 
