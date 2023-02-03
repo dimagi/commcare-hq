@@ -137,6 +137,7 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var updateScreenReaderNotification = function (notificationText) {
+        $('#sr-notification-region').text("");
         $('#sr-notification-region').text(notificationText);
     };
 
