@@ -757,7 +757,8 @@ class ListRolesView(BaseRoleAccessView):
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
-            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
+            'data_file_download_enabled':
+                domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
