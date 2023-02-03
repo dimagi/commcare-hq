@@ -7,6 +7,7 @@ from django.utils.translation import gettext as _
 
 from dimagi.utils.logging import notify_exception
 
+from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import module_offers_search
 from corehq.apps.case_search.const import (
@@ -266,10 +267,6 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
         rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
         for rel in rels
     ]
-    child_case_types = [
-        _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
-        for _type in types
-    ]
 
     expanded_case_results = []
     if custom_related_case_property:
@@ -281,10 +278,9 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     if paths:
         results.extend(get_related_case_results(helper, top_level_cases, paths))
 
-    if child_case_types:
-        results.extend(get_child_case_results(helper, top_level_case_ids, child_case_types))
-
-    results.extend(get_parent_child_ext_cases(helper, app, case_types, top_level_case_ids))
+    defined_cases = get_defined_cases(helper, app, case_types, top_level_case_ids)
+    if defined_cases:
+        results.extend(defined_cases)
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -381,6 +377,7 @@ def get_parent_child_ext_cases(helper, app, case_types, source_case_ids):
     get_parent_and_ext_cases = importlib.import_module(
         "corehq.ex-submodules.casexml.apps.phone.data_providers.case.livequery").get_parent_and_ext_cases
 
+    pull_parent_child_ext_cases = False
     results = []
     for module in app.get_modules():
         if module.case_type in case_types and module.search_config.pull_parent_child_ext_cases:
