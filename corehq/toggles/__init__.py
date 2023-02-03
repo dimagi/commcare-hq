@@ -1551,14 +1551,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_APP_CHANGES = StaticToggle(
-    'app-changes-with-improved-diff',
-    'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
@@ -2471,4 +2463,14 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+
+VIEW_APP_CHANGES = FrozenPrivilegeToggle(
+    privileges.VIEW_APP_DIFF,
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )

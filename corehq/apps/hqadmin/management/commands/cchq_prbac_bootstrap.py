@@ -186,6 +186,10 @@ class Command(BaseCommand):
              name='Phone Heartbeat',
              description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
                          'app and apk'),
+        Role(slug=privileges.VIEW_APP_DIFF,
+             name='Improved app changes view',
+             description='Ability to see changes that have been made between different versions of '
+                         'your application'),
     ]
 
     BOOTSTRAP_PLANS = [
