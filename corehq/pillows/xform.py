@@ -152,17 +152,15 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         index_info = ElasticsearchIndexInfo.wrap(raw_info)
         index_info.index = kwargs['index_name']
         index_info.alias = kwargs['index_alias']
-        from corehq.apps.es.registry import register
-        from corehq.apps.es.transient_util import add_dynamic_es_adapter
-        register(index_info, index_info.alias)
-        add_dynamic_es_adapter(
+        from corehq.apps.es.transient_util import add_dynamic_adapter
+        add_dynamic_adapter(
             "XFormBackfill", index_info.index, index_info.type, index_info.mapping, index_info.alias
         )
 
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
-        index_info=XFORM_INDEX_INFO,
+        index_info=index_info,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
         change_filter_fn=is_couch_change_for_sql_domain
