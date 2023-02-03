@@ -428,12 +428,12 @@ def tableau_username(HQ_username):
 
 def _group_json_to_tuples(group_json):
     group_tuples = [TableauGroupTuple(group_dict['name'], group_dict['id']) for group_dict in group_json]
-    # Remove default Tableau group:
+    # Remove default Tableau group and HQ group:
+    group_tuples_without_defaults = []
     for group in group_tuples:
-        if group.name == 'All Users':
-            group_tuples.remove(group)
-            break
-    return group_tuples
+        if not (group.name == 'All Users' or group.name == 'HQ'):
+            group_tuples_without_defaults.append(group)
+    return group_tuples_without_defaults
 
 
 @quickcache(['domain'], timeout=30 * 60)
@@ -544,6 +544,8 @@ def _update_user_remote(session, user, groups=[]):
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     user.tableau_user_id = new_id
     user.save()
+    # Add default group
+    groups += [TableauGroupTuple('HQ', session.query_groups(name='HQ')['id'])]
     for group in groups:
         session.add_user_to_group(user.tableau_user_id, group.id)
 
