@@ -615,10 +615,23 @@ def sync_all_tableau_users():
 # Attaches to the parse_web_users method
 def add_on_tableau_details(domain, web_user_dicts):
     tableau_users_for_domain = TableauUser.objects.filter(server=TableauServer.objects.get(domain=domain))
+    session = TableauAPISession.create_session_for_domain(domain)
     for web_user_dict in web_user_dicts:
-        if not web_user_dict['last_login (read only)'] == 'N/A':
-            tableau_user = tableau_users_for_domain.get(username=web_user_dict['username'])
-            web_user_dict['tableau_role'] = tableau_user.role
+        user = CouchUser.get_by_username(web_user_dict['username'], strict=True)
+        # Make sure it's not just an invite
+        if user and user.get_domain_membership(domain):
+            try:
+                tableau_user = tableau_users_for_domain.get(username=user.username)
+                web_user_dict['tableau_role'] = tableau_user.role
+                web_user_dict['tableau_groups'] = json.dumps(_group_json_to_tuples(
+                    session.get_groups_for_user_id(tableau_user.tableau_user_id)
+                ))
+            except (TableauUser.DoesNotExist, TableauAPIError) as e:
+                _notify_tableau_exception(e, domain)
+                if isinstance(e, TableauUser.DoesNotExist):
+                    web_user_dict['tableau_role'] = 'ERROR'
+                elif isinstance(e, TableauAPIError):
+                    web_user_dict['tableau_groups'] = 'ERROR'
     return web_user_dicts
 
 
@@ -627,8 +640,13 @@ def import_tableau_users(domain, web_user_specs):
     for row in web_user_specs:
         username = row.get('username')
         remove = spec_value_to_boolean_or_none(row, 'remove')
-        if not remove:
-            user = CouchUser.get_by_username(username, strict=True)
+        user = CouchUser.get_by_username(username, strict=True)
+        if not remove and user and user.get_domain_membership(domain):
             tableau_role = row.get('tableau_role')
-            if user and user.get_domain_membership(domain) and tableau_role:
-                update_tableau_user(domain, username, role=tableau_role)
+            tableau_groups_txt = row.get('tableau_groups')
+            if tableau_role == 'ERROR' or tableau_groups_txt == 'ERROR':
+                continue
+            tableau_groups = [
+                TableauGroupTuple(name=group[0], id=group[1]) for group in json.loads(tableau_groups_txt)
+            ]
+            update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups)

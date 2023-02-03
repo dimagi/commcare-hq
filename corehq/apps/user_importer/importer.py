@@ -89,7 +89,7 @@ def check_headers(user_specs, domain, is_web_upload=False):
         allowed_headers.add('deactivate_after')
 
     if TABLEAU_USER_SYNCING.enabled(domain):
-        allowed_headers.add('tableau_role')
+        allowed_headers.update({'tableau_role', 'tableau_groups'})
 
     illegal_headers = headers - allowed_headers
 

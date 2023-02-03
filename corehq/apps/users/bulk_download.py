@@ -309,7 +309,7 @@ def parse_web_users(domain, user_filters, task=None, total_count=None):
     if is_cross_domain:
         user_headers += ['domain']
     if TABLEAU_USER_SYNCING.enabled(domain):
-        user_headers += ['tableau_role']
+        user_headers += ['tableau_role', 'tableau_groups']
         user_dicts = add_on_tableau_details(domain, user_dicts)
     return user_headers, get_user_rows(user_dicts, user_headers)
 
