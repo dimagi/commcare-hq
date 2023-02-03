@@ -133,6 +133,9 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     };
 
     let makeResponse = function (options) {
+        if (!options.commands) {
+            options.session_id = "123456789abcdefg";
+        }
         AssertProperties.assertRequired(options, ["title", "breadcrumbs"]);
         return _.defaults(options, {
             "notification": {"message": null, "error": false},
