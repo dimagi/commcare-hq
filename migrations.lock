@@ -85,7 +85,6 @@ accounting
  0063_replace_linked_projects_ff_with_erm
  0064_add_form_link_workflow_priv
  0065_phone_apk_heartbeat_privs
- 0066_remove_display_condition_on_nodeset_toggle
 admin
  0001_initial
  0002_logentry_remove_auto_add
