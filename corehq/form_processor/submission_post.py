@@ -343,13 +343,13 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
+                        report_case_usage(self.domain, len(case_stock_result.case_models))
                         openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
                                                                                       case_stock_result)
                         if openrosa_kwargs['error_message']:
                             openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
-                        report_case_usage(self.domain, len(cases))
                         openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'
