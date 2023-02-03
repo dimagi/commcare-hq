@@ -6,6 +6,7 @@ from django.urls import reverse
 
 import attrs
 
+from django.conf import settings
 from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.const import (
@@ -119,6 +120,7 @@ class TestGenericInboundAPIView(TestCase):
             url, data={}, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}"
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "Payload must be valid JSON"})
 
     def test_post_results_in_bad_type(self):
         expression = UCRExpression.objects.create(
@@ -133,8 +135,18 @@ class TestGenericInboundAPIView(TestCase):
         )
         response = self._call_api_advanced(api)
         self.assertEqual(response.status_code, 500, response.content)
-        response_json = response.json()
-        self.assertEqual(response_json, {"error": "Unexpected type for transformed request"})
+        self.assertEqual(response.json(), {"error": "Unexpected type for transformed request"})
+
+    def test_post_body_too_large(self):
+        data_51_mb = "a" * (settings.MAX_UPLOAD_SIZE + 1)
+        generic_api = self._make_api({})
+        url = reverse('generic_inbound_api', args=[self.domain_name, generic_api.url_key])
+        response = self.client.post(
+            url, data=data_51_mb, HTTP_AUTHORIZATION=f"apikey {self.user.username}:{self.api_key.key}",
+            content_type="text"
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "Request exceeds the allowed size limit"})
 
     def test_post(self):
         response_json = self._test_generic_api({

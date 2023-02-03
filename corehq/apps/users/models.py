@@ -1675,7 +1675,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
                                                           is_new_user=is_new_user)
             log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
-            sync_usercases_if_applicable(self, spawn_task)
+            if not self.to_be_deleted():
+                sync_usercases_if_applicable(self, spawn_task)
 
     def delete(self, deleted_by_domain, deleted_by, deleted_via=None):
         from corehq.apps.ota.utils import delete_demo_restore_for_user
@@ -2420,6 +2421,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
                 yield web_user
 
     @classmethod
+    def get_billing_admins_by_domain(cls, domain):
+        from corehq.apps.users.role_utils import UserRolePresets
+        users = cls.by_domain(domain)
+        for user in users:
+            if user.role_label(domain) == UserRolePresets.BILLING_ADMIN:
+                yield user
+
+    @classmethod
     def get_dimagi_emails_by_domain(cls, domain):
         user_ids = cls.ids_by_domain(domain)
         for user_doc in iter_docs(cls.get_db(), user_ids):
@@ -3085,3 +3094,38 @@ class DeactivateMobileWorkerTrigger(models.Model):
         if not existing_trigger.exists():
             return None
         return existing_trigger.first().deactivate_after
+
+
+def check_and_send_limit_email(domain, plan_limit, user_count, prev_count):
+    ADDITIONAL_USERS_PRICING = ("https://confluence.dimagi.com/display/commcarepublic"
+                                "/CommCare+Pricing+FAQs#CommCarePricingFAQs-Feesforadditionalusers")
+    ENTERPRISE_LIMIT = -1
+    if plan_limit == ENTERPRISE_LIMIT:
+        return
+
+    WARNING_PERCENT = 0.9
+    if user_count >= plan_limit > prev_count:
+        at_capacity = True
+    elif plan_limit > user_count >= (WARNING_PERCENT * plan_limit) > prev_count:
+        at_capacity = False
+    else:
+        return
+
+    billing_admins = [admin.username for admin in WebUser.get_billing_admins_by_domain(domain)]
+    admins = [admin.username for admin in WebUser.get_admins_by_domain(domain)]
+
+    if at_capacity:
+        subject = _("User count has reached the Plan limit for {}").format(domain)
+    else:
+        subject = _("User count has reached 90% of the Plan limit for {}").format(domain)
+    send_html_email_async(
+        subject,
+        set(admins + billing_admins),
+        render_to_string('users/email/user_limit_notice.html', context={
+            'at_capacity': at_capacity,
+            'url': ADDITIONAL_USERS_PRICING,
+            'user_count': user_count,
+            'plan_limit': plan_limit,
+        }),
+    )
+    return

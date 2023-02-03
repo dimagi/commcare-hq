@@ -263,7 +263,7 @@
                       data-content="{% trans_html_attr "Define text displayed when case list has no results." %}"
                 ></span>
               </label>
-              <div class="{% css_field_class %}">
+              <div class="{% css_field_class %} commcare-feature" data-since-version="2.54">
                 {% input_trans module.case_details.short.no_items_text langs input_name='no_items_text' input_id='no_items_text' data_bind="value: no_items_text" element_type="textarea" %}
               </div>
             </div>

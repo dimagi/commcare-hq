@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import FieldError
 from django.core.validators import validate_slug
 from django.db import models
@@ -13,7 +12,6 @@ from memoized import memoized
 
 from corehq.apps.userreports.models import UCRExpression
 from corehq.apps.userreports.specs import FactoryContext
-from corehq.motech.generic_inbound.utils import make_url_key
 from corehq.util import reverse
 
 
@@ -45,6 +43,8 @@ class ConfigurableAPI(models.Model):
 
     def save(self, *args, **kwargs):
         if self._state.adding:
+            from corehq.motech.generic_inbound.utils import make_url_key
+
             if self.url_key:
                 raise FieldError("'url_key' is auto-assigned")
             self.url_key = make_url_key()

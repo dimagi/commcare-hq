@@ -87,6 +87,10 @@ LITE_RELEASE_MANAGEMENT = 'lite_release_management'
 
 LOADTEST_USERS = 'loadtest_users'
 
+FORM_LINK_WORKFLOW = 'form_link_workflow'
+
+PHONE_APK_HEARTBEAT = 'phone_apk_heartbeat'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -134,6 +138,8 @@ MAX_PRIVILEGES = [
     RELEASE_MANAGEMENT,
     LITE_RELEASE_MANAGEMENT,
     LOADTEST_USERS,
+    FORM_LINK_WORKFLOW,
+    PHONE_APK_HEARTBEAT,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -196,4 +202,6 @@ class Titles(object):
             RELEASE_MANAGEMENT: _("Enterprise Release Management"),
             LITE_RELEASE_MANAGEMENT: _("Multi-Environment Release Management"),
             LOADTEST_USERS: _('Loadtest Users'),
+            FORM_LINK_WORKFLOW: _("Link to other forms in End of Form Navigation"),
+            PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
         }.get(privilege, privilege)

@@ -473,7 +473,7 @@ msgstr ""
 #: corehq/messaging/scheduling/templates/scheduling/conditional_alert_list.html
 #: corehq/messaging/smsbackends/telerivet/forms.py
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
-#: corehq/motech/generic_inbound/views.py
+#: corehq/motech/generic_inbound/views.py corehq/motech/repeaters/forms.py
 #: corehq/motech/repeaters/templates/repeaters/repeaters.html
 #: corehq/motech/views.py custom/abt/reports/late_pmt_2020.py
 msgid "Name"
@@ -6844,6 +6844,7 @@ msgstr ""
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_list.html
 #: corehq/motech/dhis2/templates/dhis2/dataset_map_update.html
 #: corehq/motech/generic_inbound/templates/generic_inbound/api_edit.html
+#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #: corehq/motech/templates/motech/connection_settings.html
 msgid "Delete"
 msgstr ""
@@ -11856,8 +11857,8 @@ msgid "No recent queries"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
-msgid "Login as"
-msgstr "Entrar como"
+msgid "Log in as"
+msgstr ""
 
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html
 #: corehq/messaging/scheduling/forms.py
@@ -15864,10 +15865,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
-msgid "View Hostings"
-msgstr ""
-
-#: corehq/apps/domain/templates/domain/manage_releases_by_app_profile.html
 #: corehq/apps/domain/templates/domain/manage_releases_by_location.html
 msgid "Could not update!"
 msgstr ""
@@ -17926,7 +17923,7 @@ msgstr ""
 #: corehq/apps/export/system_properties.py
 msgid ""
 "The HQ user who submitted the form. This will be the same as username unless "
-"the form was submitted via Login As."
+"the form was submitted via Log In As."
 msgstr ""
 
 #: corehq/apps/export/system_properties.py
@@ -20181,6 +20178,7 @@ msgstr ""
 #: corehq/apps/reports/filters/users.py
 #: corehq/apps/reports/templates/reports/project_health/user_details.html
 #: corehq/apps/sms/templates/sms/phone_number_filter.html
+#: corehq/apps/users/forms.py
 #: corehq/apps/users/templates/users/edit_commcare_user.html
 #: corehq/apps/users/templates/users/roles_and_permissions.html
 #: corehq/apps/users/views/mobile/groups.py corehq/tabs/tabclasses.py
@@ -20695,7 +20693,7 @@ msgstr ""
 #: corehq/apps/hqadmin/templates/hqadmin/authenticate_as.html
 msgid ""
 "\n"
-"          Use this form to login as a mobile user.\n"
+"          Use this form to log in as a mobile user.\n"
 "          You can fill out the fully qualified username of\n"
 "          a mobile worker in the username box\n"
 "          (&lt;username&gt;@&lt;domain&gt;.commcarehq.org)\n"
@@ -21934,8 +21932,10 @@ msgid "Add Project"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
-msgid "Manage"
-msgstr ""
+#, fuzzy
+#| msgid "Settings"
+msgid "Manage Settings"
+msgstr "Definições"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 msgid "Logged in As"
@@ -31041,6 +31041,10 @@ msgid "Recipient has no email address."
 msgstr "Destinatário sem endereço de e-mail."
 
 #: corehq/apps/sms/models.py
+msgid "Recipient's email address is not valid."
+msgstr ""
+
+#: corehq/apps/sms/models.py
 msgid ""
 "Cannot send any more reminder emails. The limit for sending reminder emails "
 "on a Trial plan has been reached."
@@ -35142,6 +35146,15 @@ msgstr ""
 msgid "{} accepted your invitation to CommCare HQ"
 msgstr ""
 
+#: corehq/apps/users/models.py
+msgid "User count has reached the Plan limit for {}"
+msgstr ""
+
+#: corehq/apps/users/models.py
+#, python-format
+msgid "User count has reached 90% of the Plan limit for {}"
+msgstr ""
+
 #: corehq/apps/users/permissions.py
 msgid "Export De-Identified Data"
 msgstr ""
@@ -35640,6 +35653,18 @@ msgstr ""
 msgid "Update Location Settings"
 msgstr "Atualizar Definições de Localização"
 
+#: corehq/apps/users/templates/users/edit_web_user.html
+#, fuzzy
+#| msgid "PowerBi/Tableau Integration"
+msgid "Tableau Configuration"
+msgstr "Integração PowerBI/Tableau"
+
+#: corehq/apps/users/templates/users/edit_web_user.html
+#, fuzzy
+#| msgid "PowerBi/Tableau Integration"
+msgid "Update Tableau Configuration"
+msgstr "Integração PowerBI/Tableau"
+
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
 msgid ""
@@ -35700,6 +35725,36 @@ msgid ""
 "\n"
 "Thanks,\n"
 "CommCare HQ\n"
+msgstr ""
+
+#: corehq/apps/users/templates/users/email/user_limit_notice.html
+#, python-format
+msgid ""
+"\n"
+"      Please note that you have reached %(user_count)s mobile users, the "
+"maximum user limit included in your plan.\n"
+"      Your user limit represents all mobile users that are not currently "
+"deactivated\n"
+"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number "
+"of mobile users\n"
+"      included in your plan, you will be charged as per the terms of plan.\n"
+"    "
+msgstr ""
+
+#: corehq/apps/users/templates/users/email/user_limit_notice.html
+#, python-format
+msgid ""
+"\n"
+"      Please note that you have utilised 90%% of the user limit included in "
+"your plan.\n"
+"      Your project currently has %(user_count)s mobile users out of "
+"%(plan_limit)s included in your plan.\n"
+"      Your user limit represents all mobile users that are not currently "
+"deactivated\n"
+"      (see <a href=\"%(url)s\">here</a> for more). If you exceed the number "
+"of mobile users\n"
+"      included in your plan, you will be charged as per the terms of plan.\n"
+"    "
 msgstr ""
 
 #: corehq/apps/users/templates/users/enterprise_users.html
@@ -36237,7 +36292,7 @@ msgid "Login-As All Users"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as any mobile worker in Web Apps."
+msgid "Allow the user to log in as any mobile worker in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -36245,7 +36300,7 @@ msgid "Limit Login-As"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as only specified users in Web Apps."
+msgid "Allow the user to log in as only specified users in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -36253,7 +36308,7 @@ msgid "Login-As Default User"
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
-msgid "Allow the user to login as the default user in Web Apps."
+msgid "Allow the user to log in as the default user in Web Apps."
 msgstr ""
 
 #: corehq/apps/users/templates/users/partials/edit_role_modal.html
@@ -36582,6 +36637,13 @@ msgstr ""
 
 #: corehq/apps/users/validation.py
 msgid "The username email domain '@{}' should be '@{}'."
+msgstr ""
+
+#: corehq/apps/users/views/__init__.py
+msgid ""
+"There was an error getting data for this user's associated Tableau\n"
+"                                             user. Please contact support if "
+"this error persists."
 msgstr ""
 
 #: corehq/apps/users/views/__init__.py
@@ -37720,7 +37782,6 @@ msgid "months"
 msgstr ""
 
 #: corehq/messaging/scheduling/forms.py
-#: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 msgid "Stop"
 msgstr ""
 
@@ -39721,6 +39782,14 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/generic_inbound/utils.py
+msgid "Request exceeds the allowed size limit"
+msgstr ""
+
+#: corehq/motech/generic_inbound/utils.py
+msgid "Unable to decode request body"
+msgstr ""
+
+#: corehq/motech/generic_inbound/utils.py
 msgid "Payload must be valid JSON"
 msgstr ""
 
@@ -40152,20 +40221,22 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-msgid "Stop Forwarding"
-msgstr ""
+#, fuzzy
+#| msgid "Delete Application"
+msgid "Delete Configuration"
+msgstr "Apagar aplicação"
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #, python-format
 msgid ""
 "\n"
-"                                    Are you sure you want to stop forwarding "
-"to: %(name)s ?\n"
-"                                    <br/>\n"
-"                                    Forwarder and its data would not be "
-"deleted but no new records would get added for\n"
-"                                    this forwarder and it would not appear "
-"in this list anymore.\n"
+"                                    Are you sure you want to delete the "
+"configuration for: %(name)s ?\n"
+"                                    <br/><br />\n"
+"                                    Data forwarding records will not be "
+"deleted, but no new records will be\n"
+"                                    forwarded, and this configuration will "
+"no longer appear on this page.\n"
 "                                "
 msgstr ""
 
@@ -40274,11 +40345,11 @@ msgid "Forwarding set up to {}"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-msgid "Update Repeater"
+msgid "Update Forwarder"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-msgid "Repeater Successfully Updated"
+msgid "Forwarder Successfully Updated"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
@@ -40522,7 +40593,7 @@ msgid "Zapier Integration"
 msgstr ""
 
 #: corehq/privileges.py
-msgid "Login As for App Preview"
+msgid "Log In As for App Preview"
 msgstr ""
 
 #: corehq/privileges.py
@@ -40563,6 +40634,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Loadtest Users"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Link to other forms in End of Form Navigation"
 msgstr ""
 
 #: corehq/reports.py
