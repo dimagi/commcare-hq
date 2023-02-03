@@ -1340,10 +1340,18 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 inline_search=search_properties.get('inline_search', False),
                 pull_parent_child_ext_cases=search_properties.get('pull_parent_child_ext_cases', False)
             )
+            _update_pull_parent_child_ext_cases(app, module,
+                search_properties.get('pull_parent_child_ext_cases', False))
 
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
+
+
+def _update_pull_parent_child_ext_cases(app, current_module, new_state: bool):
+    for module in app.get_modules():
+        if module.case_type == current_module.case_type:
+            module.search_config.pull_parent_child_ext_cases = new_state
 
 
 @no_conflict_require_POST
