@@ -133,7 +133,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     };
 
     let makeResponse = function (options) {
-        AssertProperties.assertRequired(["title", "breadcrumbs"]);
+        AssertProperties.assertRequired(options, ["title", "breadcrumbs"]);
         return _.defaults(options, {
             "notification": {"message": null, "error": false},
             "clearSession": false,
@@ -144,14 +144,14 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     };
 
     module.makeCommandsResponse = function (options) {
-        AssertProperties.assertRequired(["commands"]);
+        AssertProperties.assertRequired(options, ["commands"]);
         return _.defaults(makeResponse(options), {
             type: "commands",
         });
     };
 
     module.makeEntitiesResponse = function (options) {
-        AssertProperties.assertRequired(["entities"]);
+        AssertProperties.assertRequired(options, ["entities"]);
         return _.defaults(makeResponse(options), {
             "numEntitiesPerRow": 0,
             "pageCount": 2,
@@ -164,7 +164,7 @@ hqDefine("cloudcare/js/formplayer/spec/fake_formplayer", function () {
     };
 
     module.makeQueryResponse = function (options) {
-        AssertProperties.assertRequired(["displays", "queryKey"]);
+        AssertProperties.assertRequired(options, ["displays", "queryKey"]);
         return _.defaults(makeResponse(options), {
             type: "query",
         });
