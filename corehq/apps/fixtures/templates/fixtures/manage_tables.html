@@ -9,6 +9,7 @@
 
 {% block page_content %}
   {% initial_page_data 'data_types' types %}
+  {% initial_page_data 'can_edit_linked_data' can_edit_linked_data %}
   {% registerurl 'download_fixtures' domain %}
   {% registerurl 'fixture_interface_dispatcher' domain 'view_lookup_tables' %}
   {% registerurl 'update_lookup_tables' domain %}
@@ -39,17 +40,34 @@
           <i class="fa fa-cloud-download"></i> {% trans "Download Lookup Tables" %}
         </a>
         <!-- ko if: hasLinkedModels -->
-        <span data-bind="ifnot: unlockLinkedData">
-          <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
-            <i class="fa fa-link"></i>
-            {% trans 'Unlock Linked Tables For Me' %}
-          </button>
-        </span>
-        <span data-bind="if: unlockLinkedData">
-          <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
-            <i class="fa fa-link"></i>
-            {% trans "Lock Linked Tables For Me" %}
-          </button>
+          <!-- ko if: allowEdit -->
+            <span data-bind="ifnot: unlockLinkedData">
+              <button class="btn btn-primary" data-toggle="modal" data-target="#edit-warning-modal">
+                <i class="fa fa-link"></i>
+                {% trans 'Unlock Linked Tables For Me' %}
+              </button>
+            </span>
+            <span data-bind="if: unlockLinkedData">
+              <button class="btn btn-primary" data-bind="click: toggleLinkedLock">
+                <i class="fa fa-link"></i>
+                {% trans "Lock Linked Tables For Me" %}
+              </button>
+            </span>
+          <!-- /ko -->
+          <!-- ko ifnot: allowEdit -->
+            <span>
+              <i class="fa fa-link"></i>
+              Contains Linked Roles
+            </span>
+          <!-- /ko -->
+        <span class="hq-help-template"
+            data-placement="left"
+            data-title="{% trans 'Linked Configurations' %}"
+            data-content="
+              {% blocktrans %}
+                Linked configurations are controlled from a separate, linked project space.
+                  <a href='https://confluence.dimagi.com/display/commcarepublic/Enterprise+Release+Management' target='_blank'>Learn more</a>.
+              {% endblocktrans %}">
         </span>
         <!-- /ko -->
       </p>
