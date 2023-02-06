@@ -276,7 +276,7 @@ hqDefine("fixtures/js/lookup-manage", [
             return self.data_types().some(element => element.is_synced() && !element._destroy);
         });
 
-        self.allowEdit = ko.observable(options.can_edit_linked_data);
+        self.allowEdit = options.can_edit_linked_data;
 
         self.setModalModel = function (dataType) {
             self.modalModel(dataType);

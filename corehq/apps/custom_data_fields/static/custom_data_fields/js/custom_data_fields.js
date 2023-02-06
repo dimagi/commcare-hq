@@ -184,7 +184,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             return self.data_fields().some(field => field.isSynced());
         });
 
-        self.allowEdit = ko.observable(options.can_edit_linked_data);
+        self.allowEdit = options.can_edit_linked_data;
 
         self.addField = function () {
             self.data_fields.push(Field({
