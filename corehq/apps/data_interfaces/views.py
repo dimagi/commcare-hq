@@ -701,11 +701,15 @@ class AutomaticUpdateRuleListView(DataInterfaceSection):
             'time': f"{hour}:00" if hour else _('midnight'),  # noqa: E999
             'rule_runs': [self._format_rule_run(run) for run in self._rule_runs()],
             'has_linked_data': self.has_linked_data(),
+            'can_edit_linked_data': self.can_edit_linked_data(),
         })
         return context
 
     def has_linked_data(self):
         return bool(self._rules().exclude(upstream_id=None)[:1])
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
 
     def post(self, request, *args, **kwargs):
         response = self._update_rule(request.POST['id'], request.POST['action'])
