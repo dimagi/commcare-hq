@@ -252,13 +252,6 @@ function runserver {
     su cchq -c "./manage.py runserver $@ 0.0.0.0:8000"
 }
 
-if [ -n "$GITHUB_ACTIONS" ]; then
-    # change cchq UID and GID to match those used by Github Actions to clone the repo
-    echo "changing cchq UID:GID (`id -u cchq`:`id -g cchq`) to 1001:123"
-    groupmod -g 123 cchq
-    usermod -u 1001 -g 123 cchq
-fi
-
 source /mnt/commcare-hq-ro/scripts/datadog-utils.sh  # provides send_metric_to_datadog
 source /mnt/commcare-hq-ro/scripts/bash-utils.sh  # provides logmsg, log_group_{begin,end}, func_text and truthy
 
@@ -365,6 +358,7 @@ fi
 mkdir -p lib/sharedfiles
 ln -sf /mnt/lib/sharedfiles /sharedfiles
 chown cchq:cchq lib/sharedfiles
+su cchq -c "/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro"
 
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py
