@@ -20,7 +20,6 @@ from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
 from corehq.apps.es.tests.utils import es_test
 
-
 def test_get_related_case_relationships():
     app = Application.new_app("test-domain", "Case Search App")
     module = app.add_module(Module.new_module("Search Module", "en"))
@@ -159,9 +158,12 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self.assertEqual(set(case_ids), {"b1", "p1", "c1"})
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
-    def _assert_related_case_ids(self, cases, paths, ids):
+    def _assert_related_case_ids(self, cases, paths, expected_case_ids):
         results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
-        result_ids = Counter([result.case_id for result in results])
-        self.assertEqual(ids, set(result_ids))
+        self._assert_case_ids(expected_case_ids, results)
+
+    def _assert_case_ids(self, expected_case_ids, result_cases):
+        result_ids = Counter([case.case_id for case in result_cases])
+        self.assertEqual(expected_case_ids, set(result_ids))
         if result_ids:
             self.assertEqual(1, max(result_ids.values()), result_ids)  # no duplicates
