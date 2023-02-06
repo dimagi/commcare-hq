@@ -315,7 +315,6 @@ else
     fi
     # Own the new dirs after the overlay is mounted.
     chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
-    git config --global --add safe.directory '*'  # disable directory safety checks
 fi
 # New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
 #
@@ -359,6 +358,7 @@ fi
 mkdir -p lib/sharedfiles
 ln -sf /mnt/lib/sharedfiles /sharedfiles
 chown cchq:cchq lib/sharedfiles
+git config --global --add safe.directory '*'  # disable directory safety checks
 
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py
