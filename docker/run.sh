@@ -355,9 +355,9 @@ fi
 #       │   └── staticfiles -> /mnt/lib/staticfiles
 #       └── staticfiles
 
-mkdir -p lib/sharedfiles
+mkdir -p lib/sharedfiles /home/cchq
 ln -sf /mnt/lib/sharedfiles /sharedfiles
-chown cchq:cchq lib/sharedfiles
+chown cchq:cchq lib/sharedfiles /home/cchq
 su cchq -c "/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro"
 
 cd commcare-hq
