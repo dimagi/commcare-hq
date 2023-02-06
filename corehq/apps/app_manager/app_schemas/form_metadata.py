@@ -171,6 +171,10 @@ class _AppSummaryFormDataGenerator(object):
                                                    include_fixtures=True)
             for question in self._get_question(form.unique_id, raw_question)
         )
+
+        if 'update_case' in form.actions:
+            self._get_update_modes(form.actions.update_case.update, questions_by_path)
+
         for path, question in questions_by_path.items():
             parent = question.group or question.repeat
             if parent:
@@ -229,6 +233,13 @@ class _AppSummaryFormDataGenerator(object):
         if self._is_save_to_case(question):
             response.type = 'SaveToCase'
         return response
+
+    def _get_update_modes(self, updates, questions):
+        for property, conditional_case_update in updates.items():
+            path = conditional_case_update.question_path
+            for save_property in questions[path].save_properties:
+                if save_property.property == property:
+                    save_property.update_mode = conditional_case_update.update_mode
 
 
 def get_app_summary_formdata(domain, app, include_shadow_forms=True):
