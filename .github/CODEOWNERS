@@ -35,6 +35,7 @@
 /corehq/apps/commtrack/ @esoergel
 /corehq/apps/commtrack/static/ @esoergel @orangejenny
 /corehq/apps/commtrack/templates/ @esoergel @orangejenny
+/corehq/apps/data_dictionary/ @esoergel
 /corehq/apps/domain/decorators.py @esoergel
 /corehq/apps/domain/auth.py @esoergel
 /corehq/apps/es/ @esoergel @joxl
