@@ -379,6 +379,7 @@ class CustomDataModelMixin(object):
                 or self.request.user.is_superuser
             ),
             "is_managed_by_upstream_domain": self.is_managed_by_upstream_domain(),
+            "can_edit_linked_data": self.can_edit_linked_data(),
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])
@@ -409,6 +410,9 @@ class CustomDataModelMixin(object):
     def is_managed_by_upstream_domain(self):
         fields = self.get_definition().get_fields()
         return any(f.upstream_id for f in fields)
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
 
     def post(self, request, *args, **kwargs):
         self.save_data(request)
