@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from django.urls import reverse
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import gettext as _
 
 from requests import HTTPError
@@ -28,6 +28,8 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_value,
 )
+from .parse_response import get_errors
+from corehq.motech.views import MotechLogListView
 
 
 @dataclass
@@ -236,6 +238,12 @@ def update_tracked_entity_instance(
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while updating DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
+
 
 def update_enrollments(
     tracked_entity: Dict,
@@ -291,6 +299,12 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         case_trigger_info.extra_fields[case_property] = tei_id
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while registering DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
 def create_relationships(
