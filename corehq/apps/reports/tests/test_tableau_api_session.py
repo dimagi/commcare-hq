@@ -9,7 +9,7 @@ class FakeTableauInstance(mock.MagicMock):
 
     def __init__(self):
         super(FakeTableauInstance, self).__init__()
-        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n'}
+        self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n', 'HQ': 'bn12m'}
         self.users = {'angie@dimagi.com': 'zx8cv', 'jeff@company.com': 'uip12', 'steve@company.com': 'ty78ui'}
         self.group_names = list(self.groups.keys())
         self.group_ids = list(self.groups.values())
