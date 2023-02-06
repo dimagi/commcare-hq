@@ -1,0 +1,81 @@
+#hq-sidebar {
+  min-height: 1000px;
+}
+
+.col-hq-sidebar {
+  background-color: darken($cc-bg, 2);
+  padding: 0;
+  padding-bottom: 20px;
+}
+
+.nav-hq-sidebar {
+  font-size: 13px;
+  line-height: 18px;
+  overflow-wrap: break-word;
+
+  &.nav > li {
+    a {
+      padding: 3px 20px;
+      transition: background 1s;
+    }
+    > a:hover {
+      background-color: #dbdbdb;
+    }
+  }
+  &.nav li.active {
+    > a, > a:link, > a:visited, > a:hover {
+      background-color: $brand-primary;
+      color: #ffffff;
+    }
+  }
+  &.nav > li li a {
+    padding-left: 30px;
+  }
+  li.divider {
+    height: 1px;
+    margin: 8px 10px;
+    overflow: hidden;
+    background-color: white;
+    border-top: 1px solid $cc-neutral-hi;
+  }
+  .nav-input {
+    padding: 3px 20px;
+  }
+}
+
+.page-actions-toolbar {
+  padding: 0px 15px;
+}
+
+#reportConfig .page-actions-toolbar {
+  padding: 14px 6px;
+}
+
+.nav-main-icon {
+  font-size: 1.7em;
+  line-height: 0.7em;
+}
+
+.text-hq-nav-header {
+  margin-bottom: 6px;
+}
+
+// Bootstrap's default is to use a pointer cursor for the whole nav, which causes elements
+// like menu section headers to look clickable. Items that are actually clickable are typically
+// links that already have the pointer cursor.
+.nav {
+  cursor: default;
+}
+
+.nav > li > a {
+  color: $cc-brand-low;
+}
+
+.report-nav{
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
+}

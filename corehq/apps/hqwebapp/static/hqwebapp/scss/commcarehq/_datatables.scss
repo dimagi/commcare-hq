@@ -1,0 +1,102 @@
+.dataTables_info,
+.dataTables_length {
+  display: inline-block;
+}
+.dataTables_info {
+  padding-top: 24px;
+  padding-right: 5px;
+}
+
+.datatable thead th,
+.dataTable thead th {
+  background-color: desaturate($cc-brand-low, 50%);
+  color: #ffffff;
+  &:nth-child(odd) {
+    background-color: lighten(desaturate($cc-brand-low, 50%), 10%);
+  }
+}
+
+.datatable tfoot td,
+.datatable tfoot th,
+.dataTable tfoot td,
+.dataTable tfoot th{
+  background-color: lighten(desaturate($cc-brand-low, 60%), 10%);
+  color: #ffffff;
+  padding: 8px;
+}
+
+.datatable .header,
+.dataTable .header {
+  .dt-sort-icon:before{
+    font-family: "Glyphicons Halflings";
+    vertical-align: bottom;
+  }
+  &.headerSort {
+    .dt-sort-icon:before {
+      content: "\e150";
+      opacity: 0.2;
+    }
+  }
+  &.headerSortDesc {
+    .dt-sort-icon:before {
+      content: "\e156";
+    }
+  }
+  &.headerSortAsc {
+    .dt-sort-icon:before {
+      content: "\e155";
+    }
+  }
+  &.headerSortDesc,
+  &.headerSortAsc {
+    background-color: $cc-brand-mid;
+  }
+}
+
+.datatable .sorting_1,
+.dataTable .sorting_1 {
+  background-color: $cc-bg;
+}
+
+.panel-body-datatable {
+  padding: 0;
+  .dataTables_control {
+    padding: 10px 15px;
+    .dataTables_info {
+      padding-top: 0;
+    }
+    .dataTables_paginate {
+      .pagination {
+        margin: 0;
+      }
+    }
+  }
+}
+
+.dataTable td.text-xs {
+  font-size: .8em;
+}
+
+.dataTable td.text-sm {
+  font-size: .9em;
+}
+
+.dataTable td.text-lg {
+  font-size: 1.1em;
+}
+
+.dataTable td.text-xl {
+  font-size: 1.2em;
+}
+
+.dataTable td.text-bold {
+  font-weight: bold;
+}
+
+.dataTable td.text-red {
+  color: $cc-att-neg-mid;
+}
+
+.dataTable td.text-green {
+  color: $cc-att-pos-mid;
+}

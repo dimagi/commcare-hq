@@ -1,0 +1,106 @@
+/*
+ * Extra styling for the eonasdan-bootstrap-datetimepicker widget.
+ */
+
+$bootstrap-datetimepicker-width: 245px;
+
+.bootstrap-datetimepicker-widget.dropdown-menu {
+  text-align: center;
+  padding: 12px 15px 4px;
+
+  th {
+    text-align: center;
+
+    .dow {
+      padding-top: 8px;
+      padding-bottom: 8px;
+      font-size: 14px;
+    }
+  }
+
+  .datepicker,
+  .timepicker {
+    width: $bootstrap-datetimepicker-width;
+  }
+
+  .day,
+  .month,
+  .year,
+  .decade,
+  .picker-switch,
+  .prev,
+  .next,
+  .minute,
+  .hour,
+  .timepicker-hour,
+  .timepicker-minute {
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 4px;
+
+    &:hover {
+      background-color: $cc-bg;
+    }
+
+    &.active {
+      background-color: $cc-brand-mid;
+      color: #ffffff;
+    }
+  }
+
+  .month,
+  .year,
+  .decade {
+    font-size: 14px;
+    display: inline-block;
+    width: calc($bootstrap-datetimepicker-width/3) - 4;
+  }
+
+  .minute,
+  .hour {
+    font-size: 15px;
+    display: inline-block;
+    width: calc($bootstrap-datetimepicker-width/4) - 4;
+  }
+
+  .datepicker {
+    padding-bottom: 6px;
+  }
+
+  .timepicker {
+    padding-bottom: 15px;
+
+    a {
+      cursor: pointer;
+      padding: 8px 10px;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: $cc-bg;
+      }
+    }
+
+    .btn-primary {
+      background-color: $cc-brand-mid;
+      text-align: center;
+      padding: 8px 10px;
+    }
+
+    .table-condensed {
+      font-size: 20px;
+      width: 100%;
+    }
+  }
+
+  .picker-switch {
+    font-size: 18px;
+
+    .table-condensed {
+      width: 100%;
+
+      a {
+        display: block;
+      }
+    }
+  }
+}
