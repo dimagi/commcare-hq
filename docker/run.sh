@@ -183,6 +183,8 @@ function _run_tests {
     esac
 
     function _test_python {
+        echo "whoami: `whoami`"
+        ls -al
         ./manage.py create_kafka_topics
         if [ -n "$CI" ]; then
             logmsg INFO "coverage run manage.py test ${py_test_args[*]}"
