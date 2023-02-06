@@ -155,12 +155,12 @@ class TestGetRelatedCases(BaseCaseSearchTest):
 
         with patch("corehq.apps.case_search.utils.get_related_case_relationships",
                    return_value={"parent"}), \
-             patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c"}), \
+             patch("corehq.apps.case_search.utils.get_defined_cases", return_value=None), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
             cases = get_related_cases(_QueryHelper(self.domain), None, {"a"}, cases, 'custom_related_case_id')
 
         case_ids = Counter([case.case_id for case in cases])
-        self.assertEqual(set(case_ids), {"b1", "p1", "c1"})
+        self.assertEqual(set(case_ids), {"b1", "p1"})
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
     def test_get_child_case_results(self):
