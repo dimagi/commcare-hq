@@ -406,11 +406,10 @@ def create_relationship(requests, relationship_spec):
     response = requests.post(endpoint, json=relationship_spec.as_dict(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
-        from corehq.motech.views import MotechLogListView
         raise Dhis2Exception(_(
             'DHIS2 created {n} relationships. Errors from DHIS2 can be found '
             'in Remote API Logs: {url}'
-        ).format(n=num_imported, url=reverse(MotechLogListView.urlname)))
+        ).format(n=num_imported, url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):
