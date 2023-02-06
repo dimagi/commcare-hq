@@ -315,6 +315,7 @@ else
     fi
     # Own the new dirs after the overlay is mounted.
     chown cchq:cchq commcare-hq lib/{overlay,node_modules,staticfiles}
+    git config --global --add safe.directory '*'  # disable directory safety checks
 fi
 # New state of /mnt (depending on value of DOCKER_HQ_OVERLAY):
 #
