@@ -76,7 +76,7 @@ class TestCaseListAPI(TestCase):
         super().tearDownClass()
 
     def test_pagination(self):
-        query_dict = QueryDict('limit=3&case_type=person')
+        query_dict = QueryDict('limit=3&case_type=person&case_type=household')
         res = get_list(self.domain, query_dict)
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
@@ -88,6 +88,7 @@ class TestCaseListAPI(TestCase):
         cursor = b64decode(res['next']['cursor']).decode('utf-8')
         self.assertIn('limit=3', cursor)
         self.assertIn('case_type=person', cursor)
+        self.assertIn('case_type=household', cursor)
         self.assertIn('indexed_on.gte', cursor)
         self.assertIn('last_case_id', cursor)
 
@@ -153,3 +154,9 @@ def test_bad_requests(self, querystring, error_msg):
         params = QueryDict(querystring)
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)
+
+
+def test_doctests():
+    import corehq.apps.hqcase.api.get_list
+    results = doctest.testmod(corehq.apps.hqcase.api.get_list)
+    assert results.failed == 0

@@ -88,10 +88,11 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        cursor = urlencode(dict(params.items(), **{
+        encodeable = URLEncodeableDict(params, **{
             INDEXED_AFTER: hits[-1]["@indexed_on"],
             LAST_CASE_ID: hits[-1]["_id"],
-        }))
+        })
+        cursor = urlencode(encodeable)
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
@@ -148,3 +149,39 @@ def _get_query_filter(domain, query):
         return build_filter_from_xpath(domain, query)
     except CaseFilterError as e:
         raise UserError(f'Bad query: {e}')
+
+
+class URLEncodeableDict(dict):
+    """
+    ``URLEncodeableDict.items()`` preserves multiple values of a key by
+    repeating the key for each value.
+
+    Intended for use with ``urlencode()``.
+
+    Problem:
+
+    >>> qd = QueryDict('foo=one&bar=two&bar=three')
+    >>> list(qd.lists())
+    [('foo', ['one']), ('bar', ['two', 'three'])]
+    >>> urlencode(qd)
+    'foo=%5B%27one%27%5D&bar=%5B%27two%27%2C+%27three%27%5D'
+    >>> urlencode(qd.items())
+    'foo=one&bar=three'
+
+    Solution:
+
+    >>> ued = URLEncodeableDict(qd)
+    >>> list(ued.items())
+    [('foo', 'one'), ('bar', 'two'), ('bar', 'three')]
+    >>> urlencode(ued)
+    'foo=one&bar=two&bar=three'
+
+    """
+
+    def items(self):
+        for key, value in super().items():
+            if isinstance(value, list):
+                for v in value:
+                    yield key, v
+            else:
+                yield key, value
