@@ -137,11 +137,13 @@ function run_tests {
         argv_str=$(printf ' %q' "$TEST" "$@")
         su cchq -c "/bin/bash ../run_tests $argv_str" 2>&1
         log_group_end  # only log group end on success (notice: `set -e`)
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-prod-entrypoints.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-make-requirements.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/test-serializer-pickle-files.sh
-        [ "$TEST" == "python-sharded-and-javascript" -o "$TEST_MIGRATIONS" ] && scripts/test-django-migrations.sh
-        [ "$TEST" == "python-sharded-and-javascript" ] && scripts/track-dependency-status.sh
+        if [ "$TEST" == "python-sharded-and-javascript" ]; then
+            su cchq -c scripts/test-prod-entrypoints.sh
+            su cchq -c scripts/test-make-requirements.sh
+            su cchq -c scripts/test-serializer-pickle-files.sh
+            [ "$TEST_MIGRATIONS" ] && su cchq -c scripts/test-django-migrations.sh
+            su cchq -c scripts/track-dependency-status.sh
+        fi
         delta=$(($(date +%s) - $now))
 
         send_timing_metric_to_datadog "tests" $delta
