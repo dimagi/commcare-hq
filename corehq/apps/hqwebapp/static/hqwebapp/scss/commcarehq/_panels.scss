@@ -1,0 +1,85 @@
+.panel-modern-gray {
+  border: none;
+  background-color: lighten($cc-bg, 3);
+
+  .panel-heading {
+    padding: 0;
+    a:hover, a:link, a:focus {
+      text-decoration: none;
+    }
+    a {
+      display: block;
+      padding: 15px 15px;
+      transition: background-color 1s;
+      &:hover {
+        background-color: $cc-bg;
+      }
+    }
+    .hq-help {
+      a {
+        padding: 0;
+        display: inline-block;
+      }
+      line-height: 0;
+      margin: 0;
+      i {
+        font-size: 18px;
+        margin-bottom: -3px;
+      }
+    }
+  }
+
+  .panel-title-nolink {
+    padding: 15px 15px;
+    border-bottom: 1px solid $cc-bg;
+  }
+
+  .collapsing {
+    overflow: hidden;
+  }
+
+  legend {
+    padding: 15px 15px;
+    border-bottom: 1px solid $cc-bg;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1px solid $cc-bg;
+    margin-bottom: 20px;
+  }
+
+  .ms-list {
+    background-color: white;
+  }
+
+  .ms-container .ms-selectable, .ms-container .ms-selection {
+    background-color: transparent;
+  }
+}
+
+
+.panel-form-only {
+  legend {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  legend:first-child {
+    padding-top: 0;
+  }
+  fieldset {
+    padding-bottom: 20px;
+
+    > p {
+      padding-left: 10px;
+    }
+  }
+}
+
+.form-horizontal .panel-body .form-group,
+.panel-body .form-horizontal .form-group {
+  margin-right: 0;
+  margin-left: 0;
+}
+
+.panel-group .panel-modern-gray {
+  border-radius: 0;
+}

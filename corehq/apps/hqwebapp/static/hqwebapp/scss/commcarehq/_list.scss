@@ -1,0 +1,25 @@
+.list-table {
+  padding-left: 10px;
+  list-style: none;
+  li {
+    list-style: none;
+    padding: 2px 7px;
+    background: $cc-neutral-mid;
+    color: #ffffff;
+    border-radius: 5px;
+  }
+}
+
+.list-invitations {
+  padding-left: 0;
+  list-style: none;
+
+  li {
+    list-style: none;
+    padding: 3px 0;
+
+    > .btn {
+      margin-right: 10px;
+    }
+  }
+}
