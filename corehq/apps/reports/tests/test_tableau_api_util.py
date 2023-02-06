@@ -1,4 +1,5 @@
 from unittest import mock
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.tests.test_tableau_api_session import TestTableauAPISession
 from corehq.apps.reports.models import (
     TableauUser,
@@ -83,7 +84,7 @@ class TestTableauAPIUtil(TestTableauAPISession):
         mock_request.side_effect = (self.create_session_responses
         + [self.tableau_instance.delete_user_response(),
             self.tableau_instance.create_user_response('dschrute', 'Explorer'),
-            self.tableau_instance.query_groups_response(group_name='HQ'),
+            self.tableau_instance.query_groups_response(group_name=HQ_TABLEAU_GROUP_NAME),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response()])

@@ -21,6 +21,7 @@ from corehq.apps.celery import periodic_task
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.const import USER_QUERY_LIMIT
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.models import TableauServer, TableauAPISession, TableauUser
 from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
@@ -431,7 +432,7 @@ def _group_json_to_tuples(group_json):
     # Remove default Tableau group and HQ group:
     group_tuples_without_defaults = []
     for group in group_tuples:
-        if not (group.name == 'All Users' or group.name == 'HQ'):
+        if not (group.name == 'All Users' or group.name == HQ_TABLEAU_GROUP_NAME):
             group_tuples_without_defaults.append(group)
     return group_tuples_without_defaults
 
@@ -545,7 +546,7 @@ def _update_user_remote(session, user, groups=[]):
     user.tableau_user_id = new_id
     user.save()
     # Add default group
-    groups += [TableauGroupTuple('HQ', session.query_groups(name='HQ')['id'])]
+    groups += [TableauGroupTuple(HQ_TABLEAU_GROUP_NAME, session.query_groups(name=HQ_TABLEAU_GROUP_NAME)['id'])]
     for group in groups:
         session.add_user_to_group(user.tableau_user_id, group.id)
 
@@ -569,7 +570,8 @@ def sync_all_tableau_users():
     def _sync_tableau_users_with_remote(domain):
 
         # Setup
-        remote_HQ_group_id = [group.id for group in get_all_tableau_groups(domain) if group.name == 'HQ']
+        remote_HQ_group_id = [group.id for group
+                              in get_all_tableau_groups(domain) if group.name == HQ_TABLEAU_GROUP_NAME]
         session = TableauAPISession.create_session_for_domain(domain)
 
         # More setup - parse/get remote group ID and users in group
@@ -577,7 +579,7 @@ def sync_all_tableau_users():
             remote_HQ_group_id = remote_HQ_group_id[0]
             remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
         else:
-            remote_HQ_group_id = session.create_group('HQ', DEFAULT_TABLEAU_ROLE)
+            remote_HQ_group_id = session.create_group(HQ_TABLEAU_GROUP_NAME, DEFAULT_TABLEAU_ROLE)
             remote_HQ_group_users = []
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
 
