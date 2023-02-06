@@ -72,8 +72,9 @@ def get_list(domain, params):
     if 'cursor' in params:
         params_string = b64decode(params['cursor']).decode('utf-8')
         params = QueryDict(params_string, mutable=True)
-        last_date = params.pop(INDEXED_AFTER, None)
-        last_id = params.pop(LAST_CASE_ID, None)
+        # QueryDict.pop() returns a list
+        last_date = params.pop(INDEXED_AFTER, [None])[0]
+        last_id = params.pop(LAST_CASE_ID, [None])[0]
         query = _get_cursor_query(domain, params, last_date, last_id)
     else:
         query = _get_query(domain, params)
@@ -87,10 +88,10 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        cursor = urlencode({**params, **{
+        cursor = urlencode(dict(params.items(), **{
             INDEXED_AFTER: hits[-1]["@indexed_on"],
             LAST_CASE_ID: hits[-1]["_id"],
-        }})
+        }))
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
