@@ -139,10 +139,10 @@ function run_tests {
         log_group_end  # only log group end on success (notice: `set -e`)
         if [ "$TEST" == "python-sharded-and-javascript" ]; then
             su cchq -c scripts/test-prod-entrypoints.sh
-            su cchq -c scripts/test-make-requirements.sh
-            su cchq -c scripts/test-serializer-pickle-files.sh
+            scripts/test-make-requirements.sh
+            scripts/test-serializer-pickle-files.sh
             [ "$TEST_MIGRATIONS" ] && su cchq -c scripts/test-django-migrations.sh
-            su cchq -c scripts/track-dependency-status.sh
+            scripts/track-dependency-status.sh
         fi
         delta=$(($(date +%s) - $now))
 
@@ -361,6 +361,7 @@ mkdir -p lib/sharedfiles /home/cchq
 ln -sf /mnt/lib/sharedfiles /sharedfiles
 chown cchq:cchq lib/sharedfiles /home/cchq
 su cchq -c "/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro"
+/usr/bin/git config --global --add safe.directory /mnt/commcare-hq-ro
 
 cd commcare-hq
 ln -sf docker/localsettings.py localsettings.py
