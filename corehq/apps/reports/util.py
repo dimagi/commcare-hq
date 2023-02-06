@@ -639,12 +639,15 @@ def import_tableau_users(domain, web_user_specs):
         username = row.get('username')
         remove = spec_value_to_boolean_or_none(row, 'remove')
         user = CouchUser.get_by_username(username, strict=True)
-        if not remove and user and user.get_domain_membership(domain):
-            tableau_role = row.get('tableau_role')
-            tableau_groups_txt = row.get('tableau_groups')
-            if tableau_role == 'ERROR' or tableau_groups_txt == 'ERROR':
-                continue
-            tableau_groups = [
-                TableauGroupTuple(name=group[0], id=group[1]) for group in json.loads(tableau_groups_txt)
-            ]
-            update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups)
+        if user:
+            if remove:
+                delete_tableau_user(domain, username)
+            elif user.get_domain_membership(domain):
+                tableau_role = row.get('tableau_role')
+                tableau_groups_txt = row.get('tableau_groups')
+                if tableau_role == 'ERROR' or tableau_groups_txt == 'ERROR':
+                    continue
+                tableau_groups = [
+                    TableauGroupTuple(name=group[0], id=group[1]) for group in json.loads(tableau_groups_txt)
+                ]
+                update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups)
