@@ -24,7 +24,7 @@ class ESSyncUtil:
     def __init__(self):
         self.es = get_client()
 
-    def start_reindex(self, cname):
+    def start_reindex(self, cname, batch_size, purge_ids):
 
         adapter = doc_adapter_from_cname(cname)
 
@@ -34,7 +34,7 @@ class ESSyncUtil:
 
         self.source, self.dest = self._get_source_destination_indexes(adapter)
 
-        task_id = es_manager.reindex(self.source, self.dest)
+        task_id = es_manager.reindex(self.source, self.dest, batch_size=batch_size, purge_ids=purge_ids)
 
         # This would display progress untill reindex process is completed
         check_task_progress(task_id)
@@ -116,6 +116,19 @@ class Command(BaseCommand):
             'index_cname',
             choices=INDEXES,
             help="""Cannonical Name of the index that need to be synced""",
+        )
+        start_cmd.add_argument(
+            "--batch-size",
+            default=1000,
+            help="Set batch size of reindex process. This can be used if the default size results in timeouts"
+                 "due to large doc sizes, but will slow down the process."
+        )
+        start_cmd.add_argument(
+            "--purge-ids",
+            action="store_true",
+            default=False,
+            help="Add reindex script to remove ids from doc source. This slows down the reindex substantially,"
+                 "but is necessary if existings docs contain _ids in the source, as it is now a reserved property."
         )
 
         # Get ReIndex Process Status
