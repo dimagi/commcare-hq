@@ -164,7 +164,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function CustomDataFieldsModel(options) {
-        assertProperties.assertRequired(options, [ 'custom_fields', 'custom_fields_profiles']);
+        assertProperties.assertRequired(options,
+            [ 'custom_fields', 'custom_fields_profiles', 'can_edit_linked_data']);
 
         var self = {};
         self.data_fields = ko.observableArray();
@@ -182,6 +183,8 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.hasLinkedData = ko.pureComputed(function () {
             return self.data_fields().some(field => field.isSynced());
         });
+
+        self.allowEdit = ko.observable(options.can_edit_linked_data);
 
         self.addField = function () {
             self.data_fields.push(Field({
@@ -283,6 +286,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         var customDataFieldsModel = CustomDataFieldsModel({
             custom_fields: initialPageData.get('custom_fields'),
             custom_fields_profiles: initialPageData.get('custom_fields_profiles'),
+            can_edit_linked_data: initialPageData.get('can_edit_linked_data'),
         });
         customDataFieldsModel.data_fields.subscribe(function () {
             $("#save-custom-fields").prop("disabled", false);

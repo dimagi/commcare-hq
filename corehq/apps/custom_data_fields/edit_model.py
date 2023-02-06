@@ -339,6 +339,7 @@ class CustomDataModelMixin(object):
             "show_purge_existing": self.show_purge_existing,
             "profiles_active": self.show_profiles and self.request.POST.get("profiles_active", "false") == "true",
             "is_managed_by_upstream_domain": self.is_managed_by_upstream_domain(),
+            "can_edit_linked_data": self.can_edit_linked_data(),
         }
         if self.show_profiles:
             profiles = json.loads(self.form.data['profiles'])
@@ -369,6 +370,9 @@ class CustomDataModelMixin(object):
     def is_managed_by_upstream_domain(self):
         fields = self.get_definition().get_fields()
         return any(f.is_synced for f in fields)
+
+    def can_edit_linked_data(self):
+        return self.request.couch_user.can_edit_linked_data(self.domain)
 
     def post(self, request, *args, **kwargs):
         if self.form.is_valid():
