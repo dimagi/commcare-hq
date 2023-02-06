@@ -17,7 +17,7 @@ from corehq.apps.es.tests.utils import (
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
-from ..api.get_list import MAX_PAGE_SIZE, get_list, unpack_query_dict
+from ..api.get_list import MAX_PAGE_SIZE, get_list
 
 GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
@@ -76,7 +76,8 @@ class TestCaseListAPI(TestCase):
         super().tearDownClass()
 
     def test_pagination(self):
-        res = get_list(self.domain, {"limit": "3", "case_type": "person"})
+        query_dict = QueryDict('limit=3&case_type=person')
+        res = get_list(self.domain, query_dict)
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
@@ -128,7 +129,7 @@ class TestCaseListAPI(TestCase):
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
-    params = unpack_query_dict(QueryDict(querystring))
+    params = QueryDict(querystring)
     actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
@@ -149,12 +150,6 @@ def test_case_list_queries(self, querystring, expected):
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
-        params = unpack_query_dict(QueryDict(querystring))
+        params = QueryDict(querystring)
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)
-
-
-def test_doctests():
-    import corehq.apps.hqcase.api.get_list
-    results = doctest.testmod(corehq.apps.hqcase.api.get_list)
-    assert results.failed == 0

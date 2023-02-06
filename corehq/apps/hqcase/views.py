@@ -26,7 +26,7 @@ from corehq.util.es.elasticsearch import NotFoundError
 from corehq.util.view_utils import reverse
 
 from .api.core import SubmissionError, UserError, serialize_case, serialize_es_case
-from .api.get_list import get_list, unpack_query_dict
+from .api.get_list import get_list
 from .api.get_bulk import get_bulk
 from .api.updates import handle_case_update
 from .tasks import delete_exploded_case_task, explode_case_task
@@ -154,7 +154,7 @@ def _handle_bulk_fetch(request):
 
 def _handle_list_view(request):
     try:
-        res = get_list(request.domain, unpack_query_dict(request.GET))
+        res = get_list(request.domain, request.GET)
     except UserError as e:
         return JsonResponse({'error': str(e)}, status=400)
 
