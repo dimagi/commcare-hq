@@ -568,18 +568,14 @@ def sync_all_tableau_users():
                 _delete_user_local(domain, tableau_user_name)
 
     def _sync_tableau_users_with_remote(domain):
-
-        # Setup
-        remote_HQ_group_id = [group.id for group
-                              in get_all_tableau_groups(domain) if group.name == HQ_TABLEAU_GROUP_NAME]
         session = TableauAPISession.create_session_for_domain(domain)
 
-        # More setup - parse/get remote group ID and users in group
+        # Setup - parse/get remote group ID and users in group
+        remote_HQ_group_id = session.query_groups(name=HQ_TABLEAU_GROUP_NAME)['id']
         if remote_HQ_group_id:
-            remote_HQ_group_id = remote_HQ_group_id[0]
             remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
         else:
-            remote_HQ_group_id = session.create_group(HQ_TABLEAU_GROUP_NAME, DEFAULT_TABLEAU_ROLE)
+            remote_HQ_group_id = session.create_group(HQ_TABLEAU_GROUP_NAME, "Viewer")
             remote_HQ_group_users = []
         local_users = TableauUser.objects.filter(server=session.tableau_connected_app.server)
 

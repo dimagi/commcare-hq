@@ -343,7 +343,7 @@ class TableauAPISession(object):
         Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
         Exclude the `name` arg to get a list of all groups on the site, sorted by name.
 
-        Each group dict returned has this format, at a minumum:
+        Each group dict returned has this format, at a minumum (unless no group is returned):
         {
             "domain": {
                 "name": ...
@@ -363,6 +363,8 @@ class TableauAPISession(object):
             url,
             {}
         )
+        if not response_body['groups']:
+            return {}
         if name:
             return response_body['groups']['group'][0]
         else:
