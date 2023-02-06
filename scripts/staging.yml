@@ -78,10 +78,10 @@ branches:
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - ad/remove-entered-wrap-functions # Addison Jan 26
     - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - akj/ush-1508-checkbox-accessibility # Akash Jan 29
     - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
 #    - ce/enable-case-rate-limits # Cal Feb 1
     - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
     - ml/enforce-metadata-ff # Minha Feb 2
+    - akj/tabular-radio-btn-reader # Akash Feb 6
 submodules: { }
