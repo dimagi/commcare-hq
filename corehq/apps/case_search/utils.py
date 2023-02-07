@@ -54,11 +54,13 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         couch_user=couch_user,
         registry_slug=config.data_registry,
         custom_related_case_property=config.custom_related_case_property,
+        include_related_cases=config.include_related_cases,
     )
 
 
 def get_case_search_results(domain, case_types, criteria,
-                            app_id=None, couch_user=None, registry_slug=None, custom_related_case_property=None):
+                            app_id=None, couch_user=None, registry_slug=None,
+                            custom_related_case_property=None, include_related_cases=None):
     if registry_slug:
         query_domains = _get_registry_visible_domains(couch_user, domain, case_types, registry_slug)
         helper = _RegistryQueryHelper(domain, query_domains)

@@ -66,6 +66,7 @@ from corehq.apps.app_manager.util import (
     module_uses_smart_links,
     module_offers_registry_search,
     module_uses_inline_search,
+    module_uses_include_related_cases,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -82,6 +83,8 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
+    CASE_SEARCH_INCLUDE_RELATED_CASES_KEY
+
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -268,6 +271,14 @@ class RemoteRequestFactory(object):
                 QueryData(
                     key=CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
                     ref=f"'{self.module.search_config.custom_related_case_property}'",
+                )
+            )
+        if (module_uses_include_related_cases(self.module)
+                and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain)):
+            datums.append(
+                QueryData(
+                    key=CASE_SEARCH_INCLUDE_RELATED_CASES_KEY,
+                    ref=f"'{self.module.search_config.include_related_cases}'",
                 )
             )
         return datums
