@@ -169,6 +169,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 audioUrl: audioUri ? FormplayerFrontend.getChannel().request('resourceMap', audioUri, appId) : "",
                 value: value,
                 errorMessage: this.errorMessage,
+                dateFormat: dateFormat,
             };
         },
 
