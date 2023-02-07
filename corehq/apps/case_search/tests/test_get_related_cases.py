@@ -196,7 +196,6 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         app = Application.new_app(self.domain, "Case Search App")
         module = app.add_module(Module.new_module("Search Module", "en"))
         module.case_type = "teacher"
-        module.search_config.pull_parent_child_ext_cases = True
         cases = [
             {'_id': 'b1', 'case_type': 'b'},
             {'_id': 'a1', 'case_type': 'a', 'index': {
@@ -215,12 +214,14 @@ class TestGetRelatedCases(BaseCaseSearchTest):
 
         SOURCE_CASE_ID = {'a1', 'a2', 'a3'}
         RESULT_PARENT_CHILD_CASE_ID = {'b1', 'c1', 'e1'}
-
-        result_cases = get_parent_child_ext_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
+        with patch("corehq.apps.case_search.utils.module_uses_pull_parent_child_ext_cases",
+                return_value=True):
+            result_cases = get_parent_child_ext_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
         self._assert_case_ids(RESULT_PARENT_CHILD_CASE_ID, result_cases)
 
-        module.search_config.pull_parent_child_ext_cases = False
-        result_cases = get_parent_child_ext_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
+        with patch("corehq.apps.case_search.utils.module_uses_pull_parent_child_ext_cases",
+                return_value=False):
+            result_cases = get_parent_child_ext_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
         self.assertIsNone(result_cases)
 
     def test_get_defined_cases(self):
@@ -261,7 +262,9 @@ class TestGetRelatedCases(BaseCaseSearchTest):
 
             with flag_enabled('USH_CASE_CLAIM_UPDATES'):
                 module.search_config.pull_parent_child_ext_cases = True
-                result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
+                with patch("corehq.apps.case_search.utils.module_uses_pull_parent_child_ext_cases",
+                        return_value=True):
+                    result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'}, SOURCE_CASE_ID)
                 self._assert_case_ids(RESULT_PARENT_CHILD_EXT_CASE_ID, result_cases)
 
                 with patch("corehq.apps.case_search.utils.get_parent_child_ext_cases",
