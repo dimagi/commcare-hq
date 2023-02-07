@@ -152,6 +152,6 @@ class Command(BaseCommand):
         sub_cmd = options['sub_command']
         cmd_func = options.get('func')
         if sub_cmd == 'start':
-            cmd_func(options['index_cname'])
+            cmd_func(options['index_cname'], options['batch_size'], options['purge_ids'])
         else:
             cmd_func(options['task_id'])
