@@ -174,22 +174,32 @@ def delete_all_ucr_tables_for_domain(domain):
     """
     For a given domain, delete all the known UCR data source tables
 
-    This only deletes "known" data sources for the domain.
-    To identify "orphaned" tables, see the manage_orphaned_ucrs management command.
+    This includes attempting to delete orphaned UCRs that are associated with
+    this domain
     """
+    deleted_domains_cache = DeletedDomains()
+    if not deleted_domains_cache.is_domain_deleted(domain):
+        raise ValueError(f"{domain} is not deleted.")
+
     for config in get_datasources_for_domain(domain):
         adapter = get_indicator_adapter(config)
         adapter.drop_table()
 
+    for engine_id in {ds.engine_id for ds in get_all_data_sources()}:
+        ucrs = get_orphaned_ucrs(engine_id, domain, ignore_active_domains=True,
+                                 deleted_domains_cache=deleted_domains_cache)
+        drop_orphaned_ucrs(engine_id, ucrs)
 
-def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True):
+
+def get_orphaned_ucrs(engine_id, domain=None, ignore_active_domains=True,
+                      deleted_domains_cache=None):
     """
     :param engine_id: id of the database/engine to search in
     :param domain: (optional) domain name to limit search to
     :param ignore_active_domains: if True, only searches within deleted domains
     :return: list of tablenames
     """
-    deleted_domains_cache = DeletedDomains()
+    deleted_domains_cache = deleted_domains_cache or DeletedDomains()
     if domain and not deleted_domains_cache.is_domain_deleted(domain):
         assert not ignore_active_domains,\
             f"{domain} is active but ignore_active_domains is True"
