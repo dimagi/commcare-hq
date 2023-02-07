@@ -11,7 +11,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import (
     module_offers_search,
-    module_uses_pull_parent_child_ext_cases
+    module_uses_include_related_cases,
 )
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
@@ -380,14 +380,14 @@ def get_parent_child_ext_cases(helper, app, case_types, source_case_ids):
     get_parent_and_ext_cases = importlib.import_module(
         "corehq.ex-submodules.casexml.apps.phone.data_providers.case.livequery").get_parent_and_ext_cases
 
-    pull_parent_child_ext_cases = False
+    include_related_cases = False
     results = []
     for module in app.get_modules():
-        if module.case_type in case_types and module_uses_pull_parent_child_ext_cases(module):
-            pull_parent_child_ext_cases = True
+        if module.case_type in case_types and module_uses_include_related_cases(module):
+            include_related_cases = True
             results.extend(get_parent_and_ext_cases(helper.domain, source_case_ids))
             results.extend(get_child_case_results(helper, source_case_ids))
-    return results if pull_parent_child_ext_cases else None
+    return results if include_related_cases else None
 
 
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):

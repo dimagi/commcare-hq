@@ -421,10 +421,10 @@ def module_uses_inline_search(module):
     )
 
 
-def module_uses_pull_parent_child_ext_cases(module):
+def module_uses_include_related_cases(module):
     return (
         module_offers_search(module)
-        and module.module.search_config.pull_parent_child_ext_cases
+        and module.module.search_config.include_related_cases
     )
 
 
