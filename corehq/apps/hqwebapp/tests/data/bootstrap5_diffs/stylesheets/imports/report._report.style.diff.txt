@@ -1,0 +1,43 @@
+--- 
++++ 
+@@ -1,6 +1,6 @@
+ .report-actions {
+   padding: 5px 15px;
+-  border-bottom: 1px solid @cc-neutral-hi;
++  border-bottom: 1px solid $cc-neutral-hi;
+   text-align: right;
+ }
+ 
+@@ -11,9 +11,8 @@
+   position: absolute;
+   background-color: #ffffff;
+   padding: 15px 20px;
+-  z-index: @zindex-report-loading;
+-  .border-top-radius(5px);
+-  .border-bottom-radius(5px);
++  z-index: $zindex-report-loading;
++  border-radius: 5px;
+   left: 50%;
+   width: 350px;
+   margin-left: -175px;
+@@ -32,9 +31,9 @@
+     left: 0;
+     width: 100%;
+     height: 100%;
+-    background-color: @gray;
++    background-color: $gray;
+     // Fade for backdrop
+-    .opacity(0.8);
++    opacity: 0.8;
+ }
+ 
+ .property-name-display {
+@@ -55,7 +54,7 @@
+     margin: 4px 0;
+     font-size: 12px;
+     text-transform: uppercase;
+-    color: @cc-neutral-mid;
++    color: $cc-neutral-mid;
+     font-weight: 600;
+   }
+ }
