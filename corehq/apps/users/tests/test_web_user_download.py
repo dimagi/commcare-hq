@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest import mock
 
 from django.test import TestCase
 
@@ -6,9 +7,12 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
 from corehq.apps.users.bulk_download import parse_web_users
 from corehq.apps.users.models import Invitation, UserRole, WebUser
+from corehq.apps.reports.models import TableauUser
+from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
+from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
-
+from corehq.util.test_utils import flag_enabled
 
 @es_test
 class TestDownloadWebUsers(TestCase):
@@ -155,3 +159,36 @@ class TestDownloadWebUsers(TestCase):
             ("susan@choi.com", self.other_domain),
             ("invited_to_other_domain@user.com", self.other_domain),
         })
+
+    def _setup_tableau_users(self):
+        _setup_test_tableau_server(self, self.domain)
+        TableauUser.objects.create(
+            server=self.connected_app.server,
+            username='edith@wharton.com',
+            role=TableauUser.Roles.VIEWER.value)
+        TableauUser.objects.create(
+            server=self.connected_app.server,
+            username='george@eliot.com',
+            role=TableauUser.Roles.EXPLORER.value)
+
+    @flag_enabled('TABLEAU_USER_SYNCING')
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_tableau_user_download(self, mock_request):
+        self._setup_tableau_users()
+        mock_request.side_effect = _mock_create_session_responses(self) + [
+            self.tableau_instance.get_groups_for_user_id_response(),
+            self.tableau_instance.failure_response()
+        ]
+        (headers, rows) = parse_web_users(self.domain_obj.name, {})
+
+        rows = list(rows)
+        self.assertEqual(3, len(rows))
+
+        spec = dict(zip(headers, rows[0]))
+        self.assertEqual(TableauUser.Roles.VIEWER.value, spec['tableau_role'])
+        self.assertEqual("""[["group1", "1a2b3"], ["group2", "c4d5e"]]""", spec['tableau_groups'])
+
+        spec = dict(zip(headers, rows[1]))
+        self.assertEqual(TableauUser.Roles.EXPLORER.value, spec['tableau_role'])
+        # Should be ERROR since the second get_groups_for_user_id response fails
+        self.assertEqual('ERROR', spec['tableau_groups'])
