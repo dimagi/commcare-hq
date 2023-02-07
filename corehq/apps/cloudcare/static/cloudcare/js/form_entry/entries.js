@@ -742,30 +742,15 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
      * date picker between the three types of Entry.
      */
     function DateTimeEntryBase(question, options) {
-        var self = this,
-            thisYear = new Date().getFullYear(),
-            minDate,
-            maxDate,
-            yearEnd,
-            yearStart;
+        var self = this;
 
         EntrySingleAnswer.call(self, question, options);
-
-        // Set year ranges
-        yearEnd = thisYear + 10;
-        yearStart = thisYear - 100;
-        // Set max date to 10 years in the future
-        maxDate = moment(yearEnd, 'YYYY').toDate();
-        // Set min date to 100 years in the past
-        minDate = moment(yearStart, 'YYYY').toDate();
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
             cloudcareUtils.initDateTimePicker(self.$picker, _.extend({
                 date: self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER,
                 format: self.clientFormat,
-                minDate: minDate,
-                maxDate: maxDate,
                 keepInvalid: true,
                 parseInputDate: function (date) {
                     var d = moment(date, self.clientFormat);
