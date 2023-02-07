@@ -141,7 +141,7 @@ function run_tests {
             su cchq -c scripts/test-prod-entrypoints.sh
             scripts/test-make-requirements.sh
             scripts/test-serializer-pickle-files.sh
-            [ "$TEST_MIGRATIONS" ] && su cchq -c scripts/test-django-migrations.sh
+            su cchq -c scripts/test-django-migrations.sh
             scripts/track-dependency-status.sh
         fi
         delta=$(($(date +%s) - $now))
