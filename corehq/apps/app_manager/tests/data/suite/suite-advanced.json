@@ -210,7 +210,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/name",
+              "name_update": {
+                "question_path": "/data/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -419,7 +421,9 @@
                 "repeat_context": null,
                 "case_type": "requisition",
                 "case_tag": "open_clinic_0",
-                "name_path": "/data/req_name",
+                "name_update": {
+                  "question_path": "/data/req_name"
+                },
                 "case_properties": {},
                 "parent_reference_id": ""
               }
