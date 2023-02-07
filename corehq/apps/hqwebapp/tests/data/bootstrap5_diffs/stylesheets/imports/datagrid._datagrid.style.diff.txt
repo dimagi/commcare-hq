@@ -1,0 +1,57 @@
+--- 
++++ 
+@@ -30,8 +30,8 @@
+   width: 100%;
+ 
+   .loading-text {
+-    color: @cc-neutral-low;
+-    font-size: @font-size-base * 1.2;
++    color: $cc-neutral-low;
++    font-size: $font-size-base * 1.2;
+     line-height: 100px;
+     top: calc(50% - 50px);
+     text-align: center;
+@@ -81,27 +81,27 @@
+   margin-bottom: 10px;
+ }
+ 
+-@_header-height: 18px;
++$_header-height: 18px;
+ 
+ .datagrid-sort {
+   display: inline-block;
+   width: 15px;
+-  height: @_header-height;
+-  line-height: @_header-height;
++  height: $_header-height;
++  line-height: $_header-height;
+ }
+ 
+ .datagrid-add-link {
+   display: block;
+-  width: 100px%;
++  width: 100px;
+   height: auto;
+-  line-height: @_header-height;
++  line-height: $_header-height;
+ }
+ 
+ .datagrid-edit-link {
+   display: inline-block;
+   width: calc(100% - 35px);
+-  line-height: @_header-height;
+-  height: @_header-height;
++  line-height: $_header-height;
++  height: $_header-height;
+ 
+   .edit-icon {
+     opacity: 0;
+@@ -124,7 +124,7 @@
+ .datagrid-add-link,
+ .datagrid-edit-link,
+ .datagrid-external-link {
+-  color: @call-to-action-mid;
++  color: $call-to-action-mid;
+ 
+   &:hover {
+     text-decoration: none;
