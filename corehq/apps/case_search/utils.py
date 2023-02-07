@@ -9,7 +9,10 @@ from dimagi.utils.logging import notify_exception
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
-from corehq.apps.app_manager.util import module_offers_search
+from corehq.apps.app_manager.util import (
+    module_offers_search,
+    module_uses_pull_parent_child_ext_cases
+)
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
     COMMCARE_PROJECT,
@@ -380,7 +383,7 @@ def get_parent_child_ext_cases(helper, app, case_types, source_case_ids):
     pull_parent_child_ext_cases = False
     results = []
     for module in app.get_modules():
-        if module.case_type in case_types and module.search_config.pull_parent_child_ext_cases:
+        if module.case_type in case_types and module_uses_pull_parent_child_ext_cases(module):
             pull_parent_child_ext_cases = True
             results.extend(get_parent_and_ext_cases(helper.domain, source_case_ids))
             results.extend(get_child_case_results(helper, source_case_ids))
