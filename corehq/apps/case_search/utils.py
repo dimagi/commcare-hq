@@ -377,8 +377,7 @@ def get_child_case_types(app, case_type):
 
 
 def get_parent_child_ext_cases(helper, app, case_types, source_case_ids):
-    get_parent_and_ext_cases = importlib.import_module(
-        "corehq.ex-submodules.casexml.apps.phone.data_providers.case.livequery").get_parent_and_ext_cases
+    from casexml.apps.phone.data_providers.case.livequery import get_parent_and_ext_cases
 
     include_related_cases = False
     results = []
