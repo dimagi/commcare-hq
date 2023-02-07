@@ -136,15 +136,21 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
+    var updateScreenReaderNotification = function (notificationText) {
+        $('#sr-notification-region').text("");
+        $('#sr-notification-region').text(notificationText);
+    };
+
     var formplayerSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
-            showError(
-                gettext('Could not sync user data. Please report an issue if this persists.'),
-                $('#cloudcare-notifications')
-            );
+            const notificationText = gettext('Could not sync user data. Please report an issue if this persists.');
+            showError(notificationText, $('#cloudcare-notifications'));
+            updateScreenReaderNotification(notificationText);
         } else {
-            showSuccess(gettext('User Data successfully synced.'), $('#cloudcare-notifications'), 5000);
+            const notificationText = gettext('User Data successfully synced.');
+            showSuccess(notificationText, $('#cloudcare-notifications'), 5000);
+            updateScreenReaderNotification(notificationText);
         }
     };
 
