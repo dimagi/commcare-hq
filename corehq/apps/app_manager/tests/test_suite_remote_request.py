@@ -125,18 +125,18 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             DetailColumn.wrap(dict(
                 header={"en": "report_name"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('reports')/report[1]/name",
+                format="plain",
+                field="instance('reports')/report[1]/name",
+                useXpathExpression=True,
             ))
         )
         self.module.case_details.short.columns.append(
             DetailColumn.wrap(dict(
                 header={"en": "moon"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+                format="plain",
+                field="instance('item-list:moons')/moons_list/moons[favorite='yes']/name",
+                useXpathExpression=True,
             ))
         )
         self.module.case_details.short.columns.append(
@@ -145,15 +145,16 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                 model="case",
                 format="plain",
                 field="parent/whatever",
+                useXpathExpression=False,
             ))
         )
         self.module.case_details.long.columns.append(
             DetailColumn.wrap(dict(
                 header={"en": "ledger_name"},
                 model="case",
-                format="calculate",
-                field="whatever",
-                calc_xpath="instance('ledgerdb')/ledgers/name/name",
+                format="plain",
+                field="instance('ledgerdb')/ledgers/name/name",
+                useXpathExpression=True,
             ))
         )
         self.module.search_config = CaseSearch(
