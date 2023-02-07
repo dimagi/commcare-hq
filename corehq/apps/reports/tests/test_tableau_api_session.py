@@ -221,25 +221,29 @@ class FakeTableauInstance(mock.MagicMock):
         return mock_response
 
 
+def _setup_test_tableau_server(test_case, domain):
+    test_case.test_server = TableauServer(
+        domain=domain,
+        server_type='server',
+        server_name='test_server',
+        validate_hostname='host name',
+        target_site='target site'
+    )
+    test_case.test_server.save()
+    test_case.connected_app = TableauConnectedApp(
+        app_client_id='asdf1234',
+        secret_id='zxcv5678',
+        server=test_case.test_server
+    )
+    test_case.connected_app.save()
+    test_case.tableau_instance = FakeTableauInstance()
+
+
 class TestTableauAPISession(TestCase):
 
     def setUp(self):
         self.domain = 'test-domain-name'
-        self.test_server = TableauServer(
-            domain=self.domain,
-            server_type='server',
-            server_name='test_server',
-            validate_hostname='host name',
-            target_site='target site'
-        )
-        self.test_server.save()
-        self.connected_app = TableauConnectedApp(
-            app_client_id='asdf1234',
-            secret_id='zxcv5678',
-            server=self.test_server
-        )
-        self.connected_app.save()
-        self.tableau_instance = FakeTableauInstance()
+        _setup_test_tableau_server(self, self.domain)
         super(TestTableauAPISession, self).setUp()
 
     def test_connected_app_encryption(self):
