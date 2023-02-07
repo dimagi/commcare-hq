@@ -424,7 +424,7 @@ def module_uses_inline_search(module):
 def module_uses_include_related_cases(module):
     return (
         module_offers_search(module)
-        and module.module.search_config.include_related_cases
+        and module.search_config.include_related_cases
     )
 
 
