@@ -2123,6 +2123,8 @@ class CaseSearch(DocumentSchema):
     additional_registry_cases = StringListProperty()               # list of xpath expressions
     title_label = LabelProperty(default={})
     description = LabelProperty(default={})
+    pull_parent_child_ext_cases = BooleanProperty(default=False)
+
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
