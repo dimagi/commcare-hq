@@ -169,12 +169,8 @@ class _AppSummaryFormDataGenerator(object):
             for raw_question in form.get_questions(self.app.langs, include_triggers=True,
                                                    include_groups=True, include_translations=True,
                                                    include_fixtures=True)
-            for question in self._get_question(form.unique_id, raw_question)
+            for question in self._get_question(form.unique_id, raw_question, form.actions)
         )
-
-        if 'update_case' in form.actions:
-            self._get_update_modes(form.actions.update_case.update, questions_by_path)
-
         for path, question in questions_by_path.items():
             parent = question.group or question.repeat
             if parent:
@@ -183,10 +179,10 @@ class _AppSummaryFormDataGenerator(object):
         return [question for question in questions_by_path.values()
                 if not question.group and not question.repeat]
 
-    def _get_question(self, form_unique_id, question):
+    def _get_question(self, form_unique_id, question, actions):
         if self._needs_save_to_case_root_node(question, form_unique_id):
             yield self._save_to_case_root_node(form_unique_id, question)
-        yield self._serialized_question(form_unique_id, question)
+        yield self._serialized_question(form_unique_id, question, actions)
 
     def _needs_save_to_case_root_node(self, question, form_unique_id):
         return (
@@ -225,21 +221,25 @@ class _AppSummaryFormDataGenerator(object):
         self._seen_save_to_case[form_unique_id].append(question_path)
         return response
 
-    def _serialized_question(self, form_unique_id, question):
+    def _serialized_question(self, form_unique_id, question, actions):
         response = _FormMetadataQuestion(question)
         response.form_id = form_unique_id
         response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
         response.save_properties = self._case_meta.get_save_properties(form_unique_id, question['value'])
+        for save_property in response.save_properties:
+            self._add_update_mode(save_property, actions)
         if self._is_save_to_case(question):
             response.type = 'SaveToCase'
         return response
 
-    def _get_update_modes(self, updates, questions):
-        for property, conditional_case_update in updates.items():
-            path = conditional_case_update.question_path
-            for save_property in questions[path].save_properties:
-                if save_property.property == property:
-                    save_property.update_mode = conditional_case_update.update_mode
+    def _add_update_mode(self, save_property, actions):
+        if save_property.case_type == 'commcare-user':
+            conditional_update = actions.usercase_update.update.get(save_property.property)
+        else:
+            conditional_update = actions.update_case.update.get(save_property.property)
+
+        if conditional_update:
+            save_property.update_mode = conditional_update.update_mode
 
 
 def get_app_summary_formdata(domain, app, include_shadow_forms=True):

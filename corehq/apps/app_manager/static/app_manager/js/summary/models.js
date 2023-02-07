@@ -120,7 +120,6 @@ hqDefine('app_manager/js/summary/models',[
                     'calculate': gettext("Calculate condition"),
                     'relevant': gettext("Display condition"),
                     'required': gettext("Required"),
-                    'update_mode': gettext("Update Mode"),
                     'comment': gettext("Question Comment"),
                     'setvalue': gettext("Default Value"),
                     'constraint': gettext("Validation Condition"),
