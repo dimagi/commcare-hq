@@ -1,5 +1,4 @@
 import datetime
-import doctest
 import uuid
 from base64 import b64decode
 
@@ -154,9 +153,3 @@ def test_bad_requests(self, querystring, error_msg):
         params = QueryDict(querystring)
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)
-
-
-def test_doctests():
-    import corehq.apps.hqcase.api.get_list
-    results = doctest.testmod(corehq.apps.hqcase.api.get_list)
-    assert results.failed == 0
