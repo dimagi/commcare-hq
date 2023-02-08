@@ -437,6 +437,36 @@ class TestCreateRelationships(TestCase):
         assert relationship_created.relationship_type_id != existing_relationship.relationship_type_id
 
 
+class TestUpdateTrackedEntityInstance(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain_obj = create_domain(DOMAIN)
+        cls.factory = CaseFactory(domain=DOMAIN)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super().tearDownClass()
+
+    def setUp(self):
+        build_patch = patch('corehq.motech.dhis2.entities_helpers.build_tracked_entity')
+        build_patch.start()
+        self.addCleanup(build_patch.stop)
+
+        put_patch = patch('corehq.motech.requests.Requests.put')
+        self.put_func = put_patch.start()
+        self.addCleanup(put_patch.stop)
+        self.put_func.return_value = Mock(
+            status_code=200,
+            json=lambda: {"response": "here"},
+        )
+
+    def test_update_tracked_entity_instance_errors(self):
+        pass
+
+
 class TestRequests(TestCase):
 
     @classmethod
