@@ -65,7 +65,9 @@ class TestTableauAPIUtil(TestTableauAPISession):
     def test_add_tableau_user(self, mock_request):
         new_username = 'ricardo@company.com'
         mock_request.side_effect = (_mock_create_session_responses(self)
-        + [self.tableau_instance.create_user_response(new_username, None)])
+        + [self.tableau_instance.create_user_response(new_username, None),
+           self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+           self.tableau_instance.add_user_to_group_response()])
         add_tableau_user(self.domain, new_username)
         created_user = TableauUser.objects.get(username=new_username)
         self.assertEqual(created_user.tableau_user_id, 'gh23jk')

@@ -1967,7 +1967,9 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
 
     def _mock_create_user_mock_responses(self, username):
         return _mock_create_session_responses(self) + [
-            self.tableau_instance.create_user_response(username, None)]
+            self.tableau_instance.create_user_response(username, None),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.add_user_to_group_response()]
 
     def _mock_update_user_responses(self, username):
         return _mock_create_session_responses(self) + [

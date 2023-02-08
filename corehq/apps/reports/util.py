@@ -493,6 +493,7 @@ def _add_tableau_user_remote(session, user, role=DEFAULT_TABLEAU_ROLE):
     new_id = session.create_user(tableau_username(user.username), role)
     user.tableau_user_id = new_id
     user.save()
+    _add_user_to_HQ_group(session, user)
     return new_id
 
 
@@ -541,12 +542,26 @@ def update_tableau_user(domain, username, role=None, groups=[]):
         _notify_tableau_exception(e, domain)
 
 
+def _add_user_to_HQ_group(session, user):
+    remote_HQ_group_id = _get_hq_group_id(session)
+    if remote_HQ_group_id:
+        session.add_user_to_group(user.tableau_user_id, remote_HQ_group_id)
+    else:
+        _notify_tableau_exception(
+            f'HQ Group did not exist when trying to add user to it. Username: {user.username}.',
+            user.server.domain)
+
+
+def _get_hq_group_id(session):
+    return session.get_group(HQ_TABLEAU_GROUP_NAME).get('id')
+
+
 def _update_user_remote(session, user, groups=[]):
     new_id = session.update_user(user.tableau_user_id, role=user.role, username=tableau_username(user.username))
     user.tableau_user_id = new_id
     user.save()
     # Add default group
-    groups += [TableauGroupTuple(HQ_TABLEAU_GROUP_NAME, session.query_groups(name=HQ_TABLEAU_GROUP_NAME)['id'])]
+    _add_user_to_HQ_group(session, user)
     for group in groups:
         session.add_user_to_group(user.tableau_user_id, group.id)
 
@@ -571,7 +586,7 @@ def sync_all_tableau_users():
         session = TableauAPISession.create_session_for_domain(domain)
 
         # Setup - parse/get remote group ID and users in group
-        remote_HQ_group_id = session.query_groups(name=HQ_TABLEAU_GROUP_NAME)['id']
+        remote_HQ_group_id = _get_hq_group_id(session)
         if remote_HQ_group_id:
             remote_HQ_group_users = session.get_users_in_group(remote_HQ_group_id)
         else:
