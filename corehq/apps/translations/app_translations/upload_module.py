@@ -100,7 +100,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         if self.description:
             self._update_translation(self.description, self.module.search_config.description)
 
-        if self.no_items_text:
+        if self.no_items_text and hasattr(self.module, 'case_details'):
             self._update_translation(self.no_items_text, self.module.case_details.short.no_items_text)
 
         self._update_case_search_labels(rows)
