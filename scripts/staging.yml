@@ -72,7 +72,6 @@ branches:
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
     - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
     - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
