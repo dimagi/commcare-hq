@@ -283,7 +283,6 @@ class TestViews(TestCase):
     def test_form_linking_context(self, _):
         factory = AppFactory(build_version='2.9.0')
         m0, m0f0 = factory.new_basic_module('m0', 'frog')
-        # multiselect module (can't be linked to)
         m1, m2f0 = factory.new_basic_module('m1', 'frog')
         m1.case_details.short.multi_select = True
         # shadow module

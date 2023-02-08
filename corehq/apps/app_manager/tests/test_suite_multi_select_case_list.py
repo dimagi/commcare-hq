@@ -539,7 +539,7 @@ class MultiSelectEndOfFormNavTests(SimpleTestCase, TestXmlMixin):
         form0 = self.single_child.get_form(0)
         form1 = self.multi_child.get_form(0)
 
-        form0.post_form_workflow = WORKFLOW_PREVIOUS  # can link *from* multi-select form to single select form
+        form0.post_form_workflow = WORKFLOW_PREVIOUS  # can link *from* single select form to multi-select form
         self.assertIn({'type': 'mismatch multi select form links',
              'form_type': 'module_form',
              'module': {'id': 5, 'name': {'en': 'Single Child module'}, 'unique_id': 'Single Child_module'},
