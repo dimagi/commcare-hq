@@ -1,12 +1,12 @@
 import difflib
 import json
-import os
+from pathlib import Path
 
 from django.core.management import BaseCommand
 
 import corehq
 
-COREHQ_BASE_DIR = os.path.dirname(os.path.realpath(corehq.__file__))
+COREHQ_BASE_DIR = Path(corehq.__file__).resolve().parent
 DIFF_CONFIG_FILE = "apps/hqwebapp/tests/data/bootstrap5_diff_config.json"
 DIFF_STORAGE_FOLDER = "apps/hqwebapp/tests/data/bootstrap5_diffs/"
 
@@ -35,7 +35,7 @@ def get_diff(file_v1, file_v2):
 
 
 def get_bootstrap5_diff_config():
-    config_file_path = os.path.join(COREHQ_BASE_DIR, DIFF_CONFIG_FILE)
+    config_file_path = COREHQ_BASE_DIR / DIFF_CONFIG_FILE
     with open(config_file_path, encoding='utf-8') as f:
         return json.loads(f.read())
 
@@ -48,13 +48,13 @@ def get_bootstrap5_filepaths(full_diff_config):
             file_type = diff_config["file_type"]
             label = diff_config["label"]
 
-            path_bootstrap3 = os.path.join(COREHQ_BASE_DIR, parent_path, directory_bootstrap3)
-            path_bootstrap5 = os.path.join(COREHQ_BASE_DIR, parent_path, directory_bootstrap5)
+            path_bootstrap3 = COREHQ_BASE_DIR / parent_path / directory_bootstrap3
+            path_bootstrap5 = COREHQ_BASE_DIR / parent_path / directory_bootstrap5
             for filename_bootstrap3, filename_bootstrap5 in migrated_files:
                 diff_filename = get_diff_filename(filename_bootstrap3, filename_bootstrap5, file_type)
-                diff_filepath = os.path.join(COREHQ_BASE_DIR, DIFF_STORAGE_FOLDER, label, diff_filename)
-                bootstrap3_filepath = os.path.join(path_bootstrap3, filename_bootstrap3)
-                bootstrap5_filepath = os.path.join(path_bootstrap5, filename_bootstrap5)
+                diff_filepath = COREHQ_BASE_DIR / DIFF_STORAGE_FOLDER / label / diff_filename
+                bootstrap3_filepath = path_bootstrap3 / filename_bootstrap3
+                bootstrap5_filepath = path_bootstrap5 / filename_bootstrap5
 
                 yield bootstrap3_filepath, bootstrap5_filepath, diff_filepath
 
