@@ -77,6 +77,7 @@ def get_list(domain, params):
         last_id = params.pop(LAST_CASE_ID, [None])[0]
         query = _get_cursor_query(domain, params, last_date, last_id)
     else:
+        params = params.copy()  # Makes params mutable for pagination below
         query = _get_query(domain, params)
 
     es_result = query.run()
@@ -88,12 +89,11 @@ def get_list(domain, params):
 
     cases_in_result = len(hits)
     if cases_in_result and es_result.total > cases_in_result:
-        mutable = QueryDict('', mutable=True)
-        mutable.update(params, **{
+        params.update({
             INDEXED_AFTER: hits[-1]["@indexed_on"],
             LAST_CASE_ID: hits[-1]["_id"],
         })
-        cursor = mutable.urlencode()
+        cursor = params.urlencode()
         ret['next'] = {'cursor': b64encode(cursor.encode('utf-8'))}
 
     return ret
