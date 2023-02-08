@@ -313,6 +313,34 @@ hqDefine('cloudcare/js/utils', [
         }
     };
 
+    var dateTimePickerTooltips = {     // use default text, but enable translations
+        today: gettext('Go to today'),
+        clear: gettext('Clear selection'),
+        close: gettext('Close the picker'),
+        selectMonth: gettext('Select Month'),
+        prevMonth: gettext('Previous Month'),
+        nextMonth: gettext('Next Month'),
+        selectYear: gettext('Select Year'),
+        prevYear: gettext('Previous Year'),
+        nextYear: gettext('Next Year'),
+        selectDecade: gettext('Select Decade'),
+        prevDecade: gettext('Previous Decade'),
+        nextDecade: gettext('Next Decade'),
+        prevCentury: gettext('Previous Century'),
+        nextCentury: gettext('Next Century'),
+        pickHour: gettext('Pick Hour'),
+        incrementHour: gettext('Increment Hour'),
+        decrementHour: gettext('Decrement Hour'),
+        pickMinute: gettext('Pick Minute'),
+        incrementMinute: gettext('Increment Minute'),
+        decrementMinute: gettext('Decrement Minute'),
+        pickSecond: gettext('Pick Second'),
+        incrementSecond: gettext('Increment Second'),
+        decrementSecond: gettext('Decrement Second'),
+        togglePeriod: gettext('Toggle Period'),
+        selectTime: gettext('Select Time'),
+    }
+
     /**
      *  Convert two-digit year to four-digit year.
      *  Differs from JavaScript's two-year parsing to better match CommCare,
@@ -354,33 +382,7 @@ hqDefine('cloudcare/js/utils', [
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
-            tooltips: {     // use default text, but enable translations
-                today: gettext('Go to today'),
-                clear: gettext('Clear selection'),
-                close: gettext('Close the picker'),
-                selectMonth: gettext('Select Month'),
-                prevMonth: gettext('Previous Month'),
-                nextMonth: gettext('Next Month'),
-                selectYear: gettext('Select Year'),
-                prevYear: gettext('Previous Year'),
-                nextYear: gettext('Next Year'),
-                selectDecade: gettext('Select Decade'),
-                prevDecade: gettext('Previous Decade'),
-                nextDecade: gettext('Next Decade'),
-                prevCentury: gettext('Previous Century'),
-                nextCentury: gettext('Next Century'),
-                pickHour: gettext('Pick Hour'),
-                incrementHour: gettext('Increment Hour'),
-                decrementHour: gettext('Decrement Hour'),
-                pickMinute: gettext('Pick Minute'),
-                incrementMinute: gettext('Increment Minute'),
-                decrementMinute: gettext('Decrement Minute'),
-                pickSecond: gettext('Pick Second'),
-                incrementSecond: gettext('Increment Second'),
-                decrementSecond: gettext('Decrement Second'),
-                togglePeriod: gettext('Toggle Period'),
-                selectTime: gettext('Select Time'),
-            },
+            tooltips: dateTimePickerTooltips,
         }, extraOptions));
 
         var picker = $el.data("DateTimePicker");
@@ -395,12 +397,11 @@ hqDefine('cloudcare/js/utils', [
             return dateObj.isValid() ? dateObj : "";
         });
 
-        $el.on("focusout", function () {
-            picker.hide();
-        });
+        $el.on("focusout", picker.hide);
     };
 
     return {
+        dateTimePickerTooltips: dateTimePickerTooltips,
         convertTwoDigitYear: convertTwoDigitYear,
         initDateTimePicker: initDateTimePicker,
         getFormUrl: getFormUrl,
