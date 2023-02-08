@@ -28,11 +28,10 @@ def get_renamed_filename(filename):
 
 
 def get_diff(file_v1, file_v2):
-    with open(file_v1, "r") as fv1:
-        with open(file_v2, "r") as fv2:
-            data_v1 = fv1.readlines()
-            data_v2 = fv2.readlines()
-            return list(difflib.unified_diff(data_v1, data_v2))
+    with open(file_v1, "r") as fv1, open(file_v2, "r") as fv2:
+        data_v1 = fv1.readlines()
+        data_v2 = fv2.readlines()
+        return list(difflib.unified_diff(data_v1, data_v2))
 
 
 def get_bootstrap5_diff_config():
