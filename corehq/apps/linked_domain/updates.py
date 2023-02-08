@@ -196,7 +196,7 @@ def update_custom_data_models_impl(upstream_results, downstream_domain):
 
 def merge_fields(downstream_fields, upstream_fields):
     managed_fields = [create_local_field(field_def) for field_def in upstream_fields]
-    local_fields = [field for field in downstream_fields if not field.is_synced]
+    local_fields = [field for field in downstream_fields if not field.upstream_id]
 
     local_slugs = [field.slug for field in local_fields]
     conflicting_slugs = [field.slug for field in managed_fields if field.slug in local_slugs]
@@ -212,7 +212,7 @@ def merge_fields(downstream_fields, upstream_fields):
 # TODO: Make this whole thing a transaction
 def update_profiles(definition, upstream_profiles):
     downstream_profiles = definition.get_profiles()
-    unsynced_profile_names = [profile.name for profile in downstream_profiles if not profile.is_synced]
+    unsynced_profile_names = [profile.name for profile in downstream_profiles if not profile.upstream_id]
     conflicting_profile_names = [
         profile['name'] for profile in upstream_profiles if profile['name'] in unsynced_profile_names
     ]
@@ -222,7 +222,7 @@ def update_profiles(definition, upstream_profiles):
             f'{", ".join(conflicting_profile_names)}'
         )
 
-    existing_managed_profiles = {profile.name: profile for profile in downstream_profiles if profile.is_synced}
+    existing_managed_profiles = {profile.name: profile for profile in downstream_profiles if profile.upstream_id}
 
     for profile in upstream_profiles:
         existing_profile = existing_managed_profiles.pop(profile['name'], None)
@@ -255,7 +255,7 @@ def create_local_field(upstream_field_definition):
         choices=upstream_field_definition['choices'],
         regex=upstream_field_definition['regex'],
         regex_msg=upstream_field_definition['regex_msg'],
-        is_synced=True,
+        upstream_id=upstream_field_definition['id'],
     )
 
 
@@ -264,7 +264,7 @@ def create_synced_profile(upstream_profile, definition):
         name=upstream_profile['name'],
         definition=definition,
         fields=upstream_profile['fields'],
-        is_synced=True
+        upstream_id=upstream_profile['id'],
     )
 
 

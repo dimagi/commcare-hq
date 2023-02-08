@@ -62,6 +62,7 @@ def get_custom_data_models(domain, limit_types=None):
         if model:
             fields[field_view.field_type]['fields'] = [
                 {
+                    'id': field.id,
                     'slug': field.slug,
                     'is_required': field.is_required,
                     'label': field.label,

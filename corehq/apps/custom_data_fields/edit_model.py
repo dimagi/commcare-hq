@@ -187,7 +187,7 @@ class CustomDataFieldForm(forms.Form):
     choices = forms.CharField(widget=forms.HiddenInput, required=False)
     regex = forms.CharField(required=False)
     regex_msg = forms.CharField(required=False)
-    is_synced = forms.BooleanField(required=False)
+    upstream_id = forms.CharField(required=False, empty_value=None)
 
     def __init__(self, raw, *args, **kwargs):
         # Pull the raw_choices out here, because Django incorrectly
@@ -270,15 +270,52 @@ class CustomDataModelMixin(object):
     def get_profiles(self):
         return self.get_definition().get_profiles()
 
+    @classmethod
+    def validate_incoming_fields(cls, existing_fields, new_fields, can_edit_linked_data=False):
+        existing_synced_fields = {field.upstream_id: field for field in existing_fields if field.upstream_id}
+
+        errors = []
+        for new_field in new_fields:
+            if not new_field.upstream_id:
+                continue  # Only deal with synced data
+
+            matching_field = existing_synced_fields.pop(new_field.upstream_id, None)
+
+            # check that any upstream_ids were already present. If not, the submitter is trying to
+            # create new synced data, which is not allowed
+            if not matching_field:
+                errors.append(
+                    _("Could not update '{}'. Synced data cannot be created this way").format(new_field.slug))
+            elif not can_edit_linked_data:
+                # Ensure no changes were done to this field
+                if new_field.to_dict() != matching_field.to_dict():
+                    errors.append(
+                        _("Could not update '{}'. You do not have the appropriate role").format(new_field.slug))
+
+        # Any remaining items in the existing_synced_fields will be deleted.
+        # Ensure the user has permission to do this
+        if existing_synced_fields and not can_edit_linked_data:
+            errors.append(_("Unable to remove synced fields. You do not have the appropriate role"))
+
+        return errors
+
     def save_custom_fields(self):
         definition = self.get_definition()
+
+        incoming_fields = [self.get_field(field) for field in self.form.cleaned_data['data_fields']]
+
+        field_errors = self.validate_incoming_fields(
+            definition.get_fields(), incoming_fields, can_edit_linked_data=self.can_edit_linked_data())
+
+        if field_errors:
+            return field_errors
+
         definition.field_type = self.field_type
         definition.domain = self.domain
-        definition.set_fields([
-            self.get_field(field)
-            for field in self.form.cleaned_data['data_fields']
-        ])
+        definition.set_fields(incoming_fields)
         definition.save()
+
+        return []  # no errors
 
     def save_profiles(self):
         if not self.show_profiles:
@@ -326,7 +363,7 @@ class CustomDataModelMixin(object):
             choices=choices,
             regex=regex,
             regex_msg=regex_msg,
-            is_synced=field.get('is_synced')
+            upstream_id=field.get('upstream_id')
         )
 
     @property
@@ -371,13 +408,22 @@ class CustomDataModelMixin(object):
 
     def is_managed_by_upstream_domain(self):
         fields = self.get_definition().get_fields()
-        return any(f.is_synced for f in fields)
+        return any(f.upstream_id for f in fields)
 
     def post(self, request, *args, **kwargs):
+        self.save_data(request)
+        return self.get(request, *args, **kwargs)
+
+    def save_data(self, request):
         if self.form.is_valid():
-            self.save_custom_fields()
-            errors = self.save_profiles()
-            for error in errors:
+            field_errors = self.save_custom_fields()
+            if field_errors:
+                for error in field_errors:
+                    messages.error(request, error)
+                return
+
+            profile_errors = self.save_profiles()
+            for error in profile_errors:
                 messages.error(request, error)
 
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
@@ -395,7 +441,6 @@ class CustomDataModelMixin(object):
             else:
                 msg = _("Unable to save {} fields, see errors below.").format(self.entity_string.lower())
             messages.error(request, msg)
-        return self.get(request, *args, **kwargs)
 
     def update_existing_models(self):
         """
