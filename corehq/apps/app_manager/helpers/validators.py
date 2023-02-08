@@ -960,7 +960,7 @@ class FormBaseValidator(object):
                 errors.append(dict(type='form link to display only forms', **meta))
         elif self.form.post_form_workflow == WORKFLOW_PREVIOUS:
             if module.root_module:
-                if not(module.is_multi_select() ^ module.root_module.is_multi_select()):  # means XNOR
+                if module.is_multi_select() ^ module.root_module.is_multi_select():  # means XOR
                     errors.append(dict(type='mismatch multi select form links', **meta))
             if self.form.requires_case() and module_uses_inline_search(module):
                 errors.append(dict(type='workflow previous inline search', **meta))
