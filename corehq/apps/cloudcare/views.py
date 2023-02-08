@@ -583,7 +583,7 @@ def session_endpoint(request, domain, app_id, endpoint_id):
                 build_id = _fetch_build_id(domain, request.couch_user.username, id_map[app_id][0])
             else:
                 return _fail(_("Multiple corresponding applications found. Could not follow link."))
-        else:
+        if not build_id:
             return _fail(_("No corresponding application found in this project."))
 
     restore_as_user, set_cookie = FormplayerMain.get_restore_as_user(request, domain)
