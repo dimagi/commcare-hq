@@ -47,7 +47,10 @@ class Field(models.Model):
     regex = models.CharField(max_length=127, null=True)
     regex_msg = models.CharField(max_length=255, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
-    is_synced = models.BooleanField(default=False)
+    # NOTE: This id will not necessarily be reliable to trace back to a parent
+    #  because saving custom data overwrites the previous fields
+    #  This is intended to allow us to know when downstream data is being modified
+    upstream_id = models.CharField(max_length=32, null=True)
 
     class Meta:
         order_with_respect_to = "definition"
@@ -166,7 +169,7 @@ class CustomDataFieldsProfile(models.Model):
     name = models.CharField(max_length=126)
     fields = models.JSONField(default=dict, null=True)
     definition = models.ForeignKey('CustomDataFieldsDefinition', on_delete=models.CASCADE)
-    is_synced = models.BooleanField(default=False)
+    upstream_id = models.CharField(max_length=32, null=True)
 
     @property
     def has_users_assigned(self):
@@ -188,5 +191,5 @@ class CustomDataFieldsProfile(models.Model):
             'id': self.id,
             'name': self.name,
             'fields': self.fields,
-            'is_synced': self.is_synced,
+            'upstream_id': self.upstream_id,
         }
