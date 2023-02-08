@@ -273,8 +273,7 @@ class RemoteRequestFactory(object):
                     ref=f"'{self.module.search_config.custom_related_case_property}'",
                 )
             )
-        if (module_uses_include_related_cases(self.module)
-                and toggles.USH_CASE_CLAIM_UPDATES.enabled(self.app.domain)):
+        if (module_uses_include_related_cases(self.module)):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_INCLUDE_RELATED_CASES_KEY,
