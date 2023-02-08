@@ -197,22 +197,12 @@ def update_tracked_entity_instance(
     requests, tracked_entity, etag, case_trigger_info, case_config,
     attempt=1
 ):
-    case_updates = {}
-    for attr_id, value_source_config in case_config['attributes'].items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(
+    tracked_entity, case_updates = build_tracked_entity(
+        requests,
+        tracked_entity,
         case_trigger_info,
         case_config,
     )
-    if enrollments_with_new_events:
-        tracked_entity["enrollments"] = update_enrollments(
-            tracked_entity, enrollments_with_new_events
-        )
-    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
@@ -235,6 +225,31 @@ def update_tracked_entity_instance(
         response.raise_for_status()
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+
+
+def build_tracked_entity(
+    requests,
+    tracked_entity,
+    case_trigger_info,
+    case_config,
+):
+    case_updates = {}
+    for attr_id, value_source_config in case_config['attributes'].items():
+        value, case_update = get_or_generate_value(
+            requests, attr_id, value_source_config, case_trigger_info
+        )
+        set_te_attr(tracked_entity["attributes"], attr_id, value)
+        case_updates.update(case_update)
+    enrollments_with_new_events = get_enrollments(
+        case_trigger_info,
+        case_config,
+    )
+    if enrollments_with_new_events:
+        tracked_entity["enrollments"] = update_enrollments(
+            tracked_entity, enrollments_with_new_events
+        )
+    validate_tracked_entity(tracked_entity)
+    return tracked_entity, case_updates
 
 
 def update_enrollments(
