@@ -135,6 +135,25 @@ def get_case_property_description_dict(domain):
     return descriptions_dict
 
 
+def get_case_property_label_dict(domain):
+    """
+    This returns a dictionary of the structure
+    {
+        case_type: {
+                        case_property: label,
+                        ...
+                    },
+        ...
+    }
+    for each case type and case property in the domain.
+    """
+    annotated_types = CaseType.objects.filter(domain=domain).prefetch_related('properties')
+    labels_dict = {}
+    for case_type in annotated_types:
+        labels_dict[case_type.name] = {prop.name: prop.label for prop in case_type.properties.all()}
+    return labels_dict
+
+
 def get_values_hints_dict(domain, case_type_name):
     values_hints_dict = defaultdict(list)
     case_type = CaseType.objects.filter(domain=domain, name=case_type_name).first()
@@ -156,7 +175,7 @@ def get_deprecated_fields(domain, case_type_name):
 
 
 def save_case_property(name, case_type, domain=None, data_type=None,
-                       description=None, group=None, deprecated=None,
+                       description=None, label=None, group=None, deprecated=None,
                        fhir_resource_prop_path=None, fhir_resource_type=None, remove_path=False,
                        allowed_values=None):
     """
@@ -176,6 +195,8 @@ def save_case_property(name, case_type, domain=None, data_type=None,
         prop.group = group
     if deprecated is not None:
         prop.deprecated = deprecated
+    if label is not None:
+        prop.label = label
     try:
         prop.full_clean()
     except ValidationError as e:
