@@ -1340,19 +1340,10 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 inline_search=search_properties.get('inline_search', False),
                 include_related_cases=search_properties.get('include_related_cases', False)
             )
-            _update_include_related_cases(app, module,
-                search_properties.get('include_related_cases', False))
 
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
-
-
-def _update_include_related_cases(app, current_module, new_state: bool):
-    for module in app.get_modules():
-        if module.case_type == current_module.case_type:
-            module.search_config.include_related_cases = new_state
-
 
 @no_conflict_require_POST
 @require_can_edit_apps
