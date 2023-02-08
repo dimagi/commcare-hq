@@ -26,6 +26,7 @@ from corehq.apps.custom_data_fields.models import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.models import TableauUser, TableauServer
+from corehq.apps.reports.const import HQ_TABLEAU_GROUP_NAME
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
 from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
 from corehq.apps.user_importer.exceptions import UserUploadError
@@ -1972,7 +1973,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
         return _mock_create_session_responses(self) + [
             self.tableau_instance.delete_user_response(),
             self.tableau_instance.create_user_response(username, None),
-            self.tableau_instance.query_groups_response(group_name='HQ'),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response()

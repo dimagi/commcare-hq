@@ -53,9 +53,8 @@ class FakeTableauInstance(mock.MagicMock):
         }
         """)
 
-    def query_groups_response(self, group_name=None):
-        if group_name:
-            return self._create_response("""
+    def get_group_response(self, group_name):
+        return self._create_response("""
                 {
                     "groups": {
                         "group": [
@@ -69,44 +68,44 @@ class FakeTableauInstance(mock.MagicMock):
                         ]
                     }
                 }
-                """ % (self.groups[group_name], group_name)
-            )
-        else:
-            return self._create_response("""
-                {
-                    "pagination": {
-                        "pageNumber": "1",
-                        "pageSize": "1000",
-                        "totalAvailable": "2"
-                    },
-                    "groups": {
-                        "group": [
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
+                """ % (self.groups[group_name], group_name))
+
+    def query_groups_response(self):
+        return self._create_response("""
+            {
+                "pagination": {
+                    "pageNumber": "1",
+                    "pageSize": "1000",
+                    "totalAvailable": "2"
+                },
+                "groups": {
+                    "group": [
+                        {
+                            "domain": {
+                                "name": "local"
                             },
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
+                            "id": "%s",
+                            "name": "%s"
+                        },
+                        {
+                            "domain": {
+                                "name": "local"
                             },
-                            {
-                                "domain": {
-                                    "name": "local"
-                                },
-                                "id": "%s",
-                                "name": "%s"
-                            }
-                        ]
-                    }
+                            "id": "%s",
+                            "name": "%s"
+                        },
+                        {
+                            "domain": {
+                                "name": "local"
+                            },
+                            "id": "%s",
+                            "name": "%s"
+                        }
+                    ]
                 }
-                """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1],
-                       self.group_ids[2], self.group_names[2]))
+            }
+            """ % (self.group_ids[0], self.group_names[0], self.group_ids[1], self.group_names[1],
+                   self.group_ids[2], self.group_names[2]))
 
     def get_users_in_group_response(self):
         return self._create_response("""
@@ -282,13 +281,18 @@ class TestTableauAPISession(TestCase):
         self._assert_subset({'Content-Type': 'application/json'}, api_session.headers)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
-    def test_query_groups(self, mock_request):
+    def test_get_group(self, mock_request):
         api_session = self._create_session()
         api_session = self._sign_in(api_session=api_session)
         group_1_name = 'group1'
-        mock_request.return_value = self.tableau_instance.query_groups_response(group_1_name)
-        group1 = api_session.query_groups(group_1_name)
+        mock_request.return_value = self.tableau_instance.get_group_response(group_1_name)
+        group1 = api_session.get_group(group_1_name)
         self.assertEqual(group1['id'], '1a2b3')
+
+    @mock.patch('corehq.apps.reports.models.requests.request')
+    def test_query_groups(self, mock_request):
+        api_session = self._create_session()
+        api_session = self._sign_in(api_session=api_session)
         mock_request.return_value = self.tableau_instance.query_groups_response()
         groups = api_session.query_groups()
         self.assertEqual(len(groups), 3)

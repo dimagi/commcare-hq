@@ -85,7 +85,7 @@ class TestTableauAPIUtil(TestTableauAPISession):
         mock_request.side_effect = (_mock_create_session_responses(self)
         + [self.tableau_instance.delete_user_response(),
             self.tableau_instance.create_user_response('dschrute', 'Explorer'),
-            self.tableau_instance.query_groups_response(group_name=HQ_TABLEAU_GROUP_NAME),
+            self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response(),
             self.tableau_instance.add_user_to_group_response()])
