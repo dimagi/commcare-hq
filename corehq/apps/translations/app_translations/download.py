@@ -248,8 +248,7 @@ def get_case_search_rows(langs, module, domain):
 
 def get_module_detail_rows(langs, module):
     rows = []
-    if hasattr(module, 'case_details'):
-        rows += _get_module_detail_no_items_text(langs, module)
+    rows += _get_module_detail_no_items_text(langs, module)
     for list_or_detail, detail in [
         ("list", module.case_details.short),
         ("detail", module.case_details.long)
