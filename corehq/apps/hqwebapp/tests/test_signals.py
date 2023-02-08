@@ -1,3 +1,4 @@
+from couchdbkit import ResourceConflict
 from django.test import TestCase
 from unittest.mock import patch
 from datetime import date, timedelta
@@ -52,3 +53,10 @@ class TestFailedLoginSignal(TestCase):
 
         self.assertEqual(user.login_attempts, 5001)
         self.assertEqual(user.attempt_date, self.today)
+
+    def test_resource_conflict_on_save_is_handled(self):
+        user = FakeUser(attempt_date=self.today, login_attempts=5000)
+        credentials = {'username': 'test-user'}
+
+        with (patch.object(FakeUser, 'save', side_effect=ResourceConflict)):
+            add_failed_attempt(None, credentials)  # should not raise ResourceConflict

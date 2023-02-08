@@ -52,4 +52,10 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
         user.attempt_date = date.today()
 
     user.login_attempts += 1
-    user.save()
+
+    try:
+        user.save()
+    except ResourceConflict:
+        # swallow this exception due ensure the user still sees an auth failed
+        # error on their end, not a 500
+        return
