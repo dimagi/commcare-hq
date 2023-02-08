@@ -88,9 +88,9 @@
             {% trans "Locations" %}
           </th>
           {% if request|toggle_enabled:"DATA_DICTIONARY" %}
-          <th class="text-center">
-            {% trans "Data Dictionary" %}
-          </th>
+            <th class="text-center">
+              {% trans "Data Dictionary" %}
+            </th>
           {% endif %}
           <th class="text-center">
             {% trans "Data" %}
@@ -161,13 +161,15 @@
                                               view: permissions.view_locations
                                             }"></div>
           </td>
-          <td class="text-center">
-            <div data-bind="visible: permissions.access_all_locations,
-                                            permissionIcon: {
-                                              edit: permissions.edit_data_dict,
-                                              view: permissions.view_data_dict
-                                            }"></div>
-          </td>
+          {% if request|toggle_enabled:"DATA_DICTIONARY" %}
+            <td class="text-center">
+              <div data-bind="visible: permissions.access_all_locations,
+                                              permissionIcon: {
+                                                edit: permissions.edit_data_dict,
+                                                view: permissions.view_data_dict
+                                              }"></div>
+            </td>
+          {% endif %}
           <td class="text-center">
             <div data-bind="permissionIcon: {
                                               edit: permissions.edit_data
