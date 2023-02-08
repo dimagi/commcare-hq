@@ -154,7 +154,7 @@ class CaseSearchRequestConfig:
     case_types = attr.ib(kw_only=True, default=None)
     data_registry = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
     custom_related_case_property = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
-    include_related_cases = attr.ib(kw_only=True, default=None)
+    include_related_cases = attr.ib(kw_only=True, default=None, converter=_flatten_singleton_list)
 
     @case_types.validator
     def _require_case_type(self, attribute, value):
