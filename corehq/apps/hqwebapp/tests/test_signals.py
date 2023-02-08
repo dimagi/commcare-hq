@@ -57,8 +57,9 @@ class TestFailedLoginSignal(TestCase):
         self.assertEqual(user.attempt_date, self.today)
 
     def test_resource_conflict_on_save_is_handled(self):
-        user = FakeUser(attempt_date=self.today, login_attempts=5000)
+        user = FakeUser(attempt_date=self.today, login_attempts=1)
         credentials = {'username': 'test-user'}
 
-        with (patch.object(FakeUser, 'save', side_effect=ResourceConflict)):
+        with (patch.object(signals.CouchUser, 'get_by_username', return_value=user),
+              patch.object(FakeUser, 'save', side_effect=ResourceConflict)):
             add_failed_attempt(None, credentials)  # should not raise ResourceConflict

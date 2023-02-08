@@ -57,6 +57,6 @@ def add_failed_attempt(sender, credentials, token_failure=False, **kwargs):
     try:
         user.save()
     except ResourceConflict:
-        # swallow this exception due ensure the user still sees an auth failed
-        # error on their end, not a 500
+        # swallow this exception to ensure the user still sees an auth failed
+        # error, not a 500
         return
