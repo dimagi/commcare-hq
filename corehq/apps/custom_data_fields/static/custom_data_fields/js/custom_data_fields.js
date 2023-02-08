@@ -30,7 +30,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
             'choices',
             'regex',
             'regex_msg',
-            'is_synced',
+            'upstream_id',
         ]);
         var self = {};
         self.parent = parent;
@@ -43,11 +43,11 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         self.validationMode = ko.observable(options.choices.length ? 'choice' : 'regex');
         self.regex = ko.observable(options.regex);
         self.regex_msg = ko.observable(options.regex_msg);
-        self.isSynced = ko.observable(options.is_synced);
+        self.upstream_id = options.upstream_id;
         self.editIcon = ko.observable("fa-edit");
 
         self.isEditable = ko.pureComputed(function () {
-            return !options.is_synced || parent.unlockLinkedData();
+            return !options.upstream_id || parent.unlockLinkedData();
         });
 
         self.hasModalDetail = true;
@@ -104,7 +104,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 'choices': choices,
                 'regex': regex,
                 'regex_msg': regexMsg,
-                'is_synced': self.isSynced(),
+                'upstream_id': self.upstream_id,
             };
         };
 
@@ -112,13 +112,13 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
     }
 
     function Profile(options, parent) {
-        assertProperties.assertRequired(options, ['id', 'name', 'fields', 'is_synced']);
+        assertProperties.assertRequired(options, ['id', 'name', 'fields', 'upstream_id']);
         var self = {};
         self.parent = parent;
 
         self.id = ko.observable(options.id);
         self.name = ko.observable(options.name);
-        self.isSynced = ko.observable(options.is_synced);
+        self.upstream_id = options.upstream_id;
         self.serializedFields = ko.observable();
 
         self.hasModalDetail = false;
@@ -127,7 +127,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         });
 
         self.isEditable = ko.pureComputed(function () {
-            return !self.isSynced() || self.parent.unlockLinkedData();
+            return !self.upstream_id || self.parent.unlockLinkedData();
         });
 
         self.fields = uiElementKeyValueList.new(
@@ -156,7 +156,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 id: self.id(),
                 name: self.name(),
                 fields: self.fields.val(),
-                is_synced: self.isSynced(),
+                upstream_id: self.upstream_id,
             };
         };
 
@@ -181,7 +181,15 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
         };
 
         self.hasLinkedData = ko.pureComputed(function () {
-            return self.data_fields().some(field => field.isSynced());
+            const hasLinkedFields = self.data_fields().some(field => field.upstream_id);
+            if (hasLinkedFields) {
+                return true;
+            }
+
+            // linked profiles can exist without linked fields if the user attempts to save
+            // after the linked fields are removed.
+            const hasLinkedProfiles = self.profiles().some(profile => profile.upstream_id);
+            return hasLinkedProfiles;
         });
 
         self.allowEdit = options.can_edit_linked_data;
@@ -194,7 +202,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 choices: [],
                 regex: '',
                 regex_msg: '',
-                is_synced: false,
+                upstream_id: null,
             }, self));
         };
 
@@ -216,7 +224,7 @@ hqDefine('custom_data_fields/js/custom_data_fields', [
                 id: '',
                 name: '',
                 fields: {},
-                is_synced: false,
+                upstream_id: null,
             }, self));
         };
 
