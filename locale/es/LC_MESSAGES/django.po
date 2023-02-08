@@ -6380,7 +6380,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#: corehq/apps/sso/forms.py
+#: corehq/apps/sso/forms.py corehq/apps/users/forms.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Download"
 msgstr "Descargar"
@@ -9633,6 +9633,12 @@ msgstr ""
 "Cuando la lista de casos incluya solo un caso, omítalo, y vaya directamente "
 "a los detalles del caso."
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid "Empty Case"
+msgid "Empty Case List Text"
+msgstr "Caso Vacío"
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
 msgstr ""
@@ -12370,10 +12376,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Please wait while the map loads"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Answer Choices"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -22706,10 +22708,8 @@ msgid "Add Project"
 msgstr "Agregar Proyecto"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
-#, fuzzy
-#| msgid "Manage My Settings"
 msgid "Manage Settings"
-msgstr "Administrar Mis Configuraciones"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 msgid "Logged in As"
@@ -36297,10 +36297,6 @@ msgid "Filter and Download Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid "Download All Users"
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "Invalid Role"
 msgstr ""
 
@@ -36884,16 +36880,12 @@ msgid "Update Location Settings"
 msgstr "Actualizar Configuraciones de Ubicación"
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Tableau Configuration"
-msgstr "Configuración"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "Add custom table configuration "
 msgid "Update Tableau Configuration"
-msgstr "Agregar configuración personalizada de tablas"
+msgstr ""
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
@@ -37009,6 +37001,12 @@ msgid ""
 "          a fee of %(u_fee)s per Mobile Worker per month.\n"
 "        "
 msgstr ""
+
+#: corehq/apps/users/templates/users/filter_and_download.html
+#, fuzzy
+#| msgid "Calculations"
+msgid "Calculating download size..."
+msgstr "Cálculos"
 
 #: corehq/apps/users/templates/users/mobile/partials/user_upload_status.html
 #, python-format
@@ -41499,10 +41497,8 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Delete Configuration"
-msgstr "Configuración"
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #, fuzzy, python-format
@@ -41520,8 +41516,8 @@ msgid ""
 "                                    Are you sure you want to delete the "
 "configuration for: %(name)s ?\n"
 "                                    <br/><br />\n"
-"                                    Data forwarding records will not be "
-"deleted, but no new records will be\n"
+"                                    Historical data forwarding records will "
+"not be deleted, but no new records will be\n"
 "                                    forwarded, and this configuration will "
 "no longer appear on this page.\n"
 "                                "
@@ -41639,16 +41635,12 @@ msgid "Forwarding set up to {}"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-#, fuzzy
-#| msgid "Update Filters"
 msgid "Update Forwarder"
-msgstr "Actualizar Filtros"
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-#, fuzzy
-#| msgid "Form was successfully archived."
 msgid "Forwarder Successfully Updated"
-msgstr "El formulario fue archivado exitosamente."
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Edit Form Repeater"
@@ -41936,10 +41928,14 @@ msgid "Loadtest Users"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "End of Form Navigation"
 msgid "Link to other forms in End of Form Navigation"
-msgstr "Fin del Formulario de Navegación"
+msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "Phone Settings"
+msgid "Phone heartbeat"
+msgstr "Configuraciones del Teléfono"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -43089,9 +43085,3 @@ msgstr ""
 #: manage.py
 msgid "Enter valid JSON"
 msgstr ""
-
-#~ msgid "Manage"
-#~ msgstr "Administrar"
-
-#~ msgid "Stop Forwarding"
-#~ msgstr "Detener Reenvío"
