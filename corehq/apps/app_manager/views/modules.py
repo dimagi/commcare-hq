@@ -256,6 +256,7 @@ def _get_shared_module_view_context(request, app, module, case_property_builder,
                 'additional_registry_cases': module.search_config.additional_registry_cases,
                 'custom_related_case_property': module.search_config.custom_related_case_property,
                 'inline_search': module.search_config.inline_search,
+                'include_related_cases': module.search_config.include_related_cases,
             },
         },
     }
@@ -1337,12 +1338,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
                 additional_registry_cases=additional_registry_cases,
                 custom_related_case_property=search_properties.get('custom_related_case_property', ""),
                 inline_search=search_properties.get('inline_search', False),
+                include_related_cases=search_properties.get('include_related_cases', False)
             )
 
     resp = {}
     app.save(resp)
     return JsonResponse(resp)
-
 
 @no_conflict_require_POST
 @require_can_edit_apps
