@@ -247,3 +247,12 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             # non-default language
             es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
             self.assertEqual(es_app_strings['m0_no_items_text'], 'Lista Vacía.')
+
+        factory.new_report_module('my_module')
+        app = Application.wrap(factory.app.to_json())
+
+        with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
+            try:
+                en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            except AttributeError:
+                self.fail("_generate_app_strings raised AttributeError unexpectedly")
