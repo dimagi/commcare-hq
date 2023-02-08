@@ -366,44 +366,62 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var initDateTimePicker = function ($el, extraOptions) {
+    var initDatePicker = function ($el, selectedDate) {
         if (!$el.length) {
             return;
         }
 
-        extraOptions = extraOptions || {};
-        $el.datetimepicker(_.extend({
+        var dateFormat = "MM/DD/YYYY";
+        $el.datetimepicker({
+            date: selectedDate,
             useCurrent: false,
+            keepInvalid: true,
             showClear: true,
             showClose: true,
             showTodayButton: true,
             debug: true,
+            format: dateFormat,
             extraFormats: ["MM/DD/YYYY", "MM/DD/YY"],
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
             tooltips: dateTimePickerTooltips,
-        }, extraOptions));
-
-        var picker = $el.data("DateTimePicker");
-        picker.parseInputDate(function (dateString) {
-            if (!moment.isMoment(dateString) || dateString instanceof Date) {
-                dateString = convertTwoDigitYear(dateString);
-            }
-            if (extraOptions.parseInputDate) {
-                return extraOptions.parseInputDate(dateString);
-            }
-            let dateObj = picker.getMoment(dateString);     // undocumented/private datetimepicker function
-            return dateObj.isValid() ? dateObj : "";
+            parseInputDate: function (dateString) {
+                if (!moment.isMoment(dateString) || dateString instanceof Date) {
+                    dateString = convertTwoDigitYear(dateString);
+                }
+                let dateObj = moment(dateString, dateFormat);
+                return dateObj.isValid() ? dateObj : null;
+            },
         });
 
-        $el.on("focusout", picker.hide);
+        $el.on("focusout", $el.data("DateTimePicker").hide);
+    };
+
+    var initTimePicker = function ($el, selectedTime, dateFormat) {
+        if (!$el.length) {
+            return;
+        }
+
+        $el.datetimepicker({
+            date: selectedTime,
+            format: dateFormat,
+            keepInvalid: true,
+            useCurrent: false,
+            showClear: true,
+            showClose: true,
+            debug: true,
+            tooltips: dateTimePickerTooltips,
+        });
+
+        $el.on("focusout", $el.data("DateTimePicker").hide);
     };
 
     return {
         dateTimePickerTooltips: dateTimePickerTooltips,
         convertTwoDigitYear: convertTwoDigitYear,
-        initDateTimePicker: initDateTimePicker,
+        initDatePicker: initDatePicker,
+        initTimePicker: initTimePicker,
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
         showError: showError,

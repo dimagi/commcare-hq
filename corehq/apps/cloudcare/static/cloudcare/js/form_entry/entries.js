@@ -748,15 +748,10 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
         self.afterRender = function () {
             self.$picker = $('#' + self.entryId);
-            cloudcareUtils.initDateTimePicker(self.$picker, _.extend({
-                date: self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER,
-                format: self.clientFormat,
-                keepInvalid: true,
-                parseInputDate: function (date) {
-                    var d = moment(date, self.clientFormat);
-                    return d.isValid() ? d : null;
-                },
-            }, self.extraOptions));
+
+            var answer = self.answer() ? self.convertServerToClientFormat(self.answer()) : constants.NO_ANSWER;
+            self.initWidget(self.$picker, answer);
+
             self.$picker.on("dp.change", function (e) {
                 if (!e.date) {
                     self.answer(constants.NO_ANSWER);
@@ -768,6 +763,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     }
     DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
     DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
+    DateTimeEntryBase.prototype.initWidget = undefined;  // overridden in subclasses
     DateTimeEntryBase.prototype.convertServerToClientFormat = function (date) {
         return moment(date, this.serverFormat).format(this.clientFormat);
     };
@@ -780,9 +776,6 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // Formatting string should be in moment format: https://momentjs.com/docs/#/displaying/format/
     DateTimeEntryBase.prototype.serverFormat = undefined;
 
-    // Extra options to pass to datetimepicker widget
-    DateTimeEntryBase.prototype.extraOptions = {};
-
     function DateEntry(question, options) {
         this.templateType = 'date';
         DateTimeEntryBase.call(this, question, options);
@@ -792,6 +785,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     // This is format equates to 12/31/2016 and is used by the datetimepicker
     DateEntry.prototype.clientFormat = 'MM/DD/YYYY';
     DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
+    DateEntry.prototype.initWidget = function ($element, answer) {
+        cloudcareUtils.initDatePicker($element, answer);
+    };
 
     function TimeEntry(question, options) {
         this.templateType = 'time';
@@ -814,7 +810,9 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
 
     TimeEntry.prototype.clientFormat = 'HH:mm';
     TimeEntry.prototype.serverFormat = 'HH:mm';
-    TimeEntry.prototype.extraOptions = {showTodayButton: false};
+    TimeEntry.prototype.initWidget = function ($element, answer) {
+        cloudcareUtils.initTimePicker($element, answer, this.clientFormat);
+    };
 
     function EthiopianDateEntry(question, options) {
         var self = this,
