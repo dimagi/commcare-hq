@@ -354,9 +354,9 @@ def get_defined_cases(helper, app, case_types, source_case_ids, include_related_
 
 
 def get_all_related_cases(helper, source_case_ids):
-    from casexml.apps.phone.data_providers.case.livequery import get_parent_and_ext_cases
+    from casexml.apps.phone.data_providers.case.livequery import get_parent_host_ext_cases
     results = []
-    results.extend(get_parent_and_ext_cases(helper.domain, source_case_ids))
+    results.extend(get_parent_host_ext_cases(helper.domain, source_case_ids))
     results.extend(get_child_case_results(helper, source_case_ids))
     return results
 
