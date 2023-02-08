@@ -1,12 +1,14 @@
-from couchdbkit import ResourceConflict
-from django.test import TestCase
-from unittest.mock import patch
 from datetime import date, timedelta
+from unittest.mock import patch
+
+from django.test import TestCase
+
+from couchdbkit import ResourceConflict
 
 from corehq.apps.users.models import CouchUser
 
-from ..signals import add_failed_attempt
 from .. import signals
+from ..signals import add_failed_attempt
 
 
 class FakeUser(CouchUser):

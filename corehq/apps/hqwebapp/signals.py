@@ -1,8 +1,9 @@
 from datetime import date
 
-from couchdbkit import ResourceConflict
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.dispatch import receiver
+
+from couchdbkit import ResourceConflict
 
 from corehq.apps.users.models import CouchUser
 from corehq.util.metrics import metrics_counter
