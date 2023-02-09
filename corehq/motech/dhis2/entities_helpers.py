@@ -199,22 +199,13 @@ def update_tracked_entity_instance(
     requests, tracked_entity, etag, case_trigger_info, case_config,
     attempt=1
 ):
-    case_updates = {}
-    for attr_id, value_source_config in case_config['attributes'].items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
         case_trigger_info,
         case_config,
+        True
     )
-    if enrollments_with_new_events:
-        tracked_entity["enrollments"] = update_enrollments(
-            tracked_entity, enrollments_with_new_events
-        )
-    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
@@ -245,6 +236,32 @@ def update_tracked_entity_instance(
         ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
+def _build_tracked_entity(
+    requests,
+    tracked_entity,
+    case_trigger_info,
+    case_config,
+    is_update,
+):
+    case_updates = {}
+    for attr_id, value_source_config in case_config['attributes'].items():
+        value, case_update = get_or_generate_value(
+            requests, attr_id, value_source_config, case_trigger_info
+        )
+        set_te_attr(tracked_entity["attributes"], attr_id, value)
+        case_updates.update(case_update)
+    enrollments = get_enrollments(case_trigger_info, case_config)
+    if enrollments:
+        if is_update:
+            tracked_entity["enrollments"] = update_enrollments(
+                tracked_entity, enrollments
+            )
+        else:
+            tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
+    return tracked_entity, case_updates
+
+
 def update_enrollments(
     tracked_entity: Dict,
     enrollments_with_new_events: List,
@@ -266,23 +283,18 @@ def update_enrollments(
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
-    case_updates = {}
     tracked_entity = {
         "trackedEntityType": case_config['te_type_id'],
         "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
         "attributes": [],
     }
-
-    for attr_id, value_source_config in case_config['attributes'].items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments = get_enrollments(case_trigger_info, case_config)
-    if enrollments:
-        tracked_entity["enrollments"] = enrollments
-    validate_tracked_entity(tracked_entity)
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
+        case_trigger_info,
+        case_config,
+        False
+    )
     endpoint = "/api/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
