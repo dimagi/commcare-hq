@@ -277,7 +277,7 @@ class RemoteRequestFactory(object):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_INCLUDE_RELATED_CASES_KEY,
-                    ref=f"'{self.module.search_config.include_related_cases}'",
+                    ref="'true'",
                 )
             )
         return datums
