@@ -84,7 +84,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
-    def test_get_path_related_cases_results_duplicates(self):
+    def test_get_related_cases_duplicates(self):
         """Test that `get_related_cases` does not include any cases that are in the initial
         set or are duplicates of others already found."""
 
@@ -136,7 +136,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self.assertEqual(set(case_ids), {"a1", "d1", "h1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
-    def test_get_path_related_cases_results_expanded_results(self):
+    def test_get_related_cases_expanded_results(self):
         """Test that `get_related_cases` includes related cases for cases loaded
         via the 'custom_related_case_property'."""
 
@@ -263,14 +263,14 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         hits = CaseSearchES().domain(self.domain).case_type("a").run().hits
         SOURCE_CASES = [wrap_case_search_hit(result) for result in hits]
         RESULT_PARENT_CHILD_ID = {'b1', 'c1'}
-        RESULT_PARENT_CHILD_EXT_CASE_ID = {'b1', 'c1', 'e1'}
+        RESULT_ALL_RELATED_CASE_ID = {'b1', 'c1', 'e1'}
 
         with patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
             patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                 return_value={"parent"}):
             result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
                 SOURCE_CASES, include_related_cases=True)
-            self._assert_case_ids(RESULT_PARENT_CHILD_EXT_CASE_ID, result_cases)
+            self._assert_case_ids(RESULT_ALL_RELATED_CASE_ID, result_cases)
 
             result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
                 SOURCE_CASES, include_related_cases=False)
