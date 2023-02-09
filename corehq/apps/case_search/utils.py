@@ -289,11 +289,10 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
 
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
-    top_level_case_ids = {case.case_id for case in top_level_cases}
     if paths:
         results.extend(get_related_case_results(helper, top_level_cases, paths))
 
-    defined_cases = get_defined_cases(helper, app, case_types, top_level_case_ids, include_related_cases)
+    defined_cases = get_defined_cases(helper, app, case_types, top_level_cases, include_related_cases)
     if defined_cases:
         results.extend(defined_cases)
 
@@ -351,20 +350,22 @@ def get_related_case_results(helper, cases, paths):
     return results
 
 
-def get_defined_cases(helper, app, case_types, source_case_ids, include_related_cases):
+def get_defined_cases(helper, app, case_types, source_cases, include_related_cases):
     """
     Gets parent, child, and extension cases through sync algorithm if configured.
     Otherwise, gets child case types used by search detail tab nodesets.
     """
     if include_related_cases:
-        return get_all_related_cases(helper, source_case_ids)
+        return get_all_related_cases(helper, source_cases)
     else:
+        source_case_ids = {case.case_id for case in source_cases}
         return get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids)
 
 
-def get_all_related_cases(helper, source_case_ids):
+def get_all_related_cases(helper, source_cases):
     results = []
-    results.extend(helper.get_parent_host_ext_cases(source_case_ids))
+    results.extend(helper.get_parent_host_ext_cases(source_cases))
+    source_case_ids = {case.case_id for case in source_cases}
     results.extend(get_child_case_results(helper, source_case_ids))
     return results
 
