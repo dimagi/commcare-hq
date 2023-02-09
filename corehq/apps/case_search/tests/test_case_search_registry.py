@@ -18,7 +18,7 @@ from corehq.apps.case_search.models import (
     criteria_dict_to_criteria_list,
 )
 from corehq.apps.case_search.utils import (
-    _get_registry_visible_domains,
+    _get_helper_and_visible_domains,
     get_case_search_results,
 )
 from corehq.apps.domain.shortcuts import create_user
@@ -337,11 +337,10 @@ class TestCaseSearchRegistryPermissions(TestCase):
     def _get_registry_visible_domains(self, permissions):
         mock_role = mock.Mock(permissions=permissions)
         mock_user = mock.Mock(get_role=mock.Mock(return_value=mock_role))
-        return set(
-            _get_registry_visible_domains(
+        helper, domains = _get_helper_and_visible_domains(
                 mock_user,
                 self.domain,
                 ["herb"],
                 self.registry_slug,
             )
-        )
+        return set(domains)
