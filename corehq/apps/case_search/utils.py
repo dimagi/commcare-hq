@@ -59,9 +59,9 @@ def get_case_search_results(domain, case_types, criteria,
                             app_id=None, couch_user=None, registry_slug=None,
                             custom_related_case_property=None, include_related_cases=None):
 
-    helper, query_domains = _get_helper_and_visible_domains(couch_user, domain, case_types, registry_slug)
+    helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
-    builder = CaseSearchQueryBuilder(domain, case_types, query_domains)
+    builder = CaseSearchQueryBuilder(domain, case_types, helper.query_domains)
     try:
         search_es = builder.build_query(criteria)
     except TooManyRelatedCasesError:
@@ -88,8 +88,7 @@ def get_case_search_results(domain, case_types, criteria,
     return cases
 
 
-def _get_helper_and_visible_domains(couch_user, domain, case_types, registry_slug):
-    query_domains = [domain]
+def _get_helper(couch_user, domain, case_types, registry_slug):
     helper = _QueryHelper(domain)
     if registry_slug:
         try:
@@ -98,16 +97,16 @@ def _get_helper_and_visible_domains(couch_user, domain, case_types, registry_slu
         except (RegistryNotFound, RegistryAccessException):
             pass
         else:
-            query_domains = registry_helper.visible_domains
             helper = _RegistryQueryHelper(domain, couch_user, registry_helper)
-    return helper, query_domains
+    return helper
 
 class _QueryHelper:
     def __init__(self, domain):
         self.domain = domain
+        self.query_domains = [self.domain]
 
     def get_base_queryset(self):
-        return CaseSearchES().domain(self.domain)
+        return CaseSearchES().domain(self.query_domains)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
         return wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
@@ -123,10 +122,10 @@ class _RegistryQueryHelper:
         self.domain = domain
         self.couch_user = couch_user
         self.registry_helper = registry_helper
+        self.query_domains = self.registry_helper.visible_domains
 
     def get_base_queryset(self):
-        query_domains = self.registry_helper.visible_domains
-        return CaseSearchES().domain(query_domains)
+        return CaseSearchES().domain(self.query_domains)
 
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
         case = wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
