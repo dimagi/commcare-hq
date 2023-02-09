@@ -1345,6 +1345,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     app.save(resp)
     return JsonResponse(resp)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_report_module(request, domain, app_id, module_unique_id):

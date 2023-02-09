@@ -1,5 +1,4 @@
 import re
-import importlib
 from collections import defaultdict
 
 from django.utils.functional import cached_property
@@ -7,11 +6,9 @@ from django.utils.translation import gettext as _
 
 from dimagi.utils.logging import notify_exception
 
-from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.apps.app_manager.util import (
     module_offers_search,
-    module_uses_include_related_cases,
 )
 from corehq.apps.case_search.const import (
     CASE_SEARCH_MAX_RESULTS,
@@ -286,7 +283,7 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
 
-    defined_cases = get_defined_cases(helper, app, case_types, top_level_cases, include_related_cases)
+    defined_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_related_cases)
     if defined_cases:
         results.extend(defined_cases)
 
@@ -296,10 +293,11 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     }.values())
 
 
-def get_defined_cases(helper, app, case_types, source_cases, include_related_cases):
+def get_related_cases_result(helper, app, case_types, source_cases, include_related_cases):
     """
     Gets parent, child, and extension cases through sync algorithm if configured.
-    Otherwise, gets child case types used by search detail tab nodesets.
+    Otherwise, gets case property path defined in search details and child case types
+    used by search detail tab nodesets.
     """
     if include_related_cases:
         return _get_all_related_cases(helper, source_cases)
@@ -321,11 +319,11 @@ def _get_all_related_cases(helper, source_cases):
 
 def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases):
     paths = [
-        rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
+        rel for rels in [get_search_detail_relationship_paths(app, case_type) for case_type in case_types]
         for rel in rels
     ]
     if paths:
-        return(get_related_case_results(helper, source_cases, paths))
+        return(get_path_related_cases_results(helper, source_cases, paths))
 
 
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
@@ -337,7 +335,7 @@ def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids)
         return get_child_case_results(helper, source_case_ids, child_case_types)
 
 
-def get_related_case_relationships(app, case_type):
+def get_search_detail_relationship_paths(app, case_type):
     """
     Get unique case relationships used by search details in any modules that
     match the given case type and are configured for case search.
@@ -356,7 +354,7 @@ def get_related_case_relationships(app, case_type):
     return paths
 
 
-def get_related_case_results(helper, cases, paths):
+def get_path_related_cases_results(helper, cases, paths):
     """
     Given a set of cases and a set of case property paths,
     fetches ES documents for all cases referenced by those paths.

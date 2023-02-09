@@ -11,21 +11,20 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.case_search.utils import (
     _QueryHelper,
-    get_related_case_relationships,
-    get_related_case_results,
+    get_search_detail_relationship_paths,
+    get_path_related_cases_results,
     get_related_cases,
     _get_all_related_cases,
     get_child_case_results,
-    get_defined_cases,
+    get_related_cases_result,
 )
 from corehq.apps.es import CaseSearchES
 from corehq.apps.es.case_search import wrap_case_search_hit
 from corehq.apps.es.tests.test_case_search_es import BaseCaseSearchTest
 from corehq.apps.es.tests.utils import es_test
-from corehq.util.test_utils import flag_enabled, flag_disabled
 
 
-def test_get_related_case_relationships():
+def test_get_search_detail_relationship_paths():
     app = Application.new_app("test-domain", "Case Search App")
     module = app.add_module(Module.new_module("Search Module", "en"))
     module.case_type = "patient"
@@ -47,13 +46,13 @@ def test_get_related_case_relationships():
         DetailColumn(header={"en": "zz"}, model="case", field="parent/zz", format="plain"),
     )
 
-    eq(get_related_case_relationships(app, "patient"), {"parent/parent", "host"})
-    eq(get_related_case_relationships(app, "monster"), set())
+    eq(get_search_detail_relationship_paths(app, "patient"), {"parent/parent", "host"})
+    eq(get_search_detail_relationship_paths(app, "monster"), set())
 
 
 @es_test
 class TestGetRelatedCases(BaseCaseSearchTest):
-    def test_get_related_case_results(self):
+    def test_get_path_related_cases_results(self):
         # Note that cases must be defined before other cases can reference them
         cases = [
             {'_id': 'c1', 'case_type': 'monster', 'description': 'grandparent of first person'},
@@ -85,7 +84,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_related_case_ids(cases, {"host", "parent"}, {"c2", "c4"})
         self._assert_related_case_ids(cases, {"host", "parent/parent"}, {"c4", "c1"})
 
-    def test_get_related_case_results_duplicates(self):
+    def test_get_path_related_cases_results_duplicates(self):
         """Test that `get_related_cases` does not include any cases that are in the initial
         set or are duplicates of others already found."""
 
@@ -119,7 +118,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         source_cases = [wrap_case_search_hit(result) for result in hits]
         self.assertEqual({case.case_id for case in source_cases}, {'c1', 'c2'})
 
-        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
+        with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                    return_value={"parent", "parent/parent"}), \
                 patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
                 patch("corehq.apps.case_search.utils.get_app_cached"):
@@ -129,7 +128,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self.assertEqual(set(case_ids), {"a1", "d1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
-        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
+        with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                    return_value={"parent", "parent/parent"}), \
              patch("corehq.apps.case_search.utils.get_app_cached"):
             cases = get_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None, True)
@@ -137,7 +136,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self.assertEqual(set(case_ids), {"a1", "d1", "h1"})  # c1, c2 excluded since they are in the initial list
         self.assertEqual(max(case_ids.values()), 1, case_ids)  # no duplicates
 
-    def test_get_related_case_results_expanded_results(self):
+    def test_get_path_related_cases_results_expanded_results(self):
         """Test that `get_related_cases` includes related cases for cases loaded
         via the 'custom_related_case_property'."""
 
@@ -165,7 +164,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         cases = [wrap_case_search_hit(result) for result in hits]
         self.assertEqual({case.case_id for case in cases}, {'a1', 'a2', 'a3', 'a4'})
 
-        with patch("corehq.apps.case_search.utils.get_related_case_relationships",
+        with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                    return_value={"parent"}), \
                 patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
                 patch("corehq.apps.case_search.utils.get_app_cached"):
@@ -240,7 +239,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         result_cases = _get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASES)
         self._assert_case_ids(RESULT_ALL_RELATED_CASE_ID, result_cases)
 
-    def test_get_defined_cases(self):
+    def test_get_related_cases_result(self):
         app = Application.new_app(self.domain, "Case Search App")
         module = app.add_module(Module.new_module("Search Module", "en"))
         module.case_type = "teacher"
@@ -267,18 +266,18 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         RESULT_PARENT_CHILD_EXT_CASE_ID = {'b1', 'c1', 'e1'}
 
         with patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}), \
-            patch("corehq.apps.case_search.utils.get_related_case_relationships",
+            patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                 return_value={"parent"}):
-            result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'},
+            result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
                 SOURCE_CASES, include_related_cases=True)
             self._assert_case_ids(RESULT_PARENT_CHILD_EXT_CASE_ID, result_cases)
 
-            result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'},
+            result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
                 SOURCE_CASES, include_related_cases=False)
             self._assert_case_ids(RESULT_PARENT_CHILD_ID, result_cases)
 
     def _assert_related_case_ids(self, cases, paths, expected_case_ids):
-        results = get_related_case_results(_QueryHelper(self.domain), cases, paths)
+        results = get_path_related_cases_results(_QueryHelper(self.domain), cases, paths)
         self._assert_case_ids(expected_case_ids, results)
 
     def _assert_case_ids(self, expected_case_ids, result_cases):
