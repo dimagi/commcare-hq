@@ -278,10 +278,6 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
         return []
 
     app = get_app_cached(helper.domain, app_id)
-    paths = [
-        rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
-        for rel in rels
-    ]
 
     expanded_case_results = []
     if custom_related_case_property:
@@ -289,8 +285,6 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
 
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
-    if paths:
-        results.extend(get_related_case_results(helper, top_level_cases, paths))
 
     defined_cases = get_defined_cases(helper, app, case_types, top_level_cases, include_related_cases)
     if defined_cases:
@@ -358,8 +352,11 @@ def get_defined_cases(helper, app, case_types, source_cases, include_related_cas
     if include_related_cases:
         return get_all_related_cases(helper, source_cases)
     else:
+        results = []
+        results.extend(get_search_detail_path_defined_cases(helper, app, case_types, source_cases))
         source_case_ids = {case.case_id for case in source_cases}
-        return get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids)
+        results.extend(get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids))
+        return results
 
 
 def get_all_related_cases(helper, source_cases):
@@ -378,6 +375,14 @@ def get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
     if child_case_types:
         return get_child_case_results(helper, source_case_ids, child_case_types)
 
+
+def get_search_detail_path_defined_cases(helper, app, case_types, source_cases):
+    paths = [
+        rel for rels in [get_related_case_relationships(app, case_type) for case_type in case_types]
+        for rel in rels
+    ]
+    if paths:
+        return(get_related_case_results(helper, source_cases, paths))
 
 def get_child_case_types(app, case_type):
     """
