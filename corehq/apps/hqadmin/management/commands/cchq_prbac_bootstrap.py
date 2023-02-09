@@ -190,6 +190,9 @@ class Command(BaseCommand):
              name='File Dropzone',
              description='Offer hosting and sharing data files for downloading '
                          'from a secure dropzone'),
+        Role(slug=privileges.ATTENDANCE_TRACKING,
+             name='Attendance Tracking',
+             description='Support to use CommCareHQ for attendance tracking'),
     ]
 
     BOOTSTRAP_PLANS = [
