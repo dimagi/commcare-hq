@@ -94,7 +94,7 @@ def _get_helper_and_visible_domains(couch_user, domain, case_types, registry_slu
     if registry_slug:
         try:
             registry_helper = DataRegistryHelper(domain, registry_slug=registry_slug)
-            helper.check_data_access(couch_user, case_types)
+            registry_helper.check_data_access(couch_user, case_types)
         except (RegistryNotFound, RegistryAccessException):
             pass
         else:
@@ -322,17 +322,20 @@ def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases)
         rel for rels in [get_search_detail_relationship_paths(app, case_type) for case_type in case_types]
         for rel in rels
     ]
+    result = []
     if paths:
-        return(get_path_related_cases_results(helper, source_cases, paths))
-
+        result.extend(get_path_related_cases_results(helper, source_cases, paths))
+    return result
 
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
     child_case_types = [
         _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
         for _type in types
     ]
+    result = []
     if child_case_types:
-        return get_child_case_results(helper, source_case_ids, child_case_types)
+        result.extend(get_child_case_results(helper, source_case_ids, child_case_types))
+    return result
 
 
 def get_search_detail_relationship_paths(app, case_type):
