@@ -283,9 +283,9 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
 
-    defined_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_related_cases)
-    if defined_cases:
-        results.extend(defined_cases)
+    related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_related_cases)
+    if related_cases:
+        results.extend(related_cases)
 
     initial_case_ids = {case.case_id for case in cases}
     return list({
@@ -405,8 +405,7 @@ def get_child_case_types(app, case_type):
 
 
 def get_child_case_results(helper, parent_case_ids, child_case_types=None):
-    filter = (helper.get_base_queryset()
-            .get_child_cases(parent_case_ids, "parent"))
+    filter = (helper.get_base_queryset().get_child_cases(parent_case_ids, "parent"))
     if child_case_types:
         filter = filter.case_type(child_case_types)
 
