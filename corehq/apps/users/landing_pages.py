@@ -15,7 +15,11 @@ ALL_LANDING_PAGES = (
     LandingPage('webapps', gettext_noop('Web Apps'), 'formplayer_main'),
     LandingPage('reports', gettext_noop('Reports'), 'reports_home'),
     # Pro plan only:
-    LandingPage('downloads', gettext_noop('File Dropzone'), 'download_data_files'),
+    LandingPage(
+        'downloads',
+        gettext_noop('Data File Downloads'),
+        'download_data_files',
+    ),
 )
 
 
