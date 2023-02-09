@@ -85,6 +85,7 @@ class ViewTestCase(TestCase):
     def setUp(self):
         self.client.login(username=self.username, password=self.password)
 
+
 @domain_has_dropzone()
 class DataFileDownloadDetailTest(ViewTestCase):
 
