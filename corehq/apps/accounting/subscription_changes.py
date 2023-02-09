@@ -27,6 +27,10 @@ from corehq.apps.users.role_utils import (
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
+    add_program_manager_role_to_domain,
+    archive_role_for_domain,
+    UserRolePresets,
+    UserRole
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -195,6 +199,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
+            privileges.ATTENDANCE_TRACKING: cls.response_archive_program_manager_role,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -253,6 +258,10 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         archive_custom_roles_for_domain(domain.name)
         reset_initial_roles_for_domain(domain.name)
         return True
+
+    @staticmethod
+    def response_archive_program_manager_role(domain, new_plan_version):
+        archive_role_for_domain(role_name=UserRolePresets.PROGRAM_MANAGER, domain=domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
@@ -355,15 +364,16 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @classmethod
     def privilege_to_response_function(cls):
-        privs_to_repsones = {
+        privs_to_respones = {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
+            privileges.ATTENDANCE_TRACKING: cls.response_add_program_manager_role,
         }
-        privs_to_repsones.update({
+        privs_to_respones.update({
             p: cls.response_report_builder
             for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
         })
-        return privs_to_repsones
+        return privs_to_respones
 
     @staticmethod
     def response_role_based_access(domain, new_plan_version):
@@ -372,6 +382,18 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         - Un-archive custom roles.
         """
         unarchive_roles_for_domain(domain.name)
+        return True
+
+    @staticmethod
+    def response_add_program_manager_role(domain, new_plan_version):
+        role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
+        if not role:
+            add_program_manager_role_to_domain(domain)
+            return True
+
+        if role.is_archived:
+            role.is_archived = False
+            role.save()
         return True
 
     @staticmethod
