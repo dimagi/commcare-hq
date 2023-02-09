@@ -13,7 +13,7 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 import sys
 
-from casexml.apps.case.xform import close_extension_cases
+from casexml.apps.case.xform import close_extension_cases, process_cases_with_casedb, extract_case_blocks
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
@@ -277,6 +277,34 @@ class SubmissionPost(object):
         ledgers = []
         submission_type = 'unknown'
         openrosa_kwargs = {}
+
+        try:
+            # insert "NOT" to this conditional when QA testing begins
+            if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(self.domain):
+                case = extract_case_blocks(submitted_form)
+                if case:
+                    case_data = case[0]
+                    if 'create' in case_data:
+                        for tag in required_create_tags:
+                            if tag not in case_data['create']:
+                                raise MetadataError('One or more required tags missing in the create node')
+                    elif 'update' in case_data and not isinstance(case_data['update'], dict):
+                        raise MetadataError('Missing nodes in the update node.')
+                if submitted_form.metadata:
+                    for attr in required_metadata_tags:
+                        if getattr(submitted_form.metadata, attr) is None:
+                            raise MetadataError('One or more required tags missing in the metadata node')
+                else:
+                    raise MetadataError('Missing metadata node.')
+        except MetadataError as e:
+            submitted_form.problem = e
+            submitted_form.state = XFormInstance.ERROR
+            submission_type = 'error'
+            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+            self._log_form_completion(submitted_form, submission_type)
+            response = self._get_open_rosa_response(submitted_form, **openrosa_kwargs)
+            return FormProcessingResult(response, submitted_form, cases, ledgers, submission_type)
+
         with result.get_locked_forms() as xforms:
             if len(xforms) > 1:
                 self.track_load(len(xforms) - 1)
@@ -320,12 +348,7 @@ class SubmissionPost(object):
                 elif not instance.is_error:
                     submission_type = 'normal'
                     try:
-                        case_stock_result = self.process_xforms_for_cases(xforms, case_db,
-                                                                          self.domain, self.timing_context)
-                    except MetadataError as e:
-                        instance.problem = e
-                        instance.state = XFormInstance.ERROR
-                        submission_type = 'error'
+                        case_stock_result = self.process_xforms_for_cases(xforms, case_db, self.timing_context)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
@@ -497,30 +520,13 @@ class SubmissionPost(object):
 
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
-    def process_xforms_for_cases(xforms, case_db, domain=None, timing_context=None):
-        from casexml.apps.case.xform import process_cases_with_casedb
+    def process_xforms_for_cases(xforms, case_db, timing_context=None):
         from corehq.apps.commtrack.processing import process_stock
+
+        timing_context = timing_context or TimingContext()
 
         instance = xforms[0]
 
-        # INSERT "NOT" HERE when done w testing
-        if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(domain):
-            form_data = instance.form_data
-            if 'case' in form_data:
-                if 'create' in form_data['case']:
-                    for tag in required_create_tags:
-                        if tag not in form_data['case']['create']:
-                            raise MetadataError('One or more required tags missing in the create node')
-                elif 'update' in form_data['case'] and not isinstance(form_data['case']['update'], dict):
-                    raise MetadataError('Missing nodes in the update node.')
-            if instance.metadata:
-                for attr in required_metadata_tags:
-                    if getattr(instance.metadata, attr) is None:
-                        raise MetadataError('One or more required tags missing in the metadata node')
-            else:
-                raise MetadataError('Missing metadata node.')
-
-        timing_context = timing_context or TimingContext()
         with timing_context("process_cases"):
             case_result = process_cases_with_casedb(xforms, case_db)
         with timing_context("process_ledgers"):
