@@ -215,11 +215,11 @@ class TestGetRelatedCases(BaseCaseSearchTest):
             }},
         ]
         self._bootstrap_cases_in_es_for_domain(self.domain, cases)
-
-        SOURCE_CASE_ID = {'a1', 'a2', 'a3'}
+        hits = CaseSearchES().domain(self.domain).case_type("a").run().hits
+        SOURCE_CASES = [wrap_case_search_hit(result) for result in hits]
         RESULT_PARENT_CHILD_CASE_ID = {'b1', 'c1', 'e1', 'h1'}
 
-        result_cases = get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASE_ID)
+        result_cases = get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASES)
         self._assert_case_ids(RESULT_PARENT_CHILD_CASE_ID, result_cases)
 
     def test_get_defined_cases(self):
@@ -243,17 +243,18 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         ]
         self._bootstrap_cases_in_es_for_domain(self.domain, cases)
 
-        SOURCE_CASE_ID = {'a1', 'a2', 'a3'}
+        hits = CaseSearchES().domain(self.domain).case_type("a").run().hits
+        SOURCE_CASES = [wrap_case_search_hit(result) for result in hits]
         RESULT_CHILD_ID = {'c1'}
         RESULT_PARENT_CHILD_EXT_CASE_ID = {'b1', 'c1', 'e1'}
 
         with patch("corehq.apps.case_search.utils.get_child_case_types", return_value={'c'}):
             result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'},
-                SOURCE_CASE_ID, include_related_cases=True)
+                SOURCE_CASES, include_related_cases=True)
             self._assert_case_ids(RESULT_PARENT_CHILD_EXT_CASE_ID, result_cases)
 
             result_cases = get_defined_cases(_QueryHelper(self.domain), app, {'teacher'},
-                SOURCE_CASE_ID, include_related_cases=False)
+                SOURCE_CASES, include_related_cases=False)
             self._assert_case_ids(RESULT_CHILD_ID, result_cases)
 
     def _assert_related_case_ids(self, cases, paths, expected_case_ids):
