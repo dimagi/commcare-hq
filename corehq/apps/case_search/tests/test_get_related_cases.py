@@ -205,9 +205,6 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._assert_case_ids(WITH_FILTER_RESULT_CHILD_CASE_ID, result_cases)
 
     def test__get_all_related_cases(self):
-        app = Application.new_app(self.domain, "Case Search App")
-        module = app.add_module(Module.new_module("Search Module", "en"))
-        module.case_type = "teacher"
         # a1>b1>g1
         # e1:>a3:>h1
         # c1>a2
