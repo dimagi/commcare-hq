@@ -39,7 +39,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "graph",
                             "graph",
@@ -70,7 +69,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "4",
                             "-3",
@@ -125,7 +123,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "123",
                             "1",
@@ -223,7 +220,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "graph",
                             "graph",
@@ -254,7 +250,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "",
                             "",
@@ -309,7 +304,6 @@ hqDefine("cloudcare/js/formplayer/spec/fixtures/case_tile_list", function () {
                             "hin",
                         ],
                         "breadcrumbs": null,
-                        "menuSessionId": null,
                         "details": [
                             "",
                             "12",
