@@ -327,6 +327,7 @@ def _get_search_detail_path_defined_cases(helper, app, case_types, source_cases)
         result.extend(get_path_related_cases_results(helper, source_cases, paths))
     return result
 
+
 def _get_child_cases_referenced_in_app(helper, app, case_types, source_case_ids):
     child_case_types = [
         _type for types in [get_child_case_types(app, case_type) for case_type in case_types]
