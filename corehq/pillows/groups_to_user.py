@@ -2,8 +2,8 @@ from collections import namedtuple
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
-from corehq.elastic import send_to_elasticsearch
 from corehq.apps.es import UserES
+from corehq.apps.es.users import user_adapter
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
 from corehq.pillows.group import get_group_to_elasticsearch_processor
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint, get_checkpoint_for_elasticsearch_pillow
@@ -96,8 +96,7 @@ def remove_group_from_users(group_doc):
             made_changes = True
         if made_changes:
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
+            user_adapter.update(user_source.user_id, doc)
 
 
 def update_es_user_with_groups(group_doc):
@@ -106,17 +105,14 @@ def update_es_user_with_groups(group_doc):
             user_source.group_ids.add(group_doc["_id"])
             user_source.group_names.add(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
+            user_adapter.update(user_source.user_id, doc)
 
     for user_source in stream_user_sources(group_doc.get("removed_users", [])):
         if group_doc["name"] in user_source.group_names or group_doc["_id"] in user_source.group_ids:
             user_source.group_ids.remove(group_doc["_id"])
             user_source.group_names.remove(group_doc["name"])
             doc = {"__group_ids": list(user_source.group_ids), "__group_names": list(user_source.group_names)}
-            doc["_id"] = user_source.user_id
-            send_to_elasticsearch('users', doc, es_merge_update=True)
-
+            user_adapter.update(user_source.user_id, doc)
 
 
 UserSource = namedtuple('UserSource', ['user_id', 'group_ids', 'group_names'])
