@@ -630,24 +630,57 @@ def sync_all_tableau_users():
 
 # Attaches to the parse_web_users method
 def add_on_tableau_details(domain, web_user_dicts):
-    tableau_users_for_domain = TableauUser.objects.filter(server=TableauServer.objects.get(domain=domain))
+
     session = TableauAPISession.create_session_for_domain(domain)
+
+    def _get_roles_by_user(domain, usernames):
+        return {
+            user['username']: user['role'] for user in TableauUser.objects.filter(
+                server=TableauServer.objects.get(domain=domain)
+            ).filter(username__in=usernames).values('username', 'role')
+        }
+
+    def _get_groups_by_user(session, domain, usernames):
+        try:
+            all_groups = get_all_tableau_groups(domain, session=session)
+            users_by_group = {}
+            for group in all_groups:
+                users_by_group[group] = session.get_users_in_group(group.id)
+        except TableauAPIError:
+            return -1
+
+        def _username_in_user_dicts(username, user_dicts):
+            # Is there at least one user_dict with the given username
+            return bool(sum([user_dict.get('name') == tableau_username(username) for user_dict in user_dicts]))
+        groups_by_user = {}
+        for username in usernames:
+            groups_by_user[username] = [
+                group for group, user_dicts in users_by_group.items() if (
+                    _username_in_user_dicts(username, user_dicts))
+            ]
+        return groups_by_user
+
+    users_to_edit = []
     for web_user_dict in web_user_dicts:
         user = CouchUser.get_by_username(web_user_dict['username'], strict=True)
-        # Make sure it's not just an invite
+        # Make sure user already exists on domain (i.e. not an invited user)
         if user and user.get_domain_membership(domain):
-            try:
-                tableau_user = tableau_users_for_domain.get(username=user.username)
-                web_user_dict['tableau_role'] = tableau_user.role
-                web_user_dict['tableau_groups'] = json.dumps(_group_json_to_tuples(
-                    session.get_groups_for_user_id(tableau_user.tableau_user_id)
-                ))
-            except (TableauUser.DoesNotExist, TableauAPIError) as e:
-                _notify_tableau_exception(e, domain)
-                if isinstance(e, TableauUser.DoesNotExist):
-                    web_user_dict['tableau_role'] = 'ERROR'
-                elif isinstance(e, TableauAPIError):
-                    web_user_dict['tableau_groups'] = 'ERROR'
+            users_to_edit.append(user.username)
+
+    roles_by_user = _get_roles_by_user(domain, users_to_edit)
+    groups_by_user = _get_groups_by_user(session, domain, users_to_edit)
+
+    for web_user_dict in web_user_dicts:
+        username = web_user_dict['username']
+        web_user_dict['tableau_role'] = roles_by_user.get(username, 'N/A')
+        if groups_by_user == -1:
+            web_user_dict['tableau_groups'] = 'ERROR'
+        else:
+            groups = groups_by_user.get(username)
+            if groups or groups == []:
+                web_user_dict['tableau_groups'] = json.dumps(groups)
+            else:
+                web_user_dict['tableau_groups'] = 'N/A'
     return web_user_dicts
 
 

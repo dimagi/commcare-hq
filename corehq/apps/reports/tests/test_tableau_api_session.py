@@ -11,7 +11,7 @@ class FakeTableauInstance(mock.MagicMock):
     def __init__(self):
         super(FakeTableauInstance, self).__init__()
         self.groups = {'group1': '1a2b3', 'group2': 'c4d5e', 'group3': 'zx39n', HQ_TABLEAU_GROUP_NAME: 'bn12m'}
-        self.users = {'angie@dimagi.com': 'zx8cv', 'jeff@company.com': 'uip12', 'steve@company.com': 'ty78ui'}
+        self.users = {'edith@wharton.com': 'zx8cv', 'jeff@company.com': 'uip12', 'george@eliot.com': 'ty78ui'}
         self.group_names = list(self.groups.keys())
         self.group_ids = list(self.groups.values())
         self.users_names = list(self.users.keys())
@@ -120,7 +120,7 @@ class FakeTableauInstance(mock.MagicMock):
                         {
                             "externalAuthUserId": "",
                             "id": "%s",
-                            "name": "%s",
+                            "name": "HQ/%s",
                             "siteRole": "Viewer",
                             "locale": "local",
                             "language": "en"
@@ -128,7 +128,7 @@ class FakeTableauInstance(mock.MagicMock):
                         {
                             "externalAuthUserId": "",
                             "id": "%s",
-                            "name": "%s",
+                            "name": "HQ/%s",
                             "siteRole": "Explorer",
                             "locale": "local",
                             "language": "en"
