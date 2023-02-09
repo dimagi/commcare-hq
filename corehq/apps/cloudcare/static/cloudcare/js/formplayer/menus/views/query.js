@@ -341,9 +341,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 escapeMarkup: function (m) { return DOMPurify.sanitize(m); },
             });
             this.ui.hqHelp.hqHelp();
-            cloudcareUtils.initDateTimePicker(this.ui.date, {
-                format: dateFormat,
-            });
+            cloudcareUtils.initDatePicker(this.ui.date, this.model.get('value'), dateFormat);
             this.ui.dateRange.daterangepicker({
                 locale: {
                     format: dateFormat,

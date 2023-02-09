@@ -366,12 +366,12 @@ hqDefine('cloudcare/js/utils', [
         return inputDate;
     };
 
-    var initDatePicker = function ($el, selectedDate) {
+    var initDatePicker = function ($el, selectedDate, dateFormat) {
         if (!$el.length) {
             return;
         }
 
-        var dateFormat = "MM/DD/YYYY";
+        dateFormat = dateFormat || "MM/DD/YYYY";
         $el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
