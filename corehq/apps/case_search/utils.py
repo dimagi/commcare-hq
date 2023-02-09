@@ -115,10 +115,10 @@ class _QueryHelper:
     def wrap_case(self, es_hit, include_score=False, is_related_case=False):
         return wrap_case_search_hit(es_hit, include_score=include_score, is_related_case=is_related_case)
 
-    def get_parent_host_ext_cases(self, cases):
-        from casexml.apps.phone.data_providers.case.livequery import get_parent_host_ext_cases
+    def get_all_related_live_cases(self, cases):
+        from casexml.apps.phone.data_providers.case.livequery import get_all_related_live_cases
         case_ids = {case.case_id for case in cases}
-        return get_parent_host_ext_cases(self.domain, case_ids)
+        return get_all_related_live_cases(self.domain, case_ids)
 
 
 class _RegistryQueryHelper:
@@ -136,7 +136,7 @@ class _RegistryQueryHelper:
         case.case_json[COMMCARE_PROJECT] = case.domain
         return case
 
-    def get_parent_host_ext_cases(self, cases):
+    def get_all_related_live_cases(self, cases):
         return self.registry_helper.get_multi_domain_case_hierarchy(self.couch_user, cases)
 
 class CaseSearchQueryBuilder:
@@ -361,7 +361,7 @@ def get_defined_cases(helper, app, case_types, source_cases, include_related_cas
 
 def get_all_related_cases(helper, source_cases):
     results = []
-    results.extend(helper.get_parent_host_ext_cases(source_cases))
+    results.extend(helper.get_all_related_live_cases(source_cases))
     source_case_ids = {case.case_id for case in source_cases}
     results.extend(get_child_case_results(helper, source_case_ids))
     return results
