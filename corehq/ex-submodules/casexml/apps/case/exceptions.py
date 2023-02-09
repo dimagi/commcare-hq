@@ -62,3 +62,7 @@ class VersionNotSupported(CommCareCaseError):
 
 class PhoneDateValueError(CommCareCaseError):
     pass
+
+
+class MetadataError(CommCareCaseError):
+    pass
