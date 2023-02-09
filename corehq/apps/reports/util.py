@@ -442,8 +442,7 @@ def get_all_tableau_groups(domain, session=None):
     '''
     Returns a list of all Tableau groups on the site as list of TableauGroupTuples.
     '''
-    if not session:
-        session = TableauAPISession.create_session_for_domain(domain)
+    session = session or TableauAPISession.create_session_for_domain(domain)
     group_json = session.query_groups()
     return _group_json_to_tuples(group_json)
 
@@ -504,8 +503,7 @@ def delete_tableau_user(domain, username, session=None):
     Deletes the TableauUser object with the given username and removes it from the Tableau instance.
     '''
     try:
-        if not session:
-            session = TableauAPISession.create_session_for_domain(domain)
+        session = session or TableauAPISession.create_session_for_domain(domain)
         deleted_user_id = _delete_user_local(session, username)
         _delete_user_remote(session, deleted_user_id)
     except (TableauAPIError, TableauUser.DoesNotExist) as e:
@@ -532,8 +530,7 @@ def update_tableau_user(domain, username, role=None, groups=[], session=None):
     of TableauGroupTuples.
     '''
     try:
-        if not session:
-            session = TableauAPISession.create_session_for_domain(domain)
+        session = session or TableauAPISession.create_session_for_domain(domain)
         user = TableauUser.objects.filter(
             server=session.tableau_connected_app.server
         ).get(username=username)
