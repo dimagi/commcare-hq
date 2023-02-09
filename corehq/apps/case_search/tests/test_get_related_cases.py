@@ -209,8 +209,14 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         app = Application.new_app(self.domain, "Case Search App")
         module = app.add_module(Module.new_module("Search Module", "en"))
         module.case_type = "teacher"
+        # a1>b1>g1
+        # e1:>a3:>h1
+        # c1>a2
         cases = [
-            {'_id': 'b1', 'case_type': 'b'},
+            {'_id': 'g1', 'case_type': 'g'},
+            {'_id': 'b1', 'case_type': 'b', 'index': {
+                'parent': ('g', 'g1'),
+            }},
             {'_id': 'h1', 'case_type': 'h'},
             {'_id': 'a1', 'case_type': 'a', 'index': {
                 'parent': ('b', 'b1'),
@@ -229,10 +235,10 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         self._bootstrap_cases_in_es_for_domain(self.domain, cases)
         hits = CaseSearchES().domain(self.domain).case_type("a").run().hits
         SOURCE_CASES = [wrap_case_search_hit(result) for result in hits]
-        RESULT_PARENT_CHILD_CASE_ID = {'b1', 'c1', 'e1', 'h1'}
+        RESULT_ALL_RELATED_CASE_ID = {'b1', 'g1', 'e1', 'h1', 'c1'}
 
         result_cases = get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASES)
-        self._assert_case_ids(RESULT_PARENT_CHILD_CASE_ID, result_cases)
+        self._assert_case_ids(RESULT_ALL_RELATED_CASE_ID, result_cases)
 
     def test_get_defined_cases(self):
         app = Application.new_app(self.domain, "Case Search App")
