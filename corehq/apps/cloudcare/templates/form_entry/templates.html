@@ -521,9 +521,7 @@
                 }
             "/>
         <!-- /ko -->
-        <!-- ko ifnot: $parent.hideLabel -->
-          <span data-bind="renderMarkdown: $data"></span>
-        <!-- /ko -->
+        <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : ''"></span>
       </div>
     <!-- /ko -->
     <!-- ko if: hideLabel -->
