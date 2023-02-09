@@ -14,7 +14,7 @@ from corehq.apps.case_search.utils import (
     get_related_case_relationships,
     get_related_case_results,
     get_related_cases,
-    get_all_related_cases,
+    _get_all_related_cases,
     get_child_case_results,
     get_defined_cases,
 )
@@ -205,7 +205,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         result_cases = get_child_case_results(_QueryHelper(self.domain), SOURCE_CASE_ID, CHILD_CASE_TYPE_FILTER)
         self._assert_case_ids(WITH_FILTER_RESULT_CHILD_CASE_ID, result_cases)
 
-    def test_get_all_related_cases(self):
+    def test__get_all_related_cases(self):
         app = Application.new_app(self.domain, "Case Search App")
         module = app.add_module(Module.new_module("Search Module", "en"))
         module.case_type = "teacher"
@@ -237,7 +237,7 @@ class TestGetRelatedCases(BaseCaseSearchTest):
         SOURCE_CASES = [wrap_case_search_hit(result) for result in hits]
         RESULT_ALL_RELATED_CASE_ID = {'b1', 'g1', 'e1', 'h1', 'c1'}
 
-        result_cases = get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASES)
+        result_cases = _get_all_related_cases(_QueryHelper(self.domain), SOURCE_CASES)
         self._assert_case_ids(RESULT_ALL_RELATED_CASE_ID, result_cases)
 
     def test_get_defined_cases(self):
