@@ -197,7 +197,11 @@ class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
             if action.close_condition.is_active():
                 sub_type_meta.add_closer(self.form.unique_id, action.close_condition)
             for name, question_path in FormAction.get_action_properties(action):
-                self._add_property_save(action.case_type, name, question_path)
+                if name == 'name':
+                    update_mode = action.name_update.update_mode
+                else:
+                    update_mode = action.case_properties[name].update_mode
+                self._add_property_save(action.case_type, name, question_path, update_mode=update_mode)
 
     def _add_load_references(self):
         for case_load_reference in self.form.case_references.get_load_references():
