@@ -13,15 +13,15 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 import sys
 
-from casexml.apps.case.xform import close_extension_cases
+from casexml.apps.case.xform import close_extension_cases, process_cases_with_casedb, extract_case_blocks
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
-    CaseValueError
+    CaseValueError, MetadataError
 from corehq.apps.receiverwrapper.rate_limiter import report_case_usage, report_submission_usage
 from corehq.const import OPENROSA_VERSION_3
 from corehq.middleware import OPENROSA_VERSION_HEADER
-from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER
+from corehq.toggles import ASYNC_RESTORE, SUMOLOGIC_LOGS, NAMESPACE_OTHER, ALLOW_SUBMISSION_WITHOUT_METADATA
 from corehq.apps.app_manager.dbaccessors import get_current_app
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.commtrack.exceptions import MissingProductId
@@ -36,7 +36,6 @@ from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.system_action import SYSTEM_ACTION_XMLNS, handle_system_action
 from corehq.form_processor.utils.metadata import scrub_meta
 from corehq.form_processor.submission_process_tracker import unfinished_submission
-from corehq.util.metrics import metrics_counter
 from corehq.util.metrics.load_counters import form_load_counter
 from corehq.util.global_request import get_request
 from corehq.util.quickcache import quickcache
@@ -55,6 +54,8 @@ CaseStockProcessingResult = namedtuple(
     'CaseStockProcessingResult',
     'case_result, case_models, stock_result'
 )
+required_create_tags = ['case_name', 'owner_id', 'case_type']
+required_metadata_tags = ['timeEnd', 'userID', 'instanceID']
 
 
 class FormProcessingResult(namedtuple('FormProcessingResult', 'response xform cases ledgers submission_type')):
@@ -153,16 +154,7 @@ class SubmissionPost(object):
         Message is formatted with markdown.
         '''
 
-        if instance.metadata and (not instance.metadata.userID or not instance.metadata.instanceID):
-            metrics_counter('commcare.xform_submissions.partial_metadata', tags={
-                'domain': instance.domain,
-            })
-        elif not instance.metadata:
-            metrics_counter('commcare.xform_submissions.no_metadata', tags={
-                'domain': instance.domain,
-            })
-            return '   √   '
-        if instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
+        if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
             return '   √   '
 
         user = CouchUser.get_by_user_id(instance.user_id)
@@ -283,6 +275,34 @@ class SubmissionPost(object):
         ledgers = []
         submission_type = 'unknown'
         openrosa_kwargs = {}
+
+        try:
+            # insert "NOT" to this conditional when QA testing begins
+            if ALLOW_SUBMISSION_WITHOUT_METADATA.enabled(self.domain):
+                case = extract_case_blocks(submitted_form)
+                if case:
+                    case_data = case[0]
+                    if 'create' in case_data:
+                        for tag in required_create_tags:
+                            if tag not in case_data['create']:
+                                raise MetadataError('One or more required tags missing in the create node')
+                    elif 'update' in case_data and not isinstance(case_data['update'], dict):
+                        raise MetadataError('Missing nodes in the update node.')
+                if submitted_form.metadata:
+                    for attr in required_metadata_tags:
+                        if getattr(submitted_form.metadata, attr) is None:
+                            raise MetadataError('One or more required tags missing in the metadata node')
+                else:
+                    raise MetadataError('Missing metadata node.')
+        except MetadataError as e:
+            submitted_form.problem = e
+            submitted_form.state = XFormInstance.ERROR
+            submission_type = 'error'
+            openrosa_kwargs['error_nature'] = ResponseNature.PROCESSING_FAILURE
+            self._log_form_completion(submitted_form, submission_type)
+            response = self._get_open_rosa_response(submitted_form, **openrosa_kwargs)
+            return FormProcessingResult(response, submitted_form, cases, ledgers, submission_type)
+
         with result.get_locked_forms() as xforms:
             if len(xforms) > 1:
                 self.track_load(len(xforms) - 1)
@@ -499,7 +519,6 @@ class SubmissionPost(object):
     @staticmethod
     @tracer.wrap(name='submission.process_cases_and_stock')
     def process_xforms_for_cases(xforms, case_db, timing_context=None):
-        from casexml.apps.case.xform import process_cases_with_casedb
         from corehq.apps.commtrack.processing import process_stock
 
         timing_context = timing_context or TimingContext()
