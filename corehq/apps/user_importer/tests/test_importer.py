@@ -1972,7 +1972,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             self.tableau_instance.add_user_to_group_response()]
 
     def _mock_update_user_responses(self, username):
-        return _mock_create_session_responses(self) + [
+        return [
             self.tableau_instance.delete_user_response(),
             self.tableau_instance.create_user_response(username, None),
             self.tableau_instance.get_group_response(HQ_TABLEAU_GROUP_NAME),
@@ -1989,10 +1989,12 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
             + self._mock_create_user_mock_responses('upload@user.com')
             + self._mock_create_user_mock_responses('edith@wharton.com')
             + self._mock_create_user_mock_responses('george@eliot.com')
+            + _mock_create_session_responses(self)
+            + [self.tableau_instance.get_group_response('group1'),
+               self.tableau_instance.get_group_response('group2')]
             + self._mock_update_user_responses('edith@wharton.com')
-            + _mock_create_session_responses(self) + [
-            self.tableau_instance.delete_user_response()  # For george@eliot.com
-        ])
+            + [self.tableau_instance.delete_user_response()]
+        )
         self._setup_tableau_users()
         local_tableau_users = TableauUser.objects.filter(
             server=TableauServer.objects.get(domain=self.domain_name))
@@ -2005,7 +2007,7 @@ class TestWebUserBulkUpload(TestCase, DomainSubscriptionMixin):
                 self._get_spec(
                     username='edith@wharton.com',
                     tableau_role=TableauUser.Roles.EXPLORER.value,
-                    tableau_groups="""[["group1", "1a2b3"], ["group2", "c4d5e"]]"""
+                    tableau_groups="""group1,group2"""
                 ),
                 self._get_spec(
                     username='hello@world.com',

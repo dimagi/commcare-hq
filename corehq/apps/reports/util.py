@@ -689,6 +689,7 @@ def import_tableau_users(domain, web_user_specs):
         session = TableauAPISession.create_session_for_domain(domain)
     except TableauAPIError as e:
         _notify_tableau_exception(e, domain)
+    known_groups = {}
     for row in web_user_specs:
         username = row.get('username')
         remove = spec_value_to_boolean_or_none(row, 'remove')
@@ -701,7 +702,26 @@ def import_tableau_users(domain, web_user_specs):
                 tableau_groups_txt = row.get('tableau_groups')
                 if tableau_role == 'ERROR' or tableau_groups_txt == 'ERROR':
                     continue
-                tableau_groups = [
-                    TableauGroupTuple(name=group[0], id=group[1]) for group in json.loads(tableau_groups_txt)
-                ]
+
+                def _get_tableau_group_tuples_from_names(names, known_groups):
+                    groups = []
+                    for group_name in names:
+                        if group_name in known_groups:
+                            groups.append(known_groups[group_name])
+                        else:
+                            try:
+                                new_group = TableauGroupTuple(group_name,
+                                    session.get_group(group_name)['id'])
+                            except (TableauAPIError, KeyError) as e:
+                                _notify_tableau_exception(e, domain)
+                            else:
+                                groups.append(new_group)
+                                known_groups[group_name] = new_group
+                    return groups, known_groups
+
+                tableau_group_names = tableau_groups_txt.split(',')
+                tableau_group_names = tableau_group_names if tableau_group_names[0] else []
+                tableau_groups, known_groups = _get_tableau_group_tuples_from_names(tableau_group_names,
+                                                                                    known_groups)
+
                 update_tableau_user(domain, username, role=tableau_role, groups=tableau_groups, session=session)
