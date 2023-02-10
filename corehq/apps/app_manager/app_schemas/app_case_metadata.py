@@ -435,14 +435,13 @@ class CaseTypeMeta(JsonObject):
         self.closed_by[form_id] = closers
 
     def add_save(self, form_id, question_path, property_, update_mode):
-        update = {'property': property_, 'update_mode': update_mode}
         if self.get_save_properties(form_id, question_path):
-            self.save_properties[form_id][question_path].append(update)
+            self.save_properties[form_id][question_path].update({property_: update_mode})
         else:
             try:
-                self.save_properties[form_id].update({question_path: [update]})
+                self.save_properties[form_id].update({question_path: {property_: update_mode}})
             except KeyError:
-                self.save_properties[form_id] = {question_path: [update]}
+                self.save_properties[form_id] = {question_path: {property_: update_mode}}
 
     def add_load(self, form_id, question_path, property_):
         if self.get_load_properties(form_id, question_path):
@@ -459,9 +458,9 @@ class CaseTypeMeta(JsonObject):
         return self.load_properties.get(form_id, {}).get(path, [])
 
     def get_save_properties(self, form_id, path):
-        """returns a list of properties which load into a particular form question
+        """returns a dict of property: update_mode pairs which are saved from a particular form question
         """
-        return self.save_properties.get(form_id, {}).get(path, [])
+        return self.save_properties.get(form_id, {}).get(path, {})
 
 
 class AppCaseMetadata(JsonObject):
@@ -482,11 +481,11 @@ class AppCaseMetadata(JsonObject):
         return [
             LoadSaveProperty(
                 case_type=case_type.name,
-                property=prop.get('property'),
-                update_mode=prop.get('update_mode')
+                property=prop,
+                update_mode=update_mode
             )
             for case_type in self.case_types
-            for prop in case_type.get_save_properties(form_id, path)
+            for prop, update_mode in case_type.get_save_properties(form_id, path).items()
         ]
 
     def get_property_list(self, root_case_type, name):
