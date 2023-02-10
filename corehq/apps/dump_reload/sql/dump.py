@@ -130,7 +130,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('reports.TableauUser', SimpleFilter('server__domain')),
     FilteredModelIteratorBuilder('smsforms.SQLXFormsSession', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.MessagingEvent', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('parent__domain')),
+    FilteredModelIteratorBuilder('sms.MessagingSubEvent', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.PhoneNumber', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.SMS', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('sms.Keyword', SimpleFilter('domain')),
@@ -171,7 +171,7 @@ APP_LABELS_WITH_FILTER_KWARGS_TO_DUMP = defaultdict(list)
     FilteredModelIteratorBuilder('case_importer.CaseUploadFileMeta', SimpleFilter('caseuploadrecord__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadFormRecord', SimpleFilter('case_upload_record__domain')),
     FilteredModelIteratorBuilder('case_importer.CaseUploadRecord', SimpleFilter('domain')),
-    FilteredModelIteratorBuilder('repeaters.SQLRepeater', SimpleFilter('domain')),
+    FilteredModelIteratorBuilder('repeaters.Repeater', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.ConnectionSettings', SimpleFilter('domain')),
     FilteredModelIteratorBuilder('motech.RequestLog', SimpleFilter('domain')),
     # NH (2021-01-08): Including SQLRepeatRecord because we dump (Couch)

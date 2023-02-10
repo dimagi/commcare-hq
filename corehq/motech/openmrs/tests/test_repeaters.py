@@ -44,7 +44,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     save_match_ids,
 )
 from corehq.motech.repeater_helpers import get_relevant_case_updates_from_form_json
-from corehq.motech.openmrs.repeaters import OpenmrsRepeater, SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tests.utils import DATETIME_PATTERN, strip_xml
 from corehq.motech.value_source import CaseTriggerInfo, get_case_location
 from corehq.util.test_utils import TestFileMixin, _create_case
@@ -314,7 +314,7 @@ class AllowedToForwardTests(TestCase):
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         self.assertFalse(repeater.allowed_to_forward(payload))
 
     def test_excluded_case_type(self):
@@ -325,7 +325,7 @@ class AllowedToForwardTests(TestCase):
         form_payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
         )
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         repeater.white_listed_case_types = ['patient']
         self.assertFalse(repeater.allowed_to_forward(form_payload))
 
@@ -336,7 +336,7 @@ class AllowedToForwardTests(TestCase):
         """
         case_id = uuid.uuid4().hex
         form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         self.assertTrue(repeater.allowed_to_forward(form_payload))
 
     def test_update_from_sqlopenmrs(self):
@@ -347,7 +347,7 @@ class AllowedToForwardTests(TestCase):
             domain=DOMAIN,
             xmlns=XMLNS_OPENMRS,
         )
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         self.assertFalse(repeater.allowed_to_forward(payload))
 
     def test_excluded_case_type_sqlopenmrs(self):
@@ -358,7 +358,7 @@ class AllowedToForwardTests(TestCase):
         form_payload, cases = _create_case(
             domain=DOMAIN, case_id=case_id, case_type='notpatient', owner_id=self.owner.get_id
         )
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         repeater.white_listed_case_types = ['patient']
         self.assertFalse(repeater.allowed_to_forward(form_payload))
 
@@ -369,7 +369,7 @@ class AllowedToForwardTests(TestCase):
         """
         case_id = uuid.uuid4().hex
         form_payload, cases = _create_case(domain=DOMAIN, case_id=case_id, owner_id=self.owner.get_id)
-        repeater = SQLOpenmrsRepeater()
+        repeater = OpenmrsRepeater()
         self.assertTrue(repeater.allowed_to_forward(form_payload))
 
 
@@ -401,7 +401,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
 
     def tearDown(self):
         delete_all_users()
-        SQLOpenmrsRepeater.objects.all().delete()
+        OpenmrsRepeater.objects.all().delete()
 
     @classmethod
     def tearDownClass(cls):
@@ -494,7 +494,7 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         gardens = self.locations['Gardens']
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
-        gardens_repeater = SQLOpenmrsRepeater(**{
+        gardens_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': gardens.location_id,
             'connection_settings_id': self.conn.id,
@@ -513,15 +513,17 @@ class CaseLocationTests(LocationHierarchyTestCase):
             case_id=uuid.uuid4().hex,
             owner_id=self.locations['Gardens'].location_id
         )
-        cape_town_repeater = SQLOpenmrsRepeater(**{
+        cape_town_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Cape Town'].location_id,
+            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         cape_town_repeater.save()
-        western_cape_repeater = SQLOpenmrsRepeater(**{
+        western_cape_repeater = OpenmrsRepeater(**{
             'domain': self.domain,
             'location_id': self.locations['Western Cape'].location_id,
+            'repeater_id': uuid.uuid4().hex,
             'connection_settings_id': self.conn.id,
         })
         western_cape_repeater.save()
@@ -546,10 +548,11 @@ class CaseLocationTests(LocationHierarchyTestCase):
         """
         gardens = self.locations['Gardens']
         form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=gardens.location_id)
-        gardens_repeater = SQLOpenmrsRepeater(
+        gardens_repeater = OpenmrsRepeater(
             domain=self.domain,
             location_id=gardens.location_id,
             connection_settings=self.conn,
+            repeater_id=uuid.uuid4().hex,
         )
         gardens_repeater.save()
 
@@ -565,16 +568,18 @@ class CaseLocationTests(LocationHierarchyTestCase):
             case_id=uuid.uuid4().hex,
             owner_id=self.locations['Gardens'].location_id
         )
-        cape_town_repeater = SQLOpenmrsRepeater(
+        cape_town_repeater = OpenmrsRepeater(
             domain=self.domain,
             location_id=self.locations['Cape Town'].location_id,
             connection_settings_id=self.conn.id,
+            repeater_id=uuid.uuid4().hex,
         )
         cape_town_repeater.save()
-        western_cape_repeater = SQLOpenmrsRepeater(
+        western_cape_repeater = OpenmrsRepeater(
             domain=self.domain,
             location_id=self.locations['Western Cape'].location_id,
             connection_settings_id=self.conn.id,
+            repeater_id=uuid.uuid4().hex,
         )
         western_cape_repeater.save()
 
@@ -813,7 +818,7 @@ class VoidedPatientTests(TestCase, TestFileMixin):
 
 
 def test_observation_mappings():
-    repeater = SQLOpenmrsRepeater(**{
+    repeater = OpenmrsRepeater(**{
         "openmrs_config": {
             "openmrs_provider": "",
             "case_config": {},

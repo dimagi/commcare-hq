@@ -129,9 +129,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
+    CaseRepeater,
     Repeater,
-    SQLCaseRepeater,
-    SQLRepeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -227,7 +226,7 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(ExpectedCallback.objects.filter(domain=domain).count(), number)
         self.assertEqual(PhoneNumber.objects.filter(domain=domain).count(), number)
         self.assertEqual(MessagingEvent.objects.filter(domain=domain).count(), number)
-        self.assertEqual(MessagingSubEvent.objects.filter(parent__domain=domain).count(), number)
+        self.assertEqual(MessagingSubEvent.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackend.objects.filter(domain=domain).count(), number)
         self.assertEqual(SQLMobileBackendMapping.objects.filter(domain=domain).count(), number)
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
@@ -955,23 +954,19 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLRepeater.objects.filter(domain=domain_name),
+            Repeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
 
-    # Repeater.get_class_from_doc_type is patched because while syncing the
-    # SQL object to couch, the Repeater.save was erroring while clearing cache
-    @patch.object(Repeater, 'get_class_from_doc_type')
-    def test_repeaters_delete(self, mock):
-        mock.return_value = Repeater
+    def test_repeaters_delete(self):
         for domain_name in [self.domain.name, self.domain2.name]:
             conn = ConnectionSettings.objects.create(
                 domain=domain_name,
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLCaseRepeater.objects.create(
+            repeater = CaseRepeater.objects.create(
                 domain=domain_name,
                 connection_settings=conn
             )

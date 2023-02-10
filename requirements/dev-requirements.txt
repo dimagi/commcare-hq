@@ -88,7 +88,7 @@ contextlib2==21.6.0
     #   schema
 coverage==5.5
     # via -r test-requirements.in
-cryptography==37.0.4
+cryptography==39.0.1
     # via
     #   jwcrypto
     #   oic
@@ -117,7 +117,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.16
+django==3.2.17
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -181,7 +181,7 @@ django-phonenumber-field==5.2.0
     #   django-two-factor-auth
 django-prbac==1.0.1
     # via -r base-requirements.in
-django-recaptcha==2.0.6
+django-recaptcha==3.0.0
     # via -r base-requirements.in
 django-redis==4.12.1
     # via -r base-requirements.in
@@ -206,7 +206,7 @@ docutils==0.16
     #   -r dev-requirements.in
     #   sphinx
     #   sphinx-rtd-theme
-dropbox==9.3.0
+dropbox==11.36.0
     # via -r base-requirements.in
 elasticsearch2==2.5.1
     # via -r base-requirements.in
@@ -222,7 +222,7 @@ executing==0.8.3
     # via stack-data
 fakecouch==0.0.15
     # via -r test-requirements.in
-faker==14.2.0
+faker==16.6.1
     # via -r test-requirements.in
 fixture==1.5.11
     # via -r dev-requirements.in
@@ -232,7 +232,7 @@ flaky==3.7.0
     # via -r test-requirements.in
 freezegun==1.1.0
     # via -r test-requirements.in
-future==0.18.2
+future==0.18.3
     # via
     #   pyjwkest
     #   radon
@@ -321,7 +321,7 @@ jsonobject-couchdbkit==1.0.1
     # via -r base-requirements.in
 jsonpath-ng @ https://github.com/kaapstorm/python-jsonpath-rw/raw/wherenot+find_or_create/wheel/jsonpath_ng-1.5.2.2-py3-none-any.whl
     # via -r base-requirements.in
-jsonschema==3.2.0
+jsonschema==4.17.3
     # via -r base-requirements.in
 jwcrypto==1.4
     # via django-oauth-toolkit
@@ -330,6 +330,8 @@ kafka-python==1.4.7
 kombu==5.2.4
     # via celery
 laboratory==0.2.0
+    # via -r base-requirements.in
+looseversion==1.0.3
     # via -r base-requirements.in
 lxml==4.9.1
     # via
@@ -403,6 +405,7 @@ ply==3.11
     # via
     #   eulxml
     #   jsonpath-ng
+    #   stone
 polib==1.1.1
     # via -r base-requirements.in
 prometheus-client==0.14.1
@@ -463,7 +466,7 @@ pyjwt==2.4.0
     #   twilio
 pynacl==1.5.0
     # via pygithub
-pyopenssl==22.0.0
+pyopenssl==23.0.0
     # via -r sso-requirements.in
 pyparsing==2.4.7
     # via
@@ -471,6 +474,8 @@ pyparsing==2.4.7
     #   packaging
 pyphonetics==0.5.3
     # via -r base-requirements.in
+pypng==0.20220715.0
+    # via qrcode
 pyrsistent==0.17.3
     # via jsonschema
 python-dateutil==2.8.2
@@ -503,7 +508,7 @@ pyyaml==6.0
     #   git-build-branch
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.4.2
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -588,16 +593,15 @@ six==1.16.0
     #   jsonobject
     #   jsonobject-couchdbkit
     #   jsonpath-ng
-    #   jsonschema
     #   mando
     #   packaging
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   requests-mock
     #   sqlalchemy-postgres-copy
+    #   stone
     #   tenacity
 sniffer==0.4.1
     # via -r dev-requirements.in
@@ -643,6 +647,8 @@ sqlparse==0.3.1
     # via django
 stack-data==0.1.4
     # via ipython
+stone==3.3.1
+    # via dropbox
 stripe==4.1.0
     # via -r base-requirements.in
 suds-py3==1.4.5.0
@@ -676,6 +682,7 @@ typing-extensions==4.1.1
     #   black
     #   django-countries
     #   oic
+    #   qrcode
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -703,7 +710,7 @@ wcwidth==0.2.5
     # via prompt-toolkit
 werkzeug==1.0.1
     # via -r base-requirements.in
-wheel==0.37.1
+wheel==0.38.1
     # via
     #   -r dev-requirements.in
     #   pip-tools
@@ -727,13 +734,12 @@ zope-interface==5.4.0
 # The following packages are considered to be unsafe in a requirements file:
 pip==21.3.1
     # via pip-tools
-setuptools==50.3.0
+setuptools==65.5.1
     # via
     #   django-websocket-redis
     #   gevent
     #   gunicorn
     #   ipython
-    #   jsonschema
     #   pip-tools
     #   python-termstyle
     #   sphinx

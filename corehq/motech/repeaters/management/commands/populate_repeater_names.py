@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
-from corehq.motech.repeaters.models import SQLRepeater
+from corehq.motech.repeaters.models import Repeater
 
-CHUNKSIZE = 100
+CHUNKSIZE = 1000
 
 
 class Command(BaseCommand):
@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.repeaters_updated_count = 0
         repeaters = self._get_repeaters_with_empty_names()
-        self._total_repeaters_to_update = SQLRepeater.objects.filter(name=None).count()
+        self._total_repeaters_to_update = Repeater.objects.filter(name=None).count()
         while len(repeaters) > 0:
             self._show_progress(repeater_count=len(repeaters))
             for repeater in repeaters:
@@ -22,7 +22,7 @@ class Command(BaseCommand):
             repeaters = self._get_repeaters_with_empty_names()
 
     def _get_repeaters_with_empty_names(self):
-        return SQLRepeater.objects.filter(name=None).select_related('connection_settings')[:CHUNKSIZE]
+        return Repeater.objects.filter(name=None).select_related('connection_settings')[:CHUNKSIZE]
 
     def _show_progress(self, repeater_count):
         self.repeaters_updated_count += repeater_count

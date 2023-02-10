@@ -1,20 +1,39 @@
-from django.core.management import call_command
-from django.test import SimpleTestCase
+from io import StringIO
+from unittest.mock import patch
 
-from corehq.apps.es.sms import sms_adapter  # any valid adapter will do
-from corehq.apps.es.tests.utils import es_test
+from django.core.management.commands import makemigrations
+from django.db.migrations.operations import RunPython
+from django.test import TestCase
+
+from corehq.preindex import apps as preindex
+
+from ..django_migrations import patch_migration_autodetector
 
 
-@es_test(requires=[sms_adapter], setup_class=True)
-class TestUpdateEsMapping(SimpleTestCase):
-    """Guard against future changes to the `update_es_mapping` management
-    command accidentally breaking this migration utility.
-    """
+class TestMigrationAutodetector(TestCase):
 
-    def test_update_es_mapping(self):
-        """Ensure the management command succeeds"""
-        call_command("update_es_mapping", sms_adapter.index_name, noinput=True)
+    def test_patch_migration_autodetector(self):
+        def autodetect_migrations(self, add_operation):
+            log.append("detect")
+            add_operation(self.label, operation)
+            return lambda: log.append("write extra")
 
-    def test_update_es_mapping_quiet(self):
-        """Ensure the management command succeeds with --quiet"""
-        call_command("update_es_mapping", sms_adapter.index_name, "--quiet", noinput=True)
+        def command_writer(self_, changes):
+            log.append("write changes")
+            migrations = changes.get("preindex", [])
+            operations = [o for m in migrations for o in m.operations]
+            self.assertIn(operation, operations, changes)
+
+        log = []
+        operation = RunPython(RunPython.noop, RunPython.noop)
+        output = StringIO()
+        command = makemigrations.Command(output, output)
+        with (
+            patch.object(preindex.Config, "autodetect_migrations", new=autodetect_migrations),
+            patch.object(makemigrations.Command, "write_migration_files", new=command_writer),
+            patch_migration_autodetector(command),
+        ):
+            command.run_from_argv(["manage.py", "makemigrations", "preindex"])
+
+        self.assertEqual(log, ["detect", "write changes", "write extra"])
+        self.assertEqual(output.getvalue(), "")

@@ -8,7 +8,7 @@ from corehq.apps.registry.models import RegistryAuditLog, RegistryInvitation
 from corehq.apps.registry.tests.utils import Invitation, create_registry_for_test
 from corehq.apps.registry.utils import DataRegistryCrudHelper
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import SQLFormRepeater
+from corehq.motech.repeaters.models import FormRepeater
 
 
 class RegistryLoggingTests(TestCase):
@@ -109,12 +109,12 @@ class RegistryLoggingTests(TestCase):
 
     def test_log_data_access_with_repeater(self):
         connx = ConnectionSettings.objects.create(domain=self.domain, url='http://fake.com')
-        repeater = SQLFormRepeater(
+        repeater = FormRepeater(
             domain=self.domain,
             connection_settings=connx,
             repeater_id=uuid.uuid4().hex
         )
-        repeater.save(sync_to_couch=False)
+        repeater.save()
         self.registry.logger.data_accessed(self.user, self.domain, repeater)
         self._assertLogs([
             (self.domain, RegistryAuditLog.ACTION_DATA_ACCESSED)

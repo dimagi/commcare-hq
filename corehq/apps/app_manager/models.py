@@ -11,9 +11,9 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
-from io import BytesIO, open
+from io import open
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
@@ -31,7 +31,6 @@ from django.utils.translation import override
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_ng import jsonpath, parse
@@ -2117,6 +2116,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     pull_down_tile = BooleanProperty()
 
     print_template = DictProperty()
+
+    #Only applies to 'short' details
+    no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
@@ -4242,9 +4244,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
-    # not used yet, but nice for tagging/debugging
-    # currently only canonical value is 'incomplete-build',
-    # for when build resources aren't found where they should be
+    # for internal use only, not user-facing
     build_broken_reason = StringProperty()
 
     # watch out for a past bug:
@@ -4546,6 +4546,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
+            from corehq.apps.settings.views import get_qrcode
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4554,10 +4555,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            image = qrcode.make(url)
-            output = BytesIO()
-            image.save(output, "PNG")
-            qr_content = output.getvalue()
+            qr_content = get_qrcode(url)
             self.lazy_put_attachment(qr_content, filename,
                                      content_type="image/png")
             return qr_content
@@ -5169,7 +5167,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and domain_has_privilege(self.domain, privileges.PHONE_APK_HEARTBEAT)
         )
 
     @memoized

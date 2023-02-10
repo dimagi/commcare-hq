@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging
+#     $ scripts/rebuildstaging (--deploy)
+#     OR run deploy separately
 #     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
@@ -65,16 +66,20 @@ branches:
     - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
-    # - akj/abdm-api-for-mobile-app+ml/lookup-table-UI # Nov 8
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
-    # - ml/lookup-table-UI # Minha Oct 19
-    - ml/user-limit-emails # Minha Nov 18
     - es/redirect-domain  # Ethan Nov 21
-    # - jt/data_dict_permissions_UI_USH-73 # Jonathan T. Nov 30
-    - cs/SC-2360-auto-update-rule-overwrites-case-property
-    - em/maintenance-alert-scheduling # Evan Dec 14
-    - sk/sentry-js  # Simon Dec 21
+    #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
+    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
+    - ad/remove-entered-wrap-functions # Addison Jan 26
+    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
+    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
+    - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
+#    - ce/enable-case-rate-limits # Cal Feb 1
+    - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
+    - ml/enforce-metadata-ff # Minha Feb 2
+    - akj/tabular-radio-btn-reader # Akash Feb 6
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - sk/webapps-sessionid  # Simon Feb 9
 submodules: { }

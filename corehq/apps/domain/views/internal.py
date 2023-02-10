@@ -43,7 +43,7 @@ from corehq.apps.domain.views.settings import (
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.hqwebapp.tasks import send_html_email_async, send_mail_async
 from corehq.apps.hqwebapp.views import BasePageView
-from corehq.apps.receiverwrapper.rate_limiter import submission_rate_limiter
+from corehq.apps.receiverwrapper.rate_limiter import domain_case_rate_limiter, submission_rate_limiter
 from corehq.apps.toggle_ui.views import ToggleEditView
 from corehq.apps.users.models import CouchUser
 from corehq.const import USER_CHANGE_VIA_WEB
@@ -291,6 +291,7 @@ class ProjectLimitsView(BaseAdminProjectSettingsView):
     def page_context(self):
         return get_project_limits_context([
             ('Submission Rate Limits', submission_rate_limiter),
+            ('Case Rate Limits', domain_case_rate_limiter),
             ('Restore Rate Limits', restore_rate_limiter),
         ], self.domain)
 

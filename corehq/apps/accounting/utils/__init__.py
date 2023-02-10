@@ -19,6 +19,7 @@ from corehq.apps.accounting.exceptions import (
     ProductPlanNotFoundError,
 )
 from corehq.apps.domain.models import Domain
+from corehq.toggles import domain_has_privilege_from_toggle
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 
@@ -131,6 +132,8 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
         if privilege is None:
             return False
         if plan_version.role.has_privilege(privilege):
+            return True
+        elif domain_has_privilege_from_toggle(privilege_slug, domain):
             return True
     except ProductPlanNotFoundError:
         return False

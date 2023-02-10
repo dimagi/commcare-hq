@@ -1,11 +1,12 @@
 from copy import deepcopy
 import json
+import uuid
 
 from django.urls import reverse
 
 from corehq.motech.dhis2.tests.test_views import BaseViewTest
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.openmrs.repeaters import SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.openmrs.tests.data.openmrs_repeater import test_data
 
 
@@ -19,7 +20,8 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
         )
         conn.save()
         cls.connection_setting = conn
-        cls.repeater = SQLOpenmrsRepeater(**deepcopy(test_data))
+        cls.repeater = OpenmrsRepeater(**deepcopy(test_data))
+        cls.repeater.repeater_id = uuid.uuid4().hex
         cls.repeater.domain = cls.domain.name
         cls.repeater.connection_settings_id = conn.id
         cls.repeater.save()
@@ -48,7 +50,7 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
         }
         response = self.client.post(reverse('config_openmrs_repeater', kwargs=self.url_kwargs), data=post_data)
         self.assertEqual(response.status_code, 200)
-        updated_repeater = SQLOpenmrsRepeater.objects.get(repeater_id=self.repeater.repeater_id)
+        updated_repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater.repeater_id)
         self.assertEqual(updated_repeater.to_json()['openmrs_config'], repeater_data)
 
     def test_config_openmrs_repeater_post_with_errors(self):
@@ -67,7 +69,7 @@ class TestOpenmrsRepeaterViews(BaseViewTest):
         }
         response = self.client.post(reverse('config_openmrs_repeater', kwargs=self.url_kwargs), data=post_data)
         self.assertEqual(response.status_code, 200)
-        updated_repeater = SQLOpenmrsRepeater.objects.get(repeater_id=self.repeater.repeater_id)
+        updated_repeater = OpenmrsRepeater.objects.get(repeater_id=self.repeater.repeater_id)
 
         # Config should not change
         self.assertEqual(updated_repeater.to_json(), self.repeater.to_json())

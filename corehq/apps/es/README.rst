@@ -1,6 +1,189 @@
 Elasticsearch App
 =================
 
+
+Elasticsearch Index Management
+------------------------------
+
+CommCare HQ data in Elasticsearch is integral to core application functionality.
+The level that the application relies on Elasticsearch data varies from index to
+index. Currently, Elasticsearch contains both authoritative data (for example
+``@indexed_on`` case property and ``UnknownUser`` user records) and data used
+for real-time application logic (the ``users`` index, for example).
+
+In order to guarantee stability (or "manageability", if you will) of this core
+data, it is important that Elasticsearch indexes are maintained in a consistent
+state across all environments as a concrete design feature of CommCare HQ. This
+design constraint is accomplished by managing Elasticsearch index modifications
+(for example: creating indexes, updating index mappings, etc) exclusively
+through Django's migration framework. This ensures that all Elasticsearch index
+modifications will be part of standard CommCare HQ code deployment procedures,
+thereby preventing Elasticsearch index state drift between maintained CommCare
+HQ deployments.
+
+One or more migrations are required any time the following Elasticsearch state
+configurations are changed in code:
+
+- index names
+- index aliases
+- analyzers
+- mappings
+- tuning parameters
+
+Elasticsearch allows changing an index's ``number_of_replicas`` tuning parameter
+on a live index. In the future, the configuration settings (i.e. "live state")
+of that value should be removed from the CommCare HQ codebase entirely in order
+to decouple it from application logic.
+
+
+Creating Elasticsearch Index Migrations
+'''''''''''''''''''''''''''''''''''''''
+
+Like Django Model migrations, Elasticsearch index migrations can be quite
+verbose. To aid in creating these migrations, there is a Django manage command
+that can generate migration files for Elasticsearch index operations. Since
+the Elasticsearch index state is not a Django model, Django's model migration
+framework cannot automatically determine what operations need to be included in
+a migration, or even when a new migration is required. This is why creating
+these migrations is a separate command and not integrated into the default
+``makemigrations`` command.
+
+To create a new Elasticsearch index migration, use the
+``make_elastic_migration`` management command and provide details for the
+required migration operations via any combination of the ``-c/--create``,
+``-u/--update`` and/or ``-d/--delete`` command line options.
+
+Similar to Django model migrations, this management command uses the index
+metadata (mappings, analysis, etc) from the existing Elasticsearch code, so it
+is important that this command is executed *after* making changes to index
+metadata. To provide an example, consider a hypothetical scenario where the
+following index changes are needed:
+
+- create a new ``users`` index
+- update the mapping on the existing ``groups`` index to add a new property
+  named ``pending_users``
+- delete the existing index named ``groups-sandbox``
+
+After the new property has been added to the ``groups`` index mapping in code,
+the following management command would create a migration file (e.g.
+``corehq/apps/es/migrations/0003_groups_pending_users.py``) for the necessary
+operations:
+
+.. code-block:: shell
+
+    ./manage.py make_elastic_migration --name groups_pending_users -c users -u groups:pending_users -d groups-sandbox
+
+
+.. _updating-elastic-index-mappings:
+
+Updating Elastic Index Mappings
+'''''''''''''''''''''''''''''''
+
+Prior to the ``UpdateIndexMapping`` migration operation implementation, Elastic
+mappings were always applied "in full" any time a mapping change was needed.
+That is: the entire mapping (from code) was applied to the existing index via
+the `Put Mapping`_ API. This technique had some pros and cons:
+
+- **Pro**: the mapping update logic in code was simple because it did not have
+  to worry about which *existing* mapping properties are persistent (persist on
+  the index even if omitted in a PUT request payload) and which ones are
+  volatile (effectively "unset" if omitted in a PUT request payload).
+- **Con**: it requires that *all* mapping properties are explicitly set on every
+  mapping update, making mapping updates impossible if the existing index
+  mapping in Elasticsearch has diverged from the mapping in code.
+
+Because CommCare HQ Elastic mappings have been able to drift between
+environments, it is no longer possible to update some index mappings using the
+historical technique. On some indexes, the live index mappings have sufficiently
+diverged that there is no common, "full mapping definition" that can be applied
+on all environments. This means that in order to push mapping changes to all
+environments, new mapping update logic is needed which is capable of updating
+individual properties on an Elastic index mapping while leaving other (existing)
+properties unchanged.
+
+The ``UpdateIndexMapping`` migration operation adds this capability. Due to the
+complex behavior of the Elasticsearch "Put Mapping" API, this implementation is
+limited to only support changing the mapping ``_meta`` and ``properties`` items.
+Changing other mapping properties (e.g. ``date_detection``, ``dynamic``, etc) is
+not yet implemented. However, the current implementation does ensure that the
+existing values are retained (unchanged). Historically, these values are rarely
+changed, so this limitation does not hinder any kind of routine maintenance
+operations. Implementing the ability to change the other properties will be a
+simple task when there is a clear definition of how that functionality needs to
+work, for example: when a future feature/change requires changing these
+properties for a specific reason.
+
+.. _Put Mapping: https://www.elastic.co/guide/en/elasticsearch/reference/2.4/indices-put-mapping.html
+
+
+Comparing Mappings In Code Against Live Indexes
+"""""""""""""""""""""""""""""""""""""""""""""""
+
+When modifying mappings for an existing index, it can be useful to compare the
+new mapping (as defined in code) to the live index mappings in Elasticsearch on
+a CommCare HQ deployment. This is possible by dumping the mappings of interest
+into local files and comparing them with a diff utility. The
+``print_elastic_mappings`` Django manage command makes this process relatively
+easy. Minimally, this can be accomplished in as few as three steps:
+
+1. Export the local code mapping into a new file.
+2. Export the mappings from a deployed environment into a local file.
+3. Compare the two files.
+
+In practice, this might look like the following example:
+
+.. code-block:: shell
+
+   ./manage.py print_elastic_mappings sms --no-names > ./sms-in-code.py
+   cchq <env> django-manage print_elastic_mappings smslogs_2020-01-28:sms --no-names > ./sms-live.py
+   diff -u ./sms-live.py ./sms-in-code.py
+
+
+Elastic Index Tuning Configurations
+'''''''''''''''''''''''''''''''''''
+
+CommCare HQ provides a mechanism for individual deployments (environments) to
+tune the performance characteristics of their Elasticsearch indexes via Django
+settings. This mechanism can be used by defining an ``ES_SETTINGS`` dictionary
+in ``localsettings.py`` (or by configuring the requisite Elasticsearch
+parameters in a `CommCare Cloud environment`_). Tuning parameters can be
+specified in one of two ways:
+
+1. **"default"**: configures the tuning settings for *all* indexes in the
+   environment.
+2. **index identifier**: configures the tuning settings for *a specific* index
+   in the environment -- these settings take precedence over "default" settings.
+
+For example, if an environment wishes to explicitly configure the "case_search"
+index with six shards, and all others with only three, the configuration could
+be specified in ``localsettings.py`` as:
+
+.. code-block:: python
+
+   ES_SETTINGS = {
+       "default": {"number_of_shards": 3},
+       "case_search": {"number_of_shards": 6},
+   }
+
+Configuring a tuning setting with the special value ``None`` will result in that
+configuration item being reset to the Elasticsearch cluster default (unless
+superseded by another setting with higher precedence). Refer to
+`corehq/app/es/index/settings.py`_ file for the full details regarding what
+items (index and tunning settings values) are configurable, as well as what
+default tuning settings will be used when not customized by the environment.
+
+**Important note**: These Elasticsearch index tuning settings are not "live".
+That is: changing their values on a deployed environment will not have any
+immediate affect on live indexes in Elasticsearch. Instead, these values are
+only ever used when an index is created (for example, during a fresh CommCare HQ
+installation or when an existing index is reindexed into a new one). This means
+that making new values become "live" involves an index migration and reindex,
+which requires changes in the CommCare HQ codebase.
+
+.. _CommCare Cloud environment: https://commcare-cloud.readthedocs.io/en/latest/reference/1-commcare-cloud/2-configuration.html
+.. _corehq/app/es/index/settings.py: https://github.com/dimagi/commcare-hq/blob/master/corehq/app/es/index/settings.py
+
+
 Adapter Design
 --------------
 

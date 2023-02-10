@@ -222,7 +222,7 @@ hqDefine("cloudcare/js/form_entry/web_form_session", function () {
             cloudcareUtils.reportFormplayerErrorToHQ({
                 type: 'webformsession_request_failure',
                 request: action,
-                readableErrorMessage: errorMessage,
+                message: errorMessage,
                 statusText: resp.statusText,
                 state: resp.state ? resp.state() : null,
                 status: resp.status,

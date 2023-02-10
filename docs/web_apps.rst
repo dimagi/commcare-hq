@@ -28,7 +28,7 @@ Ways in which web apps is a typical piece of HQ code:
 * When you look at the web apps home page, where there's a tile for each app, those apps come from HQ.
 * Web apps does have some interactions with HQ once you're in an app:
 
-   * The Login As action works via HQ
+   * The Log In As action works via HQ
    * HQ provides some system information, like the current user's username and the mapbox API key, via the original context and initial page data
    * HQ directly serves multimedia files
    * Web apps calls HQ analytics code (Google Analytics, Kissmetrics, etc.)
@@ -151,7 +151,7 @@ Most of this code was written, or substantially re-written, around 2016.
 * Web apps home screen displaying all of a domain's apps
 * Syncing
 * Saved forms
-* Login As
+* Log In As
 
 JavaScript Vocabulary
 ^^^^^^^^^^^^^^^^^^^^^
@@ -176,7 +176,7 @@ These are HQ users, although the model has very few of the many attributes of Co
 
 Most of the time you're only concerned with the current user, who is accessible by requesting ``currentUser`` from the FormplayerFrontEnd's channel (see below for more on channels).
 
-The users code also deals with the Login As workflow. Login As is often desribed as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Login As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Login As screen. The current Login As user is stored in a cookie so that users do not need to re-Login-As often.
+The users code also deals with the Log In As workflow. Log In As is often described as "restore as" in the code: the user has a ``restoreAs`` attribute with the username of the current Log In As user, the ``RestoreAsBanner`` is the yellow banner up top that shows who you're logged in as, and the ``RestoreAsView`` is the Log In As screen. The current Log In As user is stored in a cookie so that users do not need to repeat the workflow often.
 
 Menus
 -----
@@ -287,7 +287,7 @@ Persistence
 
 Web apps has only transient data. All persistent data is handled by formplayer and/or HQ. The data that's specific to web apps consists mostly of user-related settings and is handled by the browser: cookies, local storage, or session storage.
 
-The Login As user is stored in a cookie. Local storage is used for the user's display options, which are the settings for language, one question per screen, etc. Session storage is also used to support some location handling and case search workflows.
+The Log In As user is stored in a cookie. Local storage is used for the user's display options, which are the settings for language, one question per screen, etc. Session storage is also used to support some location handling and case search workflows.
 
 Note that these methods aren't appropriate for sensitive data, which includes all project data. This makes it challenging to implement features like saved searches.
 
@@ -329,7 +329,7 @@ Routes **outside** of an application use human-readable short names. For example
 
 * ``/a/<DOMAIN>/cloudcare/apps/v2/#apps`` is the web apps home screen, which lists available apps and actions like sync.
 
-* ``/a/<DOMAIN>/cloudcare/apps/v2/#restore_as`` is the Login As screen
+* ``/a/<DOMAIN>/cloudcare/apps/v2/#restore_as`` is the Log In As screen
 
 Routes **inside** an application serialize the ``CloudcareURL`` object.
 

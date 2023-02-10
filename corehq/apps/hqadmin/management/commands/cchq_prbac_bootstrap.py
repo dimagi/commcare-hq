@@ -145,8 +145,8 @@ class Command(BaseCommand):
              description="Allows domains to create Daily Saved Exports"),
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
              description='Allows domains to use zapier (zapier.com) integration'),
-        Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
-             description='Allows domains to use the login as feature of app preview'),
+        Role(slug=privileges.LOGIN_AS, name='Log In As for App Preview',
+             description='Allows domains to use the Log In As feature of App Preview'),
         Role(slug=privileges.CASE_SHARING_GROUPS,
              name='Case Sharing via Groups',
              description='Allows turning on case sharing between members in a group.'),
@@ -179,6 +179,13 @@ class Command(BaseCommand):
         Role(slug=privileges.LOADTEST_USERS,
              name='Loadtest Users',
              description='Allows creating loadtest users'),
+        Role(slug=privileges.FORM_LINK_WORKFLOW,
+             name='Link to other forms',
+             description='Link to other forms in End of Form Navigation'),
+        Role(slug=privileges.PHONE_APK_HEARTBEAT,
+             name='Phone Heartbeat',
+             description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
+                         'app and apk'),
     ]
 
     BOOTSTRAP_PLANS = [

@@ -15,15 +15,6 @@ from .const import (
 )
 
 
-def force_update_repeaters_views():
-    from .models import Repeater
-    Repeater.get_db().view(
-        'repeaters/repeaters',
-        reduce=False,
-        limit=1,
-    ).all()
-
-
 def get_pending_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_PENDING_STATE)
 
@@ -278,5 +269,4 @@ def delete_all_repeat_records():
 @unit_testing_only
 def delete_all_repeaters():
     from .models import Repeater
-    for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
-        Repeater.wrap(repeater['doc']).delete()
+    Repeater.objects.all().delete()
