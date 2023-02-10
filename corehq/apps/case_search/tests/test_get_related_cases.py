@@ -129,9 +129,9 @@ class TestGetRelatedCases(BaseCaseSearchTest):
 
         def get_related_cases_helper(include_all_related_cases):
             with patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
-                return_value={"parent", "parent/parent"}), \
-                patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
-                patch("corehq.apps.case_search.utils.get_app_cached"):
+                    return_value={"parent", "parent/parent"}), \
+                    patch("corehq.apps.case_search.utils.get_child_case_types", return_value={"c", "d"}), \
+                    patch("corehq.apps.case_search.utils.get_app_cached"):
 
                 return get_related_cases(_QueryHelper(self.domain), None, {"c"}, source_cases, None,
                     include_all_related_cases)
