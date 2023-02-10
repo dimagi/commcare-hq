@@ -146,7 +146,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertInitialRoles()
         self._assertStdUsers()
 
-    @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
+    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
     def test_add_attendance_coordinator_role_for_domain(self, attendance_tracking_enabled):
         attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
@@ -165,7 +165,7 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         ).exists()
         self.assertTrue(pm_role_created)
 
-    @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
+    @patch('corehq.apps.toggle_ui.views.ATTENDANCE_TRACKING.enabled')
     def test_archive_attendance_coordinator_role_when_downgrading(self, attendance_tracking_enabled):
         attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
