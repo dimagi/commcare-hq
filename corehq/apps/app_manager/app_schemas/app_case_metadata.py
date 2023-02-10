@@ -119,14 +119,16 @@ class _BaseFormCaseMetadataBuilder(object):
             if property_info.close:
                 type_meta.add_closer(form_id, FormActionCondition(type='always'))
 
-    def _add_property_save(self, case_type, name, question_path, condition=None):
+    def _add_property_save(self, case_type, name, question_path, condition=None, update_mode=None):
         try:
             question = self.questions[question_path]
         except KeyError:
             message = "%s is not a valid question" % question_path
             self.meta.add_property_error(case_type, name, self.form.unique_id, message)
         else:
-            self.meta.add_property_save(case_type, name, self.form.unique_id, question, condition)
+            self.meta.add_property_save(
+                case_type, name, self.form.unique_id, question, condition, update_mode=update_mode
+            )
 
     def _add_property_load(self, case_type, name, question_path):
         try:
@@ -168,7 +170,9 @@ class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def _handle_open_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
         type_meta.add_opener(self.form.unique_id, action.condition)
-        self._add_property_save(self.case_type, 'name', action.name_update.question_path)
+        self._add_property_save(
+            self.case_type, 'name', action.name_update.question_path, update_mode=action.name_update.update_mode
+        )
 
     def _handle_close_case_action(self, action):
         type_meta = self.meta.get_type(self.case_type)
@@ -177,7 +181,8 @@ class _FormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def _handle_update_case_action(self, action_type, action):
         case_type = USERCASE_TYPE if action_type == 'usercase_update' else self.case_type
         for name, question_path in FormAction.get_action_properties(action):
-            self._add_property_save(case_type, name, question_path)
+            update_mode = action.update.get(name).update_mode
+            self._add_property_save(case_type, name, question_path, update_mode=update_mode)
 
     def _handle_load_action(self, action_type, action):
         case_type = USERCASE_TYPE if action_type == 'usercase_update' else self.case_type
@@ -219,7 +224,10 @@ class _AdvancedFormCaseMetadataBuilder(_BaseFormCaseMetadataBuilder):
     def _add_load_update_actions(self):
         for action in self.form.actions.load_update_cases:
             for name, conditional_update in action.case_properties.items():
-                self._add_property_save(action.case_type, name, conditional_update.question_path)
+                self._add_property_save(
+                    action.case_type, name, conditional_update.question_path,
+                    update_mode=conditional_update.update_mode
+                )
             for question_path, name in action.preload.items():
                 self._add_property_load(action.case_type, name, question_path)
             if action.close_condition.is_active():
@@ -426,14 +434,15 @@ class CaseTypeMeta(JsonObject):
             closers.conditions.append(condition)
         self.closed_by[form_id] = closers
 
-    def add_save(self, form_id, question_path, property_):
+    def add_save(self, form_id, question_path, property_, update_mode):
+        update = {'property': property_, 'update_mode': update_mode}
         if self.get_save_properties(form_id, question_path):
-            self.save_properties[form_id][question_path].append(property_)
+            self.save_properties[form_id][question_path].append(update)
         else:
             try:
-                self.save_properties[form_id].update({question_path: [property_]})
+                self.save_properties[form_id].update({question_path: [update]})
             except KeyError:
-                self.save_properties[form_id] = {question_path: [property_]}
+                self.save_properties[form_id] = {question_path: [update]}
 
     def add_load(self, form_id, question_path, property_):
         if self.get_load_properties(form_id, question_path):
@@ -471,7 +480,11 @@ class AppCaseMetadata(JsonObject):
         """gets all case types with a list of properties which are saved from a form question
         """
         return [
-            LoadSaveProperty(case_type=case_type.name, property=prop)
+            LoadSaveProperty(
+                case_type=case_type.name,
+                property=prop.get('property'),
+                update_mode=prop.get('update_mode')
+            )
             for case_type in self.case_types
             for prop in case_type.get_save_properties(form_id, path)
         ]
@@ -507,14 +520,14 @@ class AppCaseMetadata(JsonObject):
             self.get_type(prop.case_type).add_load(form_id, question.value, prop.name)
             prop.add_load(form_id, question)
 
-    def add_property_save(self, root_case_type, name, form_id, question, condition=None):
+    def add_property_save(self, root_case_type, name, form_id, question, condition=None, update_mode=None):
         try:
             props = self.get_property_list(root_case_type, name)
         except CaseMetaException as e:
             props = [self.add_property_error(root_case_type, name, form_id, str(e))]
 
         for prop in props:
-            self.get_type(prop.case_type).add_save(form_id, question.value, prop.name)
+            self.get_type(prop.case_type).add_save(form_id, question.value, prop.name, update_mode)
             prop.add_save(form_id, question, condition)
 
     def add_property_error(self, case_type, case_property, form_id, message):

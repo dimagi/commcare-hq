@@ -226,20 +226,9 @@ class _AppSummaryFormDataGenerator(object):
         response.form_id = form_unique_id
         response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
         response.save_properties = self._case_meta.get_save_properties(form_unique_id, question['value'])
-        for save_property in response.save_properties:
-            self._add_update_mode(save_property, actions)
         if self._is_save_to_case(question):
             response.type = 'SaveToCase'
         return response
-
-    def _add_update_mode(self, save_property, actions):
-        if save_property.case_type == 'commcare-user':
-            conditional_update = actions.usercase_update.update.get(save_property.property)
-        else:
-            conditional_update = actions.update_case.update.get(save_property.property)
-
-        if conditional_update:
-            save_property.update_mode = conditional_update.update_mode
 
 
 def get_app_summary_formdata(domain, app, include_shadow_forms=True):
