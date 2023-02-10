@@ -66,9 +66,9 @@ def archive_custom_roles_for_domain(domain):
         role.save()
 
 
-def archive_role_for_domain(role_name, domain):
-    """Archive the role specified by `role_name` on `domain`"""
-    role = UserRole.objects.filter(name=role_name, domain=domain).first()
+def archive_program_manager_role_for_domain(domain):
+    """Archive the Program Manager for `domain`"""
+    role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
     if not role:
         return
     role.is_archived = True
@@ -104,10 +104,17 @@ def initialize_domain_with_default_roles(domain):
         )
 
 
-def add_program_manager_role_to_domain(domain):
-    role_name = UserRolePresets.PROGRAM_MANAGER
-    UserRole.create(
-        domain,
-        role_name,
-        permissions=UserRolePresets.PRIVILEGED_ROLES[role_name]()
-    )
+def enable_program_manager_role_for_domain(domain):
+    role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
+    if not role:
+        role_name = UserRolePresets.PROGRAM_MANAGER
+        UserRole.create(
+            domain,
+            role_name,
+            permissions=UserRolePresets.PRIVILEGED_ROLES[role_name]()
+        )
+        return
+
+    if role.is_archived:
+        role.is_archived = False
+        role.save()

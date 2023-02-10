@@ -146,7 +146,9 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertInitialRoles()
         self._assertStdUsers()
 
-    def test_add_program_manager_role_for_domain(self):
+    @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
+    def test_add_program_manager_role_for_domain(self, attendance_tracking_enabled):
+        attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.community_plan,
             web_user=self.admin_username
@@ -160,7 +162,9 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         ).exists()
         self.assertTrue(pm_role_created)
 
-    def test_archive_program_manager_role_when_downgrading(self):
+    @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
+    def test_archive_program_manager_role_when_downgrading(self, attendance_tracking_enabled):
+        attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
             web_user=self.admin_username

@@ -27,10 +27,8 @@ from corehq.apps.users.role_utils import (
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
-    add_program_manager_role_to_domain,
-    archive_role_for_domain,
-    UserRolePresets,
-    UserRole
+    enable_program_manager_role_for_domain,
+    archive_program_manager_role_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -43,6 +41,7 @@ from corehq.messaging.scheduling.tasks import (
     refresh_alert_schedule_instances,
     refresh_timed_schedule_instances,
 )
+from corehq.toggles import ATTENDANCE_TRACKING
 
 
 class BaseModifySubscriptionHandler(object):
@@ -261,7 +260,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_archive_program_manager_role(domain, new_plan_version):
-        archive_role_for_domain(role_name=UserRolePresets.PROGRAM_MANAGER, domain=domain.name)
+        archive_program_manager_role_for_domain(domain=domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
@@ -386,14 +385,9 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
 
     @staticmethod
     def response_add_program_manager_role(domain, new_plan_version):
-        role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
-        if not role:
-            add_program_manager_role_to_domain(domain)
+        if not ATTENDANCE_TRACKING.enabled(domain):
             return True
-
-        if role.is_archived:
-            role.is_archived = False
-            role.save()
+        enable_program_manager_role_for_domain(domain)
         return True
 
     @staticmethod
