@@ -169,7 +169,7 @@ class _AppSummaryFormDataGenerator(object):
             for raw_question in form.get_questions(self.app.langs, include_triggers=True,
                                                    include_groups=True, include_translations=True,
                                                    include_fixtures=True)
-            for question in self._get_question(form.unique_id, raw_question, form.actions)
+            for question in self._get_question(form.unique_id, raw_question)
         )
         for path, question in questions_by_path.items():
             parent = question.group or question.repeat
@@ -179,10 +179,10 @@ class _AppSummaryFormDataGenerator(object):
         return [question for question in questions_by_path.values()
                 if not question.group and not question.repeat]
 
-    def _get_question(self, form_unique_id, question, actions):
+    def _get_question(self, form_unique_id, question):
         if self._needs_save_to_case_root_node(question, form_unique_id):
             yield self._save_to_case_root_node(form_unique_id, question)
-        yield self._serialized_question(form_unique_id, question, actions)
+        yield self._serialized_question(form_unique_id, question)
 
     def _needs_save_to_case_root_node(self, question, form_unique_id):
         return (
@@ -221,7 +221,7 @@ class _AppSummaryFormDataGenerator(object):
         self._seen_save_to_case[form_unique_id].append(question_path)
         return response
 
-    def _serialized_question(self, form_unique_id, question, actions):
+    def _serialized_question(self, form_unique_id, question):
         response = _FormMetadataQuestion(question)
         response.form_id = form_unique_id
         response.load_properties = self._case_meta.get_load_properties(form_unique_id, question['value'])
