@@ -51,13 +51,13 @@ def get_case_search_results_from_request(domain, app_id, couch_user, request_dic
         couch_user=couch_user,
         registry_slug=config.data_registry,
         custom_related_case_property=config.custom_related_case_property,
-        include_related_cases=config.include_related_cases,
+        include_all_related_cases=config.include_all_related_cases,
     )
 
 
 def get_case_search_results(domain, case_types, criteria,
                             app_id=None, couch_user=None, registry_slug=None,
-                            custom_related_case_property=None, include_related_cases=None):
+                            custom_related_case_property=None, include_all_related_cases=None):
 
     helper = _get_helper(couch_user, domain, case_types, registry_slug)
 
@@ -84,7 +84,7 @@ def get_case_search_results(domain, case_types, criteria,
     cases = [helper.wrap_case(hit, include_score=True) for hit in hits]
     if app_id:
         cases.extend(get_related_cases(helper, app_id, case_types, cases,
-            custom_related_case_property, include_related_cases))
+            custom_related_case_property, include_all_related_cases))
     return cases
 
 
@@ -263,7 +263,7 @@ class CaseSearchQueryBuilder:
         ]
 
 
-def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property, include_related_cases):
+def get_related_cases(helper, app_id, case_types, cases, custom_related_case_property, include_all_related_cases):
     """
     Fetch related cases that are necessary to display any related-case
     properties in the app requesting this case search.
@@ -282,7 +282,7 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     results = expanded_case_results
     top_level_cases = cases + expanded_case_results
 
-    related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_related_cases)
+    related_cases = get_related_cases_result(helper, app, case_types, top_level_cases, include_all_related_cases)
     if related_cases:
         results.extend(related_cases)
 
@@ -292,13 +292,13 @@ def get_related_cases(helper, app_id, case_types, cases, custom_related_case_pro
     }.values())
 
 
-def get_related_cases_result(helper, app, case_types, source_cases, include_related_cases):
+def get_related_cases_result(helper, app, case_types, source_cases, include_all_related_cases):
     """
     Gets parent, child, and extension cases through sync algorithm if configured.
     Otherwise, gets case property path defined in search details and child case types
     used by search detail tab nodesets.
     """
-    if include_related_cases:
+    if include_all_related_cases:
         return _get_all_related_cases(helper, source_cases)
     else:
         results = []

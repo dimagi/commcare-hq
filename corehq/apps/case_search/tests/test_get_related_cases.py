@@ -266,11 +266,11 @@ class TestGetRelatedCases(BaseCaseSearchTest):
             patch("corehq.apps.case_search.utils.get_search_detail_relationship_paths",
                 return_value={"parent"}):
             result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
-                SOURCE_CASES, include_related_cases=True)
+                SOURCE_CASES, include_all_related_cases=True)
             self._assert_case_ids(RESULT_ALL_RELATED_CASE_ID, result_cases)
 
             result_cases = get_related_cases_result(_QueryHelper(self.domain), app, {'teacher'},
-                SOURCE_CASES, include_related_cases=False)
+                SOURCE_CASES, include_all_related_cases=False)
             self._assert_case_ids(RESULT_PARENT_CHILD_ID, result_cases)
 
     def _assert_related_case_ids(self, cases, paths, expected_case_ids):

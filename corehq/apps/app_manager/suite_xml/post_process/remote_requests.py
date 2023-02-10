@@ -83,7 +83,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
-    CASE_SEARCH_INCLUDE_RELATED_CASES_KEY
+    CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
 
 )
 from corehq.util.timer import time_method
@@ -276,7 +276,7 @@ class RemoteRequestFactory(object):
         if (module_uses_include_related_cases(self.module)):
             datums.append(
                 QueryData(
-                    key=CASE_SEARCH_INCLUDE_RELATED_CASES_KEY,
+                    key=CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
                     ref="'true'",
                 )
             )
