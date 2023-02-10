@@ -13,7 +13,7 @@ def _grandfather_view_app_diff_privs(apps, schema_editor):
     call_command(
         'cchq_prbac_grandfather_privs',
         privileges.VIEW_APP_DIFF,
-        skip_edition='Paused,Community,Standard',
+        skip_edition='Paused,Community,Standard,Pro',
         noinput=True,
     )
 
