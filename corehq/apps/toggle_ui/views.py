@@ -41,8 +41,8 @@ from corehq.util import reverse
 from corehq.util.soft_assert import soft_assert
 from couchforms.analytics import get_last_form_submission_received
 from soil import DownloadBase
-from corehq.apps.users.role_utils import (archive_program_manager_role_for_domain,
-                                          enable_program_manager_role_for_domain)
+from corehq.apps.users.role_utils import (archive_attendance_coordinator_role_for_domain,
+                                          enable_attendance_coordinator_role_for_domain)
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
@@ -272,9 +272,9 @@ def _handle_attendance_tracking_role(domain, is_enabled):
         return
 
     if is_enabled:
-        enable_program_manager_role_for_domain(domain)
+        enable_attendance_coordinator_role_for_domain(domain)
     else:
-        archive_program_manager_role_for_domain(domain)
+        archive_attendance_coordinator_role_for_domain(domain)
 
 
 def _set_toggle(request_username, static_toggle, item, namespace, is_enabled):

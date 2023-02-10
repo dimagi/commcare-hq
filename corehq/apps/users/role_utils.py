@@ -8,7 +8,7 @@ class UserRolePresets:
     FIELD_IMPLEMENTER = "Field Implementer"
     BILLING_ADMIN = "Billing Admin"
     MOBILE_WORKER = "Mobile Worker Default"
-    PROGRAM_MANAGER = "Program Manager"
+    ATTENDANCE_COORDINATOR = "Attendance Coordinator"
 
     INITIAL_ROLES = {
         READ_ONLY: lambda: HqPermissions(view_reports=True),
@@ -28,7 +28,7 @@ class UserRolePresets:
     }
 
     PRIVILEGED_ROLES = {
-        PROGRAM_MANAGER: lambda: HqPermissions(
+        ATTENDANCE_COORDINATOR: lambda: HqPermissions(
             edit_groups=True,
             view_groups=True,
             edit_users_in_groups=True,
@@ -66,9 +66,9 @@ def archive_custom_roles_for_domain(domain):
         role.save()
 
 
-def archive_program_manager_role_for_domain(domain):
-    """Archive the Program Manager for `domain`"""
-    role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
+def archive_attendance_coordinator_role_for_domain(domain):
+    """Archive the Attendance Coordinator for `domain`"""
+    role = UserRole.objects.filter(name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=domain).first()
     if not role:
         return
     role.is_archived = True
@@ -104,10 +104,10 @@ def initialize_domain_with_default_roles(domain):
         )
 
 
-def enable_program_manager_role_for_domain(domain):
-    role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=domain).first()
+def enable_attendance_coordinator_role_for_domain(domain):
+    role = UserRole.objects.filter(name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=domain).first()
     if not role:
-        role_name = UserRolePresets.PROGRAM_MANAGER
+        role_name = UserRolePresets.ATTENDANCE_COORDINATOR
         UserRole.create(
             domain,
             role_name,

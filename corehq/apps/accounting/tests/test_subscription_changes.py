@@ -147,34 +147,43 @@ class TestUserRoleSubscriptionChanges(BaseAccountingTest):
         self._assertStdUsers()
 
     @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
-    def test_add_program_manager_role_for_domain(self, attendance_tracking_enabled):
+    def test_add_attendance_coordinator_role_for_domain(self, attendance_tracking_enabled):
         attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.community_plan,
             web_user=self.admin_username
         )
 
-        assert not UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=self.domain.name).exists()
+        assert not UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).exists()
 
         subscription.change_plan(self.advanced_plan, web_user=self.admin_username)
         pm_role_created = UserRole.objects.filter(
-            name=UserRolePresets.PROGRAM_MANAGER, domain=self.domain.name
+            name=UserRolePresets.ATTENDANCE_COORDINATOR, domain=self.domain.name
         ).exists()
         self.assertTrue(pm_role_created)
 
     @patch('corehq.apps.users.role_utils.ATTENDANCE_TRACKING.enabled')
-    def test_archive_program_manager_role_when_downgrading(self, attendance_tracking_enabled):
+    def test_archive_attendance_coordinator_role_when_downgrading(self, attendance_tracking_enabled):
         attendance_tracking_enabled.return_value = True
         subscription = Subscription.new_domain_subscription(
             self.account, self.domain.name, self.advanced_plan,
             web_user=self.admin_username
         )
 
-        role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=self.domain.name).first()
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
         self.assertFalse(role.is_archived)
 
         subscription.change_plan(self.community_plan, web_user=self.admin_username)
-        role = UserRole.objects.filter(name=UserRolePresets.PROGRAM_MANAGER, domain=self.domain.name).first()
+        role = UserRole.objects.filter(
+            name=UserRolePresets.ATTENDANCE_COORDINATOR,
+            domain=self.domain.name
+        ).first()
         self.assertTrue(role.is_archived)
 
     def _change_std_roles(self):

@@ -27,8 +27,8 @@ from corehq.apps.users.role_utils import (
     get_custom_roles_for_domain,
     reset_initial_roles_for_domain,
     unarchive_roles_for_domain,
-    enable_program_manager_role_for_domain,
-    archive_program_manager_role_for_domain,
+    enable_attendance_coordinator_role_for_domain,
+    archive_attendance_coordinator_role_for_domain,
 )
 from corehq.const import USER_DATE_FORMAT
 from corehq.messaging.scheduling.models import (
@@ -198,7 +198,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
             privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
-            privileges.ATTENDANCE_TRACKING: cls.response_archive_program_manager_role,
+            privileges.ATTENDANCE_TRACKING: cls.response_archive_attendance_coordinator_role,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -259,8 +259,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_archive_program_manager_role(domain, new_plan_version):
-        archive_program_manager_role_for_domain(domain=domain.name)
+    def response_archive_attendance_coordinator_role(domain, new_plan_version):
+        archive_attendance_coordinator_role_for_domain(domain=domain.name)
 
     @staticmethod
     def response_data_cleanup(domain, new_plan_version):
@@ -366,7 +366,7 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         privs_to_respones = {
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
-            privileges.ATTENDANCE_TRACKING: cls.response_add_program_manager_role,
+            privileges.ATTENDANCE_TRACKING: cls.response_add_attendance_coordinator_role,
         }
         privs_to_respones.update({
             p: cls.response_report_builder
@@ -384,10 +384,10 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_add_program_manager_role(domain, new_plan_version):
+    def response_add_attendance_coordinator_role(domain, new_plan_version):
         if not ATTENDANCE_TRACKING.enabled(domain):
             return True
-        enable_program_manager_role_for_domain(domain)
+        enable_attendance_coordinator_role_for_domain(domain)
         return True
 
     @staticmethod

@@ -7,7 +7,7 @@ from corehq.apps.accounting.models import SoftwarePlanEdition
 
 
 class Command(BaseCommand):
-    help = "Adds the program manager role to domains on the pro, advanced and entrprise plans."
+    help = "Adds the Attendance Coordinator role to domains on the pro, advanced and entrprise plans."
 
     def handle(self, **options):
         pro_or_higher_plan = [
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             is_active=True,
         ).values_list('subscriber__domain', flat=True).distinct()
 
-        role_name = UserRolePresets.PROGRAM_MANAGER
+        role_name = UserRolePresets.ATTENDANCE_COORDINATOR
         domains_with_role = UserRole.objects.filter(
             name=role_name,
             domain__in=domain_names
