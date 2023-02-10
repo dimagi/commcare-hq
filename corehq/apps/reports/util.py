@@ -1,7 +1,7 @@
 import json
 import math
 import warnings
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from datetime import datetime
 
 from django.conf import settings
@@ -625,6 +625,15 @@ def sync_all_tableau_users():
         _sync_tableau_users_with_remote(domain)
 
 
+def is_hq_user(tableau_username):
+    return tableau_username and tableau_username.startswith('HQ/')
+
+
+def tableau_username_to_hq(tableau_username):
+    if is_hq_user(tableau_username):
+        return tableau_username[3:]
+
+
 # Attaches to the parse_web_users method
 def add_on_tableau_details(domain, web_user_dicts):
 
@@ -637,25 +646,18 @@ def add_on_tableau_details(domain, web_user_dicts):
             ).filter(username__in=usernames).values('username', 'role')
         }
 
-    def _get_groups_by_user(session, domain, usernames):
+    def _get_groups_by_username(session, domain):
         try:
+            groups_by_username = defaultdict(list)
             all_groups = get_all_tableau_groups(domain, session=session)
-            users_by_group = {}
             for group in all_groups:
-                users_by_group[group] = session.get_users_in_group(group.id)
+                for user_dict in session.get_users_in_group(group.id):
+                    hq_username = tableau_username_to_hq(user_dict.get('name'))
+                    if hq_username:
+                        groups_by_username[hq_username].append(group.name)
+            return groups_by_username
         except TableauAPIError:
             return -1
-
-        def _username_in_user_dicts(username, user_dicts):
-            # Is there at least one user_dict with the given username
-            return bool(sum([user_dict.get('name') == tableau_username(username) for user_dict in user_dicts]))
-        groups_by_user = {}
-        for username in usernames:
-            groups_by_user[username] = [
-                group for group, user_dicts in users_by_group.items() if (
-                    _username_in_user_dicts(username, user_dicts))
-            ]
-        return groups_by_user
 
     users_to_edit = []
     for web_user_dict in web_user_dicts:
@@ -665,19 +667,19 @@ def add_on_tableau_details(domain, web_user_dicts):
             users_to_edit.append(user.username)
 
     roles_by_user = _get_roles_by_user(domain, users_to_edit)
-    groups_by_user = _get_groups_by_user(session, domain, users_to_edit)
+    groups_by_username = _get_groups_by_username(session, domain)
 
     for web_user_dict in web_user_dicts:
         username = web_user_dict['username']
-        web_user_dict['tableau_role'] = roles_by_user.get(username, 'N/A')
-        if groups_by_user == -1:
-            web_user_dict['tableau_groups'] = 'ERROR'
+        if username not in users_to_edit:
+            web_user_dict['tableau_role'] = 'N/A'
+            web_user_dict['tableau_groups'] = 'N/A'
         else:
-            groups = groups_by_user.get(username)
-            if groups or groups == []:
-                web_user_dict['tableau_groups'] = json.dumps(groups)
+            web_user_dict['tableau_role'] = roles_by_user.get(username, 'ERROR')
+            if groups_by_username == -1:
+                web_user_dict['tableau_groups'] = 'ERROR'
             else:
-                web_user_dict['tableau_groups'] = 'N/A'
+                web_user_dict['tableau_groups'] = ','.join(groups_by_username.get(username, ''))
     return web_user_dicts
 
 

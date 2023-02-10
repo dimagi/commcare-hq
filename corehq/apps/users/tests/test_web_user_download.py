@@ -191,7 +191,7 @@ class TestDownloadWebUsers(TestCase):
 
         spec = dict(zip(headers, rows[0]))
         self.assertEqual(TableauUser.Roles.VIEWER.value, spec['tableau_role'])
-        self.assertEqual("""[["group1", "1a2b3"], ["group2", "c4d5e"], ["group3", "zx39n"]]""",
+        self.assertEqual("group1,group2,group3",
             spec['tableau_groups'])
 
         spec = dict(zip(headers, rows[1]))
