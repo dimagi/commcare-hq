@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.commands import migrate
-from django.test import TestCase
+from django.test import SimpleTestCase
 
 from .. import django_migrations as reindexer
 
@@ -14,7 +14,7 @@ def handle_migrate(*args, **kw):
 
 
 @patch.object(migrate.Command, "handle", handle_migrate)
-class TestMigrateWithReindex(TestCase):
+class TestMigrateWithReindex(SimpleTestCase):
 
     def test_migrate_does_reindex(self):
         def command(name, *args, **kw):
