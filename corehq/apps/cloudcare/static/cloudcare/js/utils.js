@@ -375,13 +375,13 @@ hqDefine('cloudcare/js/utils', [
         $el.datetimepicker({
             date: selectedDate,
             useCurrent: false,
-            keepInvalid: true,
             showClear: true,
             showClose: true,
             showTodayButton: true,
             debug: true,
             format: dateFormat,
-            extraFormats: ["MM/DD/YYYY", "MM/DD/YY"],
+            extraFormats: ["MM/DD/YYYY", "MM/DD/YY", "YYYY-MM-DD"],
+            useStrict: true,
             icons: {
                 today: 'glyphicon glyphicon-calendar',
             },
@@ -406,7 +406,7 @@ hqDefine('cloudcare/js/utils', [
         $el.datetimepicker({
             date: selectedTime,
             format: dateFormat,
-            keepInvalid: true,
+            useStrict: true,
             useCurrent: false,
             showClear: true,
             showClose: true,
