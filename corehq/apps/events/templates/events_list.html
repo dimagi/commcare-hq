@@ -1,0 +1,34 @@
+{% extends 'hqwebapp/base_paginated_crud.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+
+{% requirejs_main "hqwebapp/js/crud_paginated_list_init" %}
+
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
+{% block pagination_header %}
+  <div class="row">
+    <div class="col-sm-8">
+      <p>
+        {% blocktrans %}
+          Attendance tracking events can be used to track attendance of all the selected attendees.
+        {% endblocktrans %}
+      </p>
+    </div>
+  </div>
+  <div class="btn-toolbar">
+    <a href="">
+      <button type="button" class="btn btn-primary" id="add-new">
+        <i class="fa fa-plus"></i> {% trans "Add new event" %}
+      </button>
+    </a>
+  </div>
+{% endblock pagination_header %}
+
+{% block pagination_templates %}
+  <script type="text/html" id="base-event-template">
+    <td data-bind="id: id"></td>
+  </script>
+{% endblock %}
