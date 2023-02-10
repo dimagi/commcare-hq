@@ -129,8 +129,8 @@ from corehq.form_processor.tests.utils import (
 from corehq.motech.models import ConnectionSettings, RequestLog
 from corehq.motech.repeaters.const import RECORD_SUCCESS_STATE
 from corehq.motech.repeaters.models import (
-    SQLCaseRepeater,
-    SQLRepeater,
+    CaseRepeater,
+    Repeater,
     SQLRepeatRecord,
     SQLRepeatRecordAttempt,
 )
@@ -954,7 +954,7 @@ class TestDeleteDomain(TestCase):
 
     def _assert_repeaters_count(self, domain_name, count):
         self._assert_queryset_count([
-            SQLRepeater.objects.filter(domain=domain_name),
+            Repeater.objects.filter(domain=domain_name),
             SQLRepeatRecord.objects.filter(domain=domain_name),
             SQLRepeatRecordAttempt.objects.filter(repeat_record__domain=domain_name),
         ], count)
@@ -966,7 +966,7 @@ class TestDeleteDomain(TestCase):
                 name='To Be Deleted',
                 url="http://localhost/api/"
             )
-            repeater = SQLCaseRepeater.objects.create(
+            repeater = CaseRepeater.objects.create(
                 domain=domain_name,
                 connection_settings=conn
             )

@@ -17,15 +17,17 @@
            clickable: collapsible
         },
         attr: collapsible ? {
-                role: 'button',
+                'role': 'button',
                 'aria-expanded': showChildren() ? 'true' : 'false',
-                'aria-labelledby': captionId()
+                'aria-labelledby': captionId(),
+                // tab focus only if group is visible
+                'tabindex': isVisibleGroup() ? '0' : '-1'
               } : {
-                'aria-labelledby': captionId()
+                'aria-labelledby': captionId(),
+                'tabindex': isVisibleGroup() ? '0' : '-1'
               },
         click: toggleChildren,
-        event: {keypress: keyPressAction}"
-              tabindex="0">
+        event: {keypress: keyPressAction}">
       <div data-bind="ifnot: collapsible">
         <legend>
           <span class="caption webapp-markdown-output"
@@ -437,7 +439,7 @@
 </script>
 <script type="text/html" id="select-entry-ko-template">
   <fieldset>
-  <legend aria-hidden="true" class="sr-only">{% trans "Answer Choices" %}</legend>
+  <legend class="sr-only" data-bind="text: question.caption()"></legend>
     <div class="sel clear">
       <div data-bind="foreach: choices, as: 'choice'">
         <div data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }, class: $parent.colStyleIfHideLabel">
@@ -452,9 +454,7 @@
                               class: 'group-' + $parent.entryId,
                           },
                       "/>
-            <!-- ko ifnot: $parent.hideLabel -->
-              <span data-bind="renderMarkdown: $data"></span>
-            <!-- /ko -->
+              <span data-bind="renderMarkdown: $data, class: $parent.hideLabel ? 'sr-only' : ''"></span>
           </label>
           </div>
         </div>

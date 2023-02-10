@@ -136,9 +136,14 @@ def rate_limit_submission(domain, delay_rather_than_reject=False, max_wait=15):
             datadog_metric='commcare.xform_submissions.rate_limited')
 
     if allow_form_usage and not allow_case_usage:
-        _delay_and_report_rate_limit_submission(
-            domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
-            datadog_metric='commcare.case_updates.rate_limited.test')
+        if not DO_NOT_RATE_LIMIT_SUBMISSIONS.enabled(domain):
+            allow_usage = _delay_and_report_rate_limit_submission(
+                domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+                datadog_metric='commcare.case_updates.rate_limited')
+        else:
+            _delay_and_report_rate_limit_submission(
+                domain, max_wait=max_wait, delay_rather_than_reject=delay_rather_than_reject,
+                datadog_metric='commcare.case_updates.rate_limited.test')
     return not allow_usage
 
 
