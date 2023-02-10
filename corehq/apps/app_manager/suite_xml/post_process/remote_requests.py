@@ -66,7 +66,7 @@ from corehq.apps.app_manager.util import (
     module_uses_smart_links,
     module_offers_registry_search,
     module_uses_inline_search,
-    module_uses_include_related_cases,
+    module_uses_include_all_related_cases,
 )
 from corehq.apps.app_manager.xpath import (
     CaseClaimXpath,
@@ -273,7 +273,7 @@ class RemoteRequestFactory(object):
                     ref=f"'{self.module.search_config.custom_related_case_property}'",
                 )
             )
-        if (module_uses_include_related_cases(self.module)):
+        if (module_uses_include_all_related_cases(self.module)):
             datums.append(
                 QueryData(
                     key=CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY,
