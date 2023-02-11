@@ -5972,7 +5972,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#: corehq/apps/sso/forms.py
+#: corehq/apps/sso/forms.py corehq/apps/users/forms.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Download"
 msgstr ""
@@ -9138,6 +9138,12 @@ msgid ""
 "case details."
 msgstr ""
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+#, fuzzy
+#| msgid "Case List"
+msgid "Empty Case List Text"
+msgstr "Lista de Casos"
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
 msgstr ""
@@ -11802,10 +11808,6 @@ msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
 msgid "Please wait while the map loads"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Answer Choices"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
@@ -21932,10 +21934,8 @@ msgid "Add Project"
 msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
-#, fuzzy
-#| msgid "Settings"
 msgid "Manage Settings"
-msgstr "Definições"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 msgid "Logged in As"
@@ -35078,10 +35078,6 @@ msgid "Filter and Download Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid "Download All Users"
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "Invalid Role"
 msgstr ""
 
@@ -35654,16 +35650,12 @@ msgid "Update Location Settings"
 msgstr "Atualizar Definições de Localização"
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "PowerBi/Tableau Integration"
 msgid "Tableau Configuration"
-msgstr "Integração PowerBI/Tableau"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "PowerBi/Tableau Integration"
 msgid "Update Tableau Configuration"
-msgstr "Integração PowerBI/Tableau"
+msgstr ""
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
@@ -35778,6 +35770,10 @@ msgid ""
 "you will be charged\n"
 "          a fee of %(u_fee)s per Mobile Worker per month.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/users/templates/users/filter_and_download.html
+msgid "Calculating download size..."
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile/partials/user_upload_status.html
@@ -40221,10 +40217,8 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy
-#| msgid "Delete Application"
 msgid "Delete Configuration"
-msgstr "Apagar aplicação"
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
 #, python-format
@@ -40233,8 +40227,8 @@ msgid ""
 "                                    Are you sure you want to delete the "
 "configuration for: %(name)s ?\n"
 "                                    <br/><br />\n"
-"                                    Data forwarding records will not be "
-"deleted, but no new records will be\n"
+"                                    Historical data forwarding records will "
+"not be deleted, but no new records will be\n"
 "                                    forwarded, and this configuration will "
 "no longer appear on this page.\n"
 "                                "
@@ -40638,6 +40632,10 @@ msgstr ""
 
 #: corehq/privileges.py
 msgid "Link to other forms in End of Form Navigation"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Phone heartbeat"
 msgstr ""
 
 #: corehq/reports.py
