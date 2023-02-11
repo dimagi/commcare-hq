@@ -29,7 +29,7 @@ from corehq.apps.export.views.new import (
 )
 from corehq.apps.export.views.utils import DataFileDownloadDetail
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import generate_cases
+from corehq.util.test_utils import generate_cases, privilege_enabled
 
 
 class FakeDB(object):
@@ -43,23 +43,6 @@ class FakeDB(object):
 
     def delete(self, blob_id):
         pass
-
-
-def domain_has_dropzone():
-
-    def patched(domain, slug, **assignment):
-        from corehq.apps.accounting.utils import domain_has_privilege
-        if slug == privileges.DATA_FILE_DOWNLOAD:
-            return True
-        return domain_has_privilege(domain, slug, **assignment)
-
-    return patch(
-        # This decorator is not generic because it needs to patch
-        # `domain_has_privilege()` where it is imported, not where it is
-        # defined, and it's imported in 45 different places.
-        'corehq.apps.users.permissions.domain_has_privilege',
-        new=patched,
-    )
 
 
 class ViewTestCase(TestCase):
@@ -86,7 +69,7 @@ class ViewTestCase(TestCase):
         self.client.login(username=self.username, password=self.password)
 
 
-@domain_has_dropzone()
+@privilege_enabled(privileges.DATA_FILE_DOWNLOAD)
 class DataFileDownloadDetailTest(ViewTestCase):
 
     @classmethod
@@ -134,7 +117,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
     (1000, 1999),
     (11000, None)  # This test uses this file (test_export_views.py). `11000` must be less than its size.
 ], DataFileDownloadDetailTest)
-@domain_has_dropzone()
+@privilege_enabled(privileges.DATA_FILE_DOWNLOAD)
 def test_data_file_download_partial(self, start, end):
     content_length = len(self.content)
     if end:
