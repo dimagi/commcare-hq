@@ -82,6 +82,7 @@ from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
 )
 from corehq.util.timer import time_method
 from corehq.util.view_utils import absolute_reverse
@@ -137,7 +138,7 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        if not toggles.ADD_MODIFICATION_DATE_CHECK_TO_CASE_CLAIM.enabled(self.domain, toggles.NAMESPACE_DOMAIN):
+        if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
             relevant = self.get_post_relevant()
             if relevant:
                 kwargs["relevant"] = relevant

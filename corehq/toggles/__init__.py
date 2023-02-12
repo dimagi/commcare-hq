@@ -2388,14 +2388,6 @@ APPLICATION_RELEASE_LOGS = StaticToggle(
     description='This feature provides the release logs for application.'
 )
 
-ADD_MODIFICATION_DATE_CHECK_TO_CASE_CLAIM = FeatureRelease(
-    'add_modification_date_check_to_case_claim',
-    'Prevent stale case data in forms when using case search',
-    TAG_INTERNAL,
-    namespaces=[NAMESPACE_DOMAIN],
-    owner='Steph Herbers'
-)
-
 TABLEAU_USER_SYNCING = StaticToggle(
     'tableau_user_syncing',
     'Automatically sync HQ users with users on Tableau',
