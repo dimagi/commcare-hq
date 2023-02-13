@@ -13,7 +13,7 @@ from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_table
 from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import flag_enabled
+from corehq.util.test_utils import disable_quickcache, flag_enabled
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -173,6 +173,7 @@ class TestDownloadWebUsers(TestCase):
             role=TableauUser.Roles.EXPLORER.value)
 
     @flag_enabled('TABLEAU_USER_SYNCING')
+    @disable_quickcache
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_tableau_user_download(self, mock_request):
         self._setup_tableau_users()
