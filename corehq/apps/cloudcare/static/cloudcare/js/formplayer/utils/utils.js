@@ -67,11 +67,24 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
         });
     };
 
-    Utils.doUrlAction = function (actionCallback) {
-        var currentObject = Utils.CurrentUrlToObject();
-        actionCallback(currentObject);
-        Utils.setUrlToObject(currentObject);
+    /**
+     * Helper function to update the URL
+     *
+     * @param actionCallback Function called with the current URL Object as an argument.
+     *                       Return 'false' to prevent updating the URL.
+     * @param replace        Set to 'true' to update the URL without creating an entry in
+     *                       the browser's history
+     * @returns              The updated URL Object
+     */
+    Utils.doUrlAction = function (actionCallback, replace) {
+        var currentObject = Utils.currentUrlToObject();
+        const update = actionCallback(currentObject);
+        if (update !== false) {
+            Utils.setUrlToObject(currentObject, replace);
+        }
+        return currentObject;
     };
+
 
     Utils.setCrossDomainAjaxOptions = function (options) {
         options.type = 'POST';
@@ -287,6 +300,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.sessionId = null;
         };
 
         this.spliceSelections = function (index) {
