@@ -65,30 +65,21 @@
       <!--ko if: isTab -->
       <!--ko if: $data.hasNodeset -->
       <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-      {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
-        <td class="col-sm-3 form-group">
-          <div data-bind="jqueryElement: relevant.ui"></div>
-        </td>
-        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
-          {% else %}
-        <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
-      {% endif %}
+      <td class="col-sm-3 form-group">
+        <div data-bind="jqueryElement: relevant.ui"></div>
+      </td>
+      <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
       <div data-bind="jqueryElement: nodeset_extra.ui"></div>
       <span class="help-block"
             data-bind="text: 'Please enter an expression.', visible: showWarning"></span>
       </td>
       <!--/ko-->
       <!--ko ifnot: $data.hasNodeset -->
-      {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
-        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-        <td class="col-sm-3 form-group">
-          <div data-bind="jqueryElement: relevant.ui"></div>
-        </td>
-        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
-      {% else %}
-        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-        <td class="col-sm-5" colspan="2"></td>
-      {% endif %}
+      <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+      <td class="col-sm-3 form-group">
+        <div data-bind="jqueryElement: relevant.ui"></div>
+      </td>
+      <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
       <!--/ko-->
       <!--/ko-->
       <!-- ko if: $parent.showCaseTileColumn() -->

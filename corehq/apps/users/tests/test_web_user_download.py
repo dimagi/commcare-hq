@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.es.tests.utils import es_test, populate_user_index
+from corehq.apps.es.users import user_adapter
 from corehq.apps.users.bulk_download import parse_web_users
 from corehq.apps.users.models import Invitation, UserRole, WebUser
 from corehq.apps.reports.models import TableauUser
@@ -14,7 +15,8 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import flag_enabled
 
-@es_test
+
+@es_test(requires=[user_adapter], setup_class=True)
 class TestDownloadWebUsers(TestCase):
 
     @classmethod
@@ -100,7 +102,6 @@ class TestDownloadWebUsers(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         cls.user1.delete(cls.domain_obj.name, deleted_by=None)
         cls.user2.delete(cls.domain_obj.name, deleted_by=None)
         cls.user10.delete(cls.other_domain_obj.name, deleted_by=None)

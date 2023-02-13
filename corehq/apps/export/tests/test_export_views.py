@@ -2,13 +2,14 @@ import datetime
 import json
 import os
 from io import BytesIO
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 
 from botocore.response import StreamingBody
-from unittest.mock import patch
 
+from corehq import privileges
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.dbaccessors import (
     delete_all_export_instances,
@@ -21,7 +22,6 @@ from corehq.apps.export.views.edit import (
     EditNewCustomCaseExportView,
     EditNewCustomFormExportView,
 )
-from corehq.apps.export.views.list import DailySavedExportListView
 from corehq.apps.export.views.new import (
     CreateNewCustomCaseExportView,
     CreateNewCustomFormExportView,
@@ -29,7 +29,7 @@ from corehq.apps.export.views.new import (
 )
 from corehq.apps.export.views.utils import DataFileDownloadDetail
 from corehq.apps.users.models import WebUser
-from corehq.util.test_utils import flag_enabled, generate_cases
+from corehq.util.test_utils import generate_cases, privilege_enabled
 
 
 class FakeDB(object):
@@ -69,6 +69,7 @@ class ViewTestCase(TestCase):
         self.client.login(username=self.username, password=self.password)
 
 
+@privilege_enabled(privileges.DATA_FILE_DOWNLOAD)
 class DataFileDownloadDetailTest(ViewTestCase):
 
     @classmethod
@@ -97,7 +98,6 @@ class DataFileDownloadDetailTest(ViewTestCase):
             'domain': self.domain.name, 'pk': self.data_file.id, 'filename': 'foo.txt'
         })
 
-    @flag_enabled('DATA_FILE_DOWNLOAD')
     def test_data_file_download(self):
         try:
             resp = self.client.get(self.data_file_url)
@@ -105,7 +105,6 @@ class DataFileDownloadDetailTest(ViewTestCase):
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
         self.assertEqual(resp.getvalue(), self.content)
 
-    @flag_enabled('DATA_FILE_DOWNLOAD')
     def test_data_file_download_expired(self):
         self.data_file._meta.expires_on = datetime.datetime.utcnow() - datetime.timedelta(hours=1)
         self.data_file._meta.save()
@@ -118,7 +117,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
     (1000, 1999),
     (11000, None)  # This test uses this file (test_export_views.py). `11000` must be less than its size.
 ], DataFileDownloadDetailTest)
-@flag_enabled('DATA_FILE_DOWNLOAD')
+@privilege_enabled(privileges.DATA_FILE_DOWNLOAD)
 def test_data_file_download_partial(self, start, end):
     content_length = len(self.content)
     if end:
