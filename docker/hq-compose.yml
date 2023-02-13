@@ -33,7 +33,7 @@ services:
     privileged: true  # allows mount inside container
     depends_on:
       postgres:
-        condition: service_started
+        condition: service_healthy
       couch:
         condition: service_healthy
       redis:
