@@ -77,7 +77,6 @@ branches:
     - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
 #    - ce/enable-case-rate-limits # Cal Feb 1
-    - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
     - ml/enforce-metadata-ff # Minha Feb 2
     - akj/tabular-radio-btn-reader # Akash Feb 6
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
