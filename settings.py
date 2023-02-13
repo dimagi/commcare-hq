@@ -1065,9 +1065,6 @@ ES_SETTINGS = None
 PHI_API_KEY = None
 PHI_PASSWORD = None
 
-ABDM_CLIENT_ID = None
-ABDM_CLIENT_SECRET = None
-
 STATIC_DATA_SOURCE_PROVIDERS = [
     'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
 ]

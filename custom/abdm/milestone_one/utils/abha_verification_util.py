@@ -1,7 +1,9 @@
 import requests
 
+from django.conf import settings
+
+
 from custom.abdm.milestone_one.utils.request_util import (
-    base_url,
     get_access_token,
     get_response_http_post,
 )
@@ -32,7 +34,7 @@ def get_account_information(x_token):
     headers = {"Content-Type": "application/json; charset=UTF-8"}
     token = get_access_token()
     headers.update({"Authorization": "Bearer {}".format(token), "X-Token": f"Bearer {x_token}"})
-    resp = requests.get(url=base_url + account_information_url, headers=headers)
+    resp = requests.get(url=settings.ABDM_BASE_URL + account_information_url, headers=headers)
     return resp.json()
 
 

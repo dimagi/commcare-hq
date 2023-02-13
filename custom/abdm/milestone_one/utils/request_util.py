@@ -4,9 +4,6 @@ from django.conf import settings
 
 import requests
 
-base_url = "https://healthidsbx.abdm.gov.in/api/"
-gateway_url = "https://dev.abdm.gov.in/gateway/v0.5/sessions"
-
 
 class TokenException(Exception):
     pass
@@ -17,13 +14,13 @@ def get_access_token():
         raise TokenException("Missing client credentials for ABDM. Unable to get token.")
     payload = {"clientId": settings.ABDM_CLIENT_ID, "clientSecret": settings.ABDM_CLIENT_SECRET}
     headers = {"Content-Type": "application/json; charset=UTF-8"}
-    resp = requests.post(url=gateway_url, data=json.dumps(payload), headers=headers)
+    resp = requests.post(url=settings.ABDM_GATEWAY_URL, data=json.dumps(payload), headers=headers)
     resp.raise_for_status()
     return resp.json().get("accessToken")
 
 
 def get_response_http_post(api_url, payload, additional_headers=None):
-    req_url = base_url + api_url
+    req_url = settings.ABDM_BASE_URL + api_url
     headers = {"Content-Type": "application/json"}
     try:
         token = get_access_token()
