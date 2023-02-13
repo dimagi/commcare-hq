@@ -1,21 +1,46 @@
 import json
 import math
+import uuid
 from contextlib import contextmanager
 from copy import deepcopy
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
-import uuid
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+
 from nose.tools import nottest
-from unittest.mock import patch
-from corehq.apps.es.utils import check_task_progress
 
+from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.users import user_adapter
+from corehq.apps.es.utils import check_task_progress
+from corehq.apps.users.dbaccessors import delete_all_users
+from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
     TransportError,
 )
 
+from ..client import (
+    BaseAdapter,
+    BulkActionItem,
+    ElasticMultiplexAdapter,
+    Tombstone,
+    _client_default,
+    _client_for_export,
+    _elastic_hosts,
+    get_client,
+    manager,
+)
+from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
+from ..exceptions import (
+    ESError,
+    ESShardFailure,
+    InvalidDictForAdapter,
+    TaskError,
+    TaskMissing,
+    UnknownDocException,
+)
 from .utils import (
     TestDoc,
     TestDocumentAdapter,
@@ -25,19 +50,6 @@ from .utils import (
     temporary_index,
     test_adapter,
 )
-from ..client import (
-    BaseAdapter,
-    BulkActionItem,
-    ElasticMultiplexAdapter,
-    Tombstone,
-    get_client,
-    manager,
-    _elastic_hosts,
-    _client_default,
-    _client_for_export,
-)
-from ..const import INDEX_CONF_REINDEX, INDEX_CONF_STANDARD, SCROLL_KEEPALIVE
-from ..exceptions import ESError, ESShardFailure, TaskError, TaskMissing
 
 
 @override_settings(ELASTICSEARCH_HOSTS=["localhost"],
@@ -1793,6 +1805,74 @@ class TestTombstone(SimpleTestCase):
             {Tombstone.PROPERTY_NAME: True},
             Tombstone.create_document(),
         )
+
+
+@es_test(requires=[user_adapter], setup_class=True)
+class TestFromMultiInElasticUser(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'from-python-tests'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.addClassCleanup(cls.domain_obj.delete)
+        cls.user = CommCareUser.create(
+            username="rock", domain=cls.domain, password="***********",
+            created_by=None, created_via=None
+        )
+        cls.web_user = WebUser.create(
+            username='webman', domain=cls.domain, password="***********",
+            created_by=None, created_via=None
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_all_users()
+        super().tearDownClass()
+
+    def test_from_multi_works_with_user_objects(self):
+        user_adapter.from_multi(self.user)
+        user_adapter.from_multi(self.web_user)
+
+    def test_from_multi_works_with_user_dicts(self):
+        user_adapter.from_multi(self.user.to_json())
+        user_adapter.from_multi(self.web_user.to_json())
+
+    def test_from_multi_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, user_adapter.from_multi, set)
+
+    def test_from_python_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, user_adapter.from_python, set)
+        self.assertRaises(UnknownDocException, user_adapter.from_python, self.user.to_json())
+
+    def test_from_multi_raises_for_invalid_dicts(self):
+        self.assertRaises(InvalidDictForAdapter, user_adapter.from_multi, {})
+
+    def test_from_multi_is_same_as_transform_user_for_es(self):
+        commcare_user_id, commcare_user = user_adapter.from_multi(self.user)
+        commcare_user['_id'] = commcare_user_id
+        web_user_id, web_user = user_adapter.from_multi(self.web_user)
+        web_user['_id'] = web_user_id
+        self.assertEqual(transform_user_for_elasticsearch(self.user.to_json()), commcare_user)
+        self.assertEqual(transform_user_for_elasticsearch(self.web_user.to_json()), web_user)
+
+    def test_index_can_handle_user_dicts(self):
+        user_dict = transform_user_for_elasticsearch(self.user.to_json())
+        user_adapter.index(user_dict, refresh=True)
+        self.addCleanup(user_adapter.delete, self.user._id)
+
+        commcare_user = user_adapter.to_json(self.user)
+        es_user = user_adapter.search({})['hits']['hits'][0]['_source']
+
+        self.assertEqual(es_user, commcare_user)
+
+    def test_index_can_handle_user_objects(self):
+        user_adapter.index(self.user, refresh=True)
+        self.addCleanup(user_adapter.delete, self.user._id)
+
+        commcare_user = user_adapter.to_json(self.user)
+        es_user = user_adapter.search({})['hits']['hits'][0]['_source']
+
+        self.assertEqual(es_user, commcare_user)
 
 
 class OneshotIterable:
