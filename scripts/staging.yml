@@ -81,4 +81,5 @@ branches:
     - akj/tabular-radio-btn-reader # Akash Feb 6
     - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
     - sk/webapps-sessionid  # Simon Feb 9
+    - em/app-summary-conditional-case-update-status # Evan Feb 13
 submodules: { }
