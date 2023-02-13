@@ -2397,7 +2397,7 @@ TABLEAU_USER_SYNCING = StaticToggle(
 
 ATTENDANCE_TRACKING = StaticToggle(
     'attendance_tracking',
-    'Allows easy attendance tracking',
+    'Allows access to the attendance tracking page',
     TAG_SOLUTIONS_LIMITED,
     namespaces=[NAMESPACE_DOMAIN],
     description="""

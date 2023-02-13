@@ -29,6 +29,7 @@ class UserRolePresets:
 
     PRIVILEGED_ROLES = {
         ATTENDANCE_COORDINATOR: lambda: HqPermissions(
+            manage_attendance_tracking=True,
             edit_groups=True,
             view_groups=True,
             edit_users_in_groups=True,
