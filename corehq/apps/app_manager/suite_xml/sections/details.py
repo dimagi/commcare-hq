@@ -163,7 +163,7 @@ class DetailContributor(SectionContributor):
             for tab in tabs:
                 # relevant should be set to None even in case its ''
                 tab_relevant = None
-                if tab.relevant and toggles.DISPLAY_CONDITION_ON_TABS.enabled(module.get_app().domain):
+                if tab.relevant:
                     tab_relevant = tab.relevant
 
                 sub_detail = self.build_detail(
@@ -194,6 +194,10 @@ class DetailContributor(SectionContributor):
             # Add lookup
             if detail.lookup_enabled and detail.lookup_action:
                 d.lookup = self._get_lookup_element(detail, module)
+
+            # Add no items text
+            if detail_type.endswith('short') and self.app.supports_empty_case_list_text:
+                d.no_items_text = Text(locale_id=id_strings.no_items_text_detail(module))
 
             # Add variables
             variables = list(

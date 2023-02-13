@@ -17,6 +17,7 @@ import threading
 from fnmatch import fnmatch
 
 from django.conf import settings
+from django.core import cache
 from django.core.management import call_command
 from django.db.backends.base.creation import TEST_DATABASE_PREFIX
 from django.db.utils import OperationalError
@@ -32,6 +33,7 @@ from requests.exceptions import HTTPError
 
 from dimagi.utils.parsing import string_to_boolean
 
+from corehq.apps.es.client import manager as elastic_manager
 from corehq.tests.noseplugins.cmdline_params import CmdLineParametersPlugin
 from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import timelimit, unit_testing_only
@@ -231,6 +233,8 @@ class HqdbContext(DatabaseContext):
 
     def reset_databases(self):
         self.delete_couch_databases()
+        self.delete_elastic_indexes()
+        self.clear_redis()
         # tear down all databases together to avoid dependency issues
         teardown = []
         for connection, db_name, is_first in self.old_names:
@@ -272,6 +276,21 @@ class HqdbContext(DatabaseContext):
                 log.info("database %s not found! it was probably already deleted.",
                          db.dbname)
 
+    def delete_elastic_indexes(self):
+        # corehq.apps.es.client.create_document_adapter uses
+        # TEST_DATABASE_PREFIX when constructing test index names
+        for index_name in elastic_manager.get_indices():
+            if index_name.startswith(TEST_DATABASE_PREFIX):
+                elastic_manager.index_delete(index_name)
+
+    def clear_redis(self):
+        config = settings.CACHES.get("redis", {})
+        loc = config.get("TEST_LOCATION")
+        if loc:
+            redis = cache.caches['redis']
+            assert redis.client._server == [loc], (redis.client._server, config)
+            redis.clear()
+
     def teardown(self):
         if self.should_skip_test_setup():
             return
@@ -282,6 +301,8 @@ class HqdbContext(DatabaseContext):
             return
 
         self.delete_couch_databases()
+        self.delete_elastic_indexes()
+        self.clear_redis()
 
         # HACK clean up leaked database connections
         from corehq.sql_db.connections import connection_manager

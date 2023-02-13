@@ -211,7 +211,7 @@ class RepeaterSuperProxy(models.Model):
                         'kwargs': kwargs
                     }
                     notify_error(UnknownRepeater(proxy_class_name), details=details)
-                    # Fallback to creating SQLRepeater if repeater class is not found
+                    # Fallback to creating Repeater if repeater class is not found
                     repeater_class = cls
 
         return super().__new__(repeater_class)
@@ -221,7 +221,7 @@ class RepeaterManager(models.Manager):
 
     def all_ready(self):
         """
-        Return all SQLRepeaters ready to be forwarded.
+        Return all Repeaters ready to be forwarded.
         """
         not_paused = models.Q(is_paused=False)
         next_attempt_not_in_the_future = (
@@ -239,7 +239,7 @@ class RepeaterManager(models.Manager):
 
     def get_queryset(self):
         repeater_obj = self.model()
-        if type(repeater_obj).__name__ in ("SQLRepeater", "Repeater"):
+        if type(repeater_obj).__name__ == "Repeater":
             return super().get_queryset().filter(is_deleted=False)
         else:
             return super().get_queryset().filter(repeater_type=repeater_obj._repeater_type, is_deleted=False)
@@ -248,7 +248,7 @@ class RepeaterManager(models.Manager):
         return list(self.filter(domain=domain))
 
 
-class SQLRepeater(RepeaterSuperProxy):
+class Repeater(RepeaterSuperProxy):
     domain = models.CharField(max_length=126, db_index=True)
     repeater_id = models.CharField(max_length=36, unique=True)
     name = models.CharField(max_length=255, null=True)
@@ -339,8 +339,7 @@ class SQLRepeater(RepeaterSuperProxy):
     @classmethod
     @property
     def _repeater_type(cls):
-        name = cls.__name__
-        return name[3:] if name.startswith('SQL') else name
+        return cls.__name__
 
     @property
     def repeat_records_ready(self):
@@ -535,7 +534,7 @@ class SQLRepeater(RepeaterSuperProxy):
         return self._repeater_type
 
 
-class SQLFormRepeater(SQLRepeater):
+class FormRepeater(Repeater):
 
     include_app_id_param = OptionValue(default=True)
     white_listed_form_xmlns = OptionValue(default=list)
@@ -591,7 +590,7 @@ class SQLFormRepeater(SQLRepeater):
         return headers
 
 
-class SQLCaseRepeater(SQLRepeater):
+class CaseRepeater(Repeater):
     """
     Record that cases should be repeated to a new url
 
@@ -639,7 +638,7 @@ class SQLCaseRepeater(SQLRepeater):
         return headers
 
 
-class SQLCreateCaseRepeater(SQLCaseRepeater):
+class CreateCaseRepeater(CaseRepeater):
     class Meta:
         proxy = True
 
@@ -650,7 +649,7 @@ class SQLCreateCaseRepeater(SQLCaseRepeater):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) == 1
 
 
-class SQLUpdateCaseRepeater(SQLCaseRepeater):
+class UpdateCaseRepeater(CaseRepeater):
     """
     Just like CaseRepeater but only create records if the case is being updated.
     Used by the Zapier integration.
@@ -664,7 +663,7 @@ class SQLUpdateCaseRepeater(SQLCaseRepeater):
         return super().allowed_to_forward(payload) and len(payload.xform_ids) > 1
 
 
-class SQLReferCaseRepeater(SQLCreateCaseRepeater):
+class ReferCaseRepeater(CreateCaseRepeater):
     """
     A repeater that triggers off case creation but sends a form creating cases in
     another commcare project
@@ -697,7 +696,7 @@ class SQLReferCaseRepeater(SQLCreateCaseRepeater):
         )
 
 
-class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
+class DataRegistryCaseUpdateRepeater(CreateCaseRepeater):
     """
     A repeater that triggers off case creation but sends a form to update cases in
     another commcare project space.
@@ -743,7 +742,7 @@ class SQLDataRegistryCaseUpdateRepeater(SQLCreateCaseRepeater):
         return True
 
 
-class SQLShortFormRepeater(SQLRepeater):
+class ShortFormRepeater(Repeater):
     """
     Record that form id & case ids should be repeated to a new url
 
@@ -772,7 +771,7 @@ class SQLShortFormRepeater(SQLRepeater):
         return headers
 
 
-class SQLAppStructureRepeater(SQLRepeater):
+class AppStructureRepeater(Repeater):
 
     class Meta:
         proxy = True
@@ -785,7 +784,7 @@ class SQLAppStructureRepeater(SQLRepeater):
         return None
 
 
-class SQLUserRepeater(SQLRepeater):
+class UserRepeater(Repeater):
 
     class Meta:
         proxy = True
@@ -799,7 +798,7 @@ class SQLUserRepeater(SQLRepeater):
         return CommCareUser.get(repeat_record.payload_id)
 
 
-class SQLLocationRepeater(SQLRepeater):
+class LocationRepeater(Repeater):
 
     class Meta:
         proxy = True
@@ -835,8 +834,7 @@ def get_repeater_response_from_submission_response(response):
     return response
 
 
-def get_all_sqlrepeater_types():
-    # This would be removed in cleanup as settings.REPEATER_CLASSES will reference the correct repeaters
+def get_all_repeater_types():
     return dict(REPEATER_CLASS_MAP)
 
 
@@ -923,14 +921,14 @@ class RepeatRecord(Document):
     @memoized
     def repeater(self):
         try:
-            return SQLRepeater.objects.get(repeater_id=self.repeater_id)
-        except SQLRepeater.DoesNotExist:
+            return Repeater.objects.get(repeater_id=self.repeater_id)
+        except Repeater.DoesNotExist:
             return None
 
     def is_repeater_deleted(self):
         try:
-            return SQLRepeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
-        except SQLRepeater.DoesNotExist:
+            return Repeater.all_objects.get(repeater_id=self.repeater_id).is_deleted
+        except Repeater.DoesNotExist:
             return True
 
     @property
@@ -1158,7 +1156,7 @@ class SQLRepeatRecord(models.Model):
     domain = models.CharField(max_length=126)
     couch_id = models.CharField(max_length=36, null=True, blank=True)
     payload_id = models.CharField(max_length=36)
-    repeater = models.ForeignKey(SQLRepeater,
+    repeater = models.ForeignKey(Repeater,
                                  on_delete=models.CASCADE,
                                  related_name='repeat_records')
     state = models.TextField(choices=RECORD_STATES,
@@ -1322,7 +1320,7 @@ def _get_retry_interval(last_checked, now):
     return interval
 
 
-def attempt_forward_now(repeater: SQLRepeater):
+def attempt_forward_now(repeater: Repeater):
     from corehq.motech.repeaters.tasks import process_repeater
 
     if not domain_can_forward(repeater.domain):
@@ -1332,7 +1330,7 @@ def attempt_forward_now(repeater: SQLRepeater):
     process_repeater.delay(repeater.id)
 
 
-def get_payload(repeater: SQLRepeater, repeat_record: SQLRepeatRecord) -> str:
+def get_payload(repeater: Repeater, repeat_record: SQLRepeatRecord) -> str:
     try:
         return repeater.get_payload(repeat_record)
     except Exception as err:
@@ -1349,7 +1347,7 @@ def get_payload(repeater: SQLRepeater, repeat_record: SQLRepeatRecord) -> str:
 
 
 def send_request(
-    repeater: SQLRepeater,
+    repeater: Repeater,
     repeat_record: SQLRepeatRecord,
     payload: Any,
 ) -> bool:

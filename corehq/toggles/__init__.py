@@ -17,7 +17,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.extensions import extension_point, ResultFormat
-
+from corehq import privileges
 from .models import Toggle
 from .shortcuts import set_toggle, toggle_enabled
 
@@ -120,10 +120,21 @@ ALL_TAGS = [
 
 class StaticToggle(object):
 
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None, parent_toggles=None):
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces=None,
+        help_link=None,
+        description=None,
+        save_fn=None,
+        enabled_for_new_domains_after=None,
+        enabled_for_new_users_after=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None,
+    ):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -537,7 +548,13 @@ def all_toggles_by_name_in_scope(scope_dict, toggle_class=StaticToggle):
     result = {}
     for toggle_name, toggle in scope_dict.items():
         if not toggle_name.startswith('__'):
-            if isinstance(toggle, toggle_class):
+            if toggle_class == FrozenPrivilegeToggle:
+                # Include only FrozenPrivilegeToggle types
+                include = type(toggle) == FrozenPrivilegeToggle
+            else:
+                # Exclude FrozenPrivilegeToggle but include other subclasses such as FeatureRelease
+                include = isinstance(toggle, toggle_class) and type(toggle) != FrozenPrivilegeToggle
+            if include:
                 result[toggle_name] = toggle
     return result
 
@@ -734,14 +751,6 @@ COPY_FORM_TO_APP = StaticToggle(
     'Allow copying a form from one app to another',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-DATA_FILE_DOWNLOAD = StaticToggle(
-    'data_file_download',
-    'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -969,6 +978,13 @@ USH_INLINE_SEARCH = StaticToggle(
     parent_toggles=[USH_CASE_CLAIM_UPDATES]
 )
 
+USH_EMPTY_CASE_LIST_TEXT = StaticToggle(
+    'empty_case_list_text',
+    "USH: Allow customizing the text displayed when case list contains no cases in web apps",
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 SPLIT_SCREEN_CASE_SEARCH = StaticToggle(
     'split_screen_case_search',
     "In case search, show the filters on the left and results on the right.",
@@ -1107,14 +1123,6 @@ TRANSFER_DOMAIN = StaticToggle(
     'Transfer domains to different users',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN]
-)
-
-FORM_LINK_WORKFLOW = StaticToggle(
-    'form_link_workflow',
-    'Form linking workflow available on forms',
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN],
-    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
 )
 
 SECURE_SESSION_TIMEOUT = StaticToggle(
@@ -1436,13 +1444,6 @@ SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MOBILE_USER_DEMO_MODE = StaticToggle(
-    'mobile_user_demo_mode',
-    'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
-    namespaces=[NAMESPACE_DOMAIN]
-)
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1567,20 +1568,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
-)
-
-PHONE_HEARTBEAT = StaticToggle(
-    'phone_apk_heartbeat',
-    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
-    TAG_SOLUTIONS_CONDITIONAL,
-    [NAMESPACE_DOMAIN]
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -2406,4 +2393,91 @@ TABLEAU_USER_SYNCING = StaticToggle(
     will be added/deleted/updated on the linked Tableau server.
     """,
     parent_toggles=[EMBEDDED_TABLEAU]
+)
+
+
+class FrozenPrivilegeToggle(StaticToggle):
+    """
+    A special toggle to represent a legacy toggle that should't be
+    edited via the UI or the code and its new associated privilege.
+
+    This can be used when releasing a domain-only Toggle to general
+    availability as a new paid privilege to support domains that
+    may not have the privilege but had the toggle enabled historically.
+
+    To do this, simply change the toggle type to FrozenPrivilegeToggle
+    and pass the privilege as the first argument to it.
+
+    For e.g.
+    If a toggle were defined as below
+        MY_DOMAIN_TOGGLE = StaticToggle(
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    It can be converted to a FrozenPrivilegeToggle by defining.
+        MY_DOMAIN_TOGGLE = FrozenPrivilegeToggle(
+            privilege_name
+            'toggle_name',
+            'Title',
+            TAG_PRODUCT,
+            namespaces=[NAMESPACE_DOMAIN],
+            description='Description'
+        )
+    """
+
+    def __init__(self, privilege_slug, *args, **kwargs):
+        self.privilege_slug = privilege_slug
+        super(FrozenPrivilegeToggle, self).__init__(*args, **kwargs)
+
+
+def frozen_toggles_by_privilege():
+    return {
+        t.privilege_slug: t
+        for t in all_toggles_by_name_in_scope(globals(), FrozenPrivilegeToggle).values()
+    }
+
+
+def domain_has_privilege_from_toggle(privilege_slug, domain):
+    toggle = frozen_toggles_by_privilege().get(privilege_slug)
+    return toggle and toggle.enabled(domain)
+
+
+FORM_LINK_WORKFLOW = FrozenPrivilegeToggle(
+    privileges.FORM_LINK_WORKFLOW,
+    'form_link_workflow',
+    'Form linking workflow available on forms',
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Form+Link+Workflow+Feature+Flag',
+)
+
+PHONE_HEARTBEAT = FrozenPrivilegeToggle(
+    privileges.PHONE_APK_HEARTBEAT,
+    'phone_apk_heartbeat',
+    "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
+    TAG_SOLUTIONS_CONDITIONAL,
+    [NAMESPACE_DOMAIN]
+)
+
+MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
+    privileges.PRACTICE_MOBILE_WORKERS,
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_SOLUTIONS_OPEN,
+    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.DATA_FILE_DOWNLOAD,
+    'data_file_download',
+    label='Offer hosting and sharing data files for downloading from a secure '
+          'dropzone',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
+              'sharing+data+files+for+downloading+from+a+secure+dropzone',
 )
