@@ -19,3 +19,13 @@ class TaskMissing(TaskError):
 
 class IndexNotMultiplexedException(Exception):
     pass
+
+
+class UnknownDocException(Exception):
+    def __init__(self, expected_cls, actual):
+        msg = f"Expected doc to be of type {expected_cls.__name__}, got {actual.__class__.__name__}"
+        super().__init__(msg)
+
+
+class InvalidDictForAdapter(Exception):
+    pass
