@@ -22,9 +22,9 @@ from corehq.apps.case_search.utils import (
     get_case_search_results,
 )
 from corehq.apps.domain.shortcuts import create_user
+from corehq.apps.es.case_search import case_search_adapter
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
 from corehq.apps.registry.helper import DataRegistryHelper
@@ -34,6 +34,7 @@ from corehq.apps.registry.tests.utils import (
     create_registry_for_test,
 )
 from corehq.apps.users.models import HqPermissions
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
 def case(name, type_, properties):
@@ -86,7 +87,7 @@ patch_get_app_cached = mock.patch('corehq.apps.case_search.utils.get_app_cached'
                                   lambda domain, _: get_app_with_case_search(domain))
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @mock.patch.object(DataRegistryHelper, '_check_user_has_access', new=mock.Mock())
 class TestCaseSearchRegistry(TestCase):
 
@@ -148,7 +149,7 @@ class TestCaseSearchRegistry(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     def _run_query(self, domain, case_types, criteria_dict, registry_slug):

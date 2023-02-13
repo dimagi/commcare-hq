@@ -70,20 +70,15 @@ branches:
     - es/redirect-domain  # Ethan Nov 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
     - ad/remove-entered-wrap-functions # Addison Jan 26
-    - pkv/accessibility-tree-change-1932 # Pawan Jan 27
     - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - akj/ush-1508-checkbox-accessibility # Akash Jan 29
     - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
-    - cs/SC-2473-GA-phone_apk_heartbeat-ff+ml/ff-enforce-metadata # Charl/Minha Feb 1
-    - ml/ff-enforce-metadata # Minha Feb 1
 #    - ce/enable-case-rate-limits # Cal Feb 1
-    - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
+    - ml/enforce-metadata-ff # Minha Feb 2
+    - akj/tabular-radio-btn-reader # Akash Feb 6
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - sk/webapps-sessionid  # Simon Feb 9
 submodules: { }

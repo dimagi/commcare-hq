@@ -1,6 +1,6 @@
 import decimal
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 
 from couchdbkit.exceptions import ResourceNotFound
 from django.conf import settings
@@ -17,7 +17,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.hqwebapp.views import BasePageView
 from corehq.apps.toggle_ui.models import ToggleAudit
 from corehq.apps.toggle_ui.tasks import generate_toggle_csv_download
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.toggle_ui.utils import find_static_toggle, get_subscription_info
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import (
     ALL_NAMESPACES,
@@ -176,7 +176,7 @@ class ToggleEditView(BasePageView):
             context['last_used'] = _get_usage_info(toggle)
 
         if self.show_service_type:
-            context['service_type'] = _get_service_type(toggle)
+            context['service_type'], context['by_service'] = _get_service_type(toggle)
 
         return context
 
@@ -213,7 +213,7 @@ class ToggleEditView(BasePageView):
         if self.usage_info:
             data['last_used'] = _get_usage_info(toggle)
         if self.show_service_type:
-            data['service_type'] = _get_service_type(toggle)
+            data['service_type'], data['by_service'] = _get_service_type(toggle)
         return HttpResponse(json.dumps(data), content_type="application/json")
 
     def _save_randomness(self, toggle, randomness):
@@ -332,10 +332,14 @@ def _get_service_type(toggle):
     for enabled in toggle.enabled_users:
         name = _enabled_item_name(enabled)
         if _namespace_domain(enabled):
-            subscription = Subscription.get_active_subscription_by_domain(name)
-            if subscription:
-                service_type[name] = subscription.service_type
-    return service_type
+            plan_type, plan = get_subscription_info(name)
+            service_type[name] = f"{plan_type} : {plan}"
+
+    by_service = defaultdict(list)
+    for domain, _type in sorted(service_type.items()):
+        by_service[_type].append(domain)
+
+    return service_type, dict(by_service)
 
 
 def _namespace_domain(enabled_item):

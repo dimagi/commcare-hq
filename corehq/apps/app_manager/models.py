@@ -13,7 +13,7 @@ from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
 from looseversion import LooseVersion
 from functools import wraps
-from io import BytesIO, open
+from io import open
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
@@ -31,7 +31,6 @@ from django.utils.translation import override
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_ng import jsonpath, parse
@@ -4547,6 +4546,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
+            from corehq.apps.settings.views import get_qrcode
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4555,10 +4555,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            image = qrcode.make(url)
-            output = BytesIO()
-            image.save(output, "PNG")
-            qr_content = output.getvalue()
+            qr_content = get_qrcode(url)
             self.lazy_put_attachment(qr_content, filename,
                                      content_type="image/png")
             return qr_content
