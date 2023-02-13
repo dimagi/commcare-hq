@@ -11,8 +11,6 @@ from corehq.apps.users.models import Invitation, UserRole, WebUser
 from corehq.apps.reports.models import TableauUser
 from corehq.apps.reports.tests.test_tableau_api_session import _setup_test_tableau_server
 from corehq.apps.reports.tests.test_tableau_api_util import _mock_create_session_responses
-from corehq.pillows.mappings.user_mapping import USER_INDEX
-from corehq.util.elastic import ensure_index_deleted
 from corehq.util.test_utils import disable_quickcache, flag_enabled
 
 
