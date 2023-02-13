@@ -51,7 +51,7 @@ from corehq.motech.openmrs.openmrs_config import (
     get_property_map,
 )
 from corehq.motech.openmrs.repeater_helpers import get_patient_by_uuid
-from corehq.motech.openmrs.repeaters import AtomFeedStatus, SQLOpenmrsRepeater
+from corehq.motech.openmrs.repeaters import AtomFeedStatus, OpenmrsRepeater
 from corehq.motech.value_source import (
     ValueSource,
     as_value_source,
@@ -271,7 +271,7 @@ def get_addpatient_caseblock(
     case_type: str,
     default_owner: Optional[CommCareUser],
     patient: dict,
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
 ) -> CaseBlock:
 
     case_block_kwargs = get_case_block_kwargs_from_patient(patient, repeater)
@@ -420,7 +420,7 @@ def import_encounter(repeater, encounter_uuid):
 
 
 def get_case_block_kwargs_from_encounter(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     encounter: dict,
     patient_case_id: str,
     default_owner_id: str,
@@ -489,7 +489,7 @@ def get_encounter(repeater, encounter_uuid):
 
 
 def get_case_id_owner_id_case_block(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> Tuple[Optional[str], Optional[str], Optional[CaseBlock]]:
     """
@@ -509,7 +509,7 @@ def get_case_id_owner_id_case_block(
 
 
 def get_case(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> Union[CommCareCase, None]:
 
@@ -530,7 +530,7 @@ def get_case(
 
 
 def create_case(
-    repeater: SQLOpenmrsRepeater,
+    repeater: OpenmrsRepeater,
     patient_uuid: str,
 ) -> CaseBlock:
 
@@ -542,7 +542,7 @@ def create_case(
 
 
 def get_observation_mappings(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> DefaultDict[str, List[ObservationMapping]]:
     obs_mappings = defaultdict(list)
     for form_config in repeater.openmrs_config['form_configs']:
@@ -565,7 +565,7 @@ def get_observation_mappings(
 
 
 def get_diagnosis_mappings(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> DefaultDict[str, List[ObservationMapping]]:
     diag_mappings = defaultdict(list)
     for form_config in repeater.openmrs_config['form_configs']:
@@ -581,7 +581,7 @@ def get_diagnosis_mappings(
 
 
 def get_encounter_datetime_value_sources(
-    repeater: SQLOpenmrsRepeater
+    repeater: OpenmrsRepeater
 ) -> List[ValueSource]:
     value_sources = []
     for form_config in repeater.openmrs_config['form_configs']:

@@ -1,3 +1,4 @@
+import logging
 import math
 import time
 
@@ -24,6 +25,8 @@ from pillowtop.utils import (
 )
 
 from .interface import BulkPillowProcessor, PillowProcessor
+
+logger = logging.getLogger(__name__)
 
 
 def identity(x):
@@ -69,6 +72,7 @@ class ElasticProcessor(PillowProcessor):
             return
 
         if change.deleted and change.id:
+            logger.info(f'Attempting to delete document for change {change.id}')
             doc = change.get_document()
             if doc and doc.get('doc_type'):
                 current_meta = get_doc_meta_object_from_document(doc)
@@ -76,6 +80,7 @@ class ElasticProcessor(PillowProcessor):
                     self._delete_doc_if_exists(change.id)
             else:
                 self._delete_doc_if_exists(change.id)
+            logger.info(f'Deleted document for change {change.id}')
             return
 
         with self._datadog_timing('extract'):
@@ -140,6 +145,7 @@ class BulkElasticProcessor(ElasticProcessor, BulkPillowProcessor):
     """
 
     def process_changes_chunk(self, changes_chunk):
+        logger.info('Processing chunk of changes in BulkElasticProcessor')
         if self.change_filter_fn:
             changes_chunk = [
                 change for change in changes_chunk

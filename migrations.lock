@@ -83,6 +83,8 @@ accounting
  0061_remove_enterprise_v1
  0062_add_release_management_to_enterprise
  0063_replace_linked_projects_ff_with_erm
+ 0064_add_form_link_workflow_priv
+ 0065_phone_apk_heartbeat_privs
 admin
  0001_initial
  0002_logentry_remove_auto_add
@@ -127,6 +129,7 @@ app_manager
  0022_migrate_to_conditional_case_update
  0023_applicationreleaselog
  0024_applicationreleaselog_info
+ 0025_migrate_to_search_filter_flag
 auditcare
  0001_sqlmodels
  0002_uniques
@@ -258,6 +261,7 @@ data_dictionary
  0006_caseproperty_group
  0007_property_type_choices
  0008_casepropertyallowedvalue
+ 0009_caseproperty_label
 data_interfaces
  0001_initial
  0002_remove_exists_option
@@ -670,6 +674,8 @@ pillowtop
  0005_kafkacheckpoint_doc_modification_time
  0006_add_geopoint_to_case_search_index
  0007_copy_xforms_checkpoint
+preindex
+ 0001_initial
 products
  0001_initial
 project_limits
@@ -704,6 +710,7 @@ repeaters
  00010_add_repeater_name
  0011_alter_sqlrepeater_name
  00012_create_default_names_for_repeaters
+ 0013_rename_sqlrepeaters_to_repeaters
 reports
  0001_initial
  0002_auto_20171121_1803

@@ -75,11 +75,11 @@ CHECK_FUNCTIONS = {
 
 
 class Command(BaseCommand):
-    help = "Print a list of broken builds"
+    help = "Print a list of broken builds, and set their build_broken and build_broken_reason attributes."
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'check_function',
+            '--check_function',
             choices=list(CHECK_FUNCTIONS),
         )
         parser.add_argument(
@@ -104,9 +104,8 @@ class Command(BaseCommand):
             help='End date',
         )
 
-    def handle(self, check_function, **options):
-        check_fn = CHECK_FUNCTIONS[check_function]
-
+    def handle(self, **options):
+        check_fn = CHECK_FUNCTIONS.get(options['check_function'])
         start = options['startdate']
         end = options['enddate']
         ids = options['build_ids']
@@ -118,7 +117,9 @@ class Command(BaseCommand):
             ids = ids.split(',')
 
         print('Checking {} builds\n'.format(len(ids)))
-        for message in find_broken_builds(check_fn, ids):
+        reason = input("Reason to use as build_broken_reason (leave blank to skip flagging)? ")
+
+        for message in find_broken_builds(ids, check_fn, reason):
             self.stderr.write(message)
 
 
@@ -133,9 +134,9 @@ def get_build_ids(start, end):
     return builds_ids
 
 
-def find_broken_builds(checker, builds_ids):
+def find_broken_builds(builds_ids, checker=None, reason=None):
     for build in iter_docs(Application.get_db(), builds_ids):
-        error = checker(build)
+        error = checker(build) if checker else "error"
         if error:
             yield '%s\t%s\t%s\t%s\t%s\n' % (
                 build.get('built_on'),
@@ -144,3 +145,8 @@ def find_broken_builds(checker, builds_ids):
                 build.get('copy_of'),
                 error,
             )
+            if reason:
+                build = Application.wrap(build)
+                build.build_broken = True
+                build.build_broken_reason = reason
+                build.save()
