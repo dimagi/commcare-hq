@@ -2462,6 +2462,15 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ALLOW_SUBMISSION_WITHOUT_METADATA = StaticToggle(
+    'allow_submission_without_metadata',
+    'Allows API submissions to go through without metadata',
+    TAG_PRODUCT,
+    namespaces=[NAMESPACE_DOMAIN],
+    description='This feature allows for form and case submissions via the Submission API '
+                'without the metadata node.'
+)
+
 MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
     privileges.PRACTICE_MOBILE_WORKERS,
     'mobile_user_demo_mode',
