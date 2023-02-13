@@ -205,7 +205,7 @@ future==0.18.3
     # via
     #   pyjwkest
     #   radon
-gevent==21.8.0
+gevent==22.10.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
@@ -229,7 +229,7 @@ google-auth-oauthlib==0.4.6
     # via -r base-requirements.in
 googleapis-common-protos==1.54.0
     # via google-api-core
-greenlet==1.1.2
+greenlet==2.0.2
     # via
     #   -r base-requirements.in
     #   django-websocket-redis
