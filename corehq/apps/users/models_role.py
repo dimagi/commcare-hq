@@ -82,7 +82,9 @@ class UserRole(models.Model):
     domain = models.CharField(max_length=128, null=True)
     name = models.CharField(max_length=128, null=True)
     default_landing_page = models.CharField(
-        max_length=64, choices=[(page.id, page.name) for page in ALL_LANDING_PAGES], null=True
+        max_length=64,
+        choices=[(page.id, page.name) for page in ALL_LANDING_PAGES],
+        null=True,
     )
     # role can be assigned by all non-admins
     is_non_admin_editable = models.BooleanField(null=False, default=False)

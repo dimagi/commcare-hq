@@ -6,7 +6,6 @@ from corehq.apps.app_manager.tests.util import (
     TestXmlMixin,
     patch_get_xform_resource_overrides,
 )
-from corehq.util.test_utils import flag_enabled
 
 
 @patch_get_xform_resource_overrides()
@@ -17,8 +16,7 @@ class SuiteDetailTabsTest(SimpleTestCase, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self, *args):
-        with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
-            self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
     def test_case_detail_tabs_with_nodesets_for_sorting_search_only_field(self, *args):
         app_json = self.get_json("app_case_detail_tabs_with_nodesets")

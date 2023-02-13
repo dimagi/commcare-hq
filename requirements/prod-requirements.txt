@@ -69,7 +69,7 @@ commcaretranslationchecker==0.9.7
     # via -r base-requirements.in
 contextlib2==21.6.0
     # via schema
-cryptography==39.0.0
+cryptography==39.0.1
     # via
     #   -r prod-requirements.in
     #   jwcrypto
@@ -99,7 +99,7 @@ diff-match-patch==20200713
     # via -r base-requirements.in
 dimagi-memoized==1.1.3
     # via -r base-requirements.in
-django==3.2.16
+django==3.2.17
     # via
     #   -r base-requirements.in
     #   django-appconf
@@ -245,7 +245,7 @@ importlib-metadata==4.12.0
     # via markdown
 intervaltree==3.1.0
     # via ddtrace
-ipython==8.2.0
+ipython==8.10.0
     # via -r prod-requirements.in
 iso8601==1.1.0
     # via -r base-requirements.in
@@ -340,7 +340,7 @@ prometheus-client==0.14.1
     # via
     #   -r base-requirements.in
     #   flower
-prompt-toolkit==3.0.26
+prompt-toolkit==3.0.36
     # via
     #   click-repl
     #   ipython
@@ -397,6 +397,8 @@ pyparsing==3.0.7
     # via httplib2
 pyphonetics==0.5.3
     # via -r base-requirements.in
+pypng==0.20220715.0
+    # via qrcode
 pyrsistent==0.17.3
     # via jsonschema
 python-dateutil==2.8.2
@@ -423,7 +425,7 @@ pyyaml==6.0
     # via -r base-requirements.in
 pyzxcvbn==0.8.0
     # via -r base-requirements.in
-qrcode==4.0.4
+qrcode==7.4.2
     # via
     #   -r base-requirements.in
     #   django-two-factor-auth
@@ -504,7 +506,6 @@ six==1.16.0
     #   pyjwkest
     #   python-dateutil
     #   pyzxcvbn
-    #   qrcode
     #   quickcache
     #   stone
     #   tenacity
@@ -551,6 +552,7 @@ typing-extensions==4.1.1
     # via
     #   django-countries
     #   oic
+    #   qrcode
 ua-parser==0.10.0
     # via user-agents
 unidecode==1.2.0
@@ -601,6 +603,5 @@ setuptools==65.5.1
     #   django-websocket-redis
     #   gevent
     #   gunicorn
-    #   ipython
     #   zope-event
     #   zope-interface

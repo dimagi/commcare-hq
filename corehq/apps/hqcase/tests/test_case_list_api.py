@@ -10,9 +10,10 @@ from casexml.apps.case.mock import CaseBlock, IndexAttrs
 from corehq import privileges
 from corehq.apps.es.tests.utils import (
     case_search_es_setup,
-    case_search_es_teardown,
     es_test,
 )
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.util.test_utils import generate_cases, privilege_enabled
 
 from ..api.core import UserError
@@ -22,7 +23,7 @@ GOOD_GUYS_ID = str(uuid.uuid4())
 BAD_GUYS_ID = str(uuid.uuid4())
 
 
-@es_test
+@es_test(requires=[case_search_adapter], setup_class=True)
 @privilege_enabled(privileges.API_ACCESS)
 class TestCaseListAPI(TestCase):
     domain = 'test-case-list-api'
@@ -71,11 +72,12 @@ class TestCaseListAPI(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        case_search_es_teardown()
+        FormProcessorTestUtils.delete_all_cases()
         super().tearDownClass()
 
     def test_pagination(self):
-        res = get_list(self.domain, {"limit": "3", "case_type": "person"})
+        query_dict = QueryDict('limit=3&case_type=person&case_type=household')
+        res = get_list(self.domain, query_dict)
         self.assertItemsEqual(res.keys(), ['next', 'cases', 'matching_records'])
         self.assertEqual(res['matching_records'], 5)
         self.assertEqual(
@@ -86,6 +88,7 @@ class TestCaseListAPI(TestCase):
         cursor = b64decode(res['next']['cursor']).decode('utf-8')
         self.assertIn('limit=3', cursor)
         self.assertIn('case_type=person', cursor)
+        self.assertIn('case_type=household', cursor)
         self.assertIn('indexed_on.gte', cursor)
         self.assertIn('last_case_id', cursor)
 
@@ -105,6 +108,8 @@ class TestCaseListAPI(TestCase):
     ("external_id=the-man-with-no-name", []),
     ("case_type=team", ["good_guys", "bad_guys"]),
     ("owner_id=person_owner", ['mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
+    ("owner_id=person_owner&owner_id=team_owner",
+     ['good_guys', 'bad_guys', 'mattie', 'rooster', 'laboeuf', 'chaney', 'ned']),
     ("case_name=Mattie Ross", ["mattie"]),
     ("case_name=Mattie+Ross", ["mattie"]),
     ("case_name=Mattie", []),
@@ -125,7 +130,7 @@ class TestCaseListAPI(TestCase):
     (f"indices.parent={GOOD_GUYS_ID}", ['mattie', 'rooster', 'laboeuf']),
 ], TestCaseListAPI)
 def test_case_list_queries(self, querystring, expected):
-    params = QueryDict(querystring).dict()
+    params = QueryDict(querystring)
     actual = [c['external_id'] for c in get_list(self.domain, params)['cases']]
     # order matters, so this doesn't use assertItemsEqual
     self.assertEqual(actual, expected)
@@ -146,6 +151,6 @@ def test_case_list_queries(self, querystring, expected):
 ], TestCaseListAPI)
 def test_bad_requests(self, querystring, error_msg):
     with self.assertRaises(UserError) as e:
-        params = QueryDict(querystring).dict()
+        params = QueryDict(querystring)
         get_list(self.domain, params)
     self.assertEqual(str(e.exception), error_msg)

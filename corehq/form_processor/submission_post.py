@@ -45,7 +45,6 @@ from couchforms import openrosa_response
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
-from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
@@ -145,8 +144,7 @@ class SubmissionPost(object):
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
-        found_old = scrub_meta(xform)
-        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
+        scrub_meta(xform)
 
     def _get_success_message(self, instance, cases=None):
         '''
@@ -363,13 +361,13 @@ class SubmissionPost(object):
                         raise
                     else:
                         instance.initial_processing_complete = True
+                        report_case_usage(self.domain, len(case_stock_result.case_models))
                         openrosa_kwargs['error_message'] = self.save_processed_models(case_db, xforms,
                                                                                       case_stock_result)
                         if openrosa_kwargs['error_message']:
                             openrosa_kwargs['error_nature'] = ResponseNature.POST_PROCESSING_FAILURE
                         cases = case_stock_result.case_models
                         ledgers = case_stock_result.stock_result.models_to_save
-                        report_case_usage(self.domain, len(cases))
                         openrosa_kwargs['success_message'] = self._get_success_message(instance, cases=cases)
                 elif instance.is_error:
                     submission_type = 'error'

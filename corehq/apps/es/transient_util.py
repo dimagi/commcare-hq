@@ -115,16 +115,16 @@ def populate_doc_adapter_map():
 
     if settings.UNIT_TESTING:
         from pillowtop.tests.utils import TEST_INDEX_INFO
-        _add_test_adapter("PillowTop", TEST_INDEX_INFO.index,
+        add_dynamic_adapter("PillowTop", TEST_INDEX_INFO.index,
                         TEST_INDEX_INFO.type, TEST_INDEX_INFO.mapping,
                         TEST_INDEX_INFO.alias)
 
         from corehq.apps.es.tests.utils import TEST_ES_INFO, TEST_ES_MAPPING
-        _add_test_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
+        add_dynamic_adapter("UtilES", TEST_ES_INFO.alias, TEST_ES_INFO.type,
                         TEST_ES_MAPPING, TEST_ES_INFO.alias)
 
 
-def _add_test_adapter(descriptor, index_, type_, mapping_, alias):
+def add_dynamic_adapter(descriptor, index_, type_, mapping_, alias):
 
     class Adapter(ElasticDocumentAdapter):
         mapping = mapping_
