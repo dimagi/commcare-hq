@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.management.commands.helpers import get_all_app_ids
 from corehq.toggles import SYNC_SEARCH_CASE_CLAIM
+from corehq.util.log import with_progress_bar
 
 PropertyInfo = namedtuple("PropertyInfo", "domain app_id version module_unique_id name")
 
@@ -35,11 +36,8 @@ class Command(BaseCommand):
             domains = sorted(SYNC_SEARCH_CASE_CLAIM.get_enabled_domains())
 
         results = []
-        domain_count = 0
-        for domain in domains:
-            domain_count += 1
+        for domain in with_progress_bar(domains, length=len(domains)):
             app_ids = get_all_app_ids(domain, include_builds=include_builds)
-            print(f"Looking at {domain} ({domain_count} of {len(domains)} domains), which has {len(app_ids)} apps")
             for app_id in app_ids:
                 doc = Application.get_db().get(app_id)
                 for index, module in enumerate(doc.get("modules", [])):
