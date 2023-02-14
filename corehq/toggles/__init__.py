@@ -2395,6 +2395,15 @@ TABLEAU_USER_SYNCING = StaticToggle(
     parent_toggles=[EMBEDDED_TABLEAU]
 )
 
+ATTENDANCE_TRACKING = StaticToggle(
+    'attendance_tracking',
+    'Allows access to the attendance tracking page',
+    TAG_SOLUTIONS_LIMITED,
+    namespaces=[NAMESPACE_DOMAIN],
+    description="""
+    Additional views will be added to simplify the process of using CommCareHQ for attendance tracking.
+    """
+)
 
 class FrozenPrivilegeToggle(StaticToggle):
     """
