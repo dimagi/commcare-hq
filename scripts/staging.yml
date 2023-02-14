@@ -84,4 +84,5 @@ branches:
     - jls/nodeset-filter-ui # Jenny Feb 13
     - ze/remove_deprecated_from_export
     - smh/force-incremental-sync # Steph Feb 14
+    - jm/django-3.2.18  # Joel Feb 14
 submodules: { }
