@@ -657,7 +657,7 @@ def add_on_tableau_details(domain, web_user_dicts):
                         groups_by_username[hq_username].append(group.name)
             return groups_by_username
         except TableauAPIError:
-            return -1
+            return None
 
     users_to_edit = []
     for web_user_dict in web_user_dicts:
@@ -676,7 +676,7 @@ def add_on_tableau_details(domain, web_user_dicts):
             web_user_dict['tableau_groups'] = 'N/A'
         else:
             web_user_dict['tableau_role'] = roles_by_user.get(username, 'ERROR')
-            if groups_by_username == -1:
+            if groups_by_username is None:
                 web_user_dict['tableau_groups'] = 'ERROR'
             else:
                 web_user_dict['tableau_groups'] = ','.join(groups_by_username.get(username, ''))
@@ -700,7 +700,7 @@ def import_tableau_users(domain, web_user_specs):
             elif user.get_domain_membership(domain):
                 tableau_role = row.get('tableau_role')
                 tableau_groups_txt = row.get('tableau_groups')
-                if tableau_role == 'ERROR' or tableau_groups_txt == 'ERROR':
+                if tableau_role in ('ERROR', 'N/A') or tableau_groups_txt in ('ERROR', 'N/A'):
                     continue
 
                 def _get_tableau_group_tuples_from_names(names, known_groups):
