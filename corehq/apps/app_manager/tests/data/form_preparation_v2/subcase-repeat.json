@@ -155,7 +155,9 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": "/data/mother_name"
+                            "name_update": {
+                                "question_path": "/data/mother_name"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -180,7 +182,9 @@
                         },
                         "subcases": [
                             {
-                                "case_name": "/data/child/name",
+                                "name_update": {
+                                    "question_path": "/data/child/name"
+                                },
                                 "case_properties": {},
                                 "case_type": "child",
                                 "condition": {
@@ -368,7 +372,7 @@
                             },
                             "doc_type": "OpenCaseAction",
                             "external_id": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "open_referral": {
                             "condition": {
@@ -379,7 +383,7 @@
                             },
                             "doc_type": "OpenReferralAction",
                             "followup_date": null,
-                            "name_path": null
+                            "name_update": null
                         },
                         "referral_preload": {
                             "condition": {
@@ -535,7 +539,7 @@
                 },
                 "doc_type": "OpenCaseAction",
                 "external_id": null,
-                "name_path": null
+                "name_update": null
             },
             "open_referral": {
                 "condition": {
