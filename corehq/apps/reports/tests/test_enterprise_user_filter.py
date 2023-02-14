@@ -11,7 +11,6 @@ from corehq.apps.reports.filters.controllers import (
 )
 from corehq.apps.reports.filters.users import EnterpriseUserFilter
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 @es_test(requires=[user_adapter], setup_class=True)
@@ -44,10 +43,7 @@ class BaseEnterpriseUserFilterTest(TestCase):
         create_enterprise_permissions(cls.web_user.username, 'state', ['county'], ['staging'])
 
         for user_obj in cls.mobile_users:
-            user_adapter.index(
-                transform_user_for_elasticsearch(user_obj.to_json()),
-                refresh=True
-            )
+            user_adapter.index(user_obj, refresh=True)
 
     @classmethod
     def tearDownClass(cls):

@@ -7,7 +7,6 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 @es_test(requires=[user_adapter])
@@ -33,11 +32,8 @@ class TestLoginAsUserQuery(SimpleTestCase):
             is_active=True,
         )
 
-        with patch('corehq.pillows.user.get_group_id_name_map_by_user', return_value=[]):
-            user_adapter.index(
-                transform_user_for_elasticsearch(user.to_json()),
-                refresh=True
-            )
+        with patch('corehq.apps.groups.dbaccessors.get_group_id_name_map_by_user', return_value=[]):
+            user_adapter.index(user, refresh=True)
         return user
 
     def test_login_as_user_query_username(self):

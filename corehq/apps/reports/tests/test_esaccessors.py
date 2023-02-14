@@ -72,7 +72,6 @@ from corehq.blobs.mixin import BlobMetaRef
 from corehq.form_processor.models import CaseTransaction, CommCareCase
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.case import transform_case_for_elasticsearch
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.pillows.utils import MOBILE_USER_TYPE, WEB_USER_TYPE
 from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.test_utils import make_es_ready_form
@@ -1004,7 +1003,7 @@ class TestUserESAccessors(TestCase):
 
     def _send_user_to_es(self, is_active=True):
         self.user.is_active = is_active
-        user_adapter.index(transform_user_for_elasticsearch(self.user.to_json()), refresh=True)
+        user_adapter.index(self.user, refresh=True)
 
     def test_active_user_query(self):
         self._send_user_to_es()

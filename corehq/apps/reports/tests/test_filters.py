@@ -27,7 +27,6 @@ from corehq.apps.users.models import (
     DomainMembership,
     WebUser,
 )
-from corehq.pillows.user import transform_user_for_elasticsearch
 
 
 class TestEmwfPagination(SimpleTestCase):
@@ -264,10 +263,7 @@ class TestEMWFilterOutput(TestCase):
 
     def _send_users_to_es(self):
         for user_obj in self.user_list:
-            user_adapter.index(
-                transform_user_for_elasticsearch(user_obj.to_json()),
-                refresh=True
-            )
+            user_adapter.index(user_obj, refresh=True)
 
     def test_with_active_slug(self):
         mobile_user_and_group_slugs = ['t__0']

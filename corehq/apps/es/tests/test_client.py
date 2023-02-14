@@ -1848,6 +1848,7 @@ class TestFromMultiInElasticUser(TestCase):
         self.assertRaises(InvalidDictForAdapter, user_adapter.from_multi, {})
 
     def test_from_multi_is_same_as_transform_user_for_es(self):
+        # this test can be safely removed when transform_user_for_elasticsearch is removed
         commcare_user_id, commcare_user = user_adapter.from_multi(self.user)
         commcare_user['_id'] = commcare_user_id
         web_user_id, web_user = user_adapter.from_multi(self.web_user)
@@ -1856,7 +1857,7 @@ class TestFromMultiInElasticUser(TestCase):
         self.assertEqual(transform_user_for_elasticsearch(self.web_user.to_json()), web_user)
 
     def test_index_can_handle_user_dicts(self):
-        user_dict = transform_user_for_elasticsearch(self.user.to_json())
+        user_dict = self.user.to_json()
         user_adapter.index(user_dict, refresh=True)
         self.addCleanup(user_adapter.delete, self.user._id)
 

@@ -18,7 +18,6 @@ from corehq.apps.es.tests.utils import es_test
 from corehq.apps.es.users import user_adapter
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import TestFormMetadata
-from corehq.pillows.user import transform_user_for_elasticsearch
 from corehq.util.test_utils import make_es_ready_form
 
 
@@ -172,8 +171,7 @@ class TestEnterpriseMobileWorkerSettings(TestCase):
 
         for user in cls.users:
             fresh_user = CommCareUser.get_by_user_id(user.user_id)
-            elastic_user = transform_user_for_elasticsearch(fresh_user.to_json())
-            user_adapter.index(elastic_user, refresh=True)
+            user_adapter.index(fresh_user, refresh=True)
 
     @classmethod
     def tearDownClass(cls):
