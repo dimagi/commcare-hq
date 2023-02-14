@@ -83,4 +83,5 @@ branches:
     - sk/webapps-sessionid  # Simon Feb 9
     - jls/nodeset-filter-ui # Jenny Feb 13
     - ze/remove_deprecated_from_export
+    - smh/force-incremental-sync # Steph Feb 14
 submodules: { }
