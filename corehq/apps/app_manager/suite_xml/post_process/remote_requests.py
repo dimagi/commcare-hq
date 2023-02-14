@@ -81,6 +81,7 @@ from corehq.apps.app_manager.xpath import (
 from corehq.apps.case_search.const import COMMCARE_PROJECT, EXCLUDE_RELATED_CASES_FILTER
 from corehq.apps.case_search.models import (
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    case_search_sync_cases_on_form_entry_enabled_for_domain,
     CASE_SEARCH_CUSTOM_RELATED_CASE_PROPERTY_KEY,
     CASE_SEARCH_REGISTRY_ID_KEY,
     CASE_SEARCH_INCLUDE_ALL_RELATED_CASES_KEY
@@ -140,9 +141,10 @@ class RemoteRequestFactory(object):
                 self.build_case_id_query_data(),
             ],
         }
-        relevant = self.get_post_relevant()
-        if relevant:
-            kwargs["relevant"] = relevant
+        if not case_search_sync_cases_on_form_entry_enabled_for_domain(self.domain):
+            relevant = self.get_post_relevant()
+            if relevant:
+                kwargs["relevant"] = relevant
         return RemoteRequestPost(**kwargs)
 
     def build_case_id_query_data(self):
