@@ -137,8 +137,13 @@ hqDefine('cloudcare/js/utils', [
     };
 
     var updateScreenReaderNotification = function (notificationText) {
-        $('#sr-notification-region').text("");
-        $('#sr-notification-region').text(notificationText);
+        const oldNotificationText = $('#sr-notification-region').text();
+        // make duplicate notification texts different
+        if (oldNotificationText === notificationText) {
+            $('#sr-notification-region').html("<p>" + notificationText + "</p>");
+        } else {
+            $('#sr-notification-region').html(notificationText);
+        }
     };
 
     var formplayerSyncComplete = function (isError) {
