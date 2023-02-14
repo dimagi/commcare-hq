@@ -685,7 +685,7 @@ class ElasticDocumentAdapter(BaseAdapter):
                      ``elasticsearch.Elasticsearch.index()`` method.
         """
         # TODO: remove **kw and standardize which arguments HQ uses
-        doc_id, source = self.from_python(doc)
+        doc_id, source = self.from_multi(doc)
         self._verify_doc_id(doc_id)
         self._verify_doc_source(source)
         self._index(doc_id, source, refresh, **kw)
