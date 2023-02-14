@@ -443,6 +443,20 @@ class ElasticDocumentAdapter(BaseAdapter):
         raise NotImplementedError(f"{cls.__name__} is abstract")
 
     @classmethod
+    def from_multi(cls, doc):
+        """Transform a Python model object or a model dict into the json-serializable (``dict``)
+        format suitable for indexing in Elasticsearch.
+
+        :param doc: document (instance of a Python model) or to_json of that doc
+        :returns: ``tuple`` of ``(doc_id, source_dict)`` suitable for being
+                  indexed/updated/deleted in Elasticsearch
+
+        **NOTE** This calling from_python is temprory and will be removed in next commits
+        when from_multi is implemented in all the adapters
+        """
+        return cls.from_python(doc)
+
+    @classmethod
     def to_json(cls, doc):
         """Convenience method that returns the full "from python" document
         (including the ``_id`` key, if present) as it would be returned by an
