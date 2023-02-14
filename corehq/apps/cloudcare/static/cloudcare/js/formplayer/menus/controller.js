@@ -40,11 +40,23 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
             }
 
             var urlObject = formplayerUtils.currentUrlToObject();
-
             if (urlObject.endpointId) {
                 urlObject.replaceEndpoint(menuResponse.selections);
                 formplayerUtils.setUrlToObject(urlObject);
             }
+
+            formplayerUtils.doUrlAction((urlObject) => {
+                let updated = false;
+                if (menuResponse.session_id) {
+                    urlObject.sessionId = menuResponse.session_id;
+                    updated = true;
+                } else if (urlObject.sessionId) {
+                    urlObject.sessionId = null;
+                    updated = true;
+                }
+                return updated;
+            }, true);
+
 
             // If we don't have an appId in the URL (usually due to form preview)
             // then parse the appId from the response.
