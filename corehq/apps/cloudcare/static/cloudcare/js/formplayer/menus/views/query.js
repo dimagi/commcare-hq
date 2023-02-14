@@ -13,14 +13,27 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
         md = window.markdownit();
 
     var separator = " to ",
-        dateFormat = "YYYY-MM-DD";
-    var selectDelimiter = "#,#"; // Formplayer also uses this
+        serverSeparator = "__",
+        serverPrefix = "__range__",
+        dateFormat = "MM/DD/YYYY",
+        // A list of acceptable date formats, in order of preference
+        dateFormats = ['YYYY-MM-DD', 'MM/DD/YYYY', 'MM-DD-YYYY', 'MM/DD/YY', 'MM-DD-YY', moment.defaultFormat],
+        selectDelimiter = "#,#"; // Formplayer also uses this
 
-    // special format handled by CaseSearch API
+    var toIsoDate = function (dateString) {
+        return moment(dateString, dateFormats, true).format('YYYY-MM-DD');
+    };
+    var toUiDate = function (dateString) {
+        return moment(dateString, dateFormats, true).format(dateFormat);
+    };
+
     var encodeValue = function (model, searchForBlank) {
+            // transform value entered to that sent to CaseSearch API (and saved for sticky search)
             var value = model.get('value');
-            if (value && model.get("input") === "daterange") {
-                value = "__range__" + value.replace(separator, "__");
+            if (value && model.get("input") === "date") {
+                value = toIsoDate(value);
+            } else if (value && model.get("input") === "daterange") {
+                value = serverPrefix + value.split(separator).map(toIsoDate).join(serverSeparator);
             } else if (value && (model.get('input') === 'select' || model.get('input') === 'checkbox')) {
                 value = value.join(selectDelimiter);
             }
@@ -35,6 +48,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             }
         },
         decodeValue = function (model, value) {
+            // transform default values from app config and sticky search values to UI values
             if (!_.isString(value)) {
                 return [false, undefined];
             }
@@ -46,8 +60,17 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 value = values;
             } else if (values.length === 1) {
                 value = values[0];
-                if (model.get("input") === "daterange") {
-                    value = value.replace("__range__", "").replace("__", separator);
+                if (model.get("input") === "date") {
+                    value = toUiDate(value);
+                } else if (model.get("input") === "daterange") {
+                    // Take sticky value ("__range__2023-02-14__2023-02-17")
+                    // or default value ("2023-02-14 to 2023-02-17")
+                    // coerce to "02/14/2023 to 02/17/2023", as used by the widget
+                    value = (value.replace("__range__", "")
+                             .replace(separator, serverSeparator)  // only used for default values
+                             .split(serverSeparator)
+                             .map(toUiDate)
+                             .join(separator));
                 }
             } else {
                 value = undefined;
@@ -177,16 +200,14 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
             this.model = this.options.model;
             this.errorMessage = null;
 
-            var value = this.model.get('value'),
+            // initialize with default values or with sticky values if either is present
+            var value = decodeValue(this.model, this.model.get('value'))[1],
                 allStickyValues = formplayerUtils.getStickyQueryInputs(),
                 stickyValue = allStickyValues[this.model.get('id')],
                 [searchForBlank, stickyValue] = decodeValue(this.model, stickyValue);
             this.model.set('searchForBlank', searchForBlank);
             if (stickyValue && !value) {  // Sticky values don't override default values
                 value = stickyValue;
-            }
-            if ((this.model.get('input') === 'select' || this.model.get('input') === 'checkbox') && _.isString(value)) {
-                value = value.split(selectDelimiter);
             }
             this.model.set('value', value);
         },
