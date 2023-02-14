@@ -379,7 +379,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
         form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
@@ -808,7 +808,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled(domain)
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -955,10 +955,7 @@ def _get_linkable_forms_context(module, langs):
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
-        # All other menus can be linked manually.
-        if candidate_module.is_multi_select():
-            continue
+        # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (

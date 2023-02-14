@@ -102,6 +102,8 @@ def search_view(request, domain, fhir_version_name, resource_type):
 
     cases = CommCareCase.objects.get_reverse_indexed_cases(
         domain, [patient_case_id], case_types=case_types_for_resource_type, is_closed=False)
+    if patient_case.type in case_types_for_resource_type:
+        cases.append(patient_case)
     response = {
         'resourceType': "Bundle",
         "type": "searchset",

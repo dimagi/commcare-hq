@@ -275,8 +275,6 @@ class TestTableauAPISession(TestCase):
         self.assertTrue(api_session.signed_in)
         self.assertEqual(api_session.base_url, 'https://test_server/api/3.15')
         self._assert_subset({'Content-Type': 'application/json'}, api_session.headers)
-        api_session = self._sign_out(api_session=api_session)
-        self.assertFalse(api_session.signed_in)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_query_groups(self, mock_request):
@@ -290,7 +288,6 @@ class TestTableauAPISession(TestCase):
         groups = api_session.query_groups()
         self.assertEqual(len(groups), 3)
         self.assertEqual(groups[1]['id'], 'c4d5e')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_get_users_in_group(self, mock_request):
@@ -300,7 +297,6 @@ class TestTableauAPISession(TestCase):
         users = api_session.get_users_in_group(self.tableau_instance.groups['group1'])
         self.assertEqual(len(users), 2)
         self.assertEqual(users[1]['id'], 'ty78ui')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_create_group(self, mock_request):
@@ -310,7 +306,6 @@ class TestTableauAPISession(TestCase):
         mock_request.return_value = self.tableau_instance.create_group_response(name)
         group_id = api_session.create_group(name, 'Viewer')
         self.assertEqual(group_id, 'nm12zx')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_add_user_to_group(self, mock_request):
@@ -320,7 +315,6 @@ class TestTableauAPISession(TestCase):
         group_id = '1a2b3'
         mock_request.return_value = self.tableau_instance.add_user_to_group_response()
         api_session.add_user_to_group(user_id, group_id)
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_remove_user_from_group(self, mock_request):
@@ -330,7 +324,6 @@ class TestTableauAPISession(TestCase):
         group_id = '1a2b3'
         mock_request.return_value = self.tableau_instance.remove_user_from_group_response()
         api_session.remove_user_from_group(user_id, group_id)
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_get_groups_for_user_id(self, mock_request):
@@ -340,7 +333,6 @@ class TestTableauAPISession(TestCase):
         jeff_groups = api_session.get_groups_for_user_id('uip12')
         self.assertEqual(len(jeff_groups), 2)
         self.assertEqual(jeff_groups[1]['id'], 'c4d5e')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_create_user(self, mock_request):
@@ -351,7 +343,6 @@ class TestTableauAPISession(TestCase):
         mock_request.return_value = self.tableau_instance.create_user_response(username, role)
         new_user_id = api_session.create_user(username, role)
         self.assertEqual(new_user_id, 'gh23jk')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_update_user(self, mock_request):
@@ -361,7 +352,6 @@ class TestTableauAPISession(TestCase):
                                     self.tableau_instance.create_user_response('jeff@company.com', 'Explorer')]
         new_id = api_session.update_user('uip12', 'Explorer', username='jeff@company.com')
         self.assertEqual(new_id, 'gh23jk')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_delete_user(self, mock_request):
@@ -369,7 +359,6 @@ class TestTableauAPISession(TestCase):
         api_session = self._sign_in(api_session=api_session)
         mock_request.return_value = self.tableau_instance.delete_user_response()
         api_session.delete_user('uip12')
-        self._sign_out(api_session=api_session)
 
     @mock.patch('corehq.apps.reports.models.requests.request')
     def test_failure(self, mock_request):

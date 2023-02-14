@@ -225,7 +225,7 @@ class RemoteRequestFactory(object):
             if additional_types:
                 nodeset = CaseTypeXpath(self.module.case_type).cases(
                     additional_types, instance_name=self.storage_instance)
-            if self.module.search_config.search_filter:
+            if self.module.search_config.search_filter and toggles.USH_SEARCH_FILTER.enabled(self.app.domain):
                 nodeset = f"{nodeset}[{interpolate_xpath(self.module.search_config.search_filter)}]"
         nodeset += EXCLUDE_RELATED_CASES_FILTER
 
