@@ -125,7 +125,7 @@ hqDefine('domain/js/case_search', [
             return {
                 'enable': self.toggleEnabled(),
                 'synchronous_web_apps': self.synchronousWebApps(),
-                'sync_cases_on_form_entry': self.synchronousWebApps(),
+                'sync_cases_on_form_entry': self.syncCaseOnFormEntry(),
                 'fuzzy_properties': fuzzyProperties,
                 'ignore_patterns': _.map(self.ignorePatterns(), function (rc) {
                     return {
