@@ -1,25 +1,26 @@
-from django.utils.translation import gettext_lazy
+from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.domain.views.base import BaseDomainView
 from corehq.apps.events.models import (
     Event,
-    ATTENDEE_LIST_STATUS_CHOICES,
-    domain_events_from_es,
-    domain_events_es_query,
+    get_domain_events,
 )
+from corehq.apps.events.forms import CreateEventForm
+from corehq.apps.hqwebapp.decorators import use_jquery_ui
 
 
-class EventsCRUDView(BaseDomainView, CRUDPaginatedViewMixin):
+class EventsView(BaseDomainView, CRUDPaginatedViewMixin):
     urlname = "events_page"
     template_name = 'events_list.html'
 
-    section_name = gettext_lazy("Events")
-    page_title = gettext_lazy("Attendance Tracking Events")
-    limit_text = gettext_lazy("events per page")
-    empty_notification = gettext_lazy("You have no events")
-    loading_message = gettext_lazy("Loading events")
+    section_name = _("Events")
+    page_title = _("Attendance Tracking Events")
+    limit_text = _("events per page")
+    empty_notification = _("You have no events")
+    loading_message = _("Loading events")
 
     @property
     def section_url(self):
@@ -31,17 +32,17 @@ class EventsCRUDView(BaseDomainView, CRUDPaginatedViewMixin):
 
     @property
     def total(self):
-        return domain_events_es_query(self.domain).count()
+        return len(self.domain_events)
 
     @property
     def column_names(self):
         return [
-            "Name",
-            "Start date",
-            "End date",
-            "Attendance Target",
-            "Total attendees",
-            "Status",
+            _("Name"),
+            _("Start date"),
+            _("End date"),
+            _("Attendance Target"),
+            _("Total attendees"),
+            _("Status"),
         ]
 
     @property
@@ -51,7 +52,7 @@ class EventsCRUDView(BaseDomainView, CRUDPaginatedViewMixin):
 
     @property
     def domain_events(self):
-        return domain_events_from_es(self.domain)
+        return get_domain_events(self.domain)
 
     @property
     def paginated_list(self):
@@ -67,11 +68,50 @@ class EventsCRUDView(BaseDomainView, CRUDPaginatedViewMixin):
 
     def _format_paginated_event(self, event: Event):
         return {
-            'id': event.case_id,
+            'id': event.case.case_id,
             'name': event.name,
-            'start_date': event.start,
-            'end_date': event.end,
+            'start_date': str(event.start_date),
+            'end_date': str(event.end_date),
             'target_attendance': event.attendance_target,
             'total_attendance': event.total_attendance,
             'status': event.status,
         }
+
+
+class EventCreateView(BaseDomainView):
+    template_name = "new_event.html"
+    urlname = 'add_attendance_tracking_event'
+    page_title = _("Add Attendance Tracking Event")
+    section_name = _("New Tracking Event")
+
+    @use_jquery_ui
+    def dispatch(self, request, *args, **kwargs):
+        return super(EventCreateView, self).dispatch(request, *args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(self.urlname, args=(self.domain,))
+
+    def get_context_data(self, **kwargs):
+        return {'form': self.form}
+
+    def post(self, *args, **kwargs):
+        form = self.form
+
+        if form.is_valid():
+            event_data = form.cleaned_data
+            event_data['domain'] = self.domain
+            event_data['manager'] = self.request.couch_user
+
+            event = Event.get_obj_from_data(event_data)
+            event.save()
+            return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+
+        return self.get(self.request, *args, **kwargs)
+
+    @property
+    def form(self):
+        if self.request.method == 'POST':
+            return CreateEventForm(self.request.POST)
+        else:
+            return CreateEventForm(initial={})

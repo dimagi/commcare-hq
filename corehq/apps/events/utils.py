@@ -1,23 +1,20 @@
-from corehq.apps.es.case_search import wrap_case_search_hit
+import uuid
+from corehq.apps.hqcase.utils import submit_case_blocks
+from casexml.apps.case.mock import CaseBlock
 
 
-def wrap_es_case_as_event(case):
-    from corehq.apps.events.models import Event
-
-    # Convert to CommCareCase
-    case_ = wrap_case_search_hit(case)
-    program_manager = None  # probably the case owner?
-
-    return Event(
-        domain=case_.domain,
-        name=case_.name,
-        start=case_.get_case_property('start'),
-        end=case_.get_case_property('end'),
-        attendance_target=case_.get_case_property('attendance_target'),
-        sameday_reg=case_.get_case_property('sameday_reg'),
-        track_each_day=case_.get_case_property('track_each_day'),
-        case=case_,
-        is_open=case.get_case_property('is_open'),
-        attendee_list_status=case_.get_case_property('attendee_list_status'),
-        program_manager=program_manager,
+def create_case_with_case_type(case_type, case_args):
+    case_block = CaseBlock(
+        case_id=uuid.uuid4().hex,
+        case_type=case_type,
+        case_name=case_args['name'],
+        domain=case_args['domain'],
+        owner_id=case_args['owner_id'],
+        update=case_args['properties'],
+        create=True,
     )
+    form, cases = submit_case_blocks(
+        [case_block.as_text()],
+        domain=case_args['domain'],
+    )
+    return cases[0]

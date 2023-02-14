@@ -1,6 +1,7 @@
 from django.conf.urls import re_path as url
-from corehq.apps.events.views import EventsCRUDView
+from corehq.apps.events.views import EventsView, EventCreateView
 
 urlpatterns = [
-    url(r'^$', EventsCRUDView.as_view(), name=EventsCRUDView.urlname),
+    url(r'^$', EventsView.as_view(), name=EventsView.urlname),
+    url(r'^new/$', EventCreateView.as_view(), name=EventCreateView.urlname),
 ]

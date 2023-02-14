@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="btn-toolbar">
-    <a href="">
+    <a href="{% url 'add_attendance_tracking_event' domain %}">
       <button type="button" class="btn btn-primary" id="add-new">
         <i class="fa fa-plus"></i> {% trans "Add new event" %}
       </button>
@@ -29,6 +29,11 @@
 
 {% block pagination_templates %}
   <script type="text/html" id="base-event-template">
-    <td data-bind="id: id"></td>
+    <td data-bind="text: name"></td>
+    <td data-bind="text: start_date"></td>
+    <td data-bind="text: end_date"></td>
+    <td data-bind="text: target_attendance"></td>
+    <td data-bind="text: total_attendance"></td>
+    <td data-bind="text: status"></td>
   </script>
 {% endblock %}
