@@ -927,7 +927,7 @@ class CaseAttachment(PartitionedModel, models.Model, SaveStateMixin, IsImageMixi
     @classmethod
     def get_content(cls, case_id, name):
         att = cls.objects.get_attachment_by_name(case_id, name)
-        return AttachmentContent(att.content_type, att.open())
+        return AttachmentContent(att.content_type, att.open(), att.content_length)
 
     def __str__(self):
         return str(
