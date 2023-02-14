@@ -13,7 +13,7 @@ def _run_prbac_bootstrap(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0051_add_manage_attendance_tracking_permission'),
+        ('users', '0050_add_manage_attendance_tracking_permission'),
     ]
 
     operations = [
