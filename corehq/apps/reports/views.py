@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import cmp_to_key, wraps
-from wsgiref.util import FileWrapper
 
 from django.conf import settings
 from django.contrib import messages
@@ -18,7 +17,6 @@ from django.http import (
     HttpResponseNotFound,
     HttpResponseRedirect,
     JsonResponse,
-    StreamingHttpResponse,
 )
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -120,6 +118,7 @@ from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.toggles import VIEW_FORM_ATTACHMENT
 from corehq.util import cmp
 from corehq.util.couch import get_document_or_404
+from corehq.util.download import get_download_response
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import (
     get_timezone_for_request,
@@ -1482,9 +1481,13 @@ def get_form_attachment_response(request, domain, instance_id=None, attachment_i
     except AttachmentNotFound:
         raise Http404
 
-    return StreamingHttpResponse(
-        streaming_content=FileWrapper(content.content_stream),
-        content_type=content.content_type
+    return get_download_response(
+        payload=content.content_stream,
+        content_length=content.content_length,
+        content_type=content.content_type,
+        download=False,
+        filename=attachment_id,
+        request=request
     )
 
 
