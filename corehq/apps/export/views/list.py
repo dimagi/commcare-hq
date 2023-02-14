@@ -824,7 +824,8 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
     payload = export_instance.get_payload(stream=True)
     format = Format.from_format(export_instance.export_format)
-    return get_download_response(payload, export_instance.file_size, format.mimetype, format.download, export_instance.filename, req)
+    return get_download_response(payload, export_instance.file_size, format.mimetype,
+                                 format.download, export_instance.filename, req)
 
 
 @require_GET
