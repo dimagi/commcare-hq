@@ -25,30 +25,17 @@ class GetExportQueryTests(SimpleTestCase):
         base_query = _get_base_query(instance)
         export_filter = TermFilter(term='_id', value='test')
 
-        export_query = get_export_query(instance, [export_filter], are_filters_es_formatted=False)
+        export_query = get_export_query(instance, [export_filter])
 
         self.assertTrue({'term': {'_id': 'test'}} not in base_query.filters)
         self.assertTrue({'term': {'_id': 'test'}} in export_query.filters)
-
-    def test_attribute_error_raised_if_filters_es_formatted_is_false(self):
-        instance = FormExportInstance(domain='export_test')
-        es_filter = {'term': {'_id': 'test'}}
-
-        with self.assertRaises(AttributeError):
-            get_export_query(instance, [es_filter], are_filters_es_formatted=False)
 
     def test_elasticsearch_filter_returns_successfully(self):
         instance = FormExportInstance(domain='export_test')
         base_query = _get_base_query(instance)
         es_filter = {'term': {'_id': 'test'}}
 
-        export_query = get_export_query(instance, [es_filter], are_filters_es_formatted=True)
+        export_query = get_export_query(instance, [es_filter])
 
         self.assertTrue({'term': {'_id': 'test'}} not in base_query.filters)
         self.assertTrue({'term': {'_id': 'test'}} in export_query.filters)
-
-    def test_no_error_raised_if_filters_es_formatted_is_true_but_filter_is_not(self):
-        instance = FormExportInstance(domain='export_test')
-        export_filter = TermFilter(term='_id', value='test')
-
-        get_export_query(instance, [export_filter], are_filters_es_formatted=True)
