@@ -158,7 +158,9 @@
                                 "type": "always"
                             },
                             "external_id": null,
-                            "name_path": "/data/test"
+                            "name_update": {
+                                "question_path": "/data/test"
+                            }
                         },
                         "open_referral": {
                             "condition": {
@@ -318,7 +320,7 @@
                 },
                 "doc_type": "OpenCaseAction",
                 "external_id": null,
-                "name_path": null
+                "name_update": null
             },
             "open_referral": {
                 "condition": {

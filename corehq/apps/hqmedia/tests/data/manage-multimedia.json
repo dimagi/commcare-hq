@@ -349,7 +349,9 @@
               }
             },
             "open_case": {
-              "name_path": "/data/basics/name",
+              "name_update": {
+                "question_path": "/data/basics/name"
+              },
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -802,7 +804,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -923,7 +925,9 @@
                 "case_type": "show",
                 "reference_id": null,
                 "repeat_context": "/data/shows",
-                "case_name": "/data/shows/where_is_the_show",
+                "name_update": {
+                  "question_path": "/data/shows/where_is_the_show"
+                },
                 "condition": {
                   "answer": null,
                   "question": null,
@@ -989,7 +993,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1576,7 +1580,7 @@
               }
             },
             "open_case": {
-              "name_path": null,
+              "name_update": null,
               "doc_type": "OpenCaseAction",
               "external_id": null,
               "condition": {
@@ -1926,7 +1930,9 @@
                 },
                 "repeat_context": null,
                 "case_type": "song",
-                "name_path": "/data/something",
+                "name_update": {
+                  "question_path": "/data/something"
+                },
                 "case_properties": {},
                 "case_tag": "open_song_0",
                 "case_indices": [
