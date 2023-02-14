@@ -23865,7 +23865,7 @@ define('vellum/richText',[
                 var xpath = extractXPathInfo($(this)).value;
                 return widget.mug.form.normalizeHashtag(xpath);
             });
-            description = xml.normalize(description);
+            description = xml.normalize(description)
 
             // Remove ckeditor-supplied title attributes, which will otherwise override popover title
             $imgs.removeAttr("title");
