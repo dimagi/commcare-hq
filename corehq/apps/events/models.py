@@ -7,6 +7,7 @@ from corehq.form_processor.models import CommCareCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.events.utils import create_case_with_case_type
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from corehq.apps.events.exceptions import EventNotPersistedError
 
 
 EVENT_CASE_TYPE = 'commcare-event'
@@ -68,8 +69,8 @@ class Event:
         event_obj.sameday_reg = data['sameday_reg']
         event_obj.track_each_day = data['track_each_day']
         event_obj.manager = data['manager']
-        event_obj.is_open = Event.is_open
-        event_obj.attendee_list_status = Event.attendee_list_status
+        event_obj.is_open = data.get('is_open', Event.is_open)
+        event_obj.attendee_list_status = data.get('attendee_list_status', Event.attendee_list_status)
 
         if 'case' in data:
             event_obj.case = data['case']
@@ -101,15 +102,23 @@ class Event:
     def total_attendance(self):
         return self.case.get_case_property('total_attendance')
 
+    @property
+    def event_id(self):
+        if not self._is_persisted_event():
+            raise EventNotPersistedError('No case associated with event')
+        return self.case.case_id
+
     def save(self):
-        if hasattr(self, 'case'):
-            # Todo: do an update on the existing case
+        if self._is_persisted_event():
+            # Todo: update existing case
             pass
         else:
-            case = self._create_case()
-            self.case = case
+            self._persist_event()
 
-    def _create_case(self):
+    def _is_persisted_event(self):
+        return hasattr(self, 'case') and isinstance(self.case, CommCareCase)
+
+    def _persist_event(self):
         # The Event class attributes map 1:1 with the case properties through EVENT_CASE_PROPERTIES
         case_json = {
             key: self.__dict__[key] for key in EVENT_CASE_PROPERTIES
@@ -120,7 +129,8 @@ class Event:
             'owner_id': self.manager.user_id,
             'properties': case_json,
         }
-        return create_case_with_case_type(EVENT_CASE_TYPE, case_args)
+        case_ = create_case_with_case_type(EVENT_CASE_TYPE, case_args)
+        self.case = case_
 
 
 def get_domain_events(domain):

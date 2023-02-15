@@ -1,8 +1,6 @@
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.http import HttpResponseRedirect
-from django.utils.decorators import method_decorator
-from django_prbac.decorators import requires_privilege_raise404
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from django.http import Http404
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
@@ -13,17 +11,17 @@ from corehq.apps.events.models import (
 )
 from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
-from corehq import privileges, toggles
+from corehq import toggles
 
 
 class BaseEventView(BaseDomainView):
     urlname = "events_page"
     section_name = _("Attendance Tracking")
 
-    @method_decorator(requires_privilege_raise404(privileges.ATTENDANCE_TRACKING))
     def dispatch(self, *args, **kwargs):
         # The FF check is temporary till the full feature is released
-        if not toggles.ATTENDANCE_TRACKING.enabled(self.domain):
+        toggle_enabled = toggles.ATTENDANCE_TRACKING.enabled(self.domain)
+        if not (self.request.couch_user.can_manage_events(self.domain) and toggle_enabled):
             raise Http404
         return super(BaseEventView, self).dispatch(*args, **kwargs)
 
@@ -87,7 +85,7 @@ class EventsView(BaseEventView, CRUDPaginatedViewMixin):
 
     def _format_paginated_event(self, event: Event):
         return {
-            'id': event.case.case_id,
+            'id': event.event_id,
             'name': event.name,
             'start_date': str(event.start_date),
             'end_date': str(event.end_date),
@@ -109,7 +107,7 @@ class EventCreateView(BaseEventView):
 
     @property
     def page_name(self):
-        return _("New event")
+        return _("Add new event")
 
     @property
     def page_url(self):
@@ -132,16 +130,17 @@ class EventCreateView(BaseEventView):
     def post(self, *args, **kwargs):
         form = self.form
 
-        if form.is_valid():
-            event_data = form.cleaned_data
-            event_data['domain'] = self.domain
-            event_data['manager'] = self.request.couch_user
+        if not form.is_valid():
+            return HttpResponseBadRequest()
 
-            event = Event.get_obj_from_data(event_data)
-            event.save()
-            return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
+        event_data = form.cleaned_data
+        event_data['domain'] = self.domain
+        event_data['manager'] = self.request.couch_user
 
-        return self.get(self.request, *args, **kwargs)
+        event = Event.get_obj_from_data(event_data)
+        event.save()
+
+        return HttpResponseRedirect(reverse(EventsView.urlname, args=(self.domain,)))
 
     @property
     def form(self):

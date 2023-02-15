@@ -2473,9 +2473,7 @@ class AttendanceTrackingTab(UITab):
     @property
     def _is_viewable(self):
         # The FF check is temporary until the full feature is released
-        return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and (
-            self.couch_user.is_domain_admin() or self.couch_user.can_manage_events()
-        )
+        return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and self.couch_user.can_manage_events(self.domain)
 
 
 def _get_repeat_record_report(domain):
