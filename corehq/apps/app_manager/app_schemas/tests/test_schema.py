@@ -694,7 +694,7 @@ class RegistrySchemaTest(BaseSchemaTest):
         schema = get_registry_schema(village)
         self.assert_has_kv_pairs(schema, {
             "id": "registry",
-            "uri": "jr://instance/remote",
+            "uri": "jr://instance/remote/registry",
             "name": "registry_case",
             "path": "/results/case",
             "structure": {},
