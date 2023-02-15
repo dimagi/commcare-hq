@@ -34,7 +34,7 @@ from corehq.apps.analytics.tasks import (
 )
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE
 from corehq.apps.export.exceptions import (
     ExportAsyncException,
     ExportFormValidationException,
@@ -267,12 +267,12 @@ def _check_export_size(domain, export_instances, export_filters):
     count = 0
     for instance in export_instances:
         count += get_export_size(instance, export_filters)
-    if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(domain):
+    if count > MAX_NORMAL_EXPORT_SIZE and not PAGINATED_EXPORTS.enabled(domain):
         raise ExportAsyncException(
             _("This export contains %(row_count)s rows. Please change the "
               "filters to be less than %(max_rows)s rows.") % {
                 'row_count': count,
-                'max_rows': MAX_EXPORTABLE_ROWS
+                'max_rows': MAX_NORMAL_EXPORT_SIZE
             }
         )
 
