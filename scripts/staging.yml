@@ -87,4 +87,5 @@ branches:
     - mk/support-range-for-mm # MK Feb 14
     - gh/disable-hyperlinks-on-large-exports # Graham Feb 14
     - ze/remove_deprecated_from_export # Zandre Feb 15
+    - ad/tableau-user-syncing-bulk # Addison Feb 15
 submodules: { }
