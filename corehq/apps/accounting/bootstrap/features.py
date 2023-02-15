@@ -68,6 +68,8 @@ standard_v1 = community_v2 + [
     privileges.DAILY_SAVED_EXPORT,
     privileges.ZAPIER_INTEGRATION,
     privileges.PRACTICE_MOBILE_WORKERS,
+    privileges.FORM_LINK_WORKFLOW,
+    privileges.PHONE_APK_HEARTBEAT,
 ]
 
 
@@ -100,6 +102,8 @@ pro_v1 = standard_v1 + [
     privileges.CHILD_CASES,
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
+    privileges.DATA_FILE_DOWNLOAD,
+    privileges.ATTENDANCE_TRACKING,
 ]
 
 

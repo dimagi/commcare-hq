@@ -25,6 +25,16 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
         return mdAnchorRender(tokens, idx, options, env, self);
     };
 
+    md.renderer.rules.heading_open = function (tokens, idx, options, env, self) {
+        var aIndex = tokens[idx].attrIndex('tabindex');
+
+        if (aIndex < 0) {
+            tokens[idx].attrPush(['tabindex', '0']);
+        }
+
+        return mdAnchorRender(tokens, idx, options, env, self);
+    };
+
     _.delay(function () {
         ko.bindingHandlers.renderMarkdown = {
             update: function (element, valueAccessor) {
@@ -502,6 +512,12 @@ hqDefine("cloudcare/js/form_entry/form_ui", function () {
                     return d.hasAnyNestedQuestions();
                 }
             });
+        };
+
+        self.isVisibleGroup = function () {
+            const hasChildren = self.children().length !== 0;
+            const hasLabel = !!ko.utils.unwrapObservable(self.caption_markdown) || !!self.caption();
+            return hasChildren && hasLabel;
         };
     }
     Group.prototype = Object.create(Container.prototype);
