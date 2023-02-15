@@ -232,7 +232,7 @@ hqDefine("export/js/export_list", [
             self.taskStatus.percentComplete();
             self.taskStatus.started(true);
             self.taskStatus.success(false);
-            self.taskStatus.failed(false);
+            self.taskStatus.failed(null);
             var tick = function () {
                 $.ajax({
                     method: 'GET',

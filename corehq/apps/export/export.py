@@ -12,7 +12,7 @@ from couchexport.models import Format
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
-from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
+from corehq.apps.export.const import MAX_NORMAL_EXPORT_SIZE, MAX_DAILY_EXPORT_SIZE
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.models.new import (
     CaseExportInstance,
@@ -250,7 +250,7 @@ class _PaginatedExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        if self.rows_written[table] >= MAX_EXPORTABLE_ROWS * (self.pages[table] + 1):
+        if self.rows_written[table] >= MAX_NORMAL_EXPORT_SIZE * (self.pages[table] + 1):
             self.pages[table] += 1
             self.writer.add_table(
                 self._paged_table_index(table),
@@ -440,7 +440,12 @@ def rebuild_export(export_instance, progress_tracker):
     Rebuild the given daily saved ExportInstance
     """
     filters = export_instance.get_filters() or []
-    include_hyperlinks = get_export_size(export_instance, filters) < MAX_EXPORTABLE_ROWS
+    export_size = get_export_size(export_instance, filters)
+    include_hyperlinks = export_size < MAX_NORMAL_EXPORT_SIZE
+    if export_size > MAX_DAILY_EXPORT_SIZE:
+        raise ValueError(
+            f"{export_instance} is {export_size} rows. Exceeds the "
+            f"{MAX_DAILY_EXPORT_SIZE} size limit.")
     es_filters = [f.to_es_filter() for f in filters]
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,
