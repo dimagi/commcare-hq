@@ -106,6 +106,7 @@ from corehq.tabs.utils import (
     dropdown_dict,
     sidebar_to_dropdown,
 )
+from corehq.apps.events.views import EventsView
 
 
 class ProjectReportsTab(UITab):
@@ -1357,7 +1358,6 @@ class MessagingTab(UITab):
         ):
             if urls:
                 items.append((title, urls))
-
         return items
 
 
@@ -2440,6 +2440,42 @@ class AdminTab(UITab):
                 and (self.couch_user.is_superuser
                      or toggles.IS_CONTRACTOR.enabled(self.couch_user.username))
                 and not is_request_using_sso(self._request))
+
+
+class AttendanceTrackingTab(UITab):
+    title = gettext_noop("Attendance Tracking")
+    view = EventsView.urlname
+
+    url_prefix_formats = (
+        '/a/{domain}/settings/events/',
+        '/a/{domain}/settings/events/new',
+    )
+
+    @property
+    def dropdown_items(self):
+        items = [
+            dropdown_dict(_("Events"), url=reverse(EventsView.urlname, args=(self.domain,)))
+        ]
+        return items
+
+    @property
+    def sidebar_items(self):
+        items = [
+            (_("Events"), [
+                {
+                    'title': _("View All Events"),
+                    'url': reverse(EventsView.urlname, args=(self.domain,)),
+                },
+            ]),
+        ]
+        return items
+
+    @property
+    def _is_viewable(self):
+        # The FF check is temporary until the full feature is released
+        return toggles.ATTENDANCE_TRACKING.enabled(self.domain) and (
+            self.couch_user.is_domain_admin() or self.couch_user.can_manage_events()
+        )
 
 
 def _get_repeat_record_report(domain):

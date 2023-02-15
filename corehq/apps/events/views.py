@@ -1,6 +1,9 @@
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.utils.decorators import method_decorator
+from django_prbac.decorators import requires_privilege_raise404
+from django.http import Http404
 
 from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin
 from corehq.apps.domain.views.base import BaseDomainView
@@ -10,21 +13,38 @@ from corehq.apps.events.models import (
 )
 from corehq.apps.events.forms import CreateEventForm
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
+from corehq import privileges, toggles
 
 
-class EventsView(BaseDomainView, CRUDPaginatedViewMixin):
+class BaseEventView(BaseDomainView):
+    urlname = "events_page"
+    section_name = _("Attendance Tracking")
+
+    @method_decorator(requires_privilege_raise404(privileges.ATTENDANCE_TRACKING))
+    def dispatch(self, *args, **kwargs):
+        # The FF check is temporary till the full feature is released
+        if not toggles.ATTENDANCE_TRACKING.enabled(self.domain):
+            raise Http404
+        return super(BaseEventView, self).dispatch(*args, **kwargs)
+
+    @property
+    def section_url(self):
+        return reverse(BaseEventView.urlname, args=(self.domain,))
+
+
+class EventsView(BaseEventView, CRUDPaginatedViewMixin):
     urlname = "events_page"
     template_name = 'events_list.html'
 
-    section_name = _("Events")
     page_title = _("Attendance Tracking Events")
+
     limit_text = _("events per page")
     empty_notification = _("You have no events")
     loading_message = _("Loading events")
 
     @property
-    def section_url(self):
-        return reverse(self.urlname, args=(self.domain,))
+    def page_name(self):
+        return _("Events")
 
     @property
     def page_url(self):
@@ -47,8 +67,7 @@ class EventsView(BaseDomainView, CRUDPaginatedViewMixin):
 
     @property
     def page_context(self):
-        context = self.pagination_context
-        return context
+        return self.pagination_context
 
     @property
     def domain_events(self):
@@ -78,22 +97,37 @@ class EventsView(BaseDomainView, CRUDPaginatedViewMixin):
         }
 
 
-class EventCreateView(BaseDomainView):
-    template_name = "new_event.html"
+class EventCreateView(BaseEventView):
     urlname = 'add_attendance_tracking_event'
+    template_name = "new_event.html"
+
     page_title = _("Add Attendance Tracking Event")
-    section_name = _("New Tracking Event")
 
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(EventCreateView, self).dispatch(request, *args, **kwargs)
 
     @property
-    def section_url(self):
+    def page_name(self):
+        return _("New event")
+
+    @property
+    def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
 
+    @property
+    def parent_pages(self):
+        return [
+            {
+                'title': EventsView.page_title,
+                'url': reverse(EventsView.urlname, args=[self.domain])
+            },
+        ]
+
     def get_context_data(self, **kwargs):
-        return {'form': self.form}
+        context = super(EventCreateView, self).get_context_data(**kwargs)
+        context.update({'form': self.form})
+        return context
 
     def post(self, *args, **kwargs):
         form = self.form

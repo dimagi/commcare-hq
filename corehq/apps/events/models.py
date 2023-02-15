@@ -110,6 +110,7 @@ class Event:
             self.case = case
 
     def _create_case(self):
+        # The Event class attributes map 1:1 with the case properties through EVENT_CASE_PROPERTIES
         case_json = {
             key: self.__dict__[key] for key in EVENT_CASE_PROPERTIES
         }
