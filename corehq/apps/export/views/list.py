@@ -19,7 +19,7 @@ from couchdbkit import ResourceNotFound
 from memoized import memoized
 
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.export.export import get_export_size
+from corehq.apps.export.exceptions import ExportTooLargeException
 from corehq.apps.export.views.download import DownloadDETSchemaView
 from couchexport.models import Format, IntegrationFormat
 from couchexport.writers import XlsLengthException
@@ -305,7 +305,7 @@ class ExportListHelper(object):
             'fileData': file_data,
             'isLocationSafeForUser': export.filters.is_location_safe_for_user(self.request),
             'locationRestrictions': self.get_location_restriction_names(export.filters.accessible_location_ids),
-            'taskStatus': _get_task_status_json(export),
+            'taskStatus': _get_task_status_json(export._id),
             'updatingData': False,
         }
 
@@ -541,14 +541,13 @@ class BaseExportListView(BaseProjectDataView):
         }
 
 
-def _get_task_status_json(export_instance):
-    status = get_saved_export_task_status(export_instance._id)
+def _get_task_status_json(export_instance_id):
+    status = get_saved_export_task_status(export_instance_id)
     failure_reason = None
     if status.failed():
-        failure_reason = EXPORT_FAILURE_UNKNOWN
-        export_size = get_export_size(export_instance, export_instance.get_filters())
-        if export_size > MAX_DAILY_EXPORT_SIZE:
-            failure_reason = EXPORT_FAILURE_TOO_LARGE
+        failure_reason = EXPORT_FAILURE_TOO_LARGE if \
+            status.exception == ExportTooLargeException else \
+            EXPORT_FAILURE_UNKNOWN
 
     return {
         'percentComplete': status.progress.percent or 0,
@@ -588,9 +587,8 @@ def get_saved_export_progress(request, domain):
     permissions.access_list_exports_or_404(is_deid=json.loads(request.GET.get('is_deid')))
 
     export_instance_id = request.GET.get('export_instance_id')
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
     return json_response({
-        'taskStatus': _get_task_status_json(export_instance),
+        'taskStatus': _get_task_status_json(export_instance_id),
     })
 
 

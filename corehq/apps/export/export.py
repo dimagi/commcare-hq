@@ -6,6 +6,7 @@ from collections import Counter
 
 from couchdbkit import ResourceConflict
 
+from corehq.apps.export.exceptions import ExportTooLargeException
 from corehq.util.metrics import metrics_counter, metrics_track_errors
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
@@ -443,9 +444,9 @@ def rebuild_export(export_instance, progress_tracker):
     export_size = get_export_size(export_instance, filters)
     include_hyperlinks = export_size < MAX_NORMAL_EXPORT_SIZE
     if export_size > MAX_DAILY_EXPORT_SIZE:
-        raise ValueError(
-            f"{export_instance} is {export_size} rows. Exceeds the "
-            f"{MAX_DAILY_EXPORT_SIZE} size limit.")
+        raise ExportTooLargeException(
+            f"{export_instance.name} is {export_size} rows. Exceeds the limit "
+            f"of {MAX_DAILY_EXPORT_SIZE} rows.")
     es_filters = [f.to_es_filter() for f in filters]
     with TransientTempfile() as temp_path:
         export_file = get_export_file([export_instance], es_filters, temp_path,
