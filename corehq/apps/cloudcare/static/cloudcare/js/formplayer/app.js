@@ -262,6 +262,11 @@ hqDefine("cloudcare/js/formplayer/app", function () {
                 FormplayerUtils.setUrlToObject(urlObject);
 
                 if (resp.nextScreen !== null && resp.nextScreen !== undefined) {
+                    if (resp.nextScreen.session_id) {
+                        FormplayerUtils.doUrlAction((urlObject) => {
+                            urlObject.sessionId = resp.nextScreen.session_id;
+                        }, true);
+                    }
                     FormplayerFrontend.trigger("renderResponse", resp.nextScreen);
                 } else if (urlObject.appId !== null && urlObject.appId !== undefined) {
                     FormplayerFrontend.trigger("apps:currentApp");
