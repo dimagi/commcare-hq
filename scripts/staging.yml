@@ -85,4 +85,5 @@ branches:
     - ze/remove_deprecated_from_export # Zandre Feb 15
     - ad/tableau-user-syncing-bulk # Addison Feb 15
     - es/date-widget  # Ethan Feb 15
+    - em/app-summary-conditional-case-update-status # Evan Feb 15
 submodules: { }
