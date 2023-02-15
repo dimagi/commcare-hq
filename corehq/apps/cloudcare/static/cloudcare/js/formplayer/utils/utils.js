@@ -282,6 +282,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             delete this.endpointArgs;
             this.selections = selections || [];
             sessionStorage.removeItem('selectedValues');
+            this.sessionId = null;
         };
 
         this.clearExceptApp = function () {
@@ -292,6 +293,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.sortIndex = null;
             this.search = null;
             this.queryData = null;
+            this.sessionId = null;
         };
 
         this.onSubmit = function () {
@@ -323,6 +325,7 @@ hqDefine("cloudcare/js/formplayer/utils/utils", function () {
             this.search = null;
             this.sortIndex = null;
             sessionStorage.removeItem('selectedValues');
+            this.sessionId = null;
         };
     };
 
