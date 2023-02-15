@@ -546,7 +546,7 @@ def _get_task_status_json(export_instance_id):
     failure_reason = None
     if status.failed():
         failure_reason = EXPORT_FAILURE_TOO_LARGE if \
-            status.exception == ExportTooLargeException else \
+            isinstance(status.exception, ExportTooLargeException) else \
             EXPORT_FAILURE_UNKNOWN
 
     return {

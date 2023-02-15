@@ -167,7 +167,7 @@ def get_task_status(task, is_multiple_download_task=False):
             is_ready = True
             context_result = result and result.get('messages')
         elif result and isinstance(result, Exception):
-            exception = result.__class__
+            exception = result
             context_error = six.text_type(result)
             if '\t' in context_error:
                 context_error = [err for err in context_error.split('\t') if err]
