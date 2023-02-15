@@ -10,5 +10,7 @@ function (doc) {
         }
         emit([doc.domain, doc.repeater_id, state, doc.last_checked], null);
         emit([doc.domain, null, state, doc.last_checked], null);
+        emit([doc.domain, null, null, doc.last_checked], null);
+        emit([doc.domain, doc.repeater_id, null, doc.last_checked], null);
     }
 }
