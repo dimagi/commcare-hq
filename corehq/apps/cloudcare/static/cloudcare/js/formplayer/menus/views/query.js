@@ -380,7 +380,7 @@ hqDefine("cloudcare/js/formplayer/menus/views/query", function () {
                 // Validate free-text input. Accept anything moment can recognize as a date, reformatting for ES.
                 var $input = $(this),
                     oldValue = $input.val(),
-                    parts = _.map(oldValue.split(separator), function (v) { return moment(v); }),
+                    parts = _.map(oldValue.split(separator), function (v) { return moment(v, dateFormats); }),
                     newValue = '';
 
                 if (_.every(parts, function (part) { return part.isValid(); }))  {
