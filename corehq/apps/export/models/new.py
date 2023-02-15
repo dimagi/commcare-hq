@@ -490,13 +490,15 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
         return headers
 
     def get_rows(self, document, row_number, split_columns=False,
-                 transform_dates=False, as_json=False):
+                 transform_dates=False, as_json=False, include_hyperlinks=True):
         """
         Return a list of ExportRows generated for the given document.
         :param document: dictionary representation of a form submission or case
         :param row_number: number indicating this documents index in the sequence of all documents in the export
         :param as_json: optional parameter, mainly used in APIs, to spit out
                         the data as a json-ready dict
+        :param include_hyperlinks: optional parameter, if True will specify
+                                   which column indices to hyperlink
         :return: List of ExportRows
         """
         document_id = document.get('_id')
@@ -553,9 +555,11 @@ class TableConfiguration(DocumentSchema, ReadablePathMixin):
             if as_json:
                 rows.append(row_data)
             else:
+                hyperlink_indices = self.get_hyperlink_column_indices(
+                    split_columns) if include_hyperlinks else []
                 rows.append(ExportRow(
                     data=row_data,
-                    hyperlink_column_indices=self.get_hyperlink_column_indices(split_columns),
+                    hyperlink_column_indices=hyperlink_indices,
                     skip_excel_formatting=skip_excel_formatting
                 ))
         return rows
