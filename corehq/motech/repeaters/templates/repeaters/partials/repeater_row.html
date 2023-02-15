@@ -7,48 +7,48 @@
         {% endif %}
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.get_id }}&amp;record_state=PENDING">
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=PENDING">
             {{ repeater.get_pending_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.get_id }}&amp;record_state=FAIL">
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=FAIL">
             {{ repeater.get_failure_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.get_id }}&amp;record_state=CANCELLED">
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=CANCELLED">
             {{ repeater.get_cancelled_record_count }}
         </a>
     </td>
     <td>
-        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.get_id }}&amp;record_state=SUCCESS">
+        <a href="{% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}&amp;record_state=SUCCESS">
             {{ repeater.get_success_record_count }}
         </a>
     </td>
     <td>
-        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.form_class_name repeater.get_id %}">
+        <a class="btn btn-default" href="{% url 'edit_repeater' domain repeater.form_class_name repeater.repeater_id %}">
         {% trans "Edit"%}
         </a>
         <a
             class="btn btn-default"
             href="
-            {% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.get_id }}"
+            {% url 'domain_report_dispatcher' domain report %}?repeater={{ repeater.repeater_id }}"
             >
             {% trans "View records" %}
         </a>
-        {% if repeater.paused %}
-        <a class="btn btn-default" href="#resume_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
+        {% if repeater.is_paused %}
+        <a class="btn btn-default" href="#resume_forwarding_{{ repeater.repeater_id }}" data-toggle="modal"><i
                 class="fa fa-toggle-right"></i> {% trans "Resume" %}</a>
 
-        <div class="modal fade" id="resume_forwarding_{{ repeater.get_id }}">
+        <div class="modal fade" id="resume_forwarding_{{ repeater.repeater_id }}">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title">{% trans "Resume Forwarding" %}</h4>
                     </div>
-                    <form name="resume_repeater" action="{% url 'resume_repeater' domain repeater.get_id %}"
+                    <form name="resume_repeater" action="{% url 'resume_repeater' domain repeater.repeater_id %}"
                           method="post">
                         {% csrf_token %}
                         <div class="modal-body">
@@ -72,17 +72,17 @@
             </div>
         </div>
         {% else %}
-        <a class="btn btn-default" href="#pause_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
+        <a class="btn btn-default" href="#pause_forwarding_{{ repeater.repeater_id }}" data-toggle="modal"><i
                 class="fa fa-pause"></i> {% trans "Pause" %}</a>
 
-        <div class="modal fade" id="pause_forwarding_{{ repeater.get_id }}">
+        <div class="modal fade" id="pause_forwarding_{{ repeater.repeater_id }}">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title">{% trans "Pause Forwarding" %}</h4>
                     </div>
-                    <form name="pause_repeater" action="{% url 'pause_repeater' domain repeater.get_id %}"
+                    <form name="pause_repeater" action="{% url 'pause_repeater' domain repeater.repeater_id %}"
                           method="post">
                         {% csrf_token %}
                         <div class="modal-body">
@@ -107,37 +107,37 @@
         </div>
         {% endif %}
         {% if type_info.has_config and user_can_configure %}
-        <a class="btn btn-default" href="{% url 'config_repeater' domain type_info.class_name repeater.get_id %}">
+        <a class="btn btn-default" href="{% url 'config_repeater' domain type_info.class_name repeater.repeater_id %}">
             {% trans "Configure" %}
         </a>
         {% endif %}
-        <a class="btn btn-danger" href="#stop_forwarding_{{ repeater.get_id }}" data-toggle="modal"><i
-                class="fa fa-remove"></i> {% trans "Stop" %}</a>
+        <a class="btn btn-danger" href="#delete_{{ repeater.repeater_id }}" data-toggle="modal"><i
+                class="fa fa-remove"></i> {% trans "Delete" %}</a>
 
-        <div class="modal fade" id="stop_forwarding_{{ repeater.get_id }}">
+        <div class="modal fade" id="delete_{{ repeater.repeater_id }}">
             <div class="modal-dialog">
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title">{% trans "Stop Forwarding" %}</h4>
+                        <h4 class="modal-title">{% trans "Delete Configuration" %}</h4>
                     </div>
-                    <form name="drop_repeater" action="{% url 'drop_repeater' domain repeater.get_id %}"
+                    <form name="drop_repeater" action="{% url 'drop_repeater' domain repeater.repeater_id %}"
                           method="post">
                         {% csrf_token %}
                         <div class="modal-body">
                             <p>
                                 {% blocktrans with repeater.name as name %}
-                                    Are you sure you want to stop forwarding to: {{ name }} ?
-                                    <br/>
-                                    Forwarder and its data would not be deleted but no new records would get added for
-                                    this forwarder and it would not appear in this list anymore.
+                                    Are you sure you want to delete the configuration for: {{ name }} ?
+                                    <br/><br />
+                                    Historical data forwarding records will not be deleted, but no new records will be
+                                    forwarded, and this configuration will no longer appear on this page.
                                 {% endblocktrans %}
                             </p>
                         </div>
                         <div class="modal-footer">
                             <a href="#" data-dismiss="modal" class="btn btn-default">{% trans 'Cancel' %}</a>
                             <button type="submit" class="btn btn-danger"><i
-                                    class="fa fa-remove"></i> {% trans 'Stop Forwarding' %}
+                                    class="fa fa-remove"></i> {% trans 'Delete' %}
                             </button>
                         </div>
                     </form>

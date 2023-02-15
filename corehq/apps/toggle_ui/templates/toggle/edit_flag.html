@@ -51,7 +51,7 @@
         </a>
       </span>
       {% if static_toggle.description %}
-        <p>{{ static_toggle.description|safe }}</p>
+        <p>{{ static_toggle.description }}</p>
       {% endif %}
       <p>
         <span class="label label-{{ static_toggle.tag.css_class }}">{{ static_toggle.tag.name }}</span>
@@ -69,6 +69,25 @@
       {% endif %}
       {% if static_toggle.help_link %}
         <p><a href="{{ static_toggle.help_link }}" target="_blank">{% trans "More information" %}</a></p>
+      {% endif %}
+
+      {% if by_service %}
+        {% for service, domains in by_service.items %}
+          <table class="table table-striped table-hover">
+            <thead>
+            <tr>
+              <th class="col-sm-4">Subscription Type</th>
+              <th class="col-sm-8">List of Domains</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>{{ service }}</td>
+              <td>{{ domains | join:", " }}</td>
+            </tr>
+            </tbody>
+        {% endfor %}
+        </table>
       {% endif %}
 
       {% if static_toggle.relevant_environments %}

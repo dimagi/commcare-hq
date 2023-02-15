@@ -61,7 +61,7 @@ def reset_demo_user_restore(commcare_user, domain):
     # get latest restore
     restore = RestoreConfig(
         project=Domain.get_by_name(domain),
-        restore_user=commcare_user.to_ota_restore_user(),
+        restore_user=commcare_user.to_ota_restore_user(domain),
         params=RestoreParams(version=V2),
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore, domain)
@@ -189,9 +189,7 @@ def get_restore_user(domain, couch_user, as_user_obj):
     """
     couch_restore_user = as_user_obj or couch_user
 
-    if couch_restore_user.is_commcare_user():
-        return couch_restore_user.to_ota_restore_user(couch_user)
-    elif couch_restore_user.is_web_user():
+    if couch_restore_user.is_commcare_user() or couch_restore_user.is_web_user():
         return couch_restore_user.to_ota_restore_user(domain, couch_user)
     else:
         return None

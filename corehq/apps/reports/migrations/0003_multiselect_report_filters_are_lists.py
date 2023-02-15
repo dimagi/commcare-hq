@@ -2,8 +2,10 @@ from django.db import migrations
 
 from corehq.apps.saved_reports.models import ReportConfig
 from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
+from corehq.util.django_migrations import skip_on_fresh_install
 
 
+@skip_on_fresh_install
 def _migrate_report_filters(apps, schema_editor):
     """
         Migrates ReportConfig filters with multiple values from CHOICE_DELIMITER-delimited strings to lists.

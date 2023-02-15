@@ -47,6 +47,16 @@ class RoleUtilsTests(TestCase):
 
         self.assertEqual(role.permissions, original_permissions)
 
+    def create_commcare_user_default_role(self):
+        self.addCleanup(self._delete_presets)
+        role_exists = UserRole.objects.filter(domain=self.domain, is_commcare_user_default=True).exists()
+        self.assertFalse(role_exists)
+
+        UserRole.commcare_user_default(self.domain)
+
+        role_exists = UserRole.objects.filter(domain=self.domain, is_commcare_user_default=True).exists()
+        self.assertTrue(role_exists)
+
     def test_archive_custom_roles_for_domain(self):
         def _unarchive_custom_role():
             self.role1.is_archived = False

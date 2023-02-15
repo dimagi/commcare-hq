@@ -11,9 +11,11 @@ from couchdbkit.exceptions import ResourceNotFound
 from crispy_forms.utils import render_crispy_form
 
 from corehq.apps.registry.utils import get_data_registry_dropdown_options
-from corehq.apps.reports.models import TableauVisualization
+from corehq.apps.reports.models import TableauVisualization, TableauUser
 from corehq.apps.sso.models import IdentityProvider
 from corehq.apps.sso.utils.user_helpers import get_email_domain_from_username
+from corehq.toggles import TABLEAU_USER_SYNCING
+
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import (
@@ -71,6 +73,7 @@ from corehq.apps.locations.permissions import (
 from corehq.apps.registration.forms import (
     AdminInvitesUserForm,
 )
+from corehq.apps.reports.exceptions import TableauAPIError
 from corehq.apps.reports.util import get_possible_reports
 from corehq.apps.sms.mixin import BadSMSConfigException
 from corehq.apps.sms.verify import (
@@ -90,12 +93,13 @@ from corehq.apps.users.decorators import (
     require_can_view_roles,
     require_permission_to_edit_user,
 )
-from corehq.apps.users.exceptions import MissingRoleException
+from corehq.apps.users.exceptions import MissingRoleException, InvalidRequestException
 from corehq.apps.users.forms import (
     BaseUserInfoForm,
     CommtrackUserForm,
     SetUserPasswordForm,
     UpdateUserRoleForm,
+    TableauUserForm,
 )
 from corehq.apps.users.landing_pages import get_allowed_landing_pages, validate_landing_page
 from corehq.apps.users.models import (
@@ -125,6 +129,8 @@ from corehq.util.workbook_json.excel import (
     WorksheetNotFound,
     get_workbook,
 )
+
+from dimagi.utils.logging import notify_exception
 
 
 def _users_context(request, domain):
@@ -334,6 +340,36 @@ class BaseEditUserView(BaseUserSettingsView):
         if self.form_user_update.is_valid():
             return self.form_user_update.update_user()
 
+    @property
+    @memoized
+    def tableau_form(self):
+        try:
+            if self.request.method == "POST" and self.request.POST['form_type'] == "tableau":
+                return TableauUserForm(self.request.POST,
+                                    request=self.request,
+                                    domain=self.domain,
+                                    username=self.editable_user.username)
+
+            tableau_user = TableauUser.objects.filter(server__domain=self.domain).get(
+                username=self.editable_user.username
+            )
+            return TableauUserForm(
+                domain=self.domain,
+                request=self.request,
+                username=self.editable_user.username,
+                initial={
+                    'role': tableau_user.role
+                }
+            )
+        except (TableauAPIError, TableauUser.DoesNotExist) as e:
+            messages.error(self.request, _('''There was an error getting data for this user's associated Tableau
+                                             user. Please contact support if this error persists.'''))
+            notify_exception(self.request, str(e), details={
+                'domain': self.domain,
+                'exception_type': type(e),
+            })
+
+
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
@@ -343,6 +379,10 @@ class BaseEditUserView(BaseUserSettingsView):
         elif self.request.POST['form_type'] == "update-user":
             if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
+                saved = True
+        elif self.request.POST['form_type'] == "tableau":
+            if self.tableau_form and self.tableau_form.is_valid():
+                self.tableau_form.save(self.editable_user.username)
                 saved = True
         if saved:
             return HttpResponseRedirect(self.page_url)
@@ -410,6 +450,8 @@ class EditWebUserView(BaseEditUserView):
         if (self.request.project.commtrack_enabled or
                 self.request.project.uses_locations):
             ctx.update({'update_form': self.commtrack_form})
+        if TABLEAU_USER_SYNCING.enabled(self.domain):
+            ctx.update({'tableau_form': self.tableau_form})
         if self.can_grant_superuser_access:
             ctx.update({'update_permissions': True})
 
@@ -506,46 +548,6 @@ class BaseRoleAccessView(BaseUserSettingsView):
         return self.domain_object.has_privilege(privileges.LITE_RELEASE_MANAGEMENT) and \
             not self.domain_object.has_privilege(privileges.RELEASE_MANAGEMENT)
 
-    @property
-    @memoized
-    def non_admin_roles(self):
-        return list(sorted(
-            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
-            key=lambda role: role.name if role.name else '\uFFFF'
-        ))
-
-    def get_roles_for_display(self):
-        show_es_issue = False
-        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
-        for role in self.non_admin_roles:
-            role_data = role.to_json()
-            role_view_data.append(role_data)
-
-            try:
-                user_count = get_role_user_count(role.domain, role.couch_id)
-                role_data["hasUsersAssigned"] = bool(user_count)
-            except TypeError:
-                # when query_result['hits'] returns None due to an ES issue
-                show_es_issue = True
-
-            role_data["has_unpermitted_location_restriction"] = (
-                not self.can_restrict_access_by_location
-                and not role.permissions.access_all_locations
-            )
-
-        if show_es_issue:
-            messages.error(
-                self.request,
-                mark_safe(_(  # nosec: no user input
-                    "We might be experiencing issues fetching the entire list "
-                    "of user roles right now. This issue is likely temporary and "
-                    "nothing to worry about, but if you keep seeing this for "
-                    "more than a day, please <a href='#modalReportIssue' "
-                    "data-toggle='modal'>Report an Issue</a>."
-                ))
-            )
-        return role_view_data
-
 
 @method_decorator(always_allow_project_access, name='dispatch')
 @method_decorator(toggles.ENTERPRISE_USER_MANAGEMENT.required_decorator(), name='dispatch')
@@ -574,7 +576,7 @@ class ListWebUsersView(BaseRoleAccessView):
     def role_labels(self):
         return {
             r.get_qualified_id(): r.name
-            for r in [StaticRole.domain_admin(self.domain)] + self.non_admin_roles
+            for r in [StaticRole.domain_admin(self.domain)] + UserRole.objects.get_by_domain(self.domain)
         }
 
     @property
@@ -673,6 +675,49 @@ class ListRolesView(BaseRoleAccessView):
         ]
 
     @property
+    @memoized
+    def non_admin_roles(self):
+        return list(sorted(
+            [role for role in UserRole.objects.get_by_domain(self.domain) if not role.is_commcare_user_default],
+            key=lambda role: role.name if role.name else '\uFFFF'
+        )) + [UserRole.commcare_user_default(self.domain)]  # mobile worker default listed last
+
+    def get_roles_for_display(self):
+        show_es_issue = False
+        role_view_data = [StaticRole.domain_admin(self.domain).to_json()]
+        for role in self.non_admin_roles:
+            role_data = role.to_json()
+            role_view_data.append(role_data)
+
+            if role.is_commcare_user_default:
+                role_data["preventRoleDelete"] = True
+            else:
+                try:
+                    user_count = get_role_user_count(role.domain, role.couch_id)
+                    role_data["preventRoleDelete"] = bool(user_count)
+                except TypeError:
+                    # when query_result['hits'] returns None due to an ES issue
+                    show_es_issue = True
+
+            role_data["has_unpermitted_location_restriction"] = (
+                not self.can_restrict_access_by_location
+                and not role.permissions.access_all_locations
+            )
+
+        if show_es_issue:
+            messages.error(
+                self.request,
+                mark_safe(_(  # nosec: no user input
+                    "We might be experiencing issues fetching the entire list "
+                    "of user roles right now. This issue is likely temporary and "
+                    "nothing to worry about, but if you keep seeing this for "
+                    "more than a day, please <a href='#modalReportIssue' "
+                    "data-toggle='modal'>Report an Issue</a>."
+                ))
+            )
+        return role_view_data
+
+    @property
     def page_context(self):
         if (not self.can_restrict_access_by_location
                 and any(not role.permissions.access_all_locations
@@ -704,14 +749,16 @@ class ListRolesView(BaseRoleAccessView):
             'can_restrict_access_by_location': self.can_restrict_access_by_location,
             'landing_page_choices': self.landing_page_choices,
             'show_integration': (
-                toggles.OPENMRS_INTEGRATION.enabled(self.domain) or
-                toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                toggles.OPENMRS_INTEGRATION.enabled(self.domain)
+                or toggles.DHIS2_INTEGRATION.enabled(self.domain)
+                or toggles.GENERIC_INBOUND_API.enabled(self.domain)
             ),
             'web_apps_privilege': self.web_apps_privilege,
             'erm_privilege': self.release_management_privilege,
             'mrm_privilege': self.lite_release_management_privilege,
             'has_report_builder_access': has_report_builder_access(self.request),
-            'data_file_download_enabled': toggles.DATA_FILE_DOWNLOAD.enabled(self.domain),
+            'data_file_download_enabled':
+                domain_has_privilege(self.domain, privileges.DATA_FILE_DOWNLOAD),
             'export_ownership_enabled': toggles.EXPORT_OWNERSHIP.enabled(self.domain),
             'data_registry_choices': get_data_registry_dropdown_options(self.domain),
         }
@@ -891,8 +938,11 @@ def post_user_role(request, domain):
         }, status=400)
 
     response_data = role.to_json()
-    user_count = get_role_user_count(domain, role.couch_id)
-    response_data['hasUsersAssigned'] = user_count > 0
+    if role.is_commcare_user_default:
+        response_data["preventRoleDelete"] = True
+    else:
+        user_count = get_role_user_count(domain, role.couch_id)
+        response_data['preventRoleDelete'] = user_count > 0
     return JsonResponse(response_data)
 
 
@@ -945,27 +995,43 @@ def delete_user_role(request, domain):
     if not domain_has_privilege(domain, privileges.ROLE_BASED_ACCESS):
         return JsonResponse({})
     role_data = json.loads(request.body.decode('utf-8'))
-    user_count = get_role_user_count(domain, role_data["_id"])
-    if user_count:
-        return JsonResponse({
-            "message": ngettext(
-                "Unable to delete role '{role}'. "
-                "It has one user and/or invitation still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                "Unable to delete role '{role}'. "
-                "It has {user_count} users and/or invitations still assigned to it. "
-                "Remove all users assigned to the role before deleting it.",
-                user_count,
-            ).format(role=role_data["name"], user_count=user_count)
-        }, status=400)
+
+    try:
+        response_data = _delete_user_role(domain, role_data)
+    except InvalidRequestException as e:
+        return JsonResponse({"message": str(e)}, status=400)
+
+    return JsonResponse(response_data)
+
+
+def _delete_user_role(domain, role_data):
     try:
         role = UserRole.objects.by_couch_id(role_data["_id"], domain=domain)
     except UserRole.DoesNotExist:
-        return JsonResponse({})
+        raise Http404
+
+    if role.is_commcare_user_default:
+        raise InvalidRequestException(_(
+            "Unable to delete role '{role}'. "
+            "This role is the default role for Mobile Users and can not be deleted.",
+        ).format(role=role_data["name"]))
+
+    user_count = get_role_user_count(domain, role_data["_id"])
+    if user_count:
+        raise InvalidRequestException(ngettext(
+            "Unable to delete role '{role}'. "
+            "It has one user and/or invitation still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            "Unable to delete role '{role}'. "
+            "It has {user_count} users and/or invitations still assigned to it. "
+            "Remove all users assigned to the role before deleting it.",
+            user_count,
+        ).format(role=role_data["name"], user_count=user_count))
+
     copy_id = role.couch_id
     role.delete()
     # return removed id in order to remove it from UI
-    return JsonResponse({"_id": copy_id})
+    return {"_id": copy_id}
 
 
 @always_allow_project_access

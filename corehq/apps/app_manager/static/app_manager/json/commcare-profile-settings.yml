@@ -466,3 +466,19 @@
   default: "no"
   since: "2.49"
   force: true
+
+- id: 'dependencies'
+  name: 'Android app dependencies'
+  type: 'features'
+  toggle: APP_DEPENDENCIES
+  description: >
+    Prevents mobile workers from using a CommCare app until the Android
+    apps that it needs have been installed on the device.
+  widget: 'multiSelect'
+  values:
+    - ['org.commcare.dalvik.reminders', 'CommCare Reminders']
+    - ['callout.commcare.org.sendussd', 'CommCare USSD']
+    - ['org.commcare.dalvik.abha', 'CommCare ABHA']
+  default: []  # multiSelect default takes a list
+  since: '2.53'
+  force: true

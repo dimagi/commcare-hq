@@ -145,6 +145,7 @@ def _get_expected_changes_json(user):
         'assigned_location_ids': [],
         'attempt_date': None,
         'base_doc': 'CouchUser',
+        'can_assign_superuser': False,
         'created_on': user_json['created_on'],
         'date_joined': user_json['date_joined'],
         'demo_restore_id': None,

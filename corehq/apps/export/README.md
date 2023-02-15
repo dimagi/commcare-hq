@@ -113,7 +113,7 @@ form.repeat[].question1
 
 ### System Properties
 
-System properties are properties that CommCareHQ adds to the form or case that are essentially meta data. Examples
+System properties are properties that CommCare HQ adds to the form or case that are essentially meta data. Examples
 of these include: form id, case type, case id, form xmlns, etc. System properties are added to a white list. This
 means that by default a system property on the form will _not_ be added to the export for selection. A list of the
 system properties can be found

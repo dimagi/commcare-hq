@@ -1,10 +1,13 @@
 import json
 from collections import OrderedDict
 from contextlib import contextmanager
-from copy import deepcopy
 from tempfile import NamedTemporaryFile
 
+from attrs import asdict
+
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db.transaction import atomic
 from django.http import (
     Http404,
     HttpResponseBadRequest,
@@ -21,14 +24,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from couchdbkit import ResourceNotFound
-
 from corehq.apps.hqwebapp.decorators import waf_allow
-from dimagi.utils.couch.bulk import CouchTransaction
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import get_url_base, json_response
-from soil import CachedDownload, DownloadBase
+from soil import DownloadBase
 from soil.exceptions import TaskFailedError
 from soil.util import expose_cached_download, get_download_context
 
@@ -44,11 +44,9 @@ from corehq.apps.fixtures.exceptions import (
 )
 from corehq.apps.fixtures.fixturegenerators import item_lists_by_domain
 from corehq.apps.fixtures.models import (
-    FieldList,
-    FixtureDataItem,
-    FixtureDataType,
-    FixtureTypeField,
     LookupTableRow,
+    LookupTable,
+    TypeField,
 )
 from corehq.apps.fixtures.tasks import (
     async_fixture_download,
@@ -71,23 +69,6 @@ from corehq.util.files import file_extention_from_filename
 from corehq import toggles
 
 
-def strip_json(obj, disallow_basic=None, disallow=None):
-    disallow = disallow or []
-    if disallow_basic is None:
-        disallow_basic = ['_rev', 'domain', 'doc_type']
-    disallow += disallow_basic
-    ret = {}
-    try:
-        obj = obj.to_json()
-    except Exception:
-        pass
-    for key in obj:
-        if key not in disallow:
-            ret[key] = obj[key]
-
-    return ret
-
-
 def _to_kwargs(req):
     # unicode can mix this up so have a little utility to do it
     # was seeing this only locally, not sure if python / django
@@ -107,21 +88,21 @@ def update_tables(request, domain, data_type_id=None):
         "fields":{"genderr":{"update":"gender"},"grade":{}}
     }
     """
+    data_type = None
     if data_type_id:
         try:
-            data_type = FixtureDataType.get(data_type_id)
-        except ResourceNotFound:
+            data_type = LookupTable.objects.get(id=data_type_id, domain=domain)
+        except (LookupTable.DoesNotExist, ValidationError):
             raise Http404()
 
         if data_type.domain != domain:
             raise Http404()
 
         if request.method == 'GET':
-            return json_response(strip_json(data_type))
+            return json_response(table_json(data_type))
 
         elif request.method == 'DELETE':
-            with CouchTransaction() as transaction:
-                data_type.recursive_delete(transaction)
+            data_type.delete()
             clear_fixture_cache(domain)
             return json_response({})
         elif not request.method == 'PUT':
@@ -133,6 +114,9 @@ def update_tables(request, domain, data_type_id=None):
         data_tag = fields_update["tag"]
         is_global = fields_update["is_global"]
         description = fields_update["description"]
+
+        if not data_type_id and LookupTable.objects.domain_tag_exists(domain, data_tag):
+            return HttpResponseBadRequest("DuplicateFixture")
 
         # validate tag and fields
         validation_errors = []
@@ -159,24 +143,31 @@ def update_tables(request, domain, data_type_id=None):
                     "correctly formatted"),
             })
 
-        with CouchTransaction() as transaction:
+        with atomic():
             if data_type_id:
+                assert data_type is not None, data_type_id
                 data_type = _update_types(
-                    fields_patches, domain, data_type_id, data_tag, is_global, description, transaction)
-                _update_items(fields_patches, domain, data_type_id, transaction)
+                    data_type, fields_patches, data_tag, is_global, description)
+                _update_items(fields_patches, domain, data_type_id)
             else:
-                if FixtureDataType.fixture_tag_exists(domain, data_tag):
-                    return HttpResponseBadRequest("DuplicateFixture")
-                else:
-                    data_type = _create_types(
-                        fields_patches, domain, data_tag, is_global, description, transaction)
+                data_type = _create_types(
+                    fields_patches, domain, data_tag, is_global, description)
         clear_fixture_cache(domain)
-        return json_response(strip_json(data_type))
+        return json_response(table_json(data_type))
 
 
-def _update_types(patches, domain, data_type_id, data_tag, is_global, description, transaction):
-    data_type = FixtureDataType.get(data_type_id)
-    fields_patches = deepcopy(patches)
+def table_json(table):
+    data = {
+        '_id': table.id.hex,
+        'fields': [asdict(f) for f in table.fields],
+    }
+    for key in ['description', 'is_global', 'item_attributes', 'tag']:
+        data[key] = getattr(table, key)
+    return data
+
+
+def _update_types(data_type, patches, data_tag, is_global, description):
+    fields_patches = dict(patches)
     old_fields = data_type.fields
     new_fixture_fields = []
     data_type.tag = data_tag
@@ -187,53 +178,19 @@ def _update_types(patches, domain, data_type_id, data_tag, is_global, descriptio
         if not any(patch):
             new_fixture_fields.append(old_field)
         if "update" in patch:
-            setattr(old_field, "field_name", patch["update"])
+            old_field.name = patch["update"]
             new_fixture_fields.append(old_field)
-        if "remove" in patch:
-            continue
     new_fields = list(fields_patches.keys())
     for new_field_name in new_fields:
         patch = fields_patches.pop(new_field_name)
         if "is_new" in patch:
-            new_fixture_fields.append(FixtureTypeField(
-                field_name=new_field_name,
-                properties=[]
-            ))
+            new_fixture_fields.append(TypeField(name=new_field_name))
     data_type.fields = new_fixture_fields
-
-    def update_sql_objects():
-        data_type._migration_do_sync()
-
-    transaction.set_sql_save_action(FixtureDataType, update_sql_objects)
-    transaction.save(data_type)
+    data_type.save()
     return data_type
 
 
-def _update_items(fields_patches, domain, data_type_id, transaction):
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
-    for item in data_items:
-        fields = item.fields
-        updated_fields = {}
-        patches = deepcopy(fields_patches)
-        for old_field in list(fields):
-            patch = patches.pop(old_field, {})
-            if not any(patch):
-                updated_fields[old_field] = fields.pop(old_field)
-            if "update" in patch:
-                new_field_name = patch["update"]
-                updated_fields[new_field_name] = fields.pop(old_field)
-            if "remove" in patch:
-                continue
-                # destroy_field(field_to_delete, transaction)
-        for new_field_name in list(patches):
-            patch = patches.pop(new_field_name, {})
-            if "is_new" in patch:
-                updated_fields[new_field_name] = FieldList(
-                    field_list=[]
-                )
-        setattr(item, "fields", updated_fields)
-        transaction.save(item)
-
+def _update_items(fields_patches, domain, data_type_id):
     fields_json = "fields"
     for field_name, patch in fields_patches.items():
         if "update" in patch:
@@ -249,29 +206,23 @@ def _update_items(fields_patches, domain, data_type_id, transaction):
         if "is_new" in patch:
             fields_json = JsonSet(fields_json, [field_name], [])
 
-    def update_sql_objects():
-        if fields_json != "fields":
-            LookupTableRow.objects.filter(
-                domain=domain,
-                table_id=data_type_id,
-            ).update(fields=fields_json)
-
-    transaction.set_sql_save_action(FixtureDataItem, update_sql_objects)
-    transaction.add_post_commit_action(
-        lambda: FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
-    )
+    if fields_json != "fields":
+        LookupTableRow.objects.filter(
+            domain=domain,
+            table_id=data_type_id,
+        ).update(fields=fields_json)
 
 
-def _create_types(fields_patches, domain, data_tag, is_global, description, transaction):
-    data_type = FixtureDataType(
+def _create_types(fields_patches, domain, data_tag, is_global, description):
+    data_type = LookupTable(
         domain=domain,
         tag=data_tag,
         is_global=is_global,
-        fields=[FixtureTypeField(field_name=field, properties=[]) for field in fields_patches],
+        fields=[TypeField(name=field) for field in fields_patches],
         item_attributes=[],
         description=description,
     )
-    transaction.save(data_type)
+    data_type.save()
     return data_type
 
 
@@ -300,9 +251,15 @@ def data_table(request, domain):
     headers = [DataTablesColumn(header) for header in selected_sheet["headers"]]
     data_table["headers"] = DataTablesHeader(*headers)
     if selected_sheet["headers"] and selected_sheet["rows"]:
-        data_table["rows"] = [[format_datatables_data(x or "--", "a") for x in row] for row in selected_sheet["rows"]]
+        data_table["rows"] = [
+            [format_datatables_data(x or "--", "a") for x in row]
+            for row in selected_sheet["rows"]
+        ]
     else:
-        messages.info(request, _("No items are added in this table type. Upload using excel to add some rows to this table"))
+        messages.info(request, _(
+            "No items are added in this table type. "
+            "Upload using excel to add some rows to this table"
+        ))
         data_table["rows"] = [["--" for x in range(0, len(headers))]]
     return data_table
 
@@ -352,7 +309,7 @@ class UploadItemLists(TemplateView):
         file_ref = expose_cached_download(
             request.file.read(),
             file_extension=file_extention_from_filename(request.file.name),
-            expiry=1*60*60,
+            expiry=60 * 60,
         )
 
         # catch basic validation in the synchronous UI

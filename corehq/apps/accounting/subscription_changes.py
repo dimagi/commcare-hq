@@ -9,6 +9,7 @@ from django.utils.translation import ngettext
 from couchdbkit import ResourceConflict
 
 from dimagi.utils.parsing import json_format_date
+from field_audit.models import AuditAction
 
 from corehq import privileges
 from corehq.apps.accounting.utils import get_privileges, log_accounting_error
@@ -16,7 +17,7 @@ from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.exceptions import DomainDoesNotExist
 from corehq.apps.domain.models import Domain
-from corehq.apps.fixtures.models import FixtureDataType
+from corehq.apps.fixtures.models import LookupTable
 from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
 )
@@ -262,7 +263,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             AutomaticUpdateRule.by_domain(
                 domain.name,
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
-            ).update(active=False)
+            ).update(active=False, audit_action=AuditAction.AUDIT)
             AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
             return True
         except Exception:
@@ -497,7 +498,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Lookup tables will be deleted on downgrade.
         """
-        num_fixtures = FixtureDataType.total_by_domain(domain.name)
+        num_fixtures = LookupTable.objects.by_domain(domain.name).count()
         if num_fixtures > 0:
             return _fmt_alert(
                 ngettext(

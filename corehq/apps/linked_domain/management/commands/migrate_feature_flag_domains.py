@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import (
     SoftwarePlanVisibility,
     Subscription,
 )
-from corehq.apps.toggle_ui.utils import find_static_toggle
+from corehq.apps.linked_domain.models import DomainLink
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +48,14 @@ class Command(BaseCommand):
         privilege_role_slug = 'release_management'
         active_roles = _get_active_roles()
         roles_to_update, versions_to_update, plans_to_create = _get_migration_info(
-            active_roles, 'linked_domains', privilege_role_slug
+            active_roles, privilege_role_slug
         )
         _update_roles_in_place(roles_to_update, privilege_role_slug, dry_run=dry_run)
         _update_versions_in_place(versions_to_update, privilege_role_slug, dry_run=dry_run)
         _update_subscriptions_to_new_plans(plans_to_create, privilege_role_slug, dry_run=dry_run)
 
 
-def _get_migration_info(roles, toggle_slug, privilege_slug):
+def _get_migration_info(roles, privilege_slug):
     """
     :param roles: [Role]
     :param toggle_slug: str slug for feature flag to migrate from
@@ -78,7 +78,7 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
         versions = SoftwarePlanVersion.objects.filter(role=role, is_active=True)
         domains = _get_domains_for_versions(versions)
 
-        if not _contain_public_versions(versions) and _all_domains_have_toggle_enabled(domains, toggle_slug):
+        if not _contain_public_versions(versions) and _all_domains_use_linked_domains(domains):
             roles_to_update.append(role.slug)
             formatted_domains = '\n'.join(domains)
             logger.info(f'[ERM Migration]Will update role {role.slug} for domains:\n{formatted_domains}')
@@ -86,16 +86,16 @@ def _get_migration_info(roles, toggle_slug, privilege_slug):
 
         for version in versions:
             domains_for_version = _get_domains_for_version(version)
-            if _all_domains_have_toggle_enabled(domains_for_version, toggle_slug):
+            if _all_domains_use_linked_domains(domains_for_version):
                 plan_versions_to_update.append(version.id)
                 formatted_domains = '\n'.join(domains_for_version)
                 logger.info(f'[ERM Migration]Will update plan version {version.id} for domains:\n{formatted_domains}')
             else:
-                domains_with_toggle_enabled = _get_domains_with_toggle_enabled(domains_for_version, toggle_slug)
-                if domains_with_toggle_enabled:
-                    formatted_domains = '\n'.join(domains_with_toggle_enabled)
+                domains_that_use_feature = _get_domains_that_use_linked_domains(domains_for_version)
+                if domains_that_use_feature:
+                    formatted_domains = '\n'.join(domains_that_use_feature)
                     logger.info(f'[ERM Migration]Will update plan for version {version.id} for domains:\n{formatted_domains}')
-                    plans_to_create[version.id] = domains_with_toggle_enabled
+                    plans_to_create[version.id] = domains_that_use_feature
 
     return roles_to_update, plan_versions_to_update, plans_to_create
 
@@ -105,15 +105,21 @@ def _contain_public_versions(versions):
     return SoftwarePlanVisibility.PUBLIC in plan_visibility
 
 
-def _get_domains_with_toggle_enabled(domains, toggle_slug):
-    toggle = find_static_toggle(toggle_slug)
-    return list(filter(toggle.enabled, domains))
+def _get_domains_that_use_linked_domains(domains):
+    domains_in_links = _get_all_domains_using_linked_domains()
+    return list(domains_in_links & set(domains))
 
 
-def _all_domains_have_toggle_enabled(domains, toggle_slug):
-    toggle = find_static_toggle(toggle_slug)
-    toggle_enabled = {toggle.enabled(domain) for domain in domains}
-    return len(toggle_enabled) == 1 and True in toggle_enabled
+def _all_domains_use_linked_domains(domains):
+    domains_in_links = _get_all_domains_using_linked_domains()
+    return set(domains).issubset(domains_in_links)
+
+
+def _get_all_domains_using_linked_domains():
+    domains_in_links = DomainLink.all_objects.all()
+    upstream_domains = [d.master_domain for d in domains_in_links]
+    downstream_domains = [d.linked_domain for d in domains_in_links]
+    return set(upstream_domains + downstream_domains)
 
 
 def _get_domains_for_version(version):

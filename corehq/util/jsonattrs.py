@@ -101,6 +101,13 @@ class JsonAttrsField(JSONField):
         value = super().from_db_value(value, expression, connection)
         return self.builder.attrify(value)
 
+    def value_to_string(self, obj):
+        # Returns a JSON-serializable object for compatibility with
+        # django.core.serializers.python.Serializer. Obviously this is
+        # not strictly a string, but it's closer than the collection of
+        # attrs instances returned by the default implementation.
+        return self.builder.jsonify(self.value_from_object(obj))
+
     def deconstruct(self):
         # Returns a JSONField deconstruction to be used in migrations,
         # which do not need to know anything about attrs builders.

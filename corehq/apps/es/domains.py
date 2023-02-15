@@ -12,8 +12,10 @@ DomainES
              .size(0))
 """
 from . import filters
-from .client import ElasticDocumentAdapter
+from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
+from .index.analysis import COMMA_ANALYSIS
+from .index.settings import IndexSettingsKey
 from .transient_util import get_adapter_mapping, from_dict_with_possible_id
 
 
@@ -46,8 +48,8 @@ class DomainES(HQESQuery):
 
 class ElasticDomain(ElasticDocumentAdapter):
 
-    _index_name = "hqdomains_2021-03-08"
-    type = "hqdomain"
+    analysis = COMMA_ANALYSIS
+    settings_key = IndexSettingsKey.DOMAINS
 
     @property
     def mapping(self):
@@ -56,6 +58,13 @@ class ElasticDomain(ElasticDocumentAdapter):
     @classmethod
     def from_python(cls, doc):
         return from_dict_with_possible_id(doc)
+
+
+domain_adapter = create_document_adapter(
+    ElasticDomain,
+    "hqdomains_2021-03-08",
+    "hqdomain",
+)
 
 
 def non_test_domains():

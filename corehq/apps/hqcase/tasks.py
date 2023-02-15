@@ -2,7 +2,6 @@ import uuid
 from collections import defaultdict
 from copy import copy
 
-from celery.task import task
 from toposort import toposort_flatten
 
 from casexml.apps.case.mock.case_block import IndexAttrs
@@ -11,6 +10,7 @@ from dimagi.utils.chunked import chunked
 from soil import DownloadBase
 
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from corehq.apps.celery import task
 from corehq.apps.es import CaseSearchES
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.ota.utils import get_restore_user

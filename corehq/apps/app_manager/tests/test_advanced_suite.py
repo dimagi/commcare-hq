@@ -357,7 +357,7 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     def test_advanced_module_remote_request(self, *args):
-        factory = AppFactory(domain='domain')
+        factory = AppFactory(domain='domain', build_version='2.53.0')
         factory.app._id = "123"
         m0, f0 = factory.new_advanced_module("search", "patient")
         factory.form_requires_case(f0)
@@ -388,6 +388,11 @@ class AdvancedSuiteTest(SimpleTestCase, SuiteMixin):
             <session>
               <query url="http://localhost:8000/a/domain/phone/search/123/"
                 storage-instance="results" template="case" default_search="false">
+                <title>
+                    <text>
+                        <locale id="case_search.m0.inputs"/>
+                    </text>
+                </title>
                 <data key="case_type" ref="'patient'"/>
                 <prompt key="name">
                   <display>

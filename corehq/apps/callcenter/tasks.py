@@ -1,18 +1,16 @@
 from django.conf import settings
 
 from celery.schedules import crontab
-from celery.task import periodic_task, task
 from celery.utils.log import get_task_logger
 
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
-from corehq.apps.callcenter.sync_usercase import (
-    sync_usercases
-)
+from corehq.apps.callcenter.sync_usercase import sync_usercases
 from corehq.apps.callcenter.utils import (
     get_call_center_cases,
     get_call_center_domains,
     is_midnight_for_domain,
 )
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CouchUser
 from corehq.toggles import USH_USERCASES_FOR_WEB_USERS

@@ -1,9 +1,8 @@
 import uuid
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
-
-from unittest.mock import patch
 
 from casexml.apps.case.mock import CaseBlock, IndexAttrs
 
@@ -11,12 +10,12 @@ from corehq import privileges
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import HqPermissions, UserRole, WebUser
 from corehq.form_processor.models import CommCareCase, XFormInstance
-from corehq.form_processor.tests.utils import (
-    FormProcessorTestUtils,
-    sharded,
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, sharded
+from corehq.util.test_utils import (
+    disable_quickcache,
+    flag_enabled,
+    privilege_enabled,
 )
-from casexml.apps.case.views import CaseDisplayWrapper
-from corehq.util.test_utils import disable_quickcache, flag_enabled, privilege_enabled
 
 from ..utils import submit_case_blocks
 
@@ -593,7 +592,40 @@ class TestCaseAPI(TestCase):
             },
         })
         self.assertEqual(res.status_code, 400)
-        self.assertEqual(res.json(), {'error': "Case properties must be strings"})
+        self.assertEqual(res.json(), {
+            'error': "Error with case property 'age'. Values must be strings, received '72'"
+        })
+
+    def test_non_xml_properties(self):
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+            'properties': {'not good': 'tsk tsk'},
+        })
+        self.assertEqual(res.status_code, 400)
+        msg = "Error with case property 'not good'. Case property names must be valid XML identifiers."
+        self.assertEqual(res.json()['error'], msg)
+
+    def test_non_xml_index_name(self):
+        parent_case = self._make_case()
+        res = self._create_case({
+            'case_type': 'player',
+            'case_name': 'Elizabeth Harmon',
+            'owner_id': 'methuen_home',
+            'indices': {
+                "Robert'); DROP TABLE students;--": {
+                    'case_id': parent_case.case_id,
+                    'case_type': 'player',
+                    'relationship': 'child',
+                },
+            },
+        })
+        self.assertEqual(res.status_code, 400)
+        msg = ("Error with index 'Robert'); DROP TABLE students;--'. "
+               "Index names must be valid XML identifiers.")
+        self.assertEqual(res.json()['error'], msg)
+
 
     def test_bad_index_reference(self):
         res = self._create_case({
@@ -654,16 +686,3 @@ class TestCaseAPI(TestCase):
             )
             # These requests should return a 400 because of the bad body, not a 301 redirect
             self.assertEqual(res.status_code, 400)
-
-    def test_location_id_case_property(self):
-        case_id = uuid.uuid4().hex
-        location_name = 'location'
-        submit_case_blocks([CaseBlock(
-            case_id=case_id,
-            create=True,
-            update={'location_id': location_name}
-        ).as_text()], domain=self.domain)
-        case = CommCareCase.objects.get_case(case_id, self.domain)
-        case_properties = CaseDisplayWrapper(case).dynamic_properties()
-        self.assertTrue('location_id' in case_properties)
-        self.assertEqual(location_name, case_properties['location_id'])

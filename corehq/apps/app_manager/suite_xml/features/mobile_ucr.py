@@ -265,7 +265,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
             )
         )
 
-    def _get_description_text(report_config):
+    def _get_description(report_config):
         if report_config.use_xpath_description:
             return Text(
                 xpath=TextXPath(function=config.xpath_description)
@@ -296,7 +296,7 @@ def _get_summary_details(config, domain, module, new_mobile_ucr_restore=False):
                 )
             ),
             template=Template(
-                text=_get_description_text(config)
+                text=_get_description(config)
             ),
         ),
     ]

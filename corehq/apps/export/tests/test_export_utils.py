@@ -1,12 +1,14 @@
 from datetime import date, timedelta
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 from corehq.apps.accounting.models import SoftwarePlanEdition, Subscription, DefaultProductPlan, BillingAccount, \
     SubscriptionAdjustment
+from corehq.apps.export.models import FormExportInstance, TableConfiguration, ExportColumn
 from corehq.apps.export.utils import get_default_export_settings_if_available
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.tests import generator
+from corehq.apps.export.views.utils import clean_odata_columns
 
 
 class TestExportUtils(TestCase, DomainSubscriptionMixin):
@@ -95,3 +97,46 @@ class TestExportUtils(TestCase, DomainSubscriptionMixin):
         self.update_subscription(SoftwarePlanEdition.ENTERPRISE)
         settings = get_default_export_settings_if_available(self.domain)
         self.assertIsNotNone(settings)
+
+
+class TestOdataFeedUtils(SimpleTestCase):
+
+    def test_clean_odata_columns(self):
+        export_instance = FormExportInstance(
+            _id='config_id',
+            tables=[TableConfiguration(columns=[
+                ExportColumn(
+                    label='@label_reserved_character_01',
+                ),
+                ExportColumn(
+                    label='label.reserved.character.02',
+                ),
+                ExportColumn(
+                    label='label_reserved_character_03\n',
+                ),
+                ExportColumn(
+                    label='label_reserved_character_04\t',
+                ),
+                ExportColumn(
+                    label='#label_reserved_character_05',
+                ),
+                ExportColumn(
+                    label='label,reserved,character,06',
+                ),
+                ExportColumn(
+                    label='formid',
+                    is_deleted=True,
+                ),
+            ])],
+            domain='test_odata_domain'
+        )
+
+        clean_odata_columns(export_instance)
+
+        self.assertEqual(export_instance.tables[0].columns[0].label, 'label_reserved_character_01')
+        self.assertEqual(export_instance.tables[0].columns[1].label, 'label reserved character 02')
+        self.assertEqual(export_instance.tables[0].columns[2].label, 'label_reserved_character_03')
+        self.assertEqual(export_instance.tables[0].columns[3].label, 'label_reserved_character_04 ')
+        self.assertEqual(export_instance.tables[0].columns[4].label, 'label_reserved_character_05')
+        self.assertEqual(export_instance.tables[0].columns[5].label, 'labelreservedcharacter06')
+        self.assertEqual(export_instance.tables[0].columns[6].label, 'formid_deleted')

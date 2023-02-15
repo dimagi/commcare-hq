@@ -36,6 +36,10 @@
 
 {% requirejs_main 'export/js/download_export' %}
 
+{% block page_title %}
+  {{ current_page.title }}
+{% endblock %}
+
 {% block page_content %}
   {% initial_page_data 'export_list' export_list %}
   {% initial_page_data 'form_or_case' form_or_case %}

@@ -3,16 +3,19 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 
+from celery.schedules import crontab
+
 from couchexport.models import Format
 from soil import DownloadBase
 from soil.progress import get_task_status
 from soil.util import expose_blob_download, process_email_request
 
-from celery.schedules import crontab
-from celery.task import periodic_task, task
+from corehq.apps.celery import periodic_task, task
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
-from corehq.apps.export.models.incremental import generate_and_send_incremental_export
 from corehq.apps.export.exceptions import RejectedStaleExport
+from corehq.apps.export.models.incremental import (
+    generate_and_send_incremental_export,
+)
 from corehq.apps.export.utils import get_export
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import CODES, get_blob_db
@@ -28,10 +31,7 @@ from .dbaccessors import (
     get_daily_saved_export_ids_for_auto_rebuild,
     get_properly_wrapped_export_instance,
 )
-from .export import (
-    get_export_file,
-    rebuild_export,
-)
+from .export import get_export_file, rebuild_export
 from .models.incremental import IncrementalExport
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
@@ -166,7 +166,12 @@ def saved_exports():
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
 def _cached_add_inferred_export_properties(sender, domain, case_type, properties):
-    from corehq.apps.export.models import MAIN_TABLE, PathNode, CaseInferredSchema, ScalarItem
+    from corehq.apps.export.models import (
+        MAIN_TABLE,
+        CaseInferredSchema,
+        PathNode,
+        ScalarItem,
+    )
     """
     Adds inferred properties to the inferred schema for a case type.
 

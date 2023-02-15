@@ -1,39 +1,39 @@
-from django.core.management import call_command
-from django.test import SimpleTestCase
+from io import StringIO
+from unittest.mock import patch
 
-from corehq.apps.es.tests.utils import es_test
-from corehq.elastic import get_es_new
-from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO  # any valid index will do
-from pillowtop.es_utils import initialize_index_and_mapping
+from django.core.management.commands import makemigrations
+from django.db.migrations.operations import RunPython
+from django.test import TestCase
+
+from corehq.preindex import apps as preindex
+
+from ..django_migrations import patch_migration_autodetector
 
 
-@es_test(index=SMS_INDEX_INFO, setup_class=True)
-class TestUpdateEsMapping(SimpleTestCase):
-    """Guard against future changes to the `update_es_mapping` management
-    command accidentally breaking this migration utility."""
+class TestMigrationAutodetector(TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-        cls.index = SMS_INDEX_INFO.index
-        cls.es = get_es_new()
-        cls.drop_index()
-        initialize_index_and_mapping(cls.es, SMS_INDEX_INFO)
+    def test_patch_migration_autodetector(self):
+        def autodetect_migrations(self, add_operation):
+            log.append("detect")
+            add_operation(self.label, operation)
+            return lambda: log.append("write extra")
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.drop_index()
-        super().tearDownClass()
+        def command_writer(self_, changes):
+            log.append("write changes")
+            migrations = changes.get("preindex", [])
+            operations = [o for m in migrations for o in m.operations]
+            self.assertIn(operation, operations, changes)
 
-    @classmethod
-    def drop_index(cls):
-        if cls.es.indices.exists(cls.index):
-            cls.es.indices.delete(cls.index)
+        log = []
+        operation = RunPython(RunPython.noop, RunPython.noop)
+        output = StringIO()
+        command = makemigrations.Command(output, output)
+        with (
+            patch.object(preindex.Config, "autodetect_migrations", new=autodetect_migrations),
+            patch.object(makemigrations.Command, "write_migration_files", new=command_writer),
+            patch_migration_autodetector(command),
+        ):
+            command.run_from_argv(["manage.py", "makemigrations", "preindex"])
 
-    def test_update_es_mapping(self):
-        """Ensure the management command succeeds"""
-        call_command("update_es_mapping", self.index, noinput=True)
-
-    def test_update_es_mapping_quiet(self):
-        """Ensure the management command succeeds with --quiet"""
-        call_command("update_es_mapping", self.index, "--quiet", noinput=True)
+        self.assertEqual(log, ["detect", "write changes", "write extra"])
+        self.assertEqual(output.getvalue(), "")

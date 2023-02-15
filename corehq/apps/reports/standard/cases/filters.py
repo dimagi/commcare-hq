@@ -12,11 +12,13 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES,
 )
+from corehq.apps.data_dictionary.util import get_case_property_label_dict
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reports.filters.base import (
     BaseSimpleFilter,
     BaseSingleOptionFilter,
 )
+from corehq import toggles
 
 # TODO: Replace with library method
 mark_safe_lazy = lazy(mark_safe, str)
@@ -90,7 +92,11 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = gettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    DEFAULT_COLUMNS = ['@case_type', 'case_name', 'last_modified']
+    DEFAULT_COLUMNS = [
+        {'name': '@case_type', 'label': '@case_type'},
+        {'name': 'case_name', 'label': 'case_name'},
+        {'name': 'last_modified', 'label': 'last_modified'}
+    ]
 
     @property
     def filter_context(self):
@@ -117,7 +123,16 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     @classmethod
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
-        return json.loads(value or "[]")
+        ret = json.loads(value or "[]")
+
+        # convert legacy list of strings to list of dicts
+        if ret and type(ret[0]) == str:
+            ret = [{
+                'name': prop_name,
+                'label': prop_name
+            } for prop_name in ret]
+
+        return ret
 
 
 def get_flattened_case_properties(domain, include_parent_properties=False):
@@ -126,9 +141,23 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
         include_parent_properties=include_parent_properties
     )
     property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
-    all_properties = [
-        {'name': value, 'case_type': case_type, 'count': property_counts[value]}
-        for case_type, values in all_properties_by_type.items()
-        for value in values
-    ]
+
+    if toggles.DATA_DICTIONARY.enabled(domain):
+        prop_labels = get_case_property_label_dict(domain)
+        all_properties = [
+            {
+                'name': value,
+                'case_type': case_type,
+                'count': property_counts[value],
+                'label': prop_labels.get(case_type, {}).get(value, value)
+            }
+            for case_type, values in all_properties_by_type.items()
+            for value in values
+        ]
+    else:
+        all_properties = [
+            {'name': value, 'case_type': case_type, 'count': property_counts[value]}
+            for case_type, values in all_properties_by_type.items()
+            for value in values
+        ]
     return all_properties

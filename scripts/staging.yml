@@ -9,7 +9,8 @@
 # to check if your branch causes any conflicts before rebuilding
 #     $ scripts/rebuildstaging --no-push
 # to rebuild from your new spec and deploy
-#     $ scripts/rebuildstaging
+#     $ scripts/rebuildstaging (--deploy)
+#     OR run deploy separately
 #     $ commcare-cloud --control staging deploy
 # Above commands commands can be run without the flag as well.
 
@@ -53,34 +54,37 @@ branches:
     # see https://confluence.dimagi.com/display/GTD/Deploy+Process#DeployProcess-vellum
     - vellum-staging  # DO NOT REMOVE this is similar to "autostaging", but for vellum
     # - nemanja1040:infobip_fallback_backend  # Nemanja Stancic Jul 29
-    - sr/es-alias # Sravan Nov 18
+    # - sr/es-alias # Sravan Nov 18
     - ce/bulk-case-search # Cal July 6
     # - sr/memoized-toggle # Sravan July 26
     # - dependabot/pip/requirements/certifi-2021.10.8   # SK / Joel Oct 12
     # - mk/support-expanded-cols-in-mobile-ucr # MK Feb 2
-    - mjr/all_safe_fixes  # Matt May 11
     - bmb/sso/api/test-001  # Biyeun June 15
-    - mjr/erm-overwrite # Matt June 24
-    - ad/save-only-edited-fields-migration # Addison July 7
-    - gh/upgrade-twilio # Graham July 8
-   # - rp/fix-case-properties-modal-styling # Rynhard 20 July
-    - mjr/report-logging+celery-upgrade-patch # Matt July 20
-    - mjr/report-logging-verification # Matt July 20
-    - dm/sql-lookup-tables-pr1  # Daniel July 21
-    - cs/SC-2079-form-view-ff # Charl July 25
-    - ml/limit-superuser-changes # Minha July 25
-    - jls/conditionally-required-case-search-fields # Jenny July 29
-    - es/required-2  # Ethan July 29
-    - ad/embedded-tableau-explorer-access # Addison Aug 1
-    - jc/USH-2151  # Jing/Steph Aug 2
-    # - rc/es-phonetic-analyzer # Robert Aug 4
-    - cs/missing-location-filter-definition # Charl Aug 5
-    - do/web-user-restore # Dominic Aug 8
-    - smh/multi-select-case-list-selectedValues-refactor # Steph Aug 8
-    - dependabot/pip/requirements/stripe-4.0.2  # Biyeun Aug 11
-    #- jls/web-apps-upload # Jenny Aug 15
-    - jc/USH-1371  # Jing/Joel Aug 16
-    - dependabot/npm_and_yarn/leaflet-1.8.0  # Biyeun Aug 17 (impacts maps)
-    #- bmb/upgrade-django-compressor-4.1  # Biyeun Aug 22 (impacts all static files / css)
-    - bmb/pyopenssl-upgrade-22.0.0  # Biyeun Aug 22 (impacts SSO)
+    - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
+    - do/migrate-apps # Dominic Sep 2
+    - smh/remove-setSelectedValue-import # Steph Sept 20
+    - akj/release-mode-toggle # Akash 7 Oct
+    - akj/migrations-fix # Akash Oct 11
+    - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
+    # - akj/abdm-api-for-mobile-app # Akash Sep 28
+    - es/redirect-domain  # Ethan Nov 21
+    #- jls/web-apps-requirejs  # Jenny Jan 17
+    - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
+    - jls/new-instance-connectors # Steph Dec 27
+    #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
+    - ad/remove-entered-wrap-functions # Addison Jan 26
+    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
+    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
+    - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
+    # - ce/enable-case-rate-limits # Cal Feb 1
+    # - ml/enforce-metadata-ff # Minha Feb 2
+    - akj/tabular-radio-btn-reader # Akash Feb 6
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - sk/webapps-sessionid  # Simon Feb 9
+    - jls/nodeset-filter-ui # Jenny Feb 13
+    - smh/force-incremental-sync # Steph Feb 14
+    # - jm/django-3.2.18  # Joel Feb 14
+    - gh/disable-hyperlinks-on-large-exports # Graham Feb 14
+    - ze/remove_deprecated_from_export # Zandre Feb 15
+    - ad/tableau-user-syncing-bulk # Addison Feb 15
 submodules: { }

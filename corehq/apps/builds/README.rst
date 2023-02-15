@@ -66,7 +66,7 @@ Install the configuration file
 
 In ``/etc/nginx/nginx.conf``, at the bottom of the ``http{}`` block, above any other site includes, add the line:
 
-``include /path/to/commcarehq/deployment/nginx/cchq*local*nginx.conf;``
+``include /path/to/commcarehq/deployment/nginx/cchq_local_nginx.conf;``
 
 Start nginx
 ###########
@@ -80,20 +80,24 @@ Make sure your local django application is accessible over the network
 
 Try accessing ``http://localhost/a/domain`` and see if it works. nginx should
 
-proxy all requests to localhost to your django server. You should also be able
-
-to access ``http://your_ip_address/a/domain`` from a phone or other device on the
-
-same network.
+proxy all requests to localhost to your django server.
 
 Make Commcare use your local IP address
 #######################################
 
 Set the ``BASE_ADDRESS`` setting in ``localsettings.py`` to your IP address (e.g.
 
-``192.168.0.10``), without a port. You'll have to update this if you ever change
+``192.168.0.10``), without a port.
 
-networks or get a new IP address.
+Additionally, modify ``deployment/nginx/cchq_local_nginx.conf`` to replace localhost with
+your IP address as ``server_name``.
+For example, set server_name as ``192.168.0.10``.
+Then run ``sudo nginx -s reload`` or ``brew services restart nginx`` to reload configuration.
+
+You should now be able to access ``http://your_ip_address/a/domain`` from a phone or other device on the
+same network.
+
+Note: You'll have to update these if you ever change networks or get a new IP address.
 
 Rebuild and redeploy your application
 #####################################
@@ -117,7 +121,7 @@ Using a management command
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - `./manage.py add_commcare_build --latest` To fetch the latest released build from github
-- `./manage.py add_commcare_build --version=2.53.0` To manually specify the build number to use
+- `./manage.py add_commcare_build --build_version 2.53.0` To manually specify the build number to use
 - `./manage.py add_commcare_build path/to/build/ 2.53.0 2321` To make a J2ME build from a zip. The args are build_path, version, and build_number
 
 

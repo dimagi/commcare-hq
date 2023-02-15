@@ -207,3 +207,52 @@ class AppManagerTranslationsTest(TestCase, SuiteMixin):
             self.assertEqual(es_app_strings['case_search.m0'], 'Conseguirlos')
             self.assertEqual(es_app_strings['case_search.m0.icon'], 'jr://file/commcare/image/1_es.png')
             self.assertEqual(es_app_strings['case_search.m0.again'], 'Get them all')
+
+    def test_dependencies_app_strings(self):
+        app_id = 'callout.commcare.org.sendussd'
+        app_name = 'CommCare USSD'
+
+        factory = AppFactory(build_version='2.40.0')
+        factory.app.profile['features'] = {'dependencies': [app_id]}
+
+        with flag_disabled('APP_DEPENDENCIES'):
+            default_strings = self._generate_app_strings(factory.app, 'default')
+            self.assertNotIn(f'android.package.name.{app_id}', default_strings)
+
+        with flag_enabled('APP_DEPENDENCIES'):
+            default_strings = self._generate_app_strings(factory.app, 'default')
+            self.assertEqual(
+                default_strings[f'android.package.name.{app_id}'],
+                app_name
+            )
+
+    def test_no_items_text_app_strings(self):
+        factory = AppFactory(build_version='2.54.0')
+        factory.app.langs = ['en', 'es']
+        factory.app.build_profiles = OrderedDict({
+            'en': BuildProfile(langs=['en'], name='en-profile'),
+            'es': BuildProfile(langs=['es'], name='es-profile'),
+        })
+        module, form = factory.new_basic_module('my_module', 'cases')
+        module.case_details.short.no_items_text = {'en': 'Empty List.', 'es': 'Lista Vacía.'}
+
+        # wrap to have assign_references called
+        app = Application.wrap(factory.app.to_json())
+
+        with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
+            # default language
+            en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            self.assertEqual(en_app_strings['m0_no_items_text'], 'Empty List.')
+
+            # non-default language
+            es_app_strings = self._generate_app_strings(app, 'es', build_profile_id='es')
+            self.assertEqual(es_app_strings['m0_no_items_text'], 'Lista Vacía.')
+
+        factory.new_report_module('my_module')
+        app = Application.wrap(factory.app.to_json())
+
+        with flag_enabled('USH_EMPTY_CASE_LIST_TEXT'):
+            try:
+                en_app_strings = self._generate_app_strings(app, 'default', build_profile_id='en')
+            except AttributeError:
+                self.fail("_generate_app_strings raised AttributeError unexpectedly")

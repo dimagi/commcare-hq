@@ -54,7 +54,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     AlertScheduleInstance,
 )
 from corehq.motech.models import ConnectionSettings
-from corehq.motech.repeaters.models import SQLCreateCaseRepeater
+from corehq.motech.repeaters.models import CreateCaseRepeater
 
 
 class BaseDumpLoadTest(TestCase):
@@ -81,7 +81,7 @@ class BaseDumpLoadTest(TestCase):
         self.delete_sql_data()
         super(BaseDumpLoadTest, self).tearDown()
 
-    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None, dumper_fn=None):
+    def _dump_and_load(self, expected_dump_counts, load_filter=None, expected_load_counts=None):
         expected_load_counts = expected_load_counts or expected_dump_counts
         expected_dump_counts.update(self.default_objects_counts)
 
@@ -89,11 +89,10 @@ class BaseDumpLoadTest(TestCase):
         self._check_signals_handle_raw(models)
 
         # Dump
+        dumper = SqlDataDumper(self.domain_name, [], [])
+        dumper.stdout = None  # silence output
         output_stream = StringIO()
-        if dumper_fn:
-            dumper_fn(output_stream)
-        else:
-            SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        dumper.dump(output_stream)
         output_stream.seek(0)
 
         self.delete_sql_data()
@@ -366,7 +365,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
 
         expected_object_counts = Counter({
             UserRole: 2,
-            RolePermission: 11,
+            RolePermission: 5,
             RoleAssignableBy: 1
         })
 
@@ -582,6 +581,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         MessagingSubEvent.objects.create(
             parent=event,
+            domain=self.domain_name,
             date=datetime.utcnow(),
             recipient_type=MessagingEvent.RECIPIENT_CASE,
             content_type=MessagingEvent.CONTENT_SMS,
@@ -732,8 +732,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
             url='example.com',
             user_id='user_id',
         )
-        # connection settings and sqlrepeater instances would be created automatically with sql sync logic in place
-        self._dump_and_load(Counter({SQLCreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
+        self._dump_and_load(Counter({CreateCaseRepeater: 1, ConnectionSettings: 1, ZapierSubscription: 1}))
 
     def test_lookup_table(self):
         from corehq.apps.fixtures.models import LookupTable, LookupTableRow, LookupTableRowOwner, OwnerType
@@ -767,7 +766,9 @@ class TestSqlLoadWithError(BaseDumpLoadTest):
 
     def _load_with_errors(self, chunk_size):
         output_stream = StringIO()
-        SqlDataDumper(self.domain_name, [], []).dump(output_stream)
+        dumper = SqlDataDumper(self.domain_name, [], [])
+        dumper.stdout = None
+        dumper.dump(output_stream)
         output_stream.seek(0)
         self.delete_sql_data()
         # resave the product to force an error

@@ -46,7 +46,7 @@ class RemoteRequestSmartLinkTest(SimpleTestCase, SuiteMixin):
     file_path = ('data', 'suite')
 
     def setUp(self):
-        self.factory = AppFactory(domain=DOMAIN)
+        self.factory = AppFactory(domain=DOMAIN, build_version='2.53.0')
         self.app_id = uuid4().hex
         self.factory.app._id = self.app_id
         module, form = self.factory.new_basic_module('basic', 'tree')
@@ -114,7 +114,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def setUp(self):
         self.app = Application.new_app(DOMAIN, "Untitled Application")
         self.app._id = '123'
-        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
+        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
         self.module = self.app.add_module(Module.new_module("Untitled Module", None))
         self.form = self.app.new_form(0, "Untitled Form", None)
         self.form.requires = 'case'
@@ -165,7 +165,8 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
             ),
             properties=[
                 CaseSearchProperty(name='name', label={'en': 'Name'}),
-                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date")
+                CaseSearchProperty(name='dob', label={'en': 'Date of birth'}, input_="date"),
+                CaseSearchProperty(name='consent', label={'en': 'Consent to search'}, input_="checkbox")
             ],
             additional_relevant="instance('groups')/groups/group",
             search_filter="name = instance('item-list:trees')/trees_list/trees[favorite='yes']/name",
@@ -211,6 +212,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
                          "($case_id != '') and (double(now()) mod 2 = 0)")
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request(self, *args):
         """
         Suite should include remote-request if searching is configured
@@ -223,6 +225,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled("USH_CASE_CLAIM_UPDATES")
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_remote_request_custom_detail(self, *args):
         """Remote requests for modules with custom details point to the custom detail
         """
@@ -231,6 +234,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('remote_request_custom_detail'), suite, "./remote-request[1]")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     @patch('corehq.apps.app_manager.suite_xml.post_process.resources.ResourceOverrideHelper.update_suite')
     def test_duplicate_remote_request(self, *args):
         """
@@ -286,6 +290,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('search_command_detail'), suite, "./detail")
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_case_search_filter(self, *args):
         search_filter = "rating > 3"
         self.module.search_config.search_filter = search_filter
@@ -304,6 +309,7 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         )
 
     @flag_enabled('USH_CASE_CLAIM_UPDATES')
+    @flag_enabled('USH_SEARCH_FILTER')
     def test_additional_types(self, *args):
         another_case_type = "another_case_type"
         self.module.search_config.additional_case_types = [another_case_type]
@@ -506,12 +512,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def test_prompt_appearance(self, *args):
         """Setting the appearance to "barcode"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].appearance = 'barcode_scan'
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name">
+          <prompt key="name" appearance="barcode_scan">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -522,11 +527,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
-        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        # Shouldn't be included for versions before 2.50
+        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name" appearance="barcode_scan">
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -574,12 +580,11 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def test_prompt_address(self, *args):
         """Setting the appearance to "address"
         """
-        # Shouldn't be included for versions before 2.50
         self.module.search_config.properties[0].appearance = 'address'
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name">
+          <prompt key="name" input="address">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -589,12 +594,12 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
-
-        self.app.build_spec = BuildSpec(version='2.50.0', build_number=1)
+        # Shouldn't be included for versions before 2.50
+        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name" input="address">
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -764,22 +769,6 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
     def test_prompt_default_value(self, *args):
         """Setting the default to "default_value"
         """
-        # Shouldn't be included for versions before 2.51
-        self.module.search_config.properties[0].default_value = 'foo'
-        suite = self.app.create_suite()
-        expected = """
-        <partial>
-          <prompt key="name">
-            <display>
-              <text>
-                <locale id="search_property.m0.name"/>
-              </text>
-            </display>
-          </prompt>
-        </partial>
-        """
-        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
-        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
         self.module.search_config.properties[0].default_value = 'foo'
         suite = self.app.create_suite()
         expected = """
@@ -795,12 +784,28 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
-        self.app.build_spec = BuildSpec(version='2.51.0', build_number=1)
         self.module.search_config.properties[0].default_value = "3"
         suite = self.app.create_suite()
         expected = """
         <partial>
           <prompt default="3" key="name">
+            <display>
+              <text>
+                <locale id="search_property.m0.name"/>
+              </text>
+            </display>
+          </prompt>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
+
+        # Shouldn't be included for versions before 2.51
+        self.app.build_spec = BuildSpec(version='2.35.0', build_number=1)
+        self.module.search_config.properties[0].default_value = 'foo'
+        suite = self.app.create_suite()
+        expected = """
+        <partial>
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
@@ -843,6 +848,40 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         """
         self.assertXmlPartialEqual(expected, suite, "./remote-request[1]/session/query/prompt[@key='name']")
 
+    def test_case_search_title_translation(self, *args):
+        self.app.build_spec = BuildSpec(version='2.53.0', build_number=1)
+        suite = self.app.create_suite()
+        expected_query_title = """
+        <partial>
+            <title>
+              <text>
+                <locale id="case_search.m0.inputs"/>
+              </text>
+            </title>
+        </partial>
+        """
+        expected_search_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="cchq.case"/>
+              </text>
+            </title>
+        </partial>
+        """
+        expected_case_detail = """
+        <partial>
+            <title>
+              <text>
+                <locale id="cchq.case"/>
+              </text>
+            </title>
+        </partial>
+        """
+        self.assertXmlPartialEqual(expected_query_title, suite, "./remote-request[1]/session/query/title")
+        self.assertXmlPartialEqual(expected_search_detail, suite, "./detail[@id='m0_search_short']/title")
+        self.assertXmlPartialEqual(expected_case_detail, suite, "./detail[@id='m0_case_short']/title")
+
     def test_required(self, *args):
         self.module.search_config.properties[0].required = Assertion(
             test="#session/user/data/is_supervisor = 'n'",
@@ -850,12 +889,17 @@ class RemoteRequestSuiteTest(SimpleTestCase, SuiteMixin):
         suite = self.app.create_suite()
         expected = """
         <partial>
-          <prompt key="name" required="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+          <prompt key="name">
             <display>
               <text>
                 <locale id="search_property.m0.name"/>
               </text>
             </display>
+            <required test="instance('commcaresession')/session/user/data/is_supervisor = 'n'">
+              <text>
+                <locale id="search_property.m0.name.required.text"/>
+              </text>
+            </required>
           </prompt>
         </partial>
         """

@@ -379,8 +379,8 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             )
     if (should_edit("form_links_xpath_expressions")
             and should_edit("form_links_form_ids")
-            and toggles.FORM_LINK_WORKFLOW.enabled(domain)):
-        form_links = zip(
+            and domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)):
+        form_link_data = zip(
             request.POST.getlist('form_links_xpath_expressions'),
             request.POST.getlist('form_links_form_ids'),
             [
@@ -389,15 +389,27 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ],
         )
         module_unique_ids = [m.unique_id for m in app.get_modules()]
-        form.form_links = [FormLink(
-            xpath=link[0],
-            form_id=link[1] if link[1] not in module_unique_ids else None,
-            module_unique_id=link[1] if link[1] in module_unique_ids else None,
-            datums=[
-                FormDatum(name=datum['name'], xpath=datum['xpath'])
-                for datum in link[2]
-            ]
-        ) for link in form_links]
+        form_links = []
+        for link in form_link_data:
+            xpath, unique_id, datums = link
+            if '.' in unique_id:
+                form_module_id, form_id = unique_id.split('.')
+                module_unique_id = None
+            else:
+                form_id = unique_id if unique_id not in module_unique_ids else None
+                module_unique_id = unique_id if unique_id in module_unique_ids else None
+                form_module_id = None
+            form_links.append(FormLink(
+                xpath=xpath,
+                form_id=form_id,
+                form_module_id=form_module_id,
+                module_unique_id=module_unique_id,
+                datums=[
+                    FormDatum(name=datum['name'], xpath=datum['xpath'])
+                    for datum in datums
+                ]
+            ))
+        form.form_links = form_links
 
     if should_edit('post_form_workflow_fallback'):
         form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
@@ -796,7 +808,7 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if module.root_module_id and not module.root_module.put_in_root:
         if not module.root_module.is_multi_select():
             form_workflows[WORKFLOW_PARENT_MODULE] = _("Parent Menu: ") + trans(module.root_module.name, langs)
-    allow_form_workflow = toggles.FORM_LINK_WORKFLOW.enabled and not form.get_module().is_multi_select()
+    allow_form_workflow = domain_has_privilege(domain, privileges.FORM_LINK_WORKFLOW)
     if allow_form_workflow or form.post_form_workflow == WORKFLOW_FORM:
         form_workflows[WORKFLOW_FORM] = _("Link to other form or menu")
 
@@ -850,8 +862,8 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
-    if toggles.FORM_LINK_WORKFLOW.enabled(domain):
-        context.update(_get_form_link_context(module, langs))
+    if allow_form_workflow:
+        context.update(_get_form_link_context(app, module, form, langs))
 
     if isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -905,24 +917,45 @@ def get_form_view_context_and_template(request, domain, form, langs, current_lan
     return "app_manager/form_view.html", context
 
 
-def _get_form_link_context(module, langs):
+def _get_form_link_context(app, module, form, langs):
+    return {
+        'linkable_forms': _get_linkable_forms_context(module, langs),
+        'form_links': _get_form_links(app, form)
+    }
+
+
+def _get_form_links(app, form):
+    """Augments the form link JSON with the 'unique_id' field
+    which is dynamically generated.
+    """
+    links = []
+    for link in form.form_links:
+        link_context = link.to_json()
+        try:
+            link_context['uniqueId'] = link.get_unique_id(app)
+        except FormNotFoundException:
+            continue
+        else:
+            links.append(link_context)
+    return links
+
+
+def _get_linkable_forms_context(module, langs):
     def _module_name(module):
         return trans(module.name, langs)
 
-    def _form_name(form):
-        module_name = _module_name(form.get_module())
+    def _form_name(module, form):
+        module_name = _module_name(module)
         form_name = trans(form.name, langs)
         return "{} > {}".format(module_name, form_name)
 
     linkable_items = []
+    is_multi_select = module.is_multi_select()
     for candidate_module in module.get_app().get_modules():
         # Menus can be linked automatically if they're a top-level menu (no parent)
         # or their parent menu's case type matches the current menu's parent's case type.
         # Menus that use display-only forms can't be linked at all, since they don't have a
-        # dedicated screen to navigate to. Multi-select menus can't be linked to at all.
-        # All other menus can be linked manually.
-        if candidate_module.is_multi_select():
-            continue
+        # dedicated screen to navigate to. All other menus can be linked manually.
         if not candidate_module.put_in_root:
             is_top_level = candidate_module.root_module_id is None
             is_child_match = (
@@ -937,21 +970,20 @@ def _get_form_link_context(module, langs):
                     'auto_link': True,
                     'allow_manual_linking': False,
                 })
-        for candidate_form in candidate_module.get_forms():
+        for candidate_form in candidate_module.get_suite_forms():
             # Forms can be linked automatically if their module is the same case type as this module,
             # or if they belong to this module's parent module. All other forms can be linked manually.
             case_type_match = candidate_module.case_type == module.case_type
             is_parent = candidate_module.unique_id == module.root_module_id
             linkable_items.append({
-                'unique_id': candidate_form.unique_id,
-                'name': _form_name(candidate_form),
-                'auto_link': case_type_match or is_parent,
+                # this is necessary to disambiguate forms in shadow modules
+                'unique_id': f'{candidate_module.unique_id}.{candidate_form.unique_id}',
+                'name': _form_name(candidate_module, candidate_form),
+                'auto_link': not is_multi_select and (case_type_match or is_parent),
                 'allow_manual_linking': True,
             })
 
-    return {
-        'linkable_forms': sorted(linkable_items, key=lambda link: link['name']),
-    }
+    return sorted(linkable_items, key=lambda link: link['name'])
 
 
 @require_can_edit_apps
@@ -969,7 +1001,7 @@ def get_form_datums(request, domain, app_id):
         make_datum(datum) for datum in helper.get_datums_meta_for_form_generic(form)
         if datum.requires_selection
     ]
-    return JsonResponse(datums)
+    return JsonResponse(datums, safe=False)
 
 
 @require_GET

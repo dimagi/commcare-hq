@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db.models import Count
 from corehq.motech.repeaters.models import RepeatRecord, Repeater
 
 
@@ -10,12 +11,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write("\n")
         self.stdout.write('fetching repeater data...')
-        repeater_summary = Repeater.get_db().view(
-            'repeaters/repeaters',
-            group_level=1,
-            reduce=True
-        ).all()
-        repeaters_by_domain = {info['key'][0]: info['value'] for info in repeater_summary}
+        repeater_summary = Repeater.objects.all().values("domain").annotate(count=Count("domain"))
+        repeaters_by_domain = {info['domain']: info['count'] for info in repeater_summary}
 
         self.stdout.write("\n")
         self.stdout.write('fetching repeat record data...')

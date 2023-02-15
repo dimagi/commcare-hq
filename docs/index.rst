@@ -1,7 +1,7 @@
 .. This is the main index for HQ's docs.
 
-Welcome to CommCareHQ's documentation!
-======================================
+Welcome to CommCare HQ's documentation!
+=======================================
 
 CommCare is a multi-tier mobile, server, and messaging platform. The platform enables users to build and
 configure content and a user interface, deploy that application to Android devices or to an end-user-facing web
@@ -100,6 +100,7 @@ Data is transmitted from the phone to the server (and vis-a-versa) over a secure
     sso/overview
     sso/architecture
     sso/local_setup
+    sso/adding_idp
 
 .. toctree::
     :caption: UI and Front End

@@ -1,7 +1,6 @@
 from django.utils.translation import gettext as _
 
-from celery.task import task
-
+from corehq.apps.celery import task
 from corehq.apps.products.bulk import import_products
 from corehq.util.workbook_json.excel_importer import (
     SingleExcelImporter,

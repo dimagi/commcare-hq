@@ -29,7 +29,10 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.case_list_menu_item_label = None
         self.search_label = None
         self.search_again_label = None
+        self.title_label = None
+        self.description = None
         self.tab_headers = None
+        self.no_items_text = None
 
     def update(self, rows):
         # The list might contain DetailColumn instances in them that have exactly
@@ -43,24 +46,24 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         self._get_condensed_rows(rows)
 
-        short_details = list(self.module.case_details.short.get_columns())
-        long_details = list(self.module.case_details.long.get_columns())
+        short_details_columns = list(self.module.case_details.short.get_columns())
+        long_details_columns = list(self.module.case_details.long.get_columns())
         list_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'list']
         detail_rows = [row for row in self.condensed_rows if row['list_or_detail'] == 'detail']
 
         if (
-            len(short_details) == len(list_rows)
-            and len(long_details) == len(detail_rows)
+            len(short_details_columns) == len(list_rows)
+            and len(long_details_columns) == len(detail_rows)
         ):
-            self._update_details_based_on_position(list_rows, short_details,
-                                                   detail_rows, long_details)
+            self._update_details_based_on_position(list_rows, short_details_columns,
+                                                   detail_rows, long_details_columns)
         else:
-            if len(short_details) != len(list_rows):
-                expected_list = short_details
+            if len(short_details_columns) != len(list_rows):
+                expected_list = short_details_columns
                 received_list = list_rows
                 list_or_detail = _("case list")
             else:
-                expected_list = long_details
+                expected_list = long_details_columns
                 received_list = detail_rows
                 list_or_detail = _("case detail")
             message = _(
@@ -90,6 +93,15 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
 
         if self.search_again_label:
             self._update_translation(self.search_again_label, self.module.search_config.search_again_label.label)
+
+        if self.title_label:
+            self._update_translation(self.title_label, self.module.search_config.title_label)
+
+        if self.description:
+            self._update_translation(self.description, self.module.search_config.description)
+
+        if self.no_items_text:
+            self._update_translation(self.no_items_text, self.module.case_details.short.no_items_text)
 
         self._update_case_search_labels(rows)
 
@@ -184,7 +196,7 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         "parent" rows, so that there's one row per case proeprty.
 
         This function also pulls out case detail tab headers and the case list form label,
-        which will be processed separately from the case proeprty rows.
+        which will be processed separately from the case property rows.
 
         Populates class attributes condensed_rows, case_list_form_label, case_list_menu_item_label,
         case search button labels, and tab_headers.
@@ -194,6 +206,9 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
         self.case_list_menu_item_label = None
         self.search_label = None
         self.search_again_label = None
+        self.title_label = None
+        self.description = None
+        self.no_items_text = None
         self.tab_headers = [None for i in self.module.case_details.long.tabs]
         index_of_last_enum_in_condensed = -1
         index_of_last_graph_in_condensed = -1
@@ -249,6 +264,14 @@ class BulkAppTranslationModuleUpdater(BulkAppTranslationUpdater):
                 self.search_label = row
             elif row['case_property'] == 'search_again_label':
                 self.search_again_label = row
+            elif row['case_property'] == 'title_label':
+                self.title_label = row
+            elif row['case_property'] == 'description':
+                self.description = row
+
+            # It's the empty case list text. Don't add it to condensed rows
+            elif row['case_property'] == 'no_items_text':
+                self.no_items_text = row
 
             # If it's a tab header, don't add it to condensed rows
             elif re.search(r'^Tab \d+$', row['case_property']):

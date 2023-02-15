@@ -289,7 +289,6 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
             "two_factor_auth": self.domain_object.two_factor_auth,
             "strong_mobile_passwords": self.domain_object.strong_mobile_passwords,
             "ga_opt_out": self.domain_object.ga_opt_out,
-            "restrict_mobile_access": self.domain_object.restrict_mobile_access,
             "disable_mobile_login_lockout": self.domain_object.disable_mobile_login_lockout,
         }
         if self.request.method == 'POST':
@@ -309,6 +308,7 @@ class EditPrivacySecurityView(BaseAdminProjectSettingsView):
         if self.privacy_form.is_valid():
             self.privacy_form.save(self.domain_object)
             messages.success(request, _("Your project settings have been saved!"))
+            return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
 
 

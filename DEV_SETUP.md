@@ -58,7 +58,8 @@ NOTE: Developers on Mac OS have additional prerequisites. See the [Supplementary
 
   - **Mac**:
 
-    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!)
+    Mac OS 12.x still comes shipped with Python 2.7 (?!), so you need to explicitly use `python3` instead of `python` (unless you use `pyenv`—which we highly recommend!). First install [homebrew](https://brew.sh/)
+    
 
     ```sh
     brew install python@3.9
@@ -164,14 +165,14 @@ please see [`xmlsec`'s install notes](https://pypi.org/project/xmlsec/).
 
     To set Python 3.9 as the global `python`, run:
     ```sh
-    pyenv global 3.9.13  # or whatever version was just installed - it should tab complete
+    pyenv global 3.9.xx  # or whatever version was just installed - it should tab complete
     ```
     Pro-tip: this is great for Mac OS users working around having to explicitly use `python3` :)
 
 
-2. Create the virtualenv `hq` with Python 3.9.11:
+2. Create the virtualenv `hq` with Python 3.9.xx:
    ```sh
-   pyenv virtualenv 3.9.11 hq
+   pyenv virtualenv 3.9.xx hq
    ```
    Then to enter the environment:
    ```sh
@@ -323,7 +324,7 @@ needs of most developers.
     systemctl is-active docker || sudo systemctl start docker
     # add your user to the `docker` group
     sudo adduser $USER docker
-    # login as yourself again to activate membership of the "docker" group
+    # log in as yourself again to activate membership of the "docker" group
     su - $USER
 
     # re-activate your virtualenv (with your venv tool of choice)
@@ -412,6 +413,16 @@ that to the new install. If not, proceed to Step 5B.
     ```
 
   - Fire up Fauxton to check that the dbs are there: http://localhost:5984/_utils/
+    - As of CouchDB 3.x, Fauxton is no longer shipped in the container and must
+      be installed separately:
+
+      ```sh
+      npm install -g fauxton
+      fauxton
+      ```
+
+      Open http://localhost:8000 in a browser. Run fauxton with ``-p PORT`` to
+      use a port other than 8000.
 
 - Shared Directory
   - If you are following the default instructions, move/merge the `sharedfiles`
@@ -506,7 +517,20 @@ command that sets the stored index names to the aliases.
 ./manage.py ptop_es_manage --flip_all_aliases
 ```
 
-### Step 7: Installing JavaScript Requirements
+### Step 7: Installing JavaScript and Front-End Requirements
+
+#### Install Dart Sass
+
+We are transitioning to using `sass`/`scss` for our stylesheets. In order to compile `*.scss`,
+Dart Sass is required.
+
+We recommend using `npm` to install this globally with:
+```
+npm install -g sass
+```
+
+You can also [follow the instructions here](https://sass-lang.com/install) if you encounter issues with this method.
+
 
 #### Installing Yarn
 
@@ -611,6 +635,8 @@ To be able to use CommCare, you'll want to create a superuser, which you can do 
 
 This can also be used to promote a user created by signing up to a superuser.
 
+Note that promoting a user to superuser status using this command will also give them the
+ability to assign other users as superuser in the in-app Superuser Management page.
 
 ### Step 11: Running CommCare HQ
 

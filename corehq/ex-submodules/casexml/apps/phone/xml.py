@@ -7,6 +7,8 @@ from casexml.apps.case.xml.generator import get_generator, date_to_xml_string,\
     safe_element, CaseDBXMLGenerator
 import six
 
+from casexml.apps.phone.exceptions import RestoreException
+
 USER_REGISTRATION_XMLNS_DEPRECATED = "http://openrosa.org/user-registration"
 USER_REGISTRATION_XMLNS = "http://openrosa.org/user/registration"
 
@@ -111,12 +113,24 @@ def get_casedb_element(case):
 def get_registration_element(restore_user):
     root = safe_element("Registration")
     root.set("xmlns", USER_REGISTRATION_XMLNS)
-    root.append(safe_element("username", restore_user.username))
-    root.append(safe_element("password", restore_user.password))
-    root.append(safe_element("uuid", restore_user.user_id))
-    root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
-    root.append(get_data_element('user_data', restore_user.user_session_data))
+    for key, value in get_registration_element_data(restore_user).items():
+        if isinstance(value, str) or value is None:
+            root.append(safe_element(key, value))
+        elif isinstance(value, dict):
+            root.append(get_data_element(key, value))
+        else:
+            raise RestoreException(f"Unexpected data type: {type(value)} ({value})")
     return root
+
+
+def get_registration_element_data(restore_user):
+    return {
+        "username": restore_user.username,
+        "password": restore_user.password,
+        "uuid": restore_user.user_id,
+        "date": date_to_xml_string(restore_user.date_joined),
+        "user_data": restore_user.user_session_data
+    }
 
 
 # Case registration blocks do not have a password

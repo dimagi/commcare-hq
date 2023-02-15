@@ -11,9 +11,9 @@ import types
 import uuid
 from collections import Counter, OrderedDict, defaultdict, namedtuple
 from copy import deepcopy
-from distutils.version import LooseVersion
+from looseversion import LooseVersion
 from functools import wraps
-from io import BytesIO, open
+from io import open
 from itertools import chain
 from mimetypes import guess_type
 from urllib.parse import urljoin
@@ -31,7 +31,6 @@ from django.utils.translation import override
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
-import qrcode
 from couchdbkit import ResourceNotFound
 from couchdbkit.exceptions import BadValueError
 from jsonpath_ng import jsonpath, parse
@@ -489,7 +488,7 @@ class AutoSelectCase(DocumentSchema):
     Configuration for auto-selecting a case.
     Attributes:
         value_source    Reference to the source of the value. For mode = fixture,
-                        this represents the FixtureDataType ID. For mode = case
+                        this represents the LookupTable ID. For mode = case
                         this represents the 'case_tag' for the case.
                         The modes 'user' and 'raw' don't require a value_source.
         value_key       The actual field that contains the case ID. Can be a case
@@ -787,13 +786,32 @@ class FormLink(DocumentSchema):
 
     xpath: XPath condition that must be true in order to execute link
     form_id: ID of next form to open, mutually exclusive with module_unique_id
+    form_module_id: ID of the form's module (this is used for shadow modules)
     module_unique_id: ID of next module to open, mutually exclusive with form_id
     datums: Any user-provided datums, necessary when HQ can't figure them out automatically
     """
     xpath = StringProperty()
     form_id = FormIdProperty('modules[*].forms[*].form_links[*].form_id')
+    form_module_id = StringProperty()
     module_unique_id = StringProperty()
     datums = SchemaListProperty(FormDatum)
+
+    def get_unique_id(self, app):
+        """"Get a unique ID for this link. For links to modules this is just the ID
+        of the module since that is already unique in the app.
+
+        For links to forms this is a combination of the form and module ID which is
+        necessary to support linking to forms in shadow modules.
+        """
+        if self.module_unique_id:
+            return self.module_unique_id
+
+        if self.form_module_id:
+            return f"{self.form_module_id}.{self.form_id}"
+
+        # legacy data does not have 'form_module_id'
+        form = app.get_form(self.form_id)
+        return f"{form.get_module().unique_id}.{self.form_id}"
 
 
 class FormSchedule(DocumentSchema):
@@ -1929,6 +1947,12 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     # Allow selection of mutiple cases. Only applies to 'short' details
     multi_select = BooleanProperty(default=False)
 
+    # If True, enables auto selection of cases in a multi-select case list
+    auto_select = BooleanProperty(default=False)
+
+    # Sets a maximum selected value for manual and auto select multi-select case lists
+    max_select_value = IntegerProperty(default=100)
+
     # If True, use case tiles in the case list
     use_case_tiles = BooleanProperty()
     # If given, use this string for the case tile markup instead of the default temaplte
@@ -1941,6 +1965,9 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     pull_down_tile = BooleanProperty()
 
     print_template = DictProperty()
+
+    #Only applies to 'short' details
+    no_items_text = LabelProperty(default={'en': 'List is empty.'})
 
     def get_instance_name(self, module):
         value_is_the_default = self.instance_name == 'casedb'
@@ -2094,6 +2121,7 @@ class CaseSearch(DocumentSchema):
     data_registry_workflow = StringProperty(exclude_if_none=True)  # one of REGISTRY_WORKFLOW_*
     additional_registry_cases = StringListProperty()               # list of xpath expressions
     title_label = LabelProperty(default={})
+    description = LabelProperty(default={})
 
     # case property referencing another case's ID
     custom_related_case_property = StringProperty(exclude_if_none=True)
@@ -2110,6 +2138,12 @@ class CaseSearch(DocumentSchema):
         if self.additional_relevant:
             return f"({default_condition}) and ({self.additional_relevant})"
         return default_condition
+
+    def get_search_title_label(self, app, lang, for_default=False):
+        if for_default:
+            lang = app.default_language
+        # Some apps have undefined labels incorrectly set to None, normalize here
+        return self.title_label.get(lang) or ''
 
     def overwrite_attrs(self, src_config, slugs):
         if 'search_properties' in slugs:
@@ -2135,7 +2169,7 @@ class FixtureSelect(DocumentSchema):
     Configuration for creating a details screen from a fixture which can be used to pre-filter
     cases prior to displaying the case list.
 
-    fixture_type:       FixtureDataType.tag
+    fixture_type:       LookupTable.tag
     display_column:     name of the column to display in the list
     localize:           boolean if display_column actually contains the key for the localized string
     variable_column:    name of the column whose value should be saved when the user selects an item
@@ -2207,6 +2241,8 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'search_config'):
             self.search_config.search_label._module = self
             self.search_config.search_again_label._module = self
+            self.search_config.title_label._module = self
+            self.search_config.description._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -2290,6 +2326,15 @@ class ModuleBase(IndexedSchema, ModuleMediaMixin, NavMenuItemMediaMixin, Comment
         if hasattr(self, 'case_details'):
             return self.case_details.short.multi_select
         return False
+
+    def is_auto_select(self):
+        if self.is_multi_select and hasattr(self, 'case_details'):
+            return self.case_details.short.auto_select
+        return self.auto_select_case
+
+    @property
+    def max_select_value(self):
+        return self.case_details.short.max_select_value
 
     def default_name(self, app=None):
         if not app:
@@ -3078,6 +3123,9 @@ class AdvancedModule(ModuleBase):
     def is_multi_select(self):
         return False
 
+    def is_auto_select(self):
+        return False
+
     def requires_case_details(self):
         if self.case_list.show:
             return True
@@ -3720,6 +3768,15 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             return False
         return self.source_module.is_multi_select()
 
+    def is_auto_select(self):
+        if not self.source_module:
+            return False
+        return self.source_module.is_auto_select()
+
+    @property
+    def max_select_value(self):
+        return self.source_module.max_select_value
+
     @classmethod
     def new_module(cls, name, lang, shadow_module_version=2):
         lang = lang or 'en'
@@ -3801,7 +3858,7 @@ class LazyBlobDoc(BlobMixin):
     def __attachment_cache_key(self, name):
         return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
-    def __set_cached_attachment(self, name, content, timeout=60*60*24):
+    def __set_cached_attachment(self, name, content, timeout=60*10):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
         self._LAZY_ATTACHMENTS_CACHE[name] = content
 
@@ -3956,9 +4013,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
     last_released = DateTimeProperty(required=False)
     build_broken = BooleanProperty(default=False)
     is_auto_generated = BooleanProperty(default=False)
-    # not used yet, but nice for tagging/debugging
-    # currently only canonical value is 'incomplete-build',
-    # for when build resources aren't found where they should be
+    # for internal use only, not user-facing
     build_broken_reason = StringProperty()
 
     # watch out for a past bug:
@@ -4217,6 +4272,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
         try:
             return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
+            from corehq.apps.settings.views import get_qrcode
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
             kwargs = []
             if build_profile_id is not None:
@@ -4225,10 +4281,7 @@ class ApplicationBase(LazyBlobDoc, SnapshotMixin,
                 kwargs.append('download_target_version=true')
             url += '?' + '&'.join(kwargs)
 
-            image = qrcode.make(url)
-            output = BytesIO()
-            image.save(output, "PNG")
-            qr_content = output.getvalue()
+            qr_content = get_qrcode(url)
             self.lazy_put_attachment(qr_content, filename,
                                      content_type="image/png")
             return qr_content
@@ -4542,16 +4595,6 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     def wrap(cls, data):
         self = super(Application, cls).wrap(data)
 
-        translations = data.get('translations')
-        for module in self.modules:
-            if hasattr(module, 'search_config'):
-                label_dict = {lang: label.get('case.search.title')
-                    for lang, label in translations.items() if label}
-                search_config = getattr(module, 'search_config')
-                default_label_dict = getattr(search_config, 'title_label')
-                label_dict.update(default_label_dict)
-                setattr(search_config, 'title_label', label_dict)
-
         # make sure all form versions are None on working copies
         if not self.copy_of:
             for form in self.get_forms():
@@ -4846,7 +4889,7 @@ class Application(ApplicationBase, ApplicationMediaMixin, ApplicationIntegration
     @memoized
     def enable_update_prompts(self):
         return (
-            self.supports_update_prompts and toggles.PHONE_HEARTBEAT.enabled(self.domain)
+            self.supports_update_prompts and domain_has_privilege(self.domain, privileges.PHONE_APK_HEARTBEAT)
         )
 
     @memoized
@@ -5971,6 +6014,38 @@ class LatestEnabledBuildProfiles(models.Model):
     def to_json(self, app_names):
         from corehq.apps.app_manager.serializers import LatestEnabledBuildProfileSerializer
         return LatestEnabledBuildProfileSerializer(self, context={'app_names': app_names}).data
+
+
+class ApplicationReleaseLog(models.Model):
+    ACTION_RELEASED = "released"
+    ACTION_IN_TEST = "in_test"
+    ACTION_CREATED = "created"
+    ACTION_REVERTED = "reverted"
+    ACTION_DELETED = "deleted"
+
+    ACTION_DISPLAY = {
+        ACTION_RELEASED: _("Released"),
+        ACTION_IN_TEST: _("In Test"),
+        ACTION_CREATED: _("Created"),
+        ACTION_REVERTED: _("Reverted"),
+        ACTION_DELETED: _("Deleted")
+    }
+
+    domain = models.CharField(max_length=255, null=False, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    action = models.CharField(max_length=255)
+    version = models.IntegerField()
+    app_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+    info = models.JSONField(default=dict)
+
+    def to_json(self):
+        return {
+            "created_at": self.created_at,
+            "action": self.ACTION_DISPLAY[self.action],
+            "version": self.version,
+            "user_id": self.user_id,
+        }
 
 
 # backwards compatibility with suite-1.0.xml

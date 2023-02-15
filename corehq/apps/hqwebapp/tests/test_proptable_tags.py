@@ -16,16 +16,26 @@ class CaseDisplayDataTest(SimpleTestCase):
         data = {
             'color': 'red'
         }
-        self.assertEqual(get_display_data(data, column),
-                         {'expr': 'color', 'name': 'favorite color', 'value': 'red', 'has_history': False})
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'color',
+            'name': 'favorite color',
+            'description': None,
+            'value': 'red',
+            'has_history': False,
+        })
 
     def test_get_display_data_no_name(self):
         column = DisplayConfig(expr='color')
         data = {
             'color': 'red'
         }
-        self.assertEqual(get_display_data(data, column),
-                         {'expr': 'color', 'name': 'color', 'value': 'red', 'has_history': False})
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'color',
+            'name': 'color',
+            'description': None,
+            'value': 'red',
+            'has_history': False,
+        })
 
     def test_get_display_data_function(self):
         get_color = lambda x: x['color']
@@ -33,34 +43,46 @@ class CaseDisplayDataTest(SimpleTestCase):
         data = {
             'color': 'red'
         }
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'favorite color', 'name': 'favorite color', 'value': 'red', 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'favorite color',
+            'name': 'favorite color',
+            'description': None,
+            'value': 'red',
+            'has_history': False,
+        })
 
     def test_get_display_data_history(self):
         column = DisplayConfig(expr='colour', has_history=True)
         data = {'colour': 'red'}
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'colour', 'name': 'colour', 'value': 'red', 'has_history': True}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'colour',
+            'name': 'colour',
+            'description': None,
+            'value': 'red',
+            'has_history': True,
+        })
 
     def test_get_display_data_format(self):
         column = DisplayConfig(expr='colour', format="<b>{}</b>")
         data = {'colour': 'red'}
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'colour', 'name': 'colour', 'value': '<b>red</b>', 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'colour',
+            'name': 'colour',
+            'description': None,
+            'value': '<b>red</b>',
+            'has_history': False,
+        })
 
     def test_get_display_process_yesno(self):
         column = DisplayConfig(expr='big', process="yesno")
         data = {'big': True}
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'big', 'name': 'big', 'value': 'yes', 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'big',
+            'name': 'big',
+            'description': None,
+            'value': 'yes',
+            'has_history': False,
+        })
 
     @patch("corehq.apps.hqwebapp.templatetags.proptable_tags.get_doc_info_by_id")
     def test_get_display_process_docinfo(self, get_doc_info_by_id):
@@ -73,10 +95,13 @@ class CaseDisplayDataTest(SimpleTestCase):
         column = DisplayConfig(expr='bob', process="doc_info")
         data = {'bob': True, 'domain': 'bobs_domain'}
         expected_value = 'Mobile Worker\n<a href="https://www.commcarehq.org/i_am_bob">Bob</a>\n'
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'bob', 'name': 'bob', 'value': expected_value, 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'bob',
+            'name': 'bob',
+            'description': None,
+            'value': expected_value,
+            'has_history': False,
+        })
 
     def test_get_display_process_date(self):
         column = DisplayConfig(expr='date', process="date")
@@ -86,10 +111,13 @@ class CaseDisplayDataTest(SimpleTestCase):
             "Mar 16, 2021 14:37 UTC"
             "</time>"
         )
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'date',
+            'name': 'date',
+            'description': None,
+            'value': expected_value,
+            'has_history': False,
+        })
 
     def test_get_display_process_timeago(self):
         column = DisplayConfig(expr='date', process="date", timeago=True)
@@ -99,10 +127,13 @@ class CaseDisplayDataTest(SimpleTestCase):
             "Mar 16, 2021 14:37 UTC"
             "</time>"
         )
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'date',
+            'name': 'date',
+            'description': None,
+            'value': expected_value,
+            'has_history': False,
+        })
 
     @override_settings(PHONE_TIMEZONES_HAVE_BEEN_PROCESSED=True)
     def test_get_display_process_phonetime(self):
@@ -113,18 +144,24 @@ class CaseDisplayDataTest(SimpleTestCase):
             "Mar 16, 2021 16:37 SAST"
             "</time>"
         )
-        self.assertEqual(
-            get_display_data(data, column, timezone=pytz.timezone("Africa/Johannesburg")),
-            {'expr': 'date', 'name': 'date', 'value': expected_value, 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column, timezone=pytz.timezone("Africa/Johannesburg")), {
+            'expr': 'date',
+            'name': 'date',
+            'description': None,
+            'value': expected_value,
+            'has_history': False,
+        })
 
     def test_get_display_data_blank(self):
         column = DisplayConfig(expr='not_prop')
         data = {'prop': True}
-        self.assertEqual(
-            get_display_data(data, column),
-            {'expr': 'not_prop', 'name': 'not prop', 'value': '---', 'has_history': False}
-        )
+        self.assertEqual(get_display_data(data, column), {
+            'expr': 'not_prop',
+            'name': 'not prop',
+            'description': None,
+            'value': '---',
+            'has_history': False,
+        })
 
 
 class ToHTMLTest(SimpleTestCase):

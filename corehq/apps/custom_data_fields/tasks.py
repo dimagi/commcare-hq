@@ -1,8 +1,8 @@
-from celery.task import task
 from celery.utils.log import get_task_logger
 
 from dimagi.utils.couch.database import iter_docs
 
+from corehq.apps.celery import task
 from corehq.apps.custom_data_fields.models import CustomDataFieldsProfile
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.signals import update_user_in_es

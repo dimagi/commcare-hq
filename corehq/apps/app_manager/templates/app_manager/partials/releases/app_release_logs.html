@@ -1,0 +1,50 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+<div class="panel panel-appmanager">
+  <div class="panel-heading">
+    <h4 class="panel-title-nolink">
+      {% trans "Application Release Logs" %}
+    </h4>
+  </div>
+  <div class="panel-body">
+    <table id="release-logs-table" class="table table-profiles">
+      <thead>
+        <tr class="row form-group">
+          <th>{% trans "Version Number" %}</th>
+          <th>{% trans "Update Type" %}</th>
+          <th>{% trans "Time" %}</th>
+          <th>{% trans "User" %}</th>
+          <th>{% trans "Info" %}</th>
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: releaseLogs">
+        <tr class="row">
+          <td class="col-sm">
+            <span data-bind="text: version"></span>
+          </td>
+          <td class="col-sm">
+            <span data-bind="text: action"></span>
+          </td>
+          <td class="col-sm">
+            <span data-bind="text: created_at_string"></span>
+          </td>
+          <td class="col-sm">
+            <span data-bind="text: user_email"></span>
+          </td>
+          <td class="col-sm">
+            <span data-bind="text: info"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<pagination data-apply-bindings="false"
+              params="goToPage: goToPage,
+                      perPage: fetchLimit,
+                      slug: 'release-logs-table',
+                      totalItems: totalItems,
+                      onLoad: onPaginationLoad,
+                      showSpinner: showPaginationSpinner"></pagination>
