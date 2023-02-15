@@ -31,27 +31,27 @@ def get_cancelled_repeat_record_count(domain, repeater_id):
     return get_repeat_record_count(domain, repeater_id, RECORD_CANCELLED_STATE)
 
 
-def get_repeat_record_count(domain, repeater_id=None, state=None):
+def get_repeat_record_count(domain, repeater_id=None, state=None, datespan=None):
     from .models import are_repeat_records_migrated
 
     if are_repeat_records_migrated(domain):
-        return get_sql_repeat_record_count(domain, repeater_id, state)
-    return get_couch_repeat_record_count(domain, repeater_id, state)
+        return get_sql_repeat_record_count(domain, repeater_id, state, datespan=datespan)
+    return get_couch_repeat_record_count(domain, repeater_id, state, datespan=datespan)
 
 
-def get_couch_repeat_record_count(domain, repeater_id=None, state=None):
+def get_couch_repeat_record_count(domain, repeater_id=None, state=None, datespan=None):
     from .models import RepeatRecord
     kwargs = dict(
         include_docs=False,
         reduce=True,
         descending=True,
     )
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, datespan=datespan))
     result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
     return result['value'] if result else 0
 
 
-def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
+def get_sql_repeat_record_count(domain, repeater_id=None, state=None, datespan=None):
     from .models import SQLRepeatRecord
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
@@ -59,6 +59,9 @@ def get_sql_repeat_record_count(domain, repeater_id=None, state=None):
         queryset = queryset.filter(repeater__repeater_id=repeater_id)
     if state:
         queryset = queryset.filter(state=state)
+    if datespan:
+        queryset = queryset.filter(
+            sqlrepeatrecordattempt__created_at__range=(datespan.startdate, datespan.enddate))
     return estimate_row_count(queryset)
 
 
@@ -74,34 +77,41 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
     return results['value'] if results else 0
 
 
-def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
+def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None, datespan=None):
     kwargs = {}
 
-    if repeater_id and not state:
-        kwargs['endkey'] = [domain, repeater_id]
-        kwargs['startkey'] = [domain, repeater_id, {}]
-    elif repeater_id and state:
+    if datespan:
+        # reversed because descending:True
+        enddatekey = json_format_datetime(datespan.startdate) if datespan.startdate else ""
+        startdatekey = json_format_datetime(datespan.enddate) if datespan.enddate else ""
+        kwargs['endkey'] = [domain, repeater_id, state, enddatekey]
+        kwargs['startkey'] = [domain, repeater_id, state, startdatekey]
+    elif state:
         kwargs['endkey'] = [domain, repeater_id, state]
-        kwargs['startkey'] = [domain, repeater_id, state, {}]
-    elif not repeater_id and state:
-        kwargs['endkey'] = [domain, None, state]
-        kwargs['startkey'] = [domain, None, state, {}]
-    elif not repeater_id and not state:
-        kwargs['endkey'] = [domain, None]
-        kwargs['startkey'] = [domain, None, {}]
+        kwargs['startkey'] = [domain, repeater_id, state, None]
+    elif repeater_id:
+        kwargs['endkey'] = [domain, repeater_id]
+        kwargs['startkey'] = [domain, repeater_id, None, None]
+    else:
+        kwargs['endkey'] = [domain, None, None]
+        kwargs['startkey'] = [domain, None, None, None]
 
     return kwargs
 
 
-def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
+def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None,
+        datespan=None):
     from .models import are_repeat_records_migrated
 
     if are_repeat_records_migrated(domain):
-        return get_paged_sql_repeat_records(domain, skip, limit, repeater_id, state)
-    return get_paged_couch_repeat_records(domain, skip, limit, repeater_id, state)
+        return get_paged_sql_repeat_records(domain, skip, limit, repeater_id, state,
+            datespan=datespan)
+    return get_paged_couch_repeat_records(domain, skip, limit, repeater_id, state,
+        datespan=datespan)
 
 
-def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=None):
+def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=None,
+        datespan=None):
     from .models import RepeatRecord
     kwargs = {
         'include_docs': True,
@@ -110,14 +120,15 @@ def get_paged_couch_repeat_records(domain, skip, limit, repeater_id=None, state=
         'skip': skip,
         'descending': True,
     }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state, datespan=datespan))
 
     results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
 
-def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=None):
+def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=None,
+        datespan=None):
     from .models import SQLRepeatRecord
 
     queryset = SQLRepeatRecord.objects.filter(domain=domain)
@@ -125,6 +136,9 @@ def get_paged_sql_repeat_records(domain, skip, limit, repeater_id=None, state=No
         queryset = queryset.filter(repeater__repeater_id=repeater_id)
     if state:
         queryset = queryset.filter(state=state)
+    if datespan:
+        queryset = queryset.filter(
+            sqlrepeatrecordattempt__created_at__range=(datespan.startdate, datespan.enddate))
     return (queryset.order_by('-registered_at')[skip:skip + limit]
             .select_related('repeater')
             .prefetch_related('sqlrepeatrecordattempt_set'))

@@ -15,8 +15,11 @@ from corehq.motech.repeaters.dbaccessors import (
     get_success_repeat_record_count,
     iter_repeat_records_by_domain,
     iterate_repeat_record_ids,
+    get_paged_sql_repeat_records,
 )
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord, SQLRepeatRecordAttempt
+from dimagi.utils.dates import DateSpan
+from .test_models import RepeaterTestCase
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -144,6 +147,83 @@ class TestRepeatRecordDBAccessors(TestCase):
         overdue_count = get_overdue_repeat_record_count()
         self.assertEqual(overdue_count, 1)
 
+    def test_get_paged_repeat_records_by_last_checked(self):
+        today = datetime.utcnow()
+        specific_id = 'some_id'
+
+        def _record(last_checked):
+            return RepeatRecord(
+                domain=self.domain,
+                last_checked=last_checked,
+                succeeded=False,
+                repeater_id=self.other_id,
+                next_check=today,
+                payload_id=self.payload_id_2,
+            )
+
+        two_days_ago = RepeatRecord(
+            domain=self.domain,
+            last_checked=today - timedelta(days=2),
+            succeeded=False,
+            failure_reason='some error',
+            repeater_id=specific_id,
+            next_check=today,
+            payload_id=self.payload_id_2,
+        )
+        on_today = RepeatRecord(
+            domain=self.domain,
+            last_checked=today + timedelta(days=2),
+            succeeded=True,
+            repeater_id=self.other_id,
+            next_check=today,
+            payload_id=self.payload_id_2,
+        )
+        two_days_latter = RepeatRecord(
+            domain=self.domain,
+            last_checked=today,
+            succeeded=False,
+            repeater_id=specific_id,
+            next_check=today,
+            payload_id=self.payload_id_2,
+        )
+        records = [two_days_ago, on_today, two_days_latter]
+        RepeatRecord.bulk_save(records)
+
+        def _get_records(startdate, enddate, state=None, repeater_id=None):
+            return get_paged_repeat_records(
+                self.domain, 0, 10,
+                datespan=DateSpan(startdate, enddate),
+                state=state,
+                repeater_id=repeater_id,
+            )
+
+        # Test only by last_checked
+        self.assertEqual(
+            len(_get_records(today - timedelta(days=3), today + timedelta(days=3))),
+            3
+        )
+        self.assertEqual(
+            len(_get_records(today - timedelta(days=1), today + timedelta(days=1))),
+            1
+        )
+        # Test state as well
+        self.assertEqual(
+            len(_get_records(today - timedelta(days=3), today + timedelta(days=3), state='FAIL')),
+            1
+        )
+        # Test repeater_id as well
+        self.assertEqual(
+            len(_get_records(today - timedelta(days=0), today + timedelta(days=2), repeater_id=specific_id)),
+            1
+        )
+        # Test state and repeater_id
+        self.assertEqual(
+            len(_get_records(today - timedelta(days=3),
+                today + timedelta(days=3), state='FAIL', repeater_id=specific_id)),
+            1
+        )
+        RepeatRecord.bulk_delete(records)
+
     def test_get_all_repeat_records_by_domain_wrong_domain(self):
         records = list(iter_repeat_records_by_domain("wrong-domain"))
         self.assertEqual(len(records), 0)
@@ -184,3 +264,50 @@ class TestOtherDBAccessors(TestCase):
 
     def test_get_domains_that_have_repeat_records(self):
         self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])
+
+
+class TestSQLDBAccessors(RepeaterTestCase):
+
+    def test_get_paged_sql_repeat_records_daterange(self):
+        domain = 'test-sql'
+        eve = self.sql_repeater.repeat_records.create(
+            domain=domain,
+            payload_id='eve',
+            registered_at='1970-02-01',
+        )
+        moon = self.sql_repeater.repeat_records.create(
+            domain=domain,
+            payload_id='moon',
+            registered_at='1970-02-01',
+        )
+        eve_old = SQLRepeatRecordAttempt.objects.create(
+            repeat_record=eve,
+            created_at=datetime.utcnow() - timedelta(days=2)
+        )
+        moon_new = SQLRepeatRecordAttempt.objects.create(
+            repeat_record=moon,
+            created_at=datetime.utcnow() + timedelta(days=2)
+        )
+        self.assertQuerysetEqual(
+            get_paged_sql_repeat_records(domain, 0, 10),
+            [eve, moon],
+            ordered=False
+        )
+        self.assertQuerysetEqual(
+            get_paged_sql_repeat_records(domain, 0, 10,
+                datespan=DateSpan(datetime.utcnow() - timedelta(days=3), datetime.utcnow() + timedelta(days=3))),
+            [eve, moon],
+            ordered=False
+        )
+        self.assertQuerysetEqual(
+            get_paged_sql_repeat_records(domain, 0, 10,
+                datespan=DateSpan(datetime.utcnow() - timedelta(days=3), datetime.utcnow() + timedelta(days=1))),
+            [eve]
+        )
+        self.assertQuerysetEqual(
+            get_paged_sql_repeat_records(domain, 0, 10,
+                datespan=DateSpan(datetime.utcnow() - timedelta(days=1), datetime.utcnow() + timedelta(days=3))),
+            [moon]
+        )
+        for obj in [eve, moon, eve_old, moon_new]:
+            obj.delete()
