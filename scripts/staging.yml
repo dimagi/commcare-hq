@@ -84,7 +84,6 @@ branches:
     - jls/nodeset-filter-ui # Jenny Feb 13
     - smh/force-incremental-sync # Steph Feb 14
     # - jm/django-3.2.18  # Joel Feb 14
-    - mk/support-range-for-mm # MK Feb 14
     - gh/disable-hyperlinks-on-large-exports # Graham Feb 14
     - ze/remove_deprecated_from_export # Zandre Feb 15
     - ad/tableau-user-syncing-bulk # Addison Feb 15
