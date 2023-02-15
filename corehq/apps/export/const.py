@@ -98,7 +98,8 @@ CASE_CREATE_ELEMENTS = ['case_name', 'owner_id', 'case_type']
 FORM_EXPORT = 'form'
 CASE_EXPORT = 'case'
 SMS_EXPORT = 'sms'
-MAX_EXPORTABLE_ROWS = 100000
+MAX_NORMAL_EXPORT_SIZE = 100000
+MAX_DAILY_EXPORT_SIZE = 1000000
 CASE_SCROLL_SIZE = 10000
 
 # When a question is missing completely from a form/case this should be the value
@@ -135,3 +136,6 @@ class SharingOption(object):
 
 
 UNKNOWN_EXPORT_OWNER = 'unknown'
+
+EXPORT_FAILURE_TOO_LARGE = 'too_large'
+EXPORT_FAILURE_UNKNOWN = 'unknown'
