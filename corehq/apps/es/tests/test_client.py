@@ -9,12 +9,25 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from nose.tools import nottest
 
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.es.apps import app_adapter
+from corehq.apps.es.case_search import case_search_adapter
+from corehq.apps.es.cases import case_adapter
+from corehq.apps.es.domains import domain_adapter
+from corehq.apps.es.forms import form_adapter
 from corehq.apps.es.users import user_adapter
 from corehq.apps.es.utils import check_task_progress
 from corehq.apps.users.dbaccessors import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.tests.utils import create_case, create_form_for_test
+from corehq.pillows.application import transform_app_for_es
+from corehq.pillows.case import transform_case_for_elasticsearch
+from corehq.pillows.case_search import \
+    transform_case_for_elasticsearch as transform_for_case_search
+from corehq.pillows.domain import transform_domain_for_elasticsearch
 from corehq.pillows.user import transform_user_for_elasticsearch
+from corehq.pillows.xform import transform_xform_for_elasticsearch
 from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
@@ -2098,6 +2111,61 @@ class TestFromMultiInCaseSearch(TestCase):
         es_case = case_search_adapter.search({})['hits']['hits'][0]['_source']
         es_case.pop('@indexed_on')
         self.assertEqual(es_case, case)
+
+
+@es_test(requires=[form_adapter], setup_class=True)
+class TestFromMultiInForms(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'from-multi-forms-tests'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.form = create_form_for_test(cls.domain, save=True)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    def test_from_multi_works_with_form_objects(self):
+        form_adapter.from_multi(self.form)
+
+    def test_from_multi_works_with_form_dicts(self):
+        form_adapter.from_multi(self.form.to_json())
+
+    def test_from_multi_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, form_adapter.from_multi, set)
+
+    def test_from_python_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, form_adapter.from_python, set)
+        self.assertRaises(UnknownDocException, form_adapter.from_python, self.form.to_json())
+
+    def test_from_multi_is_same_as_transform_form_for_es(self):
+        # this test can be safely removed when transform_form_for_elasticsearch is removed
+        form_id, form = form_adapter.from_multi(self.form)
+        form['_id'] = form_id
+        form.pop('inserted_at')
+        form_transformed_dict = transform_xform_for_elasticsearch(self.form.to_json())
+        form_transformed_dict.pop('inserted_at')
+        self.assertEqual(form_transformed_dict, form)
+
+    def test_index_can_handle_form_dicts(self):
+        form_dict = self.form.to_json()
+        form_adapter.index(form_dict, refresh=True)
+        self.addCleanup(form_adapter.delete, self.form.form_id)
+
+        form = form_adapter.to_json(self.form)
+        form.pop('inserted_at')
+        es_form = form_adapter.search({})['hits']['hits'][0]['_source']
+        es_form.pop('inserted_at')
+        self.assertEqual(es_form, form)
+
+    def test_index_can_handle_form_objects(self):
+        form_adapter.index(self.form, refresh=True)
+        self.addCleanup(form_adapter.delete, self.form.form_id)
+
+        form = form_adapter.to_json(self.form)
+        form.pop('inserted_at')
+        es_form = form_adapter.search({})['hits']['hits'][0]['_source']
+        es_form.pop('inserted_at')
+        self.assertEqual(es_form, form)
 
 
 class OneshotIterable:
