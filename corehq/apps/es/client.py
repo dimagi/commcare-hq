@@ -18,6 +18,7 @@ from corehq.util.es.elasticsearch import (
     Elasticsearch,
     ElasticsearchException,
     NotFoundError,
+    TransportError,
     bulk,
 )
 from corehq.util.metrics import metrics_counter
@@ -1201,16 +1202,25 @@ class ElasticMultiplexAdapter(BaseAdapter):
         return ElasticDocumentAdapter.bulk_delete(self, doc_ids, **bulk_kw)
 
     def delete(self, doc_id, refresh=False):
-        """Delete on primary, index tombstone on secondary."""
-        self.primary.delete(doc_id, refresh)
-        # don't refresh the secondary because we never read from it
-        self.secondary._index(doc_id, Tombstone.create_document())
+        """Delete from both primary and secondary via the ``bulk()`` method in
+        order to perform both actions in a single HTTP request (two, if a
+        tombstone is required).
+        """
+        try:
+            self.bulk_delete([doc_id], refresh=refresh)
+        except BulkIndexError as exc:
+            resp = list(exc.errors[0].values())[0]
+            raise NotFoundError(resp.pop("status"), str(resp), resp) from exc
 
     def index(self, doc, refresh=False, **kw):
-        """Index on both adapters"""
-        self.primary.index(doc, refresh, **kw)
-        # don't refresh the secondary because we never read from it
-        self.secondary.index(doc, **kw)
+        """Index into both primary and secondary via the ``bulk()`` method in
+        order to perform both actions in a single HTTP request.
+        """
+        try:
+            self.bulk_index([doc], refresh=refresh)
+        except BulkIndexError as exc:
+            resp = list(exc.errors[0].values())[0]
+            raise TransportError(resp.pop("status"), str(resp), resp) from exc
 
     def update(self, doc_id, fields, return_doc=False, refresh=False,
                _upsert=False, **kw):

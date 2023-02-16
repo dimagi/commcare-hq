@@ -1893,27 +1893,61 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
         self.assertPrimaryAndSecondaryDocIdsEqual([])
 
     def test_delete(self):
-        doc_id = self._make_doc().id
-        with (
-            patch.object(self.adapter.primary, 'delete') as p_mock,
-            patch.object(self.adapter.secondary, '_index') as s_mock,
-        ):
-            self.adapter.delete(doc_id)
+        doc = self._make_doc()
+        # setup and verify a synced secondary condition
+        self.adapter.index(doc, refresh=True)
+        self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
+        # test
+        self.adapter.delete(doc.id)
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
 
-        # Primary index gets delete request
-        p_mock.assert_called_once_with(doc_id, False)
+    def test_delete_raises_notfounderror_on_failure(self):
+        doc = self._make_doc()
+        # verify state
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        # test
+        with self.assertRaises(NotFoundError) as test:
+            self.adapter.delete(doc.id)
+        self.assertEqual(test.exception.status_code, 404)
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
 
-        # Secondary index creates tombstone
-        s_mock.assert_called_once_with(doc_id, Tombstone.create_document())
+    def test_delete_creates_tombstone_when_missing_in_secondary(self):
+        doc = self._make_doc()
+        # setup and verify a not-synced secondary condition
+        self.adapter.primary.index(doc, refresh=True)
+        self.assertTrue(self.adapter.primary.exists(doc.id))
+        self.assertFalse(self.adapter.secondary.exists(doc.id))
+        # test
+        self.adapter.delete(doc.id)
+        self.addCleanup(self.adapter.secondary.delete, doc.id)
+        self.assertFalse(self.adapter.primary.exists(doc.id))
+        self.assertEqual(
+            dict(_id=doc.id, **Tombstone.create_document()),
+            self.adapter.secondary.get(doc.id),
+        )
 
     def test_index(self):
         doc = self._make_doc()
-        with patch_adapters_method(self.adapter, "index") as (p_mock, s_mock):
-            self.adapter.index(doc, True)
+        # verify state
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        # test
+        self.adapter.index(doc)
+        self.addCleanup(self.adapter.delete, doc.id)
+        self.assertPrimaryAndSecondaryDocIdsEqual([doc.id])
 
-        # Primary and secondary makes index request
-        p_mock.assert_called_once_with(doc, True)
-        s_mock.assert_called_once_with(doc)
+    def test_index_raises_transporterror_on_failure(self):
+        doc = self._make_doc()
+        # verify state
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        # test
+        error = BulkIndexError("error", [{"index": {"status": 500}}])
+        with (
+            patch.object(self.adapter, "bulk_index", side_effect=error) as mock,
+            self.assertRaises(TransportError) as test,
+        ):
+            self.adapter.index(doc)
+        mock.assert_called_once_with([doc], refresh=ANY)
+        self.assertEqual(test.exception.status_code, 500)
 
     def test_update(self):
         doc_id = self._make_doc().id
