@@ -72,7 +72,6 @@ branches:
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
     # - ce/enable-case-rate-limits # Cal Feb 1
     # - ml/enforce-metadata-ff # Minha Feb 2
