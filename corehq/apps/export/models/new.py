@@ -258,6 +258,7 @@ class ExportColumn(DocumentSchema):
     # Determines whether or not to show the column in the UI Config without clicking advanced
     is_advanced = BooleanProperty(default=False)
     is_deleted = BooleanProperty(default=False)
+    is_deprecated = BooleanProperty(default=False)
     selected = BooleanProperty(default=False)
     tags = ListProperty()
     help_text = StringProperty()
@@ -336,13 +337,20 @@ class ExportColumn(DocumentSchema):
         return value
 
     @staticmethod
-    def create_default_from_export_item(table_path, item, app_ids_and_versions, auto_select=True):
+    def create_default_from_export_item(
+        table_path,
+        item,
+        app_ids_and_versions,
+        auto_select=True,
+        is_deprecated=False
+    ):
         """Creates a default ExportColumn given an item
 
         :param table_path: The path of the table_path that the item belongs to
         :param item: An ExportItem instance
         :param app_ids_and_versions: A dictionary of app ids that map to latest build version
         :param auto_select: Automatically select the column
+        :param is_deprecated: Whether the property has been deprecated in the data dictionary
         :returns: An ExportColumn instance
         """
         is_case_update = item.tag == PROPERTY_TAG_CASE and not isinstance(item, CaseIndexItem)
@@ -355,6 +363,7 @@ class ExportColumn(DocumentSchema):
             "item": item,
             "label": item.readable_path if not is_case_history_update else item.label,
             "is_advanced": not is_case_id and (is_case_update or is_label_question),
+            "is_deprecated": is_deprecated
         }
 
         if isinstance(item, GeopointItem):
@@ -376,11 +385,12 @@ class ExportColumn(DocumentSchema):
             column = ExportColumn(**constructor_args)
         column.update_properties_from_app_ids_and_versions(app_ids_and_versions)
         column.selected = (
-            auto_select and
-            not column._is_deleted(app_ids_and_versions) and
-            not is_case_update and
-            not is_label_question and
-            is_main_table
+            auto_select
+            and not column._is_deleted(app_ids_and_versions)
+            and not is_case_update
+            and not is_label_question
+            and is_main_table
+            and not is_deprecated
         )
         return column
 
