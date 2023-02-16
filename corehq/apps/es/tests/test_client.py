@@ -1924,6 +1924,72 @@ class TestFromMultiInDomain(TestCase):
         self.assertEqual(es_domain, domain)
 
 
+@es_test(requires=[app_adapter], setup_class=True)
+class TestFromMultiInApplication(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'from-multi-application-tests'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.app = cls._create_app(name='from-multi-test-app')
+        cls.addClassCleanup(cls.app.delete_app)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    @classmethod
+    def _create_app(self, name):
+        factory = AppFactory(domain=self.domain, name=name, build_version='2.11.0')
+        module1, form1 = factory.new_basic_module('open_case', 'house')
+        factory.form_opens_case(form1)
+        app = factory.app
+        app.save()
+        return app
+
+    def test_from_multi_works_with_application_objects(self):
+        app_adapter.from_multi(self.app)
+
+    def test_from_multi_works_with_application_dicts(self):
+        app_adapter.from_multi(self.app.to_json())
+
+    def test_from_multi_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, app_adapter.from_multi, set)
+
+    def test_from_python_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, app_adapter.from_python, set)
+        self.assertRaises(UnknownDocException, app_adapter.from_python, self.app.to_json())
+
+    def test_from_multi_is_same_as_transform_app_for_es(self):
+        # this test can be safely removed when transform_app_for_es is removed
+        app_id, app = app_adapter.from_multi(self.app)
+        app['_id'] = app_id
+        app_transformed_dict = transform_app_for_es(self.app.to_json())
+        app_transformed_dict.pop('@indexed_on')
+        app.pop('@indexed_on')
+        self.assertEqual(app_transformed_dict, app)
+
+    def test_index_can_handle_app_dicts(self):
+        app_dict = self.app.to_json()
+        app_adapter.index(app_dict, refresh=True)
+        self.addCleanup(app_adapter.delete, self.app._id)
+
+        app = app_adapter.to_json(self.app)
+        app.pop('@indexed_on')
+        es_app = app_adapter.search({})['hits']['hits'][0]['_source']
+        es_app.pop('@indexed_on')
+        self.assertEqual(es_app, app)
+
+    def test_index_can_handle_app_objects(self):
+        app_adapter.index(self.app, refresh=True)
+        self.addCleanup(app_adapter.delete, self.app._id)
+
+        app = app_adapter.to_json(self.app)
+        app.pop('@indexed_on')
+        es_app = app_adapter.search({})['hits']['hits'][0]['_source']
+        es_app.pop('@indexed_on')
+
+        self.assertEqual(es_app, app)
+
+
 class OneshotIterable:
 
     def __init__(self, items):
