@@ -114,7 +114,7 @@ class EventCreateView(BaseEventView):
     def parent_pages(self):
         return [
             {
-                'title': EventsView.page_title,
+                'title': _("Events"),
                 'url': reverse(EventsView.urlname, args=[self.domain])
             },
         ]

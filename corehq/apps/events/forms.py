@@ -1,10 +1,10 @@
 from django import forms
-from corehq.apps.hqwebapp.crispy import HQFormHelper
 from crispy_forms import layout as crispy
-from crispy_forms.bootstrap import StrictButton
-from django.utils.html import format_html
-
+from django.core.validators import MinLengthValidator
 from django.utils.translation import gettext_lazy as _
+
+from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.events.models import get_domain_attendee_cases
 
 TRACK_BY_DAY = "by_day"
 TRACK_BY_EVENT = "by_event"
@@ -44,11 +44,18 @@ class CreateEventForm(forms.Form):
         widget=forms.RadioSelect,
         required=False,
     )
+    expected_attendees = forms.MultipleChoiceField(
+        label=_("Attendees"),
+        validators=[MinLengthValidator(1)],
+        required=True,
+    )
 
     def __init__(self, *args, **kwargs):
         super(CreateEventForm, self).__init__(*args, **kwargs)
 
-        self.helper = HQFormHelper()
+        self.fields['expected_attendees'].choices = self._get_possible_attendees()
+
+        self.helper = hqcrispy.HQFormHelper()
         self.helper.add_layout(
             crispy.Layout(
                 crispy.Fieldset(
@@ -66,11 +73,10 @@ class CreateEventForm(forms.Form):
                         crispy.Field('tracking_option', data_bind="checked: trackingOption"),
                         data_bind="visible: showTrackingOptions",
                     ),
-                    StrictButton(
-                        format_html("Save"),
-                        css_class='btn-primary',
-                        type='submit'
-                    )
+                    'expected_attendees',
+                    hqcrispy.FormActions(
+                        crispy.Submit('submit_btn', 'Save')
+                    ),
                 )
             )
         )
@@ -82,3 +88,8 @@ class CreateEventForm(forms.Form):
         tracking_option = self.cleaned_data.get('tracking_option', TRACK_BY_DAY)
         self.cleaned_data['track_each_day'] = tracking_option == TRACK_BY_DAY
         return self.cleaned_data
+
+    def _get_possible_attendees(self):
+        return [
+            (case_.case_id, case_.name) for case_ in get_domain_attendee_cases()
+        ]
