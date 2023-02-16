@@ -68,7 +68,7 @@ hqDefine("cloudcare/js/formplayer/sessions/views", function () {
         initialize: function (options) {
             this.model = new Backbone.Model({
                 page: options.pageNumber + 1 || 1,
-                limit: parseInt($.cookie("sessions-per-page-limit")) || 10,
+                limit: options.pageSize,
             });
             this.model.on('change', function () {
                 this.options.listSessions(this.model.get('page') - 1, this.model.get("limit"));

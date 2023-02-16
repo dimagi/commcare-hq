@@ -20,6 +20,7 @@ hqDefine("cloudcare/js/formplayer/sessions/controller", function () {
                 var sessionListView = Views({
                     collection: sessions,
                     pageNumber: pageNumber,
+                    pageSize: pageSize,
                     totalPages: totalPages,
                     listSessions: listSessions
                 });
