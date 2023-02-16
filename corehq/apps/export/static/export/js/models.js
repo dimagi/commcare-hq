@@ -301,6 +301,12 @@ hqDefine('export/js/models', [
         });
     };
 
+    ExportInstance.prototype.onLoadAllProperties = function (exportInstance, e) {
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.append('load_deprecated', 'True');
+        window.location.href = pageUrl;
+    };
+
     ExportInstance.prototype.getFormatOptionValues = function () {
         return _.filter(constants.EXPORT_FORMATS, function (format) {
             return this.formatOptions.indexOf(format) !== -1;
@@ -557,6 +563,12 @@ hqDefine('export/js/models', [
 
     TableConfiguration.prototype.toggleShowDeprecated = function (table) {
         table.showDeprecated(!table.showDeprecated());
+
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        if (urlParams.get('load_deprecated') != 'True' && table.showDeprecated()) {
+            $('#export-process-deprecated-properties').modal('show');
+        }
     };
 
     TableConfiguration.prototype._select = function (select) {
