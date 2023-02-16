@@ -6,7 +6,7 @@ hqDefine("events/js/new_event", [
     "hqwebapp/js/components.ko",
 ], function (
     $,
-    ko,
+    ko
 ) {
     $(function () {
         $("#id_start_date").datepicker({
