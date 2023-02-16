@@ -114,6 +114,7 @@ from corehq.util.global_request import get_request_domain
 from corehq.util.timezones.utils import get_timezone_for_domain
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.html_utils import strip_tags
+from corehq.apps.data_dictionary.util import get_deprecated_fields
 
 
 DAILY_SAVED_EXPORT_ATTACHMENT_NAME = "payload"
@@ -862,7 +863,14 @@ class ExportInstance(BlobMixin, Document):
         raise NotImplementedError()
 
     @classmethod
-    def generate_instance_from_schema(cls, schema, saved_export=None, auto_select=True, export_settings=None):
+    def generate_instance_from_schema(
+        cls,
+        schema,
+        saved_export=None,
+        auto_select=True,
+        export_settings=None,
+        load_deprecated=False
+    ):
         """Given an ExportDataSchema, this will generate an ExportInstance"""
         if saved_export:
             instance = saved_export
@@ -895,12 +903,20 @@ class ExportInstance(BlobMixin, Document):
                 index, column = table.get_column(
                     item.path, item.doc_type, None
                 )
+                is_deprecated = False
+                if schema.type == 'case' and item.label in get_deprecated_fields(schema.domain, schema.case_type):
+                    is_deprecated = True
+                    item.tag = 'deprecated'
                 if not column:
+                    if is_deprecated and not load_deprecated:
+                        continue
+
                     column = ExportColumn.create_default_from_export_item(
                         table.path,
                         item,
                         latest_app_ids_and_versions,
-                        auto_select
+                        auto_select,
+                        is_deprecated
                     )
                     if prev_index:
                         # if it's a new column, insert it right after the previous column
@@ -908,6 +924,12 @@ class ExportInstance(BlobMixin, Document):
                         table.columns.insert(index, column)
                     else:
                         table.columns.append(column)
+                else:
+                    if column.selected:
+                        column.is_deprecated = is_deprecated
+                    elif is_deprecated and not load_deprecated:
+                        table.columns.remove(column)
+                        continue
 
                 # Ensure that the item is up to date
                 column.item = item
