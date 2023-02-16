@@ -186,6 +186,13 @@ class Command(BaseCommand):
              name='Phone Heartbeat',
              description='Ability to configure a mobile feature to prompt users to update to latest CommCare '
                          'app and apk'),
+        Role(slug=privileges.DATA_FILE_DOWNLOAD,
+             name='File Dropzone',
+             description='Offer hosting and sharing data files for downloading '
+                         'from a secure dropzone'),
+        Role(slug=privileges.ATTENDANCE_TRACKING,
+             name='Attendance Tracking',
+             description='Supports using CommCareHQ for attendance tracking'),
     ]
 
     BOOTSTRAP_PLANS = [

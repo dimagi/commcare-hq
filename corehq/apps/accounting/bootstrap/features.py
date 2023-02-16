@@ -102,6 +102,8 @@ pro_v1 = standard_v1 + [
     privileges.CHILD_CASES,
     privileges.LITE_RELEASE_MANAGEMENT,
     privileges.LOADTEST_USERS,
+    privileges.DATA_FILE_DOWNLOAD,
+    privileges.ATTENDANCE_TRACKING,
 ]
 
 

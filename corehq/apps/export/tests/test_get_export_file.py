@@ -133,7 +133,7 @@ class WriterTest(SimpleTestCase):
         self.assertTrue(export_save.called)
 
     @patch('corehq.apps.export.models.FormExportInstance.save')
-    @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
+    @patch('corehq.apps.export.export.MAX_NORMAL_EXPORT_SIZE', 2)
     @flag_enabled('PAGINATED_EXPORTS')
     def test_paginated_table(self, export_save):
         export_instance = FormExportInstance(
