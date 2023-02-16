@@ -266,7 +266,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     dd_props_by_group = list(_get_dd_props_by_group(domain, case_type))
     tables = [
         (group, _table_definition([
-            (p.name, p.description) for p in props
+            (p.name, p.label, p.description) for p in props
         ]))
         for group, props in dd_props_by_group
     ]
@@ -276,7 +276,7 @@ def _get_dd_tables(domain, case_type, dynamic_data, timezone):
     unrecognized = set(dynamic_data.keys()) - props_in_dd
     if unrecognized:
         tables.append((_('Unrecognized'), _table_definition([
-            (p, None) for p in unrecognized
+            (p, None, None) for p in unrecognized
         ])))
 
     return [{
@@ -306,10 +306,11 @@ def _table_definition(props):
     return {
         "layout": list(chunked([
             DisplayConfig(
-                expr=name,
+                expr=prop_name,
+                name=label,
                 description=description,
                 has_history=True
-            ) for name, description in sorted(props)
+            ) for prop_name, label, description in sorted(props)
         ], DYNAMIC_CASE_PROPERTIES_COLUMNS))
     }
 
