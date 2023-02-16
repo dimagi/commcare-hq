@@ -307,7 +307,7 @@ def _table_definition(props):
         "layout": list(chunked([
             DisplayConfig(
                 expr=prop_name,
-                name=label,
+                name=label or prop_name,
                 description=description,
                 has_history=True
             ) for prop_name, label, description in sorted(props)
