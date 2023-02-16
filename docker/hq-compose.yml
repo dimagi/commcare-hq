@@ -96,7 +96,7 @@ services:
       - ${VOLUME_PREFIX}${BLANK_IF_TESTS-couchdb2:}/usr/src/couchdb/dev/lib/node1/data
 
   redis:
-    image: redis:6.2
+    image: redis:7
     expose:
       - "6379"
     healthcheck:
