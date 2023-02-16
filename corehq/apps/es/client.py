@@ -1194,6 +1194,12 @@ class ElasticMultiplexAdapter(BaseAdapter):
         for seq, action in sorted(flatten(by_id)):
             yield action
 
+    def bulk_index(self, docs, **bulk_kw):
+        return ElasticDocumentAdapter.bulk_index(self, docs, **bulk_kw)
+
+    def bulk_delete(self, doc_ids, **bulk_kw):
+        return ElasticDocumentAdapter.bulk_delete(self, doc_ids, **bulk_kw)
+
     def delete(self, doc_id, refresh=False):
         """Delete on primary, index tombstone on secondary."""
         self.primary.delete(doc_id, refresh)

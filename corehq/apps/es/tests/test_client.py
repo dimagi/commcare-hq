@@ -1874,28 +1874,23 @@ class TestElasticMultiplexAdapter(SimpleTestCase, ESTestHelpers):
 
     def test_bulk_index(self):
         docs = [self._make_doc() for x in range(3)]
-        bulk_actions = [BulkActionItem.index(doc) for doc in docs]
-        with patch_adapters_method(self.adapter, "bulk") as (p_mock, s_mock):
-            self.adapter.bulk(bulk_actions)
-
-        # Both adapters receive bulk request
-        p_mock.assert_called_once_with(bulk_actions, False)
-        s_mock.assert_called_once_with(bulk_actions)
+        doc_ids = [doc.id for doc in docs]
+        # verify state
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
+        # test
+        self.adapter.bulk_index(docs)
+        self.addCleanup(self.adapter.bulk_delete, doc_ids)
+        self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
 
     def test_bulk_delete(self):
         docs = [self._make_doc() for x in range(2)]
-        bulk_actions = [BulkActionItem.delete(doc) for doc in docs]
         doc_ids = [doc.id for doc in docs]
-        with patch_adapters_method(self.adapter, "bulk") as (p_mock, s_mock):
-            self.adapter.bulk(bulk_actions)
-
-        # Primary index gets delete request
-        p_mock.assert_called_once_with(bulk_actions, False)
-
-        # Secondary index creates tombstones for the docs
-        s_mock.assert_called_once()
-        tombstone_ids = [tombstone_obj.doc.id for tombstone_obj in s_mock.call_args.args[0]]
-        self.assertEqual(doc_ids, tombstone_ids)
+        # setup and verify state
+        self.adapter.bulk_index(docs)
+        self.assertPrimaryAndSecondaryDocIdsEqual(doc_ids)
+        # test
+        self.adapter.bulk_delete(doc_ids)
+        self.assertPrimaryAndSecondaryDocIdsEqual([])
 
     def test_delete(self):
         doc_id = self._make_doc().id
