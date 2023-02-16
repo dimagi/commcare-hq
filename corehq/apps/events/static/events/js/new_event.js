@@ -1,14 +1,12 @@
 hqDefine("events/js/new_event", [
     "jquery",
     "knockout",
-    "hqwebapp/js/initial_page_data",
     "hqwebapp/js/widgets",
     "jquery-ui/ui/widgets/datepicker",
     "hqwebapp/js/components.ko",
 ], function (
     $,
     ko,
-    initialPageData
 ) {
     $(function () {
         $("#id_start_date").datepicker({
@@ -22,7 +20,7 @@ hqDefine("events/js/new_event", [
         });
 
 
-        function eventViewModel(initialPageData) {
+        function eventViewModel() {
             'use strict';
             var self = {};
 
@@ -46,7 +44,7 @@ hqDefine("events/js/new_event", [
             return self;
         }
 
-        var eventModel = eventViewModel(initialPageData);
+        var eventModel = eventViewModel();
         $('#tracking-event-form').koApplyBindings(eventModel);
     });
 });

@@ -107,7 +107,7 @@ class EventCreateView(BaseEventView):
 
     @property
     def page_name(self):
-        return _("Add new event")
+        return _("Add New Event")
 
     @property
     def page_url(self):
