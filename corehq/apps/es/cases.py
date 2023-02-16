@@ -15,11 +15,15 @@ closed after May 1st.
          .OR(case_es.is_closed(False),
              case_es.closed_range(gte=datetime.date(2015, 05, 01))))
 """
+import copy
+import datetime
+from corehq.apps.es.exceptions import UnknownDocException
+
 from . import aggregations, filters
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class CaseES(HQESQuery):
@@ -54,8 +58,50 @@ class ElasticCase(ElasticDocumentAdapter):
         return get_adapter_mapping(self)
 
     @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(cls, case):
+        """
+        :param case: an instance of ``CommCareCase``
+        :raises ``UnknownDocException`` if ``case`` is not an instance of ``CommCareCase``
+        """
+        from corehq.form_processor.models.cases import CommCareCase
+        if not isinstance(case, CommCareCase):
+            raise UnknownDocException(CommCareCase, case)
+        return cls.from_multi(case)
+
+    @classmethod
+    def from_multi(cls, case):
+        """
+        Takes in a ``CommCareCase`` object or a case dict
+        and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_case_for_elasticsearch`` with added support for user objects.
+        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
+
+        :param user: an instance of ``CommCareCase`` or ``dict`` which is ``case.to_json()``
+
+        :raises UnknownDocException: if object passes in not instance of ``CommCareCase``
+        """
+        from corehq.pillows.utils import get_user_type
+        from corehq.form_processor.models.cases import CommCareCase
+
+        def _verify_and_return_case_as_dict():
+            if isinstance(case, dict):
+                return copy.deepcopy(case)
+            elif isinstance(case, CommCareCase):
+                return case.to_json()
+            raise UnknownDocException(CommCareCase, case)
+
+        doc_ret = _verify_and_return_case_as_dict()
+        if not doc_ret.get("owner_id"):
+            if doc_ret.get("user_id"):
+                doc_ret["owner_id"] = doc_ret["user_id"]
+
+        doc_ret['owner_type'] = get_user_type(doc_ret.get("owner_id", None))
+        doc_ret['inserted_at'] = datetime.datetime.utcnow().isoformat()
+
+        if 'backend_id' not in doc_ret:
+            doc_ret['backend_id'] = 'couch'
+
+        return doc_ret.pop('_id'), doc_ret
 
 
 case_adapter = create_document_adapter(
