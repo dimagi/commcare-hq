@@ -25,7 +25,7 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
             return _.isEqual(answer1, answer2);
         } else if (answer1 === answer2) {
             return true;
-        } else if(answer1.slice(answer1.lastIndexOf(".")) === answer2.slice(answer2.lastIndexOf("."))) {
+        } else if (answer1 && answer2 && answer1.slice(answer1.lastIndexOf(".")) === answer2.slice(answer2.lastIndexOf("."))) {
             return true;
         }
         return false;
