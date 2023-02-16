@@ -2,11 +2,17 @@
 AppES
 -----
 """
+from datetime import datetime
+
+from dimagi.utils.parsing import json_format_datetime
+
+from corehq.apps.es.exceptions import UnknownDocException
+
 from . import filters, queries
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .es_query import HQESQuery
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
+from .transient_util import get_adapter_mapping
 
 
 class AppES(HQESQuery):
@@ -33,8 +39,48 @@ class ElasticApp(ElasticDocumentAdapter):
         return get_adapter_mapping(self)
 
     @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(cls, app):
+        """
+        :param app: an instance of ``Application`` or ``RemoteApp`` or ``LinkedApplication``
+        :raises ``UnknownDocException`` if app is not an instance of classes mentioned above
+        """
+        from corehq.apps.app_manager.models import (
+            Application,
+            LinkedApplication,
+            RemoteApp,
+        )
+        if not type(app) in {Application, RemoteApp, LinkedApplication}:
+            raise UnknownDocException(Application, app)
+        return cls.from_multi(app)
+
+    @classmethod
+    def from_multi(cls, app):
+        """
+        Takes in a ``Application`` object or an app dict
+        and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_app_for_es`` with added support for user objects.
+        In future all references to  ``transform_app_for_es`` will be replaced by `from_python`
+
+        :param app: an instance of ``Application`` or ``dict`` which is ``app.to_json()``
+
+        :raises UnknownDocException: if object passes in not instance of
+        ``Application`` or ``RemoteApp`` or ``LinkedApplication``
+        """
+        from corehq.apps.app_manager.models import (
+            Application,
+            LinkedApplication,
+            RemoteApp,
+        )
+        from corehq.apps.app_manager.util import get_correct_app_class
+        if isinstance(app, dict):
+            app_obj = get_correct_app_class(app).wrap(app)
+        elif type(app) in {Application, RemoteApp, LinkedApplication}:
+            app_obj = app
+        else:
+            raise UnknownDocException(Application, app)
+        app_obj['@indexed_on'] = json_format_datetime(datetime.utcnow())
+        app_dict = app_obj.to_json()
+        return app_dict.pop('_id', None), app_dict
 
 
 app_adapter = create_document_adapter(
