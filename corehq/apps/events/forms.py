@@ -50,8 +50,9 @@ class CreateEventForm(forms.Form):
         required=True,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, domain, *args, **kwargs):
         super(CreateEventForm, self).__init__(*args, **kwargs)
+        self.domain = domain
 
         self.fields['expected_attendees'].choices = self._get_possible_attendees()
 
@@ -91,5 +92,5 @@ class CreateEventForm(forms.Form):
 
     def _get_possible_attendees(self):
         return [
-            (case_.case_id, case_.name) for case_ in get_domain_attendee_cases()
+            (case_.case_id, case_.name) for case_ in get_domain_attendee_cases(self.domain)
         ]
