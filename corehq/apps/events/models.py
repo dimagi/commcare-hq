@@ -61,3 +61,7 @@ class Event(models.Model):
     @property
     def status(self):
         return self.attendee_list_status
+
+
+def get_domain_attendee_cases(domain):
+    return []
