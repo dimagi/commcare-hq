@@ -270,12 +270,12 @@ class TestSQLDBAccessors(RepeaterTestCase):
 
     def test_get_paged_sql_repeat_records_daterange(self):
         domain = 'test-sql'
-        eve = self.sql_repeater.repeat_records.create(
+        eve = self.repeater.repeat_records.create(
             domain=domain,
             payload_id='eve',
             registered_at='1970-02-01',
         )
-        moon = self.sql_repeater.repeat_records.create(
+        moon = self.repeater.repeat_records.create(
             domain=domain,
             payload_id='moon',
             registered_at='1970-02-01',
