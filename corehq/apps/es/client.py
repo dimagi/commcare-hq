@@ -23,7 +23,6 @@ from corehq.util.es.elasticsearch import (
 )
 from corehq.util.metrics import metrics_counter
 
-from .app_config import register_document_adapter
 from .const import (
     INDEX_CONF_REINDEX,
     INDEX_CONF_STANDARD,
@@ -1311,8 +1310,8 @@ def _elastic_hosts():
 
 
 def create_document_adapter(cls, index_name, type_, *, secondary=None):
-    """Creates, registers and returns a document adapter instance for the
-    parameters provided.
+    """Creates and returns a document adapter instance for the parameters
+    provided.
 
     :param cls: an ``ElasticDocumentAdapter`` subclass
     :param index_name: the name of the index that the adapter interacts with
@@ -1332,7 +1331,6 @@ def create_document_adapter(cls, index_name, type_, *, secondary=None):
         secondary_adapter = cls(runtime_name(secondary), type_)
         doc_adapter = ElasticMultiplexAdapter(doc_adapter, secondary_adapter)
 
-    register_document_adapter(doc_adapter)
     return doc_adapter
 
 
