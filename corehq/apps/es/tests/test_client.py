@@ -2045,6 +2045,61 @@ class TestFromMultiInCases(TestCase):
         self.assertEqual(es_case, case)
 
 
+@es_test(requires=[case_search_adapter], setup_class=True)
+class TestFromMultiInCaseSearch(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.domain = 'from-multi-casesearch-tests'
+        cls.domain_obj = create_domain(cls.domain)
+        cls.case = create_case(cls.domain, save=True)
+        cls.addClassCleanup(cls.domain_obj.delete)
+
+    def test_from_multi_works_with_case_objects(self):
+        case_search_adapter.from_multi(self.case)
+
+    def test_from_multi_works_with_case_dicts(self):
+        case_search_adapter.from_multi(self.case.to_json())
+
+    def test_from_multi_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, case_search_adapter.from_multi, set)
+
+    def test_from_python_raises_for_other_objects(self):
+        self.assertRaises(UnknownDocException, case_search_adapter.from_python, set)
+        self.assertRaises(UnknownDocException, case_search_adapter.from_python, self.case.to_json())
+
+    def test_from_multi_is_same_as_transform_case_for_es(self):
+        # this test can be safely removed when transform_case_for_elasticsearch is removed
+        case_id, case = case_search_adapter.from_multi(self.case)
+        case['_id'] = case_id
+        case.pop('@indexed_on')
+        case_transformed_dict = transform_for_case_search(self.case.to_json())
+        case_transformed_dict.pop('@indexed_on')
+        self.assertEqual(case_transformed_dict, case)
+
+    def test_index_can_handle_case_dicts(self):
+        case_dict = self.case.to_json()
+        case_search_adapter.index(case_dict, refresh=True)
+        self.addCleanup(case_search_adapter.delete, self.case.case_id)
+
+        case = case_search_adapter.to_json(self.case)
+        case.pop('@indexed_on')
+        es_case = case_search_adapter.search({})['hits']['hits'][0]['_source']
+        es_case.pop('@indexed_on')
+        self.assertEqual(es_case, case)
+
+    def test_index_can_handle_case_objects(self):
+        case_search_adapter.index(self.case, refresh=True)
+        self.addCleanup(case_search_adapter.delete, self.case.case_id)
+
+        case = case_search_adapter.to_json(self.case)
+        case.pop('@indexed_on')
+        es_case = case_search_adapter.search({})['hits']['hits'][0]['_source']
+        es_case.pop('@indexed_on')
+        self.assertEqual(es_case, case)
+
+
 class OneshotIterable:
 
     def __init__(self, items):
