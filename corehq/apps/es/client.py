@@ -14,6 +14,7 @@ from corehq.apps.es.filters import term
 from dimagi.utils.chunked import chunked
 
 from corehq.util.es.elasticsearch import (
+    BulkIndexError,
     Elasticsearch,
     ElasticsearchException,
     NotFoundError,
@@ -776,6 +777,10 @@ class ElasticDocumentAdapter(BaseAdapter):
             elasticsearch-py library's ``bulk()`` helper function (i.e. raise).
         """
         payload = [self._render_bulk_action(action) for action in actions]
+        return self._bulk(payload, refresh, raise_errors)
+
+    def _bulk(self, payload, refresh, raise_errors):
+        """Perform the bulk operation with the low-level payload object."""
         return bulk(
             self._es,
             payload,
@@ -806,11 +811,13 @@ class ElasticDocumentAdapter(BaseAdapter):
         action_gen = (BulkActionItem.delete_id(doc_id) for doc_id in doc_ids)
         return self.bulk(action_gen, **bulk_kw)
 
-    def _render_bulk_action(self, action):
+    def _render_bulk_action(self, action, *, forbid_tombstones=True):
         """Return a "raw" action object in the format required by the
         Elasticsearch ``bulk()`` helper function.
 
         :param action: a ``BulkActionItem`` instance
+        :param forbid_tombstones: Optional (default ``True``) passed verbatim to
+            the ``_verify_doc_source()`` method.
         :returns: ``dict``
         """
         for_elastic = {
@@ -826,7 +833,7 @@ class ElasticDocumentAdapter(BaseAdapter):
         elif action.is_index:
             for_elastic["_op_type"] = "index"
             doc_id, source = self.from_python(action.doc)
-            self._verify_doc_source(source)
+            self._verify_doc_source(source, forbid_tombstones=forbid_tombstones)
             for_elastic["_source"] = source
         else:
             raise ValueError(f"unsupported action type: {action!r}")
@@ -846,16 +853,18 @@ class ElasticDocumentAdapter(BaseAdapter):
             raise ValueError(f"invalid Elastic _id value: {doc_id!r}")
 
     @staticmethod
-    def _verify_doc_source(source):
+    def _verify_doc_source(source, *, forbid_tombstones=True):
         """Check whether or the not the provided ``source`` is valid for
         passing to Elasticseach (does not contain any illegal meta properties).
 
         :param source: ``dict`` of document properties to check
+        :param forbid_tombstones: Optional. If ``True`` (the default), raise if
+            ``source`` contains any properties reserved for tombstones.
         :raises: ``ValueError``
         """
         if not isinstance(source, dict) or "_id" in source:
             raise ValueError(f"invalid Elastic _source value: {source}")
-        if source.get(Tombstone.PROPERTY_NAME, False):
+        if forbid_tombstones and source.get(Tombstone.PROPERTY_NAME, False):
             raise ValueError(f"property {Tombstone.PROPERTY_NAME} is reserved")
 
     @staticmethod
@@ -1054,25 +1063,136 @@ class ElasticMultiplexAdapter(BaseAdapter):
         return self.primary.search(*args, **kw)
 
     # Elastic index write methods (multiplexed between both adapters)
-    def bulk(self, actions, refresh=False, **kw):
-        """Pass actions verbatim to primary. Convert delete actions to
-        'index tombstone' actions and send to secondary."""
-        primary_actions = []
-        secondary_actions = []
-        for action in actions:
-            primary_actions.append(action)
-            if action.is_delete:
-                # This logic belongs in the BulkActionItem class, but that class
-                # has no concept of 'to_python(doc)'
-                if action.doc_id is None:
-                    doc_id = self.from_python(action.doc)[0]
+    def bulk(self, actions, refresh=False, raise_errors=True):
+        """Apply bulk actions on the primary and secondary.
+
+        Bulk actions are applied against the primary and secondary in chunks of
+        500 actions at a time (replicates the behavior of the the ``bulk()``
+        helper function). Chunks are applied against the primary and secondary
+        simultaneously by chunking the original ``actions`` in blocks of (up to)
+        250 and performing a single block of (up to) 500 actions against both
+        indexes in parallel. Tombstone documents are indexed on the secondary
+        for any ``delete`` actions which succeed on the primary but fail on the
+        secondary.
+        """
+        success_count = 0
+        errors = []
+        for chunk in chunked(self._iter_pruned_actions(actions), 250):
+            payload = []
+            for action in chunk:
+                # apply the chunk to both indexes in parallel
+                payload.append(self.primary._render_bulk_action(action))
+                payload.append(self.secondary._render_bulk_action(action))
+            _, chunk_errs = bulk(self._es, payload, chunk_size=len(payload),
+                                 refresh=refresh, raise_on_error=False,
+                                 raise_on_exception=raise_errors)
+            deduped_errs = {}
+            primary_del_fail_ids = set()
+            secondary_del_fails = {}
+            for error in chunk_errs:
+                doc_id, index_name = self._parse_bulk_error(error)
+                if index_name == self.primary.index_name:
+                    deduped_errs[doc_id] = error
+                    if self._is_delete_not_found(error):
+                        # don't add tombstones for deletes that failed on the
+                        # primary index
+                        primary_del_fail_ids.add(doc_id)
                 else:
-                    doc_id = action.doc_id
-                action = BulkActionItem.index(Tombstone(doc_id))
-            secondary_actions.append(action)
-        self.primary.bulk(primary_actions, refresh, **kw)
-        # don't refresh the secondary because we never read from it
-        self.secondary.bulk(secondary_actions, **kw)
+                    if self._is_delete_not_found(error):
+                        secondary_del_fails[doc_id] = error
+                    else:
+                        deduped_errs.setdefault(doc_id, error)
+            tombstone_ids = set(secondary_del_fails) - primary_del_fail_ids
+            if tombstone_ids:
+                # add tombstones on secondary
+                try:
+                    _, make_tstone_errs = self.secondary._bulk(
+                        self._iter_tombstone_bulk_payload(tombstone_ids),
+                        refresh=False,
+                        raise_errors=raise_errors,
+                    )
+                except BulkIndexError as exc:
+                    make_tstone_errs = exc.errors
+                for error in make_tstone_errs:
+                    doc_id, _ = self._parse_bulk_error(error)
+                    deduped_errs.setdefault(doc_id, secondary_del_fails[doc_id])
+
+            errors.extend(deduped_errs.values())
+            if raise_errors and errors:
+                # raise the same as elasticsearch-py does
+                raise BulkIndexError(f"{len(errors)} document(s) failed to index.", errors)
+            success_count += (len(chunk) - len(deduped_errs))
+        return success_count, errors
+
+    def _iter_tombstone_bulk_payload(self, doc_ids):
+        for doc_id in doc_ids:
+            yield self.secondary._render_bulk_action(
+                BulkActionItem.index(Tombstone(doc_id)),
+                forbid_tombstones=False,
+            )
+
+    @staticmethod
+    def _parse_bulk_error(error):
+        """Returns tuple ``(doc_id, index_name)`` for the provided bulk action
+        error.
+        """
+        op_type, = error.keys()
+        return error[op_type]["_id"], error[op_type]["_index"]
+
+    @staticmethod
+    def _is_delete_not_found(error):
+        return error.get("delete", {}).get("status") == 404
+
+    def _iter_pruned_actions(self, actions):
+        """Iterates over ``actions``, yielding a subset of actions in the
+        same order. Actions are pruned (not yielded) if they are superseded by a
+        later action. Pruning logic uses the following algorithm:
+
+        - Any ``index`` action supersedes all prior actions for the same
+          document ``_id``.
+        - Any ``delete`` action supersedes previous ``delete`` actions for the
+          same document ``_id``, but does not superseded ``index`` actions.
+
+        For any unique document ``_id`` present in the original actions, there
+        are only three possible action permutations yielded by this method:
+
+        1. ``delete_action`` only: This is the last of one or more
+           delete actions for this document. There were no index actions.
+        2. ``index_action`` only: This is the last of one or more actions of any
+           type for this document, and this action came after all others.
+        3. ``index_action`` *and* ``delete_action`` (index action will always be
+           yielded first): These are the last of each index and delete actions
+           (respectively), and the delete action came *after* the index action.
+
+        :param actions: an iterable of ``BulkActionItem`` instances.
+        """
+        by_id = {}
+        for seq, action in enumerate(actions):
+            # Render the action to get the document id and bulk action 'op_type'
+            # value. The adpater used to acquire this info is not important
+            # (either the primary or secondary will suffice).
+            serializable_action = self.primary._render_bulk_action(action)
+            doc_id = serializable_action["_id"]
+            op_type = serializable_action["_op_type"]
+            if action.is_delete:
+                by_id.setdefault(doc_id, {})[op_type] = (seq, action)
+            else:
+                assert action.is_index, action
+                by_id[doc_id] = {op_type: (seq, action)}
+
+        def flatten(by_id):
+            """Iterate pruned actions, yielding ``(seq, action)`` tuples to
+            support sorting the actions in in their original order.
+            This could also be converted into a nested generator expression
+            (instead of a this inline function definition), but the function
+            implementation is easier to read.
+            """
+            for doc_id, actions in by_id.items():
+                for op_type, (seq, action) in actions.items():
+                    yield seq, action
+
+        for seq, action in sorted(flatten(by_id)):
+            yield action
 
     def delete(self, doc_id, refresh=False):
         """Delete on primary, index tombstone on secondary."""
