@@ -420,7 +420,6 @@ hqDefine('cloudcare/js/utils', [
     };
 
     return {
-        dateTimePickerTooltips: dateTimePickerTooltips,
         convertTwoDigitYear: convertTwoDigitYear,
         initDatePicker: initDatePicker,
         initTimePicker: initTimePicker,
