@@ -10,6 +10,8 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 
+import copy
+from datetime import datetime
 from warnings import warn
 
 from django.conf import settings
@@ -30,15 +32,16 @@ from corehq.apps.case_search.const import (
     VALUE,
 )
 from corehq.apps.es.cases import CaseES, owner
+from corehq.apps.es.exceptions import UnknownDocException
 from corehq.util.dates import iso_string_to_datetime
+from dimagi.utils.parsing import json_format_datetime
 
 from . import filters, queries
 from .cases import case_adapter
 from .client import ElasticDocumentAdapter, create_document_adapter
 from .index.analysis import PHONETIC_ANALYSIS
 from .index.settings import IndexSettingsKey
-from .transient_util import get_adapter_mapping, from_dict_with_possible_id
-
+from .transient_util import get_adapter_mapping
 PROPERTY_KEY = "{}.key.exact".format(CASE_PROPERTIES_PATH)
 PROPERTY_VALUE = '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE)
 PROPERTY_VALUE_EXACT = '{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE)
@@ -149,8 +152,48 @@ class ElasticCaseSearch(ElasticDocumentAdapter):
         return get_adapter_mapping(self)
 
     @classmethod
-    def from_python(cls, doc):
-        return from_dict_with_possible_id(doc)
+    def from_python(cls, case):
+        """
+        :param case: an instance of ``CommCareCase``
+        :raises ``UnknownDocException`` if ``case`` is not an instance of ``CommCareCase``
+        """
+        from corehq.form_processor.models.cases import CommCareCase
+        if not isinstance(case, CommCareCase):
+            raise UnknownDocException(CommCareCase, case)
+        return cls.from_multi(case)
+
+    @classmethod
+    def from_multi(cls, case):
+        """
+        Takes in a ``CommCareCase`` object or a case dict
+        and applies required transformation to make it suitable for ES.
+        The function is replica of ``transform_case_for_elasticsearch`` with added support for user objects.
+        In future all references to  ``transform_case_for_elasticsearch`` will be replaced by `from_python`
+
+        :param user: an instance of ``CommCareCase`` or ``dict`` which is ``case.to_json()``
+
+        :raises UnknownDocException: if object passes in not instance of ``CommCareCase``
+        """
+        from corehq.form_processor.models.cases import CommCareCase
+        from corehq.pillows.case_search import _get_case_properties
+        from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAPPING
+
+        def _verify_and_return_case_as_dict():
+            if isinstance(case, dict):
+                return copy.deepcopy(case)
+            elif isinstance(case, CommCareCase):
+                return case.to_json()
+            raise UnknownDocException(CommCareCase, case)
+
+        case_dict = _verify_and_return_case_as_dict()
+        doc = {
+            desired_property: case_dict.get(desired_property)
+            for desired_property in CASE_SEARCH_MAPPING['properties'].keys()
+            if desired_property not in SYSTEM_PROPERTIES
+        }
+        doc[INDEXED_ON] = json_format_datetime(datetime.utcnow())
+        doc['case_properties'] = _get_case_properties(case_dict)
+        return case_dict.get('_id'), doc
 
 
 case_search_adapter = create_document_adapter(
