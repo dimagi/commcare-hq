@@ -17,7 +17,7 @@ from corehq.apps.case_search.xpath_functions import (
     XPATH_QUERY_FUNCTIONS,
 )
 from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_path_expression, \
-    walk_ancestor_hierarchy
+    ancestor_comparison_query
 from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es import filters
 
@@ -77,7 +77,7 @@ def build_filter_from_ast(node, context):
     If fuzzy is true, all equality operations will be treated as fuzzy.
     """
     def _simple_ancestor_query(node):
-        return walk_ancestor_hierarchy(context, node)
+        return ancestor_comparison_query(context, node)
 
     def _is_subcase_count(node):
         """Returns whether a particular AST node is a subcase lookup.
