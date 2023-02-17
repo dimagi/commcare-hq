@@ -89,7 +89,11 @@ hqDefine("cloudcare/js/form_entry/utils", function () {
         // Must add the form-control class to the input created by mapbox in order to edit.
         var inputEl = $('input.mapboxgl-ctrl-geocoder--input');
         inputEl.addClass('form-control');
-        inputEl.on('keydown', _.debounce(self._inputOnKeyDown, 200));
+        inputEl.on('keydown', _.debounce((e) => {
+            if (e.keyCode === 38 || e.keyCode === 40) {
+                $("#geocoder-option-sr").html("<p>" + $("ul.suggestions li.active").text() + "</p>");
+            }
+        }, 200));
     };
 
     /**
