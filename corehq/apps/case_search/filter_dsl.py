@@ -17,7 +17,7 @@ from corehq.apps.case_search.exceptions import (
 from corehq.apps.case_search.xpath_functions import (
     XPATH_QUERY_FUNCTIONS,
 )
-from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_path_expression, \
+from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_comparison, \
     ancestor_comparison_query
 from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 
@@ -91,7 +91,7 @@ def build_filter_from_ast(node, context):
                 serialize(node)
             )
 
-        if is_ancestor_path_expression(node):
+        if is_ancestor_comparison(node):
             # this node represents a filter on a property for a related case
             return _simple_ancestor_query(node)
 
