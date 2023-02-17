@@ -3,6 +3,7 @@ from eulxml.xpath import serialize
 
 from corehq.apps.case_search.exceptions import TooManyRelatedCasesError
 from corehq.apps.case_search.filter_dsl import MAX_RELATED_CASES
+from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
 
 
@@ -16,7 +17,7 @@ def is_ancestor_path_expression(node):
     return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
 
 
-def walk_ancestor_hierarchy(_comparison_raw, context, node):
+def walk_ancestor_hierarchy(context, node):
     """Return a query that will fulfill the filter on the related case.
 
     :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
@@ -30,7 +31,7 @@ def walk_ancestor_hierarchy(_comparison_raw, context, node):
 
     # fetch the ids of the highest level cases that match the case_property
     # i.e. all the cases which have `property = 'value'`
-    ids = _parent_property_lookup(_comparison_raw, context, node)
+    ids = _parent_property_lookup(context, node)
 
     # get the related case path we need to walk, i.e. `parent/grandparent/property`
     n = node.left
@@ -55,10 +56,10 @@ def walk_ancestor_hierarchy(_comparison_raw, context, node):
     return reverse_index_case_query(ids, final_identifier)
 
 
-def _parent_property_lookup(_comparison_raw, context, node):
+def _parent_property_lookup(context, node):
     """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
     """
-    es_filter = _comparison_raw(node.left.right, node.op, node.right, node)
+    es_filter = property_comparison_query(node.left.right, node.op, node.right, node)
     es_query = CaseSearchES().domain(context.domain).filter(es_filter)
     if es_query.count() > MAX_RELATED_CASES:
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)

@@ -2,16 +2,13 @@ import re
 from dataclasses import dataclass
 
 from django.utils.translation import gettext as _
-
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import (
     BinaryExpression,
     FunctionCall,
-    Step,
     serialize,
 )
 
-from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     XPathFunctionException,
@@ -21,11 +18,8 @@ from corehq.apps.case_search.xpath_functions import (
 )
 from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_path_expression, \
     walk_ancestor_hierarchy
+from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es import filters
-from corehq.apps.es.case_search import (
-    case_property_query,
-    case_property_range_query,
-)
 
 
 @dataclass
@@ -83,7 +77,7 @@ def build_filter_from_ast(node, context):
     If fuzzy is true, all equality operations will be treated as fuzzy.
     """
     def _simple_ancestor_query(node):
-        return walk_ancestor_hierarchy(_comparison_raw, context, node)
+        return walk_ancestor_hierarchy(context, node)
 
     def _is_subcase_count(node):
         """Returns whether a particular AST node is a subcase lookup.
@@ -97,31 +91,7 @@ def build_filter_from_ast(node, context):
         """Returns the filter for a comparison operation (=, !=, >, <, >=, <=)
 
         """
-        return _comparison_raw(node.left, node.op, node.right, node)
-
-    def _comparison_raw(case_property_name_raw, op, value_raw, node):
-        if not isinstance(case_property_name_raw, Step):
-            raise CaseFilterError(
-                _("We didn't understand what you were trying to do with {}").format(serialize(node)),
-                serialize(node)
-            )
-
-        case_property_name = serialize(case_property_name_raw)
-        value = unwrap_value(value_raw, context)
-        if op in [EQ, NEQ]:
-            query = case_property_query(case_property_name, value, fuzzy=context.fuzzy)
-            if op == NEQ:
-                query = filters.NOT(query)
-            return query
-        else:
-            try:
-                return case_property_range_query(case_property_name, **{RANGE_OP_MAPPING[op]: value})
-            except (TypeError, ValueError):
-                raise CaseFilterError(
-                    _("The right hand side of a comparison must be a number or date. "
-                      "Dates must be surrounded in quotation marks"),
-                    serialize(node),
-                )
+        return property_comparison_query(context, node.left, node.op, node.right, node)
 
     def visit(node):
 
