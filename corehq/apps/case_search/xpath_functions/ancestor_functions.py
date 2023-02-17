@@ -70,7 +70,7 @@ def walk_ancestor_hierarchy(context, node, case_ids):
 def _parent_property_lookup(context, node):
     """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
     """
-    es_filter = property_comparison_query(node.left.right, node.op, node.right, node)
+    es_filter = property_comparison_query(context, node.left.right, node.op, node.right, node)
     es_query = CaseSearchES().domain(context.domain).filter(es_filter)
     if es_query.count() > MAX_RELATED_CASES:
         new_query = '{} {} "{}"'.format(serialize(node.left.right), node.op, node.right)
