@@ -36,6 +36,8 @@ of that value should be removed from the CommCare HQ codebase entirely in order
 to decouple it from application logic.
 
 
+.. _creating-elasticsearch-index-migrations:
+
 Creating Elasticsearch Index Migrations
 '''''''''''''''''''''''''''''''''''''''
 
@@ -280,10 +282,9 @@ Reindex Procedure Details
 1. Configure multiplexing on an index by passing in ``secondary`` index name to
    ``create_document_adapter``.
 
-   - Ensure that there is a migration in place for creating the index.
-
-     **Note** Tooling around this is a WIP
-
+   - Ensure that there is a migration in place for creating the index (see
+     `Creating Elasticsearch Index Migrations <creating-elasticsearch-index-migrations_>`__
+     above).
    - *(Optional)* If the reindex involves other meta-index changes (shards,
      mappings, etc), also update those configurations at this time.
 
@@ -508,7 +509,7 @@ Using this adapter in practice might look as follows:
     )
     books_adapter.index(new_book)
     # fetch existing
-    classic_book = books_adapter.fetch("978-0345391803")
+    classic_book = books_adapter.get("978-0345391803")
 
 
 Tombstone
@@ -549,10 +550,6 @@ A sample tombstone document would look like
     {
       "__is_tombstone__" : True
     }
-
-Current mapping does not index ``__is_tombstone__`` property but it would be added
-to mappings before we start reindexing. This would help us in ensuring that we
-can ignore them in the ES queries.
 
 
 Code Documentation
