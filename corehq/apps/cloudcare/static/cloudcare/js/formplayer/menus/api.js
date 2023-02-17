@@ -28,14 +28,20 @@ hqDefine("cloudcare/js/formplayer/menus/api", function () {
                 if (!params.preview) {
                     // Make sure the user has access to the app
                     if (!appCollection.find(function (app) {
-                        return app.id === params.appId || app.get('copy_of') === params.copyOf;
+                        if (app.id && app.id === params.appId) {
+                            return true;
+                        }
+                        if (app.get('copy_of') && app.get('copy_of') === params.copyOf) {
+                            return true;
+                        }
                     })) {
                         FormplayerFrontend.trigger(
                             'showError',
-                            gettext('Permission Denied')
+                            gettext('The application could not be found')
                         );
                         FormplayerFrontend.trigger('navigateHome');
                         defer.reject();
+                        return;
                     }
                 }
 

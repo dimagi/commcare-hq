@@ -46,7 +46,6 @@ from couchforms import openrosa_response
 from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import DefaultAuthContext, UnfinishedSubmissionStub
 from couchforms.signals import successful_form_received
-from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
 from phonelog.utils import process_device_log, SumoLogicLog
@@ -144,8 +143,7 @@ class SubmissionPost(object):
 
     def _post_process_form(self, xform):
         self._set_submission_properties(xform)
-        found_old = scrub_meta(xform)
-        legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
+        scrub_meta(xform)
 
     def _get_success_message(self, instance, cases=None):
         '''

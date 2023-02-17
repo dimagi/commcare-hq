@@ -22,7 +22,7 @@ class STATES(object):
     failed = 3
 
 
-class TaskStatus(namedtuple('TaskStatus', ['result', 'error', 'state', 'progress'])):
+class TaskStatus(namedtuple('TaskStatus', ['result', 'error', 'state', 'progress', 'exception'])):
     def missing(self):
         return self.state == STATES.missing
 
@@ -146,6 +146,7 @@ def get_multiple_task_progress(task):
 def get_task_status(task, is_multiple_download_task=False):
     context_result = None
     context_error = None
+    exception = None
     is_ready = False
     failed = False
 
@@ -166,6 +167,7 @@ def get_task_status(task, is_multiple_download_task=False):
             is_ready = True
             context_result = result and result.get('messages')
         elif result and isinstance(result, Exception):
+            exception = result
             context_error = six.text_type(result)
             if '\t' in context_error:
                 context_error = [err for err in context_error.split('\t') if err]
@@ -203,6 +205,7 @@ def get_task_status(task, is_multiple_download_task=False):
         result=context_result,
         error=context_error,
         progress=progress,
+        exception=exception
     )
 
 

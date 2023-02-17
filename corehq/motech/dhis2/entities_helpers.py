@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from django.urls import reverse
+from corehq.util.view_utils import absolute_reverse
 from django.utils.translation import gettext as _
 
 from requests import HTTPError
@@ -28,6 +28,8 @@ from corehq.motech.value_source import (
     get_case_trigger_info_for_case,
     get_value,
 )
+from .parse_response import get_errors
+from corehq.motech.views import MotechLogListView
 
 
 @dataclass
@@ -197,22 +199,13 @@ def update_tracked_entity_instance(
     requests, tracked_entity, etag, case_trigger_info, case_config,
     attempt=1
 ):
-    case_updates = {}
-    for attr_id, value_source_config in case_config['attributes'].items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments_with_new_events = get_enrollments(
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
         case_trigger_info,
         case_config,
+        True
     )
-    if enrollments_with_new_events:
-        tracked_entity["enrollments"] = update_enrollments(
-            tracked_entity, enrollments_with_new_events
-        )
-    validate_tracked_entity(tracked_entity)
     tei_id = tracked_entity["trackedEntityInstance"]
     endpoint = f"/api/trackedEntityInstances/{tei_id}"
     headers = {
@@ -236,6 +229,38 @@ def update_tracked_entity_instance(
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
 
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while updating DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
+
+
+def _build_tracked_entity(
+    requests,
+    tracked_entity,
+    case_trigger_info,
+    case_config,
+    is_update,
+):
+    case_updates = {}
+    for attr_id, value_source_config in case_config['attributes'].items():
+        value, case_update = get_or_generate_value(
+            requests, attr_id, value_source_config, case_trigger_info
+        )
+        set_te_attr(tracked_entity["attributes"], attr_id, value)
+        case_updates.update(case_update)
+    enrollments = get_enrollments(case_trigger_info, case_config)
+    if enrollments:
+        if is_update:
+            tracked_entity["enrollments"] = update_enrollments(
+                tracked_entity, enrollments
+            )
+        else:
+            tracked_entity["enrollments"] = enrollments
+    validate_tracked_entity(tracked_entity)
+    return tracked_entity, case_updates
+
 
 def update_enrollments(
     tracked_entity: Dict,
@@ -258,23 +283,18 @@ def update_enrollments(
 
 
 def register_tracked_entity_instance(requests, case_trigger_info, case_config):
-    case_updates = {}
     tracked_entity = {
         "trackedEntityType": case_config['te_type_id'],
         "orgUnit": get_value(case_config['org_unit_id'], case_trigger_info),
         "attributes": [],
     }
-
-    for attr_id, value_source_config in case_config['attributes'].items():
-        value, case_update = get_or_generate_value(
-            requests, attr_id, value_source_config, case_trigger_info
-        )
-        set_te_attr(tracked_entity["attributes"], attr_id, value)
-        case_updates.update(case_update)
-    enrollments = get_enrollments(case_trigger_info, case_config)
-    if enrollments:
-        tracked_entity["enrollments"] = enrollments
-    validate_tracked_entity(tracked_entity)
+    tracked_entity, case_updates = _build_tracked_entity(
+        requests,
+        tracked_entity,
+        case_trigger_info,
+        case_config,
+        False
+    )
     endpoint = "/api/trackedEntityInstances/"
     response = requests.post(endpoint, json=tracked_entity, raise_for_status=True)
     summaries = response.json()["response"]["importSummaries"]
@@ -291,6 +311,12 @@ def register_tracked_entity_instance(requests, case_trigger_info, case_config):
         case_trigger_info.extra_fields[case_property] = tei_id
     if case_updates:
         save_case_updates(requests.domain_name, case_trigger_info.case_id, case_updates)
+
+    if len(get_errors(response.json())):
+        raise Dhis2Exception(_(
+            'Error(s) while registering DHIS2 tracked entity. '
+            'Errors from DHIS2 can be found in Remote API Logs: {url}'
+        ).format(url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
 def create_relationships(
@@ -392,11 +418,10 @@ def create_relationship(requests, relationship_spec):
     response = requests.post(endpoint, json=relationship_spec.as_dict(), raise_for_status=True)
     num_imported = response.json()['response']['imported']
     if num_imported != 1:
-        from corehq.motech.views import MotechLogListView
         raise Dhis2Exception(_(
             'DHIS2 created {n} relationships. Errors from DHIS2 can be found '
             'in Remote API Logs: {url}'
-        ).format(n=num_imported, url=reverse(MotechLogListView.urlname)))
+        ).format(n=num_imported, url=absolute_reverse(MotechLogListView.urlname, args=[requests.domain_name])))
 
 
 def get_or_generate_value(requests, attr_id, value_source_config, case_trigger_info):

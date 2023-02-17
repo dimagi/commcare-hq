@@ -63,25 +63,25 @@ branches:
     - dmr/add-support-for-ses-django-email-backend  # Danny Aug 26
     - do/migrate-apps # Dominic Sep 2
     - smh/remove-setSelectedValue-import # Steph Sept 20
-    - akj/release-mode-toggle # Akash 7 Oct
     - akj/migrations-fix # Akash Oct 11
     - mk/support-expanded-cols-in-mobile-ucr-2 # MK Oct 31
     # - akj/abdm-api-for-mobile-app # Akash Sep 28
     - es/redirect-domain  # Ethan Nov 21
     #- jls/web-apps-requirejs  # Jenny Jan 17
     - gh/remove-duplicate-kafka-seq-code # Graham Dec 26
-    - gh/refactor-orphaned-ucr-code # Graham Dec 26
     - jls/new-instance-connectors # Steph Dec 27
-    - smh/allow-eof-form-lining-multi-select # Steph Jan 4
-    - pkv/data-dictionary-labels-cle-integration # Pawan Jan 11
     #- ad/user-syncing-task # Addison Jan 13  # conflicts with 'ad/user-syncing-UI' disabled by Joel Jan 23
-    - rp/mobile-worker-bulk-download-ui-change # Rynhard Jan 20
-    - ad/remove-entered-wrap-functions # Addison Jan 26
-    - pkv/sync-complete-action-indicator-sr # Pawan Jan 27
-    - jls/remove-a-lot-of-wrapping # Jenny Jan 30
     - pkv/accessibility-pagination-widget-on-incomplete-forms # Pawan Feb 1
-#    - ce/enable-case-rate-limits # Cal Feb 1
-    - ap/refactor_send_to_elasticsearch_usage # Amit Feb 2
-    - ml/enforce-metadata-ff # Minha Feb 2
+    # - ce/enable-case-rate-limits # Cal Feb 1
+    # - ml/enforce-metadata-ff # Minha Feb 2
     - akj/tabular-radio-btn-reader # Akash Feb 6
+    - jt/ush_2575_case_search_pull_related_cases # Jonathan T. Feb 6
+    - sk/webapps-sessionid  # Simon Feb 9
+    - jls/nodeset-filter-ui # Jenny Feb 13
+    - smh/force-incremental-sync # Steph Feb 14
+    - ad/tableau-user-syncing-bulk # Addison Feb 15
+    - es/date-widget  # Ethan Feb 15
+    - em/app-summary-conditional-case-update-status # Evan Feb 15
+    - dependabot/pip/requirements/jinja2-3.1.2 # Graham Feb 16
+    - rc/media-upload-spinner-fix # Robert Feb 16
 submodules: { }

@@ -120,10 +120,21 @@ ALL_TAGS = [
 
 class StaticToggle(object):
 
-    def __init__(self, slug, label, tag, namespaces=None, help_link=None,
-                 description=None, save_fn=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, relevant_environments=None,
-                 notification_emails=None, parent_toggles=None):
+    def __init__(
+        self,
+        slug,
+        label,
+        tag,
+        namespaces=None,
+        help_link=None,
+        description=None,
+        save_fn=None,
+        enabled_for_new_domains_after=None,
+        enabled_for_new_users_after=None,
+        relevant_environments=None,
+        notification_emails=None,
+        parent_toggles=None,
+    ):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -740,14 +751,6 @@ COPY_FORM_TO_APP = StaticToggle(
     'Allow copying a form from one app to another',
     TAG_INTERNAL,
     [NAMESPACE_DOMAIN, NAMESPACE_USER],
-)
-
-DATA_FILE_DOWNLOAD = StaticToggle(
-    'data_file_download',
-    'Offer hosting and sharing data files for downloading from a secure dropzone',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+sharing+data+files+for+downloading+from+a+secure+dropzone',
-    namespaces=[NAMESPACE_DOMAIN],
 )
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
@@ -1441,13 +1444,6 @@ SHOW_IDS_IN_REPORT_BUILDER = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-MOBILE_USER_DEMO_MODE = StaticToggle(
-    'mobile_user_demo_mode',
-    'Ability to make a mobile worker into Demo only mobile worker',
-    TAG_SOLUTIONS_OPEN,
-    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
-    namespaces=[NAMESPACE_DOMAIN]
-)
 
 ALLOW_USER_DEFINED_EXPORT_COLUMNS = StaticToggle(
     'allow_user_defined_export_columns',
@@ -1572,13 +1568,6 @@ INCREMENTAL_EXPORTS = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
     help_link="https://confluence.dimagi.com/display/saas/Incremental+Data+Exports"
-)
-
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN]
 )
 
 SKIP_REMOVE_INDICES = StaticToggle(
@@ -2471,4 +2460,24 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     "Ability to configure a mobile feature to prompt users to update to latest CommCare app and apk",
     TAG_SOLUTIONS_CONDITIONAL,
     [NAMESPACE_DOMAIN]
+)
+
+MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
+    privileges.PRACTICE_MOBILE_WORKERS,
+    'mobile_user_demo_mode',
+    'Ability to make a mobile worker into Demo only mobile worker',
+    TAG_SOLUTIONS_OPEN,
+    help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(
+    privileges.DATA_FILE_DOWNLOAD,
+    'data_file_download',
+    label='Offer hosting and sharing data files for downloading from a secure '
+          'dropzone',
+    tag=TAG_SOLUTIONS_OPEN,
+    namespaces=[NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/saas/Offer+hosting+and+'
+              'sharing+data+files+for+downloading+from+a+secure+dropzone',
 )

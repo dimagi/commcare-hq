@@ -5933,6 +5933,7 @@ msgstr "Valeur"
 #: corehq/apps/app_manager/templates/app_manager/form_summary_base.html
 #: corehq/apps/builds/templates/builds/edit_menu.html
 #: corehq/apps/custom_data_fields/templates/custom_data_fields/partials/fields_tab.html
+#: corehq/apps/data_dictionary/views.py
 #: corehq/apps/reports/templates/reports/filters/explorer_columns.html
 #: corehq/apps/userreports/templates/userreports/partials/property_list_configuration.html
 msgid "Label"
@@ -6265,7 +6266,7 @@ msgstr ""
 #: corehq/apps/export/templates/export/partials/table.html
 #: corehq/apps/hqmedia/templates/hqmedia/audio_translator.html
 #: corehq/apps/reports/templates/reports/form/partials/single_form.html
-#: corehq/apps/sso/forms.py
+#: corehq/apps/sso/forms.py corehq/apps/users/forms.py
 #: corehq/ex-submodules/casexml/apps/case/templates/case/partials/case_attachments.html
 msgid "Download"
 msgstr "Télécharger"
@@ -6394,9 +6395,9 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
 msgid ""
 "\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select form, which is not supported.\n"
+"                Linking for a form in a multi-select case list is restricted "
+"to multi-select forms only.\n"
+"                Please ensure your form is multi-select.\n"
 "              "
 msgstr ""
 
@@ -6404,19 +6405,9 @@ msgstr ""
 msgid ""
 "\n"
 "                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a parent menu that uses multi-select, which is not "
+"appears to involve both\n"
+"                a multi-select form and a single select-form, which is not "
 "supported.\n"
-"              "
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/partials/build_errors.html
-msgid ""
-"\n"
-"                Please check that end of form navigation is correct. It "
-"appears to involve\n"
-"                a multi-select case list and the \"Previous Screen\" "
-"workflow, which are not compatible.\n"
 "              "
 msgstr ""
 
@@ -9521,6 +9512,10 @@ msgstr ""
 "Si la liste des dossiers contient uniquement un dossier, sautez le et allez "
 "directement sur les détails du dossier."
 
+#: corehq/apps/app_manager/templates/app_manager/partials/modules/module_view_settings.html
+msgid "Empty Case List Text"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/partials/modules/report_context_tile.html
 msgid "Last UCR Update"
 msgstr ""
@@ -12251,10 +12246,6 @@ msgid "Please wait while the map loads"
 msgstr ""
 
 #: corehq/apps/cloudcare/templates/form_entry/templates.html
-msgid "Answer Choices"
-msgstr ""
-
-#: corehq/apps/cloudcare/templates/form_entry/templates.html
 #: corehq/apps/cloudcare/templates/formplayer/query_view.html
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html
 #: corehq/apps/data_dictionary/templates/data_dictionary/base.html
@@ -12377,7 +12368,11 @@ msgid "Linking directly into Web Apps has been disabled."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
-msgid "Could not find application."
+msgid "Multiple corresponding applications found. Could not follow link."
+msgstr ""
+
+#: corehq/apps/cloudcare/views.py
+msgid "No corresponding application found in this project."
 msgstr ""
 
 #: corehq/apps/cloudcare/views.py
@@ -22606,10 +22601,8 @@ msgid "Add Project"
 msgstr "Ajouter un projet"
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
-#, fuzzy
-#| msgid "Manage My Settings"
 msgid "Manage Settings"
-msgstr "Gérer mes paramètres"
+msgstr ""
 
 #: corehq/apps/hqwebapp/templates/hqwebapp/includes/global_navigation_bar.html
 msgid "Logged in As"
@@ -36226,10 +36219,6 @@ msgid "Filter and Download Mobile Workers"
 msgstr ""
 
 #: corehq/apps/users/forms.py
-msgid "Download All Users"
-msgstr ""
-
-#: corehq/apps/users/forms.py
 msgid "Invalid Role"
 msgstr ""
 
@@ -36810,16 +36799,12 @@ msgid "Update Location Settings"
 msgstr "Mettre à jour les paramètres pour les Sites"
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Tableau Configuration"
-msgstr "Configuration"
+msgstr ""
 
 #: corehq/apps/users/templates/users/edit_web_user.html
-#, fuzzy
-#| msgid "Add custom table configuration "
 msgid "Update Tableau Configuration"
-msgstr "Ajouter configuration personnalisée de tableau"
+msgstr ""
 
 #: corehq/apps/users/templates/users/email/new_domain_request.html
 #, python-format
@@ -36934,6 +36919,10 @@ msgid ""
 "you will be charged\n"
 "          a fee of %(u_fee)s per Mobile Worker per month.\n"
 "        "
+msgstr ""
+
+#: corehq/apps/users/templates/users/filter_and_download.html
+msgid "Calculating download size..."
 msgstr ""
 
 #: corehq/apps/users/templates/users/mobile/partials/user_upload_status.html
@@ -40454,7 +40443,21 @@ msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
 #, python-brace-format
+msgid ""
+"Error(s) while updating DHIS2 tracked entity. Errors from DHIS2 can be found "
+"in Remote API Logs: {url}"
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
 msgid "{n} tracked entity instances were registered from case {case}."
+msgstr ""
+
+#: corehq/motech/dhis2/entities_helpers.py
+#, python-brace-format
+msgid ""
+"Error(s) while registering DHIS2 tracked entity. Errors from DHIS2 can be "
+"found in Remote API Logs: {url}"
 msgstr ""
 
 #: corehq/motech/dhis2/entities_helpers.py
@@ -41429,38 +41432,22 @@ msgid ""
 msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy
-#| msgid "Configuration"
 msgid "Delete Configuration"
-msgstr "Configuration"
+msgstr ""
 
 #: corehq/motech/repeaters/templates/repeaters/partials/repeater_row.html
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                              This controls which parent "
-#| "this organization level\n"
-#| "                                              must have. You can use this "
-#| "to setup a organization\n"
-#| "                                              level that can have "
-#| "different types of children.\n"
-#| "                                          "
+#, python-format
 msgid ""
 "\n"
 "                                    Are you sure you want to delete the "
 "configuration for: %(name)s ?\n"
 "                                    <br/><br />\n"
-"                                    Data forwarding records will not be "
-"deleted, but no new records will be\n"
+"                                    Historical data forwarding records will "
+"not be deleted, but no new records will be\n"
 "                                    forwarded, and this configuration will "
 "no longer appear on this page.\n"
 "                                "
 msgstr ""
-"\n"
-"Ceci contrôle quel parent ce niveau d'organisation\n"
-"doit avoir. Vous pouvez l'utiliser pour configurer le niveau d'une "
-"organisation\n"
-"qui peut avoir différents types d'enfants."
 
 #: corehq/motech/repeaters/templates/repeaters/repeat_record_report.html
 msgid "Resend selected"
@@ -41569,16 +41556,12 @@ msgid "Forwarding set up to {}"
 msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-#, fuzzy
-#| msgid "Update Filters"
 msgid "Update Forwarder"
-msgstr "Mettre à jour les filtres"
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
-#, fuzzy
-#| msgid "Form was successfully archived."
 msgid "Forwarder Successfully Updated"
-msgstr "Le formulaire a été archivé avec succès."
+msgstr ""
 
 #: corehq/motech/repeaters/views/repeaters.py
 msgid "Edit Form Repeater"
@@ -41867,10 +41850,18 @@ msgid "Loadtest Users"
 msgstr ""
 
 #: corehq/privileges.py
-#, fuzzy
-#| msgid "End of Form Navigation"
 msgid "Link to other forms in End of Form Navigation"
-msgstr "Fin de la navigation de formulaire"
+msgstr ""
+
+#: corehq/privileges.py
+msgid "Phone heartbeat"
+msgstr ""
+
+#: corehq/privileges.py
+#, fuzzy
+#| msgid "File Type"
+msgid "File Dropzone"
+msgstr "Type de fichier"
 
 #: corehq/reports.py
 msgid "Report Builder Reports"
@@ -43055,9 +43046,3 @@ msgstr "Le Score à la Fonctionnalité"
 #: manage.py
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
-
-#~ msgid "Manage"
-#~ msgstr "Gérer"
-
-#~ msgid "Stop Forwarding"
-#~ msgstr "Arrêter le transfert"
