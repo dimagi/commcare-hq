@@ -2,7 +2,7 @@ from django.utils.translation import gettext
 from eulxml.xpath import serialize
 
 from corehq.apps.case_search.exceptions import TooManyRelatedCasesError
-from corehq.apps.case_search.filter_dsl import MAX_RELATED_CASES
+from corehq.apps.case_search.const import MAX_RELATED_CASES
 from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
 from corehq.apps.es.case_search import CaseSearchES, reverse_index_case_query
 

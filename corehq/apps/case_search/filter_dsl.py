@@ -9,6 +9,7 @@ from eulxml.xpath.ast import (
     serialize,
 )
 
+from corehq.apps.case_search.const import OPERATOR_MAPPING, COMPARISON_OPERATORS, ALL_OPERATORS
 from corehq.apps.case_search.exceptions import (
     CaseFilterError,
     XPathFunctionException,
@@ -19,7 +20,6 @@ from corehq.apps.case_search.xpath_functions import (
 from corehq.apps.case_search.xpath_functions.ancestor_functions import is_ancestor_path_expression, \
     ancestor_comparison_query
 from corehq.apps.case_search.xpath_functions.comparison import property_comparison_query
-from corehq.apps.es import filters
 
 
 @dataclass
@@ -48,27 +48,6 @@ def print_ast(node):
             indent -= 1
 
     visit(node, 0)
-
-
-MAX_RELATED_CASES = 500000  # Limit each related case lookup to return 500,000 cases to prevent timeouts
-
-
-OPERATOR_MAPPING = {
-    'and': filters.AND,
-    'or': filters.OR,
-}
-RANGE_OP_MAPPING = {
-    '>': 'gt',
-    '>=': 'gte',
-    '<': 'lt',
-    '<=': 'lte',
-}
-
-EQ = "="
-NEQ = "!="
-COMPARISON_OPERATORS = [EQ, NEQ] + list(RANGE_OP_MAPPING.keys())
-
-ALL_OPERATORS = COMPARISON_OPERATORS + list(OPERATOR_MAPPING.keys())
 
 
 def build_filter_from_ast(node, context):

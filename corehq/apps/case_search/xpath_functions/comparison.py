@@ -4,7 +4,7 @@ from eulxml.xpath.ast import Step
 
 from corehq.apps.case_search.dsl_utils import unwrap_value
 from corehq.apps.case_search.exceptions import CaseFilterError
-from corehq.apps.case_search.filter_dsl import EQ, NEQ, RANGE_OP_MAPPING
+from corehq.apps.case_search.const import RANGE_OP_MAPPING, EQ, NEQ
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import case_property_query, case_property_range_query
 
