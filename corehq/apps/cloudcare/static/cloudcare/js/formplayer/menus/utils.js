@@ -110,8 +110,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
             formMenu: "#form-menu",
         });
         FormplayerFrontend.regions.getRegion('formMenu').show(views.PrintMenuView());
-    }
-
+    };
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise

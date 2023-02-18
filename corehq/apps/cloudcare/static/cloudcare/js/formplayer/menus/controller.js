@@ -109,7 +109,7 @@ hqDefine("cloudcare/js/formplayer/menus/controller", function () {
                 menusUtils.showLanguageMenu(menuResponse.langs);
             }
             else if (enablePrintOption && !menuResponse.queryKey) {
-                menusUtils.showPrintOption()
+                menusUtils.showPrintOption();
             }
         } else {
             FormplayerFrontend.regions.getRegion('breadcrumb').empty();
