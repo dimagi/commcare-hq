@@ -137,3 +137,10 @@
 <script type="text/template" id="language-option-template">
   <a class="lang" id="<%- lang %>"><%- lang %></a>
 </script>
+
+<script type="text/template" id="print-menu-template">
+   <i class="fa fa-bars dropdown-toggle" data-toggle="dropdown"></i>
+   <ul class="dropdown-menu dropdown-menu-right">
+     <li class="dropdown-header" onclick="window.print()">{% trans "Print" %}</li>
+   </ul>
+</script>

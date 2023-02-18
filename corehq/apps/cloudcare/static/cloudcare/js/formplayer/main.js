@@ -21,6 +21,7 @@ hqDefine("cloudcare/js/formplayer/main", function () {
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
             changeFormLanguage: toggles.toggleEnabled('CHANGE_FORM_LANGUAGE'),
+            enablePrintOption: toggles.toggleEnabled('PRINT_BUTTON_WITHIN_FORMS'),
         };
         FormplayerFrontEnd.start(options);
 

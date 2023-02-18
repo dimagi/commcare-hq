@@ -105,6 +105,13 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         FormplayerFrontend.regions.getRegion('formMenu').show(formMenuView);
     };
 
+    var showPrintOption = function () {
+        FormplayerFrontend.regions.addRegions({
+            formMenu: "#form-menu",
+        });
+        FormplayerFrontend.regions.getRegion('formMenu').show(views.PrintMenuView());
+    }
+
 
     var getMenuView = function (menuResponse) {
         var menuData = {                    // TODO: make this more concise
@@ -189,6 +196,7 @@ hqDefine("cloudcare/js/formplayer/menus/utils", function () {
         handleLocationRequest: handleLocationRequest,
         showBreadcrumbs: showBreadcrumbs,
         showLanguageMenu: showLanguageMenu,
+        showPrintOption: showPrintOption,
         startOrStopLocationWatching: startOrStopLocationWatching,
     };
 });
