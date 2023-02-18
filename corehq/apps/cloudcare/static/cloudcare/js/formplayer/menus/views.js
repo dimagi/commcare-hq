@@ -711,6 +711,11 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         childViewContainer: 'ul',
     });
 
+    var PrintMenuView = Marionette.CollectionView.extend({
+        template: _.template($("#print-menu-template").html() || ""),
+        tagName: 'li',
+    });
+
     var DetailView = Marionette.View.extend({
         tagName: "tr",
         className: "",
@@ -805,6 +810,9 @@ hqDefine("cloudcare/js/formplayer/menus/views", function () {
         },
         FormMenuView: function (options) {
             return new FormMenuView(options);
+        },
+        PrintMenuView: function (options) {
+            return new PrintMenuView(options);
         },
         CaseDetailFooterView: function (options) {
             return new CaseDetailFooterView(options);
