@@ -163,9 +163,10 @@ class TableauServer(models.Model):
     target_site = models.CharField(max_length=64, default='Default')
 
     def __str__(self):
-        return '{server} {server_type} {site}'.format(server=self.server_name,
-                                                      server_type=self.server_type,
-                                                      site=self.target_site)
+        return '{domain} {server} {server_type} {site}'.format(domain=self.domain,
+                                                               server=self.server_name,
+                                                               server_type=self.server_type,
+                                                               site=self.target_site)
 
 
 class TableauVisualization(models.Model):
@@ -336,38 +337,43 @@ class TableauAPISession(object):
         if not self.signed_in:
             raise TableauAPIError("You must be signed in to the API to call that method.")
 
-
-    def query_groups(self, name=None):
+    def get_group(self, name):
         '''
-        Include `name` arg to get information for a specific group (like the group ID). Case sensitive.
-        Exclude the `name` arg to get a list of all groups on the site, sorted by name.
-
-        Each group dict returned has this format, at a minumum:
+        Case sensitive. Return format:
         {
             "domain": {
                 "name": ...
             },
             "id": ...,
-            "name": ...
+            "name": ...,
+            ...
         }
         '''
-        url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000'
-        if name:
-            url += f'&filter=name:eq:{name}'
-        else:
-            url += '&sort=name:asc'
+        url = self.base_url + f'/sites/{self.site_id}/groups?filter=name:eq:{name}'
+        response_body = self._make_request(
+            self.GET,
+            'Get Group',
+            url,
+            {}
+        )
+        if not response_body.get('groups'):
+            return {}
+        return response_body['groups']['group'][0]
+
+    def query_groups(self):
+        '''
+        Get a list of all groups on the site, sorted by name. Group dicts have the same format as get_group.
+        '''
+        url = self.base_url + f'/sites/{self.site_id}/groups?pageSize=1000&sort=name:asc'
         response_body = self._make_request(
             self.GET,
             'Query Groups',
             url,
             {}
         )
-        if name:
-            return response_body['groups']['group'][0]
-        else:
-            if 1000 < int(response_body['pagination']['totalAvailable']):
-                raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
-            return response_body['groups']['group']
+        if 1000 < int(response_body['pagination']['totalAvailable']):
+            raise TableauAPIError("Error: API does not work with more than 1000 groups on a single site.")
+        return response_body['groups']['group']
 
     def get_user_on_site(self, username):
         '''
