@@ -118,12 +118,16 @@ def get_case_hierarchy(domain, cases):
     assert domains == {domain}, "All cases must belong to the same domain"
 
     case_ids = {case.case_id for case in cases}
+    new_cases = get_all_related_live_cases(domain, case_ids)
 
+    return cases + new_cases
+
+
+def get_all_related_live_cases(domain, case_ids):
     all_case_ids, indices = get_live_case_ids_and_indices(domain, case_ids, TimingContext())
     new_case_ids = list(all_case_ids - case_ids)
     new_cases = PrefetchIndexCaseAccessor(domain, indices).get_cases(new_case_ids)
-
-    return cases + new_cases
+    return new_cases
 
 
 def get_live_case_ids_and_indices(domain, owned_ids, timing_context):
