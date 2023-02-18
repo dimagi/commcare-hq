@@ -2215,6 +2215,13 @@ TURN_IO_BACKEND = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+PRINT_BUTTON_WITHIN_FORMS = StaticToggle(
+    'print_button_within_forms',
+    'Enable a print button within all forms',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 FOLLOWUP_FORMS_AS_CASE_LIST_FORM = StaticToggle(
     'followup_forms_as_case_list_form',
