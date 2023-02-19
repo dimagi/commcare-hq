@@ -933,7 +933,7 @@ hqDefine("cloudcare/js/form_entry/entries", function () {
     function ImageEntry(question, options) {
         var self = this;
         FileEntry.call(this, question, options);
-        self.accept = "image/*,.pdf,.doc,.docx";
+        self.accept = "image/*,.pdf";
 
         self.helpText = function () {
             return gettext("Upload image");

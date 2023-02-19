@@ -190,6 +190,13 @@ class Command(BaseCommand):
              name='Improved app changes view',
              description='Ability to see changes that have been made between different versions of '
                          'your application'),
+        Role(slug=privileges.DATA_FILE_DOWNLOAD,
+             name='File Dropzone',
+             description='Offer hosting and sharing data files for downloading '
+                         'from a secure dropzone'),
+        Role(slug=privileges.ATTENDANCE_TRACKING,
+             name='Attendance Tracking',
+             description='Supports using CommCareHQ for attendance tracking'),
     ]
 
     BOOTSTRAP_PLANS = [

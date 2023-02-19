@@ -21,7 +21,7 @@ def _grandfather_view_app_diff_privs(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounting', '0065_phone_apk_heartbeat_privs'),
+        ('accounting', '0066_data_file_download_priv'),
     ]
 
     operations = [

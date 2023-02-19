@@ -27,6 +27,7 @@ REPORT_BUILDER_ADD_ON_PRIVS = {
     REPORT_BUILDER_30,
 }
 
+ATTENDANCE_TRACKING = 'attendance_tracking'
 ROLE_BASED_ACCESS = 'role_based_access'
 RESTRICT_ACCESS_BY_LOCATION = 'restrict_access_by_location'
 
@@ -93,6 +94,9 @@ PHONE_APK_HEARTBEAT = 'phone_apk_heartbeat'
 
 VIEW_APP_DIFF = 'view_app_diff'
 
+# a.k.a. "File Dropzone", "Secure File Transfer"
+DATA_FILE_DOWNLOAD = 'data_file_download'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -143,6 +147,8 @@ MAX_PRIVILEGES = [
     FORM_LINK_WORKFLOW,
     PHONE_APK_HEARTBEAT,
     VIEW_APP_DIFF,
+    DATA_FILE_DOWNLOAD,
+    ATTENDANCE_TRACKING,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -208,4 +214,6 @@ class Titles(object):
             FORM_LINK_WORKFLOW: _("Link to other forms in End of Form Navigation"),
             PHONE_APK_HEARTBEAT: _("Phone heartbeat"),
             VIEW_APP_DIFF: _("Improved app changes view"),
+            DATA_FILE_DOWNLOAD: _('File Dropzone'),
+            ATTENDANCE_TRACKING: _("Attendance Tracking"),
         }.get(privilege, privilege)
