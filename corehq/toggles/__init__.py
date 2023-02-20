@@ -1547,14 +1547,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-VIEW_APP_CHANGES = StaticToggle(
-    'app-changes-with-improved-diff',
-    'Improved app changes view',
-    TAG_SOLUTIONS_OPEN,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
-)
-
 PAGINATED_EXPORTS = StaticToggle(
     'paginated_exports',
     'Allows for pagination of exports for very large exports',
@@ -2462,6 +2454,7 @@ PHONE_HEARTBEAT = FrozenPrivilegeToggle(
     [NAMESPACE_DOMAIN]
 )
 
+
 MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
     privileges.PRACTICE_MOBILE_WORKERS,
     'mobile_user_demo_mode',
@@ -2469,6 +2462,16 @@ MOBILE_USER_DEMO_MODE = FrozenPrivilegeToggle(
     TAG_SOLUTIONS_OPEN,
     help_link='https://confluence.dimagi.com/display/GS/Demo+Mobile+Workers+and+Practice+Mode',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+VIEW_APP_CHANGES = FrozenPrivilegeToggle(
+    privileges.VIEW_APP_DIFF,
+    'app-changes-with-improved-diff',
+    'Improved app changes view',
+    TAG_SOLUTIONS_OPEN,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+    help_link="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions",
 )
 
 DATA_FILE_DOWNLOAD = FrozenPrivilegeToggle(

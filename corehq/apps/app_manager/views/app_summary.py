@@ -7,12 +7,12 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 from django.contrib import messages
-from corehq.toggles import VIEW_APP_CHANGES
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.web import json_response
 
+from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.app_schemas.app_case_metadata import (
     FormQuestionResponse,
 )
@@ -30,6 +30,7 @@ from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.decorators import login_or_api_key
 from corehq.apps.domain.views.base import LoginAndDomainMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq import privileges
 
 
 class AppSummaryView(LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
@@ -96,17 +97,6 @@ class AppFormSummaryView(AppSummaryView):
 
     @property
     def page_context(self):
-
-        if self._show_app_changes_notification():
-            messages.warning(
-                self.request,
-                'Hey Dimagi User! Have you tried out '
-                '<a href="https://confluence.dimagi.com/display/saas/Viewing+App+Changes+between+versions" '
-                'target="_blank">Viewing App Changes between Versions</a> yet? It might be just what you are '
-                'looking for!',
-                extra_tags='html'
-            )
-
         context = super(AppFormSummaryView, self).page_context
         modules, errors = get_app_summary_formdata(self.domain, self.app, include_shadow_forms=False)
         context.update({
@@ -115,15 +105,6 @@ class AppFormSummaryView(AppSummaryView):
             'errors': errors,
         })
         return context
-
-    def _show_app_changes_notification(self):
-        if settings.ENTERPRISE_MODE:
-            return False
-
-        if self.request.couch_user.is_dimagi and not VIEW_APP_CHANGES.enabled(self.domain):
-            return True
-
-        return False
 
 
 class FormSummaryDiffView(AppSummaryView):
@@ -143,8 +124,16 @@ class FormSummaryDiffView(AppSummaryView):
         return self.get_app(self.kwargs.get('second_app_id'))
 
     @property
+    def can_view_app_diff(self):
+        return (domain_has_privilege(self.domain, privileges.VIEW_APP_DIFF)
+                or self.request.user.is_superuser)
+
+    @property
     def page_context(self):
         context = super(FormSummaryDiffView, self).page_context
+
+        if not self.can_view_app_diff:
+            raise Http404()
 
         if self.first_app.origin_id != self.second_app.origin_id:
             # This restriction is somewhat arbitrary, as you might want to

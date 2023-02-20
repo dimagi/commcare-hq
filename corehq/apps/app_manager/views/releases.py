@@ -216,6 +216,8 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
         'can_edit_apps': request.couch_user.can_edit_apps(),
+        'can_view_app_diff': (domain_has_privilege(domain, privileges.VIEW_APP_DIFF)
+                              or request.user.is_superuser)
     }
     if not app.is_remote_app():
         context.update({
