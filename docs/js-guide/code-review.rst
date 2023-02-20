@@ -18,7 +18,7 @@ Make any user-facing language as clear as possible.
 
    - "Lookup tables" not "fixtures"
    - "Web apps" not "cloudcare"
-   - "Mobile worker" not "mobile user"
+   - "Mobile worker" not "mobile user" or "CommCare User"
    - etc.
 
 Translations
@@ -38,7 +38,7 @@ Security
 --------
 
 - Use ``<%- ... %>`` in Underscore templates to HTML escape values.
-- Use ``DomPurify`` to HTML escape user input that will displayed, but not in a template.
+- Use ``DomPurify`` to HTML escape user input that will be displayed, but not in a template.
 
 Delays and Errors
 -----------------
@@ -64,7 +64,8 @@ specific to JavaScript or more frequently arise in it:
 
 - Naming. JavaScript is often messy because it sometimes uses server naming conventions, which are different, for server
   data. Push the author to leave the code better than they found it. Don't allow the same identifier to be used
-  with different capitalizations.
+  with different capitalizations, e.g., ``firstName`` and ``first_name`` in the same file. Find a synonym for one
+  of them.
 - JavaScript should be enclosed in modules and those modules should explicitly declare dependencies, as in the
   first code block `here
   <https://commcare-hq.readthedocs.io/js-guide/dependencies.html#how-do-i-know-whether-or-not-im-working-with-requirejs>`__. Exceptions are app manager, reports, and web apps.
